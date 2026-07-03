@@ -43,7 +43,13 @@ import {
 } from './documentDocxStructure.js';
 import {
   buildDocxStyleConfig,
+  clampHeadingText,
+  clampTableColumns,
+  DOCX_PALETTE,
   DOCX_STYLE_IDS,
+  DOCX_TITLE_MAX_CHARS,
+  DOCX_TONE_COLOR,
+  DOCX_TONE_FILL,
   resolveDocxFonts,
   resolveFormattingClass,
 } from './documentDocxStyles.js';
@@ -351,7 +357,7 @@ function buildAssumptionMarker(font: string): TextRun {
   return new TextRun({
     text: '  [Assumption — needs source]',
     italics: true,
-    color: 'B45309',
+    color: DOCX_PALETTE.amberInk,
     size: 18,
     font,
   });
@@ -369,7 +375,9 @@ function styleIdForHeadingLevel(level: 1 | 2 | 3): string {
 
 function renderHeadingBlock(block: DocumentBlock, ctx: RenderContext): Paragraph {
   const value = (block.content ?? {}) as { text?: string; level?: 1 | 2 | 3 };
-  const text = asString(value.text ?? '');
+  // Overflow guard — a runaway "heading" (mis-classified paragraph) is
+  // truncated at a word boundary so the outline / TOC entry stays one line.
+  const text = clampHeadingText(asString(value.text ?? ''));
   const level = value.level ?? 2;
   return new Paragraph({
     style: styleIdForHeadingLevel(level),
@@ -414,14 +422,6 @@ function renderListBlocks(block: DocumentBlock, ctx: RenderContext): Paragraph[]
   });
 }
 
-/** Tone → accent hex (no leading `#`) for callout labels + KPI deltas. */
-const CALLOUT_TONE_COLOR: Record<string, string> = {
-  info: '2563EB',
-  warning: 'D97706',
-  danger: 'DC2626',
-  success: '16A34A',
-};
-
 /** Normalize a CSS hex (`#RRGGBB` / `RRGGBB`) to bare 6-digit uppercase, or null. */
 function normalizeHex(raw: unknown): string | null {
   if (typeof raw !== 'string') return null;
@@ -437,16 +437,36 @@ function isDarkFill(hex: string): boolean {
   return 0.299 * r + 0.587 * g + 0.114 * b < 140;
 }
 
+/**
+ * Map a callout marker (premium `tone`, legacy `variant`) to a doctrine tone
+ * key. Legacy variants (`key_message`, `insight`, …) fall back to `info` (navy)
+ * so an untoned callout still reads as a deliberate navy device rather than the
+ * old off-palette indigo.
+ */
+function calloutToneKey(marker: string | undefined): keyof typeof DOCX_TONE_COLOR {
+  const m = String(marker ?? '').toLowerCase();
+  if (m === 'success' || m === 'positive') return 'success';
+  if (m === 'warning' || m === 'caution') return 'warning';
+  if (m === 'danger' || m === 'critical' || m === 'risk') return 'danger';
+  return 'info';
+}
+
 function renderCalloutBlock(block: DocumentBlock, ctx: RenderContext): Paragraph {
   const value = (block.content ?? {}) as BlockCalloutContent;
   const text = asString(value.text ?? '');
-  // Premium content-gen emits `tone`; legacy schema emits `variant`.
-  const marker = value.tone ?? value.variant;
-  const accent = (marker && CALLOUT_TONE_COLOR[String(marker).toLowerCase()]) || '4338CA';
-  // Callout wyróżnia się STYLEM (akcent + kursywa), nie brzydkim tagiem „[INFO]"
-  // w środku prozy — tag był nieprofesjonalny w dokumencie konsultanta.
+  // Premium content-gen emits `tone`; legacy schema emits `variant`. Resolve to
+  // a doctrine tone so the accent spine + soft tint match DeckStyler/WorkbookStyler.
+  const toneKey = calloutToneKey(value.tone ?? value.variant);
+  const accent = DOCX_TONE_COLOR[toneKey];
+  const fill = DOCX_TONE_FILL[toneKey];
+  // Callout wyróżnia się STYLEM (akcentowy pasek + tło + kursywa), nie brzydkim
+  // tagiem „[INFO]" w środku prozy — tag był nieprofesjonalny w dokumencie
+  // konsultanta. Kolor paska/tła nadpisuje domyślny teal ze stylu nazwanego,
+  // więc np. callout „danger" dostaje malinowy pasek na różowym tle.
   return new Paragraph({
     style: DOCX_STYLE_IDS.CALLOUT,
+    shading: { type: 'clear', fill },
+    border: { left: { color: accent, space: 12, style: 'single', size: 24 } },
     children: [
       new TextRun({ text, italics: true, bold: true, color: accent, font: ctx.bodyFont }),
     ],
@@ -487,17 +507,27 @@ function renderKpiStripBlock(block: DocumentBlock, ctx: RenderContext): (Table |
     const delta = asString(item?.delta ?? '').trim();
     // Colour the delta by direction marker (▲ up / ▼ down / + / −) so the
     // strip reads at a glance. Falls back to neutral slate.
-    let deltaColor = '64748B';
-    if (/[▲]|^\+|\bvs\b.*\+|up/i.test(delta)) deltaColor = '16A34A';
-    else if (/[▼]|^−|^-/.test(delta)) deltaColor = 'DC2626';
+    let deltaColor: string = DOCX_PALETTE.muted;
+    if (/[▲]|^\+|\bvs\b.*\+|up/i.test(delta)) deltaColor = DOCX_TONE_COLOR.success;
+    else if (/[▼]|^−|^-/.test(delta)) deltaColor = DOCX_TONE_COLOR.danger;
     const cellChildren: DocxParagraph[] = [
       new Paragraph({
         style: DOCX_STYLE_IDS.CAPTION,
-        children: [new TextRun({ text: label, font: ctx.bodyFont, size: 16, color: '64748B' })],
+        children: [
+          new TextRun({ text: label, font: ctx.bodyFont, size: 16, color: DOCX_PALETTE.muted }),
+        ],
       }),
       new Paragraph({
         style: DOCX_STYLE_IDS.BODY_TEXT,
-        children: [new TextRun({ text: metricValue, bold: true, font: ctx.headingFont, size: 28 })],
+        children: [
+          new TextRun({
+            text: metricValue,
+            bold: true,
+            font: ctx.headingFont,
+            size: 28,
+            color: DOCX_PALETTE.navy,
+          }),
+        ],
       }),
     ];
     if (delta.length > 0 && delta !== '0') {
@@ -509,7 +539,7 @@ function renderKpiStripBlock(block: DocumentBlock, ctx: RenderContext): (Table |
       );
     }
     return new TableCell({
-      shading: { fill: 'F1F5F9' },
+      shading: { fill: DOCX_PALETTE.kpiFill },
       margins: { top: 80, bottom: 80, left: 120, right: 120 },
       children: cellChildren,
     });
@@ -608,7 +638,8 @@ function normalizeTableContent(content: unknown): {
 
 function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Paragraph)[] {
   const value = (block.content ?? {}) as { caption?: string };
-  const { headers, rows } = normalizeTableContent(block.content);
+  const normalized = normalizeTableContent(block.content);
+  let { headers, rows } = normalized;
 
   if (headers.length === 0 && rows.length === 0) {
     return [
@@ -624,6 +655,28 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
     ];
   }
 
+  // Overflow guard — a table wider than A4 can legibly show collapses every
+  // cell to a sliver. Keep the leading columns and fold the remainder into a
+  // single "+N more" column (DeckStyler/WorkbookStyler width-clamp analogue).
+  const columnCount = Math.max(headers.length, ...rows.map((r) => r.length), 0);
+  const clamp = clampTableColumns(columnCount);
+  if (clamp.overflowed) {
+    const foldLabel = `+${clamp.folded.length} more`;
+    const pick = <T,>(arr: T[], fallback: T): T[] =>
+      clamp.keep.map((i) => arr[i] ?? fallback);
+    if (headers.length > 0) {
+      headers = [...pick(headers, ''), foldLabel];
+    }
+    rows = rows.map((row) => {
+      const kept = pick(row, { text: '', fill: null });
+      const foldedText = clamp.folded
+        .map((i) => row[i]?.text ?? '')
+        .filter((t) => t.length > 0)
+        .join(' · ');
+      return [...kept, { text: foldedText, fill: null }];
+    });
+  }
+
   const tableRows: unknown[] = [];
   if (headers.length > 0) {
     tableRows.push(
@@ -631,38 +684,20 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
         tableHeader: true,
         children: headers.map(
           (cell) =>
+            // Navy header band + white bold text — the DOCX analogue of
+            // WorkbookStyler's navy header fill and DeckStyler's dominant band.
             new TableCell({
-              shading: { fill: 'E2E8F0' },
-              children: [
-                new Paragraph({
-                  style: DOCX_STYLE_IDS.BODY_TEXT,
-                  children: [new TextRun({ text: cell, bold: true, font: ctx.bodyFont, size: 20 })],
-                }),
-              ],
-            })
-        ),
-      })
-    );
-  }
-  for (const row of rows) {
-    tableRows.push(
-      new TableRow({
-        children: row.map(
-          (cell) =>
-            new TableCell({
-              ...(cell.fill ? { shading: { fill: cell.fill } } : {}),
+              shading: { fill: DOCX_PALETTE.navy },
               children: [
                 new Paragraph({
                   style: DOCX_STYLE_IDS.BODY_TEXT,
                   children: [
                     new TextRun({
-                      text: cell.text,
+                      text: cell,
+                      bold: true,
                       font: ctx.bodyFont,
                       size: 20,
-                      // White text on dark status fills keeps it legible.
-                      ...(cell.fill && isDarkFill(cell.fill)
-                        ? { color: 'FFFFFF', bold: true }
-                        : {}),
+                      color: DOCX_PALETTE.white,
                     }),
                   ],
                 }),
@@ -672,6 +707,37 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
       })
     );
   }
+  rows.forEach((row, rowIndex) => {
+    // Subtle zebra striping on odd body rows (WorkbookStyler zebra analogue).
+    // An explicit per-cell fill (status semaphore etc.) always wins.
+    const zebra = rowIndex % 2 === 1;
+    tableRows.push(
+      new TableRow({
+        children: row.map((cell) => {
+          const fill = cell.fill ?? (zebra ? DOCX_PALETTE.zebraFill : null);
+          return new TableCell({
+            ...(fill ? { shading: { fill } } : {}),
+            children: [
+              new Paragraph({
+                style: DOCX_STYLE_IDS.BODY_TEXT,
+                children: [
+                  new TextRun({
+                    text: cell.text,
+                    font: ctx.bodyFont,
+                    size: 20,
+                    // White text on dark status fills keeps it legible.
+                    ...(cell.fill && isDarkFill(cell.fill)
+                      ? { color: DOCX_PALETTE.white, bold: true }
+                      : {}),
+                  }),
+                ],
+              }),
+            ],
+          });
+        }),
+      })
+    );
+  });
 
   const table = new Table({
     rows: tableRows,
@@ -802,7 +868,7 @@ function renderFootnoteBlock(block: DocumentBlock, ctx: RenderContext): Paragrap
     new Paragraph({
       style: DOCX_STYLE_IDS.BODY_TEXT,
       children: [
-        new TextRun({ text: 'Note ', italics: true, font: ctx.bodyFont, color: '64748B' }),
+        new TextRun({ text: 'Note ', italics: true, font: ctx.bodyFont, color: DOCX_PALETTE.muted }),
         new FootnoteReferenceRun(id),
       ],
     }),
@@ -920,10 +986,21 @@ function renderCoverBlock(ctx: RenderContext, options: DocumentRenderOptions = {
         alignment: AlignmentType.CENTER,
         children: [
           new TextRun({
-            text: schema.title,
+            // Overflow guard — a pathologically long title is truncated at a
+            // word boundary so the cover stays a clean title block.
+            text: clampHeadingText(schema.title, DOCX_TITLE_MAX_CHARS),
             font: ctx.headingFont,
           }),
         ],
+      }),
+      // Teal accent rule under the title — the DOCX analogue of DeckStyler's
+      // cover accent rule. A short centred bottom-bordered paragraph reads as a
+      // deliberate rule rather than a line of text.
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 160 },
+        border: { bottom: { color: DOCX_PALETTE.teal, space: 1, style: 'single', size: 18 } },
+        children: [new TextRun({ text: '', font: ctx.bodyFont })],
       }),
       new Paragraph({
         style: DOCX_STYLE_IDS.SUBTITLE,
@@ -1129,7 +1206,7 @@ export async function renderDocumentSchemaToDocxBuffer(
             new TextRun({
               text: headerText,
               size: 18,
-              color: '64748B',
+              color: DOCX_PALETTE.muted,
               font: ctx.bodyFont,
             }),
           ],
@@ -1142,7 +1219,7 @@ export async function renderDocumentSchemaToDocxBuffer(
       new TextRun({
         text: schema.confidentiality.replace(/_/g, ' '),
         size: 16,
-        color: '94A3B8',
+        color: DOCX_PALETTE.faint,
         font: ctx.bodyFont,
       })
     );
@@ -1157,7 +1234,7 @@ export async function renderDocumentSchemaToDocxBuffer(
     const formatTemplate = formatting.footers.pageNumberingFormat?.trim();
     if (formatTemplate && formatTemplate.length > 0) {
       footerRuns.push(
-        new TextRun({ text: '   |   ', size: 16, color: '94A3B8', font: ctx.bodyFont })
+        new TextRun({ text: '   |   ', size: 16, color: DOCX_PALETTE.faint, font: ctx.bodyFont })
       );
       // Split the template around the `{N}` and `{M}` placeholders so
       // the replacement runs become real Word `PageNumber` fields
@@ -1171,7 +1248,7 @@ export async function renderDocumentSchemaToDocxBuffer(
             new TextRun({
               children: [PageNumber.CURRENT],
               size: 16,
-              color: '94A3B8',
+              color: DOCX_PALETTE.faint,
               font: ctx.bodyFont,
             })
           );
@@ -1180,31 +1257,31 @@ export async function renderDocumentSchemaToDocxBuffer(
             new TextRun({
               children: [PageNumber.TOTAL_PAGES],
               size: 16,
-              color: '94A3B8',
+              color: DOCX_PALETTE.faint,
               font: ctx.bodyFont,
             })
           );
         } else if (piece.length > 0) {
           footerRuns.push(
-            new TextRun({ text: piece, size: 16, color: '94A3B8', font: ctx.bodyFont })
+            new TextRun({ text: piece, size: 16, color: DOCX_PALETTE.faint, font: ctx.bodyFont })
           );
         }
       }
     } else {
       footerRuns.push(
-        new TextRun({ text: '   |   ', size: 16, color: '94A3B8', font: ctx.bodyFont }),
-        new TextRun({ text: 'Page ', size: 16, color: '94A3B8', font: ctx.bodyFont }),
+        new TextRun({ text: '   |   ', size: 16, color: DOCX_PALETTE.faint, font: ctx.bodyFont }),
+        new TextRun({ text: 'Page ', size: 16, color: DOCX_PALETTE.faint, font: ctx.bodyFont }),
         new TextRun({
           children: [PageNumber.CURRENT],
           size: 16,
-          color: '94A3B8',
+          color: DOCX_PALETTE.faint,
           font: ctx.bodyFont,
         }),
-        new TextRun({ text: ' / ', size: 16, color: '94A3B8', font: ctx.bodyFont }),
+        new TextRun({ text: ' / ', size: 16, color: DOCX_PALETTE.faint, font: ctx.bodyFont }),
         new TextRun({
           children: [PageNumber.TOTAL_PAGES],
           size: 16,
-          color: '94A3B8',
+          color: DOCX_PALETTE.faint,
           font: ctx.bodyFont,
         })
       );
