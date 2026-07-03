@@ -101,8 +101,8 @@ function ToolbarIconButton({
       disabled={disabled}
       className={`p-1.5 rounded-lg transition-colors ${
         active
-          ? 'text-slate-700 dark:text-slate-300 bg-slate-500/10'
-          : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'
+          ? 'text-c-text bg-c-surface'
+          : 'text-c-text-secondary hover:text-c-text-secondary'
       } ${disabled ? 'opacity-30 cursor-not-allowed' : ''} ${className ?? ''}`}
       title={title}
     >
@@ -336,8 +336,8 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
   ];
 
   return (
-    <div className="flex flex-wrap items-center gap-1 md:gap-2 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-200/60 dark:border-navy-700/60 mx-3 my-2 px-4 py-2 flex-shrink-0">
-      <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 mr-2">
+    <div className="flex flex-wrap items-center gap-1 md:gap-2 bg-c-surface backdrop-blur-sm rounded-2xl shadow-xl border border-c-border-subtle mx-3 my-2 px-4 py-2 flex-shrink-0">
+      <div className="text-xs font-semibold text-c-text mr-2">
         {isPl ? 'Tabela' : 'Table'}
       </div>
 
@@ -392,7 +392,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                     setRenamingViewId(null);
                   }
                 }}
-                className="px-2 py-1 rounded-lg text-[10px] font-bold bg-white dark:bg-navy-800 border border-primary-400 outline-none w-20"
+                className="px-2 py-1 rounded-lg text-[10px] font-bold bg-c-surface border border-c-accent outline-none w-20"
               />
             ) : (
               <button
@@ -404,8 +404,8 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                 }}
                 className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${
                   activeViewId === v.id
-                    ? 'bg-slate-500/10 text-slate-700 dark:text-slate-300'
-                    : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'
+                    ? 'bg-c-surface text-c-text'
+                    : 'text-c-text-secondary hover:text-c-text-secondary'
                 }`}
               >
                 {v.name}
@@ -419,7 +419,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
               setSaveViewName('');
               setShowSaveViewDialog(true);
             }}
-            className="p-1 rounded-lg text-slate-600 hover:text-slate-500 hover:bg-slate-500/10 transition-colors"
+            className="p-1 rounded-lg text-c-text-secondary hover:text-c-text-muted hover:bg-c-surface transition-colors"
             title={isPl ? 'Zapisz widok' : 'Save view'}
           >
             <Plus size={12} />
@@ -434,10 +434,10 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
           onClick={() => setShowSaveViewDialog(false)}
         >
           <div
-            className="bg-white dark:bg-navy-900 rounded-xl shadow-xl border border-slate-200 dark:border-navy-700 p-4 w-72"
+            className="bg-c-surface rounded-xl shadow-xl border border-c-border-subtle p-4 w-72"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-sm font-semibold mb-2 text-slate-800 dark:text-slate-200">
+            <h3 className="text-sm font-semibold mb-2 text-c-text">
               {isPl ? 'Zapisz widok' : 'Save view'}
             </h3>
             <input
@@ -445,7 +445,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
               value={saveViewName}
               onChange={(e) => setSaveViewName(e.target.value)}
               placeholder={isPl ? 'Nazwa widoku…' : 'View name…'}
-              className="w-full h-8 px-3 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 outline-none focus:ring-2 focus:ring-blue-500/30 mb-3"
+              className="w-full h-8 px-3 rounded-lg text-xs bg-c-surface-raised border border-c-border-subtle outline-none focus:ring-2 focus:ring-blue-500/30 mb-3"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && saveViewName.trim()) handleSaveView(saveViewName.trim());
               }}
@@ -453,14 +453,14 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setShowSaveViewDialog(false)}
-                className="px-3 py-1.5 text-xs rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800"
+                className="px-3 py-1.5 text-xs rounded-lg text-c-text-muted hover:bg-c-surface-raised"
               >
                 {isPl ? 'Anuluj' : 'Cancel'}
               </button>
               <button
                 disabled={!saveViewName.trim()}
                 onClick={() => handleSaveView(saveViewName.trim())}
-                className="px-3 py-1.5 text-xs rounded-lg bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-40"
+                className="px-3 py-1.5 text-xs rounded-lg bg-c-accent text-white hover:bg-c-accent disabled:opacity-40"
               >
                 {isPl ? 'Zapisz' : 'Save'}
               </button>
@@ -473,12 +473,12 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
       {viewContextMenu && (
         <div className="fixed inset-0 z-[60]" onClick={() => setViewContextMenu(null)}>
           <div
-            className="absolute bg-white dark:bg-navy-900 rounded-lg shadow-xl border border-slate-200 dark:border-navy-700 py-1 min-w-[140px]"
+            className="absolute bg-c-surface rounded-lg shadow-xl border border-c-border-subtle py-1 min-w-[140px]"
             style={{ left: viewContextMenu.x, top: viewContextMenu.y }}
             onClick={(e) => e.stopPropagation()}
           >
             <button
-              className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+              className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text"
               onClick={() => {
                 const v = savedViews.find((sv) => sv.id === viewContextMenu.viewId);
                 if (v) {
@@ -491,7 +491,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
               {isPl ? 'Zmień nazwę' : 'Rename'}
             </button>
             <button
-              className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+              className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text"
               onClick={() => {
                 updateSavedView(viewContextMenu.viewId, {
                   sort: sort ? [sort] : undefined,
@@ -524,21 +524,21 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         </div>
       )}
 
-      <div className="w-px h-5 bg-slate-200 dark:bg-navy-700" />
+      <div className="w-px h-5 bg-c-border-subtle" />
 
       {/* Quick filter */}
       <div className="relative flex-1 max-w-[200px]">
-        <Filter size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-600" />
+        <Filter size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-c-text-secondary" />
         <input
           value={props.filterInput}
           onChange={(e) => props.onFilterInputChange(e.target.value)}
           placeholder={isPl ? 'Filtruj…' : 'Filter…'}
-          className="w-full h-7 pl-7 pr-2 rounded-lg text-[11px] bg-white dark:bg-white/[0.04] border border-slate-200/60 dark:border-white/[0.08] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
+          className="w-full h-7 pl-7 pr-2 rounded-lg text-[11px] bg-c-surface border border-c-border-subtle text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
         />
         {props.filterInput && (
           <button
             onClick={() => props.onFilterInputChange('')}
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-c-text-secondary hover:text-c-text-secondary"
           >
             <X size={10} />
           </button>
@@ -551,8 +551,8 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
           onClick={() => setShowFilterPanel(!showFilterPanel)}
           className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
             filters.rules.length > 0
-              ? 'bg-slate-500/10 text-slate-700 dark:text-slate-300'
-              : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+              ? 'bg-c-surface text-c-text'
+              : 'text-c-text-secondary hover:bg-c-surface-raised'
           }`}
         >
           <Filter size={12} />
@@ -604,8 +604,8 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         onClick={() => setGroupBy(groupBy ? null : 'status')}
         className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
           groupBy
-            ? 'bg-slate-500/10 text-slate-700 dark:text-slate-300'
-            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+            ? 'bg-c-surface text-c-text'
+            : 'text-c-text-secondary hover:bg-c-surface-raised'
         }`}
         title={isPl ? 'Grupuj' : 'Group'}
       >
@@ -614,17 +614,17 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
       </button>
 
       {/* View layout switcher — FROZEN order */}
-      <div className="flex items-center rounded-lg border border-slate-200/60 dark:border-navy-700/60 overflow-hidden">
+      <div className="flex items-center rounded-lg border border-c-border-subtle overflow-hidden">
         {layoutItems.map((v) => (
           <button
             key={v.id}
             onClick={() => setViewLayout(v.id)}
-            className={`relative p-1.5 transition-colors ${viewLayout === v.id ? 'bg-slate-500/10 text-slate-700 dark:text-slate-300' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
+            className={`relative p-1.5 transition-colors ${viewLayout === v.id ? 'bg-c-surface text-c-text' : 'text-c-text-secondary hover:text-c-text-secondary'}`}
             title={v.label}
           >
             <v.icon size={12} />
             {viewLayout === v.id && (
-              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-0.5 rounded-full bg-navy-900 dark:bg-white" />
+              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-0.5 rounded-full bg-c-surface dark:bg-c-surface" />
             )}
           </button>
         ))}
@@ -699,7 +699,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         {showMoreMenu && (
           <div
             data-testid="table-toolbar-overflow-menu"
-            className="absolute right-0 top-full mt-1 z-50 w-56 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1 max-h-[70vh] overflow-y-auto"
+            className="absolute right-0 top-full mt-1 z-50 w-56 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1 max-h-[70vh] overflow-y-auto"
             role="menu"
           >
             {(() => {
@@ -810,8 +810,8 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                       }}
                       className={`w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-colors ${
                         it.active
-                          ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10'
-                          : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                          ? 'text-c-accent bg-c-accent-soft'
+                          : 'text-c-text hover:bg-c-surface-raised'
                       }`}
                     >
                       <Icon size={14} /> {it.label}
@@ -827,15 +827,15 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
       <div className="hidden md:contents">
         {/* Platform tab switcher */}
         {usePlatform && (
-          <div className="flex items-center rounded-lg bg-slate-100 dark:bg-navy-800 p-0.5">
+          <div className="flex items-center rounded-lg bg-c-surface-raised p-0.5">
             {(['data', 'forms', 'interfaces', 'models', 'workflow'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => uiDispatch({ type: 'SET_PLATFORM_TAB', tab })}
                 className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
                   ui.platformTab === tab
-                    ? 'bg-white text-slate-800 shadow-sm dark:bg-navy-700 dark:text-white'
-                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+                    ? 'bg-c-surface text-c-text shadow-sm'
+                    : 'text-c-text-muted hover:text-c-text'
                 }`}
               >
                 {tab === 'data'
@@ -888,7 +888,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
               className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
                 showToolsMenu
                   ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-500/10'
-                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+                  : 'text-c-text-secondary hover:bg-c-surface-raised'
               }`}
               title={isPl ? 'Narzędzia' : 'Tools'}
             >
@@ -897,8 +897,8 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
               <ChevronDown size={10} />
             </button>
             {showToolsMenu && (
-              <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1 max-h-[70vh] overflow-y-auto">
-                <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
+              <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1 max-h-[70vh] overflow-y-auto">
+                <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-secondary">
                   {isPl ? 'Workflow' : 'Workflow'}
                 </div>
                 {[
@@ -934,13 +934,13 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                       item.onClick();
                       setShowToolsMenu(false);
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-c-surface-raised text-c-text"
                   >
                     {item.icon} {item.label}
                   </button>
                 ))}
-                <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
-                <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
+                <div className="border-t border-c-border-subtle my-1" />
+                <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-secondary">
                   {isPl ? 'Budowanie' : 'Build'}
                 </div>
                 {[
@@ -973,18 +973,18 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                       item.onClick();
                       setShowToolsMenu(false);
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-c-surface-raised text-c-text"
                   >
                     {item.icon} {item.label}
                   </button>
                 ))}
-                <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
+                <div className="border-t border-c-border-subtle my-1" />
                 <button
                   onClick={() => {
                     props.onShowConsultifyLink();
                     setShowToolsMenu(false);
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-c-surface-raised text-c-text"
                 >
                   <Layers size={14} className="text-indigo-500" />{' '}
                   {isPl ? 'Połączenie z Consultify' : 'Consultify Link'}
@@ -1000,75 +1000,75 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         {!locked && (
           <button
             onClick={props.onShowAICategorize}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
           >
             <Layers size={14} /> {isPl ? 'AI Kategoryzacja' : 'AI Categorize'}
           </button>
         )}
         <button
           onClick={props.onShowScoringModel}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
         >
           <Trophy size={14} /> {isPl ? 'Scoring' : 'Scoring'}
         </button>
         <button
           onClick={props.onShowExportPresentation}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
         >
           <Presentation size={14} /> {isPl ? 'Prezentacja' : 'Presentation'}
         </button>
         <button
           onClick={props.onShowPipeline}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
         >
           <Rocket size={14} /> {isPl ? 'Pipeline' : 'Pipeline'}
         </button>
         <button
           onClick={props.onShowCopilot}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
         >
           <Brain size={14} /> AI Copilot
         </button>
         <button
           onClick={props.onShowVoiceInput}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
         >
           <Mic size={14} /> {isPl ? 'Głos / Obraz' : 'Voice / Image'}
         </button>
         <button
           onClick={props.onShowCrossRelations}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
         >
           <Network size={14} /> {isPl ? 'Relacje' : 'Relations'}
         </button>
         <button
           onClick={props.onToggleHeatmap}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
         >
           <Flame size={14} /> {isPl ? 'Heatmapa' : 'Heatmap'}
         </button>
         <button
           onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showAuditTrail' })}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
         >
           <History size={14} /> {isPl ? 'Historia' : 'History'}
         </button>
         <button
           onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showActivityFeed' })}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
         >
           <Activity size={14} /> {isPl ? 'Aktywność' : 'Activity'}
         </button>
         <button
           onClick={props.onShowConditionalFmt}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
         >
           <Paintbrush size={14} /> {isPl ? 'Formatowanie' : 'Formatting'}
         </button>
         {!locked && (
           <button
             onClick={props.onShowFrameworkGen}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
           >
             <LayoutGrid size={14} /> Framework
           </button>
@@ -1076,7 +1076,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         {!locked && (
           <button
             onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showTemplateGallery' })}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
           >
             <LayoutTemplate size={14} /> {isPl ? 'Szablony' : 'Templates'}
           </button>
@@ -1088,7 +1088,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         {props.connectors.connectors.length > 0 && (
           <button
             onClick={props.onShowConnectorList}
-            className="relative p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            className="relative p-1.5 rounded-lg text-c-text-secondary hover:text-c-text-secondary transition-colors"
             title={isPl ? 'Konektory' : 'Connectors'}
           >
             <Layers size={12} />
@@ -1141,35 +1141,35 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
       <div className="relative">
         <button
           onClick={() => setShowColumnConfig(!showColumnConfig)}
-          className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors"
           title={isPl ? 'Kolumny' : 'Columns'}
         >
           <Columns3 size={12} />
         </button>
         {showColumnConfig && (
-          <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl p-2">
+          <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl p-2">
             {columns.map((col) => (
               <button
                 key={col.key}
                 onClick={() => toggleColumn(col.key)}
-                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-c-text hover:bg-c-surface-raised transition-colors"
               >
                 {col.visible ? (
-                  <Eye size={12} className="text-slate-500" />
+                  <Eye size={12} className="text-c-text-muted" />
                 ) : (
-                  <EyeOff size={12} className="text-slate-600" />
+                  <EyeOff size={12} className="text-c-text-secondary" />
                 )}
                 {col.header}
-                <span className="ml-auto text-[9px] text-slate-600">{col.type}</span>
+                <span className="ml-auto text-[9px] text-c-text-secondary">{col.type}</span>
               </button>
             ))}
-            <div className="border-t border-slate-200/60 dark:border-navy-700/60 mt-1 pt-1">
+            <div className="border-t border-c-border-subtle mt-1 pt-1">
               <button
                 onClick={() => {
                   setShowColumnConfig(false);
                   uiDispatch({ type: 'SET_PANEL', panel: 'showAddColumn', value: true });
                 }}
-                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-500/10 transition-colors"
+                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-c-text hover:bg-c-surface transition-colors"
               >
                 <Plus size={12} /> {isPl ? 'Nowa kolumna' : 'New column'}
               </button>
@@ -1195,7 +1195,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         <button
           onClick={props.onPlatformUndo}
           disabled={!usePlatform && !props.nodesUndo.canUndo}
-          className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-30 transition-colors"
+          className="p-1.5 rounded-lg text-c-text-secondary hover:text-c-text-secondary disabled:opacity-30 transition-colors"
           title="Undo (Ctrl+Z)"
         >
           <Undo2 size={13} />
@@ -1203,7 +1203,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         <button
           onClick={props.nodesUndo.redo}
           disabled={!props.nodesUndo.canRedo}
-          className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-30 transition-colors"
+          className="p-1.5 rounded-lg text-c-text-secondary hover:text-c-text-secondary disabled:opacity-30 transition-colors"
           title="Redo (Ctrl+Y)"
         >
           <Redo2 size={13} />
@@ -1215,7 +1215,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
       {/* Bulk actions */}
       {selectedRowIds.size > 0 && (
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 bg-slate-500/10 px-2 py-0.5 rounded-lg">
+          <span className="text-[10px] font-bold text-c-text bg-c-surface px-2 py-0.5 rounded-lg">
             {selectedRowIds.size} {isPl ? 'zaznaczonych' : 'selected'}
           </span>
           {!locked && (
@@ -1228,12 +1228,12 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                   <ArrowRight size={11} /> {isPl ? 'Konwertuj' : 'Convert'} <ChevronDown size={9} />
                 </button>
                 {showBulkConvertMenu && (
-                  <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl p-1">
+                  <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl p-1">
                     {(['initiative', 'task', 'decision'] as const).map((t) => (
                       <button
                         key={t}
                         onClick={() => props.onBulkConvert(t)}
-                        className="w-full text-left px-3 py-1.5 rounded-lg text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors capitalize"
+                        className="w-full text-left px-3 py-1.5 rounded-lg text-[11px] font-medium text-c-text hover:bg-c-surface-raised transition-colors capitalize"
                       >
                         →{' '}
                         {t === 'initiative'
@@ -1262,18 +1262,18 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
 
       {/* Add row */}
       {!locked && (
-        <div className="flex items-center rounded-lg border border-slate-200/60 dark:border-navy-700/60 overflow-hidden">
+        <div className="flex items-center rounded-lg border border-c-border-subtle overflow-hidden">
           <button
             onClick={handleAddRow}
             data-testid="table-add-row"
-            className="inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors"
             title={isPl ? 'Dodaj pusty wiersz' : 'Add blank row'}
           >
             <Plus size={12} /> {isPl ? 'Wiersz' : 'Row'}
           </button>
           <button
             onClick={props.onAddRowWithTemplate}
-            className="px-1 py-1.5 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors border-l border-slate-200/60 dark:border-navy-700/60"
+            className="px-1 py-1.5 text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised transition-colors border-l border-c-border-subtle"
             title={isPl ? 'Dodaj z szablonu' : 'Add from template'}
           >
             <ChevronDown size={10} />
@@ -1282,7 +1282,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
       )}
 
       {/* Save status + button */}
-      <span className="text-[11px] text-slate-500 dark:text-slate-400">{saveStatusLabel}</span>
+      <span className="text-[11px] text-c-text-muted">{saveStatusLabel}</span>
       <Button
         variant="primary"
         size="sm"
@@ -1302,14 +1302,14 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         }}
       >
         <SheetContent side="right" className="flex w-full max-w-md flex-col p-0 sm:max-w-lg">
-          <SheetHeader className="relative border-b border-slate-200/80 pr-12 dark:border-navy-700/80">
+          <SheetHeader className="relative border-b border-c-border-subtle pr-12">
             <SheetTitle>{isPl ? 'Asystent schematu tabeli' : 'Table schema assistant'}</SheetTitle>
             <SheetDescription>
               {[base?.name, table?.name].filter(Boolean).join(' · ') ||
                 (isPl ? 'Zaproponuj zmiany struktury przez AI.' : 'Draft schema changes with AI.')}
             </SheetDescription>
             <div className="absolute right-4 top-4">
-              <SheetClose className="relative text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100" />
+              <SheetClose className="relative text-c-text-muted hover:text-c-text" />
             </div>
           </SheetHeader>
           <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">

@@ -37,7 +37,7 @@ function getSelectOptions(fieldOptions?: Record<string, unknown>): TablePlatform
 }
 
 const baseCls =
-  'w-full rounded-lg border border-primary-400 dark:border-primary-500 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] md:text-[11px] text-sm text-slate-800 dark:text-slate-200 outline-none ring-2 ring-primary-500/30 min-h-[44px] md:min-h-0 touch-manipulation';
+  'w-full rounded-lg border border-c-accent bg-c-surface px-2 py-1.5 text-[11px] md:text-[11px] text-sm text-c-text outline-none ring-2 ring-c-focus min-h-[44px] md:min-h-0 touch-manipulation';
 
 // ── Text Editor ──────────────────────────────────────────────────────────────
 
@@ -117,21 +117,21 @@ const RichTextEditor: React.FC<CellEditorProps> = ({ value, onSave, onCancel }) 
         <button
           type="button"
           onClick={() => document.execCommand('bold')}
-          className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 font-bold"
+          className="px-1.5 py-0.5 rounded bg-c-surface-raised font-bold"
         >
           B
         </button>
         <button
           type="button"
           onClick={() => document.execCommand('italic')}
-          className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 italic"
+          className="px-1.5 py-0.5 rounded bg-c-surface-raised italic"
         >
           I
         </button>
         <button
           type="button"
           onClick={() => document.execCommand('insertUnorderedList')}
-          className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800"
+          className="px-1.5 py-0.5 rounded bg-c-surface-raised"
         >
           • List
         </button>
@@ -139,7 +139,7 @@ const RichTextEditor: React.FC<CellEditorProps> = ({ value, onSave, onCancel }) 
       <div
         ref={editorRef}
         contentEditable
-        className="min-h-[80px] p-2 border rounded bg-white dark:bg-navy-950 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-slate-200"
+        className="min-h-[80px] p-2 border rounded bg-c-surface text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-c-text"
         onInput={() => {
           /* value tracked via ref */
         }}
@@ -255,7 +255,7 @@ const SingleSelectEditor: React.FC<CellEditorProps> = ({
 
   return (
     <div ref={ref} className="relative">
-      <div className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl p-1 max-h-48 overflow-auto">
+      <div className="w-full rounded-xl border border-c-border-subtle bg-c-surface shadow-xl p-1 max-h-48 overflow-auto">
         {options.map((opt) => {
           const optVal = String(opt.name ?? opt.id);
           return (
@@ -266,8 +266,8 @@ const SingleSelectEditor: React.FC<CellEditorProps> = ({
                 onSave(optVal);
                 setOpen(false);
               }}
-              className={`w-full text-left px-2 py-1.5 rounded-lg text-[11px] hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors flex items-center gap-2 min-h-[44px] md:min-h-0 touch-manipulation ${
-                String(value) === optVal ? 'bg-primary-50 dark:bg-primary-500/10' : ''
+              className={`w-full text-left px-2 py-1.5 rounded-lg text-[11px] hover:bg-c-surface-raised transition-colors flex items-center gap-2 min-h-[44px] md:min-h-0 touch-manipulation ${
+                String(value) === optVal ? 'bg-c-accent-soft' : ''
               }`}
             >
               {opt.color && (
@@ -287,7 +287,7 @@ const SingleSelectEditor: React.FC<CellEditorProps> = ({
               onSave(null);
               setOpen(false);
             }}
-            className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] text-slate-600 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+            className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] text-c-text-secondary hover:bg-c-surface-raised transition-colors"
           >
             Clear
           </button>
@@ -336,7 +336,7 @@ const MultiSelectEditor: React.FC<CellEditorProps> = ({
 
   return (
     <div ref={ref} className="relative">
-      <div className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl p-1 max-h-48 overflow-auto">
+      <div className="w-full rounded-xl border border-c-border-subtle bg-c-surface shadow-xl p-1 max-h-48 overflow-auto">
         {options.map((opt) => {
           const optVal = String(opt.name ?? opt.id);
           const isSelected = selected.includes(optVal);
@@ -345,13 +345,13 @@ const MultiSelectEditor: React.FC<CellEditorProps> = ({
               key={opt.id}
               type="button"
               onClick={() => toggle(optVal)}
-              className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors flex items-center gap-2 min-h-[44px] md:min-h-0 touch-manipulation"
+              className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] hover:bg-c-surface-raised transition-colors flex items-center gap-2 min-h-[44px] md:min-h-0 touch-manipulation"
             >
               <span
                 className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center flex-shrink-0 ${
                   isSelected
-                    ? 'bg-navy-900 border-navy-900'
-                    : 'border-slate-300 dark:border-navy-600'
+                    ? 'bg-c-accent border-c-accent'
+                    : 'border-c-border'
                 }`}
               >
                 {isSelected && <Check size={9} className="text-white" />}
@@ -456,7 +456,7 @@ const LinkedRecordEditor: React.FC<CellEditorProps> = ({
 
   if (!linkedTableId) {
     return (
-      <div className="flex items-center gap-2 px-2 py-1.5 text-[11px] text-slate-600">
+      <div className="flex items-center gap-2 px-2 py-1.5 text-[11px] text-c-text-secondary">
         <Link2 className="h-3.5 w-3.5" />
         {isPl ? 'Brak powiązanej tabeli' : 'No linked table configured'}
       </div>
@@ -527,7 +527,7 @@ const RatingEditor: React.FC<CellEditorProps> = ({ value, fieldOptions, onSave, 
             className={
               i < draft
                 ? 'text-amber-400 fill-amber-400'
-                : 'text-slate-600 dark:text-navy-600 hover:text-amber-300'
+                : 'text-c-text-secondary hover:text-amber-300'
             }
           />
         </button>

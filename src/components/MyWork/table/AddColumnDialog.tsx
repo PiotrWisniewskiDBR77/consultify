@@ -189,44 +189,44 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
 
   return (
     <div className="fixed inset-0 z-context-menu flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <div className="w-[480px] max-h-[85vh] overflow-auto rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-2xl">
+      <div className="w-[480px] max-h-[85vh] overflow-auto rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
-          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
+          <h3 className="text-sm font-bold text-c-text">
             {isPl ? 'Dodaj kolumnę' : 'Add Column'}
           </h3>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-1 rounded-lg hover:bg-c-surface-raised transition-colors"
           >
-            <X size={16} className="text-slate-600" />
+            <X size={16} className="text-c-text-secondary" />
           </button>
         </div>
 
         <div className="px-5 py-4 space-y-4">
           {/* Name */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+            <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
               {isPl ? 'Nazwa' : 'Name'}
             </label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={isPl ? 'np. Status, Priorytet...' : 'e.g. Status, Priority...'}
-              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
+              className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
               autoFocus
             />
           </div>
 
           {/* Grouped type selector */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1.5">
+            <label className="block text-[11px] font-bold text-c-text-secondary mb-1.5">
               {isPl ? 'Typ' : 'Type'}
             </label>
             <div className="space-y-3">
               {groups.map((group) => (
                 <div key={group.key}>
-                  <div className="text-[9px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1">
+                  <div className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-1">
                     {isPl ? group.label.pl : group.label.en}
                   </div>
                   <div className="grid grid-cols-5 gap-1">
@@ -241,8 +241,8 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                           onClick={() => setType(t)}
                           className={`flex flex-col items-center gap-0.5 px-1.5 py-1.5 rounded-xl text-[9px] font-medium transition-all ${
                             isActive
-                              ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400 ring-1 ring-primary-500/30'
-                              : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                              ? 'bg-c-accent-soft text-c-accent ring-1 ring-c-focus'
+                              : 'text-c-text-secondary hover:bg-c-surface-raised'
                           }`}
                         >
                           <Icon size={14} />
@@ -259,14 +259,14 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
           {/* Type-specific config */}
           {(type === 'select' || type === 'multiselect') && (
             <div>
-              <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+              <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
                 {isPl ? 'Opcje (oddzielone przecinkiem)' : 'Options (comma-separated)'}
               </label>
               <input
                 value={options}
                 onChange={(e) => setOptions(e.target.value)}
                 placeholder="Option 1, Option 2, Option 3"
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
+                className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
               />
             </div>
           )}
@@ -283,16 +283,16 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                 />
               ) : (
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+                  <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
                     {isPl ? 'Formuła' : 'Formula'}
                   </label>
                   <input
                     value={formula}
                     onChange={(e) => setFormula(e.target.value)}
                     placeholder="{impact} * {effort}"
-                    className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs font-mono text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
+                    className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs font-mono text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
                   />
-                  <p className="mt-1 text-[9px] text-slate-600">
+                  <p className="mt-1 text-[9px] text-c-text-secondary">
                     {isPl
                       ? 'Użyj {nazwa_kolumny} aby odwołać się do wartości'
                       : 'Use {column_key} to reference values'}
@@ -316,7 +316,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
 
           {type === 'ai_generated' && (
             <div>
-              <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+              <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
                 {isPl ? 'Prompt AI' : 'AI Prompt'}
               </label>
               <textarea
@@ -328,20 +328,20 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                     : 'Assess risk based on company context...'
                 }
                 rows={3}
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30 resize-none"
+                className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 resize-none"
               />
             </div>
           )}
 
           {type === 'currency' && (
             <div>
-              <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+              <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
                 {isPl ? 'Waluta' : 'Currency'}
               </label>
               <select
                 value={currencyCode}
                 onChange={(e) => setCurrencyCode(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
+                className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
               >
                 {['USD', 'EUR', 'PLN', 'GBP', 'CHF', 'JPY', 'CAD', 'AUD'].map((c) => (
                   <option key={c} value={c}>
@@ -354,13 +354,13 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
 
           {type === 'date' && (
             <div>
-              <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+              <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
                 {isPl ? 'Format daty' : 'Date format'}
               </label>
               <select
                 value={dateFormat}
                 onChange={(e) => setDateFormat(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
+                className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
               >
                 <option value="YYYY-MM-DD">YYYY-MM-DD</option>
                 <option value="DD/MM/YYYY">DD/MM/YYYY</option>
@@ -374,16 +374,16 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
 
           {type === 'relation' && (
             <div>
-              <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+              <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
                 {isPl ? 'Cel relacji' : 'Relation target'}
               </label>
               <input
                 value={relationTarget}
                 onChange={(e) => setRelationTarget(e.target.value)}
                 placeholder={isPl ? 'np. Inicjatywy, Zadania...' : 'e.g. Initiatives, Tasks...'}
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
+                className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
               />
-              <p className="mt-1 text-[9px] text-slate-600">
+              <p className="mt-1 text-[9px] text-c-text-secondary">
                 {isPl
                   ? 'Wskaż tabelę lub moduł, z którego chcesz linkować wiersze'
                   : 'Point to the table or module to link rows from'}
@@ -394,24 +394,24 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
           {type === 'rollup' && (
             <div className="space-y-2">
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+                <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
                   {isPl ? 'Źródło (kolumna relacji)' : 'Source (relation column)'}
                 </label>
                 <input
                   value={rollupSource}
                   onChange={(e) => setRollupSource(e.target.value)}
                   placeholder={isPl ? 'np. tasks_relation' : 'e.g. tasks_relation'}
-                  className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
+                  className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+                <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
                   {isPl ? 'Funkcja' : 'Function'}
                 </label>
                 <select
                   value={rollupFunction}
                   onChange={(e) => setRollupFunction(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
+                  className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
                 >
                   <option value="count">Count</option>
                   <option value="sum">Sum</option>
@@ -426,20 +426,20 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-slate-200/60 dark:border-navy-700/60">
+        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-c-border-subtle">
           <button
             onClick={() => {
               reset();
               onClose();
             }}
-            className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="px-4 py-2 rounded-xl text-xs font-semibold text-c-text-secondary hover:bg-c-surface-raised transition-colors"
           >
             {isPl ? 'Anuluj' : 'Cancel'}
           </button>
           <button
             onClick={handleAdd}
             disabled={!name.trim()}
-            className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors disabled:opacity-40"
+            className="px-4 py-2 rounded-xl text-xs font-semibold bg-c-text text-c-bg hover:bg-c-text-secondary transition-colors disabled:opacity-40"
           >
             {isPl ? 'Dodaj kolumnę' : 'Add Column'}
           </button>
