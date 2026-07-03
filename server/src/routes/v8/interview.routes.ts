@@ -110,8 +110,16 @@ const firstParam = (value: unknown): string | undefined => {
 };
 
 async function ensureInterviewInsightActivityTable(): Promise<void> {
-  await queryHelpers.queryRun(
-    `CREATE TABLE IF NOT EXISTS interview_insight_activity (
+  // Fail-soft: this opportunistic DDL runs first inside the GET
+  // /insights/:id/activity read path. queryHelpers.queryRun() REJECTS on any DB
+  // error (unlike DbPromise which defaults to fallback:true), so a transient DDL
+  // failure (lock/timeout/brief read-only/connection blip) would bubble up as a
+  // bare HTTP 500 → white screen. Swallow + log here so the read path degrades to
+  // a safe empty list at the call site instead. Real errors are logged, never
+  // silently hidden.
+  try {
+    await queryHelpers.queryRun(
+      `CREATE TABLE IF NOT EXISTS interview_insight_activity (
       id TEXT PRIMARY KEY,
       organization_id TEXT NOT NULL,
       insight_id TEXT NOT NULL,
@@ -120,16 +128,21 @@ async function ensureInterviewInsightActivityTable(): Promise<void> {
       user_id TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`
-  );
-  await queryHelpers.queryRun(
-    `CREATE INDEX IF NOT EXISTS idx_interview_insight_activity_org ON interview_insight_activity(organization_id)`
-  );
-  await queryHelpers.queryRun(
-    `CREATE INDEX IF NOT EXISTS idx_interview_insight_activity_insight ON interview_insight_activity(insight_id)`
-  );
-  await queryHelpers.queryRun(
-    `CREATE INDEX IF NOT EXISTS idx_interview_insight_activity_created ON interview_insight_activity(created_at DESC)`
-  );
+    );
+    await queryHelpers.queryRun(
+      `CREATE INDEX IF NOT EXISTS idx_interview_insight_activity_org ON interview_insight_activity(organization_id)`
+    );
+    await queryHelpers.queryRun(
+      `CREATE INDEX IF NOT EXISTS idx_interview_insight_activity_insight ON interview_insight_activity(insight_id)`
+    );
+    await queryHelpers.queryRun(
+      `CREATE INDEX IF NOT EXISTS idx_interview_insight_activity_created ON interview_insight_activity(created_at DESC)`
+    );
+  } catch (err: any) {
+    logger.warn(
+      `[V8 Interview] ensureInterviewInsightActivityTable DDL failed (degrading gracefully): ${err?.message}`
+    );
+  }
 }
 
 async function logInsightActivity(params: {
@@ -1761,12 +1774,17 @@ router.get(
     }
 
     await ensureInterviewInsightActivityTable();
-    const entries = await queryHelpers.queryAll(
-      `SELECT a.id, a.type, a.description, a.created_at, u.first_name, u.last_name
+    // Fail-soft read: if the activity table is briefly unavailable (freshly
+    // provisioned / transient error), degrade to an empty list rather than a
+    // bare 500 — the audit-log query below already does the same.
+    const entries = await queryHelpers
+      .queryAll(
+        `SELECT a.id, a.type, a.description, a.created_at, u.first_name, u.last_name
        FROM interview_insight_activity a LEFT JOIN users u ON u.id = a.user_id
        WHERE a.organization_id = ? AND a.insight_id = ? ORDER BY a.created_at DESC`,
-      [organizationId, id]
-    );
+        [organizationId, id]
+      )
+      .catch(() => []);
     const auditEntries = await queryHelpers
       .queryAll(
         `SELECT a.id, a.action as type, a.entity_type, a.entity_id, a.created_at, a.detail_json, u.first_name, u.last_name
