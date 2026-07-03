@@ -238,7 +238,7 @@ export const PolicyGovernanceTab: React.FC = () => {
                       </div>
                       <div>
                         <h4
-                          className={`font-semibold ${isSelected ? 'text-white' : 'text-navy-900 dark:text-slate-300'}`}
+                          className={`font-semibold ${isSelected ? 'text-c-text' : 'text-navy-900 dark:text-slate-300'}`}
                         >
                           {level.title}
                         </h4>

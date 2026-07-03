@@ -357,10 +357,10 @@ export const SecuritySettings: React.FC = () => {
       {activeTab === '2fa' && (
         <div className="space-y-6">
           {/* 2FA Requirement Toggle */}
-          <div className="p-6 bg-navy-800/50 rounded-xl border border-white/5">
+          <div className="p-6 bg-c-surface-raised/50 rounded-xl border border-white/5">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-white">Require 2FA for All Users</h3>
+                <h3 className="text-lg font-semibold text-c-text">Require 2FA for All Users</h3>
                 <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
                   When enabled, all users must set up two-factor authentication to access the
                   system.
@@ -373,26 +373,26 @@ export const SecuritySettings: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, require2fa: e.target.checked })}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-navy-900 transition-colors"></div>
+                <div className="w-11 h-6 bg-c-surface-raised rounded-full peer peer-checked:bg-navy-900 transition-colors"></div>
                 <div className="absolute left-1 top-1 w-4 h-4 bg-white dark:bg-navy-900 rounded-full peer-checked:translate-x-5 transition-transform"></div>
               </label>
             </div>
           </div>
 
           {/* 2FA Users List */}
-          <div className="bg-navy-800/50 rounded-xl border border-white/5 overflow-hidden">
+          <div className="bg-c-surface-raised/50 rounded-xl border border-white/5 overflow-hidden">
             <div className="p-4 border-b border-white/5">
-              <h3 className="text-lg font-semibold text-white">User 2FA Status</h3>
+              <h3 className="text-lg font-semibold text-c-text">User 2FA Status</h3>
             </div>
             <div className="divide-y divide-white/5">
               {twoFAStatus?.users.map((user) => (
                 <div key={user.id} className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white font-medium">
+                    <div className="w-10 h-10 rounded-full bg-c-surface-raised flex items-center justify-center text-c-text font-medium">
                       {user.firstName?.[0] || '?'}
                     </div>
                     <div>
-                      <p className="text-white font-medium">
+                      <p className="text-c-text font-medium">
                         {user.firstName} {user.lastName}
                       </p>
                       <p className="text-sm text-slate-400 dark:text-slate-500">{user.email}</p>
@@ -419,8 +419,8 @@ export const SecuritySettings: React.FC = () => {
       {/* Password Policy Tab */}
       {activeTab === 'password' && (
         <div className="space-y-6">
-          <div className="p-6 bg-navy-800/50 rounded-xl border border-white/5 space-y-6">
-            <h3 className="text-lg font-semibold text-white">Password Requirements</h3>
+          <div className="p-6 bg-c-surface-raised/50 rounded-xl border border-white/5 space-y-6">
+            <h3 className="text-lg font-semibold text-c-text">Password Requirements</h3>
 
             {/* Minimum Length */}
             <div>
@@ -435,7 +435,7 @@ export const SecuritySettings: React.FC = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, passwordMinLength: parseInt(e.target.value) })
                 }
-                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                className="w-full h-2 bg-c-surface-raised rounded-lg appearance-none cursor-pointer"
               />
               <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mt-1">
                 <span>6</span>
@@ -452,7 +452,7 @@ export const SecuritySettings: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, passwordRequireUppercase: e.target.checked })
                   }
-                  className="w-5 h-5 rounded bg-slate-700 border-slate-600 text-primary-500 focus:ring-primary-500"
+                  className="w-5 h-5 rounded bg-c-surface-raised border-slate-600 text-primary-500 focus:ring-primary-500"
                 />
                 <span className="text-slate-300">Require uppercase letter (A-Z)</span>
               </label>
@@ -464,7 +464,7 @@ export const SecuritySettings: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, passwordRequireNumber: e.target.checked })
                   }
-                  className="w-5 h-5 rounded bg-slate-700 border-slate-600 text-primary-500 focus:ring-primary-500"
+                  className="w-5 h-5 rounded bg-c-surface-raised border-slate-600 text-primary-500 focus:ring-primary-500"
                 />
                 <span className="text-slate-300">Require number (0-9)</span>
               </label>
@@ -476,7 +476,7 @@ export const SecuritySettings: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, passwordRequireSpecial: e.target.checked })
                   }
-                  className="w-5 h-5 rounded bg-slate-700 border-slate-600 text-primary-500 focus:ring-primary-500"
+                  className="w-5 h-5 rounded bg-c-surface-raised border-slate-600 text-primary-500 focus:ring-primary-500"
                 />
                 <span className="text-slate-300">Require special character (!@#$%^&*)</span>
               </label>
@@ -495,14 +495,14 @@ export const SecuritySettings: React.FC = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, passwordExpiryDays: parseInt(e.target.value) })
                 }
-                className="w-full bg-navy-950 border border-white/10 rounded-lg p-3 text-white"
+                className="w-full bg-primary-600 border border-white/10 rounded-lg p-3 text-white"
               />
             </div>
           </div>
 
           {/* Session Settings */}
-          <div className="p-6 bg-navy-800/50 rounded-xl border border-white/5 space-y-6">
-            <h3 className="text-lg font-semibold text-white">Session Settings</h3>
+          <div className="p-6 bg-c-surface-raised/50 rounded-xl border border-white/5 space-y-6">
+            <h3 className="text-lg font-semibold text-c-text">Session Settings</h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -517,7 +517,7 @@ export const SecuritySettings: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, sessionTimeoutMinutes: parseInt(e.target.value) })
                   }
-                  className="w-full bg-navy-950 border border-white/10 rounded-lg p-3 text-white"
+                  className="w-full bg-primary-600 border border-white/10 rounded-lg p-3 text-white"
                 />
               </div>
 
@@ -533,7 +533,7 @@ export const SecuritySettings: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, maxSessionsPerUser: parseInt(e.target.value) })
                   }
-                  className="w-full bg-navy-950 border border-white/10 rounded-lg p-3 text-white"
+                  className="w-full bg-primary-600 border border-white/10 rounded-lg p-3 text-white"
                 />
               </div>
             </div>
@@ -557,9 +557,9 @@ export const SecuritySettings: React.FC = () => {
       {activeTab === 'sessions' && (
         <div className="space-y-6">
           {/* All Organization Sessions */}
-          <div className="bg-navy-800/50 rounded-xl border border-white/5 overflow-hidden">
+          <div className="bg-c-surface-raised/50 rounded-xl border border-white/5 overflow-hidden">
             <div className="p-4 border-b border-white/5 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-white">Active Sessions</h3>
+              <h3 className="text-lg font-semibold text-c-text">Active Sessions</h3>
               <button
                 onClick={fetchSessions}
                 className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg text-slate-400 dark:text-slate-500 hover:text-white"
@@ -569,7 +569,7 @@ export const SecuritySettings: React.FC = () => {
             </div>
             <div className="overflow-x-auto">
               <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full text-sm">
-                <thead className="bg-navy-950 text-slate-300 uppercase text-xs">
+                <thead className="bg-c-bg text-slate-300 uppercase text-xs">
                   <tr>
                     <th className="px-4 py-3 text-left">User</th>
                     <th className="px-4 py-3 text-left">Device</th>
@@ -593,7 +593,7 @@ export const SecuritySettings: React.FC = () => {
                       <tr key={session.id} className="hover:bg-white/5">
                         <td className="px-4 py-3">
                           <div>
-                            <p className="text-white font-medium">{session.userName}</p>
+                            <p className="text-c-text font-medium">{session.userName}</p>
                             <p className="text-xs text-slate-400 dark:text-slate-500">
                               {session.userEmail}
                             </p>
@@ -630,9 +630,9 @@ export const SecuritySettings: React.FC = () => {
 
       {/* Login History Tab */}
       {activeTab === 'history' && (
-        <div className="bg-navy-800/50 rounded-xl border border-white/5 overflow-hidden">
+        <div className="bg-c-surface-raised/50 rounded-xl border border-white/5 overflow-hidden">
           <div className="p-4 border-b border-white/5 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">Login History</h3>
+            <h3 className="text-lg font-semibold text-c-text">Login History</h3>
             <button
               onClick={fetchLoginHistory}
               className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg text-slate-400 dark:text-slate-500 hover:text-white"
@@ -642,7 +642,7 @@ export const SecuritySettings: React.FC = () => {
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-navy-950 text-slate-300 uppercase text-xs">
+              <thead className="bg-c-bg text-slate-300 uppercase text-xs">
                 <tr>
                   <th className="px-4 py-3 text-left">User</th>
                   <th className="px-4 py-3 text-left">Status</th>
@@ -666,7 +666,7 @@ export const SecuritySettings: React.FC = () => {
                     <tr key={item.id} className="hover:bg-white/5">
                       <td className="px-4 py-3">
                         <div>
-                          <p className="text-white font-medium">{item.userName || 'Unknown'}</p>
+                          <p className="text-c-text font-medium">{item.userName || 'Unknown'}</p>
                           <p className="text-xs text-slate-400 dark:text-slate-500">
                             {item.userEmail}
                           </p>

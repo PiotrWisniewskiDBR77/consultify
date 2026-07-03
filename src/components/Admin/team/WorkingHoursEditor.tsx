@@ -275,7 +275,7 @@ export const WorkingHoursEditor: React.FC<WorkingHoursEditorProps> = ({
                     className={cn(
                       'w-5 h-5 rounded flex items-center justify-center transition-all',
                       schedule.enabled
-                        ? 'bg-navy-900 text-white'
+                        ? 'bg-primary-600 text-white'
                         : 'bg-slate-200 dark:bg-navy-700 text-slate-400 dark:text-slate-500'
                     )}
                   >

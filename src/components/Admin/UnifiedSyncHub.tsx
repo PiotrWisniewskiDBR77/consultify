@@ -272,7 +272,7 @@ function renderConnectorIcon(connectorId: string, name: string): React.ReactNode
   const Icon = CONNECTOR_ICONS[connectorId];
   if (Icon) return <Icon />;
   const letter = (name || connectorId || '?').trim().slice(0, 1).toUpperCase();
-  return <span className="text-xs font-semibold text-slate-200">{letter}</span>;
+  return <span className="text-xs font-semibold text-c-text-secondary">{letter}</span>;
 }
 
 // ── Constants ──────────────────────────────────────────────────
@@ -1668,10 +1668,10 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   <span>{CATEGORY_ICONS[cat]}</span>
                   {CATEGORY_LABELS[cat] || cat}
                 </div>
-                <div className="rounded-xl border border-navy-700/50 overflow-hidden bg-navy-800/20">
+                <div className="rounded-xl border border-c-border/50 overflow-hidden bg-c-surface-raised/20">
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
-                      <thead className="bg-navy-900/40 text-slate-400 dark:text-slate-500">
+                      <thead className="bg-c-surface/40 text-slate-400 dark:text-slate-500">
                         <tr className="text-left text-xs">
                           <th className="px-3 py-2 w-10" />
                           <th className="px-3 py-2">
@@ -1701,14 +1701,14 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                                 ? 'ready'
                                 : 'not_ready';
                           return (
-                            <tr key={conn.id} className="text-slate-200 hover:bg-navy-800/40">
+                            <tr key={conn.id} className="text-c-text-secondary hover:bg-c-surface-raised/40">
                               <td className="px-3 py-2.5">
-                                <span className="w-8 h-8 rounded-lg bg-navy-900/40 border border-navy-700/60 flex items-center justify-center text-slate-200">
+                                <span className="w-8 h-8 rounded-lg bg-c-surface/40 border border-c-border/60 flex items-center justify-center text-c-text-secondary">
                                   {renderConnectorIcon(conn.id, conn.name)}
                                 </span>
                               </td>
                               <td className="px-3 py-2.5">
-                                <div className="text-sm text-white">{conn.name}</div>
+                                <div className="text-sm text-c-text">{conn.name}</div>
                                 <div className="text-[11px] text-slate-500 dark:text-slate-400">{conn.id}</div>
                               </td>
                               <td className="px-3 py-2.5 hidden md:table-cell">
@@ -1716,13 +1716,13 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                                   {(conn.capabilities || []).slice(0, 4).map((cap) => (
                                     <span
                                       key={cap}
-                                      className="px-1.5 py-0.5 rounded-full bg-navy-700/60 text-[10px] text-slate-300 border border-navy-600"
+                                      className="px-1.5 py-0.5 rounded-full bg-c-surface-raised/60 text-[10px] text-slate-300 border border-c-border"
                                     >
                                       {cap}
                                     </span>
                                   ))}
                                   {(conn.capabilities || []).length > 4 && (
-                                    <span className="px-1.5 py-0.5 rounded-full bg-navy-700/30 text-[10px] text-slate-400 dark:text-slate-500 border border-navy-700">
+                                    <span className="px-1.5 py-0.5 rounded-full bg-c-surface-raised/30 text-[10px] text-slate-400 dark:text-slate-500 border border-c-border">
                                       +{(conn.capabilities || []).length - 4}
                                     </span>
                                   )}
@@ -1733,13 +1733,13 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                                   {(conn.configFields || []).slice(0, 4).map((field) => (
                                     <span
                                       key={field}
-                                      className="px-1.5 py-0.5 rounded-full bg-navy-700/60 text-[10px] text-slate-300 border border-navy-600"
+                                      className="px-1.5 py-0.5 rounded-full bg-c-surface-raised/60 text-[10px] text-slate-300 border border-c-border"
                                     >
                                       {formatConfigFieldLabel(field)}
                                     </span>
                                   ))}
                                   {(conn.configFields || []).length > 4 && (
-                                    <span className="px-1.5 py-0.5 rounded-full bg-navy-700/30 text-[10px] text-slate-400 dark:text-slate-500 border border-navy-700">
+                                    <span className="px-1.5 py-0.5 rounded-full bg-c-surface-raised/30 text-[10px] text-slate-400 dark:text-slate-500 border border-c-border">
                                       +{(conn.configFields || []).length - 4}
                                     </span>
                                   )}
@@ -2127,21 +2127,21 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         key={int.id}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="border border-navy-700/50 rounded-lg bg-navy-900/40 hover:bg-navy-800/60 transition-colors"
+        className="border border-c-border/50 rounded-lg bg-c-surface/40 hover:bg-c-surface-raised/60 transition-colors"
       >
         <div
           className="flex items-center gap-4 px-4 py-3 cursor-pointer"
           onClick={() => setExpandedId(isExpanded ? null : int.id)}
         >
           {/* Icon */}
-          <div className="w-9 h-9 rounded-lg bg-navy-800 flex items-center justify-center text-lg shrink-0">
+          <div className="w-9 h-9 rounded-lg bg-c-surface-raised flex items-center justify-center text-lg shrink-0">
             {CATEGORY_ICONS[int.category] || '🔌'}
           </div>
 
           {/* Name + category */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-white truncate">{int.name}</span>
+              <span className="text-sm font-medium text-c-text truncate">{int.name}</span>
               {renderStatusChip(int.status)}
             </div>
             <div className="flex items-center gap-3 mt-0.5">
@@ -2217,7 +2217,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden"
             >
-              <div className="px-4 pb-4 pt-1 border-t border-navy-700/50 space-y-3">
+              <div className="px-4 pb-4 pt-1 border-t border-c-border/50 space-y-3">
                 {/* Error banner */}
                 {int.status === 'error' && int.lastError && (
                   <div className="flex items-start gap-2 p-2.5 rounded-lg bg-rose-500/10 text-rose-400 text-xs">
@@ -2297,7 +2297,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                             </button>
                           ) : (
                             <div
-                              className="space-y-2 rounded-lg border border-amber-500/20 bg-navy-950/30 p-3"
+                              className="space-y-2 rounded-lg border border-amber-500/20 bg-c-bg/30 p-3"
                               onClick={(e) => e.stopPropagation()}
                             >
                               {missingConfigFields.map((field) => (
@@ -2312,7 +2312,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                                       handlePendingConfigDraftChange(int.id, field, e.target.value)
                                     }
                                     placeholder={formatConfigFieldLabel(field)}
-                                    className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-amber-500/40 focus:outline-none"
+                                    className="w-full rounded-lg border border-c-border bg-primary-600 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-amber-500/40 focus:outline-none"
                                   />
                                 </label>
                               ))}
@@ -2406,10 +2406,10 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   </div>
                 )}
 
-                <div className="rounded-lg border border-slate-700/70 bg-navy-950/30 p-3">
+                <div className="rounded-lg border border-c-border/70 bg-c-bg/30 p-3">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <div className="text-xs font-medium text-white">
+                      <div className="text-xs font-medium text-c-text">
                         {t('integrations.syncHub.lifecycleShell', 'Lifecycle shell')}
                       </div>
                       <div className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
@@ -2446,13 +2446,13 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                           ? 'border-emerald-500/20 bg-emerald-500/5 text-emerald-200'
                           : step.state === 'active'
                             ? 'border-amber-500/20 bg-amber-500/5 text-amber-100'
-                            : 'border-slate-700 bg-navy-900/30 text-slate-300';
+                            : 'border-c-border bg-c-surface/30 text-slate-300';
                       const badgeClasses =
                         step.state === 'done'
                           ? 'bg-emerald-500/15 text-emerald-300'
                           : step.state === 'active'
                             ? 'bg-amber-500/15 text-amber-200'
-                            : 'bg-slate-700/60 text-slate-300';
+                            : 'bg-c-surface-raised/60 text-slate-300';
                       const badgeLabel =
                         step.state === 'done'
                           ? t('integrations.syncHub.lifecycleDone', 'Done')
@@ -2490,7 +2490,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                       {int.connector.capabilities.map((cap) => (
                         <span
                           key={cap}
-                          className="px-2 py-0.5 rounded-full bg-navy-800 text-xs text-slate-400 dark:text-slate-500 border border-navy-700"
+                          className="px-2 py-0.5 rounded-full bg-c-surface-raised text-xs text-slate-400 dark:text-slate-500 border border-c-border"
                         >
                           read:{cap}
                         </span>
@@ -2591,7 +2591,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                     )}
 
                     {isEditingCredential && (
-                      <div className="mt-3 space-y-2 rounded-lg border border-primary-500/20 bg-navy-950/30 p-3">
+                      <div className="mt-3 space-y-2 rounded-lg border border-primary-500/20 bg-c-bg/30 p-3">
                         <label className="block">
                           <div className="mb-1 text-[11px] uppercase tracking-wide text-primary-100/80">
                             {t('integrations.syncHub.providerAccountId', 'Provider account')}
@@ -2607,7 +2607,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               )
                             }
                             placeholder="acct-123"
-                            className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-primary-500/40 focus:outline-none"
+                            className="w-full rounded-lg border border-c-border bg-primary-600 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-primary-500/40 focus:outline-none"
                           />
                         </label>
                         <label className="block">
@@ -2625,7 +2625,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               )
                             }
                             placeholder="tenant-456"
-                            className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-primary-500/40 focus:outline-none"
+                            className="w-full rounded-lg border border-c-border bg-primary-600 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-primary-500/40 focus:outline-none"
                           />
                         </label>
                         <label className="block">
@@ -2639,7 +2639,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               handleCredentialDraftChange(int.id, 'scopesGranted', e.target.value)
                             }
                             placeholder="read:jira-work, write:jira-work"
-                            className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-primary-500/40 focus:outline-none"
+                            className="w-full rounded-lg border border-c-border bg-primary-600 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-primary-500/40 focus:outline-none"
                           />
                         </label>
                         <label className="block">
@@ -2653,7 +2653,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               handleCredentialDraftChange(int.id, 'tokenExpiresAt', e.target.value)
                             }
                             placeholder="2026-03-27T19:00:00.000Z"
-                            className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-primary-500/40 focus:outline-none"
+                            className="w-full rounded-lg border border-c-border bg-primary-600 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-primary-500/40 focus:outline-none"
                           />
                         </label>
                         <div className="flex items-center gap-2">
@@ -2693,7 +2693,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                             {t('integrations.syncHub.recordRefreshResult', 'Record refresh result')}
                           </button>
                         ) : (
-                          <div className="space-y-2 rounded-lg border border-primary-500/20 bg-navy-950/30 p-3">
+                          <div className="space-y-2 rounded-lg border border-primary-500/20 bg-c-bg/30 p-3">
                             <label className="block">
                               <div className="mb-1 text-[11px] uppercase tracking-wide text-primary-100/80">
                                 {t('integrations.syncHub.refreshResult', 'Refresh result')}
@@ -2706,7 +2706,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                                     e.target.value as RefreshResultDraft
                                   )
                                 }
-                                className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white focus:border-primary-500/40 focus:outline-none"
+                                className="w-full rounded-lg border border-c-border bg-primary-600 px-3 py-2 text-xs text-white focus:border-primary-500/40 focus:outline-none"
                               >
                                 <option value="success">success</option>
                                 <option value="transient_failure">transient_failure</option>
@@ -2817,7 +2817,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                     )}
 
                     {isEditingRefreshSecret && (
-                      <div className="mt-3 space-y-2 rounded-lg border border-sky-500/20 bg-navy-950/30 p-3">
+                      <div className="mt-3 space-y-2 rounded-lg border border-sky-500/20 bg-c-bg/30 p-3">
                         <label className="block">
                           <div className="mb-1 text-[11px] uppercase tracking-wide text-sky-100/80">
                             {t('integrations.syncHub.clientId', 'Client ID')}
@@ -2829,7 +2829,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               handleRefreshSecretDraftChange(int.id, 'clientId', e.target.value)
                             }
                             placeholder="client-id"
-                            className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-sky-500/40 focus:outline-none"
+                            className="w-full rounded-lg border border-c-border bg-primary-600 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-sky-500/40 focus:outline-none"
                           />
                         </label>
                         <label className="block">
@@ -2843,7 +2843,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               handleRefreshSecretDraftChange(int.id, 'clientSecret', e.target.value)
                             }
                             placeholder="client-secret"
-                            className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-sky-500/40 focus:outline-none"
+                            className="w-full rounded-lg border border-c-border bg-primary-600 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-sky-500/40 focus:outline-none"
                           />
                         </label>
                         <label className="block">
@@ -2857,7 +2857,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               handleRefreshSecretDraftChange(int.id, 'refreshToken', e.target.value)
                             }
                             placeholder="refresh-token"
-                            className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-sky-500/40 focus:outline-none"
+                            className="w-full rounded-lg border border-c-border bg-primary-600 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-sky-500/40 focus:outline-none"
                           />
                         </label>
                         <label className="block">
@@ -2875,7 +2875,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               )
                             }
                             placeholder="https://auth.atlassian.com/oauth/token"
-                            className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-sky-500/40 focus:outline-none"
+                            className="w-full rounded-lg border border-c-border bg-primary-600 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-sky-500/40 focus:outline-none"
                           />
                         </label>
                         <div className="text-[11px] text-sky-100/60">
@@ -3037,7 +3037,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t('integrations.syncHub.search', 'Search integrations…')}
-            className="w-full h-9 pl-9 pr-4 bg-navy-800 border border-navy-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-primary-500/50"
+            className="w-full h-9 pl-9 pr-4 bg-c-surface-raised border border-c-border rounded-lg text-sm text-c-text placeholder-slate-500 focus:outline-none focus:border-primary-500/50"
           />
         </div>
         <button
@@ -3068,7 +3068,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             <div className="mt-10 text-left">
               <div className="flex items-center justify-between gap-3 mb-3">
                 <div>
-                  <div className="text-sm font-medium text-white">
+                  <div className="text-sm font-medium text-c-text">
                     {t('integrations.syncHub.availableConnectors', 'Available connectors')}
                   </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -3085,7 +3085,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                     className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${
                       !showComingSoonCatalog
                         ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
-                        : 'text-slate-400 dark:text-slate-500 hover:text-white border border-navy-700'
+                        : 'text-slate-400 dark:text-slate-500 hover:text-white border border-c-border'
                     }`}
                   >
                     {t('integrations.syncHub.readyOnly', 'Ready')}
@@ -3096,7 +3096,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                     className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${
                       showComingSoonCatalog
                         ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
-                        : 'text-slate-400 dark:text-slate-500 hover:text-white border border-navy-700'
+                        : 'text-slate-400 dark:text-slate-500 hover:text-white border border-c-border'
                     }`}
                   >
                     {t('integrations.syncHub.showAll', 'All')}
@@ -3121,7 +3121,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         <div className="flex items-start gap-3 rounded-lg border border-primary-500/20 bg-primary-500/5 p-4">
           <Zap size={16} className="text-primary-300 mt-0.5 shrink-0" />
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium text-white">
+            <div className="text-sm font-medium text-c-text">
               {t('integrations.syncHub.healthEmptyTitle', 'No integrations connected yet')}
             </div>
             <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">
@@ -3152,7 +3152,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             {
               label: t('integrations.syncHub.total', 'Total'),
               value: healthSummary.total,
-              color: 'text-white',
+              color: 'text-c-text',
             },
             {
               label: t('integrations.syncHub.healthy', 'Healthy'),
@@ -3172,7 +3172,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           ].map((card) => (
             <div
               key={card.label}
-              className="p-3 rounded-lg bg-navy-800/60 border border-navy-700/50"
+              className="p-3 rounded-lg bg-c-surface-raised/60 border border-c-border/50"
             >
               <div className={`text-2xl font-semibold ${card.color}`}>{card.value}</div>
               <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{card.label}</div>
@@ -3183,7 +3183,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
       {v8AuthHealthSummary && (
         <div>
-          <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+          <h3 className="text-sm font-medium text-c-text mb-3 flex items-center gap-2">
             <Shield size={14} className="text-blue-400" />
             {t('integrations.syncHub.v8AuthHealth', 'V8 Auth Health')}
           </h3>
@@ -3223,7 +3223,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       )}
 
       <div>
-        <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+        <h3 className="text-sm font-medium text-c-text mb-3 flex items-center gap-2">
           <ShieldAlert size={14} className="text-amber-400" />
           {t('integrations.syncHub.v8AuthEscalations', 'V8 Active Auth Escalations')}
           {v8AuthEscalations.length > 0 && (
@@ -3233,7 +3233,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           )}
         </h3>
         {v8AuthEscalations.length === 0 ? (
-          <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
+          <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-c-surface/30 border border-c-border/40">
             {t('integrations.syncHub.v8NoEscalations', 'No governed auth escalations are open.')}
           </div>
         ) : (
@@ -3254,7 +3254,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   <ShieldAlert size={14} className="text-amber-400 shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-slate-200">
+                      <span className="text-xs font-medium text-c-text-secondary">
                         {escalation.connectorId}
                       </span>
                       <span className="px-1.5 py-0.5 text-[11px] bg-amber-500/10 text-amber-300 rounded">
@@ -3322,7 +3322,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       </div>
 
       <div>
-        <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+        <h3 className="text-sm font-medium text-c-text mb-3 flex items-center gap-2">
           <Zap size={14} className="text-blue-400" />
           {t('integrations.syncHub.v8ConnectorHealth', 'V8 Connector Health')}
           {Object.keys(v8ConnectorHealth).length > 0 && (
@@ -3332,7 +3332,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           )}
         </h3>
         {v8ConnectorHealthLoading ? (
-          <div className="flex items-center justify-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
+          <div className="flex items-center justify-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-c-surface/30 border border-c-border/40">
             <Loader2 size={14} className="animate-spin mr-2" />
             {t(
               'integrations.syncHub.v8ConnectorHealthLoading',
@@ -3340,7 +3340,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             )}
           </div>
         ) : v8ConnectorHealthTargets.length === 0 ? (
-          <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
+          <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-c-surface/30 border border-c-border/40">
             {t(
               'integrations.syncHub.v8NoConnectorTargets',
               'No governed connector targets are available for this workspace yet.'
@@ -3363,7 +3363,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               const showMarkReauthNeeded =
                 health && ['healthy', 'connected_pending_verification'].includes(health.authState);
               const tone = !health
-                ? 'border-navy-700/40 bg-navy-900/30'
+                ? 'border-c-border/40 bg-c-surface/30'
                 : health.healthy
                   ? 'border-emerald-500/20 bg-emerald-500/5'
                   : ['error', 'dead_letter', 'conflict'].includes(health.syncStatus)
@@ -3375,8 +3375,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-slate-200">{target.name}</span>
-                        <span className="px-1.5 py-0.5 text-[11px] bg-navy-800 text-slate-400 dark:text-slate-500 rounded">
+                        <span className="text-xs font-medium text-c-text-secondary">{target.name}</span>
+                        <span className="px-1.5 py-0.5 text-[11px] bg-c-surface-raised text-slate-400 dark:text-slate-500 rounded">
                           {target.connectorId}
                         </span>
                       </div>
@@ -3511,7 +3511,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       </div>
 
       <div>
-        <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+        <h3 className="text-sm font-medium text-c-text mb-3 flex items-center gap-2">
           <AlertTriangle size={14} className="text-rose-400" />
           {t('integrations.syncHub.v8Conflicts', 'V8 Unresolved Sync Conflicts')}
           {v8Conflicts.length > 0 && (
@@ -3521,7 +3521,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           )}
         </h3>
         {v8Conflicts.length === 0 ? (
-          <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
+          <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-c-surface/30 border border-c-border/40">
             {t('integrations.syncHub.v8NoConflicts', 'No governed sync conflicts are open.')}
           </div>
         ) : (
@@ -3534,7 +3534,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 <AlertTriangle size={14} className="text-rose-400 shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-slate-200">
+                    <span className="text-xs font-medium text-c-text-secondary">
                       {conflict.conflictClass}
                     </span>
                     <span className="px-1.5 py-0.5 text-[11px] bg-rose-500/10 text-rose-300 rounded uppercase">
@@ -3568,7 +3568,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
       {v8WorkspaceMapping && (
         <div>
-          <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+          <h3 className="text-sm font-medium text-c-text mb-3 flex items-center gap-2">
             <Layers size={14} className="text-fuchsia-400" />
             {t('integrations.syncHub.v8CollaborationSubstrate', 'V8 Collaboration Substrate')}
           </h3>
@@ -3592,7 +3592,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               {
                 label: t('integrations.syncHub.v8EmbeddedIn', 'Embedded in'),
                 value: v8WorkspaceMapping.embeddedIn ?? 'standalone',
-                color: 'text-slate-200',
+                color: 'text-c-text-secondary',
               },
             ].map((card) => (
               <div
@@ -3608,7 +3608,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       )}
 
       <div>
-        <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+        <h3 className="text-sm font-medium text-c-text mb-3 flex items-center gap-2">
           <Activity size={14} className="text-sky-400" />
           {t('integrations.syncHub.v8WorkspacePresence', 'V8 Workspace Presence')}
           {v8WorkspacePresence.length > 0 && (
@@ -3624,7 +3624,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           </div>
         ) : null}
         {v8WorkspacePresence.length === 0 ? (
-          <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
+          <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-c-surface/30 border border-c-border/40">
             {v8WorkspacePresenceFailed
               ? t(
                   'integrations.syncHub.v8WorkspacePresenceFailed',
@@ -3650,7 +3650,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 <Activity size={14} className="text-sky-400 shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-slate-200">{presence.userId}</span>
+                    <span className="text-xs font-medium text-c-text-secondary">{presence.userId}</span>
                     <span className="px-1.5 py-0.5 text-[11px] bg-sky-500/10 text-sky-300 rounded">
                       {presence.activeSurface}
                     </span>
@@ -3667,7 +3667,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       </div>
 
       <div>
-        <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+        <h3 className="text-sm font-medium text-c-text mb-3 flex items-center gap-2">
           <Shield size={14} className="text-primary-400" />
           {t('integrations.syncHub.v8ActiveLocks', 'V8 Active Locks')}
           {v8WorkspaceLocks.length > 0 && (
@@ -3677,7 +3677,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           )}
         </h3>
         {v8WorkspaceLocks.length === 0 ? (
-          <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
+          <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-c-surface/30 border border-c-border/40">
             {t('integrations.syncHub.v8NoLocks', 'No governed workspace locks are active.')}
           </div>
         ) : (
@@ -3690,7 +3690,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 <Shield size={14} className="text-primary-400 shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-slate-200">{lock.lockType}</span>
+                    <span className="text-xs font-medium text-c-text-secondary">{lock.lockType}</span>
                     <span className="px-1.5 py-0.5 text-[11px] bg-primary-500/10 text-primary-300 rounded">
                       {lock.lockScope}
                     </span>
@@ -3706,7 +3706,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
       {/* Errors list */}
       <div>
-        <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+        <h3 className="text-sm font-medium text-c-text mb-3 flex items-center gap-2">
           <AlertTriangle size={14} className="text-amber-400" />
           {t('integrations.syncHub.unresolvedErrors', 'Unresolved Errors')}
           {errors.length > 0 && (
@@ -3725,7 +3725,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             {errors.map((err) => (
               <div
                 key={err.id}
-                className="flex items-start gap-3 p-3 rounded-lg bg-navy-900/40 border border-navy-700/50"
+                className="flex items-start gap-3 p-3 rounded-lg bg-c-surface/40 border border-c-border/50"
               >
                 <XCircle size={14} className="text-rose-400 shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
@@ -3790,13 +3790,13 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             value={usersSearchQuery}
             onChange={(e) => setUsersSearchQuery(e.target.value)}
             placeholder={t('integrations.syncHub.usersSearch', 'Search users, connectors, status…')}
-            className="w-full h-9 pl-9 pr-4 bg-navy-800 border border-navy-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-primary-500/50"
+            className="w-full h-9 pl-9 pr-4 bg-c-surface-raised border border-c-border rounded-lg text-sm text-c-text placeholder-slate-500 focus:outline-none focus:border-primary-500/50"
           />
         </div>
         <button
           onClick={() => void fetchAdminOwnership()}
           disabled={ownershipLoading}
-          className="h-9 px-4 bg-navy-800 hover:bg-navy-700 text-slate-200 text-sm rounded-lg flex items-center gap-2 transition-colors shrink-0 disabled:opacity-60"
+          className="h-9 px-4 bg-c-surface-raised hover:bg-c-surface-raised text-c-text-secondary text-sm rounded-lg flex items-center gap-2 transition-colors shrink-0 disabled:opacity-60"
         >
           <RefreshCw size={16} className={ownershipLoading ? 'animate-spin' : ''} />
           {t('common.refresh', 'Refresh')}
@@ -3809,10 +3809,10 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         </div>
       )}
 
-      <div className="rounded-xl border border-navy-700/50 bg-navy-900/20 overflow-hidden">
+      <div className="rounded-xl border border-c-border/50 bg-c-surface/20 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-navy-900/40 text-slate-500 dark:text-slate-400">
+            <thead className="bg-c-surface/40 text-slate-500 dark:text-slate-400">
               <tr className="text-left text-xs">
                 <th className="px-3 py-2">{t('integrations.syncHub.user', 'User')}</th>
                 <th className="px-3 py-2">{t('integrations.syncHub.connector', 'Connector')}</th>
@@ -3844,20 +3844,20 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                     item.email ||
                     item.userId;
                   return (
-                    <tr key={`${item.integrationId}:${item.userId}`} className="text-slate-200">
+                    <tr key={`${item.integrationId}:${item.userId}`} className="text-c-text-secondary">
                       <td className="px-3 py-2.5">
-                        <div className="text-sm font-medium text-white">{userLabel}</div>
+                        <div className="text-sm font-medium text-c-text">{userLabel}</div>
                         {item.email && (
                           <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{item.email}</div>
                         )}
                       </td>
                       <td className="px-3 py-2.5">
-                        <span className="px-2 py-0.5 rounded-full text-xs bg-navy-800 border border-navy-700 text-slate-300">
+                        <span className="px-2 py-0.5 rounded-full text-xs bg-c-surface-raised border border-c-border text-slate-300">
                           {item.connectorId}
                         </span>
                       </td>
                       <td className="px-3 py-2.5">
-                        <div className="text-sm text-slate-100">{item.integrationName}</div>
+                        <div className="text-sm text-c-text-secondary">{item.integrationName}</div>
                         <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">{item.integrationId}</div>
                       </td>
                       <td className="px-3 py-2.5">
@@ -3892,7 +3892,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               setConnectionLogOffset(0);
               setConnectionLogEventType(e.target.value);
             }}
-            className="h-9 px-3 bg-navy-800 border border-navy-700 rounded-lg text-sm text-slate-200"
+            className="h-9 px-3 bg-c-surface-raised border border-c-border rounded-lg text-sm text-c-text-secondary"
           >
             <option value="">{t('integrations.syncHub.eventAll', 'All events')}</option>
             <option value="connect_initiated">connect_initiated</option>
@@ -3910,7 +3910,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               setConnectionLogConnectorId(e.target.value);
             }}
             placeholder={t('integrations.syncHub.connectorId', 'connectorId')}
-            className="h-9 px-3 bg-navy-800 border border-navy-700 rounded-lg text-sm text-slate-200 placeholder-slate-500"
+            className="h-9 px-3 bg-c-surface-raised border border-c-border rounded-lg text-sm text-c-text-secondary placeholder-slate-500"
           />
         </div>
 
@@ -3918,7 +3918,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           <button
             onClick={() => void fetchAdminConnectionLogs()}
             disabled={connectionLogLoading}
-            className="h-9 px-4 bg-navy-800 hover:bg-navy-700 text-slate-200 text-sm rounded-lg flex items-center gap-2 transition-colors shrink-0 disabled:opacity-60"
+            className="h-9 px-4 bg-c-surface-raised hover:bg-c-surface-raised text-c-text-secondary text-sm rounded-lg flex items-center gap-2 transition-colors shrink-0 disabled:opacity-60"
           >
             <RefreshCw size={16} className={connectionLogLoading ? 'animate-spin' : ''} />
             {t('common.refresh', 'Refresh')}
@@ -3932,10 +3932,10 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         </div>
       )}
 
-      <div className="rounded-xl border border-navy-700/50 bg-navy-900/20 overflow-hidden">
+      <div className="rounded-xl border border-c-border/50 bg-c-surface/20 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-navy-900/40 text-slate-500 dark:text-slate-400">
+            <thead className="bg-c-surface/40 text-slate-500 dark:text-slate-400">
               <tr className="text-left text-xs">
                 <th className="px-3 py-2">{t('integrations.syncHub.time', 'Time')}</th>
                 <th className="px-3 py-2">{t('integrations.syncHub.connector', 'Connector')}</th>
@@ -3962,7 +3962,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 </tr>
               ) : (
                 connectionLogItems.map((row) => (
-                  <tr key={row.id} className="text-slate-200">
+                  <tr key={row.id} className="text-c-text-secondary">
                     <td className="px-3 py-2.5 text-xs text-slate-500 dark:text-slate-400">
                       {timeAgo(row.createdAt)}
                       <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
@@ -3970,12 +3970,12 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                       </div>
                     </td>
                     <td className="px-3 py-2.5">
-                      <span className="px-2 py-0.5 rounded-full text-xs bg-navy-800 border border-navy-700 text-slate-300">
+                      <span className="px-2 py-0.5 rounded-full text-xs bg-c-surface-raised border border-c-border text-slate-300">
                         {row.connectorId}
                       </span>
                     </td>
                     <td className="px-3 py-2.5">
-                      <div className="text-sm font-medium text-white">{row.eventType}</div>
+                      <div className="text-sm font-medium text-c-text">{row.eventType}</div>
                       {row.metadata && (
                         <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 truncate max-w-[520px]">
                           {JSON.stringify(row.metadata)}
@@ -4003,14 +4003,14 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               setConnectionLogOffset(Math.max(0, connectionLogOffset - connectionLogLimit))
             }
             disabled={connectionLogOffset === 0}
-            className="px-3 py-2 rounded-lg border border-navy-700 bg-navy-800/50 hover:bg-navy-800 text-slate-200 disabled:opacity-40 transition-colors"
+            className="px-3 py-2 rounded-lg border border-c-border bg-c-surface-raised/50 hover:bg-c-surface-raised text-c-text-secondary disabled:opacity-40 transition-colors"
           >
             {t('common.prev', 'Prev')}
           </button>
           <button
             onClick={() => setConnectionLogOffset(connectionLogOffset + connectionLogLimit)}
             disabled={connectionLogOffset + connectionLogLimit >= connectionLogTotal}
-            className="px-3 py-2 rounded-lg border border-navy-700 bg-navy-800/50 hover:bg-navy-800 text-slate-200 disabled:opacity-40 transition-colors"
+            className="px-3 py-2 rounded-lg border border-c-border bg-c-surface-raised/50 hover:bg-c-surface-raised text-c-text-secondary disabled:opacity-40 transition-colors"
           >
             {t('common.next', 'Next')}
           </button>
@@ -4113,7 +4113,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       {v8RefreshPolicyTargets.length > 0 && (
         <div className="space-y-3">
           <div>
-            <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-medium text-c-text mb-3 flex items-center gap-2">
               <Zap size={14} className="text-primary-400" />
               {t('integrations.syncHub.v8RefreshPolicies', 'Governed Refresh Timing Policies')}
             </h3>
@@ -4129,7 +4129,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-slate-100">
+                          <span className="text-sm font-medium text-c-text-secondary">
                             {target.providerLabel}
                           </span>
                           <span className="px-1.5 py-0.5 text-[11px] bg-primary-500/10 text-primary-300 rounded">
@@ -4140,13 +4140,13 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                           {target.integrationName}
                         </div>
                         <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-400 dark:text-slate-500">
-                          <span className="px-2 py-0.5 rounded-full bg-navy-800 border border-navy-700">
+                          <span className="px-2 py-0.5 rounded-full bg-c-surface-raised border border-c-border">
                             lifetime {policy?.typicalTokenLifetimeMinutes ?? 'none'}m
                           </span>
-                          <span className="px-2 py-0.5 rounded-full bg-navy-800 border border-navy-700">
+                          <span className="px-2 py-0.5 rounded-full bg-c-surface-raised border border-c-border">
                             refresh window {policy?.refreshWindowMinutes ?? 'none'}m
                           </span>
-                          <span className="px-2 py-0.5 rounded-full bg-navy-800 border border-navy-700">
+                          <span className="px-2 py-0.5 rounded-full bg-c-surface-raised border border-c-border">
                             retries {policy?.maxRetryAttempts ?? 'none'}
                           </span>
                         </div>
@@ -4180,11 +4180,11 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       ) : (
         <div className="space-y-3">
           {integrations.map((int) => (
-            <div key={int.id} className="p-3 rounded-lg bg-navy-900/40 border border-navy-700/50">
+            <div key={int.id} className="p-3 rounded-lg bg-c-surface/40 border border-c-border/50">
               <div className="flex items-center gap-3 mb-2">
                 <span className="text-lg">{CATEGORY_ICONS[int.category] || '🔌'}</span>
                 <div>
-                  <div className="text-sm font-medium text-white">{int.name}</div>
+                  <div className="text-sm font-medium text-c-text">{int.name}</div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">
                     {int.connector?.authType || 'oauth2'}
                   </div>
@@ -4195,7 +4195,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 {(int.connector?.capabilities || []).map((cap) => (
                   <span
                     key={cap}
-                    className="px-2 py-0.5 rounded-full bg-navy-800 text-xs text-slate-400 dark:text-slate-500 border border-navy-700"
+                    className="px-2 py-0.5 rounded-full bg-c-surface-raised text-xs text-slate-400 dark:text-slate-500 border border-c-border"
                   >
                     read:{cap}
                   </span>
@@ -4227,7 +4227,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       <div className="space-y-4">
         <div className="flex items-center gap-3">
           <select
-            className="bg-navy-800 border border-navy-700 rounded-lg px-3 py-1.5 text-sm text-slate-300"
+            className="bg-c-surface-raised border border-c-border rounded-lg px-3 py-1.5 text-sm text-slate-300"
             value={v8RunsFilter}
             onChange={(e) => {
               setV8RunsFilter(e.target.value);
@@ -4246,7 +4246,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               ))}
           </select>
           <select
-            className="bg-navy-800 border border-navy-700 rounded-lg px-3 py-1.5 text-sm text-slate-300"
+            className="bg-c-surface-raised border border-c-border rounded-lg px-3 py-1.5 text-sm text-slate-300"
             value={v8RunsStatusFilter}
             onChange={(e) => {
               setV8RunsStatusFilter(e.target.value);
@@ -4279,10 +4279,10 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             )}
           />
         ) : (
-          <div className="border border-navy-700/50 rounded-lg overflow-hidden">
+          <div className="border border-c-border/50 rounded-lg overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-navy-800/60 text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <tr className="bg-c-surface-raised/60 text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   <th className="text-left px-4 py-2">
                     {t('integrations.syncHub.runsStatus', 'Status')}
                   </th>
@@ -4322,7 +4322,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   };
                   return (
                     <React.Fragment key={run.id}>
-                      <tr className="border-t border-navy-700/30 hover:bg-navy-800/30">
+                      <tr className="border-t border-c-border/30 hover:bg-c-surface-raised/30">
                         <td className="px-4 py-2">
                           <span
                             className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[run.status] || 'text-slate-400 dark:text-slate-500 bg-slate-500/10'}`}
@@ -4407,10 +4407,10 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           {t('integrations.syncHub.noAuditData', 'No audit events yet')}
         </div>
       ) : (
-        <div className="border border-navy-700/50 rounded-lg overflow-hidden">
+        <div className="border border-c-border/50 rounded-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-navy-800/60 text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              <tr className="bg-c-surface-raised/60 text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 <th className="text-left px-4 py-2">
                   {t('integrations.syncHub.auditAction', 'Action')}
                 </th>
@@ -4426,7 +4426,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               {auditLog.map((entry) => (
                 <tr
                   key={entry.id}
-                  className="text-slate-300 hover:bg-navy-800/40 transition-colors"
+                  className="text-slate-300 hover:bg-c-surface-raised/40 transition-colors"
                 >
                   <td className="px-4 py-2.5">
                     <span
@@ -4471,16 +4471,16 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-navy-900 border border-navy-700 rounded-xl w-full max-w-lg max-h-[80vh] flex flex-col"
+          className="bg-c-surface border border-c-border rounded-xl w-full max-w-lg max-h-[80vh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between p-4 border-b border-navy-700">
-            <h3 className="text-base font-semibold text-white">
+          <div className="flex items-center justify-between p-4 border-b border-c-border">
+            <h3 className="text-base font-semibold text-c-text">
               {t('integrations.syncHub.connectNew', 'Connect Integration')}
             </h3>
             <button
               onClick={() => setShowConnectModal(false)}
-              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-white rounded-lg hover:bg-navy-800"
+              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-white rounded-lg hover:bg-c-surface-raised"
             >
               <X size={18} />
             </button>
@@ -4493,7 +4493,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${
                 !selectedCategory
                   ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
-                  : 'text-slate-400 dark:text-slate-500 hover:text-white border border-navy-700'
+                  : 'text-slate-400 dark:text-slate-500 hover:text-white border border-c-border'
               }`}
             >
               {t('common.all', 'All')}
@@ -4507,7 +4507,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${
                     selectedCategory === cat
                       ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
-                      : 'text-slate-400 dark:text-slate-500 hover:text-white border border-navy-700'
+                      : 'text-slate-400 dark:text-slate-500 hover:text-white border border-c-border'
                   }`}
                 >
                   {CATEGORY_LABELS[cat] || cat}
@@ -4526,7 +4526,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${
                   !showComingSoonCatalog
                     ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
-                    : 'text-slate-400 dark:text-slate-500 hover:text-white border border-navy-700'
+                    : 'text-slate-400 dark:text-slate-500 hover:text-white border border-c-border'
                 }`}
               >
                 {t('integrations.syncHub.readyOnly', 'Ready')}
@@ -4537,7 +4537,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${
                   showComingSoonCatalog
                     ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
-                    : 'text-slate-400 dark:text-slate-500 hover:text-white border border-navy-700'
+                    : 'text-slate-400 dark:text-slate-500 hover:text-white border border-c-border'
                 }`}
               >
                 {t('integrations.syncHub.showAll', 'All')}
@@ -4558,7 +4558,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="text-xl font-semibold text-c-text">
             {t('integrations.syncHub.title', 'Integrations Hub')}
           </h2>
           <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
@@ -4579,7 +4579,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-navy-700/50">
+      <div className="flex items-center gap-1 border-b border-c-border/50">
         {TABS.map((tab) => (
           <button
             key={tab.id}
@@ -4593,7 +4593,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             {tab.icon}
             {tab.label}
             {tab.badge !== undefined && tab.badge > 0 && (
-              <span className="px-1.5 py-0.5 text-xs bg-navy-800 rounded">{tab.badge}</span>
+              <span className="px-1.5 py-0.5 text-xs bg-c-surface-raised rounded">{tab.badge}</span>
             )}
           </button>
         ))}

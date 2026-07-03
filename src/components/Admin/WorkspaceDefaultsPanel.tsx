@@ -107,7 +107,7 @@ const COLOR_OPTIONS = [
   { id: 'amber', bg: 'bg-amber-500', light: 'bg-amber-100' },
   { id: 'green', bg: 'bg-green-500', light: 'bg-green-100' },
   { id: 'blue', bg: 'bg-blue-500', light: 'bg-blue-100' },
-  { id: 'violet', bg: 'bg-navy-900', light: 'bg-primary-100' },
+  { id: 'violet', bg: 'bg-primary-500', light: 'bg-primary-100' },
   { id: 'pink', bg: 'bg-pink-500', light: 'bg-pink-100' },
 ];
 
@@ -763,7 +763,7 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({
                     onClick={() => toggleWorkingDay(day.value)}
                     className={`w-10 h-10 text-xs font-medium rounded-lg transition-colors ${
                       settings.workingDays.includes(day.value)
-                        ? 'bg-navy-900 text-white'
+                        ? 'bg-primary-600 text-white'
                         : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-600'
                     }`}
                   >

@@ -777,7 +777,7 @@ export const EnhancedDataTable = forwardRef<
                       className={cn(
                         'w-8 h-8 text-sm rounded-lg transition-colors',
                         currentPage === pageNum
-                          ? 'bg-navy-900 text-white'
+                          ? 'bg-primary-600 text-white'
                           : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/30 dark:hover:bg-navy-700'
                       )}
                     >

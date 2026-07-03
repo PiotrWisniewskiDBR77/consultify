@@ -295,7 +295,7 @@ const Toggle: React.FC<{ value: boolean; onChange: (v: boolean) => void; size?: 
   return (
     <button
       onClick={() => onChange(!value)}
-      className={`relative ${w} rounded-full transition-colors duration-200 ${value ? 'bg-navy-900' : 'bg-slate-300 dark:bg-navy-600'}`}
+      className={`relative ${w} rounded-full transition-colors duration-200 ${value ? 'bg-c-surface' : 'bg-slate-300 dark:bg-navy-600'}`}
     >
       <div
         className={`absolute top-0.5 ${dot} rounded-full bg-white shadow-sm transition-transform duration-200 ${value ? translate : 'translate-x-0.5'}`}
@@ -2090,7 +2090,7 @@ const SectionRow: React.FC<SectionRowProps> = ({
       <div className="flex items-center gap-2 px-3 py-2">
         <button
           onClick={onToggle}
-          className={`w-5 h-5 rounded border-2 flex items-center justify-center transition flex-shrink-0 ${isEnabled ? 'bg-navy-900 border-navy-900 text-white' : 'border-slate-300 dark:border-navy-600 hover:border-primary-400'}`}
+          className={`w-5 h-5 rounded border-2 flex items-center justify-center transition flex-shrink-0 ${isEnabled ? 'bg-primary-600 border-c-border text-white' : 'border-slate-300 dark:border-navy-600 hover:border-primary-400'}`}
         >
           {isEnabled && <Check size={12} />}
         </button>

@@ -212,7 +212,7 @@ const SYSTEM_ROLES: Role[] = [
 const ROLE_COLORS = [
   {
     id: 'violet',
-    bg: 'bg-navy-900',
+    bg: 'bg-primary-500',
     text: 'text-primary-500',
     light: 'bg-primary-100 dark:bg-primary-900/30',
   },

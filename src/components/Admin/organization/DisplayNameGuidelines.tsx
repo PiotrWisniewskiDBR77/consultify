@@ -141,7 +141,7 @@ export const DisplayNameGuidelinesConfig: React.FC<DisplayNameGuidelinesProps> =
           </span>
         </div>
         <div className="flex items-center gap-3 p-3 bg-white dark:bg-navy-800 rounded-lg">
-          <div className="w-10 h-10 rounded-full bg-navy-900 flex items-center justify-center text-white font-medium">
+          <div className="w-10 h-10 rounded-full bg-primary-600 flex items-center justify-center text-white font-medium">
             {preview.charAt(0)}
           </div>
           <span className="text-lg font-medium text-navy-900 dark:text-white">{preview}</span>

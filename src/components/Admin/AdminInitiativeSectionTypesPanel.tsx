@@ -120,7 +120,7 @@ const getTypeBadge = (isSystem: boolean) =>
         bg: 'bg-primary-500/20',
         label: 'ORG',
         icon: Building2,
-        dot: 'bg-navy-900',
+        dot: 'bg-primary-500',
       };
 
 const getCategoryBadge = (category: string) => {
@@ -507,7 +507,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                               }}
                               className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
                                 selectedIds.has(st.id)
-                                  ? 'bg-navy-900 border-navy-900 text-white'
+                                  ? 'bg-primary-600 border-c-border text-white'
                                   : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
                               }`}
                             >

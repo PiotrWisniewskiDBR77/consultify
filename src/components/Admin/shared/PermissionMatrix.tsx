@@ -309,7 +309,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                                   className={cn(
                                     'w-6 h-6 rounded flex items-center justify-center transition-all',
                                     allGranted
-                                      ? 'bg-navy-900 text-white'
+                                      ? 'bg-primary-600 text-white'
                                       : someGranted
                                         ? 'bg-primary-200 dark:bg-primary-900/50 text-primary-600'
                                         : 'bg-slate-200 dark:bg-navy-700 text-slate-400 dark:text-slate-500 hover:bg-slate-300 dark:hover:bg-navy-600'
@@ -372,7 +372,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                                   className={cn(
                                     'w-5 h-5 rounded flex items-center justify-center transition-all',
                                     granted
-                                      ? 'bg-navy-900 text-white'
+                                      ? 'bg-primary-600 text-white'
                                       : 'bg-slate-200 dark:bg-navy-700',
                                     !readOnly &&
                                       !isLocked &&
@@ -398,8 +398,8 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
       {/* Legend */}
       <div className="flex items-center gap-6 text-xs text-slate-500 dark:text-slate-400">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-navy-900 flex items-center justify-center">
-            <Check size={10} className="text-white" />
+          <div className="w-4 h-4 rounded bg-c-surface flex items-center justify-center">
+            <Check size={10} className="text-c-text" />
           </div>
           <span>{t('admin.permissions.legend.granted', 'Granted')}</span>
         </div>

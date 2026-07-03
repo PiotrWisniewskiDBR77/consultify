@@ -117,7 +117,7 @@ export const AdminScimLifecyclePanel: React.FC = () => {
             />
             <button
               onClick={() => void createToken()}
-              className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800"
+              className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
             >
               Generate token
             </button>
@@ -150,7 +150,7 @@ export const AdminScimLifecyclePanel: React.FC = () => {
             />
             <button
               onClick={() => void createGroupMapping()}
-              className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800"
+              className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
             >
               Save mapping
             </button>

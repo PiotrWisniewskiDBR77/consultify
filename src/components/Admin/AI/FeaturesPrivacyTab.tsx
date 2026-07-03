@@ -302,8 +302,8 @@ export const FeaturesPrivacyTab: React.FC = () => {
               onChange={(v) => updateSetting('voiceEnabled', v)}
             />
 
-            <div className="pt-4 border-t border-slate-700/50">
-              <h4 className="font-medium text-white mb-3">Audit Settings</h4>
+            <div className="pt-4 border-t border-c-border/50">
+              <h4 className="font-medium text-c-text mb-3">Audit Settings</h4>
               <div className="space-y-3">
                 <SettingsToggle
                   label="Audit All AI Requests"
@@ -632,11 +632,11 @@ Example:
                 className={`p-4 rounded-xl border cursor-pointer transition-all ${
                   editingPrompt?.key === p.key
                     ? 'bg-primary-500/20 border-primary-500'
-                    : 'bg-navy-900 border-white/5 hover:border-white/20'
+                    : 'bg-c-surface border-white/5 hover:border-white/20'
                 }`}
               >
                 <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-bold text-white">{p.key}</h3>
+                  <h3 className="font-bold text-c-text">{p.key}</h3>
                   <span className="text-xs text-slate-600 dark:text-slate-500">
                     {formatPromptDate(p)}
                   </span>
@@ -648,10 +648,10 @@ Example:
             ))}
           </div>
 
-          <div className="bg-navy-900 border border-white/10 rounded-xl p-6 h-fit">
+          <div className="bg-c-surface border border-white/10 rounded-xl p-6 h-fit">
             {editingPrompt ? (
               <form onSubmit={handleUpdatePrompt}>
-                <h3 className="text-lg font-bold text-white mb-4">Edit: {editingPrompt.key}</h3>
+                <h3 className="text-lg font-bold text-c-text mb-4">Edit: {editingPrompt.key}</h3>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
@@ -662,7 +662,7 @@ Example:
                       onChange={(e) =>
                         setEditingPrompt({ ...editingPrompt, description: e.target.value })
                       }
-                      className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white text-sm"
+                      className="w-full bg-primary-600 border border-white/10 rounded p-2 text-white text-sm"
                     />
                   </div>
                   <div>
@@ -674,13 +674,13 @@ Example:
                       onChange={(e) =>
                         setEditingPrompt({ ...editingPrompt, content: e.target.value })
                       }
-                      className="w-full h-64 bg-navy-950 border border-white/10 rounded p-4 text-white font-mono text-sm leading-relaxed focus:border-primary-500 outline-none resize-none"
+                      className="w-full h-64 bg-primary-600 border border-white/10 rounded p-4 text-white font-mono text-sm leading-relaxed focus:border-primary-500 outline-none resize-none"
                     />
                   </div>
 
                   {/* Context Injection Controls */}
-                  <div className="bg-navy-950 border border-white/5 rounded-lg p-4">
-                    <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                  <div className="bg-c-bg border border-white/5 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-c-text mb-3 flex items-center gap-2">
                       <Shield size={14} className="text-primary-400" />
                       Context Injection
                     </h4>
@@ -717,7 +717,7 @@ Example:
                                   context_config: newConfig,
                                 });
                               }}
-                              className="w-4 h-4 rounded border-slate-600 text-primary-500 focus:ring-primary-500 bg-slate-700"
+                              className="w-4 h-4 rounded border-slate-600 text-primary-500 focus:ring-primary-500 bg-c-surface-raised"
                             />
                             <span className="text-xs text-slate-600">{opt.label}</span>
                           </label>
