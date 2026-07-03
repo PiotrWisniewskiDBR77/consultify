@@ -438,7 +438,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                         className={cn(
                           'p-3 rounded-lg border-2 text-left transition-all duration-200',
                           isSelected
-                            ? 'border-c-border-strong bg-c-surface-raised.08]'
+                            ? 'border-c-border-strong bg-c-surface-raised'
                             : 'border-c-border-subtle hover:border-c-border dark:hover:border-white/20'
                         )}
                       >
@@ -578,7 +578,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
           ))}
 
           {/* Tip */}
-          <div className="flex items-start gap-3 p-4 bg-c-surface-raised.03] border border-c-border-subtle rounded-xl">
+          <div className="flex items-start gap-3 p-4 bg-c-surface-raised border border-c-border-subtle rounded-xl">
             <Info size={16} className="text-[var(--c-info)] mt-0.5 flex-shrink-0" />
             <div>
               <p className="text-sm font-medium text-c-text">

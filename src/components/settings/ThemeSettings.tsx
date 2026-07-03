@@ -260,7 +260,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                       'relative p-4 rounded-xl border-2 transition-all duration-200',
                       'hover:scale-[1.02] active:scale-[0.98]',
                       isSelected
-                        ? 'border-c-border-strong bg-c-surface-raised.08]'
+                        ? 'border-c-border-strong bg-c-surface-raised'
                         : 'border-c-border-subtle hover:border-c-border dark:hover:border-white/20 bg-c-surface-raised'
                     )}
                   >
@@ -400,7 +400,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                       'relative p-4 rounded-xl border-2 transition-all duration-200',
                       'hover:scale-[1.02] active:scale-[0.98]',
                       isSelected
-                        ? 'border-c-border-strong bg-c-surface-raised.08]'
+                        ? 'border-c-border-strong bg-c-surface-raised'
                         : 'border-c-border-subtle hover:border-c-border dark:hover:border-white/20 bg-c-surface-raised'
                     )}
                   >

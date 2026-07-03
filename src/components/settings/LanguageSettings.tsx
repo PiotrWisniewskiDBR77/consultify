@@ -139,7 +139,7 @@ export const LanguageSettings: React.FC<LanguageSettingsProps> = ({ className = 
             onClick={() => handleLanguageChange(lang.code)}
             className={`w-full flex items-center justify-between p-4 rounded-lg transition-colors ${
               currentLang === lang.code
-                ? 'bg-c-surface-raised.08] border-2 border-[var(--c-info)]'
+                ? 'bg-c-surface-raised border-2 border-[var(--c-info)]'
                 : 'bg-c-surface-raised border-2 border-transparent hover:border-c-border-subtle dark:border-navy-700 dark:hover:border-navy-600'
             }`}
           >

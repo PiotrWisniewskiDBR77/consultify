@@ -335,7 +335,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
                 }
                 className={`p-4 rounded-xl border-2 transition-all text-left ${
                   isSelected
-                    ? 'border-[var(--c-info)] bg-c-surface-raised.08]'
+                    ? 'border-[var(--c-info)] bg-c-surface-raised'
                     : 'border-c-border-subtle dark:border-navy-700 hover:border-c-info/50 dark:hover:border-c-info/30'
                 }`}
               >
@@ -387,7 +387,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
                     }
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all ${
                       isSelected
-                        ? 'border-[var(--c-info)] bg-c-surface-raised.08]'
+                        ? 'border-[var(--c-info)] bg-c-surface-raised'
                         : 'border-c-border-subtle dark:border-navy-700 hover:border-c-info/50'
                     }`}
                   >

@@ -312,7 +312,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                 onClick={() => setSameEveryDay(true)}
                 className={`flex-1 p-4 rounded-xl border-2 transition-all ${
                   sameEveryDay
-                    ? 'border-[var(--c-info)] bg-c-surface-raised.08]'
+                    ? 'border-[var(--c-info)] bg-c-surface-raised'
                     : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border dark:hover:border-white/20'
                 }`}
               >
@@ -341,7 +341,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                 onClick={() => setSameEveryDay(false)}
                 className={`flex-1 p-4 rounded-xl border-2 transition-all ${
                   !sameEveryDay
-                    ? 'border-[var(--c-info)] bg-c-surface-raised.08]'
+                    ? 'border-[var(--c-info)] bg-c-surface-raised'
                     : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border dark:hover:border-white/20'
                 }`}
               >
