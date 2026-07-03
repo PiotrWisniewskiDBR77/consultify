@@ -78,7 +78,7 @@ export const SourceMetadataBlock: React.FC<SourceMetadataBlockProps> = ({
         }`}
       >
         <div className="flex items-center gap-2">
-          <AlertTriangle size={compact ? 12 : 14} className="text-danger-400 shrink-0" />
+          <AlertTriangle size={compact ? 14 : 16} className="text-danger-400 shrink-0" />
           <span className="text-xs font-medium text-danger-400">
             {t('traceability.noSource', 'No source')}
           </span>
@@ -121,10 +121,10 @@ export const SourceMetadataBlock: React.FC<SourceMetadataBlockProps> = ({
             className="ml-auto flex items-center gap-1 text-primary-400 hover:underline shrink-0"
           >
             {compact ? (
-              <ExternalLink size={12} />
+              <ExternalLink size={14} />
             ) : (
               <>
-                <Link2 size={12} />
+                <Link2 size={14} />
                 {t('traceability.openSource', 'Open source')}
               </>
             )}
