@@ -679,7 +679,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
 
         {/* ── Rich body editor (full mode only) ── */}
         {mode === 'full' && (
-          <div className="px-5 py-3 border-b border-c-border-subtle/[0.04] flex-shrink-0">
+          <div className="px-5 py-3 border-b border-c-border-subtle flex-shrink-0">
             <div className="flex items-center gap-1 mb-2">
               {[
                 { Icon: Bold, before: '**', after: '**', titleKey: 'Bold' },
@@ -754,7 +754,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
 
         {/* ── Notion-style property strip (hidden in platform full mode — fields live in the Fields tab) ── */}
         {!(isPlatform && mode === 'full') && (
-          <div className="px-5 py-2.5 border-b border-c-border-subtle/[0.04] flex-shrink-0">
+          <div className="px-5 py-2.5 border-b border-c-border-subtle flex-shrink-0">
             <div className="space-y-1.5">
               {columns
                 .filter((col) => col.key !== 'label' && col.key !== 'type' && col.visible)
@@ -765,7 +765,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                       <span className="text-[10px] font-medium text-c-text-muted w-24 flex-shrink-0 truncate">
                         {col.header}
                       </span>
-                      <div className="flex-1 min-w-0 rounded-md hover:bg-c-surface-raised/[0.02] px-1.5 py-0.5 -mx-1.5 transition-colors">
+                      <div className="flex-1 min-w-0 rounded-md hover:bg-c-surface-raised px-1.5 py-0.5 -mx-1.5 transition-colors">
                         <CellRenderer
                           column={col}
                           value={node.data?.[col.key]}
@@ -784,7 +784,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
 
         {/* ── Sub-items (full mode only) ── */}
         {mode === 'full' && (childNodes.length > 0 || !locked) && (
-          <div className="px-5 py-2 border-b border-c-border-subtle/[0.04] flex-shrink-0">
+          <div className="px-5 py-2 border-b border-c-border-subtle flex-shrink-0">
             <button
               onClick={() => setSubItemsExpanded(!subItemsExpanded)}
               className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-c-text-muted mb-1"
@@ -798,7 +798,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                   <button
                     key={child.id}
                     onClick={() => onNodeClick?.(child.id)}
-                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left hover:bg-c-surface-raised/[0.02] transition-colors"
+                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left hover:bg-c-surface-raised transition-colors"
                   >
                     <div
                       className="w-1.5 h-1.5 rounded-full flex-shrink-0"
@@ -844,7 +844,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 ? (rawStatus as ValidationStatus)
                 : 'unverified';
             return (
-              <div className="px-5 py-2 border-b border-c-border-subtle/[0.04] flex-shrink-0">
+              <div className="px-5 py-2 border-b border-c-border-subtle flex-shrink-0">
                 <ProvenanceCell
                   recordId={node.id}
                   confidenceScore={Number.isFinite(confidence) ? confidence : null}
@@ -859,7 +859,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
 
         {/* ── Tabs (full mode): platform = HIG pill strip ── */}
         {mode === 'full' && isPlatform && (
-          <div className="flex items-center gap-1.5 px-5 py-2 border-b border-c-border-subtle/[0.04] flex-shrink-0 overflow-x-auto">
+          <div className="flex items-center gap-1.5 px-5 py-2 border-b border-c-border-subtle flex-shrink-0 overflow-x-auto">
             {(
               [
                 { id: 'fields' as const, labelEn: 'Fields', labelPl: 'Pola', Icon: FileText },
@@ -918,7 +918,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
           </div>
         )}
         {mode === 'full' && !isPlatform && (
-          <div className="flex items-center gap-0.5 px-5 py-1.5 border-b border-c-border-subtle/[0.04] flex-shrink-0 overflow-x-auto">
+          <div className="flex items-center gap-0.5 px-5 py-1.5 border-b border-c-border-subtle flex-shrink-0 overflow-x-auto">
             {TABS.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -957,7 +957,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                     <label className="block text-[10px] font-semibold text-c-text-muted mb-1">
                       {col.header}
                     </label>
-                    <div className="rounded-xl border border-c-border-subtle/[0.06] px-2.5 py-2">
+                    <div className="rounded-xl border border-c-border-subtle px-2.5 py-2">
                       <CellRenderer
                         column={col}
                         value={node.data?.[col.key]}
@@ -971,7 +971,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 ))}
 
                 {/* Connections */}
-                <div className="pt-3 border-t border-c-border-subtle/[0.04]">
+                <div className="pt-3 border-t border-c-border-subtle">
                   <label className="block text-[10px] font-bold uppercase tracking-wider text-c-text-muted mb-2">
                     <GitBranch size={10} className="inline mr-1" />
                     {isPl ? 'Powiązane elementy' : 'Related items'} ({relatedNodes.length})
@@ -1505,7 +1505,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
 
             {/* Related Records — linkedRecord (platform) or relation columns */}
             {linkedColumnKeys.length > 0 && (
-              <div className="mt-6 pt-4 border-t border-c-border-subtle/[0.04]">
+              <div className="mt-6 pt-4 border-t border-c-border-subtle">
                 <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-c-text-muted mb-2">
                   <Link2 size={10} />
                   {isPl ? 'Powiązane rekordy' : 'Related Records'}
@@ -1549,7 +1549,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
 
         {/* ── Trust signals ── */}
         {node && (node.data?.sourceType || node.data?.convertedTo || node.data?.aiGenerated) && (
-          <div className="px-5 py-2 border-t border-c-border-subtle/[0.04] flex-shrink-0">
+          <div className="px-5 py-2 border-t border-c-border-subtle flex-shrink-0">
             <div className="flex flex-wrap gap-1.5">
               {node.data?.aiGenerated && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[8px] font-bold bg-c-accent-soft text-c-accent">
