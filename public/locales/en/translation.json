@@ -1517,7 +1517,9 @@
       "done": "{{count}} {{noun}}",
       "processedNoun": "processed",
       "partial": "{{success}} done, {{failed}} failed"
-    }
+    },
+    "export": "Export",
+    "decision": "Decision"
   },
   "superadmin": {
     "confirm": {
@@ -1852,7 +1854,33 @@
     "targetScore": "Target score",
     "gap": "Gap",
     "evidenceCount": "Evidence",
-    "recommendationsCount": "Recommendations"
+    "recommendationsCount": "Recommendations",
+    "confidence": "Confidence",
+    "statuses": {
+      "draft": "Draft",
+      "review": "In review",
+      "approved": "Approved",
+      "generated": "Generated",
+      "completed": "Completed"
+    },
+    "resume": "Resume",
+    "requestReview": "Request review",
+    "approve": "Approve",
+    "sendBack": "Send back",
+    "generateInitiatives": "Generate initiatives",
+    "aiHints": {
+      "execBrief": "Executive brief",
+      "keyRisks": "Key risks",
+      "initiativeAngles": "Initiative angles"
+    },
+    "noRelations": "No relations",
+    "loadingRelations": "Loading relations…",
+    "aiUnavailable": "AI unavailable",
+    "aiTimedOut": "AI timed out",
+    "copyAsMarkdown": "Copy as Markdown",
+    "copyForSlack": "Copy for Slack",
+    "approvalSnapshot": "Approval snapshot",
+    "useAiHints": "Use AI hints in the footer to generate a brief."
   },
   "sidebar": {
     "module3_1": "Initiatives",
@@ -5106,6 +5134,24 @@
       "planCta": "Plan the tasks",
       "advanceTitle": "Next in the process",
       "advanceCta": "Submit for review"
+    },
+    "status": {
+      "pendingReview": "Pending review",
+      "promoted": "Promoted",
+      "planning": "Planning",
+      "scheduled": "Scheduled",
+      "executing": "Executing",
+      "blocked": "Blocked",
+      "done": "Done",
+      "tracking": "Tracking",
+      "cancelled": "Cancelled",
+      "archived": "Archived"
+    },
+    "priorityLevels": {
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
     }
   },
   "execution": {
@@ -6054,7 +6100,9 @@
       "version": "version",
       "author": "Author",
       "period": "Period",
-      "immutable": "Immutable version"
+      "immutable": "Immutable version",
+      "startReview": "Start review",
+      "customType": "Custom"
     },
     "toast": {
       "chatOpened": "Chat opened",

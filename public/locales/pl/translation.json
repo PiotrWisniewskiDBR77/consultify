@@ -202,7 +202,9 @@
       "done": "{{count}} {{noun}}",
       "processedNoun": "przetworzono",
       "partial": "Wykonano {{success}}, błędów: {{failed}}"
-    }
+    },
+    "export": "Eksportuj",
+    "decision": "Decyzja"
   },
   "superadmin": {
     "confirm": {
@@ -537,7 +539,33 @@
     "targetScore": "Wynik docelowy",
     "gap": "Luka",
     "evidenceCount": "Dowody",
-    "recommendationsCount": "Rekomendacje"
+    "recommendationsCount": "Rekomendacje",
+    "confidence": "Pewność",
+    "statuses": {
+      "draft": "Szkic",
+      "review": "W przeglądzie",
+      "approved": "Zatwierdzony",
+      "generated": "Wygenerowany",
+      "completed": "Ukończony"
+    },
+    "resume": "Wznów",
+    "requestReview": "Wyślij do przeglądu",
+    "approve": "Zatwierdź",
+    "sendBack": "Odeślij",
+    "generateInitiatives": "Generuj inicjatywy",
+    "aiHints": {
+      "execBrief": "Brief zarządczy",
+      "keyRisks": "Kluczowe ryzyka",
+      "initiativeAngles": "Kąty inicjatyw"
+    },
+    "noRelations": "Brak powiązań",
+    "loadingRelations": "Ładowanie powiązań…",
+    "aiUnavailable": "AI niedostępne",
+    "aiTimedOut": "Przekroczono czas AI",
+    "copyAsMarkdown": "Kopiuj jako Markdown",
+    "copyForSlack": "Kopiuj dla Slack",
+    "approvalSnapshot": "Snapshot zatwierdzenia",
+    "useAiHints": "Użyj AI hintów w stopce, aby wygenerować brief."
   },
   "presentations": {
     "wizard": {
@@ -4321,6 +4349,24 @@
       "planCta": "Zaplanuj zadania",
       "advanceTitle": "Dalej w procesie",
       "advanceCta": "Prześlij do przeglądu"
+    },
+    "status": {
+      "pendingReview": "Do przeglądu",
+      "promoted": "Promowana",
+      "planning": "Planowanie",
+      "scheduled": "Zaplanowana",
+      "executing": "W realizacji",
+      "blocked": "Zablokowana",
+      "done": "Zakończona",
+      "tracking": "Śledzenie",
+      "cancelled": "Anulowana",
+      "archived": "Zarchiwizowana"
+    },
+    "priorityLevels": {
+      "critical": "Krytyczny",
+      "high": "Wysoki",
+      "medium": "Średni",
+      "low": "Niski"
     }
   },
   "execution": {
@@ -5269,7 +5315,9 @@
       "version": "wersja",
       "author": "Autor",
       "period": "Okres",
-      "immutable": "Wersja niezmienna"
+      "immutable": "Wersja niezmienna",
+      "startReview": "Rozpocznij przegląd",
+      "customType": "Niestandardowy"
     },
     "toast": {
       "chatOpened": "Czat otwarty",
