@@ -27,10 +27,10 @@ import {
   createFeedbackInternal,
   type FeedbackIntakeInput,
 } from '../feedback.routes.js';
+import { anchorSlackThread } from '../../services/slack/feedbackThreadAnchor.js';
 import { routeToSlack } from '../../services/slack/slackRouter.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
-import { get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
-import { getTableColumns } from '../../utils/dbSchema.js';
+import { get as dbGet } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
 const router = Router();
@@ -490,71 +490,6 @@ export async function handleViewSubmission(payload: any): Promise<void> {
       meta.response_url,
       `✅ Zgłoszenie #${shortId} przyjęte${taskId ? ` → task ${taskId.slice(0, 8)}` : ''}. Śledzenie: wątek na #cf-feedback.`
     );
-  }
-}
-
-/**
- * Persist the Slack thread coordinates onto the feedback ticket's metadata_json
- * (merging with what createFeedbackInternal already wrote). This is what lets
- * F3 reply status/workflow updates into the same thread.
- */
-async function anchorSlackThread(
-  feedbackId: string,
-  channelId: string | undefined,
-  threadTs: string
-): Promise<void> {
-  try {
-    const cols = await getTableColumns('feedback_items');
-    if (!cols.has('metadata_json')) return;
-
-    // Preferred path: atomic per-key JSON patch (Postgres jsonb_set) so a
-    // concurrent whole-object writer (e.g. escalation's alertDispatch persist)
-    // cannot clobber the anchor via read-modify-write. Falls through to the
-    // legacy read-modify-write below on engines without jsonb (mock-DB/sqlite).
-    try {
-      await dbRun(
-        `UPDATE feedback_items
-         SET metadata_json = jsonb_set(
-               jsonb_set(COALESCE(metadata_json, '{}')::jsonb, '{slack_thread_ts}', to_jsonb(?::text), true),
-               '{slack_channel_id}', to_jsonb(?::text), true
-             )::text
-         WHERE id = ?`,
-        [threadTs, channelId ?? '', feedbackId]
-      );
-      return;
-    } catch {
-      // fall through to read-modify-write
-    }
-
-    const row = await dbGet<{ metadata_json?: string }>(
-      `SELECT metadata_json FROM feedback_items WHERE id = ?`,
-      [feedbackId]
-    );
-    let meta: Record<string, unknown> = {};
-    if (row?.metadata_json) {
-      try {
-        meta =
-          typeof row.metadata_json === 'string'
-            ? JSON.parse(row.metadata_json)
-            : (row.metadata_json as Record<string, unknown>);
-      } catch {
-        meta = {};
-      }
-    }
-    meta.slack_thread_ts = threadTs;
-    if (channelId) meta.slack_channel_id = channelId;
-
-    const updateCols = ['metadata_json = ?'];
-    if (cols.has('updated_at')) updateCols.push('updated_at = CURRENT_TIMESTAMP');
-    await dbRun(`UPDATE feedback_items SET ${updateCols.join(', ')} WHERE id = ?`, [
-      JSON.stringify(meta),
-      feedbackId,
-    ]);
-  } catch (err) {
-    logger.warn('[SlackInbound] anchorSlackThread failed', {
-      feedbackId,
-      error: err instanceof Error ? err.message : String(err),
-    });
   }
 }
 

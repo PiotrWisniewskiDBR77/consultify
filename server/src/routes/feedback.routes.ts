@@ -48,8 +48,8 @@ import {
   inferPriorityForPipeline as inferFeedbackPriority,
 } from '../services/feedbackTriage.js';
 import NotificationService from '../services/notificationService.js';
+import { anchorSlackThread } from '../services/slack/feedbackThreadAnchor.js';
 import { routeToSlack } from '../services/slack/slackRouter.js';
-import slackService from '../services/slackService.js';
 import WhatsAppService from '../services/WhatsAppService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
@@ -798,9 +798,15 @@ async function dispatchFeedbackEscalation(input: {
     }
   }
 
-  // Slack-sourced feedback is already posted to #cf-feedback by the inbound
-  // handler via slackRouter (with thread anchoring). Posting again here through
-  // the legacy webhook path would duplicate the message → skip for source=slack.
+  // Unified Slack posting — SAME pipeline regardless of where the report
+  // originated (Piotr: "całą tę historię zgłoszeń [chcę] dostawać bezpośrednio
+  // na Slacka", not just the ones reported FROM Slack). Slack-sourced tickets
+  // are already posted + anchored by the inbound handler (slackInbound.routes.ts,
+  // before escalation runs) → skip here to avoid a duplicate post. Every OTHER
+  // origin (in-app FeedbackSidePanel widget, API) posts through the same
+  // router+headline+blocks format used for Slack-sourced tickets, and gets the
+  // SAME thread anchor — so later status/workflow/response updates
+  // (notifySlackThread) reply into that thread exactly like a Slack-origin ticket.
   const isSlackSourced =
     (input.metadata as { source?: unknown } | undefined)?.source === 'slack';
   if (uniqueChannels.includes('slack') && isSlackSourced) {
@@ -811,26 +817,51 @@ async function dispatchFeedbackEscalation(input: {
     };
   } else if (uniqueChannels.includes('slack')) {
     try {
-      await slackService.sendNewFeedbackAlert({
-        type: input.feedbackType === 'PULSE' ? 'IDEA' : input.feedbackType,
-        userEmail: input.userEmail || undefined,
-        userName: input.userName || undefined,
-        message: body,
-        severity: input.severity || undefined,
-        priority: input.priority || undefined,
-        routePath: input.routePath || undefined,
-        deviceType: input.deviceType || undefined,
-        screenSize: input.screenSize || undefined,
-        uiLanguage: input.uiLanguage || undefined,
-        uiTheme: input.uiTheme || undefined,
-        organizationId: input.organizationId || undefined,
-        feedbackId: input.id,
-        taskId: input.taskId || undefined,
-        appEnv: input.appEnv,
+      const categoryLabel =
+        input.feedbackType === 'BUG'
+          ? 'Błąd'
+          : input.feedbackType === 'FEATURE'
+            ? 'Funkcja'
+            : input.feedbackType === 'PULSE'
+              ? 'Ocena'
+              : 'Pomysł';
+      const priorityLabel =
+        input.severity && input.severity.toUpperCase() !== 'MEDIUM'
+          ? input.severity.toUpperCase()
+          : undefined;
+      const appUrl =
+        process.env.APP_URL ||
+        process.env.FRONTEND_URL ||
+        (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : '') ||
+        'http://localhost:5173';
+      const contextParts: string[] = [];
+      if (input.userName || input.userEmail) {
+        contextParts.push(`zgłosił(a): ${input.userName || input.userEmail}`);
+      }
+      if (input.routePath) contextParts.push(`strona: ${input.routePath}`);
+      const detailLines = [
+        body,
+        contextParts.length > 0 ? contextParts.join(' · ') : undefined,
+        `<${appUrl}/superadmin/customers/feedback?feedbackId=${encodeURIComponent(input.id)}|Otwórz w Super Adminie>`,
+      ].filter(Boolean);
+
+      const routed = await routeToSlack({
+        channel: 'feedback',
+        severity: notificationSeverity,
+        category: categoryLabel,
+        priorityLabel,
+        title: input.title,
+        text: detailLines.join('\n'),
       });
+
+      if (routed.ok && routed.ts) {
+        await anchorSlackThread(input.id, routed.channelId, routed.ts);
+      }
+
       dispatchSummary.results.slack = {
-        status: 'sent',
+        status: routed.ok ? 'sent' : 'failed',
         attemptedAt: new Date().toISOString(),
+        detail: routed.ok ? undefined : `transport=${routed.transport}`,
       };
     } catch (error) {
       logger.error('[Feedback] Failed Slack escalation:', error);
