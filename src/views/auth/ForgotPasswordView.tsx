@@ -30,12 +30,12 @@ export const ForgotPasswordView: React.FC = () => {
 
   if (status === 'sent') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-navy-800 px-4 py-12 sm:px-6 lg:px-8">
+      <div className="flex min-h-screen items-center justify-center bg-c-bg px-4 py-12 sm:px-6 lg:px-8">
         <div className="w-full max-w-md space-y-6 text-center">
-          <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm dark:border-navy-700 dark:bg-navy-900">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+          <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-8 shadow-sm">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-c-success/10">
               <svg
-                className="h-6 w-6 text-green-600 dark:text-green-400"
+                className="h-6 w-6 text-c-success"
                 fill="none"
                 viewBox="0 0 24 24"
                 strokeWidth={2}
@@ -48,10 +48,10 @@ export const ForgotPasswordView: React.FC = () => {
                 />
               </svg>
             </div>
-            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-c-text">
               {t('auth.forgotPassword.checkEmail', 'Check your email')}
             </h2>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+            <p className="mt-2 text-sm text-c-text-secondary">
               {t(
                 'auth.forgotPassword.sentMessage',
                 'If an account with that email exists, we sent a password reset link. Please check your inbox and spam folder.'
@@ -59,7 +59,7 @@ export const ForgotPasswordView: React.FC = () => {
             </p>
             <button
               onClick={() => navigate('/login')}
-              className="mt-6 w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors"
+              className="mt-6 w-full rounded-lg bg-c-accent px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90 transition-colors"
             >
               {t('auth.backToLogin', 'Back to login')}
             </button>
@@ -70,13 +70,13 @@ export const ForgotPasswordView: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-navy-800 px-4 py-12 sm:px-6 lg:px-8">
+    <div className="flex min-h-screen items-center justify-center bg-c-bg px-4 py-12 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-6">
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm dark:border-navy-700 dark:bg-navy-900">
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-8 shadow-sm">
+          <h2 className="text-xl font-semibold text-c-text">
             {t('auth.forgotPassword.title', 'Reset your password')}
           </h2>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+          <p className="mt-2 text-sm text-c-text-secondary">
             {t(
               'auth.forgotPassword.subtitle',
               "Enter your email address and we'll send you a link to reset your password."
@@ -85,10 +85,7 @@ export const ForgotPasswordView: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300"
-              >
+              <label htmlFor="email" className="block text-sm font-medium text-c-text-secondary">
                 {t('auth.email', 'Email')}
               </label>
               <input
@@ -97,7 +94,7 @@ export const ForgotPasswordView: React.FC = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-navy-600 dark:bg-navy-800 dark:text-white dark:placeholder-slate-500"
+                className="mt-1 block w-full rounded-lg border border-c-border bg-c-surface px-3 py-2.5 text-sm text-c-text placeholder-c-text-muted focus:border-c-focus-solid focus:outline-none focus:ring-1 focus:ring-c-focus"
                 placeholder={t('auth.emailPlaceholder', 'you@company.com')}
               />
             </div>
@@ -109,7 +106,7 @@ export const ForgotPasswordView: React.FC = () => {
             <button
               type="submit"
               disabled={status === 'loading'}
-              className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full rounded-lg bg-c-accent px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {status === 'loading'
                 ? t('common.sending', 'Sending...')
@@ -120,7 +117,7 @@ export const ForgotPasswordView: React.FC = () => {
           <div className="mt-4 text-center">
             <button
               onClick={() => navigate('/login')}
-              className="text-sm text-indigo-600 hover:underline dark:text-indigo-400"
+              className="text-sm text-c-accent hover:underline"
             >
               {t('auth.backToLogin', 'Back to login')}
             </button>

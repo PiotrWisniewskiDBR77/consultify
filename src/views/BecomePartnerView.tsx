@@ -40,10 +40,10 @@ export const BecomePartnerView: React.FC = () => {
 
   const BENEFIT_KEYS = ['platform', 'certifications', 'billing', 'materials'] as const;
   const BENEFIT_VISUALS = [
-    { icon: Rocket, color: 'violet' },
-    { icon: GraduationCap, color: 'blue' },
-    { icon: CreditCard, color: 'emerald' },
-    { icon: BookOpen, color: 'purple' },
+    { icon: Rocket },
+    { icon: GraduationCap },
+    { icon: CreditCard },
+    { icon: BookOpen },
   ];
 
   // SSOT — partnership tiers come from PARTNER_TIERS (shared with the public
@@ -55,21 +55,21 @@ export const BecomePartnerView: React.FC = () => {
 
   return (
     <MarketingLayout>
-      <div className="min-h-[calc(100vh-3.5rem)] bg-navy-950 text-white selection:bg-primary-500/30 overflow-x-hidden relative">
+      <div className="min-h-[calc(100vh-3.5rem)] bg-navy-950 text-white selection:bg-c-accent-soft overflow-x-hidden relative">
         {/* Background Atmosphere */}
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-[-5%] right-[-10%] w-[50%] h-[50%] bg-primary-600/15 rounded-full blur-[150px]" />
-          <div className="absolute bottom-[-10%] left-[-5%] w-[40%] h-[40%] bg-primary-600/10 rounded-full blur-[120px]" />
-          <div className="absolute top-[40%] left-[20%] w-[30%] h-[30%] bg-blue-600/8 rounded-full blur-[100px]" />
+          <div className="absolute top-[-5%] right-[-10%] w-[50%] h-[50%] bg-c-accent/15 rounded-full blur-[150px]" />
+          <div className="absolute bottom-[-10%] left-[-5%] w-[40%] h-[40%] bg-c-accent/10 rounded-full blur-[120px]" />
+          <div className="absolute top-[40%] left-[20%] w-[30%] h-[30%] bg-c-info/8 rounded-full blur-[100px]" />
         </div>
 
         <main className="relative z-10 pt-16 pb-20 px-6">
           {/* HERO SECTION */}
           <section className="max-w-5xl mx-auto text-center mb-24 animate-fade-in">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-600/10 border border-primary-500/20 mb-8">
-              <Sparkles size={16} className="text-primary-400" />
-              <span className="text-sm font-medium text-primary-300">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-c-accent-soft border border-c-accent/20 mb-8">
+              <Sparkles size={16} className="text-c-accent" />
+              <span className="text-sm font-medium text-c-accent">
                 {t('pages.partner.hero.badge', 'Consultify Partner Program')}
               </span>
             </div>
@@ -77,7 +77,7 @@ export const BecomePartnerView: React.FC = () => {
             {/* Main Headline */}
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.1] mb-8 bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
               {t('pages.partner.hero.titleLine1', 'Join the')} <br className="hidden md:block" />
-              <span className="bg-gradient-to-r from-primary-400 to-primary-400 bg-clip-text text-transparent">
+              <span className="text-c-accent">
                 {t('pages.partner.hero.titleLine2', 'Consultify Partner Program')}
               </span>
             </h1>
@@ -115,7 +115,7 @@ export const BecomePartnerView: React.FC = () => {
                 onClick={() => navigate('/login')}
                 className="inline-flex items-center gap-2 text-white/60 hover:text-white font-medium text-lg px-6 py-4 rounded-xl hover:bg-white/10 transition-all duration-300"
               >
-                <Shield size={18} className="text-primary-400" />
+                <Shield size={18} className="text-c-accent" />
                 {t('pages.partner.hero.existingPartner', 'Zaloguj się jako partner')}
               </button>
             </div>
@@ -123,24 +123,24 @@ export const BecomePartnerView: React.FC = () => {
             {/* Trust / value strip — SSOT-derived, truthful (beta program) */}
             <div className="mt-14 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-white/50">
               <span className="flex items-center gap-2">
-                <TrendingUp size={16} className="text-primary-400" />
+                <TrendingUp size={16} className="text-c-accent" />
                 {t('pages.partner.hero.stat.commission', 'do {{pct}}% prowizji', {
                   pct: maxCommissionPct,
                 })}
               </span>
               <span className="text-white/15">•</span>
               <span className="flex items-center gap-2">
-                <Award size={16} className="text-primary-400" />
+                <Award size={16} className="text-c-accent" />
                 {t('pages.partner.hero.stat.tiers', '4 poziomy partnerstwa')}
               </span>
               <span className="text-white/15">•</span>
               <span className="flex items-center gap-2">
-                <GraduationCap size={16} className="text-primary-400" />
+                <GraduationCap size={16} className="text-c-accent" />
                 {t('pages.partner.hero.stat.academy', 'Partner Academy + certyfikacja')}
               </span>
               <span className="text-white/15">•</span>
               <span className="flex items-center gap-2">
-                <Shield size={16} className="text-primary-400" />
+                <Shield size={16} className="text-c-accent" />
                 {t('pages.partner.hero.stat.standards', 'ISO 21500 / PMBOK 7 / PRINCE2')}
               </span>
             </div>
@@ -167,10 +167,10 @@ export const BecomePartnerView: React.FC = () => {
                 return (
                   <div
                     key={key}
-                    className={`bg-navy-900/30 backdrop-blur-sm p-6 rounded-xl group hover:bg-${visual.color}-600/5 transition-all duration-500 border border-white/5 hover:border-${visual.color}-500/20 overflow-hidden relative`}
+                    className="bg-navy-900/30 backdrop-blur-sm p-6 rounded-xl group hover:bg-c-accent/5 transition-all duration-500 border border-white/5 hover:border-c-accent/20 overflow-hidden relative"
                   >
                     <visual.icon
-                      className={`text-${visual.color}-400 mb-4 group-hover:scale-110 transition-transform duration-500 relative z-10`}
+                      className="text-c-accent mb-4 group-hover:scale-110 transition-transform duration-500 relative z-10"
                       size={32}
                     />
                     <h3 className="text-lg font-semibold mb-2 relative z-10">
@@ -208,17 +208,17 @@ export const BecomePartnerView: React.FC = () => {
                     key={tier.id}
                     className={`relative bg-navy-900/30 backdrop-blur-sm p-8 rounded-xl border transition-all duration-500 group ${
                       tier.highlight
-                        ? 'border-primary-500/40 shadow-lg shadow-primary-500/10'
-                        : 'border-white/10 hover:border-primary-500/20'
+                        ? 'border-c-accent/40 shadow-lg shadow-c-accent/10'
+                        : 'border-white/10 hover:border-c-accent/20'
                     }`}
                   >
                     {tier.badge && (
-                      <span className="absolute top-4 right-4 px-2 py-0.5 rounded-full bg-primary-500/20 text-primary-300 text-[10px] font-semibold uppercase tracking-wide">
+                      <span className="absolute top-4 right-4 px-2 py-0.5 rounded-full bg-c-accent-soft text-c-accent text-[10px] font-semibold uppercase tracking-wide">
                         {tier.badge}
                       </span>
                     )}
-                    <div className="w-14 h-14 rounded-xl bg-primary-600/20 flex items-center justify-center mb-6 group-hover:bg-primary-600/30 transition-colors">
-                      <TierIcon size={28} className="text-primary-400" />
+                    <div className="w-14 h-14 rounded-xl bg-c-accent/20 flex items-center justify-center mb-6 group-hover:bg-c-accent/30 transition-colors">
+                      <TierIcon size={28} className="text-c-accent" />
                     </div>
                     <h3 className="text-xl font-bold mb-1">{tier.name}</h3>
                     <p className="text-white/50 text-sm mb-4">{tier.description}</p>
@@ -259,7 +259,7 @@ export const BecomePartnerView: React.FC = () => {
                           <li key={bIndex} className="flex items-start gap-2 text-sm text-white/70">
                             <CheckCircle2
                               size={14}
-                              className="mt-0.5 text-primary-400 flex-shrink-0"
+                              className="mt-0.5 text-c-accent flex-shrink-0"
                             />
                             {benefit.name}
                           </li>
@@ -288,7 +288,7 @@ export const BecomePartnerView: React.FC = () => {
                 const prefix = `pages.partner.process.steps.${key}`;
                 return (
                   <div key={key} className="relative">
-                    <div className="bg-navy-900/30 backdrop-blur-sm p-6 rounded-xl text-center border border-white/5 hover:border-primary-500/20 transition-all duration-300">
+                    <div className="bg-navy-900/30 backdrop-blur-sm p-6 rounded-xl text-center border border-white/5 hover:border-c-accent/20 transition-all duration-300">
                       <div className="w-12 h-12 rounded-full bg-navy-900 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
                         {index + 1}
                       </div>
@@ -308,7 +308,7 @@ export const BecomePartnerView: React.FC = () => {
 
           {/* FINAL CTA SECTION */}
           <section className="max-w-3xl mx-auto text-center py-16 px-8 bg-navy-900/30 backdrop-blur-sm rounded-xl border border-white/10">
-            <BadgeCheck size={48} className="text-primary-400 mx-auto mb-6" />
+            <BadgeCheck size={48} className="text-c-accent mx-auto mb-6" />
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
               {t('pages.partner.cta.heading', 'Ready to Partner?')}
             </h2>
