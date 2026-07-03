@@ -135,49 +135,49 @@ export const AIInlineResponse: React.FC<AIInlineResponseProps> = ({
 
   return (
     <div className="mx-auto max-w-5xl px-6 pb-3">
-      <div className="rounded-xl border border-slate-200 dark:border-slate-800/40 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-950/30 dark:to-blue-950/20 overflow-hidden shadow-sm">
-        <div className="flex items-center justify-between px-4 py-2 border-b border-slate-200/60 dark:border-slate-800/30">
-          <div className="flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300">
+      <div className="rounded-xl border border-c-border-subtle bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-950/30 dark:to-blue-950/20 overflow-hidden shadow-sm">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-c-border-subtle">
+          <div className="flex items-center gap-2 text-xs font-medium text-c-text-secondary">
             <Sparkles size={14} />
             <span>{label}</span>
-            {isStreaming && <Loader2 size={12} className="animate-spin text-slate-500" />}
+            {isStreaming && <Loader2 size={12} className="animate-spin text-c-text-muted" />}
           </div>
           <button
             onClick={() => {
               abortRef.current?.abort();
               onDismiss();
             }}
-            className="p-1 rounded-md text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-white/60 dark:hover:bg-white/[0.06]"
+            className="p-1 rounded-md text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised"
             aria-label={pl ? 'Zamknij' : 'Close'}
           >
             <X size={14} />
           </button>
         </div>
 
-        <div className="px-4 py-3 text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap leading-relaxed min-h-[48px] max-h-[300px] overflow-y-auto">
+        <div className="px-4 py-3 text-sm text-c-text whitespace-pre-wrap leading-relaxed min-h-[48px] max-h-[300px] overflow-y-auto">
           {error ? (
-            <span className="text-danger-600 dark:text-danger-400">{error}</span>
+            <span className="text-c-danger">{error}</span>
           ) : response ? (
             response
           ) : (
-            <span className="text-slate-600 dark:text-slate-500">
+            <span className="text-c-text-muted">
               {pl ? 'Generowanie odpowiedzi…' : 'Generating response…'}
             </span>
           )}
         </div>
 
         {!isStreaming && response && !error && (
-          <div className="flex items-center gap-2 px-4 py-2 border-t border-slate-200/60 dark:border-slate-800/30">
+          <div className="flex items-center gap-2 px-4 py-2 border-t border-c-border-subtle">
             <button
               onClick={() => onInsert(response)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-xs font-medium transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-c-accent hover:brightness-110 text-white text-xs font-medium transition-colors"
             >
               <Check size={12} />
               {pl ? 'Zaproponuj do notatki' : 'Propose for note'}
             </button>
             <button
               onClick={handleCopy}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-navy-700 text-xs font-medium transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-c-surface hover:bg-c-surface-raised text-c-text border border-c-border text-xs font-medium transition-colors"
             >
               <Copy size={12} />
               {pl ? 'Kopiuj' : 'Copy'}
@@ -187,7 +187,7 @@ export const AIInlineResponse: React.FC<AIInlineResponseProps> = ({
                 abortRef.current?.abort();
                 onDismiss();
               }}
-              className="px-3 py-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] text-xs font-medium transition-colors"
+              className="px-3 py-1.5 rounded-lg text-c-text-muted hover:bg-c-surface-raised text-xs font-medium transition-colors"
             >
               {pl ? 'Odrzuć' : 'Dismiss'}
             </button>

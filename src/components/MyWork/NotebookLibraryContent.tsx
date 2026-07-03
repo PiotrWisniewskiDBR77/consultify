@@ -402,7 +402,7 @@ export const NotebookLibraryContent: React.FC<NotebookLibraryContentProps> = ({
                   if (e.key === 'Enter') onOpenNotebook(nb);
                 }}
                 tabIndex={0}
-                className="group cursor-pointer border-b border-c-border-subtle outline-none transition-colors hover:bg-slate-100/80 hover:shadow-[inset_0_0_0_1px_rgba(148,163,184,0.22)] dark:hover:bg-white/[0.04] dark:hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.10)]"
+                className="group cursor-pointer border-b border-c-border-subtle outline-none transition-colors hover:bg-c-surface-raised hover:shadow-[inset_0_0_0_1px_var(--c-border)]"
               >
                 {/* S1-U2a: Ideas-row anatomy — neutral icon tile + L2 title +
                     L5 meta subtitle (no oversized emoji as identity). */}
@@ -416,7 +416,7 @@ export const NotebookLibraryContent: React.FC<NotebookLibraryContentProps> = ({
                       )}
                     </span>
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      <div className="truncate text-sm font-semibold text-c-text">
                         {nb.title}
                       </div>
                       <div className="truncate text-[11px] leading-4 text-c-text-muted">
@@ -596,7 +596,7 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
             if (e.key === 'Enter' && canSave) void handleSave();
           }}
           placeholder={pl ? 'np. Strategia 2026' : 'e.g. Strategy 2026'}
-          className="w-full px-3 py-2 mb-4 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-100 text-sm outline-none focus:ring-2 focus:ring-slate-500/30 focus:border-slate-500"
+          className="w-full px-3 py-2 mb-4 rounded-lg border border-c-border bg-c-surface text-c-text text-sm outline-none focus:ring-2 focus:ring-[var(--c-focus)] focus:border-[var(--c-focus-solid)]"
         />
 
         <span className="block text-sm font-medium text-c-text-secondary mb-1.5">
@@ -608,8 +608,8 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
             onClick={() => setScope('personal')}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
               scope === 'personal'
-                ? 'border-slate-500 bg-slate-50 dark:bg-slate-900/20 text-slate-700 dark:text-slate-300'
-                : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300'
+                ? 'border-c-border-strong bg-c-surface-raised text-c-text'
+                : 'border-c-border text-c-text-secondary hover:bg-c-surface-raised'
             }`}
           >
             <Lock size={15} />
@@ -620,8 +620,8 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
             onClick={() => setScope('team')}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
               scope === 'team'
-                ? 'border-slate-500 bg-slate-50 dark:bg-slate-900/20 text-slate-700 dark:text-slate-300'
-                : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300'
+                ? 'border-c-border-strong bg-c-surface-raised text-c-text'
+                : 'border-c-border text-c-text-secondary hover:bg-c-surface-raised'
             }`}
           >
             <Users size={15} />
@@ -638,7 +638,7 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
               <select
                 value={teamId}
                 onChange={(e) => setTeamId(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-100 text-sm outline-none focus:ring-2 focus:ring-slate-500/30"
+                className="w-full px-3 py-2 rounded-lg border border-c-border bg-c-surface text-c-text text-sm outline-none focus:ring-2 focus:ring-[var(--c-focus)]"
               >
                 {teams.map((t) => (
                   <option key={t.id} value={t.id}>

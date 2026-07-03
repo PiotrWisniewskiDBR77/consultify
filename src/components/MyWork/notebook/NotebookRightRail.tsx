@@ -88,8 +88,8 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
       onClick={() => onTabChange(tab)}
       className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-colors ${
         activeTab === tab
-          ? 'bg-slate-800 text-white dark:bg-white/[0.12]'
-          : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-white/[0.06]'
+          ? 'bg-c-text text-c-surface dark:bg-c-surface-raised dark:text-c-text'
+          : 'text-c-text-muted hover:text-c-text hover:bg-c-surface-raised dark:text-c-text-muted dark:hover:text-c-text dark:hover:bg-white/[0.06]'
       }`}
     >
       {icon}
@@ -98,15 +98,15 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
   );
 
   return (
-    <div className="flex w-80 shrink-0 flex-col overflow-hidden rounded-2xl border border-slate-200/70 bg-white dark:border-white/[0.06] dark:bg-navy-950">
+    <div className="flex w-80 shrink-0 flex-col overflow-hidden rounded-2xl border border-c-border/70 bg-c-surface dark:border-white/[0.06] dark:bg-navy-950">
       {/* Rail header with tabs */}
-      <div className="flex items-center gap-1 border-b border-slate-200/60 px-2 py-1.5 dark:border-white/[0.06]">
+      <div className="flex items-center gap-1 border-b border-c-border/60 px-2 py-1.5 dark:border-white/[0.06]">
         {tabBtn('work', <Wrench size={11} />, isPolish ? 'Praca' : 'Work')}
         {tabBtn('context', <Layers size={11} />, isPolish ? 'Kontekst' : 'Context')}
         <button
           type="button"
           onClick={onClose}
-          className="ml-auto rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
+          className="ml-auto rounded-md p-1 text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text dark:hover:bg-white/[0.06] dark:hover:text-c-text"
           title={isPolish ? 'Zamknij panel' : 'Close panel'}
         >
           <X size={14} />
