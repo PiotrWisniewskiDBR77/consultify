@@ -281,7 +281,7 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
       aria-modal="true"
       data-testid="launcher-modal"
       aria-labelledby="outputs-launcher-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-overlay flex items-center justify-center bg-black/40 backdrop-blur-sm"
       onClick={(e) => {
         if (e.target === overlayRef.current) onClose();
       }}

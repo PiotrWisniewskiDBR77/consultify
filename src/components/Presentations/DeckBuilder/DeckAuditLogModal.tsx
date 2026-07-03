@@ -1143,7 +1143,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 py-8"
+      className="fixed inset-0 z-overlay flex items-center justify-center bg-slate-900/40 px-4 py-8"
       onClick={onClose}
     >
       <div

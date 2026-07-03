@@ -95,7 +95,7 @@ export const AIInterviewModal: React.FC<AIInterviewModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white dark:bg-navy-900 w-full max-w-lg rounded-xl shadow-2xl overflow-hidden border border-slate-200 dark:border-navy-700 flex flex-col max-h-[80vh]">
         {/* Header */}
         <div className="p-4 bg-navy-900 flex justify-between items-center text-white">

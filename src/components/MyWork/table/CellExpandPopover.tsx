@@ -118,7 +118,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
   const typeColor = COLUMN_TYPE_COLORS[column.type] || '#6366f1';
 
   return (
-    <div className="fixed inset-0 z-[200]" onClick={onClose}>
+    <div className="fixed inset-0 z-context-menu" onClick={onClose}>
       <div
         ref={popoverRef}
         onClick={(e) => e.stopPropagation()}

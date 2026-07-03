@@ -52,7 +52,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
   };
 
   return (
-    <div className="absolute right-0 top-0 bottom-0 w-72 bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700 shadow-2xl z-40 flex flex-col">
+    <div className="absolute right-0 top-0 bottom-0 w-72 bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700 shadow-2xl z-dropdown flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-800">
         <div className="flex items-center gap-2">

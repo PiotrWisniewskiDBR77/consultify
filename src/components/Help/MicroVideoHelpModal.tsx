@@ -65,12 +65,12 @@ export const MicroVideoHelpModal: React.FC<MicroVideoHelpModalProps> = ({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/40 dark:bg-black/60 z-[60] transition-opacity"
+        className="fixed inset-0 bg-black/40 dark:bg-black/60 z-modal transition-opacity"
         onClick={handleClose}
       />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-[61] flex items-center justify-center p-4 pointer-events-none">
+      <div className="fixed inset-0 z-modal flex items-center justify-center p-4 pointer-events-none">
         <div
           className="pointer-events-auto w-full max-w-lg bg-white dark:bg-navy-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-navy-700 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
           onClick={(e) => e.stopPropagation()}

@@ -352,7 +352,7 @@ export const RecordExpandModal: React.FC<RecordExpandModalProps> = React.memo(
 
     return (
       <div
-        className="fixed inset-0 z-[160] flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]"
+        className="fixed inset-0 z-context-menu flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]"
         onClick={onClose}
       >
         <div

@@ -59,7 +59,7 @@ const DemoBanner: React.FC<DemoBannerProps> = ({ onStartTrialClick }) => {
   return (
     <div
       data-tour="demo-banner"
-      className="bg-navy-900/95 dark:bg-navy-950 border-b border-white/5 text-slate-100 relative z-50"
+      className="bg-navy-900/95 dark:bg-navy-950 border-b border-white/5 text-slate-100 relative z-overlay"
     >
       {/* Main Banner — DBR77 */}
       <div className="px-4 py-2 flex items-center justify-between">

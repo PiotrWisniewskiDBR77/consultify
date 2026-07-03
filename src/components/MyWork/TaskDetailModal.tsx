@@ -172,7 +172,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 bg-black/50 z-toast flex items-center justify-center p-4 backdrop-blur-sm">
       <div className="bg-c-surface w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex justify-between items-center p-4 border-b border-c-border-subtle shrink-0">

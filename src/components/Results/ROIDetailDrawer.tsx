@@ -273,8 +273,8 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-navy-950/40" onClick={onClose} />
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-navy-900 border-l border-navy-700 shadow-2xl flex flex-col overflow-hidden">
+      <div className="fixed inset-0 z-dropdown bg-navy-950/40" onClick={onClose} />
+      <div className="fixed inset-y-0 right-0 z-overlay w-full max-w-lg bg-navy-900 border-l border-navy-700 shadow-2xl flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-navy-700 shrink-0">
           <div className="flex items-center gap-3 min-w-0">

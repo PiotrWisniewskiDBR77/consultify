@@ -474,7 +474,7 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
   return (
     <div ref={overlayRootRef} className="absolute inset-0 z-30 pointer-events-none">
       {shouldShowStatusState && (
-        <div className="absolute top-3 right-3 z-50 flex items-center gap-2 rounded-full border border-amber-300/60 bg-amber-50/95 px-3 py-1.5 text-[10px] font-semibold text-amber-800 shadow-lg backdrop-blur-sm dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-100">
+        <div className="absolute top-3 right-3 z-overlay flex items-center gap-2 rounded-full border border-amber-300/60 bg-amber-50/95 px-3 py-1.5 text-[10px] font-semibold text-amber-800 shadow-lg backdrop-blur-sm dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-100">
           <WifiOff size={12} />
           <div className="flex flex-col leading-tight">
             <span>
@@ -495,7 +495,7 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
 
       {/* Presence badge */}
       {connected && otherUsers.length > 0 && (
-        <div className="absolute top-3 right-3 z-50 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-white/90 dark:bg-navy-900/90 backdrop-blur-sm shadow-lg border border-slate-200/30 dark:border-navy-700/30">
+        <div className="absolute top-3 right-3 z-overlay flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-white/90 dark:bg-navy-900/90 backdrop-blur-sm shadow-lg border border-slate-200/30 dark:border-navy-700/30">
           <Users size={12} className="text-emerald-500" />
           <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">
             {otherUsers.length + 1}
@@ -519,7 +519,7 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
       {lockedNodeEntries.map(([nodeId, uid]) => (
         <div
           key={`lock-${nodeId}`}
-          className="absolute z-40 pointer-events-none"
+          className="absolute z-dropdown pointer-events-none"
           style={{
             left: (nodeRects[nodeId]?.left ?? 0) + (nodeRects[nodeId]?.width ?? 0) / 2,
             top: (nodeRects[nodeId]?.top ?? 0) - 14,
@@ -558,7 +558,7 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
       {otherUsers.map((u, idx) => (
         <div
           key={u.id}
-          className="absolute pointer-events-none z-50 transition-all duration-200"
+          className="absolute pointer-events-none z-overlay transition-all duration-200"
           style={{ left: u.cursorX, top: u.cursorY }}
         >
           <svg width="16" height="20" viewBox="0 0 16 20" fill="none">

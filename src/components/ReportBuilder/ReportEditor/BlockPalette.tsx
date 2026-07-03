@@ -500,7 +500,7 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl h-[min(720px,85vh)] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="p-6 border-b border-slate-200 dark:border-slate-800">

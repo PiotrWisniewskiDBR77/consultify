@@ -728,7 +728,7 @@ const ConfigEditModal: React.FC<{
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
       <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-lg">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-slate-900 dark:text-white">Edit Configuration</h3>
@@ -866,7 +866,7 @@ const ConfigAddModal: React.FC<{
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
       <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-lg">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-slate-900 dark:text-white">Add Configuration</h3>
@@ -1021,7 +1021,7 @@ const ConfigHistoryModal: React.FC<{
   onRollback: (version: ConfigVersion) => void;
   onClose: () => void;
 }> = ({ config, versions, loadError, onRollback, onClose }) => (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
     <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
       <div className="flex items-center justify-between mb-6">
         <div>

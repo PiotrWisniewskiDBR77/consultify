@@ -713,7 +713,7 @@ const SubmitForReviewModal: React.FC<{
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
       <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-md mx-4">
         <div className="p-4 border-b border-slate-200 dark:border-navy-700">
           <h3 className="text-lg font-semibold text-navy-900 dark:text-white">Submit for Review</h3>
@@ -796,7 +796,7 @@ const ApprovalModal: React.FC<{
   notes: string;
   onNotesChange: (notes: string) => void;
 }> = ({ onClose, onApprove, notes, onNotesChange }) => (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
     <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-md mx-4">
       <div className="p-4 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-3">
@@ -851,7 +851,7 @@ const RejectModal: React.FC<{
   reason: string;
   onReasonChange: (reason: string) => void;
 }> = ({ onClose, onReject, reason, onReasonChange }) => (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
     <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-md mx-4">
       <div className="p-4 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-3">
@@ -904,7 +904,7 @@ const RestoreVersionModal: React.FC<{
   onClose: () => void;
   onRestore: () => void;
 }> = ({ version, onClose, onRestore }) => (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
     <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-md mx-4">
       <div className="p-4 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-3">

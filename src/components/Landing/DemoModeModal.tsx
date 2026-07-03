@@ -110,7 +110,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          className="fixed inset-0 z-toast flex items-center justify-center p-4"
           onClick={onClose}
         >
           <div className="absolute inset-0 bg-c-bg/90 backdrop-blur-md" />

@@ -200,7 +200,7 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed inset-0 z-overlay flex items-center justify-center">
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}

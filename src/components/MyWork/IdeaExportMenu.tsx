@@ -583,7 +583,7 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+    <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/30 backdrop-blur-sm">
       <div className="bg-white dark:bg-navy-900 rounded-2xl shadow-2xl border border-slate-200/60 dark:border-navy-700/60 w-full max-w-2xl overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
           <div className="flex items-center gap-2">

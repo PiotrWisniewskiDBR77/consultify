@@ -530,7 +530,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[80] flex justify-end">
+    <div className="fixed inset-0 z-modal flex justify-end">
       <div className="absolute inset-0 bg-black/20 dark:bg-black/40" onClick={onClose} />
       <div
         ref={drawerRef}

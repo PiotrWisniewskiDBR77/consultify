@@ -114,7 +114,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
   };
 
   return (
-    <div className="fixed right-0 top-0 bottom-0 w-96 bg-white dark:bg-navy-900 shadow-2xl border-l border-slate-200 dark:border-slate-700 z-50 flex flex-col">
+    <div className="fixed right-0 top-0 bottom-0 w-96 bg-white dark:bg-navy-900 shadow-2xl border-l border-slate-200 dark:border-slate-700 z-overlay flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-3">

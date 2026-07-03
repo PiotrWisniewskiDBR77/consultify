@@ -209,7 +209,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
       );
     }
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
         <div className="bg-white dark:bg-navy-900 rounded-xl p-8">
           <Loader2 className="w-8 h-8 text-primary-500 animate-spin mx-auto" />
         </div>
@@ -232,7 +232,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
       );
     }
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay p-4">
         <div className="bg-white dark:bg-navy-900 rounded-xl p-8 text-center max-w-sm">
           <AlertCircle className="w-12 h-12 text-danger-400 mx-auto mb-3" />
           <p className="text-slate-500 dark:text-slate-400">
@@ -526,7 +526,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
 
   // Modal mode: wrap in overlay
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay p-4">
       {content}
     </div>
   );

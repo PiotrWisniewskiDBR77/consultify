@@ -301,7 +301,7 @@ const GenerateInitiativesModal: FC<{
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-overlay flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -539,8 +539,8 @@ const InitiativeRow: FC<{
 
           {showStatusDropdown && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setShowStatusDropdown(false)} />
-              <div className="absolute left-0 top-full mt-1 z-50 w-40 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
+              <div className="fixed inset-0 z-dropdown" onClick={() => setShowStatusDropdown(false)} />
+              <div className="absolute left-0 top-full mt-1 z-overlay w-40 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
                 {getStatusActions(initiative.status).length === 0 ? (
                   <div className="px-3 py-2 text-xs text-slate-500 dark:text-slate-400">
                     No actions
@@ -633,8 +633,8 @@ const InitiativeRow: FC<{
 
             {showActions && (
               <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowActions(false)} />
-                <div className="absolute right-0 top-full mt-1 z-50 w-40 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
+                <div className="fixed inset-0 z-dropdown" onClick={() => setShowActions(false)} />
+                <div className="absolute right-0 top-full mt-1 z-overlay w-40 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
                   <button
                     onClick={() => {
                       onOpen(initiative.id);
@@ -1358,7 +1358,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
       <AnimatePresence>
         {showManualModal && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-overlay flex items-center justify-center p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -1526,7 +1526,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
       <AnimatePresence>
         {editModalOpen && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-overlay flex items-center justify-center p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

@@ -30,7 +30,7 @@ export const MobileToolbarMenu: React.FC<MobileToolbarMenuProps> = ({ children }
         {open ? <X size={16} /> : <MoreHorizontal size={16} />}
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-navy-950 rounded-xl border border-slate-200 dark:border-navy-700 shadow-xl p-2 min-w-[200px] max-h-[70vh] overflow-y-auto">
+        <div className="absolute right-0 top-full mt-1 z-overlay bg-white dark:bg-navy-950 rounded-xl border border-slate-200 dark:border-navy-700 shadow-xl p-2 min-w-[200px] max-h-[70vh] overflow-y-auto">
           <div className="flex flex-col gap-1" onClick={() => setOpen(false)}>
             {children}
           </div>

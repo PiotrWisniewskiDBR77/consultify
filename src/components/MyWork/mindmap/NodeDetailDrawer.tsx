@@ -375,7 +375,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
     nodeData.sourceType === 'ai_suggestion';
 
   return (
-    <div className="fixed top-0 right-0 bottom-0 z-[85] w-[420px] max-w-[90vw] bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border-l border-slate-200/60 dark:border-navy-700/60 shadow-2xl flex flex-col overflow-hidden">
+    <div className="fixed top-0 right-0 bottom-0 z-modal w-[420px] max-w-[90vw] bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border-l border-slate-200/60 dark:border-navy-700/60 shadow-2xl flex flex-col overflow-hidden">
       {/* Header */}
       <div className="flex items-start gap-3 px-5 py-4 border-b border-slate-200/40 dark:border-navy-700/40">
         <div className="flex-1 min-w-0">

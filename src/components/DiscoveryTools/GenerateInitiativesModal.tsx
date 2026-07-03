@@ -81,7 +81,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/40">
       <div className="w-full max-w-lg bg-white dark:bg-navy-900 rounded-xl shadow-lg border border-slate-200 dark:border-navy-700">
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-700">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white">

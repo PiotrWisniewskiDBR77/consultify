@@ -105,7 +105,7 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-overlay flex items-center justify-center bg-slate-950/40 backdrop-blur-sm p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby={`${testId}-title`}

@@ -371,8 +371,8 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
 
   const content = (
     <>
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[200]" onClick={onClose} />
-      <div className="fixed top-[14%] left-1/2 -translate-x-1/2 w-full max-w-md z-[201]">
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-context-menu" onClick={onClose} />
+      <div className="fixed top-[14%] left-1/2 -translate-x-1/2 w-full max-w-md z-context-menu">
         <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl border border-slate-200 dark:border-navy-700 overflow-hidden">
           <div className="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-slate-200 dark:border-navy-700">
             <Search size={16} className="text-slate-600 shrink-0" />

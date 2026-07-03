@@ -340,7 +340,7 @@ export const SubscriptionsPanel: React.FC = () => {
 
       {/* Create Subscription Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-slate-900 border border-white/10 rounded-xl p-6 w-full max-w-md">
             <h3 className="text-lg font-semibold text-white mb-6">Create Subscription</h3>
 
@@ -444,7 +444,7 @@ export const SubscriptionsPanel: React.FC = () => {
 
       {/* Manage Subscription Modal */}
       {selectedSubscription && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-slate-900 border border-white/10 rounded-xl p-6 w-full max-w-lg">
             <h3 className="text-lg font-semibold text-white mb-2">Manage Subscription</h3>
             <p className="text-sm text-slate-600 dark:text-slate-500 mb-6">

@@ -122,13 +122,13 @@ export const MicroVideoPrompt: React.FC<MicroVideoPromptProps> = ({
     <>
       {/* Backdrop — Layer 3 floating */}
       <div
-        className="fixed inset-0 z-[60] bg-black/30 dark:bg-black/50 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 z-modal bg-black/30 dark:bg-black/50 backdrop-blur-sm transition-opacity"
         onClick={handleOverlayClick}
         aria-hidden="true"
       />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-[61] flex items-center justify-center p-4 pointer-events-none">
+      <div className="fixed inset-0 z-modal flex items-center justify-center p-4 pointer-events-none">
         <div
           role="dialog"
           aria-modal="true"

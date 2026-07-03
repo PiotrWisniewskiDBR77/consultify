@@ -178,7 +178,7 @@ export function ReportTemplatePickerModal(props: {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-overlay flex items-center justify-center p-4">
       <button
         type="button"
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -615,7 +615,7 @@ export function ReportTemplatePickerModal(props: {
 
       {/* Small meta modal: name + module + description (adds context for generator) */}
       {isNewTemplateMetaOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-modal flex items-center justify-center p-4">
           <button
             type="button"
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -757,7 +757,7 @@ export function ReportTemplatePickerModal(props: {
 
       {/* Template builder overlay (uses the full report generator UI, but saves as template) */}
       {isTemplateBuilderOpen && (
-        <div className="fixed inset-0 z-[70]">
+        <div className="fixed inset-0 z-modal">
           <ReportEditor
             mode="template"
             templateMeta={{

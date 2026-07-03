@@ -325,7 +325,7 @@ export const IPAccessRulesPanel: React.FC = () => {
 
       {/* Add Rule Modal */}
       {showAddForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-slate-900 border border-white/10 rounded-xl p-6 w-full max-w-md">
             <h3 className="text-lg font-semibold text-white mb-6">Add IP Rule</h3>
 

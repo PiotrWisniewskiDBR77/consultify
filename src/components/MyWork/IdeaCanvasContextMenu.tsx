@@ -248,7 +248,7 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
   return (
     <div
       ref={menuRef}
-      className="fixed z-[100] bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-xl py-1.5 min-w-[200px] animate-in fade-in zoom-in-95 duration-150"
+      className="fixed z-toast bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-xl py-1.5 min-w-[200px] animate-in fade-in zoom-in-95 duration-150"
       style={{ left: position.x, top: position.y }}
     >
       {isOnNode && target.nodeLabel && (

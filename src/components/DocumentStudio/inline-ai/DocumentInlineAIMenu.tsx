@@ -141,7 +141,7 @@ export const DocumentInlineAIMenu: React.FC<DocumentInlineAIMenuProps> = ({
     <div
       ref={menuRef}
       data-testid="doc-inline-ai-menu"
-      className="fixed z-50 rounded-lg border border-slate-200 bg-white shadow-lg dark:border-navy-700 dark:bg-navy-900 p-2"
+      className="fixed z-overlay rounded-lg border border-slate-200 bg-white shadow-lg dark:border-navy-700 dark:bg-navy-900 p-2"
       style={{
         top: `${position.top}px`,
         left: `${position.left}px`,

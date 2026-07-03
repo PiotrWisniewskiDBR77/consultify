@@ -55,7 +55,7 @@ export const GlossaryPanel: React.FC<GlossaryPanelProps> = ({ isOpen, onClose })
 
   return (
     <div
-      className="fixed inset-0 z-[300] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-context-menu flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
       onClick={onClose}
     >
       <div

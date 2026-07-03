@@ -190,7 +190,7 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay p-4">
       <div className="bg-white dark:bg-navy-900 rounded-xl w-full max-w-lg shadow-xl overflow-hidden">
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700">

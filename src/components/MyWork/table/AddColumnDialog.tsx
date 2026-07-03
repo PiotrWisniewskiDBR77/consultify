@@ -188,7 +188,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
   const groups = getPropertyGroups();
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-sm">
+    <div className="fixed inset-0 z-context-menu flex items-center justify-center bg-black/30 backdrop-blur-sm">
       <div className="w-[480px] max-h-[85vh] overflow-auto rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
