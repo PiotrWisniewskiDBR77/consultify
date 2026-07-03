@@ -17,7 +17,6 @@ import {
   Eye,
   FileBarChart2,
   FileText,
-  Loader2,
   Lock,
   MessageSquare,
   Pencil,
@@ -52,6 +51,7 @@ import {
 import { useModuleOpenDocuments } from '../../shared/ModuleHub/useModuleOpenDocuments';
 import { type RowAction } from '../../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../../shared/TableWithPreviewLayout';
+import { EmptyState, LoadingState } from '../../shared/states';
 import { ErrorState } from '../../ui/primitives/ErrorState';
 import { EntityStatusChip, MetaChip } from '../../ui/primitives/chips';
 import { PortfolioHealthReport } from './PortfolioHealthReport';
@@ -727,8 +727,8 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
   const renderContent = () => {
     if (isLoading) {
       return (
-        <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+        <div className="p-6">
+          <LoadingState template="list" rows={6} />
         </div>
       );
     }
@@ -750,23 +750,20 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
     if (activeTab === 'list') {
       if (filteredReports.length === 0) {
         return (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <FileBarChart2 className="w-16 h-16 text-slate-600 mb-4" />
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-              No reports yet
-            </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-md">
-              Generate your first management report to track project status, team progress, and
-              portfolio health.
-            </p>
-            <button
-              onClick={handleNewReport}
-              className="flex items-center gap-2 px-6 py-3 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-xl font-medium transition-colors"
-            >
-              <Sparkles size={18} />
-              Generate Report
-            </button>
-          </div>
+          <EmptyState
+            variant="new"
+            icon={FileBarChart2}
+            title={t('reports.empty.noReports', 'No reports yet')}
+            description={t(
+              'reports.empty.noReportsDesc',
+              'Generate your first management report to track project status, team progress, and portfolio health.'
+            )}
+            primaryAction={{
+              label: t('reports.actions.generate', 'Generate Report'),
+              onClick: handleNewReport,
+              icon: Sparkles,
+            }}
+          />
         );
       }
 
@@ -929,15 +926,15 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
     if (activeTab === 'reports') {
       if (templates.length === 0) {
         return (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <Wand2 className="w-16 h-16 text-slate-600 mb-4" />
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-              No templates yet
-            </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-              Create templates to quickly generate reports with predefined sections.
-            </p>
-          </div>
+          <EmptyState
+            variant="new"
+            icon={Wand2}
+            title={t('reports.empty.noTemplates', 'No templates yet')}
+            description={t(
+              'reports.empty.noTemplatesDesc',
+              'Create templates to quickly generate reports with predefined sections.'
+            )}
+          />
         );
       }
 
@@ -957,15 +954,15 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
     if (activeTab === 'initiatives') {
       if (schedules.length === 0) {
         return (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <CalendarClock className="w-16 h-16 text-slate-600 mb-4" />
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-              No schedules yet
-            </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-              Set up recurring schedules to automatically generate reports.
-            </p>
-          </div>
+          <EmptyState
+            variant="new"
+            icon={CalendarClock}
+            title={t('reports.empty.noSchedules', 'No schedules yet')}
+            description={t(
+              'reports.empty.noSchedulesDesc',
+              'Set up recurring schedules to automatically generate reports.'
+            )}
+          />
         );
       }
 
