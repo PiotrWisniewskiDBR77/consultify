@@ -37,11 +37,24 @@ Kluczowe fixy (wszystkie na demo, commity na `feat/deliverables-w1`):
 - **Railway:** `LINKEDIN_CLIENT_ID=86jcfcnstl4cvu`, `LINKEDIN_CLIENT_SECRET` (ustawione), `LINKEDIN_CALLBACK_URL` ok.
 - **E2E PRZESZŁO**: Piotr dokończył logowanie LinkedIn rano 07-03 → wiersz `oauth_links` (`linkedin sRaIO1sdc7 piotr.wisniewski@dbr77.com → user d2b6a316`, display „Piotr Wiśniewski Ph.D.", linked_at 09:12:18Z). Zalinkowany po mailu do ISTNIEJĄCEGO usera — zero duplikatu. Opcjonalne (nie blokuje): weryfikacja strony DBR77 przez admina (Settings→Verify) jeśli KAŻDY user LinkedIn ma się logować.
 
-### Re-test finalny 2026-07-03 ~09:38 UTC (wszystkie 3 metody na @538298a4e3)
+### Re-test finalny 2026-07-03 ~09:38 UTC (wszystkie 3 metody na @538298a4e3, DEMO)
 - **Email/hasło**: `POST /api/auth/login` → 200 + JWT (piotr.wisniewski@dbr77.com). ✅
 - **Google**: pełne E2E w przeglądarce (logout → /auth → przycisk Google → chooser → „signing back in" Continue → `/oauth/callback?token=…` → `/chat` zalogowany); `oauth_links.last_login_at` google podbił się na 09:38 = fast-path po `provider_user_id` przy powtórnym logowaniu działa. ✅
 - **LinkedIn**: wiersz w DB jw. (pętla domknięta 09:12). ✅
 - **Duplikaty**: `users` z tym mailem = dokładnie 1 (d2b6a316); nowi userzy 24h = tylko persony seedu Atelier. ✅
+
+### PRODUKCJA (consultify.ai / Railway service `consultify`, environment `production`, DB centerbeam) — LinkedIn domknięty 2026-07-03 ~15:57 UTC
+Piotr zauważył że demo≠produkcja: Google na prod miał już WŁASNY, poprawny klient (inny GCP client_id niż demo, nikt wcześniej o tym nie wspominał w handoffie) — zweryfikowany technicznie (LinkedIn/Google redirect zwraca prawdziwy ekran logowania, nie `invalid_client`), ale nie było żywego testu. LinkedIn na prod miał PLACEHOLDER (`LINKEDIN_CLIENT_ID=1`, `LINKEDIN_CLIENT_SECRET=1`, brak `LINKEDIN_CALLBACK_URL`→fallback `localhost:3005`) — kompletnie niedziałający.
+
+**Fix (zrobiony w tej sesji, bez hasła Piotra):**
+1. LinkedIn Developer Portal, apka „Consultify" (app_id `256781426`) → Auth tab → dodany DRUGI redirect URL `https://consultify.ai/api/auth/linkedin/callback` (obok demo-owego) — jedna apka obsługuje obie domeny.
+2. Railway: `railway variables --environment production --service consultify --set LINKEDIN_CLIENT_ID=86jcfcnstl4cvu --set LINKEDIN_CLIENT_SECRET=<ten sam co demo> --set LINKEDIN_CALLBACK_URL=https://consultify.ai/api/auth/linkedin/callback`.
+3. Zmiana zmiennych NIE auto-redeployuje natychmiast (obserwowane opóźnienie) — trzeba `railway environment production` (przełącza linked context CLI, `--environment` flag nieobsługiwany przez `redeploy`) → `railway redeploy --service consultify -y`. Build+deploy ~7 min, potwierdzone `gitSha` się zmienił.
+4. Piotr sam dokończył login (agent nie wpisuje haseł — LinkedIn zażądał re-auth hasłem mimo żywej sesji w innej karcie, prawdopodobnie step-up przy autoryzacji NOWEGO redirect URI).
+
+**Zweryfikowane w DB produkcyjnej (centerbeam, NIE trolley):** `oauth_links` nowy wiersz `linkedin piotr.wisniewski@dbr77.com→user 7f8ef469 (prod, OWNER)`, `linked_at=15:57:06`. Dokładnie 1 user z tym mailem na prod — zero duplikatu.
+
+**Otwarte na prod:** Google nie przetestowany żywym klikiem (tylko technicznie zweryfikowany redirect — brak `invalid_client`). Jeśli ktoś zechce przetestować, flow identyczny jak LinkedIn.
 
 ### Meczowanie z bazą (wymóg Piotra) — DZIAŁA, zweryfikowane
 `oauthService.findOrCreateUser`: (1) po `oauth_links(provider,provider_user_id)` fast-path; (2) **po `LOWER(email)` → LINKUJE do istniejącego usera** (bez duplikatu); (3) nowy mail → nowy user+org (role CEO, plan free). Google Piotra zalinkował się do istniejącego konta (`oauth_links` row: `google piotr.wisniewski@dbr77.com→user d2b6a316`, org demo). Tabela `oauth_links` istnieje na trolley.
