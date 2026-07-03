@@ -22,6 +22,8 @@ import {
   YAxis,
 } from 'recharts';
 
+import { useFinanceChartColors } from './financeChartTokens';
+
 interface CashFlowEntry {
   year: number;
   costs: number;
@@ -45,6 +47,7 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
   showBreakeven = true,
   height = 400,
 }) => {
+  const chart = useFinanceChartColors();
   const formatCurrency = (value: number) => {
     if (Math.abs(value) >= 1000000) {
       return `${(value / 1000000).toFixed(1)}M`;
@@ -124,8 +127,14 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
             </div>
             {showCumulative && (
               <div className="flex items-center justify-between gap-4">
-                <span className="text-primary-500 flex items-center gap-1">
-                  <div className="w-3 h-3 rounded-full border-2 border-primary-500" />
+                <span
+                  className="flex items-center gap-1"
+                  style={{ color: chart.cumulative }}
+                >
+                  <div
+                    className="w-3 h-3 rounded-full border-2"
+                    style={{ borderColor: chart.cumulative }}
+                  />
                   Skumulowane:
                 </span>
                 <span
@@ -205,13 +214,13 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
       {/* Chart */}
       <ResponsiveContainer width="100%" height={height}>
         <ComposedChart data={cashFlows} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.2)" />
+          <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
           <XAxis
             dataKey="year"
             tickFormatter={(value) => `Rok ${value}`}
-            tick={{ fill: '#64748b', fontSize: 12 }}
+            tick={{ fill: chart.axis, fontSize: 12 }}
           />
-          <YAxis tickFormatter={formatCurrency} tick={{ fill: '#64748b', fontSize: 12 }} />
+          <YAxis tickFormatter={formatCurrency} tick={{ fill: chart.axis, fontSize: 12 }} />
           <Tooltip content={<CustomTooltip />} />
           <Legend
             wrapperStyle={{ paddingTop: '20px' }}
@@ -224,18 +233,24 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
           {showBreakeven && (
             <ReferenceLine
               y={0}
-              stroke="#94a3b8"
+              stroke={chart.reference}
               strokeDasharray="5 5"
-              label={{ value: 'Break-even', position: 'left', fill: '#94a3b8', fontSize: 11 }}
+              label={{ value: 'Break-even', position: 'left', fill: chart.reference, fontSize: 11 }}
             />
           )}
 
           {/* Bars for costs and benefits */}
-          <Bar dataKey="costs" name="Costs" fill="#f43f5e" radius={[4, 4, 0, 0]} maxBarSize={50} />
+          <Bar
+            dataKey="costs"
+            name="Costs"
+            fill={chart.cost}
+            radius={[4, 4, 0, 0]}
+            maxBarSize={50}
+          />
           <Bar
             dataKey="benefits"
             name="Benefits"
-            fill="#10b981"
+            fill={chart.benefit}
             radius={[4, 4, 0, 0]}
             maxBarSize={50}
           />
@@ -245,8 +260,8 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
             type="monotone"
             dataKey="netCashFlow"
             name="Net Flow"
-            fill="rgba(59, 130, 246, 0.2)"
-            stroke="#3b82f6"
+            fill={chart.netFill}
+            stroke={chart.net}
             strokeWidth={2}
           />
 
@@ -256,10 +271,10 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
               type="monotone"
               dataKey="cumulativeCashFlow"
               name="Skumulowane"
-              stroke="#6366f1"
+              stroke={chart.cumulative}
               strokeWidth={3}
-              dot={{ fill: '#6366f1', strokeWidth: 2, r: 4 }}
-              activeDot={{ r: 6, fill: '#6366f1' }}
+              dot={{ fill: chart.cumulative, strokeWidth: 2, r: 4 }}
+              activeDot={{ r: 6, fill: chart.cumulative }}
             />
           )}
         </ComposedChart>
@@ -282,7 +297,7 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
           </div>
           {showCumulative && (
             <div className="flex items-center gap-2">
-              <div className="w-4 h-1 rounded bg-primary-500" />
+              <div className="w-4 h-1 rounded" style={{ backgroundColor: chart.cumulative }} />
               <span>Skumulowane</span>
             </div>
           )}
