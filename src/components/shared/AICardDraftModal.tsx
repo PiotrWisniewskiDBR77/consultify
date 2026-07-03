@@ -152,7 +152,7 @@ export const AICardDraftModal: React.FC<AICardDraftModalProps> = ({
             onClick={onClose}
             className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 dark:text-slate-400"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
 
