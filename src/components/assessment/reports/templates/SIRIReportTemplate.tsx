@@ -34,6 +34,11 @@ import {
 import { SIRIAssessmentData } from '../../../../types';
 import { buildSIRIConclusionModel } from '../../../../services/report/siriConclusion';
 import {
+  buildSiriConclusionPayload,
+  pushReportConclusion,
+  type ReportConclusionSource,
+} from '../../../../services/report/conclusionPush';
+import {
   ConclusionExecutiveSummary,
   ConclusionGapCards,
 } from '../ConclusionSummary';
@@ -136,6 +141,12 @@ interface SIRIReportTemplateProps {
   organizationName?: string;
   assessmentDate?: string;
   showLegalNotice?: boolean;
+  /**
+   * CONCLUSION_LAYER bridge: when provided, the W1 conclusion model built for
+   * this report is persisted as a Conclusion candidate (fail-safe push via
+   * POST /api/conclusions — a failure never affects rendering).
+   */
+  conclusionSource?: ReportConclusionSource;
 }
 
 export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
@@ -143,6 +154,7 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
   organizationName = 'Organization',
   assessmentDate,
   showLegalNotice = true,
+  conclusionSource,
 }) => {
   // Calculate building block scores
   const blockScores = ['PROCESS', 'TECHNOLOGY', 'ORGANIZATION'].map((block) => ({
@@ -174,6 +186,15 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
 
   // Conclusion layer (WNIOSKOWA) — deterministic, engine-grounded (OXFORD O2.2).
   const conclusion = buildSIRIConclusionModel(data, 'pl');
+
+  // CONCLUSION_LAYER bridge: persist the W1 verdict as a Conclusion candidate
+  // when the caller identifies the source assessment. Fail-safe by contract.
+  React.useEffect(() => {
+    if (!conclusionSource?.assessmentId) return;
+    void pushReportConclusion(buildSiriConclusionPayload(conclusion, conclusionSource));
+    // Re-push only when the source identity changes — the model is deterministic per data.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conclusionSource?.assessmentId]);
   const execVM = {
     headline: conclusion.executiveSummary.headline,
     k1_state: conclusion.executiveSummary.k1_state,
