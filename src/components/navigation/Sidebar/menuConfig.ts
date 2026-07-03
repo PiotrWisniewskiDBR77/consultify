@@ -66,26 +66,21 @@ export function getMenuStructure(t: TranslationFn, _journeyState?: string): Menu
       icon: React.createElement(ClipboardList, { size: 20 }),
       viewId: AppView.DISCOVERY_CONSULTANT,
     },
-    // 3. Narzędzia (v3): jeden obszar Tools (Discovery + Assessments)
+    // 3. Narzędzia (DECYZJA-D2): Tools i Assessment jako DWA równorzędne
+    // top-level wpisy sidebara (nie flyout submenu pod „Tools"). Routing
+    // /assessment (ASSESSMENT_OVERVIEW) istnieje niezależnie od /discovery-tools —
+    // to zmiana struktury nav, nie nowy routing.
     {
       id: 'TOOLS',
       label: t('sidebar.tools', 'Tools'),
       icon: React.createElement(Wrench, { size: 20 }),
       viewId: AppView.DISCOVERY_TOOLS,
-      subItems: [
-        {
-          id: 'TOOLS_LIBRARY',
-          label: t('sidebar.toolsLibrary', 'Library'),
-          icon: React.createElement(BookOpen, { size: 16 }),
-          viewId: AppView.DISCOVERY_TOOLS,
-        },
-        {
-          id: 'TOOLS_ASSESSMENT',
-          label: t('sidebar.assessment', 'Assessment'),
-          icon: React.createElement(CheckCircle2, { size: 16 }),
-          viewId: AppView.ASSESSMENT_OVERVIEW,
-        },
-      ],
+    },
+    {
+      id: 'TOOLS_ASSESSMENT',
+      label: t('sidebar.assessment', 'Assessment'),
+      icon: React.createElement(CheckCircle2, { size: 20 }),
+      viewId: AppView.ASSESSMENT_OVERVIEW,
     },
     // 5. Inicjatywy - zarządzanie inicjatywami
     {
