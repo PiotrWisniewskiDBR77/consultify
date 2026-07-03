@@ -221,7 +221,10 @@ async function persistEvent(
  *
  * Returns null when the write must NOT proceed (socket closed / fail-closed).
  */
-async function ensureFreshOrgContext(ws: CollabSocket, db: IDatabase): Promise<WsOrgContext | null> {
+async function ensureFreshOrgContext(
+  ws: CollabSocket,
+  db: IDatabase
+): Promise<WsOrgContext | null> {
   const ctx = ws.__orgCtx;
   const user = ws.__user;
   if (!ctx || !user) {
@@ -236,11 +239,9 @@ async function ensureFreshOrgContext(ws: CollabSocket, db: IDatabase): Promise<W
   if (isWsOrgContextFresh(ctx)) return ctx;
 
   if (!ws.__orgCtxRefresh) {
-    ws.__orgCtxRefresh = resolveWsOrgContext(db, user.userId, ctx.jwtOrganizationId).finally(
-      () => {
-        ws.__orgCtxRefresh = null;
-      }
-    );
+    ws.__orgCtxRefresh = resolveWsOrgContext(db, user.userId, ctx.jwtOrganizationId).finally(() => {
+      ws.__orgCtxRefresh = null;
+    });
   }
   let fresh: WsOrgContext;
   try {
