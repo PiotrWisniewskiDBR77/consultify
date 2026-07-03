@@ -101,15 +101,15 @@ export const TemplatesPopover: React.FC<TemplatesPopoverProps> = ({
   };
 
   return (
-    <div className="w-64 max-h-[440px] overflow-y-auto rounded-xl bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/[0.06] shadow-xl">
+    <div className="w-64 max-h-[440px] overflow-y-auto rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border shadow-xl">
       <div className="p-2">
         <div className="relative">
-          <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-600" />
+          <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-c-text-secondary" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={isPl ? 'Szukaj…' : 'Search…'}
-            className="w-full pl-7 pr-2 py-1.5 text-[11px] rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200/40 dark:border-white/[0.04] text-slate-700 dark:text-slate-200 placeholder:text-slate-400 outline-none focus:ring-1 focus:ring-slate-400/30"
+            className="w-full pl-7 pr-2 py-1.5 text-[11px] rounded-lg bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border text-c-text-secondary dark:text-c-text placeholder:text-c-text-muted outline-none focus:ring-1 focus:ring-c-border"
             autoFocus
           />
         </div>
@@ -118,16 +118,16 @@ export const TemplatesPopover: React.FC<TemplatesPopoverProps> = ({
       {/* Starting points (Popular Starts) */}
       {filteredStarts.length > 0 && (
         <div className="px-1 pb-1">
-          <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-500/70">
+          <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
             {isPl ? 'Punkty startowe' : 'Starting points'}
           </div>
           {filteredStarts.map((s) => (
             <button
               key={s.id}
               onClick={() => handleIntentClick(s.id)}
-              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
             >
-              <Compass size={12} className="text-slate-500 shrink-0" />
+              <Compass size={12} className="text-c-text-secondary shrink-0" />
               {isPl ? s.labelPl : s.labelEn}
             </button>
           ))}
@@ -136,12 +136,12 @@ export const TemplatesPopover: React.FC<TemplatesPopoverProps> = ({
 
       {/* Divider between sections */}
       {filteredStarts.length > 0 && templates.length > 0 && (
-        <div className="border-t border-slate-200/30 dark:border-white/[0.04]" />
+        <div className="border-t border-c-border-subtle dark:border-c-border" />
       )}
 
       {/* Templates */}
       <div className="px-1 pb-1">
-        <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600">
+        <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
           {isPl ? 'Szablony' : 'Templates'}
         </div>
         {templates.map((t) => (
@@ -151,25 +151,25 @@ export const TemplatesPopover: React.FC<TemplatesPopoverProps> = ({
               onApplyTemplate(t.id);
               onClose();
             }}
-            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
           >
-            <Layers size={12} className="text-slate-600 shrink-0" />
+            <Layers size={12} className="text-c-text-secondary shrink-0" />
             {isPl ? t.labelPl : t.labelEn}
           </button>
         ))}
         {templates.length === 0 && filteredStarts.length === 0 && (
-          <div className="px-2 py-3 text-[10px] text-slate-600 text-center">
+          <div className="px-2 py-3 text-[10px] text-c-text-secondary text-center">
             {isPl ? 'Brak wyników' : 'No results'}
           </div>
         )}
       </div>
-      <div className="border-t border-slate-200/30 dark:border-white/[0.04] px-1 py-1">
+      <div className="border-t border-c-border-subtle dark:border-c-border px-1 py-1">
         <button
           onClick={() => {
             onOpenGallery();
             onClose();
           }}
-          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-medium text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
         >
           <ChevronRight size={12} />
           {isPl ? 'Zobacz więcej' : 'See more'}

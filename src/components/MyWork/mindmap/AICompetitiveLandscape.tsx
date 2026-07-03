@@ -97,17 +97,17 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/40">
-      <div className="w-full max-w-2xl rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
-        <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-c-bg">
+      <div className="w-full max-w-2xl rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
           <div>
             <div className="flex items-center gap-2">
-              <Globe size={16} className="text-blue-500" />
-              <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+              <Globe size={16} className="text-c-info" />
+              <h3 className="text-sm font-bold text-c-text dark:text-c-text">
                 {isPl ? 'AI: Krajobraz konkurencyjny' : 'AI: Competitive Landscape'}
               </h3>
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mt-1">
               {isPl
                 ? 'AI identyfikuje konkurentów i pozycjonowanie rynkowe.'
                 : 'AI identifies competitors and market positioning.'}
@@ -115,7 +115,7 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-c-text-secondary hover:text-c-text-secondary dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
           >
             <X size={16} />
           </button>
@@ -124,8 +124,8 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
         <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
           {competitors.length === 0 && !loading && (
             <div className="text-center py-8">
-              <Trophy size={36} className="text-slate-600 dark:text-slate-400 mx-auto mb-3" />
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
+              <Trophy size={36} className="text-c-text-secondary dark:text-c-text-muted mx-auto mb-3" />
+              <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mb-4">
                 {isPl
                   ? 'AI przeanalizuje krajobraz konkurencyjny dla Twojego pomysłu.'
                   : 'AI will analyze the competitive landscape for your idea.'}
@@ -133,7 +133,7 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
               <button
                 onClick={analyze}
                 disabled={loading || locked}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-500/15 to-indigo-500/10 text-[11px] font-bold text-blue-700 dark:text-blue-300 hover:from-blue-500/25 hover:to-indigo-500/15 transition-all disabled:opacity-40"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r   text-[11px] font-bold text-c-info dark:text-c-info hover: hover: transition-all disabled:opacity-40"
               >
                 <Sparkles size={14} />
                 {isPl ? 'Analizuj konkurencję' : 'Analyze competition'}
@@ -143,8 +143,8 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
 
           {loading && (
             <div className="flex items-center justify-center gap-2 py-8">
-              <Loader2 size={16} className="animate-spin text-blue-500" />
-              <span className="text-[11px] text-slate-500">
+              <Loader2 size={16} className="animate-spin text-c-info" />
+              <span className="text-[11px] text-c-text-secondary">
                 {isPl ? 'Analizuję rynek...' : 'Analyzing market...'}
               </span>
             </div>
@@ -157,22 +157,22 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
                 return (
                   <div
                     key={comp.id}
-                    className={`p-3 rounded-xl border transition-all ${isAdded ? 'border-emerald-400/30 bg-emerald-500/5' : 'border-slate-200/30 dark:border-navy-700/30 bg-slate-50/30 dark:bg-navy-950/10'}`}
+                    className={`p-3 rounded-xl border transition-all ${isAdded ? 'border-c-success bg-c-success' : 'border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface'}`}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <Globe size={12} className="text-blue-500" />
-                        <span className="text-[12px] font-bold text-slate-700 dark:text-slate-200">
+                        <Globe size={12} className="text-c-info" />
+                        <span className="text-[12px] font-bold text-c-text-secondary dark:text-c-text">
                           {comp.name}
                         </span>
                       </div>
                       {isAdded ? (
-                        <span className="text-[9px] text-emerald-500 font-bold">ADDED</span>
+                        <span className="text-[9px] text-c-success font-bold">ADDED</span>
                       ) : (
                         <button
                           onClick={() => handleAdd(comp)}
                           disabled={locked}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors disabled:opacity-40"
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold text-c-info dark:text-c-info hover:bg-c-info transition-colors disabled:opacity-40"
                         >
                           <Plus size={9} />
                           {isPl ? 'Dodaj' : 'Add'}
@@ -180,18 +180,18 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
                       )}
                     </div>
                     {comp.positioning && (
-                      <div className="text-[10px] text-slate-600 dark:text-slate-300 mb-2">
+                      <div className="text-[10px] text-c-text-secondary dark:text-c-text-muted mb-2">
                         {comp.positioning}
                       </div>
                     )}
                     <div className="flex gap-3">
                       {comp.strengths.length > 0 && (
                         <div className="flex-1">
-                          <div className="text-[8px] font-bold text-emerald-600 uppercase tracking-wider mb-1">
+                          <div className="text-[8px] font-bold text-c-success uppercase tracking-wider mb-1">
                             {isPl ? 'Mocne' : 'Strengths'}
                           </div>
                           {comp.strengths.map((s, i) => (
-                            <div key={i} className="text-[9px] text-slate-500 dark:text-slate-400">
+                            <div key={i} className="text-[9px] text-c-text-secondary dark:text-c-text-muted">
                               + {s}
                             </div>
                           ))}
@@ -199,11 +199,11 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
                       )}
                       {comp.weaknesses.length > 0 && (
                         <div className="flex-1">
-                          <div className="text-[8px] font-bold text-danger-600 uppercase tracking-wider mb-1">
+                          <div className="text-[8px] font-bold text-c-danger uppercase tracking-wider mb-1">
                             {isPl ? 'Slabe' : 'Weaknesses'}
                           </div>
                           {comp.weaknesses.map((w, i) => (
-                            <div key={i} className="text-[9px] text-slate-500 dark:text-slate-400">
+                            <div key={i} className="text-[9px] text-c-text-secondary dark:text-c-text-muted">
                               - {w}
                             </div>
                           ))}
@@ -211,11 +211,11 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
                       )}
                     </div>
                     {comp.differentiator && (
-                      <div className="mt-2 pt-2 border-t border-slate-200/20 dark:border-navy-700/20">
-                        <span className="text-[8px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                      <div className="mt-2 pt-2 border-t border-c-border-subtle dark:border-c-border">
+                        <span className="text-[8px] font-bold text-c-text-secondary dark:text-c-text-muted uppercase tracking-wider">
                           {isPl ? 'Nasz wyróżnik' : 'Our edge'}:{' '}
                         </span>
-                        <span className="text-[9px] text-slate-600 dark:text-slate-400">
+                        <span className="text-[9px] text-c-text-secondary dark:text-c-text-muted">
                           {comp.differentiator}
                         </span>
                       </div>
@@ -224,11 +224,11 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
                 );
               })}
 
-              <div className="flex items-center gap-2 pt-2 border-t border-slate-200/30 dark:border-navy-700/30">
+              <div className="flex items-center gap-2 pt-2 border-t border-c-border-subtle dark:border-c-border">
                 <button
                   onClick={analyze}
                   disabled={loading}
-                  className="text-[10px] text-slate-500 hover:text-slate-700 transition-colors"
+                  className="text-[10px] text-c-text-secondary hover:text-c-text-secondary transition-colors"
                 >
                   {isPl ? 'Ponowna analiza' : 'Re-analyze'}
                 </button>

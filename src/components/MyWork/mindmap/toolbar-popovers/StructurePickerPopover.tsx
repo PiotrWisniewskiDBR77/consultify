@@ -81,9 +81,9 @@ export const StructurePickerPopover: React.FC<StructurePickerPopoverProps> = ({
   onClose,
 }) => {
   return (
-    <div className="w-64 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/[0.06] shadow-xl overflow-hidden">
-      <div className="px-3 py-2 border-b border-slate-200/30 dark:border-white/[0.04]">
-        <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-600">
+    <div className="w-64 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border shadow-xl overflow-hidden">
+      <div className="px-3 py-2 border-b border-c-border-subtle dark:border-c-border">
+        <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
           {isPl ? 'Typ struktury' : 'Structure Type'}
         </div>
       </div>
@@ -100,32 +100,32 @@ export const StructurePickerPopover: React.FC<StructurePickerPopoverProps> = ({
               }}
               className={`w-full flex items-start gap-2.5 px-2.5 py-2 rounded-lg text-left transition-colors ${
                 isActive
-                  ? 'bg-slate-100 dark:bg-white/[0.07]'
-                  : 'hover:bg-slate-50 dark:hover:bg-white/[0.03]'
+                  ? 'bg-c-surface-raised dark:bg-c-surface-raised'
+                  : 'hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
               }`}
             >
               <Icon
                 size={14}
                 className={`mt-0.5 shrink-0 ${
-                  isActive ? 'text-slate-700 dark:text-slate-200' : 'text-slate-600'
+                  isActive ? 'text-c-text-secondary dark:text-c-text' : 'text-c-text-secondary'
                 }`}
               />
               <div className="min-w-0">
                 <div
                   className={`text-[11px] font-semibold ${
                     isActive
-                      ? 'text-slate-900 dark:text-white'
-                      : 'text-slate-700 dark:text-slate-200'
+                      ? 'text-c-text dark:text-c-text'
+                      : 'text-c-text-secondary dark:text-c-text'
                   }`}
                 >
                   {isPl ? opt.labelPl : opt.labelEn}
                 </div>
-                <div className="text-[9px] text-slate-600 dark:text-slate-500 leading-tight mt-0.5">
+                <div className="text-[9px] text-c-text-secondary dark:text-c-text-secondary leading-tight mt-0.5">
                   {isPl ? opt.descPl : opt.descEn}
                 </div>
               </div>
               {isActive && (
-                <div className="ml-auto mt-0.5 w-1.5 h-1.5 rounded-full bg-navy-900 dark:bg-white shrink-0" />
+                <div className="ml-auto mt-0.5 w-1.5 h-1.5 rounded-full bg-c-surface dark:bg-c-surface-raised shrink-0" />
               )}
             </button>
           );

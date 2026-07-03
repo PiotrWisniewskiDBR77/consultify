@@ -34,40 +34,40 @@ interface PresentationModeProps {
 const BRANCH_COLORS: Record<string, { bg: string; text: string; accent: string }> = {
   problem: {
     bg: 'from-danger-500/20 to-danger-600/10',
-    text: 'text-danger-700 dark:text-danger-300',
-    accent: 'bg-danger-500',
+    text: 'text-c-danger dark:text-c-danger',
+    accent: 'bg-c-danger',
   },
   goal: {
-    bg: 'from-emerald-500/20 to-emerald-600/10',
-    text: 'text-emerald-700 dark:text-emerald-300',
-    accent: 'bg-emerald-500',
+    bg: ' ',
+    text: 'text-c-success dark:text-c-success',
+    accent: 'bg-c-success',
   },
   options: {
-    bg: 'from-amber-500/20 to-amber-600/10',
-    text: 'text-amber-700 dark:text-amber-300',
-    accent: 'bg-amber-500',
+    bg: ' ',
+    text: 'text-c-warning dark:text-c-warning',
+    accent: 'bg-c-warning',
   },
   evidence: {
-    bg: 'from-sky-500/20 to-sky-600/10',
-    text: 'text-sky-700 dark:text-sky-300',
-    accent: 'bg-sky-500',
+    bg: ' ',
+    text: 'text-c-info dark:text-c-info',
+    accent: 'bg-c-info',
   },
   risks: {
-    bg: 'from-primary-500/20 to-primary-600/10',
-    text: 'text-primary-700 dark:text-primary-300',
-    accent: 'bg-navy-900',
+    bg: ' ',
+    text: 'text-c-accent dark:text-c-accent',
+    accent: 'bg-c-surface',
   },
   experiments: {
-    bg: 'from-blue-500/20 to-blue-600/10',
-    text: 'text-blue-700 dark:text-blue-300',
-    accent: 'bg-blue-500',
+    bg: ' ',
+    text: 'text-c-info dark:text-c-info',
+    accent: 'bg-c-info',
   },
 };
 
 const DEFAULT_COLORS = {
-  bg: 'from-slate-500/20 to-slate-600/10',
-  text: 'text-slate-700 dark:text-slate-300',
-  accent: 'bg-slate-500',
+  bg: ' ',
+  text: 'text-c-text-secondary dark:text-c-text-muted',
+  accent: 'bg-c-surface-raised',
 };
 
 function formatElapsed(totalSeconds: number): string {
@@ -158,26 +158,26 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
   const progress = ((currentSlide + 1) / slides.length) * 100;
 
   return (
-    <div className="fixed inset-0 z-[98] bg-white dark:bg-navy-950 flex flex-col">
+    <div className="fixed inset-0 z-[98] bg-c-surface-raised dark:bg-c-surface flex flex-col">
       {/* Progress bar */}
-      <div className="h-1 bg-slate-200 dark:bg-navy-800">
+      <div className="h-1 bg-c-surface-raised dark:bg-c-surface">
         <div
-          className="h-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-500"
+          className="h-full bg-gradient-to-r   transition-all duration-500"
           style={{ width: `${progress}%` }}
         />
       </div>
 
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-slate-200/40 dark:border-navy-700/40">
+      <div className="flex items-center justify-between px-6 py-3 border-b border-c-border-subtle dark:border-c-border">
         <div className="flex items-center gap-2">
-          <Play size={14} className="text-amber-500" />
-          <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
+          <Play size={14} className="text-c-warning" />
+          <span className="text-[11px] font-bold text-c-text-secondary dark:text-c-text-muted">
             {isPl ? 'Tryb prezentacji' : 'Presentation Mode'}
           </span>
-          <span className="text-[10px] text-slate-600">
+          <span className="text-[10px] text-c-text-secondary">
             {currentSlide + 1} / {slides.length}
           </span>
-          <span className="text-[10px] text-slate-600 flex items-center gap-1 ml-2">
+          <span className="text-[10px] text-c-text-secondary flex items-center gap-1 ml-2">
             <Clock size={10} />
             {formatElapsed(elapsedSeconds)}
           </span>
@@ -188,15 +188,15 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
             title={isPl ? 'Notatki prezentera (N)' : 'Presenter notes (N)'}
             className={`p-2 rounded-lg transition-colors ${
               showNotes
-                ? 'text-amber-500 bg-amber-500/10'
-                : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800'
+                ? 'text-c-warning bg-c-warning'
+                : 'text-c-text-secondary hover:text-c-text-secondary dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface'
             }`}
           >
             <StickyNote size={14} />
           </button>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-c-text-secondary hover:text-c-text-secondary dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
           >
             <X size={16} />
           </button>
@@ -207,9 +207,9 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
       <div className="flex-1 flex items-center justify-center px-8 py-12">
         {slide.type === 'title' && (
           <div className="text-center max-w-2xl animate-fade-in">
-            <Lightbulb size={48} className="text-amber-500 mx-auto mb-6" />
-            <h1 className="text-3xl font-bold text-slate-800 dark:text-white mb-4">{ideaTitle}</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <Lightbulb size={48} className="text-c-warning mx-auto mb-6" />
+            <h1 className="text-3xl font-bold text-c-text dark:text-c-text mb-4">{ideaTitle}</h1>
+            <p className="text-sm text-c-text-secondary dark:text-c-text-muted">
               {isPl
                 ? `${branches.length} gałęzi · ${branches.reduce((s, b) => s + b.nodes.length, 0)} pomysłów`
                 : `${branches.length} branches · ${branches.reduce((s, b) => s + b.nodes.length, 0)} ideas`}
@@ -241,24 +241,24 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
                   <div className={`w-3 h-3 rounded-full ${colors.accent}`} />
                   <GitBranch size={20} className={colors.text} />
                   <h2 className={`text-2xl font-bold ${colors.text}`}>{b.label}</h2>
-                  <span className="text-sm text-slate-600 ml-2">({b.nodes.length})</span>
+                  <span className="text-sm text-c-text-secondary ml-2">({b.nodes.length})</span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   {b.nodes.map((node, idx) => (
                     <div
                       key={node.id}
-                      className={`p-4 rounded-2xl bg-gradient-to-br ${colors.bg} border border-slate-200/30 dark:border-navy-700/30 animate-slide-up`}
+                      className={`p-4 rounded-2xl bg-gradient-to-br ${colors.bg} border border-c-border-subtle dark:border-c-border animate-slide-up`}
                       style={{ animationDelay: `${idx * 100}ms` }}
                     >
                       <div className="flex items-start gap-2">
-                        <span className="text-[10px] font-bold text-slate-600 mt-0.5">
+                        <span className="text-[10px] font-bold text-c-text-secondary mt-0.5">
                           {idx + 1}.
                         </span>
                         <div>
                           <div className={`text-sm font-semibold ${colors.text}`}>{node.label}</div>
                           {node.status && node.status !== 'idea' && (
-                            <div className="text-[9px] text-slate-600 mt-1 capitalize">
+                            <div className="text-[9px] text-c-text-secondary mt-1 capitalize">
                               {node.status.replace(/_/g, ' ')}
                             </div>
                           )}
@@ -278,10 +278,10 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
 
                 {/* Presenter Notes */}
                 {showNotes && b.nodes.some((n) => n.notes) && (
-                  <div className="mt-6 rounded-2xl bg-slate-50 dark:bg-navy-900/60 border border-slate-200/40 dark:border-navy-700/40 overflow-hidden">
+                  <div className="mt-6 rounded-2xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border overflow-hidden">
                     <button
                       onClick={() => setShowNotes((p) => !p)}
-                      className="w-full flex items-center gap-2 px-4 py-2.5 text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors"
+                      className="w-full flex items-center gap-2 px-4 py-2.5 text-[11px] font-bold text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
                     >
                       <StickyNote size={12} />
                       {isPl ? 'Notatki prezentera' : 'Presenter Notes'}
@@ -293,9 +293,9 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
                         .map((n) => (
                           <div
                             key={n.id}
-                            className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed"
+                            className="text-[11px] text-c-text-secondary dark:text-c-text-muted leading-relaxed"
                           >
-                            <span className="font-semibold text-slate-600 dark:text-slate-300">
+                            <span className="font-semibold text-c-text-secondary dark:text-c-text-muted">
                               {n.label}:
                             </span>{' '}
                             {n.notes}
@@ -310,11 +310,11 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
       </div>
 
       {/* Navigation */}
-      <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200/40 dark:border-navy-700/40">
+      <div className="flex items-center justify-between px-6 py-4 border-t border-c-border-subtle dark:border-c-border">
         <button
           onClick={goPrev}
           disabled={currentSlide === 0}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-30"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-bold text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors disabled:opacity-30"
         >
           <ArrowLeft size={14} />
           {isPl ? 'Wstecz' : 'Previous'}
@@ -328,8 +328,8 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
               onClick={() => setCurrentSlide(idx)}
               className={`w-2 h-2 rounded-full transition-all ${
                 idx === currentSlide
-                  ? 'bg-amber-500 w-4'
-                  : 'bg-slate-300 dark:bg-navy-600 hover:bg-slate-400'
+                  ? 'bg-c-warning w-4'
+                  : 'bg-c-surface-raised dark:bg-c-surface-raised hover:bg-c-surface-raised'
               }`}
             />
           ))}
@@ -338,7 +338,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
         <button
           onClick={goNext}
           disabled={currentSlide === slides.length - 1}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-bold text-amber-700 dark:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 transition-colors disabled:opacity-30"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-bold text-c-warning dark:text-c-warning bg-c-warning hover:bg-c-warning transition-colors disabled:opacity-30"
         >
           {isPl ? 'Dalej' : 'Next'}
           <ArrowRight size={14} />

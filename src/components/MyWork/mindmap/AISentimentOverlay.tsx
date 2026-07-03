@@ -27,9 +27,9 @@ interface AISentimentOverlayProps {
 }
 
 const SENTIMENT_CONFIG = {
-  positive: { bg: 'bg-emerald-500/10', text: 'text-emerald-600', emoji: '😊' },
-  neutral: { bg: 'bg-slate-500/10', text: 'text-slate-500', emoji: '😐' },
-  negative: { bg: 'bg-danger-500/10', text: 'text-danger-600', emoji: '😟' },
+  positive: { bg: 'bg-c-success', text: 'text-c-success', emoji: '😊' },
+  neutral: { bg: 'bg-c-surface-raised', text: 'text-c-text-secondary', emoji: '😐' },
+  negative: { bg: 'bg-c-danger', text: 'text-c-danger', emoji: '😟' },
 };
 
 export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
@@ -100,18 +100,18 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
   for (const r of results) counts[r.sentiment]++;
 
   return (
-    <div className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-black/40">
-      <div className="w-full max-w-lg rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
-        <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+    <div className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-c-bg">
+      <div className="w-full max-w-lg rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
           <div className="flex items-center gap-2">
-            <SmilePlus size={16} className="text-emerald-500" />
-            <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+            <SmilePlus size={16} className="text-c-success" />
+            <h3 className="text-sm font-bold text-c-text dark:text-c-text">
               {isPl ? 'AI: Analiza sentymentu' : 'AI: Sentiment Analysis'}
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-c-text-secondary hover:text-c-text-secondary dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
           >
             <X size={16} />
           </button>
@@ -120,8 +120,8 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
         <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
           {results.length === 0 && !loading && (
             <div className="text-center py-8">
-              <SmilePlus size={36} className="text-slate-600 dark:text-slate-400 mx-auto mb-3" />
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
+              <SmilePlus size={36} className="text-c-text-secondary dark:text-c-text-muted mx-auto mb-3" />
+              <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mb-4">
                 {isPl
                   ? 'AI oceni sentyment pomysłów na podstawie danych firmy.'
                   : 'AI will assess idea sentiment based on company data.'}
@@ -129,7 +129,7 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
               <button
                 onClick={analyzeSentiment}
                 disabled={loading || locked}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500/15 to-green-500/10 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 hover:from-emerald-500/25 hover:to-green-500/15 transition-all disabled:opacity-40"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r   text-[11px] font-bold text-c-success dark:text-c-success hover: hover: transition-all disabled:opacity-40"
               >
                 <Sparkles size={14} />
                 {isPl ? 'Analizuj sentyment' : 'Analyze sentiment'}
@@ -139,8 +139,8 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
 
           {loading && (
             <div className="flex items-center justify-center gap-2 py-8">
-              <Loader2 size={16} className="animate-spin text-emerald-500" />
-              <span className="text-[11px] text-slate-500">
+              <Loader2 size={16} className="animate-spin text-c-success" />
+              <span className="text-[11px] text-c-text-secondary">
                 {isPl ? 'Analizuję...' : 'Analyzing...'}
               </span>
             </div>
@@ -149,7 +149,7 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
           {results.length > 0 && (
             <>
               {/* Summary bar */}
-              <div className="flex items-center gap-3 mb-4 p-3 rounded-xl bg-slate-50/50 dark:bg-navy-950/20">
+              <div className="flex items-center gap-3 mb-4 p-3 rounded-xl bg-c-surface-raised dark:bg-c-surface">
                 {Object.entries(counts).map(([key, count]) => {
                   const cfg = SENTIMENT_CONFIG[key as keyof typeof SENTIMENT_CONFIG];
                   return (
@@ -159,22 +159,22 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
                     </div>
                   );
                 })}
-                <div className="flex-1 h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden flex">
+                <div className="flex-1 h-2 rounded-full bg-c-surface-raised dark:bg-c-surface overflow-hidden flex">
                   {counts.positive > 0 && (
                     <div
-                      className="h-full bg-emerald-500"
+                      className="h-full bg-c-success"
                       style={{ width: `${(counts.positive / results.length) * 100}%` }}
                     />
                   )}
                   {counts.neutral > 0 && (
                     <div
-                      className="h-full bg-slate-400"
+                      className="h-full bg-c-surface-raised"
                       style={{ width: `${(counts.neutral / results.length) * 100}%` }}
                     />
                   )}
                   {counts.negative > 0 && (
                     <div
-                      className="h-full bg-danger-500"
+                      className="h-full bg-c-danger"
                       style={{ width: `${(counts.negative / results.length) * 100}%` }}
                     />
                   )}
@@ -189,15 +189,15 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
                   return (
                     <div
                       key={r.nodeId}
-                      className={`flex items-center gap-2.5 p-2.5 rounded-xl ${cfg.bg} border border-slate-200/20 dark:border-navy-700/20`}
+                      className={`flex items-center gap-2.5 p-2.5 rounded-xl ${cfg.bg} border border-c-border-subtle dark:border-c-border`}
                     >
                       <span className="text-sm shrink-0">{cfg.emoji}</span>
                       <div className="min-w-0 flex-1">
-                        <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200 truncate">
+                        <div className="text-[11px] font-medium text-c-text-secondary dark:text-c-text truncate">
                           {node?.data?.label || r.nodeId}
                         </div>
                         {r.reason && (
-                          <div className="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                          <div className="text-[9px] text-c-text-secondary dark:text-c-text-muted mt-0.5 truncate">
                             {r.reason}
                           </div>
                         )}
@@ -212,17 +212,17 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
         </div>
 
         {results.length > 0 && (
-          <div className="px-5 py-3 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center gap-2">
+          <div className="px-5 py-3 border-t border-c-border-subtle dark:border-c-border flex items-center gap-2">
             <button
               onClick={onClose}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+              className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle dark:border-c-border text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
             >
               {isPl ? 'Zamknij' : 'Close'}
             </button>
             <button
               onClick={handleApply}
               disabled={locked}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-emerald-500/15 to-green-500/10 text-emerald-700 dark:text-emerald-300 hover:from-emerald-500/25 hover:to-green-500/15 border border-emerald-500/10 transition-all disabled:opacity-40"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r   text-c-success dark:text-c-success hover: hover: border border-c-success transition-all disabled:opacity-40"
             >
               <SmilePlus size={12} />
               {isPl ? 'Zastosuj kolory' : 'Apply colors'}

@@ -18,9 +18,9 @@ interface EvidenceBadgeProps {
 }
 
 const EVIDENCE_CONFIG: Record<EvidenceType, { color: string; letter: string }> = {
-  assessment: { color: 'bg-danger-500', letter: 'A' },
-  interview: { color: 'bg-blue-500', letter: 'I' },
-  kpi: { color: 'bg-emerald-500', letter: 'K' },
+  assessment: { color: 'bg-c-danger', letter: 'A' },
+  interview: { color: 'bg-c-info', letter: 'I' },
+  kpi: { color: 'bg-c-success', letter: 'K' },
 };
 
 export const EvidenceBadge: React.FC<EvidenceBadgeProps> = ({ type, count, compact }) => {
@@ -29,7 +29,7 @@ export const EvidenceBadge: React.FC<EvidenceBadgeProps> = ({ type, count, compa
 
   return (
     <div
-      className={`inline-flex items-center justify-center rounded-full text-white font-bold ${cfg.color} ${
+      className={`inline-flex items-center justify-center rounded-full text-c-text font-bold ${cfg.color} ${
         compact ? 'w-3.5 h-3.5 text-[6px]' : 'w-4 h-4 text-[7px]'
       }`}
       title={`${type}: ${count}`}
@@ -68,7 +68,7 @@ export const MaturityRing: React.FC<MaturityRingProps> = ({
         fill="none"
         stroke="currentColor"
         strokeWidth={strokeWidth}
-        className="text-slate-200 dark:text-navy-700"
+        className="text-c-text dark:text-c-text-secondary"
       />
       <circle
         cx={size / 2}
@@ -96,16 +96,16 @@ interface StatusDotProps {
 }
 
 const STATUS_COLORS: Record<NodeStatusType, string> = {
-  idea: 'bg-slate-400',
-  exploring: 'bg-blue-500',
-  validated: 'bg-emerald-500',
-  ready_to_convert: 'bg-amber-500',
-  converted: 'bg-sky-500',
+  idea: 'bg-c-surface-raised',
+  exploring: 'bg-c-info',
+  validated: 'bg-c-success',
+  ready_to_convert: 'bg-c-warning',
+  converted: 'bg-c-info',
 };
 
 export const StatusDot: React.FC<StatusDotProps> = ({ status, size = 6 }) => (
   <div
-    className={`rounded-full ${STATUS_COLORS[status]} ring-2 ring-white dark:ring-navy-900`}
+    className={`rounded-full ${STATUS_COLORS[status]} ring-2 ring-c-border dark:ring-c-border`}
     style={{ width: size, height: size }}
     title={status.replace(/_/g, ' ')}
   />
@@ -167,7 +167,7 @@ export const VoteStars: React.FC<VoteStarsProps> = ({
           onClick={() => onVote?.(i + 1 === votes ? 0 : i + 1)}
           disabled={disabled || !onVote}
           className={`transition-colors ${
-            i < votes ? 'text-amber-400' : 'text-slate-600 dark:text-navy-600 hover:text-amber-300'
+            i < votes ? 'text-c-warning' : 'text-c-text-secondary dark:text-c-text-secondary hover:text-c-warning'
           } disabled:cursor-default`}
         >
           <svg

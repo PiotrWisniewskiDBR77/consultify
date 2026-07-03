@@ -128,18 +128,18 @@ export const EmbedInReports: React.FC<EmbedInReportsProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/40">
-      <div className="w-full max-w-lg rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
-        <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-c-bg">
+      <div className="w-full max-w-lg rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
           <div className="flex items-center gap-2">
-            <Code size={16} className="text-blue-500" />
-            <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+            <Code size={16} className="text-c-info" />
+            <h3 className="text-sm font-bold text-c-text dark:text-c-text">
               {isPl ? 'Osadź w raporcie' : 'Embed in Report'}
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-c-text-secondary hover:text-c-text-secondary dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
           >
             <X size={16} />
           </button>
@@ -154,7 +154,7 @@ export const EmbedInReports: React.FC<EmbedInReportsProps> = ({
                 <button
                   key={f.id}
                   onClick={() => setFormat(f.id)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${format === f.id ? 'bg-blue-500/15 text-blue-700 dark:text-blue-300' : 'text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800'}`}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${format === f.id ? 'bg-c-info text-c-info dark:text-c-info' : 'text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface'}`}
                 >
                   <Icon size={12} />
                   {f.label}
@@ -165,22 +165,22 @@ export const EmbedInReports: React.FC<EmbedInReportsProps> = ({
 
           {/* Preview */}
           <div className="relative">
-            <pre className="p-3 rounded-xl bg-slate-50 dark:bg-navy-950/30 border border-slate-200/30 dark:border-navy-700/30 text-[10px] text-slate-600 dark:text-slate-400 overflow-auto max-h-[300px] whitespace-pre-wrap font-mono">
+            <pre className="p-3 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border text-[10px] text-c-text-secondary dark:text-c-text-muted overflow-auto max-h-[300px] whitespace-pre-wrap font-mono">
               {embedContent}
             </pre>
             <button
               onClick={handleCopy}
-              className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/80 dark:bg-navy-800/80 text-slate-500 hover:text-blue-600 transition-colors"
+              className="absolute top-2 right-2 p-1.5 rounded-lg bg-c-surface-raised dark:bg-c-surface text-c-text-secondary hover:text-c-info transition-colors"
             >
               {copied ? (
-                <CheckCircle2 size={14} className="text-emerald-500" />
+                <CheckCircle2 size={14} className="text-c-success" />
               ) : (
                 <ClipboardCopy size={14} />
               )}
             </button>
           </div>
 
-          <p className="text-[9px] text-slate-600 mt-3 text-center">
+          <p className="text-[9px] text-c-text-secondary mt-3 text-center">
             {isPl
               ? 'Skopiuj i wklej do raportu, prezentacji lub dokumentu.'
               : 'Copy and paste into your report, presentation, or document.'}

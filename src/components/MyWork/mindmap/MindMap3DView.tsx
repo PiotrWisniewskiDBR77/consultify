@@ -159,23 +159,23 @@ export const MindMap3DView: React.FC<MindMap3DViewProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[93] bg-slate-950 flex flex-col overflow-hidden">
-      <div className="flex items-center gap-3 px-6 py-3 bg-slate-900/80 border-b border-white/5">
+    <div className="fixed inset-0 z-[93] bg-c-surface flex flex-col overflow-hidden">
+      <div className="flex items-center gap-3 px-6 py-3 bg-c-surface border-b border-c-border">
         <button
           onClick={onClose}
-          className="p-2 rounded-lg text-slate-600 hover:text-white hover:bg-white/10 transition-colors"
+          className="p-2 rounded-lg text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised transition-colors"
         >
           <ChevronLeft size={16} />
         </button>
-        <Box size={16} className="text-slate-400" />
-        <h2 className="text-sm font-bold text-white">{isPl ? 'Widok 3D' : '3D View'}</h2>
-        <span className="text-[10px] text-slate-500 ml-2">
+        <Box size={16} className="text-c-text-muted" />
+        <h2 className="text-sm font-bold text-c-text">{isPl ? 'Widok 3D' : '3D View'}</h2>
+        <span className="text-[10px] text-c-text-secondary ml-2">
           {isPl ? 'Przeciągnij, aby obrócić' : 'Drag to rotate'}
         </span>
         <div className="flex-1" />
         <button
           onClick={resetView}
-          className="p-2 rounded-lg text-slate-600 hover:text-white hover:bg-white/10 transition-colors"
+          className="p-2 rounded-lg text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised transition-colors"
           title="Reset view"
         >
           <RotateCcw size={14} />
@@ -236,7 +236,7 @@ export const MindMap3DView: React.FC<MindMap3DViewProps> = ({
               }}
             >
               <div
-                className="px-3 py-1.5 rounded-xl text-white font-bold shadow-lg whitespace-nowrap"
+                className="px-3 py-1.5 rounded-xl text-c-text font-bold shadow-lg whitespace-nowrap"
                 style={{
                   fontSize: `${node.size * 0.55}px`,
                   backgroundColor: `${node.color}cc`,

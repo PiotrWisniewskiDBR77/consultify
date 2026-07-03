@@ -474,7 +474,7 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
   return (
     <div ref={overlayRootRef} className="absolute inset-0 z-30 pointer-events-none">
       {shouldShowStatusState && (
-        <div className="absolute top-3 right-3 z-overlay flex items-center gap-2 rounded-full border border-amber-300/60 bg-amber-50/95 px-3 py-1.5 text-[10px] font-semibold text-amber-800 shadow-lg backdrop-blur-sm dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-100">
+        <div className="absolute top-3 right-3 z-overlay flex items-center gap-2 rounded-full border border-c-warning bg-c-warning px-3 py-1.5 text-[10px] font-semibold text-c-warning shadow-lg backdrop-blur-sm dark:border-c-warning dark:bg-c-warning dark:text-c-warning">
           <WifiOff size={12} />
           <div className="flex flex-col leading-tight">
             <span>
@@ -484,7 +484,7 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
                   ? t('collaboration.reconnecting', 'Reconnecting collaboration')
                   : t('collaboration.connectionDegraded', 'Connection degraded')}
             </span>
-            <span className="text-[9px] font-medium text-amber-700/90 dark:text-amber-200/80">
+            <span className="text-[9px] font-medium text-c-warning dark:text-c-warning">
               {connectionState === 'connecting'
                 ? t('collaboration.establishingSession', 'Establishing session')
                 : t('collaboration.singleUserMode', 'Single-user mode')}
@@ -495,16 +495,16 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
 
       {/* Presence badge */}
       {connected && otherUsers.length > 0 && (
-        <div className="absolute top-3 right-3 z-overlay flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-white/90 dark:bg-navy-900/90 backdrop-blur-sm shadow-lg border border-slate-200/30 dark:border-navy-700/30">
-          <Users size={12} className="text-emerald-500" />
-          <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">
+        <div className="absolute top-3 right-3 z-overlay flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm shadow-lg border border-c-border-subtle dark:border-c-border">
+          <Users size={12} className="text-c-success" />
+          <span className="text-[10px] font-bold text-c-text-secondary dark:text-c-text-muted">
             {otherUsers.length + 1}
           </span>
           <div className="flex -space-x-1.5">
             {otherUsers.slice(0, 4).map((u, idx) => (
               <div
                 key={u.id}
-                className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-white border-2 border-white dark:border-navy-900"
+                className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-c-text border-2 border-c-border dark:border-c-border"
                 style={{ backgroundColor: u.color || CURSOR_COLORS[idx % CURSOR_COLORS.length] }}
                 title={u.name}
               >
@@ -528,7 +528,7 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
           }}
         >
           <div
-            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-bold text-white whitespace-nowrap"
+            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-bold text-c-text whitespace-nowrap"
             style={{ backgroundColor: userColorMap[uid] || '#94a3b8' }}
           >
             <Lock size={8} />
@@ -568,7 +568,7 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
             />
           </svg>
           <div
-            className="ml-4 -mt-1 px-1.5 py-0.5 rounded text-[8px] font-bold text-white whitespace-nowrap"
+            className="ml-4 -mt-1 px-1.5 py-0.5 rounded text-[8px] font-bold text-c-text whitespace-nowrap"
             style={{ backgroundColor: u.color || CURSOR_COLORS[idx % CURSOR_COLORS.length] }}
           >
             {u.name}

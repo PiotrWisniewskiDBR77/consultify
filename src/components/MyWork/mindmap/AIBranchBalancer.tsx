@@ -75,15 +75,15 @@ export const AIBranchBalancer: React.FC<AIBranchBalancerProps> = ({
 
   return (
     <div className="absolute bottom-16 left-3 z-[88] w-[280px]">
-      <div className="rounded-2xl bg-white/90 dark:bg-navy-900/90 backdrop-blur-xl border border-blue-400/30 dark:border-blue-500/20 shadow-2xl overflow-hidden">
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200/30 dark:border-navy-700/30">
-          <Scale size={14} className="text-blue-500 shrink-0" />
-          <span className="text-[11px] font-bold text-blue-700 dark:text-blue-300 flex-1">
+      <div className="rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-info dark:border-c-info shadow-2xl overflow-hidden">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-c-border-subtle dark:border-c-border">
+          <Scale size={14} className="text-c-info shrink-0" />
+          <span className="text-[11px] font-bold text-c-info dark:text-c-info flex-1">
             {isPl ? 'Mapa niezbalansowana' : 'Unbalanced Map'}
           </span>
           <button
             onClick={() => setDismissed(true)}
-            className="p-1 rounded-lg text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-1 rounded-lg text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
           >
             <X size={12} />
           </button>
@@ -93,32 +93,32 @@ export const AIBranchBalancer: React.FC<AIBranchBalancerProps> = ({
           {/* Branch bars */}
           {branches.map((b) => (
             <div key={b.branchKey} className="flex items-center gap-2">
-              <span className="text-[9px] font-medium text-slate-500 dark:text-slate-400 w-16 truncate">
+              <span className="text-[9px] font-medium text-c-text-secondary dark:text-c-text-muted w-16 truncate">
                 {b.label}
               </span>
-              <div className="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
+              <div className="flex-1 h-1.5 rounded-full bg-c-surface-raised dark:bg-c-surface overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all ${
-                    b.count === 0 ? 'bg-danger-400' : b.count <= 1 ? 'bg-amber-400' : 'bg-emerald-400'
+                    b.count === 0 ? 'bg-c-danger' : b.count <= 1 ? 'bg-c-warning' : 'bg-c-success'
                   }`}
                   style={{ width: `${Math.max(5, b.percentage)}%` }}
                 />
               </div>
-              <span className="text-[9px] text-slate-600 w-4 text-right">{b.count}</span>
+              <span className="text-[9px] text-c-text-secondary w-4 text-right">{b.count}</span>
             </div>
           ))}
 
           {/* Suggestions */}
           {emptyBranches.length > 0 && (
-            <div className="pt-1.5 border-t border-slate-200/30 dark:border-navy-700/30">
-              <div className="text-[9px] text-slate-500 dark:text-slate-400 mb-1">
+            <div className="pt-1.5 border-t border-c-border-subtle dark:border-c-border">
+              <div className="text-[9px] text-c-text-secondary dark:text-c-text-muted mb-1">
                 {isPl ? 'Puste gałęzie:' : 'Empty branches:'}
               </div>
               {emptyBranches.map((b) => (
                 <button
                   key={b.branchKey}
                   onClick={() => onFocusBranch(b.branchKey)}
-                  className="w-full flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-medium text-danger-600 dark:text-danger-400 hover:bg-danger-500/10 transition-colors"
+                  className="w-full flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-medium text-c-danger dark:text-c-danger hover:bg-c-danger transition-colors"
                 >
                   <BarChart3 size={10} />
                   <span className="flex-1 text-left">{b.label}</span>
@@ -129,15 +129,15 @@ export const AIBranchBalancer: React.FC<AIBranchBalancerProps> = ({
           )}
 
           {weakBranches.length > 0 && (
-            <div className="pt-1.5 border-t border-slate-200/30 dark:border-navy-700/30">
-              <div className="text-[9px] text-slate-500 dark:text-slate-400 mb-1">
+            <div className="pt-1.5 border-t border-c-border-subtle dark:border-c-border">
+              <div className="text-[9px] text-c-text-secondary dark:text-c-text-muted mb-1">
                 {isPl ? 'Słabe gałęzie (1 element):' : 'Weak branches (1 item):'}
               </div>
               {weakBranches.map((b) => (
                 <button
                   key={b.branchKey}
                   onClick={() => onFocusBranch(b.branchKey)}
-                  className="w-full flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-medium text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition-colors"
+                  className="w-full flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-medium text-c-warning dark:text-c-warning hover:bg-c-warning transition-colors"
                 >
                   <BarChart3 size={10} />
                   <span className="flex-1 text-left">{b.label}</span>

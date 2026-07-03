@@ -88,18 +88,18 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/40">
-      <div className="w-full max-w-lg rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
-        <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-c-bg">
+      <div className="w-full max-w-lg rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
           <div className="flex items-center gap-2">
-            <FileText size={16} className="text-blue-500" />
-            <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+            <FileText size={16} className="text-c-info" />
+            <h3 className="text-sm font-bold text-c-text dark:text-c-text">
               {isPl ? 'Dokument → Mapa' : 'Document → Map'}
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-c-text-secondary hover:text-c-text-secondary dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
           >
             <X size={16} />
           </button>
@@ -107,9 +107,9 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
 
         <div className="px-5 py-4">
           {/* File upload */}
-          <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-slate-300/60 dark:border-navy-600/60 hover:border-blue-400/60 transition-colors cursor-pointer mb-3">
-            <Upload size={16} className="text-slate-600" />
-            <span className="text-[11px] text-slate-500 dark:text-slate-400">
+          <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-c-border-subtle dark:border-c-border hover:border-c-info transition-colors cursor-pointer mb-3">
+            <Upload size={16} className="text-c-text-secondary" />
+            <span className="text-[11px] text-c-text-secondary dark:text-c-text-muted">
               {isPl ? 'Załaduj plik .txt lub .md' : 'Upload .txt or .md file'}
             </span>
             <input type="file" accept=".txt,.md" onChange={handleFileUpload} className="hidden" />
@@ -123,14 +123,14 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
             placeholder={
               isPl ? 'Lub wklej tekst dokumentu tutaj...' : 'Or paste document text here...'
             }
-            className="w-full px-3 py-2 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/50 dark:bg-navy-950/30 text-xs text-slate-800 dark:text-slate-200 placeholder:text-slate-400/60 focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none mb-3"
+            className="w-full px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface text-xs text-c-text dark:text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-info resize-none mb-3"
           />
 
           {/* Extract button */}
           <button
             onClick={extractIdeas}
             disabled={!text.trim() || loading || locked}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-500/15 to-blue-500/10 text-[11px] font-bold text-blue-700 dark:text-blue-300 hover:from-blue-500/25 hover:to-blue-500/15 transition-all disabled:opacity-40 mb-3"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r   text-[11px] font-bold text-c-info dark:text-c-info hover: hover: transition-all disabled:opacity-40 mb-3"
           >
             {loading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
             {loading
@@ -145,17 +145,17 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
           {/* Extracted ideas */}
           {extractedIdeas.length > 0 && (
             <div>
-              <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600 mb-1.5">
+              <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-1.5">
                 {isPl ? 'Wyodrębnione pomysły' : 'Extracted ideas'} ({extractedIdeas.length})
               </div>
               <div className="space-y-1 max-h-[200px] overflow-y-auto">
                 {extractedIdeas.map((idea, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center gap-2 p-2 rounded-xl bg-blue-500/5 border border-blue-400/10"
+                    className="flex items-center gap-2 p-2 rounded-xl bg-c-info border border-c-info"
                   >
-                    <Sparkles size={10} className="text-blue-500 shrink-0" />
-                    <span className="text-[11px] text-slate-700 dark:text-slate-200">{idea}</span>
+                    <Sparkles size={10} className="text-c-info shrink-0" />
+                    <span className="text-[11px] text-c-text-secondary dark:text-c-text">{idea}</span>
                   </div>
                 ))}
               </div>
@@ -163,17 +163,17 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
           )}
         </div>
 
-        <div className="px-5 py-3 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center gap-2">
+        <div className="px-5 py-3 border-t border-c-border-subtle dark:border-c-border flex items-center gap-2">
           <button
             onClick={onClose}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+            className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle dark:border-c-border text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
           >
             {isPl ? 'Anuluj' : 'Cancel'}
           </button>
           <button
             onClick={handleApply}
             disabled={extractedIdeas.length === 0 || locked}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-blue-500/15 to-blue-500/10 text-blue-700 dark:text-blue-300 hover:from-blue-500/25 hover:to-blue-500/15 border border-blue-500/10 transition-all disabled:opacity-40"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r   text-c-info dark:text-c-info hover: hover: border border-c-info transition-all disabled:opacity-40"
           >
             <FileText size={12} />
             {isPl

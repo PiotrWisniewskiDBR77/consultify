@@ -119,15 +119,15 @@ class CanvasToolErrorBoundary extends React.Component<
     if (this.state.hasError) {
       const isPl = typeof window !== 'undefined' && (navigator.language || '').startsWith('pl');
       return (
-        <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-slate-50 dark:bg-navy-950 p-8">
-          <div className="p-3 rounded-2xl bg-danger-500/10">
-            <AlertTriangle size={32} className="text-danger-500" />
+        <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-c-surface-raised dark:bg-c-surface p-8">
+          <div className="p-3 rounded-2xl bg-c-danger">
+            <AlertTriangle size={32} className="text-c-danger" />
           </div>
           <div className="text-center">
-            <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1">
+            <div className="text-sm font-semibold text-c-text dark:text-c-text mb-1">
               {this.props.toolName} {isPl ? 'nie załadował się' : 'failed to load'}
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 max-w-sm">
+            <div className="text-xs text-c-text-secondary dark:text-c-text-muted max-w-sm">
               {this.state.error?.message ||
                 (isPl ? 'Wystąpił nieoczekiwany błąd' : 'An unexpected error occurred')}
             </div>
@@ -138,7 +138,7 @@ class CanvasToolErrorBoundary extends React.Component<
                 this.setState({ hasError: false, error: null });
                 this.props.onRetry?.();
               }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-slate-900/[0.06] dark:bg-white/[0.10] text-slate-700 dark:text-slate-200 hover:bg-slate-900/[0.10] dark:hover:bg-white/[0.14] transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-c-surface dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text hover:bg-c-surface dark:hover:bg-c-surface-raised transition-colors"
             >
               <RefreshCw size={14} />
               {isPl ? 'Ponów' : 'Retry'}
@@ -2653,7 +2653,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   return (
     <div
       ref={workspaceRootRef}
-      className="w-full h-full flex overflow-hidden bg-white dark:bg-navy-950"
+      className="w-full h-full flex overflow-hidden bg-c-surface-raised dark:bg-c-surface"
       style={{ touchAction: 'none' }}
       role="region"
       aria-label={isPolish ? 'Obszar roboczy mapy idei' : 'Idea map workspace'}
@@ -2669,22 +2669,22 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       >
         {/* Breadcrumb for drill-down navigation */}
         {drillDownStack.length > 0 && (
-          <div className="absolute top-2 left-4 z-[60] flex items-center gap-1 bg-white/90 dark:bg-navy-900/90 backdrop-blur-sm rounded-xl px-3 py-1.5 border border-slate-200/60 dark:border-navy-700/60 shadow-sm">
+          <div className="absolute top-2 left-4 z-[60] flex items-center gap-1 bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm rounded-xl px-3 py-1.5 border border-c-border-subtle dark:border-c-border shadow-sm">
             <button
               onClick={() => handleDrillUp(0)}
-              className="text-[10px] font-semibold text-slate-600 dark:text-slate-300 hover:underline"
+              className="text-[10px] font-semibold text-c-text-secondary dark:text-c-text-muted hover:underline"
             >
               {isPolish ? 'Główna mapa' : 'Root map'}
             </button>
             {drillDownStack.map((item, i) => (
               <React.Fragment key={item.nodeId}>
-                <span className="text-[10px] text-slate-600 mx-0.5">/</span>
+                <span className="text-[10px] text-c-text-secondary mx-0.5">/</span>
                 <button
                   onClick={() => handleDrillUp(i + 1)}
                   className={`text-[10px] font-medium truncate max-w-[120px] ${
                     i === drillDownStack.length - 1
-                      ? 'text-slate-700 dark:text-slate-200'
-                      : 'text-slate-600 dark:text-slate-300 hover:underline'
+                      ? 'text-c-text-secondary dark:text-c-text'
+                      : 'text-c-text-secondary dark:text-c-text-muted hover:underline'
                   }`}
                 >
                   {item.label}
@@ -2696,8 +2696,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
         {/* V5-IDEA-15: Focus mode indicator */}
         {focusMode !== 'full' && (
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 z-[58] flex items-center gap-2 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm rounded-xl px-3 py-1.5 border border-slate-200/60 dark:border-navy-700/60 shadow-sm">
-            <span className="text-[10px] font-bold uppercase tracking-wide text-slate-700 dark:text-slate-200">
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 z-[58] flex items-center gap-2 bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm rounded-xl px-3 py-1.5 border border-c-border-subtle dark:border-c-border shadow-sm">
+            <span className="text-[10px] font-bold uppercase tracking-wide text-c-text-secondary dark:text-c-text">
               {focusMode === 'system'
                 ? isPolish
                   ? `Tryb skupiony: ${activeToolLabel}`
@@ -2708,7 +2708,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             </span>
             <button
               onClick={handleExitFocus}
-              className="text-[10px] font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+              className="text-[10px] font-semibold text-c-text-secondary hover:text-c-text-secondary dark:text-c-text-muted dark:hover:text-c-text transition-colors"
             >
               {isPolish ? '← Pełny canvas' : '← Full canvas'}
             </button>
@@ -2716,32 +2716,32 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         )}
 
         <div
-          className={`absolute ${workspaceHeaderOffsetClass} left-20 z-[57] max-w-[28rem] rounded-2xl border border-slate-200/70 bg-white/92 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-navy-700/60 dark:bg-navy-900/92`}
+          className={`absolute ${workspaceHeaderOffsetClass} left-20 z-[57] max-w-[28rem] rounded-2xl border border-c-border-subtle bg-c-surface-raised px-4 py-3 shadow-sm backdrop-blur-sm dark:border-c-border dark:bg-c-surface`}
         >
           <div className="flex flex-wrap items-center gap-1.5">
             {/* A4: breadcrumb — Ideas › {idea title} › {tool} */}
             <button
               type="button"
               onClick={() => navigate('/my-work')}
-              className="text-[11px] font-semibold text-slate-600 hover:underline dark:text-slate-300"
+              className="text-[11px] font-semibold text-c-text-secondary hover:underline dark:text-c-text-muted"
             >
               {isPolish ? 'Idee' : 'Ideas'}
             </button>
-            <span className="text-[10px] text-slate-600" aria-hidden="true">
+            <span className="text-[10px] text-c-text-secondary" aria-hidden="true">
               ›
             </span>
             <span
-              className="max-w-[14rem] truncate text-[11px] font-semibold text-slate-700 dark:text-slate-200"
+              className="max-w-[14rem] truncate text-[11px] font-semibold text-c-text-secondary dark:text-c-text"
               title={title || (isPolish ? 'Bez tytułu' : 'Untitled')}
             >
               {title ||
                 safeTitleFromSeed(seedText, isPolish) ||
                 (isPolish ? 'Bez tytułu' : 'Untitled')}
             </span>
-            <span className="text-[10px] text-slate-600" aria-hidden="true">
+            <span className="text-[10px] text-c-text-secondary" aria-hidden="true">
               ›
             </span>
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
+            <span className="rounded-full bg-c-surface-raised px-2 py-0.5 text-[10px] font-medium text-c-text-secondary dark:bg-c-surface-raised dark:text-c-text-muted">
               {activeToolLabel}
             </span>
             {(() => {
@@ -2752,12 +2752,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               const ps = rootNode?.data?.pipelineStage;
               if (!ps || ps === 'draft') return null;
               return (
-                <span className="rounded-full bg-slate-900/[0.06] dark:bg-white/[0.10] px-2 py-0.5 text-[10px] font-medium text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-navy-700">
+                <span className="rounded-full bg-c-surface dark:bg-c-surface-raised px-2 py-0.5 text-[10px] font-medium text-c-text-secondary dark:text-c-text border border-c-border-subtle dark:border-c-border">
                   {ps}
                 </span>
               );
             })()}
-            <span className="text-[10px] text-slate-600 dark:text-slate-500">
+            <span className="text-[10px] text-c-text-secondary dark:text-c-text-secondary">
               {draftSavedLabel}
             </span>
           </div>
@@ -2768,7 +2768,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
            * so we hide it once the canvas has content instead of hovering over the work.
            */}
           {!mapHasNodes && (
-            <div className="mt-2 text-[11px] leading-5 text-slate-600 dark:text-slate-300">
+            <div className="mt-2 text-[11px] leading-5 text-c-text-secondary dark:text-c-text-muted">
               {workspaceNextStepLabel}
             </div>
           )}

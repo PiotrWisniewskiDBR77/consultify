@@ -114,12 +114,12 @@ export const EdgeContextMenu: React.FC<EdgeContextMenuProps> = ({
             >
               <Icon
                 size={13}
-                className={`shrink-0 ${item.danger ? 'text-danger-500' : 'text-slate-600 dark:text-slate-500'}`}
+                className={`shrink-0 ${item.danger ? 'text-c-danger' : 'text-c-text-secondary dark:text-c-text-secondary'}`}
               />
               <span className="flex-1">{isPl ? item.labelPl : item.labelEn}</span>
             </button>
             {item.dividerAfter && (
-              <div className="my-1 mx-2 h-px bg-slate-200/40 dark:bg-white/[0.04]" />
+              <div className="my-1 mx-2 h-px bg-c-surface-raised dark:bg-c-surface-raised" />
             )}
           </React.Fragment>
         );

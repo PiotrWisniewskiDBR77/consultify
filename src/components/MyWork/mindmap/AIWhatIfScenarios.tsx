@@ -96,43 +96,43 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
   const typeConfig = {
     opportunity: {
       icon: Sparkles,
-      color: 'text-emerald-500',
-      bg: 'bg-emerald-500/10',
+      color: 'text-c-success',
+      bg: 'bg-c-success',
       label: isPl ? 'Szansa' : 'Opportunity',
     },
     risk: {
       icon: AlertTriangle,
-      color: 'text-danger-500',
-      bg: 'bg-danger-500/10',
+      color: 'text-c-danger',
+      bg: 'bg-c-danger',
       label: isPl ? 'Ryzyko' : 'Risk',
     },
     alternative: {
       icon: Route,
-      color: 'text-blue-500',
-      bg: 'bg-blue-500/10',
+      color: 'text-c-info',
+      bg: 'bg-c-info',
       label: isPl ? 'Alternatywa' : 'Alternative',
     },
   };
 
   const impactBadge = {
-    high: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300',
-    medium: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-    low: 'bg-slate-100 text-slate-600 dark:bg-slate-800/30 dark:text-slate-400',
+    high: 'bg-c-danger text-c-danger dark:bg-c-danger dark:text-c-danger',
+    medium: 'bg-c-warning text-c-warning dark:bg-c-warning dark:text-c-warning',
+    low: 'bg-c-surface-raised text-c-text-secondary dark:bg-c-surface dark:text-c-text-muted',
   };
 
   return (
-    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/40">
-      <div className="w-full max-w-lg rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-c-bg">
+      <div className="w-full max-w-lg rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
           <div>
             <div className="flex items-center gap-2">
-              <GitBranch size={14} className="text-slate-500" />
-              <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+              <GitBranch size={14} className="text-c-text-secondary" />
+              <h3 className="text-sm font-bold text-c-text dark:text-c-text">
                 {isPl ? 'Co jeśli...?' : 'What if...?'}
               </h3>
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mt-1">
               {isPl
                 ? `Scenariusze dla: "${selectedNodeLabel}"`
                 : `Scenarios for: "${selectedNodeLabel}"`}
@@ -140,7 +140,7 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-c-text-secondary hover:text-c-text-secondary dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
           >
             <X size={16} />
           </button>
@@ -150,8 +150,8 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
         <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
           {scenarios.length === 0 && !loading && (
             <div className="text-center py-8">
-              <Route size={32} className="text-slate-600 dark:text-slate-400 mx-auto mb-3" />
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
+              <Route size={32} className="text-c-text-secondary dark:text-c-text-muted mx-auto mb-3" />
+              <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mb-4">
                 {isPl
                   ? 'Wygeneruj alternatywne ścieżki, ryzyka i szanse.'
                   : 'Generate alternative paths, risks and opportunities.'}
@@ -159,7 +159,7 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
               <button
                 onClick={generateScenarios}
                 disabled={loading || locked}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-navy-800 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-700 transition-all disabled:opacity-40"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-c-surface-raised dark:bg-c-surface text-[11px] font-bold text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-all disabled:opacity-40"
               >
                 <Sparkles size={14} />
                 {isPl ? 'Generuj scenariusze' : 'Generate scenarios'}
@@ -169,8 +169,8 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
 
           {loading && (
             <div className="flex items-center justify-center gap-2 py-8">
-              <Loader2 size={16} className="animate-spin text-slate-500" />
-              <span className="text-[11px] text-slate-500">
+              <Loader2 size={16} className="animate-spin text-c-text-secondary" />
+              <span className="text-[11px] text-c-text-secondary">
                 {isPl ? 'Analizuję...' : 'Analyzing...'}
               </span>
             </div>
@@ -184,13 +184,13 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
                 return (
                   <div
                     key={scenario.id}
-                    className={`p-3 rounded-xl border border-slate-200/30 dark:border-navy-700/30 ${cfg.bg}`}
+                    className={`p-3 rounded-xl border border-c-border-subtle dark:border-c-border ${cfg.bg}`}
                   >
                     <div className="flex items-start gap-2">
                       <Icon size={14} className={`mt-0.5 shrink-0 ${cfg.color}`} />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-[11px] font-bold text-slate-800 dark:text-white">
+                          <span className="text-[11px] font-bold text-c-text dark:text-c-text">
                             {scenario.title}
                           </span>
                           <span
@@ -200,7 +200,7 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
                           </span>
                         </div>
                         {scenario.description && (
-                          <p className="text-[10px] text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                          <p className="text-[10px] text-c-text-secondary dark:text-c-text-muted mt-1 leading-relaxed">
                             {scenario.description}
                           </p>
                         )}
@@ -214,7 +214,7 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
                               });
                             }}
                             disabled={locked}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-40"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors disabled:opacity-40"
                           >
                             <Zap size={9} />
                             {isPl ? 'Dodaj do mapy' : 'Add to map'}
@@ -229,7 +229,7 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
               <button
                 onClick={generateScenarios}
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100/50 dark:hover:bg-navy-800/50 transition-colors disabled:opacity-40 mt-2"
+                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-medium text-c-text-secondary hover:text-c-text-secondary dark:text-c-text-muted dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors disabled:opacity-40 mt-2"
               >
                 <Sparkles size={10} />
                 {isPl ? 'Generuj ponownie' : 'Regenerate'}

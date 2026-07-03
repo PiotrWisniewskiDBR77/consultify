@@ -111,18 +111,18 @@ export const AIAutoClustering: React.FC<AIAutoClusteringProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/40">
-      <div className="w-full max-w-lg rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
-        <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-c-bg">
+      <div className="w-full max-w-lg rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
           <div className="flex items-center gap-2">
-            <Group size={16} className="text-blue-500" />
-            <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+            <Group size={16} className="text-c-info" />
+            <h3 className="text-sm font-bold text-c-text dark:text-c-text">
               {isPl ? 'AI: Auto-Clustering' : 'AI: Auto-Clustering'}
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-c-text-secondary hover:text-c-text-secondary dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
           >
             <X size={16} />
           </button>
@@ -131,8 +131,8 @@ export const AIAutoClustering: React.FC<AIAutoClusteringProps> = ({
         <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
           {clusters.length === 0 && !loading && (
             <div className="text-center py-8">
-              <Palette size={36} className="text-slate-600 dark:text-slate-400 mx-auto mb-3" />
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
+              <Palette size={36} className="text-c-text-secondary dark:text-c-text-muted mx-auto mb-3" />
+              <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mb-4">
                 {isPl
                   ? 'AI pogrupuje pomysły w klastry tematyczne.'
                   : 'AI will group ideas into thematic clusters.'}
@@ -140,7 +140,7 @@ export const AIAutoClustering: React.FC<AIAutoClusteringProps> = ({
               <button
                 onClick={detectClusters}
                 disabled={loading || locked}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-500/15 to-blue-500/10 text-[11px] font-bold text-blue-700 dark:text-blue-300 hover:from-blue-500/25 hover:to-blue-500/15 transition-all disabled:opacity-40"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r   text-[11px] font-bold text-c-info dark:text-c-info hover: hover: transition-all disabled:opacity-40"
               >
                 <Sparkles size={14} />
                 {isPl ? 'Wykryj klastry' : 'Detect clusters'}
@@ -150,8 +150,8 @@ export const AIAutoClustering: React.FC<AIAutoClusteringProps> = ({
 
           {loading && (
             <div className="flex items-center justify-center gap-2 py-8">
-              <Loader2 size={16} className="animate-spin text-blue-500" />
-              <span className="text-[11px] text-slate-500">
+              <Loader2 size={16} className="animate-spin text-c-info" />
+              <span className="text-[11px] text-c-text-secondary">
                 {isPl ? 'Grupuję...' : 'Clustering...'}
               </span>
             </div>
@@ -162,7 +162,7 @@ export const AIAutoClustering: React.FC<AIAutoClusteringProps> = ({
               {clusters.map((cluster) => (
                 <div
                   key={cluster.id}
-                  className="p-3 rounded-xl border border-slate-200/30 dark:border-navy-700/30"
+                  className="p-3 rounded-xl border border-c-border-subtle dark:border-c-border"
                   style={{ borderLeftColor: cluster.color, borderLeftWidth: 3 }}
                 >
                   <div className="flex items-center gap-2 mb-1.5">
@@ -170,10 +170,10 @@ export const AIAutoClustering: React.FC<AIAutoClusteringProps> = ({
                       className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: cluster.color }}
                     />
-                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
+                    <span className="text-[11px] font-bold text-c-text-secondary dark:text-c-text">
                       {cluster.name}
                     </span>
-                    <span className="text-[9px] text-slate-600">
+                    <span className="text-[9px] text-c-text-secondary">
                       ({cluster.nodeIds.length} nodes)
                     </span>
                   </div>
@@ -183,7 +183,7 @@ export const AIAutoClustering: React.FC<AIAutoClusteringProps> = ({
                       return (
                         <span
                           key={nid}
-                          className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400"
+                          className="text-[9px] px-1.5 py-0.5 rounded-full bg-c-surface-raised dark:bg-c-surface text-c-text-secondary dark:text-c-text-muted"
                         >
                           {node?.data?.label || nid}
                         </span>
@@ -197,7 +197,7 @@ export const AIAutoClustering: React.FC<AIAutoClusteringProps> = ({
                 <button
                   onClick={detectClusters}
                   disabled={loading}
-                  className="inline-flex items-center gap-1 text-[10px] text-slate-500 hover:text-slate-700 transition-colors"
+                  className="inline-flex items-center gap-1 text-[10px] text-c-text-secondary hover:text-c-text-secondary transition-colors"
                 >
                   <RefreshCw size={10} /> {isPl ? 'Ponownie' : 'Re-run'}
                 </button>
@@ -205,7 +205,7 @@ export const AIAutoClustering: React.FC<AIAutoClusteringProps> = ({
                 <button
                   onClick={handleApply}
                   disabled={locked}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-500/20 transition-colors disabled:opacity-40"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold bg-c-info text-c-info dark:text-c-info hover:bg-c-info transition-colors disabled:opacity-40"
                 >
                   <Zap size={12} /> {isPl ? 'Zastosuj klastry' : 'Apply clusters'}
                 </button>

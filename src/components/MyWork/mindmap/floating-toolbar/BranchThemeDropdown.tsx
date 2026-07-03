@@ -36,8 +36,8 @@ export const BranchThemeDropdown: React.FC<BranchThemeDropdownProps> = ({
   onClose,
 }) => {
   return (
-    <div className="w-48 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/[0.06] shadow-xl py-1">
-      <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600">
+    <div className="w-48 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border shadow-xl py-1">
+      <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
         {isPl ? 'Styl linii' : 'Line style'}
       </div>
       {LINE_STYLES.map((s) => {
@@ -51,8 +51,8 @@ export const BranchThemeDropdown: React.FC<BranchThemeDropdownProps> = ({
             }}
             className={`w-full flex items-center gap-3 px-2 py-2 text-[11px] transition-colors ${
               isActive
-                ? 'bg-slate-200/70 dark:bg-navy-800 text-slate-900 dark:text-slate-100 font-semibold'
-                : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.03]'
+                ? 'bg-c-surface-raised dark:bg-c-surface text-c-text dark:text-c-text font-semibold'
+                : 'text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
             }`}
           >
             <svg viewBox="0 0 32 16" className="w-8 h-4 shrink-0">
