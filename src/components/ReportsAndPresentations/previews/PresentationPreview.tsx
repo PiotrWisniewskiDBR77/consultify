@@ -2,7 +2,10 @@ import { FileDown, ClipboardCheck } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { PreviewActionBar } from '@/components/shared/PreviewPane/PreviewActionBar';
+import {
+  PreviewActionBar,
+  type ActionButton,
+} from '@/components/shared/PreviewPane/PreviewActionBar';
 import { PreviewMetaCard, type MetaPill } from '@/components/shared/PreviewPane/PreviewMetaCard';
 import { statusChipTone } from '@/components/ui/primitives/chips/EntityStatusChip';
 
@@ -82,13 +85,13 @@ export const PresentationPreviewFooter: React.FC<PresentationPreviewFooterProps>
 }) => {
   const { t } = useTranslation();
 
-  const buttons = [
+  const candidates: Array<ActionButton | null> = [
     onExport
       ? {
           label: t('common.export', 'Export'),
           icon: FileDown,
           onClick: () => onExport(),
-          colorScheme: 'neutral' as const,
+          colorScheme: 'neutral',
         }
       : null,
     onStartReview
@@ -96,13 +99,12 @@ export const PresentationPreviewFooter: React.FC<PresentationPreviewFooterProps>
           label: t('reports.preview.startReview', 'Start review'),
           icon: ClipboardCheck,
           onClick: () => void onStartReview(),
-          colorScheme: 'primary' as const,
+          colorScheme: 'primary',
           disabled: reviewActionDisabled,
         }
       : null,
-  ].filter(Boolean) as NonNullable<
-    Parameters<typeof PreviewActionBar>[0]['rows']
-  >[number]['buttons'];
+  ];
+  const buttons = candidates.filter((b): b is ActionButton => b !== null);
 
   return (
     <div className="space-y-2.5">
