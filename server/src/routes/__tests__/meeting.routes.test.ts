@@ -12,9 +12,10 @@ const mockUpdateStatus = vi.fn();
 const mockAddDecision = vi.fn();
 const mockAddFollowUp = vi.fn();
 const mockUpdateFollowUpStatus = vi.fn();
+const mockEnsureTables = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('../../services/meetingService.js', () => ({
-  ensureMeetingTables: vi.fn().mockResolvedValue(undefined),
+  ensureMeetingTables: (...a: unknown[]) => mockEnsureTables(...a),
   createMeeting: (...a: unknown[]) => mockCreate(...a),
   listMeetings: (...a: unknown[]) => mockList(...a),
   updateMeeting: (...a: unknown[]) => mockUpdate(...a),
@@ -64,6 +65,20 @@ const sampleMeeting = {
 describe('meeting routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // clearAllMocks wipes implementations; restore the DDL happy-path default.
+    mockEnsureTables.mockResolvedValue(undefined);
+  });
+
+  // Fail-soft lazy DDL: when ensureMeetingTables() rejects (e.g. transient DDL
+  // failure), the request must return a structured 500 { error, code } rather
+  // than crashing with a bare/unhandled error.
+  it('returns a structured 500 when the lazy DDL fails (no bare crash)', async () => {
+    mockEnsureTables.mockRejectedValueOnce(new Error('DDL boom'));
+    const res = await request(createApp()).get('/api/meeting');
+    expect(res.status).toBe(500);
+    expect(res.body).toMatchObject({ code: 'MEETING_TABLES_UNAVAILABLE' });
+    expect(typeof res.body.error).toBe('string');
+    expect(mockList).not.toHaveBeenCalled();
   });
 
   it('GET / lists meetings for the org', async () => {

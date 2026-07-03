@@ -50,9 +50,21 @@ router.use(isAuthenticated);
 // SSOT-mirror middleware — currently pass-through ('open'); flips to 403
 // BETA_LOCKED when MODULE_MEETING is set 'closed' in betaAccess.ts.
 router.use(betaGate);
-router.use(async (_req, _res, next) => {
-  await ensureMeetingTables();
-  next();
+// Fail-soft lazy DDL: if ensureMeetingTables() throws (e.g. transient DB/DDL
+// failure), return a structured 500 instead of leaking a bare/unhandled error.
+// Mirrors the "Settings 500 = lazy DDL" remediation: a GET with ensure*Table
+// and no try/catch produces an opaque 500 when the DDL path fails.
+router.use(async (_req, res, next) => {
+  try {
+    await ensureMeetingTables();
+    next();
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    logger.error(`[Meeting] ensureMeetingTables failed: ${msg}`);
+    res
+      .status(500)
+      .json({ error: 'Meeting storage is unavailable', code: 'MEETING_TABLES_UNAVAILABLE' });
+  }
 });
 
 router.get(

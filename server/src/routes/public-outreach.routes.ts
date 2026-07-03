@@ -78,7 +78,9 @@ router.get('/unsubscribe', async (req: Request, res: Response) => {
     );
   } catch (e: any) {
     logger.error('[PublicOutreach] unsubscribe failed', e);
-    return res.status(500).send('Error');
+    return res
+      .status(500)
+      .json({ error: 'Unsubscribe failed', code: 'OUTREACH_UNSUBSCRIBE_FAILED' });
   }
 });
 
@@ -149,7 +151,9 @@ router.get('/track/click', async (req: Request, res: Response) => {
     return res.redirect(url);
   } catch (e: any) {
     logger.error('[PublicOutreach] click tracking failed', e);
-    return res.status(500).send('Error');
+    return res
+      .status(500)
+      .json({ error: 'Click tracking failed', code: 'OUTREACH_CLICK_TRACKING_FAILED' });
   }
 });
 
