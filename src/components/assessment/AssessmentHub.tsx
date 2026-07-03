@@ -22,6 +22,7 @@ import {
   MessageSquare,
   Monitor,
   Presentation,
+  Trash2,
   Upload,
   Workflow,
   X,
@@ -50,9 +51,12 @@ import { createWorkspaceContext } from '@/types/workspace';
 import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import { DecisionDetailView } from '../MyWork/DecisionDetailView';
+import { useConfirmDialog } from '../MyWork/shared/ConfirmDialog';
 import { TaskDetailView } from '../MyWork/TaskDetailView';
 import {
   ASSESSMENT_STATUSES,
+  type BulkAction,
+  BulkActionBar,
   FilterableTable,
   FilterChip,
   GridItem,
@@ -64,6 +68,7 @@ import {
   REPORT_STATUSES,
   StatusDropdown,
   TableColumn,
+  useTableSelection,
   ViewMode,
 } from '../shared/ModuleHub';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
@@ -1154,6 +1159,57 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
       ? 'Assessment list is temporarily unavailable. Retry or create a new assessment while staging recovers.'
       : 'No assessments found. Create your first assessment to get started.';
 
+  // canon §3.5 — leading selection column prepended to the per-tab columns.
+  const tableColumnsWithSelect: TableColumn[] = useMemo(
+    () => [{ id: 'select', label: '', type: 'select', width: '44px' }, ...tableColumns],
+    [tableColumns]
+  );
+
+  // canon §3.5 — row selection + bulk delete. The delete endpoint is tab-aware
+  // (assessment / report / initiative), matching the single-row delete flow.
+  const selection = useTableSelection(currentData.map((r: any) => String(r.id)));
+  const { dialog: bulkConfirmDialog, confirm: confirmBulkDelete } = useConfirmDialog();
+  const bulkActions = useMemo<BulkAction[]>(() => {
+    const docType =
+      activeTab === 'initiatives'
+        ? 'initiative'
+        : activeTab === 'reports'
+          ? 'report'
+          : 'assessment';
+    const deletePath = (id: string) =>
+      docType === 'report'
+        ? `/assessment-reports/${id}`
+        : docType === 'initiative'
+          ? `/initiatives/${id}`
+          : `/assessment-workflow-v2/${id}`;
+    return [
+      {
+        id: 'delete',
+        label: t('common.delete', 'Delete'),
+        icon: Trash2,
+        variant: 'danger',
+        onRun: async (sel) => {
+          const ok = await confirmBulkDelete({
+            title: t('assessment.bulk.confirmDeleteTitle', 'Usunąć zaznaczone pozycje?'),
+            description: t(
+              'assessment.bulk.confirmDeleteDesc',
+              'Trwale usuniesz {{count}} pozycji. Tej operacji nie można cofnąć.',
+              { count: sel.count }
+            ),
+            confirmLabel: t('common.delete', 'Delete'),
+            cancelLabel: t('common.cancel', 'Anuluj'),
+            variant: 'danger',
+          });
+          if (!ok) return;
+          await sel.runBulk((id) => Api.delete(deletePath(id)), {
+            successNoun: t('assessment.bulk.deletedNoun', 'usunięto'),
+          });
+          refreshData();
+        },
+      },
+    ];
+  }, [activeTab, confirmBulkDelete, refreshData, t]);
+
   const hubWorkspaceContext = useMemo(
     () =>
       createWorkspaceContext(AppView.ASSESSMENT_OVERVIEW, 'assessment', {
@@ -1511,10 +1567,13 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
             />
           )}
         >
-          <div className="pl-4 pr-1.5 pt-3 pb-4">
+          <div className="flex flex-col pl-4 pr-1.5 pt-1 pb-4">
+            <BulkActionBar selection={selection} actions={bulkActions} className="pb-2" />
+            {bulkConfirmDialog}
             <FilterableTable
-              columns={tableColumns}
+              columns={tableColumnsWithSelect}
               data={currentData}
+              selection={selection.selectionProp}
               onRowClick={(row) => setSelectedAssessmentId((row as any).id as string)}
               onRowDoubleClick={handleOpenDocument}
               onRowAction={handleRowAction}
@@ -1528,15 +1587,20 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     }
 
     return (
-      <FilterableTable
-        columns={tableColumns}
-        data={currentData}
-        onRowClick={handleOpenDocument}
-        onRowAction={handleRowAction}
-        activeFilters={activeFilters}
-        onFilterChange={setActiveFilters}
-        emptyMessage={emptyStateMessage}
-      />
+      <div className="flex flex-col">
+        <BulkActionBar selection={selection} actions={bulkActions} className="px-1 pb-2" />
+        {bulkConfirmDialog}
+        <FilterableTable
+          columns={tableColumnsWithSelect}
+          data={currentData}
+          selection={selection.selectionProp}
+          onRowClick={handleOpenDocument}
+          onRowAction={handleRowAction}
+          activeFilters={activeFilters}
+          onFilterChange={setActiveFilters}
+          emptyMessage={emptyStateMessage}
+        />
+      </div>
     );
   };
 
