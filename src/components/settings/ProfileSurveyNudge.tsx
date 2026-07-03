@@ -188,11 +188,11 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
   return (
     <div className="fixed inset-0 z-context-menu flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={handleDismiss} />
-      <div className="relative w-full max-w-lg bg-white dark:bg-navy-900 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+      <div className="relative w-full max-w-lg bg-c-surface rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300">
         {/* Progress bar */}
-        <div className="h-1 bg-slate-100 dark:bg-navy-800">
+        <div className="h-1 bg-c-surface-raised">
           <div
-            className="h-full bg-gradient-to-r from-primary-500 to-crimson-500 transition-all duration-500 ease-out"
+            className="h-full bg-gradient-to-r from-c-accent-soft to-c-accent transition-all duration-500 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -200,7 +200,7 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
         {/* Close button */}
         <button
           onClick={handleDismiss}
-          className="absolute top-4 right-4 p-1.5 rounded-full text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors z-10"
+          className="absolute top-4 right-4 p-1.5 rounded-full text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-800 transition-colors z-10"
         >
           <X size={18} />
         </button>
@@ -211,8 +211,8 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
               <div className="w-16 h-16 mx-auto mb-4 bg-green-100 dark:bg-green-500/20 rounded-full flex items-center justify-center">
                 <Sparkles size={32} className="text-green-600 dark:text-green-400" />
               </div>
-              <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-2">Gotowe!</h3>
-              <p className="text-slate-500 dark:text-slate-400 text-sm">
+              <h3 className="text-xl font-bold text-navy-900 mb-2">Gotowe!</h3>
+              <p className="text-c-text-muted text-sm">
                 Dzięki za uzupełnienie profilu. Teraz dopasujemy pytania do Twojego obszaru.
               </p>
             </div>
@@ -223,17 +223,17 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
               {/* Header */}
               <div className="mb-6">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-medium text-primary-600 dark:text-primary-400 uppercase tracking-wider">
+                  <span className="text-xs font-medium text-c-accent uppercase tracking-wider">
                     Krok {stepIndex + 1} z {STEPS.length}
                   </span>
                 </div>
-                <h3 className="text-xl font-bold text-navy-900 dark:text-white">
+                <h3 className="text-xl font-bold text-navy-900">
                   {step === 'department' && 'W jakim dziale pracujesz?'}
                   {step === 'seniority' && 'Na jakim poziomie jest Twoje stanowisko?'}
                   {step === 'tenure' && 'Jak długo pracujesz w firmie?'}
                   {step === 'expertise' && 'Jakie masz kompetencje?'}
                 </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-sm text-c-text-muted mt-1">
                   {step === 'department' &&
                     'Pomoże nam to dobrać odpowiednie pytania do Twojego obszaru.'}
                   {step === 'seniority' && 'Dopasujemy pytania do perspektywy Twojego stanowiska.'}
@@ -255,13 +255,13 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
                         onClick={() => setDepartment(dept)}
                         className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-left text-sm font-medium transition-all border ${
                           department === dept
-                            ? 'bg-primary-50 dark:bg-primary-500/20 border-primary-400 dark:border-primary-500 text-primary-700 dark:text-primary-300 shadow-sm shadow-primary-500/10'
-                            : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:border-primary-300 dark:hover:border-primary-600'
+                            ? 'bg-c-accent-soft dark:bg-c-accent-soft border-c-accent dark:border-c-accent text-c-accent shadow-sm shadow-c-accent'
+                            : 'bg-c-surface border-c-border-subtle dark:border-navy-700 text-c-text-secondary hover:border-c-accent'
                         }`}
                       >
                         <Building
                           size={16}
-                          className={department === dept ? 'text-primary-500' : 'text-slate-600'}
+                          className={department === dept ? 'text-c-accent' : 'text-c-text-secondary'}
                         />
                         {dept}
                       </button>
@@ -278,13 +278,13 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
                         onClick={() => setSeniority(lvl)}
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium transition-all border ${
                           seniority === lvl
-                            ? 'bg-primary-50 dark:bg-primary-500/20 border-primary-400 dark:border-primary-500 text-primary-700 dark:text-primary-300 shadow-sm shadow-primary-500/10'
-                            : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:border-primary-300 dark:hover:border-primary-600'
+                            ? 'bg-c-accent-soft dark:bg-c-accent-soft border-c-accent dark:border-c-accent text-c-accent shadow-sm shadow-c-accent'
+                            : 'bg-c-surface border-c-border-subtle dark:border-navy-700 text-c-text-secondary hover:border-c-accent'
                         }`}
                       >
                         <Award
                           size={16}
-                          className={seniority === lvl ? 'text-primary-500' : 'text-slate-600'}
+                          className={seniority === lvl ? 'text-c-accent' : 'text-c-text-secondary'}
                         />
                         {lvl}
                       </button>
@@ -301,13 +301,13 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
                         onClick={() => setTenure(opt.value)}
                         className={`flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium transition-all border ${
                           tenure === opt.value
-                            ? 'bg-primary-50 dark:bg-primary-500/20 border-primary-400 dark:border-primary-500 text-primary-700 dark:text-primary-300 shadow-sm shadow-primary-500/10'
-                            : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:border-primary-300 dark:hover:border-primary-600'
+                            ? 'bg-c-accent-soft dark:bg-c-accent-soft border-c-accent dark:border-c-accent text-c-accent shadow-sm shadow-c-accent'
+                            : 'bg-c-surface border-c-border-subtle dark:border-navy-700 text-c-text-secondary hover:border-c-accent'
                         }`}
                       >
                         <Calendar
                           size={16}
-                          className={tenure === opt.value ? 'text-primary-500' : 'text-slate-600'}
+                          className={tenure === opt.value ? 'text-c-accent' : 'text-c-text-secondary'}
                         />
                         {opt.label}
                       </button>
@@ -318,11 +318,11 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
                 {step === 'expertise' && (
                   <div>
                     {expertise.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-3 pb-3 border-b border-slate-200 dark:border-navy-700">
+                      <div className="flex flex-wrap gap-2 mb-3 pb-3 border-b border-c-border-subtle dark:border-navy-700">
                         {expertise.map((tag) => (
                           <span
                             key={tag}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 rounded-full text-xs font-medium"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-c-accent-soft dark:bg-c-accent-soft text-c-accent rounded-full text-xs font-medium"
                           >
                             <Tag size={10} />
                             {tag}
@@ -347,7 +347,7 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
                               setExpertise([...expertise, suggestion]);
                             }
                           }}
-                          className="px-2.5 py-1 text-xs rounded-full border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-primary-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                          className="px-2.5 py-1 text-xs rounded-full border border-c-border-subtle dark:border-navy-700 text-c-text-secondary hover:border-c-accent hover:text-c-accent transition-colors"
                         >
                           + {suggestion}
                         </button>
@@ -362,7 +362,7 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
                 <button
                   type="button"
                   onClick={handleDismiss}
-                  className="text-xs text-slate-600 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  className="text-xs text-c-text-secondary hover:text-c-text-secondary transition-colors"
                 >
                   Uzupełnię później
                 </button>
@@ -372,8 +372,8 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
                   disabled={!canProceed && step !== 'expertise'}
                   className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                     canProceed || step === 'expertise'
-                      ? 'bg-gradient-to-r from-primary-600 to-crimson-600 text-white shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40 hover:scale-[1.02]'
-                      : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-500 cursor-not-allowed'
+                      ? 'bg-gradient-to-r from-c-accent-soft to-c-accent text-white shadow-lg shadow-c-accent hover:shadow-c-accent hover:scale-[1.02]'
+                      : 'bg-c-surface-raised text-c-text-secondary cursor-not-allowed'
                   }`}
                 >
                   {stepIndex === STEPS.length - 1 ? 'Zapisz' : 'Dalej'}
