@@ -176,7 +176,7 @@ export const INITIATIVE_LEVELS: {
     id: 'strategic',
     label: 'Strategic Program',
     description: 'Cross-functional program. 3-12 months, multiple teams, executive sponsor.',
-    color: 'text-primary-500 bg-primary-500/10 border-primary-500/30',
+    color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/30',
     icon: '🎯',
   },
   {
@@ -1361,7 +1361,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       return (
         <div className="flex items-center justify-center h-full text-slate-500">
           <div className="text-center">
-            <Lightbulb className="w-12 h-12 mx-auto mb-4 text-primary-400/50" />
+            <Lightbulb className="w-12 h-12 mx-auto mb-4 text-indigo-400/50" />
             <p className="text-lg text-slate-900 dark:text-white">{t('initiatives.empty.title')}</p>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
               {t('initiatives.empty.description')}
@@ -1649,9 +1649,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             setScope(opt.id);
             if (opt.id === 'active') setActiveStatusFilter(null);
           }}
-          className={`inline-flex items-center justify-center h-8 px-3 rounded-full text-[11px] font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+          className={`inline-flex items-center justify-center h-8 px-3 rounded-full text-[11px] font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
             scope === opt.id
-              ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
+              ? 'bg-white/80 dark:bg-navy-800 text-indigo-700 dark:text-indigo-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
               : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
           }`}
           title={
@@ -1712,7 +1712,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     {
       id: 'resources',
       labelKey: 'initiatives.analysis.resources.title',
-      icon: <Users size={14} className="text-primary-400" />,
+      icon: <Users size={14} className="text-indigo-400" />,
     },
     {
       id: 'feasibility',
