@@ -1,13 +1,13 @@
 /**
- * USPOJNIENIE E1 + E2 — Obserwowalność łańcucha inicjatyw (widoczna w UI).
+ * UNIFICATION E1 + E2 — Initiative chain observability (visible in the UI).
  *
- * Audyt 2026-06-26 wykazał, że endpointy lineage (`/initiatives/:id/lineage`) i
- * funnel (`/initiatives/funnel/stats`) istniały, ale ŻADEN komponent FE ich nie
- * konsumował — obserwowalność była niewidoczna dla użytkownika. Ten panel domyka tę
- * lukę: pokazuje lejek konwersji portfela (E2) oraz łańcuch pochodzenia wybranej
- * inicjatywy (E1): źródło → inicjatywa → wykonanie → rezultaty.
+ * The 2026-06-26 audit showed that the lineage (`/initiatives/:id/lineage`) and
+ * funnel (`/initiatives/funnel/stats`) endpoints existed, but NO FE component
+ * consumed them — observability was invisible to the user. This panel closes that
+ * gap: it shows the portfolio conversion funnel (E2) and the lineage chain of the
+ * selected initiative (E1): source → initiative → execution → results.
  *
- * Read-only. i18n PL/EN przez t(). Statusy przez EntityStatusChip (kanon c.*).
+ * Read-only. i18n PL/EN via t(). Statuses via EntityStatusChip (canon c.*).
  */
 import { ArrowRight, GitBranch, Loader2, TrendingUp } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -30,7 +30,7 @@ function ConversionStep({ label, value }: { label: string; value: number }) {
   );
 }
 
-/** Poziomy pasek udziału (bez hex/rose — token primary). */
+/** Horizontal share bar (no hex/rose — primary token). */
 function ShareBar({ label, count, total }: { label: React.ReactNode; count: number; total: number }) {
   const pct = total > 0 ? Math.round((count / total) * 100) : 0;
   return (
@@ -47,7 +47,7 @@ function ShareBar({ label, count, total }: { label: React.ReactNode; count: numb
 }
 
 export interface InitiativeObservabilityPanelProps {
-  /** Opcjonalnie: id inicjatywy do wstępnego pokazania łańcucha lineage. */
+  /** Optional: initiative id to pre-show the lineage chain. */
   initialInitiativeId?: string | null;
 }
 
@@ -126,23 +126,23 @@ export function InitiativeObservabilityPanel({
         {funnelLoading ? (
           <div className="flex items-center gap-2 py-6 text-sm text-slate-500">
             <Loader2 className="h-4 w-4 animate-spin" />
-            {t('common.loading', 'Ładowanie…')}
+            {t('common.loading', 'Loading…')}
           </div>
         ) : funnel ? (
           <>
             <div className="mb-4 flex items-center justify-center gap-1 rounded-lg bg-slate-50 py-3 dark:bg-slate-800/50">
               <ConversionStep
-                label={t('initiatives.observability.created', 'Utworzone')}
+                label={t('initiatives.observability.created', 'Created')}
                 value={funnel.conversion.created}
               />
               <ArrowRight className="h-4 w-4 text-slate-300" />
               <ConversionStep
-                label={t('initiatives.observability.inExecution', 'W wykonaniu')}
+                label={t('initiatives.observability.inExecution', 'In execution')}
                 value={funnel.conversion.inExecution}
               />
               <ArrowRight className="h-4 w-4 text-slate-300" />
               <ConversionStep
-                label={t('initiatives.observability.tracking', 'Rezultaty')}
+                label={t('initiatives.observability.tracking', 'Results')}
                 value={funnel.conversion.tracking}
               />
               <div className="ml-4 flex flex-col items-center border-l border-slate-200 pl-4 dark:border-slate-700">
@@ -150,7 +150,7 @@ export function InitiativeObservabilityPanel({
                   {funnel.conversion.conversionPct}%
                 </span>
                 <span className="text-xs text-slate-500 dark:text-slate-400">
-                  {t('initiatives.observability.conversion', 'Konwersja')}
+                  {t('initiatives.observability.conversion', 'Conversion')}
                 </span>
               </div>
             </div>
@@ -158,7 +158,7 @@ export function InitiativeObservabilityPanel({
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <h4 className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-400">
-                  {t('initiatives.observability.byStatus', 'Wg statusu')}
+                  {t('initiatives.observability.byStatus', 'By status')}
                 </h4>
                 {Object.entries(funnel.byStatus)
                   .sort((a, b) => b[1] - a[1])
@@ -173,7 +173,7 @@ export function InitiativeObservabilityPanel({
               </div>
               <div>
                 <h4 className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-400">
-                  {t('initiatives.observability.bySource', 'Wg źródła')}
+                  {t('initiatives.observability.bySource', 'By source')}
                 </h4>
                 {Object.entries(funnel.bySource)
                   .sort((a, b) => b[1] - a[1])
@@ -185,24 +185,24 @@ export function InitiativeObservabilityPanel({
           </>
         ) : (
           <p className="py-4 text-sm text-slate-500">
-            {t('initiatives.observability.empty', 'Brak danych obserwowalności.')}
+            {t('initiatives.observability.empty', 'No observability data.')}
           </p>
         )}
       </section>
 
-      {/* ── E1: Lineage łańcucha ─────────────────────────────────────────── */}
+      {/* ── E1: Lineage chain ────────────────────────────────────────────── */}
       <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
         <header className="mb-3 flex flex-wrap items-center gap-2">
           <GitBranch className="h-4 w-4 text-primary-500" />
           <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-            {t('initiatives.observability.lineageTitle', 'Łańcuch pochodzenia inicjatywy')}
+            {t('initiatives.observability.lineageTitle', 'Initiative lineage chain')}
           </h3>
           {initiatives.length > 0 && (
             <select
               value={selectedId ?? ''}
               onChange={(e) => setSelectedId(e.target.value || null)}
               className="ml-auto rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-              aria-label={t('initiatives.observability.pickInitiative', 'Wybierz inicjatywę')}
+              aria-label={t('initiatives.observability.pickInitiative', 'Select initiative')}
             >
               {initiatives.map((i) => (
                 <option key={i.id} value={i.id}>
@@ -216,23 +216,23 @@ export function InitiativeObservabilityPanel({
         {lineageLoading ? (
           <div className="flex items-center gap-2 py-6 text-sm text-slate-500">
             <Loader2 className="h-4 w-4 animate-spin" />
-            {t('common.loading', 'Ładowanie…')}
+            {t('common.loading', 'Loading…')}
           </div>
         ) : lineage ? (
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            {/* Źródło */}
+            {/* Source */}
             <div className="rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700">
-              <div className="text-xs text-slate-400">{t('initiatives.observability.source', 'Źródło')}</div>
+              <div className="text-xs text-slate-400">{t('initiatives.observability.source', 'Source')}</div>
               <div className="font-medium text-slate-700 dark:text-slate-200">
                 {lineage.source
                   ? lineage.source.type
-                  : t('initiatives.observability.sourceManual', 'ręczne')}
+                  : t('initiatives.observability.sourceManual', 'manual')}
               </div>
             </div>
             <ArrowRight className="h-4 w-4 text-slate-300" />
-            {/* Inicjatywa */}
+            {/* Initiative */}
             <div className="rounded-lg border border-primary-200 bg-primary-50 px-3 py-2 dark:border-primary-800 dark:bg-primary-900/20">
-              <div className="text-xs text-slate-400">{t('initiatives.observability.initiative', 'Inicjatywa')}</div>
+              <div className="text-xs text-slate-400">{t('initiatives.observability.initiative', 'Initiative')}</div>
               <div className="max-w-[16rem] truncate font-medium text-slate-800 dark:text-slate-100">
                 {lineage.initiative.title}
               </div>
@@ -241,9 +241,9 @@ export function InitiativeObservabilityPanel({
               </div>
             </div>
             <ArrowRight className="h-4 w-4 text-slate-300" />
-            {/* Wykonanie */}
+            {/* Execution */}
             <div className="rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700">
-              <div className="text-xs text-slate-400">{t('initiatives.observability.execution', 'Wykonanie')}</div>
+              <div className="text-xs text-slate-400">{t('initiatives.observability.execution', 'Execution')}</div>
               <div className="font-medium text-slate-700 dark:text-slate-200">
                 {lineage.downstream.executionStatus
                   ? lineage.downstream.executionStatus
@@ -251,9 +251,9 @@ export function InitiativeObservabilityPanel({
               </div>
             </div>
             <ArrowRight className="h-4 w-4 text-slate-300" />
-            {/* Rezultaty */}
+            {/* Results */}
             <div className="rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700">
-              <div className="text-xs text-slate-400">{t('initiatives.observability.results', 'Rezultaty')}</div>
+              <div className="text-xs text-slate-400">{t('initiatives.observability.results', 'Results')}</div>
               <div className="font-medium text-slate-700 dark:text-slate-200">
                 {lineage.downstream.benefits && lineage.downstream.benefits.length > 0
                   ? t('initiatives.observability.kpiCount', '{{count}} KPI', {
@@ -265,7 +265,7 @@ export function InitiativeObservabilityPanel({
           </div>
         ) : (
           <p className="py-4 text-sm text-slate-500">
-            {t('initiatives.observability.noLineage', 'Brak łańcucha dla wybranej inicjatywy.')}
+            {t('initiatives.observability.noLineage', 'No lineage chain for the selected initiative.')}
           </p>
         )}
       </section>

@@ -39,10 +39,10 @@ interface ValueIntelligence {
 }
 
 const FUNNEL_LABEL: Record<string, string> = {
-  ideas: 'Pomysły',
-  validated: 'Zwalidowane',
-  inflight: 'W realizacji',
-  realized: 'Zrealizowane',
+  ideas: 'Ideas',
+  validated: 'Validated',
+  inflight: 'In progress',
+  realized: 'Realized',
 };
 const FUNNEL_ORDER = ['ideas', 'validated', 'inflight', 'realized'];
 
@@ -53,10 +53,10 @@ const ACTION_STYLE: Record<DecisionAction, string> = {
   HOLD: 'bg-gray-100 text-gray-500 border-gray-200',
 };
 const ACTION_LABEL: Record<DecisionAction, string> = {
-  SCALE: 'Skaluj',
-  INTERVENE: 'Interweniuj',
-  STOP: 'Zatrzymaj',
-  HOLD: 'Wstrzymaj',
+  SCALE: 'Scale',
+  INTERVENE: 'Intervene',
+  STOP: 'Stop',
+  HOLD: 'Hold',
 };
 
 function fmt(v: number | null | undefined): string {
@@ -119,12 +119,12 @@ export const TransformationScorecard: React.FC<Props> = ({ projectId, fetcher })
   );
 
   if (failed)
-    return wrap(<p className="text-sm text-c-text-muted">Narracja wartości niedostępna chwilowo.</p>);
-  if (loading && !data) return wrap(<p className="text-sm text-c-text-muted">Ładowanie wartości…</p>);
+    return wrap(<p className="text-sm text-c-text-muted">Value narrative temporarily unavailable.</p>);
+  if (loading && !data) return wrap(<p className="text-sm text-c-text-muted">Loading value…</p>);
   if (!data || (data.scorecard?.itemCount ?? 0) === 0)
     return wrap(
       <p className="text-sm text-c-text-muted" data-testid="scorecard-empty">
-        Brak danych wartości — dodaj ROI/realizację inicjatyw.
+        No value data yet — add initiative ROI / realization.
       </p>
     );
 
@@ -137,13 +137,13 @@ export const TransformationScorecard: React.FC<Props> = ({ projectId, fetcher })
   return wrap(
     <>
       <h3 className="mb-3 text-sm font-semibold text-c-text">
-        Wartość transformacji
+        Transformation value
       </h3>
 
       <div className="grid grid-cols-3 gap-3" data-testid="scorecard-header">
-        <Stat label="Zabankowane" value={fmt(sc.banked)} tone="emerald" />
-        <Stat label="W realizacji" value={fmt(sc.inFlight)} tone="blue" />
-        <Stat label="Zagrożone" value={fmt(sc.atRisk)} tone="red" />
+        <Stat label="Banked" value={fmt(sc.banked)} tone="emerald" />
+        <Stat label="In progress" value={fmt(sc.inFlight)} tone="blue" />
+        <Stat label="At risk" value={fmt(sc.atRisk)} tone="red" />
       </div>
       <div className="mt-2">
         <div className="h-2 w-full overflow-hidden rounded-full bg-c-surface-raised">
@@ -153,13 +153,13 @@ export const TransformationScorecard: React.FC<Props> = ({ projectId, fetcher })
           />
         </div>
         <p className="mt-1 text-[11px] text-c-text-muted">
-          {Math.round((sc.pctOfTarget || 0) * 100)}% z celu {fmt(sc.totalTarget)}
+          {Math.round((sc.pctOfTarget || 0) * 100)}% of target {fmt(sc.totalTarget)}
         </p>
       </div>
 
       <div className="mt-4" data-testid="scorecard-funnel">
         <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
-          Lejek wartości
+          Value funnel
         </p>
         <div className="flex flex-col gap-1">
           {orderedFunnel.map((f) => (
@@ -184,7 +184,7 @@ export const TransformationScorecard: React.FC<Props> = ({ projectId, fetcher })
       {(data.decisions || []).length > 0 && (
         <div className="mt-4" data-testid="scorecard-decisions">
           <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
-            Rekomendacje
+            Recommendations
           </p>
           <ul className="flex flex-col gap-1">
             {data.decisions.slice(0, 6).map((d) => (

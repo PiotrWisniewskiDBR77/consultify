@@ -311,7 +311,7 @@ export const PresentationsHub: React.FC = () => {
   // Row actions — canon §9.2 Fixed Bottom Manifest (decks have no due date → no Delay)
   const getRowActions = useCallback(
     (deck: PresentationDeck): RowAction[] => [
-      // GÓRA — kontekst
+      // TOP — context
       {
         id: 'open',
         label: t('common.open', 'Open'),
@@ -335,10 +335,10 @@ export const PresentationsHub: React.FC = () => {
             },
           ] as RowAction[])
         : []),
-      // DÓŁ — FIXED BOTTOM MANIFEST
+      // BOTTOM — FIXED BOTTOM MANIFEST
       {
         id: 'open_preview',
-        label: t('rap.actions.openPreview', 'Otwórz podgląd'),
+        label: t('rap.actions.openPreview', 'Open preview'),
         icon: ChevronRight,
         divider: true,
         onClick: () => setSelectedId(deck.id),
@@ -352,10 +352,10 @@ export const PresentationsHub: React.FC = () => {
       {
         // canon §14 + §9.2: Archive slot — soft-delete (backend TBD)
         id: 'archive',
-        label: t('rap.actions.archive', 'Archiwizuj'),
+        label: t('rap.actions.archive', 'Archive'),
         icon: Archive,
         disabled: true,
-        description: t('common.comingSoon', 'Wkrótce'),
+        description: t('common.comingSoon', 'Coming soon'),
         onClick: () => {},
       },
       // DANGER
@@ -475,14 +475,14 @@ export const PresentationsHub: React.FC = () => {
         variant: 'danger',
         onRun: async (sel) => {
           const ok = await confirmBulkDelete({
-            title: t('presentations.bulk.confirmDeleteTitle', 'Usunąć zaznaczone prezentacje?'),
+            title: t('presentations.bulk.confirmDeleteTitle', 'Delete selected presentations?'),
             description: t(
               'presentations.bulk.confirmDeleteDesc',
-              'Trwale usuniesz {{count}} prezentacji. Tej operacji nie można cofnąć.',
+              'You will permanently delete {{count}} presentations. This action cannot be undone.',
               { count: sel.count }
             ),
             confirmLabel: t('common.delete', 'Delete'),
-            cancelLabel: t('common.cancel', 'Anuluj'),
+            cancelLabel: t('common.cancel', 'Cancel'),
             variant: 'danger',
           });
           if (!ok) return;
@@ -492,7 +492,7 @@ export const PresentationsHub: React.FC = () => {
               await Api.delete(`/presentations/decks/${id}`);
               deleted.push(id);
             },
-            { successNoun: t('presentations.bulk.deletedNoun', 'usunięto') }
+            { successNoun: t('presentations.bulk.deletedNoun', 'deleted') }
           );
           if (deleted.length > 0) {
             setOpenDocuments((prev) => prev.filter((d) => !deleted.includes(String(d.id))));

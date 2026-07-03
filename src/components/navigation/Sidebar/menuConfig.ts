@@ -145,7 +145,7 @@ export function getMenuStructure(t: TranslationFn, _journeyState?: string): Menu
     // / route gates stay intact.
     {
       id: 'MODULE_PRESENTATIONS',
-      label: t('sidebar.materialy', 'Materiały'),
+      label: t('sidebar.materialy', 'Materials'),
       icon: React.createElement(FolderOutput, { size: 20 }),
       viewId: AppView.PRESENTATIONS,
       badge: 'beta',
@@ -286,7 +286,7 @@ export function getViewName(view: AppView, t: TranslationFn): string {
     [AppView.MCP_IRIS_COMING_SOON]: t('sidebar.mcpIris', 'MCP IRIS'),
     [AppView.MCP_MARKETPLACE_COMING_SOON]: t('sidebar.mcpMarketplace', 'MCP Marketplace'),
     [AppView.CONCLUSIONS]: t('sidebar.conclusions', 'Conclusions'),
-    [AppView.PRESENTATIONS]: t('sidebar.materialy', 'Materiały'),
+    [AppView.PRESENTATIONS]: t('sidebar.materialy', 'Materials'),
     [AppView.PREZENTACJE_GEN]: t('sidebar.prezentacje', 'Presentation Studio'),
     [AppView.WORDY]: t('sidebar.wordy', 'Documents'),
     [AppView.EXCELE]: t('sidebar.tabele', 'Table Studio'),

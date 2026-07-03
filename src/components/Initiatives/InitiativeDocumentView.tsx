@@ -572,8 +572,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   const [activeNSection, setActiveNSection] = useState<string>('initiative-definition');
   const [nModeSectionOrder, setNModeSectionOrder] = useState<string[] | null>(null);
-  // Canon Toolbar (Warstwa 3) — user-toggled section visibility for the left nav.
-  // Drops section ids from the nav until restored ("Przywróć domyślne").
+  // Canon Toolbar (Layer 3) — user-toggled section visibility for the left nav.
+  // Drops section ids from the nav until restored ("Restore defaults").
   const [hiddenSectionIds, setHiddenSectionIds] = useState<Set<string>>(new Set());
   // Canon Toolbar dropdown open-state (Sections / New / Export / kebab).
   const [showSectionsMenu, setShowSectionsMenu] = useState(false);
@@ -581,7 +581,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showToolbarKebab, setShowToolbarKebab] = useState(false);
 
-  // F5 — "Zrób materiał": one-click deck/report/table via the M17 pipeline.
+  // F5 — "Make material": one-click deck/report/table via the M17 pipeline.
   // POST /api/initiatives/:id/materialize { format } → binary blob download.
   const [showMaterializeMenu, setShowMaterializeMenu] = useState(false);
   const [materializingFormat, setMaterializingFormat] = useState<
@@ -2793,7 +2793,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       );
       if (!transition || !transition.canCurrentUserExecute) {
         toast.error(
-          t('initiatives.toast.statusUpdateError', 'Nie udało się zaktualizować statusu')
+          t('initiatives.toast.statusUpdateError', 'Failed to update status')
         );
         return;
       }
@@ -2802,7 +2802,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         toast.error(
           t(
             'initiatives.toast.gateBlockedHub',
-            'Nie można przejść dalej — brakuje elementów blokujących:\n• {{items}}',
+            'Cannot proceed — missing blocking items:\n• {{items}}',
             { items: list || t('common.missing', 'Missing required items') }
           ),
           { duration: 6500 }
@@ -2835,7 +2835,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     } catch (e: any) {
       toast.error(
         e?.message ||
-          t('initiatives.toast.statusUpdateError', 'Nie udało się zaktualizować statusu')
+          t('initiatives.toast.statusUpdateError', 'Failed to update status')
       );
     } finally {
       setIsMutating(false);
@@ -2873,7 +2873,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     } catch (e: any) {
       toast.error(
         e?.message ||
-          t('initiatives.toast.statusUpdateError', 'Nie udało się zaktualizować statusu')
+          t('initiatives.toast.statusUpdateError', 'Failed to update status')
       );
     } finally {
       setIsMutating(false);
@@ -2897,7 +2897,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       }
     } catch (e: any) {
       toast.error(
-        e?.message || t('initiatives.toast.watchError', 'Nie udało się zmienić obserwowania')
+        e?.message || t('initiatives.toast.watchError', 'Failed to change watching')
       );
     } finally {
       setIsMutating(false);
@@ -3037,7 +3037,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       }
     } catch (e: any) {
       if (!silent) {
-        toast.error(e?.message || t('initiatives.toast.saveError', 'Nie udało się zapisać'));
+        toast.error(e?.message || t('initiatives.toast.saveError', 'Failed to save'));
       }
     } finally {
       setIsMutating(false);
@@ -3242,7 +3242,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       toast.success(t('initiatives.taskCreated2'));
     } catch (e: any) {
       toast.error(
-        e?.message || t('initiatives.toast.createTaskError', 'Nie udało się utworzyć zadania')
+        e?.message || t('initiatives.toast.createTaskError', 'Failed to create task')
       );
     } finally {
       setIsMutating(false);
@@ -3286,7 +3286,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       toast.success(t('initiatives.decisionCreated2'));
     } catch (e: any) {
       toast.error(
-        e?.message || t('initiatives.toast.createDecisionError', 'Nie udało się utworzyć decyzji')
+        e?.message || t('initiatives.toast.createDecisionError', 'Failed to create decision')
       );
     } finally {
       setIsMutating(false);
@@ -3325,7 +3325,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       toast.success(t('initiatives.raidItemAdded2'));
     } catch (e: any) {
       toast.error(
-        e?.message || t('initiatives.toast.createRaidError', 'Nie udało się dodać elementu RAID')
+        e?.message || t('initiatives.toast.createRaidError', 'Failed to add RAID item')
       );
     } finally {
       setIsMutating(false);
@@ -4262,7 +4262,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       }
     } catch (e: any) {
       toast.error(
-        e?.message || t('initiatives.toast.aiGenerationError', 'Generowanie AI nie powiodło się')
+        e?.message || t('initiatives.toast.aiGenerationError', 'AI generation failed')
       );
       return null;
     } finally {
@@ -4354,7 +4354,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         toast.success(t('initiatives.aiGeneratedAFinancialDraftReview2'));
       } catch (e: any) {
         toast.error(
-          e?.message || t('initiatives.toast.aiGenerationError', 'Generowanie AI nie powiodło się')
+          e?.message || t('initiatives.toast.aiGenerationError', 'AI generation failed')
         );
       } finally {
         setIsGeneratingAI(null);
@@ -4389,7 +4389,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     } catch (e: any) {
       toast.error(
         e?.message ||
-          t('initiatives.toast.approvalRequestError', 'Nie udało się wysłać prośby o zatwierdzenie')
+          t('initiatives.toast.approvalRequestError', 'Failed to send approval request')
       );
     } finally {
       setIsMutating(false);
@@ -4469,7 +4469,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setShowMoreMenu(false);
       fetchAll();
     } catch (e: any) {
-      toast.error(e?.message || t('initiatives.toast.archiveError', 'Nie udało się zarchiwizować'));
+      toast.error(e?.message || t('initiatives.toast.archiveError', 'Failed to archive'));
     } finally {
       setIsMutating(false);
     }
@@ -4491,7 +4491,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setShowMoreMenu(false);
       onBack?.();
     } catch (e: any) {
-      toast.error(e?.message || t('initiatives.toast.deleteError', 'Nie udało się usunąć'));
+      toast.error(e?.message || t('initiatives.toast.deleteError', 'Failed to delete'));
     } finally {
       setIsMutating(false);
     }
@@ -4911,7 +4911,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   const initiativeNSections: NModeSection[] = useMemo(() => {
     const allSections: NModeSection[] = [
-      // --- Definicja (zawsze na górze) ---
+      // --- Definition (always at top) ---
       {
         id: 'initiative-definition',
         icon: Search,
@@ -4997,7 +4997,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         cSpan: 2,
         component: null,
       },
-      // --- Governance (rzadko używane) ---
+      // --- Governance (rarely used) ---
       {
         id: 'raci',
         icon: ShieldCheck,
@@ -5028,7 +5028,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         label: { en: 'Resources', pl: 'Zasoby' },
         component: null,
       },
-      // --- Dokumentacja i logi (dół) ---
+      // --- Documentation and logs (bottom) ---
       {
         id: 'attachments-links',
         icon: FolderOpen,
@@ -9124,7 +9124,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     setPresentOpen(true);
   }, []);
 
-  // F5 — "Zrób materiał": ask the M17 pipeline to render a deck / report / table
+  // F5 — "Make material": ask the M17 pipeline to render a deck / report / table
   // from this initiative's real data and trigger a browser download. The endpoint
   // returns a binary blob with a Content-Disposition filename.
   const handleMaterialize = useCallback(
@@ -10112,7 +10112,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           )}
                         </div>
 
-                        {/* Slot 3b — Zrób materiał ▾ (F5: deck / report / table via M17) */}
+                        {/* Slot 3b — Make material ▾ (F5: deck / report / table via M17) */}
                         <div className="relative">
                           <ToolbarSubtleButton
                             icon={
@@ -10126,7 +10126,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                             aria-expanded={showMaterializeMenu}
                             disabled={!!materializingFormat}
                           >
-                            <span>{t('initiatives.makeMaterial', 'Zrób materiał')}</span>
+                            <span>{t('initiatives.makeMaterial', 'Make material')}</span>
                             <ChevronDown size={12} className="opacity-60" />
                           </ToolbarSubtleButton>
                           {showMaterializeMenu && (

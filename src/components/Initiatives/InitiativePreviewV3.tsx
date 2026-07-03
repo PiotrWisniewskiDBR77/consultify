@@ -103,7 +103,7 @@ export const InitiativePreviewV3Body: React.FC<{
   detailsExpanded?: boolean;
   onToggleDetailsExpanded?: () => void;
   onSummarize?: () => Promise<void> | void;
-  /** B1 (deliverables): generuje dokument ugruntowany w tej inicjatywie (czat). */
+  /** B1 (deliverables): generates a document grounded in this initiative (chat). */
   onMakeDocument?: () => Promise<void> | void;
 }> = ({ initiative, detailsExpanded, onToggleDetailsExpanded, onSummarize, onMakeDocument }) => {
   const { i18n, t } = useTranslation();
@@ -370,7 +370,7 @@ function getLinkageTypeLabel(
 }
 
 /**
- * Inline "Powiązane modele finansowe / Linked finance models" list.
+ * Inline "Linked finance models" list.
  * Reads the M16-written economics linkages for this initiative (org-scoped on the
  * server) and renders name (finance model ref) + type + status, with an action to
  * open the model in /economics. Renders nothing when there are no linkages so the

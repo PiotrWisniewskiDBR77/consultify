@@ -98,7 +98,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, children, depth, allNodes, ad
               </div>
             )}
             {node.confidence != null && (
-              <div className="text-xs mt-0.5 opacity-60">{Math.round(node.confidence * 100)}% pewność</div>
+              <div className="text-xs mt-0.5 opacity-60">{Math.round(node.confidence * 100)}% confidence</div>
             )}
           </div>
           {children.length > 0 && (
@@ -150,7 +150,7 @@ const ValueDriverTree: React.FC<Props> = ({ projectId = 'all' }) => {
         setData(payload);
         setError(null);
       })
-      .catch(() => setError(t('results.driverTree.error', 'Nie udało się załadować drzewa.')))
+      .catch(() => setError(t('results.driverTree.error', 'Failed to load the tree.')))
       .finally(() => setLoading(false));
   }, [projectId, t]);
 
@@ -184,7 +184,7 @@ const ValueDriverTree: React.FC<Props> = ({ projectId = 'all' }) => {
   if (error || !data) {
     return (
       <div data-testid="value-driver-tree-error" className="py-4 text-sm text-slate-400">
-        {error || t('results.driverTree.noData', 'Brak danych drzewa wartości.')}
+        {error || t('results.driverTree.noData', 'No value tree data.')}
       </div>
     );
   }
@@ -195,8 +195,8 @@ const ValueDriverTree: React.FC<Props> = ({ projectId = 'all' }) => {
       <div className="flex flex-wrap gap-3">
         {[
           { label: t('results.driverTree.stats.kpis', 'KPI'), value: data.stats.kpiCount },
-          { label: t('results.driverTree.stats.initiatives', 'Inicjatywy'), value: data.stats.initiativeCount },
-          { label: t('results.driverTree.stats.nodes', 'Węzły'), value: data.stats.totalNodes },
+          { label: t('results.driverTree.stats.initiatives', 'Initiatives'), value: data.stats.initiativeCount },
+          { label: t('results.driverTree.stats.nodes', 'Nodes'), value: data.stats.totalNodes },
         ].map((s) => (
           <div key={s.label} className="rounded-lg border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] px-3 py-2">
             <div className="text-xs text-slate-500 dark:text-slate-400">{s.label}</div>
@@ -218,7 +218,7 @@ const ValueDriverTree: React.FC<Props> = ({ projectId = 'all' }) => {
       {/* Tree */}
       {roots.length === 0 ? (
         <div className="py-6 text-center text-sm text-slate-400">
-          {t('results.driverTree.noLinks', 'Brak powiązań KPI z inicjatywami. Połącz KPI z inicjatywami w zakładce KPI.')}
+          {t('results.driverTree.noLinks', 'No KPI–initiative links. Link KPIs to initiatives in the KPI tab.')}
         </div>
       ) : (
         <div className="space-y-3 overflow-auto">

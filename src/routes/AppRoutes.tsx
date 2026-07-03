@@ -1977,7 +1977,7 @@ export const AppRoutes: React.FC = () => {
           element={
             <BetaGate moduleId="MODULE_PRESENTATIONS">
               <MainLayout
-                breadcrumbs={breadcrumbs || [t('sidebar.materialy', 'Materiały')]}
+                breadcrumbs={breadcrumbs || [t('sidebar.materialy', 'Materials')]}
                 noPadding
               >
                 <ProductionModuleGate
