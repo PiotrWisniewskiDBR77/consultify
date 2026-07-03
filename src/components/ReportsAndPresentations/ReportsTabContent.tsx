@@ -17,15 +17,19 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { useConfirmDialog } from '@/components/MyWork/shared/ConfirmDialog';
 import { LoadingState, StatusChip } from '@/components/ui/primitives';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 
 import {
+  type BulkAction,
+  BulkActionBar,
   FilterableTable,
   type FilterChip,
   type GridItem,
   GridView,
   type TableColumn,
+  useTableSelection,
   type ViewMode,
 } from '../shared/ModuleHub';
 import type { RowAction } from '../shared/RowActionsMenu';
@@ -84,6 +88,8 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
 
   const columns: TableColumn[] = useMemo(
     () => [
+      // canon §3.5 — leading selection column.
+      { id: 'select', label: '', type: 'select', width: '44px' },
       {
         id: 'title',
         label: t('rap.columns.title', 'Tytuł'),
@@ -311,6 +317,46 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
       }
     : null;
   const itemIds = filteredData.map((i) => i.id);
+
+  // canon §3.5 — row selection + bulk archive (loops existing archiveReport).
+  const selection = useTableSelection(itemIds);
+  const { dialog: bulkConfirmDialog, confirm: confirmBulk } = useConfirmDialog();
+  const bulkActions = useMemo<BulkAction[]>(() => {
+    const rowById = new Map(filteredData.map((r) => [String(r.id), r]));
+    return [
+      {
+        id: 'archive',
+        label: t('rap.actions.archive', 'Archiwizuj'),
+        icon: Archive,
+        variant: 'danger',
+        onRun: async (sel) => {
+          const ok = await confirmBulk({
+            title: t('rap.bulk.confirmArchiveReportsTitle', 'Zarchiwizować zaznaczone raporty?'),
+            description: t(
+              'rap.bulk.confirmArchiveReportsDesc',
+              'Zarchiwizujesz {{count}} raportów. Operacja jest odwracalna.',
+              { count: sel.count }
+            ),
+            confirmLabel: t('rap.actions.archive', 'Archiwizuj'),
+            cancelLabel: t('common.cancel', 'Anuluj'),
+            variant: 'warning',
+          });
+          if (!ok) return;
+          await sel.runBulk(
+            async (id) => {
+              const row = rowById.get(id);
+              if (!row) throw new Error('missing row');
+              const done = await actions.archiveReport(row);
+              if (!done) throw new Error('archive failed');
+            },
+            { silent: true }
+          );
+          onRefresh();
+        },
+      },
+    ];
+  }, [filteredData, actions, confirmBulk, onRefresh, t]);
+
   const reviewDisabled =
     !previewItem?.artifactId ||
     reviewBusyArtifactId === previewItem?.artifactId ||
@@ -461,18 +507,25 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
           />
         )}
       >
-        <FilterableTable
-          columns={columns}
-          data={filteredData}
-          selectedRowId={selectedId}
-          onRowClick={(row) => setSelectedId(row.id)}
-          onRowDoubleClick={(row) => openReport(row as ReportItem)}
-          getRowActions={(row) => getRowActions(row as unknown as ReportItem)}
-          activeFilters={activeFilters}
-          onFilterChange={onFilterChange}
-          emptyMessage={t('rap.empty.reports', 'Brak raportów')}
-          canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
-        />
+        <div className="flex h-full min-h-0 flex-col">
+          <BulkActionBar selection={selection} actions={bulkActions} />
+          {bulkConfirmDialog}
+          <div className="min-h-0 flex-1">
+            <FilterableTable
+              columns={columns}
+              data={filteredData}
+              selectedRowId={selectedId}
+              selection={selection.selectionProp}
+              onRowClick={(row) => setSelectedId(row.id)}
+              onRowDoubleClick={(row) => openReport(row as ReportItem)}
+              getRowActions={(row) => getRowActions(row as unknown as ReportItem)}
+              activeFilters={activeFilters}
+              onFilterChange={onFilterChange}
+              emptyMessage={t('rap.empty.reports', 'Brak raportów')}
+              canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
+            />
+          </div>
+        </div>
       </TableWithPreviewLayout>
     </div>
   );

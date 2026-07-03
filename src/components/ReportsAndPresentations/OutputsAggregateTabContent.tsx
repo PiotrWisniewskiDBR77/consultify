@@ -41,13 +41,18 @@ import {
   resolveTablePlatformWorkspaceIdForTable,
 } from '@/utils/sheetArtifactOpen';
 
+import { useConfirmDialog } from '@/components/MyWork/shared/ConfirmDialog';
+
 import { API_URL, getHeaders } from '../../services/api';
 import {
+  type BulkAction,
+  BulkActionBar,
   FilterableTable,
   type FilterChip,
   type GridItem,
   GridView,
   type TableColumn,
+  useTableSelection,
   type ViewMode,
 } from '../shared/ModuleHub';
 import type { RowAction } from '../shared/RowActionsMenu';
@@ -325,6 +330,8 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
 
   const columns: TableColumn[] = useMemo(
     () => [
+      // canon §3.5 — leading selection column drives select-all + per-row checkboxes.
+      { id: 'select', label: '', type: 'select', width: '44px' },
       {
         id: 'title',
         label: t('rap.columns.title', 'Tytuł'),
@@ -718,6 +725,51 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
     : null;
   const itemIds = filteredData.map((i) => i.id);
 
+  // canon §3.5 — row selection + bulk archive (loops the existing per-row
+  // archiveReport/archiveDeck; no new backend endpoint).
+  const selection = useTableSelection(itemIds);
+  const { dialog: bulkConfirmDialog, confirm: confirmBulk } = useConfirmDialog();
+
+  const bulkActions = useMemo<BulkAction[]>(() => {
+    const rowById = new Map(filteredData.map((r) => [String(r.id), r]));
+    return [
+      {
+        id: 'archive',
+        // canon §14: bulk Archive = reversible soft-delete over selected outputs.
+        label: t('rap.actions.archive', 'Archiwizuj'),
+        icon: Archive,
+        variant: 'danger',
+        onRun: async (sel) => {
+          const ok = await confirmBulk({
+            title: t('rap.bulk.confirmArchiveTitle', 'Zarchiwizować zaznaczone outputy?'),
+            description: t(
+              'rap.bulk.confirmArchiveDesc',
+              'Zarchiwizujesz {{count}} pozycji. Operacja jest odwracalna.',
+              { count: sel.count }
+            ),
+            confirmLabel: t('rap.actions.archive', 'Archiwizuj'),
+            cancelLabel: t('common.cancel', 'Anuluj'),
+            variant: 'warning',
+          });
+          if (!ok) return;
+          await sel.runBulk(
+            async (id) => {
+              const row = rowById.get(id);
+              if (!row) throw new Error('missing row');
+              const done =
+                row.kind === 'presentation'
+                  ? await actions.archiveDeck(row)
+                  : await actions.archiveReport(row);
+              if (!done) throw new Error('archive failed');
+            },
+            { silent: true }
+          );
+          onRefresh();
+        },
+      },
+    ];
+  }, [filteredData, actions, confirmBulk, onRefresh, t]);
+
   if (loading) {
     return (
       <div className="p-4">
@@ -1087,21 +1139,28 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
           </div>
         )}
       >
-        <FilterableTable
-          columns={columns}
-          data={filteredData}
-          selectedRowId={selectedId}
-          onRowClick={(row) => setSelectedId((row as AggregateRow).id)}
-          onRowDoubleClick={(row) => openRow(row as AggregateRow)}
-          getRowActions={(row) => getRowActions(row as AggregateRow)}
-          activeFilters={activeFilters}
-          onFilterChange={onFilterChange}
-          emptyMessage={t('rap.empty.outputs', 'Brak outputów')}
-          canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
-          // L-06 (§27): persist column widths/visibility/order across reload —
-          // canonical FilterableTable localStorage path, one key for this table.
-          persistKey="rap.outputs.aggregate"
-        />
+        <div className="flex h-full min-h-0 flex-col">
+          <BulkActionBar selection={selection} actions={bulkActions} />
+          {bulkConfirmDialog}
+          <div className="min-h-0 flex-1">
+            <FilterableTable
+              columns={columns}
+              data={filteredData}
+              selectedRowId={selectedId}
+              selection={selection.selectionProp}
+              onRowClick={(row) => setSelectedId((row as AggregateRow).id)}
+              onRowDoubleClick={(row) => openRow(row as AggregateRow)}
+              getRowActions={(row) => getRowActions(row as AggregateRow)}
+              activeFilters={activeFilters}
+              onFilterChange={onFilterChange}
+              emptyMessage={t('rap.empty.outputs', 'Brak outputów')}
+              canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
+              // L-06 (§27): persist column widths/visibility/order across reload —
+              // canonical FilterableTable localStorage path, one key for this table.
+              persistKey="rap.outputs.aggregate"
+            />
+          </div>
+        </div>
       </TableWithPreviewLayout>
     </div>
   );
