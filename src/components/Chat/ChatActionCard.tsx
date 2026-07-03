@@ -1,11 +1,11 @@
 /**
  * ChatActionCard (V3-B02)
  * Unified UI component for rendering chat actions in AI responses.
- * DBR77: rounded-lg, h-auto, border border-white/10.
- * Primary: bg-primary-500/10, border-primary-500/30.
- * Secondary: bg-white/5, border-white/10.
+ * SPEC-K tool-call card: rounded-lg, h-auto, tokenized (c.*) surfaces.
+ * Primary: bg-c-accent-soft, border-c-accent/30 (Harvard Crimson brand accent).
+ * Secondary: bg-c-surface-raised, border-c-border.
  * Disabled: opacity-50, cursor-not-allowed, tooltip with reason.
- * Error: red border + inline error message.
+ * Error: c-danger border + inline error message.
  */
 
 import {
@@ -91,11 +91,11 @@ export const ChatActionCard: React.FC<ChatActionCardProps> = ({
   const baseClasses =
     'flex items-center gap-2 rounded-lg border h-auto min-h-[36px] px-3 py-2 text-left text-sm font-medium transition-all duration-200';
   const primaryClasses =
-    'bg-primary-500/10 border-primary-500/30 text-primary-700 dark:text-primary-300 hover:bg-primary-500/20 dark:hover:bg-primary-500/20';
+    'bg-c-accent-soft border-c-accent/30 text-c-accent hover:bg-c-accent-soft hover:border-c-accent/50';
   const secondaryClasses =
-    'bg-white/5 border-white/10 text-slate-700 dark:text-slate-300 hover:bg-white/10 dark:hover:bg-white/10';
+    'bg-c-surface-raised border-c-border text-c-text-secondary hover:bg-c-border-subtle hover:text-c-text';
   const disabledClasses = 'opacity-50 cursor-not-allowed';
-  const errorClasses = 'border-danger-500/50 bg-danger-500/5';
+  const errorClasses = 'border-c-danger/50 bg-c-danger/5';
 
   const cardClasses = [
     baseClasses,
@@ -124,7 +124,7 @@ export const ChatActionCard: React.FC<ChatActionCardProps> = ({
         <span className="truncate">{label}</span>
       </button>
       {error && (
-        <span className="text-xs text-danger-600 dark:text-danger-400" role="alert">
+        <span className="text-xs text-c-danger" role="alert">
           {error}
         </span>
       )}
