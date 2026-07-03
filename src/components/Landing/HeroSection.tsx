@@ -4,8 +4,6 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { useAppStore } from '../../store/useAppStore';
-
 interface HeroSectionProps {
   onDemoClick: () => void;
   onTrialClick: () => void;
@@ -23,10 +21,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   onExpertClick,
 }) => {
   const [isVideoOpen, setIsVideoOpen] = useState(false);
-  const { theme } = useAppStore();
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const isDark = theme === 'dark';
 
   // Randomly select a slogan variant based on current second (changes every second)
   // This ensures variety on each page load in production
@@ -120,7 +116,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-5xl lg:text-7xl font-black text-navy-950 dark:text-white leading-[1.05] tracking-tight mb-8"
+            className="text-5xl lg:text-7xl font-black text-c-text leading-[1.05] tracking-tight mb-8"
           >
             {t('landing.hero.title', 'Think bigger.Do smarter').split('.')[0]}.<br />
             {t('landing.hero.title', 'Think bigger.Do smarter').split('.')[1]}.
@@ -151,9 +147,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             const colorMap: Record<string, { border: string; glow: string; hoverBorder: string }> =
               {
                 crimson: {
-                  border: 'ring-primary-500/40',
-                  glow: 'shadow-primary-500/20',
-                  hoverBorder: 'group-hover:ring-primary-400/60',
+                  border: 'ring-c-accent/40',
+                  glow: 'shadow-c-accent/20',
+                  hoverBorder: 'group-hover:ring-c-accent/60',
                 },
                 indigo: {
                   border: 'ring-indigo-500/40',
@@ -202,7 +198,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                                     shadow-lg hover:shadow-2xl ${colors.glow} hover:shadow-xl
                                     transition-all duration-500 cursor-pointer select-none
                                     ${card.className}
-                                    ${card.primary ? 'ring-2 ring-primary-600 ring-offset-4 dark:ring-offset-navy-950' : ''}
+                                    ${card.primary ? 'ring-2 ring-c-accent ring-offset-4 ring-offset-c-bg' : ''}
                                 `}
               >
                 {/* Background Image */}
@@ -257,7 +253,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 {/* Glowing accent for primary */}
                 {card.primary && (
                   <div
-                    className={`absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl pointer-events-none animate-breathing-glow ${isDark ? 'bg-primary-500/20' : 'bg-primary-600/10'}`}
+                    className="absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl pointer-events-none animate-breathing-glow bg-c-accent/20"
                   />
                 )}
               </motion.div>
@@ -273,7 +269,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             className="hidden lg:block lg:col-span-1 lg:row-span-1 relative group cursor-pointer shadow-lg hover:shadow-2xl shadow-primary-500/20 hover:shadow-xl transition-all duration-500"
           >
             {/* Glow effect */}
-            <div className="absolute inset-0 bg-gradient-to-br from-primary-600/30 to-crimson-600/30 rounded-xl blur-2xl opacity-50 group-hover:opacity-80 transition-opacity duration-500"></div>
+            <div className="absolute inset-0 bg-c-accent/30 rounded-xl blur-2xl opacity-50 group-hover:opacity-80 transition-opacity duration-500"></div>
 
             {/* Content */}
             <div className="relative h-full px-8 py-8 rounded-xl border border-white/20 backdrop-blur-xl bg-black/60 shadow-2xl flex flex-col justify-center ring-2 ring-primary-500/40 group-hover:ring-primary-400/60 ring-inset transition-all duration-500 overflow-hidden">
@@ -311,7 +307,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] bg-navy-950/95 backdrop-blur-xl flex items-center justify-center p-6"
+            className="fixed inset-0 z-[200] bg-c-bg/95 backdrop-blur-xl flex items-center justify-center p-6"
           >
             <button
               onClick={() => setIsVideoOpen(false)}
