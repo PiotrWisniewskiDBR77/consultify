@@ -106,7 +106,7 @@ const DemoBanner: React.FC<DemoBannerProps> = ({ onStartTrialClick }) => {
             className="bg-primary-500 hover:bg-primary-600 text-white text-xs px-3 py-1.5 rounded-lg transition-colors font-semibold flex items-center gap-1.5"
           >
             {t('demo.banner.startTrial', 'Start Trial')}
-            <ExternalLink size={12} />
+            <ExternalLink size={14} />
           </button>
         </div>
       </div>
