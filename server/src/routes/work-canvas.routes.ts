@@ -1947,6 +1947,12 @@ async function createVersionSnapshot(
 async function ensureStorage(): Promise<void> {
   if (!storageReadyPromise) {
     storageReadyPromise = (async () => {
+      // Fail-soft, self-healing: this opportunistic DDL runs first in the Canvas
+      // read paths (GET /drafts etc). Use fallback:true so a transient DDL failure
+      // (lock/timeout/brief read-only/connection blip) can NEVER reject and bubble
+      // up as a bare HTTP 500 / white screen. The IIFE is also memoized below; on
+      // failure we null the promise (see .catch) so the next request retries
+      // instead of being poisoned by a permanently-rejected cached promise.
       await dbRun(
         `CREATE TABLE IF NOT EXISTS work_canvas_drafts (
           id TEXT PRIMARY KEY,
@@ -1982,7 +1988,7 @@ async function ensureStorage(): Promise<void> {
           updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )`,
         [],
-        { fallback: false }
+        { fallback: true }
       );
       const contentContractColumns = [
         "ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS canonical_format TEXT NOT NULL DEFAULT 'markdown'",
@@ -1996,19 +2002,19 @@ async function ensureStorage(): Promise<void> {
         'ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS projection_error TEXT',
       ];
       for (const statement of contentContractColumns) {
-        await dbRun(statement, [], { fallback: false });
+        await dbRun(statement, [], { fallback: true });
       }
       await dbRun(
         `CREATE INDEX IF NOT EXISTS idx_work_canvas_drafts_org_updated
          ON work_canvas_drafts (organization_id, updated_at DESC)`,
         [],
-        { fallback: false }
+        { fallback: true }
       );
       await dbRun(
         `CREATE INDEX IF NOT EXISTS idx_work_canvas_drafts_conversation
          ON work_canvas_drafts (organization_id, conversation_id)`,
         [],
-        { fallback: false }
+        { fallback: true }
       );
       await dbRun(
         `CREATE TABLE IF NOT EXISTS work_canvas_proposals (
@@ -2029,7 +2035,7 @@ async function ensureStorage(): Promise<void> {
           updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )`,
         [],
-        { fallback: false }
+        { fallback: true }
       );
       await dbRun(
         `CREATE TABLE IF NOT EXISTS work_canvas_versions (
@@ -2044,20 +2050,27 @@ async function ensureStorage(): Promise<void> {
           created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )`,
         [],
-        { fallback: false }
+        { fallback: true }
       );
       await dbRun(
         'ALTER TABLE work_canvas_versions ADD COLUMN IF NOT EXISTS blocks_json TEXT',
         [],
-        { fallback: false }
+        { fallback: true }
       );
       await dbRun(
         `CREATE INDEX IF NOT EXISTS idx_work_canvas_versions_draft_created
          ON work_canvas_versions (draft_id, created_at DESC)`,
         [],
-        { fallback: false }
+        { fallback: true }
       );
-    })();
+    })().catch((err: any) => {
+      // Self-heal: drop the memoized (now rejected) promise so a transient DDL
+      // failure retries on the next request instead of poisoning Canvas until
+      // process restart. Re-throw so this call still surfaces the failure to its
+      // caller (handlers wrap ensureStorage / degrade to a safe response).
+      storageReadyPromise = null;
+      throw err;
+    });
   }
   return storageReadyPromise;
 }
@@ -2638,32 +2651,41 @@ async function createOutputResource(
 router.use(verifyToken);
 
 router.get('/drafts', async (req: AuthRequest, res) => {
-  await ensureStorage();
-  const { organizationId, userId } = authContext(req);
-  const conversationId = req.query.conversationId ? String(req.query.conversationId) : null;
-  const projectId = req.query.projectId ? String(req.query.projectId) : null;
-  const whereParts = ['organization_id = ?'];
-  const queryParams: unknown[] = [organizationId];
-  if (conversationId) {
-    whereParts.push('conversation_id = ?');
-    queryParams.push(conversationId);
-  }
-  const accessParts = ['created_by = ?', 'owner_id = ?', "visibility = 'project'"];
-  queryParams.push(userId, userId);
-  if (projectId) {
-    whereParts.push('project_id = ?');
-    queryParams.push(projectId);
-  }
-  whereParts.push(`(${accessParts.join(' OR ')})`);
-  const rows = await dbAll<DraftRow>(
-    `SELECT * FROM work_canvas_drafts
+  // Fail-soft list: this is a high-traffic Canvas read. A transient DDL/read
+  // failure must degrade to an empty list (not a bare HTTP 500 / white screen).
+  // ensureStorage() is now fail-soft + self-healing; wrap the read too so any
+  // residual transient error still yields a well-formed empty envelope.
+  try {
+    await ensureStorage();
+    const { organizationId, userId } = authContext(req);
+    const conversationId = req.query.conversationId ? String(req.query.conversationId) : null;
+    const projectId = req.query.projectId ? String(req.query.projectId) : null;
+    const whereParts = ['organization_id = ?'];
+    const queryParams: unknown[] = [organizationId];
+    if (conversationId) {
+      whereParts.push('conversation_id = ?');
+      queryParams.push(conversationId);
+    }
+    const accessParts = ['created_by = ?', 'owner_id = ?', "visibility = 'project'"];
+    queryParams.push(userId, userId);
+    if (projectId) {
+      whereParts.push('project_id = ?');
+      queryParams.push(projectId);
+    }
+    whereParts.push(`(${accessParts.join(' OR ')})`);
+    const rows = await dbAll<DraftRow>(
+      `SELECT * FROM work_canvas_drafts
      WHERE ${whereParts.join(' AND ')}
      ORDER BY updated_at DESC`,
-    queryParams,
-    { fallback: false }
-  );
-  const result = rows.map(toDraft);
-  res.json(envelope(result));
+      queryParams,
+      { fallback: true }
+    );
+    const result = rows.map(toDraft);
+    res.json(envelope(result));
+  } catch (err: any) {
+    logger.warn(`[WorkCanvas] GET /drafts degraded to empty list: ${err?.message}`);
+    res.json(envelope([] as ReturnType<typeof toDraft>[]));
+  }
 });
 
 router.post('/drafts', async (req: AuthRequest, res) => {
