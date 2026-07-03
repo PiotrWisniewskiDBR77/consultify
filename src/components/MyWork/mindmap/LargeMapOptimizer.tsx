@@ -50,10 +50,10 @@ export const LargeMapOptimizer: React.FC<LargeMapOptimizerProps> = ({
     <div
       className={`fixed bottom-4 right-4 z-50 flex items-center gap-2 px-3 py-2 rounded-xl shadow-lg border text-xs font-medium ${
         level === 'critical'
-          ? 'bg-c-danger dark:bg-c-danger border-c-danger dark:border-c-danger text-c-danger dark:text-c-danger'
+          ? 'bg-c-surface-raised dark:bg-c-surface border-c-danger dark:border-c-danger text-c-danger dark:text-c-danger'
           : level === 'warning'
-            ? 'bg-c-warning dark:bg-c-warning border-c-warning dark:border-c-warning text-c-warning dark:text-c-warning'
-            : 'bg-c-info dark:bg-c-info border-c-info dark:border-c-info text-c-info dark:text-c-info'
+            ? 'bg-c-surface-raised dark:bg-c-surface border-c-warning dark:border-c-warning text-c-warning dark:text-c-warning'
+            : 'bg-c-surface-raised dark:bg-c-surface border-c-info dark:border-c-info text-c-info dark:text-c-info'
       }`}
     >
       {level === 'critical' ? <AlertTriangle size={14} /> : <Zap size={14} />}

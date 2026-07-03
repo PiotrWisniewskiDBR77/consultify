@@ -27,9 +27,9 @@ interface AISentimentOverlayProps {
 }
 
 const SENTIMENT_CONFIG = {
-  positive: { bg: 'bg-c-success', text: 'text-c-success', emoji: '😊' },
+  positive: { bg: 'bg-c-surface-raised', text: 'text-c-success', emoji: '😊' },
   neutral: { bg: 'bg-c-surface-raised', text: 'text-c-text-secondary', emoji: '😐' },
-  negative: { bg: 'bg-c-danger', text: 'text-c-danger', emoji: '😟' },
+  negative: { bg: 'bg-c-surface-raised', text: 'text-c-danger', emoji: '😟' },
 };
 
 export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({

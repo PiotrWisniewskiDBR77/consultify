@@ -102,12 +102,12 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
         {/* Diff summary bar */}
         <div className="px-5 py-2.5 flex items-center gap-3 bg-c-surface-raised dark:bg-c-surface border-b border-c-border-subtle dark:border-c-border">
           {addCount > 0 && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-c-success dark:text-c-success bg-c-success dark:bg-c-success px-2 py-0.5 rounded-full">
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-c-success dark:text-c-success bg-c-surface-raised dark:bg-c-surface px-2 py-0.5 rounded-full">
               <Plus size={10} /> {addCount} {isPl ? 'dodano' : 'added'}
             </span>
           )}
           {removeCount > 0 && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-c-danger dark:text-c-danger bg-c-danger dark:bg-c-danger px-2 py-0.5 rounded-full">
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-c-danger dark:text-c-danger bg-c-surface-raised dark:bg-c-surface px-2 py-0.5 rounded-full">
               <Trash2 size={10} /> {removeCount} {isPl ? 'usunięto' : 'removed'}
             </span>
           )}
@@ -181,8 +181,8 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
                         <span
                           className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
                             isAdd
-                              ? 'bg-c-success dark:bg-c-success text-c-success dark:text-c-success'
-                              : 'bg-c-danger dark:bg-c-danger text-c-danger dark:text-c-danger'
+                              ? 'bg-c-surface-raised dark:bg-c-surface-raised text-c-success dark:text-c-success'
+                              : 'bg-c-surface-raised dark:bg-c-surface-raised text-c-danger dark:text-c-danger'
                           }`}
                         >
                           {isAdd ? <Plus size={9} /> : <Trash2 size={9} />}

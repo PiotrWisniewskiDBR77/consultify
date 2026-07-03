@@ -127,19 +127,19 @@ const STATUS_CONFIG: Record<
   in_review: {
     labelPl: 'W przeglądzie',
     labelEn: 'In Review',
-    color: 'text-c-warning bg-c-warning dark:bg-c-warning',
+    color: 'text-c-warning bg-c-surface-raised dark:bg-c-surface',
     icon: Eye,
   },
   approved: {
     labelPl: 'Zatwierdzony',
     labelEn: 'Approved',
-    color: 'text-c-success bg-c-success dark:bg-c-success',
+    color: 'text-c-success bg-c-surface-raised dark:bg-c-surface',
     icon: ShieldCheck,
   },
   changes_requested: {
     labelPl: 'Zmiany wymagane',
     labelEn: 'Changes Requested',
-    color: 'text-c-danger bg-c-danger dark:bg-c-danger',
+    color: 'text-c-danger bg-c-surface-raised dark:bg-c-surface',
     icon: AlertCircle,
   },
 };
@@ -410,7 +410,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                                 {entry.citations.map((c, i) => (
                                   <span
                                     key={i}
-                                    className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-full bg-c-info dark:bg-c-info text-c-info dark:text-c-info"
+                                    className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-full bg-c-surface-raised dark:bg-c-surface-raised text-c-info dark:text-c-info"
                                   >
                                     {c.kind && (
                                       <span className="font-bold uppercase text-[7px] opacity-60">
@@ -669,7 +669,7 @@ export const AIGovernanceBadge: React.FC<AIGovernanceBadgeProps> = ({ mapExtensi
       onClick={onClick}
       className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-semibold transition-all hover:scale-[1.02] ${
         unreviewed
-          ? 'bg-c-warning dark:bg-c-warning text-c-warning dark:text-c-warning border border-c-warning dark:border-c-warning animate-pulse'
+          ? 'bg-c-surface-raised dark:bg-c-surface-raised text-c-warning dark:text-c-warning border border-c-warning dark:border-c-warning animate-pulse'
           : 'bg-c-surface-raised dark:bg-c-surface text-c-text-secondary dark:text-c-text-muted border border-c-border-subtle dark:border-c-border'
       }`}
       title={

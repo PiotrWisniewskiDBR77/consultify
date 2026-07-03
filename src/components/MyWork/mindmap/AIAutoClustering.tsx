@@ -206,7 +206,7 @@ export const AIAutoClustering: React.FC<AIAutoClusteringProps> = ({
                 <button
                   onClick={handleApply}
                   disabled={locked}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold bg-c-info text-c-info dark:text-c-info hover:bg-c-info transition-colors disabled:opacity-40"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold bg-c-surface-raised text-c-info dark:text-c-info hover:bg-c-surface-raised transition-colors disabled:opacity-40"
                 >
                   <Zap size={12} /> {isPl ? 'Zastosuj klastry' : 'Apply clusters'}
                 </button>

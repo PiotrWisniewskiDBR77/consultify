@@ -196,7 +196,7 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
             </div>
           )}
           {error && (
-            <div className="rounded-xl bg-c-danger dark:bg-c-danger border border-c-danger dark:border-c-danger p-3 text-xs text-c-danger dark:text-c-danger">
+            <div className="rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-danger dark:border-c-danger p-3 text-xs text-c-danger dark:text-c-danger">
               {error}
             </div>
           )}

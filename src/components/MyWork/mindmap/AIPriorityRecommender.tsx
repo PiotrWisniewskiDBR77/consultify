@@ -32,14 +32,14 @@ interface AIPriorityRecommenderProps {
 }
 
 const IMPACT_COLORS = {
-  high: 'text-c-success bg-c-success',
-  medium: 'text-c-warning bg-c-warning',
+  high: 'text-c-success bg-c-surface-raised',
+  medium: 'text-c-warning bg-c-surface-raised',
   low: 'text-c-text-secondary bg-c-surface-raised',
 };
 const EFFORT_COLORS = {
-  high: 'text-c-danger bg-c-danger',
-  medium: 'text-c-warning bg-c-warning',
-  low: 'text-c-success bg-c-success',
+  high: 'text-c-danger bg-c-surface-raised',
+  medium: 'text-c-warning bg-c-surface-raised',
+  low: 'text-c-success bg-c-surface-raised',
 };
 
 export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
@@ -195,7 +195,7 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
                   <button
                     key={s}
                     onClick={() => setSortBy(s)}
-                    className={`px-2 py-0.5 rounded-lg text-[9px] font-bold transition-colors ${sortBy === s ? 'bg-c-warning text-c-warning dark:text-c-warning' : 'text-c-text-secondary hover:text-c-text-secondary'}`}
+                    className={`px-2 py-0.5 rounded-lg text-[9px] font-bold transition-colors ${sortBy === s ? 'bg-c-surface-raised text-c-warning dark:text-c-warning' : 'text-c-text-secondary hover:text-c-text-secondary'}`}
                   >
                     {s === 'rank'
                       ? isPl
@@ -215,7 +215,7 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
                     key={rec.nodeId}
                     className="flex items-center gap-3 p-2.5 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border"
                   >
-                    <div className="w-6 h-6 rounded-full bg-c-warning text-c-warning dark:text-c-warning flex items-center justify-center text-[10px] font-bold shrink-0">
+                    <div className="w-6 h-6 rounded-full bg-c-surface-raised text-c-warning dark:text-c-warning flex items-center justify-center text-[10px] font-bold shrink-0">
                       {rec.rank}
                     </div>
                     <div className="min-w-0 flex-1">

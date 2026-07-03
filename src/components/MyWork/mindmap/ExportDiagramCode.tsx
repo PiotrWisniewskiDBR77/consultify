@@ -140,7 +140,7 @@ export const ExportDiagramCode: React.FC<ExportDiagramCodeProps> = ({
                   setFormat(f);
                   setCopied(false);
                 }}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${format === f ? 'bg-c-warning text-c-warning dark:text-c-warning' : 'text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface'}`}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${format === f ? 'bg-c-surface-raised text-c-warning dark:text-c-warning' : 'text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface'}`}
               >
                 {f === 'mermaid' ? 'Mermaid' : 'PlantUML'}
               </button>

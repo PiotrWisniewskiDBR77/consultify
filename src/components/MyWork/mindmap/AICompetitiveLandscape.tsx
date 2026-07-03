@@ -172,7 +172,7 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
                         <button
                           onClick={() => handleAdd(comp)}
                           disabled={locked}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold text-c-info dark:text-c-info hover:bg-c-info transition-colors disabled:opacity-40"
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold text-c-info dark:text-c-info hover:bg-c-surface-raised transition-colors disabled:opacity-40"
                         >
                           <Plus size={9} />
                           {isPl ? 'Dodaj' : 'Add'}

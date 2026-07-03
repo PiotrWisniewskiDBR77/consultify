@@ -188,7 +188,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
             title={isPl ? 'Notatki prezentera (N)' : 'Presenter notes (N)'}
             className={`p-2 rounded-lg transition-colors ${
               showNotes
-                ? 'text-c-warning bg-c-warning'
+                ? 'text-c-warning bg-c-surface-raised'
                 : 'text-c-text-secondary hover:text-c-text-secondary dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface'
             }`}
           >
@@ -338,7 +338,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
         <button
           onClick={goNext}
           disabled={currentSlide === slides.length - 1}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-bold text-c-warning dark:text-c-warning bg-c-warning hover:bg-c-warning transition-colors disabled:opacity-30"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-bold text-c-warning dark:text-c-warning bg-c-surface-raised hover:bg-c-surface-raised transition-colors disabled:opacity-30"
         >
           {isPl ? 'Dalej' : 'Next'}
           <ArrowRight size={14} />

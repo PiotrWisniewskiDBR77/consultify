@@ -85,7 +85,7 @@ export const AssignPersonModal: React.FC<AssignPersonModalProps> = ({
                     onAssign(name);
                     onClose();
                   }}
-                  className="rounded-full bg-c-surface-raised px-2 py-0.5 text-xs text-c-text-secondary hover:bg-c-info hover:text-c-info dark:bg-c-surface dark:text-c-text-muted dark:hover:bg-c-surface"
+                  className="rounded-full bg-c-surface-raised px-2 py-0.5 text-xs text-c-text-secondary hover:bg-c-surface-raised hover:text-c-info dark:bg-c-surface dark:text-c-text-muted dark:hover:bg-c-surface"
                 >
                   {name}
                 </button>

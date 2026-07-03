@@ -154,7 +154,7 @@ export const EmbedInReports: React.FC<EmbedInReportsProps> = ({
                 <button
                   key={f.id}
                   onClick={() => setFormat(f.id)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${format === f.id ? 'bg-c-info text-c-info dark:text-c-info' : 'text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface'}`}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${format === f.id ? 'bg-c-surface-raised text-c-info dark:text-c-info' : 'text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface'}`}
                 >
                   <Icon size={12} />
                   {f.label}

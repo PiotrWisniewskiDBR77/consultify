@@ -196,7 +196,7 @@ export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
                     <button
                       onClick={() => handleAdd(spot)}
                       disabled={locked}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold bg-c-warning text-c-warning dark:text-c-warning hover:bg-c-warning transition-colors disabled:opacity-40"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold bg-c-surface-raised text-c-warning dark:text-c-warning hover:bg-c-surface-raised transition-colors disabled:opacity-40"
                     >
                       <Plus size={9} />
                       {isPl ? 'Dodaj' : 'Add'}

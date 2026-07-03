@@ -170,7 +170,7 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ open, onClose,
                 </label>
                 <button
                   onClick={() => removeWebhook(wh.id)}
-                  className="p-1 rounded text-c-danger hover:text-c-danger hover:bg-c-danger transition-colors"
+                  className="p-1 rounded text-c-danger hover:text-c-danger hover:bg-c-surface-raised transition-colors"
                 >
                   <Trash2 size={12} />
                 </button>
@@ -186,7 +186,7 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ open, onClose,
                   <button
                     key={evt}
                     onClick={() => toggleEvent(wh.id, evt)}
-                    className={`px-2 py-0.5 rounded-md text-[8px] font-bold transition-colors ${wh.events.includes(evt) ? 'bg-c-warning text-c-warning dark:text-c-warning' : 'bg-c-surface-raised dark:bg-c-surface text-c-text-muted'}`}
+                    className={`px-2 py-0.5 rounded-md text-[8px] font-bold transition-colors ${wh.events.includes(evt) ? 'bg-c-surface-raised text-c-warning dark:text-c-warning' : 'bg-c-surface-raised dark:bg-c-surface text-c-text-muted'}`}
                   >
                     {evt.replace(/_/g, ' ')}
                   </button>

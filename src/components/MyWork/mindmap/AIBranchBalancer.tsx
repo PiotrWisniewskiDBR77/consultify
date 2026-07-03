@@ -118,7 +118,7 @@ export const AIBranchBalancer: React.FC<AIBranchBalancerProps> = ({
                 <button
                   key={b.branchKey}
                   onClick={() => onFocusBranch(b.branchKey)}
-                  className="w-full flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-medium text-c-danger dark:text-c-danger hover:bg-c-danger transition-colors"
+                  className="w-full flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-medium text-c-danger dark:text-c-danger hover:bg-c-surface-raised transition-colors"
                 >
                   <BarChart3 size={10} />
                   <span className="flex-1 text-left">{b.label}</span>
@@ -137,7 +137,7 @@ export const AIBranchBalancer: React.FC<AIBranchBalancerProps> = ({
                 <button
                   key={b.branchKey}
                   onClick={() => onFocusBranch(b.branchKey)}
-                  className="w-full flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-medium text-c-warning dark:text-c-warning hover:bg-c-warning transition-colors"
+                  className="w-full flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-medium text-c-warning dark:text-c-warning hover:bg-c-surface-raised transition-colors"
                 >
                   <BarChart3 size={10} />
                   <span className="flex-1 text-left">{b.label}</span>

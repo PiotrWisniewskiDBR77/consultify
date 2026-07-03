@@ -482,7 +482,7 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
   return (
     <div ref={overlayRootRef} className="absolute inset-0 z-30 pointer-events-none">
       {shouldShowStatusState && (
-        <div className="absolute top-3 right-3 z-overlay flex items-center gap-2 rounded-full border border-c-warning bg-c-warning px-3 py-1.5 text-[10px] font-semibold text-c-warning shadow-lg backdrop-blur-sm dark:border-c-warning dark:bg-c-warning dark:text-c-warning">
+        <div className="absolute top-3 right-3 z-overlay flex items-center gap-2 rounded-full border border-c-warning bg-c-surface-raised px-3 py-1.5 text-[10px] font-semibold text-c-warning shadow-lg backdrop-blur-sm dark:border-c-warning dark:bg-c-surface dark:text-c-warning">
           <WifiOff size={12} />
           <div className="flex flex-col leading-tight">
             <span>

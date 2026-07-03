@@ -134,25 +134,25 @@ const STATUS_CONFIG: Record<
   exploring: {
     labelPl: 'Eksploracja',
     labelEn: 'Exploring',
-    color: 'bg-c-info text-c-info dark:bg-c-info dark:text-c-info',
+    color: 'bg-c-surface-raised text-c-info dark:bg-c-surface dark:text-c-info',
     icon: Target,
   },
   validated: {
     labelPl: 'Zwalidowany',
     labelEn: 'Validated',
-    color: 'bg-c-success text-c-success dark:bg-c-success dark:text-c-success',
+    color: 'bg-c-surface-raised text-c-success dark:bg-c-surface dark:text-c-success',
     icon: Star,
   },
   ready_to_convert: {
     labelPl: 'Gotowy do konwersji',
     labelEn: 'Ready to Convert',
-    color: 'bg-c-warning text-c-warning dark:bg-c-warning dark:text-c-warning',
+    color: 'bg-c-surface-raised text-c-warning dark:bg-c-surface dark:text-c-warning',
     icon: Rocket,
   },
   converted: {
     labelPl: 'Skonwertowany',
     labelEn: 'Converted',
-    color: 'bg-c-accent text-c-accent dark:bg-c-accent dark:text-c-accent',
+    color: 'bg-c-surface-raised text-c-accent dark:bg-c-surface dark:text-c-accent',
     icon: ArrowRight,
   },
 };
@@ -443,7 +443,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                             isActive
                               ? cfg.color + ' ring-1 ring-current/20 shadow-sm'
                               : isPast
-                                ? 'bg-c-success text-c-success dark:bg-c-success dark:text-c-success'
+                                ? 'bg-c-surface-raised text-c-success dark:bg-c-surface dark:text-c-success'
                                 : 'text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface'
                           } disabled:opacity-40`}
                           title={isPl ? cfg.labelPl : cfg.labelEn}
@@ -569,7 +569,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                     type="button"
                     disabled={locked || isProtected}
                     onClick={() => handleRemoveTag(tag)}
-                    className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-medium bg-c-surface-raised dark:bg-c-surface text-c-text-secondary dark:text-c-text hover:bg-c-danger hover:text-c-danger dark:hover:bg-c-danger dark:hover:text-c-danger transition-colors disabled:opacity-50"
+                    className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-medium bg-c-surface-raised dark:bg-c-surface text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised hover:text-c-danger dark:hover:bg-c-surface dark:hover:text-c-danger transition-colors disabled:opacity-50"
                   >
                     <Hash size={9} className="shrink-0" />
                     <span>{tag}</span>

@@ -93,10 +93,10 @@ const DiffBadge: React.FC<{ diff: SnapshotDiff; pl: boolean }> = ({ diff, pl }) 
     [-diff.removedEdges, '-', pl ? 'krawędzi' : 'edges'],
   ];
   const colors = [
-    'bg-c-success dark:bg-c-success text-c-success dark:text-c-success',
-    'bg-c-danger dark:bg-c-danger text-c-danger dark:text-c-danger',
-    'bg-c-info dark:bg-c-info text-c-info dark:text-c-info',
-    'bg-c-warning dark:bg-c-warning text-c-warning dark:text-c-warning',
+    'bg-c-surface-raised dark:bg-c-surface-raised text-c-success dark:text-c-success',
+    'bg-c-surface-raised dark:bg-c-surface-raised text-c-danger dark:text-c-danger',
+    'bg-c-surface-raised dark:bg-c-surface-raised text-c-info dark:text-c-info',
+    'bg-c-surface-raised dark:bg-c-surface-raised text-c-warning dark:text-c-warning',
   ];
   const visible = items
     .map((it, i) => ({ val: Math.abs(it[0]), sign: it[1], label: it[2], cls: colors[i] }))
@@ -348,12 +348,12 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
               {t('Historia wersji', 'Version History')}
             </h3>
             {!backend && (
-              <span className="text-[9px] rounded bg-c-warning px-1.5 py-0.5 text-c-warning dark:bg-c-warning dark:text-c-warning">
+              <span className="text-[9px] rounded bg-c-surface-raised px-1.5 py-0.5 text-c-warning dark:bg-c-surface dark:text-c-warning">
                 {t('tryb lokalny', 'local mode')}
               </span>
             )}
             {previewing && (
-              <span className="text-[9px] rounded bg-c-info px-1.5 py-0.5 text-c-info dark:bg-c-info dark:text-c-info">
+              <span className="text-[9px] rounded bg-c-surface-raised px-1.5 py-0.5 text-c-info dark:bg-c-surface dark:text-c-info">
                 {t('podgląd', 'preview')}
               </span>
             )}
@@ -505,14 +505,14 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
                         <div className="flex items-center gap-1 mt-2 pt-1.5 border-t border-c-border-subtle dark:border-c-border">
                           <button
                             onClick={() => restore(snap)}
-                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium text-c-warning hover:bg-c-warning transition-colors"
+                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium text-c-warning hover:bg-c-surface-raised transition-colors"
                           >
                             <RotateCcw size={10} />
                             {t('Przywróć', 'Restore')}
                           </button>
                           <button
                             onClick={() => del(snap.id)}
-                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] text-c-text-secondary hover:text-c-danger hover:bg-c-danger transition-colors"
+                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] text-c-text-secondary hover:text-c-danger hover:bg-c-surface-raised transition-colors"
                           >
                             <Trash2 size={10} />
                             {t('Usuń', 'Delete')}

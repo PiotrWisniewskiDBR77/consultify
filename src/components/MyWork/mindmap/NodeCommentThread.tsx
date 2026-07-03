@@ -205,7 +205,7 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
           comments.map((c) => (
             <div key={c.id} className="group">
               <div className="flex items-start gap-2">
-                <div className="w-6 h-6 rounded-full bg-c-info text-c-info dark:text-c-info flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5">
+                <div className="w-6 h-6 rounded-full bg-c-surface-raised text-c-info dark:text-c-info flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5">
                   {c.author.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -261,7 +261,7 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
             <button
               onClick={handleSubmit}
               disabled={!text.trim()}
-              className="p-2.5 rounded-xl bg-c-info text-c-info dark:text-c-info hover:bg-c-info transition-colors disabled:opacity-30"
+              className="p-2.5 rounded-xl bg-c-surface-raised text-c-info dark:text-c-info hover:bg-c-surface-raised transition-colors disabled:opacity-30"
             >
               <Send size={14} />
             </button>

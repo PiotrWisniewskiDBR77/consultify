@@ -205,7 +205,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
       <div className="px-4 py-2 border-b border-c-border-subtle dark:border-c-border flex items-center gap-1 overflow-x-auto">
         <button
           onClick={() => setFilter(null)}
-          className={`px-2 py-0.5 rounded-lg text-[9px] font-bold transition-colors shrink-0 ${!filter ? 'bg-c-warning text-c-warning dark:text-c-warning' : 'text-c-text-secondary hover:text-c-text-secondary'}`}
+          className={`px-2 py-0.5 rounded-lg text-[9px] font-bold transition-colors shrink-0 ${!filter ? 'bg-c-surface-raised text-c-warning dark:text-c-warning' : 'text-c-text-secondary hover:text-c-text-secondary'}`}
         >
           {isPl ? 'Wszystko' : 'All'}
         </button>
@@ -213,7 +213,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
           <button
             key={t}
             onClick={() => setFilter(t)}
-            className={`px-2 py-0.5 rounded-lg text-[9px] font-bold transition-colors shrink-0 ${filter === t ? 'bg-c-warning text-c-warning dark:text-c-warning' : 'text-c-text-secondary hover:text-c-text-secondary'}`}
+            className={`px-2 py-0.5 rounded-lg text-[9px] font-bold transition-colors shrink-0 ${filter === t ? 'bg-c-surface-raised text-c-warning dark:text-c-warning' : 'text-c-text-secondary hover:text-c-text-secondary'}`}
           >
             {t.replace(/_/g, ' ')}
           </button>

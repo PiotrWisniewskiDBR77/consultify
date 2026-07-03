@@ -115,8 +115,8 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
   };
 
   const impactBadge = {
-    high: 'bg-c-danger text-c-danger dark:bg-c-danger dark:text-c-danger',
-    medium: 'bg-c-warning text-c-warning dark:bg-c-warning dark:text-c-warning',
+    high: 'bg-c-surface-raised text-c-danger dark:bg-c-surface dark:text-c-danger',
+    medium: 'bg-c-surface-raised text-c-warning dark:bg-c-surface dark:text-c-warning',
     low: 'bg-c-surface-raised text-c-text-secondary dark:bg-c-surface dark:text-c-text-muted',
   };
 
