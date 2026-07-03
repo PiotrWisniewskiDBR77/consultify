@@ -27,8 +27,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { EntityStatusChip } from '@/components/ui/primitives';
 import { LoadingState } from '@/components/shared/states';
+import { EntityStatusChip } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 import {
