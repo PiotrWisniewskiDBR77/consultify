@@ -10650,6 +10650,9 @@
         "ready": "Ready"
       },
       "next": "next"
+    },
+    "session": {
+      "notLoadedYet": "Session is still loading — try again in a moment"
     }
   },
   "aiAuthoring": {
