@@ -230,17 +230,17 @@ export const NotebookMentionMenu: React.FC<NotebookMentionMenuProps> = ({
       ref={menuRef}
       role="listbox"
       aria-label={t('Mention an entity', 'Wzmiankuj encję')}
-      className="absolute z-50 w-72 max-h-80 overflow-y-auto rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg py-1"
+      className="absolute z-50 w-72 max-h-80 overflow-y-auto rounded-xl border border-c-border bg-c-surface shadow-lg py-1"
       style={{ top: position.y, left: position.x }}
       onMouseDown={(e) => e.preventDefault()}
     >
       {loading && results.length === 0 ? (
-        <div className="flex items-center gap-2 px-3 py-4 text-[12px] text-slate-400">
+        <div className="flex items-center gap-2 px-3 py-4 text-[12px] text-c-text-muted">
           <Loader2 size={14} className="animate-spin" />
           {t('Searching…', 'Szukam…')}
         </div>
       ) : results.length === 0 ? (
-        <div className="px-3 py-4 text-center text-[12px] text-slate-400 dark:text-slate-500">
+        <div className="px-3 py-4 text-center text-[12px] text-c-text-muted">
           {t('No matches', 'Brak dopasowań')}
         </div>
       ) : (
@@ -248,7 +248,7 @@ export const NotebookMentionMenu: React.FC<NotebookMentionMenuProps> = ({
           const Icon = cfg.icon;
           return (
             <div key={cfg.type} className="px-1">
-              <div className="flex items-center gap-1.5 px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+              <div className="flex items-center gap-1.5 px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
                 <Icon size={11} />
                 {t(cfg.labelEn, cfg.labelPl)}
               </div>
@@ -270,16 +270,16 @@ export const NotebookMentionMenu: React.FC<NotebookMentionMenuProps> = ({
                       onSelect(entity);
                     }}
                     className={`flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors ${
-                      isActive ? 'bg-slate-100 dark:bg-navy-800' : 'hover:bg-slate-50 dark:hover:bg-white/[0.04]'
+                      isActive ? 'bg-c-surface-raised' : 'hover:bg-c-surface-raised dark:hover:bg-white/[0.04]'
                     }`}
                   >
                     <span className="text-[15px] leading-none">{cfg.emoji}</span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[13px] font-medium text-slate-700 dark:text-slate-200">
+                      <span className="block truncate text-[13px] font-medium text-c-text">
                         {entity.title}
                       </span>
                       {entity.status && (
-                        <span className="block truncate text-[11px] text-slate-400 dark:text-slate-500">
+                        <span className="block truncate text-[11px] text-c-text-muted">
                           {entity.status}
                         </span>
                       )}
