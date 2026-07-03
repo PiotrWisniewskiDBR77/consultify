@@ -38,7 +38,7 @@ import { Api } from '../../services/api';
 import { Notification } from '../../types';
 import TeresaMark from '../shared/TeresaMark';
 export const NotificationDropdown = () => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const { setCurrentView, setMyWorkIntent, isChatCollapsed, toggleChatCollapse } = useAppStore();
   const { updateWorkspaceFromView } = useConversationStore();
@@ -420,7 +420,7 @@ export const NotificationDropdown = () => {
                   .filter((n) => !isSnoozed(n.id)) // Filter out snoozed notifications
                   .map((notification) =>
                     (() => {
-                      const contract = buildNotificationContent(notification as any, isPolish);
+                      const contract = buildNotificationContent(notification as any, t);
                       const primaryLabel =
                         contract.primaryCta.kind === 'none'
                           ? isPolish

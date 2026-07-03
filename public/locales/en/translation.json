@@ -15004,7 +15004,196 @@
       "source": "source",
       "actions": "Actions"
     },
-    "delete": "Delete"
+    "delete": "Delete",
+    "content": {
+      "why": {
+        "overdueDay": "Deadline passed {{count}} day ago — cost of inaction is rising.",
+        "overdueDays": "Deadline passed {{count}} days ago — cost of inaction is rising.",
+        "overdue": "Deadline passed — cost of inaction is rising.",
+        "dueSoon": "Deadline is approaching — needs a plan and confirmation.",
+        "escalated": "No response triggered an escalation.",
+        "blocked": "Blocked — requires immediate attention.",
+        "assigned": "New assignment — action required.",
+        "aiRisk": "AI detected a risk — review the details.",
+        "ai": "AI suggests action — review the recommendation.",
+        "paymentFailed": "Payment failed — it may affect access to features. Update your payment method.",
+        "usageAlertPct": "You are approaching a limit ({{pct}}%) — plan actions (upgrade/cleanup/limits).",
+        "usageAlert": "You are approaching a limit — plan actions (upgrade/cleanup/limits).",
+        "subscriptionChange": "Subscription or plan changed — review billing details.",
+        "dbr77Kb": "New knowledge base content — worth reading and applying.",
+        "dbr77Instruction": "New instruction for working in the system — it will help you execute faster.",
+        "dbr77Update": "DBR77 updates — review what changed.",
+        "dbr77Generic": "DBR77 communication — review details.",
+        "gate": "Gate requires your GO/NO-GO decision.",
+        "milestone": "Milestone achieved.",
+        "default": "Requires action in the system."
+      },
+      "context": {
+        "daysPastDeadline": "{{count}}d past deadline",
+        "decisionDeadline": "{{title}} — {{count}}d until deadline",
+        "potentialSavings": "Potential savings: {{amount}}/year",
+        "updateVersion": "Update — {{version}}",
+        "invoice": "Invoice {{id}}",
+        "paymentIssue": "Payment issue"
+      },
+      "blocked": {
+        "decision": "Blocks: a decision to be made (may block tasks).",
+        "task": "Blocks: task progress (check blockers/deadline).",
+        "unknown": "Blocks: unknown (check linked entity)."
+      },
+      "cta": {
+        "openDocument": "Open document"
+      },
+      "action": {
+        "taskOverdueCritical": "Immediately contact{{assigneePart}} and escalate to the project manager. {{taskPart}} {{count}}d overdue.",
+        "taskOverdue": "Check progress{{taskPart}} and update the deadline{{ownerPart}}.",
+        "taskBlocked": "Remove the blocker{{blockerPart}} and unblock progress{{taskPart}}.",
+        "taskAssigned": "Review the assigned task{{taskPart}}, confirm scope, and start work.",
+        "decisionOverdue": "Immediately make a decision{{decisionPart}} — delay is blocking downstream work.",
+        "decisionRequired": "Analyze context and make a decision{{decisionPart}}. Consult the team if needed.",
+        "aiRiskDetected": "Review the risk{{riskPart}} detected by AI. Verify the data and decide on action.",
+        "aiRecommendation": "Review the AI recommendation, verify assumptions, and apply or dismiss with justification.",
+        "aiOverload": "AI detected resource overload. Review team workload and redistribute tasks.",
+        "aiDependencyConflict": "AI detected a dependency conflict. Review the timeline and resolve scheduling conflicts.",
+        "gate": "Review gate criteria and make a GO/NO-GO decision.",
+        "paymentFailed": "Open billing, update your payment method, and retry the transaction.",
+        "usageAlert": "Approaching limit{{metricPart}}{{pctPart}}. Decide: upgrade plan, clean up data, or increase limit.",
+        "subscriptionChange": "Review subscription change details and confirm new terms.",
+        "invoiceReady": "New invoice available. Review and forward to accounting.",
+        "dbr77KbNew": "Read the new knowledge base article and apply it to your work.",
+        "dbr77Instruction": "Read the new instruction and adjust your workflow.",
+        "dbr77Update": "Review system updates. Check if changes affect your tasks.",
+        "systemAlert": "Read the system alert and take the required action.",
+        "milestone": "Informational — no direct action required. You may dismiss.",
+        "doCta": "Do: {{label}}",
+        "default": "Open the linked entity and take action."
+      },
+      "checklist": {
+        "taskOverdueCritical": {
+          "blockers": "Check blockers and reason for delay",
+          "contactNamed": "Contact {{assignee}}",
+          "contact": "Contact the assignee",
+          "deadline": "Set a new realistic deadline",
+          "escalate": "Escalate to manager if no response within 2h",
+          "status": "Update task status",
+          "notify": "Notify stakeholders about the new plan"
+        },
+        "taskOverdue": {
+          "open": "Open the task and review details",
+          "blockers": "Check for blockers",
+          "update": "Update deadline or status",
+          "notify": "Notify the team about the change"
+        },
+        "taskBlocked": {
+          "identify": "Identify the blocker",
+          "contact": "Contact the blocking party",
+          "plan": "Establish a plan to remove the blocker",
+          "status": "Update task status",
+          "escalate": "Escalate if blocker persists > 24h"
+        },
+        "taskAssigned": {
+          "review": "Review task description and scope",
+          "confirm": "Confirm the deadline",
+          "dependencies": "Check dependencies and blockers",
+          "start": "Start work or raise concerns"
+        },
+        "decisionOverdue": {
+          "analyze": "Analyze decision context",
+          "consult": "Consult key stakeholders",
+          "decide": "Make the decision or escalate",
+          "document": "Document the rationale",
+          "notify": "Notify dependent teams"
+        },
+        "decisionRequired": {
+          "review": "Review data and decision context",
+          "consult": "Consult the team if needed",
+          "decide": "Make the decision or delegate",
+          "document": "Document the choice and rationale"
+        },
+        "aiRiskDetected": {
+          "review": "Review detected risk details",
+          "verify": "Verify AI input data",
+          "assess": "Assess real impact on the project",
+          "act": "Take mitigating action or dismiss",
+          "update": "Update the risk register"
+        },
+        "aiRecommendation": {
+          "review": "Review the AI recommendation",
+          "verify": "Verify assumptions and data",
+          "apply": "Apply or dismiss with justification"
+        },
+        "aiOverload": {
+          "review": "Review team workload",
+          "identify": "Identify most overloaded people",
+          "redistribute": "Redistribute or postpone tasks",
+          "notify": "Notify team about changes"
+        },
+        "aiDependencyConflict": {
+          "review": "Review conflicting dependencies",
+          "compare": "Compare task timelines",
+          "reorder": "Reorder or shift deadlines",
+          "confirm": "Confirm new schedule with team"
+        },
+        "gate": {
+          "review": "Review gate criteria",
+          "check": "Check deliverables status",
+          "decide": "Make GO/NO-GO decision",
+          "document": "Document the decision"
+        },
+        "paymentFailed": {
+          "open": "Open billing section",
+          "check": "Check payment method",
+          "update": "Update card/account details",
+          "retry": "Retry the transaction",
+          "confirm": "Confirm payment success"
+        },
+        "usageAlert": {
+          "check": "Check current usage",
+          "identify": "Identify what consumes resources",
+          "decide": "Decide: upgrade, cleanup, or limit",
+          "implement": "Implement chosen strategy"
+        },
+        "subscriptionChange": {
+          "review": "Review new terms",
+          "confirm": "Confirm feature availability",
+          "update": "Update budget if needed"
+        },
+        "invoiceReady": {
+          "download": "Download the invoice",
+          "verify": "Verify amount and period",
+          "forward": "Forward to accounting"
+        },
+        "dbr77KbNew": {
+          "read": "Read the new article",
+          "check": "Check if it applies to your tasks",
+          "apply": "Apply the knowledge in practice"
+        },
+        "dbr77Instruction": {
+          "read": "Read the new instruction",
+          "adjust": "Adjust your workflow",
+          "confirm": "Confirm changes implemented"
+        },
+        "dbr77Update": {
+          "review": "Review the changelog",
+          "check": "Check impact on your tasks",
+          "test": "Test new features"
+        },
+        "systemAlert": {
+          "read": "Read alert details",
+          "assess": "Assess impact on your work",
+          "act": "Take the required action"
+        },
+        "milestone": {
+          "review": "Review the summary",
+          "dismiss": "Dismiss the notification"
+        },
+        "default": {
+          "review": "Review notification details",
+          "act": "Take appropriate action"
+        }
+      },
+      "defaultTitle": "Notification"
+    }
   },
   "task": {
     "status": "Status"

@@ -174,7 +174,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   onClose,
   onNavigateToSource,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const { isChatCollapsed, toggleChatCollapse } = useAppStore();
   const { updateWorkspaceFromView } = useConversationStore();
@@ -427,7 +427,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
   const generateActionChecklist = (notif: any) => {
     // Use the enriched rule-engine checklist from notificationContent contract
-    const notifContract = buildNotificationContent(notif, isPolish);
+    const notifContract = buildNotificationContent(notif, t);
     const suggested: SuggestedChecklistItem[] = notifContract.suggestedChecklist || [];
 
     if (suggested.length > 0) {
@@ -1129,7 +1129,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     ? TYPE_ICONS[typeKey] || { icon: Bell, color: 'text-slate-600' }
     : { icon: Bell, color: 'text-slate-600' };
   const TypeIcon = typeConfig.icon;
-  const contract = notification ? buildNotificationContent(notification as any, isPolish) : null;
+  const contract = notification ? buildNotificationContent(notification as any, t) : null;
   const aiAnalysis = generateAIAnalysis();
 
   // Keep expected action draft in sync with loaded notification (and language)

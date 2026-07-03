@@ -16057,7 +16057,196 @@
       "source": "źródło",
       "actions": "Akcje"
     },
-    "delete": "Usuń"
+    "delete": "Usuń",
+    "content": {
+      "why": {
+        "overdueDay": "Termin minął {{count}} dzień temu — rośnie koszt braku reakcji.",
+        "overdueDays": "Termin minął {{count}} dni temu — rośnie koszt braku reakcji.",
+        "overdue": "Termin minął — rośnie koszt braku reakcji.",
+        "dueSoon": "Termin zbliża się — wymaga planu i potwierdzenia.",
+        "escalated": "Brak reakcji spowodował eskalację.",
+        "blocked": "Zablokowane — wymaga natychmiastowej reakcji.",
+        "assigned": "Nowe przypisanie — potrzebny ruch.",
+        "aiRisk": "AI wykryło ryzyko — sprawdź szczegóły.",
+        "ai": "AI sugeruje działanie — sprawdź rekomendację.",
+        "paymentFailed": "Płatność nie powiodła się — może to zatrzymać dostęp do funkcji. Zaktualizuj metodę płatności.",
+        "usageAlertPct": "Zbliżasz się do limitu ({{pct}}%) — zaplanuj działania (upgrade/porządek/limity).",
+        "usageAlert": "Zbliżasz się do limitu — zaplanuj działania (upgrade/porządek/limity).",
+        "subscriptionChange": "Zmieniono subskrypcję lub plan — sprawdź szczegóły rozliczeń.",
+        "dbr77Kb": "Nowa wiedza w bazie wiedzy — warto przeczytać i zastosować.",
+        "dbr77Instruction": "Nowa instrukcja pracy w systemie — ułatwi Ci wykonywanie zadań.",
+        "dbr77Update": "Nowości i aktualizacje DBR77 — sprawdź co się zmieniło.",
+        "dbr77Generic": "Komunikat DBR77 — sprawdź szczegóły.",
+        "gate": "Bramka wymaga Twojej decyzji GO/NO-GO.",
+        "milestone": "Kamień milowy osiągnięty.",
+        "default": "Wymaga reakcji w systemie."
+      },
+      "context": {
+        "daysPastDeadline": "{{count}}d po terminie",
+        "decisionDeadline": "{{title}} — {{count}}d do deadline",
+        "potentialSavings": "Potencjalne oszczędności: {{amount}}/rok",
+        "updateVersion": "Aktualizacja — {{version}}",
+        "invoice": "Faktura {{id}}",
+        "paymentIssue": "Problem z płatnością"
+      },
+      "blocked": {
+        "decision": "Blokuje: decyzję do podjęcia (może blokować taski).",
+        "task": "Blokuje: ruch w tasku (sprawdź blokadę/termin).",
+        "unknown": "Blokuje: nieustalone (sprawdź powiązaną encję)."
+      },
+      "cta": {
+        "openDocument": "Otwórz dokument"
+      },
+      "action": {
+        "taskOverdueCritical": "Natychmiast skontaktuj się{{assigneePart}} i eskaluj do kierownika projektu. {{taskPart}} {{count}}d po terminie.",
+        "taskOverdue": "Sprawdź postęp{{taskPart}} i zaktualizuj deadline{{ownerPart}}.",
+        "taskBlocked": "Usuń blokadę{{blockerPart}} i odblokuj postęp{{taskPart}}.",
+        "taskAssigned": "Przejrzyj przypisane zadanie{{taskPart}}, potwierdź scope i rozpocznij pracę.",
+        "decisionOverdue": "Natychmiast podejmij decyzję{{decisionPart}} — opóźnienie blokuje dalsze prace.",
+        "decisionRequired": "Przeanalizuj kontekst i podejmij decyzję{{decisionPart}}. Skonsultuj z zespołem jeśli potrzeba.",
+        "aiRiskDetected": "Przejrzyj ryzyko{{riskPart}} wykryte przez AI. Zweryfikuj dane i zdecyduj o działaniu.",
+        "aiRecommendation": "Przejrzyj rekomendację AI, zweryfikuj założenia i zastosuj lub odrzuć z uzasadnieniem.",
+        "aiOverload": "AI wykryło przeciążenie zasobów. Przejrzyj obciążenie zespołu i przedystrybuuj zadania.",
+        "aiDependencyConflict": "AI wykryło konflikt zależności. Przejrzyj timeline i rozwiąż konflikty w harmonogramie.",
+        "gate": "Przejrzyj kryteria bramki i podejmij decyzję GO/NO-GO.",
+        "paymentFailed": "Otwórz rozliczenia, zaktualizuj metodę płatności i ponów transakcję.",
+        "usageAlert": "Zbliżasz się do limitu{{metricPart}}{{pctPart}}. Zdecyduj: upgrade planu, porządek danych lub zwiększ limit.",
+        "subscriptionChange": "Sprawdź szczegóły zmiany subskrypcji i potwierdź nowe warunki.",
+        "invoiceReady": "Nowa faktura do pobrania. Sprawdź i przekaż do księgowości.",
+        "dbr77KbNew": "Przeczytaj nowy artykuł w bazie wiedzy i zastosuj w swojej pracy.",
+        "dbr77Instruction": "Przeczytaj nową instrukcję i dostosuj swój workflow.",
+        "dbr77Update": "Zapoznaj się z nowościami w systemie. Sprawdź czy zmiany wpływają na Twoje zadania.",
+        "systemAlert": "Przeczytaj alert systemowy i podejmij wymagane działanie.",
+        "milestone": "Informacja — nie wymaga bezpośredniego działania. Możesz zamknąć.",
+        "doCta": "Wykonaj: {{label}}",
+        "default": "Otwórz powiązaną encję i wykonaj akcję."
+      },
+      "checklist": {
+        "taskOverdueCritical": {
+          "blockers": "Sprawdź blokery i przyczynę opóźnienia",
+          "contactNamed": "Skontaktuj się z {{assignee}}",
+          "contact": "Skontaktuj się z odpowiedzialnym",
+          "deadline": "Ustal nowy realny termin",
+          "escalate": "Eskaluj do kierownika jeśli brak odpowiedzi w 2h",
+          "status": "Zaktualizuj status zadania",
+          "notify": "Powiadom interesariuszy o nowym planie"
+        },
+        "taskOverdue": {
+          "open": "Otwórz zadanie i przejrzyj szczegóły",
+          "blockers": "Sprawdź czy są blokery",
+          "update": "Zaktualizuj deadline lub status",
+          "notify": "Powiadom zespół o zmianie"
+        },
+        "taskBlocked": {
+          "identify": "Zidentyfikuj blokadę",
+          "contact": "Skontaktuj się z osobą blokującą",
+          "plan": "Ustal plan usunięcia blokady",
+          "status": "Zaktualizuj status zadania",
+          "escalate": "Eskaluj jeśli blokada trwa > 24h"
+        },
+        "taskAssigned": {
+          "review": "Przejrzyj opis i zakres zadania",
+          "confirm": "Potwierdź termin wykonania",
+          "dependencies": "Sprawdź zależności i blokery",
+          "start": "Rozpocznij pracę lub zgłoś wątpliwości"
+        },
+        "decisionOverdue": {
+          "analyze": "Przeanalizuj kontekst decyzji",
+          "consult": "Skonsultuj z kluczowymi interesariuszami",
+          "decide": "Podejmij decyzję lub eskaluj",
+          "document": "Udokumentuj uzasadnienie",
+          "notify": "Powiadom zależne zespoły"
+        },
+        "decisionRequired": {
+          "review": "Przejrzyj dane i kontekst decyzji",
+          "consult": "Skonsultuj z zespołem jeśli potrzeba",
+          "decide": "Podejmij decyzję lub deleguj",
+          "document": "Udokumentuj wybór i uzasadnienie"
+        },
+        "aiRiskDetected": {
+          "review": "Przejrzyj szczegóły wykrytego ryzyka",
+          "verify": "Zweryfikuj dane wejściowe AI",
+          "assess": "Oceń realny wpływ na projekt",
+          "act": "Podejmij działanie mitygujące lub odrzuć",
+          "update": "Zaktualizuj rejestr ryzyk"
+        },
+        "aiRecommendation": {
+          "review": "Przejrzyj rekomendację AI",
+          "verify": "Zweryfikuj założenia i dane",
+          "apply": "Zastosuj lub odrzuć z uzasadnieniem"
+        },
+        "aiOverload": {
+          "review": "Przejrzyj obciążenie zespołu",
+          "identify": "Zidentyfikuj najbardziej obciążone osoby",
+          "redistribute": "Przedystrybuuj lub odłóż zadania",
+          "notify": "Powiadom zespół o zmianach"
+        },
+        "aiDependencyConflict": {
+          "review": "Przejrzyj konfliktujące zależności",
+          "compare": "Porównaj timeline'y zadań",
+          "reorder": "Zmień kolejność lub przesuń terminy",
+          "confirm": "Potwierdź nowy harmonogram z zespołem"
+        },
+        "gate": {
+          "review": "Przejrzyj kryteria bramki",
+          "check": "Sprawdź stan deliverables",
+          "decide": "Podejmij decyzję GO/NO-GO",
+          "document": "Udokumentuj decyzję"
+        },
+        "paymentFailed": {
+          "open": "Otwórz sekcję rozliczeń",
+          "check": "Sprawdź metodę płatności",
+          "update": "Zaktualizuj dane karty/konta",
+          "retry": "Ponów transakcję",
+          "confirm": "Potwierdź sukces płatności"
+        },
+        "usageAlert": {
+          "check": "Sprawdź aktualne zużycie",
+          "identify": "Zidentyfikuj co zajmuje zasoby",
+          "decide": "Zdecyduj: upgrade, porządek lub limit",
+          "implement": "Wdróż wybraną strategię"
+        },
+        "subscriptionChange": {
+          "review": "Przejrzyj nowe warunki",
+          "confirm": "Potwierdź dostępność funkcji",
+          "update": "Zaktualizuj budżet jeśli potrzeba"
+        },
+        "invoiceReady": {
+          "download": "Pobierz fakturę",
+          "verify": "Zweryfikuj kwotę i okres",
+          "forward": "Przekaż do księgowości"
+        },
+        "dbr77KbNew": {
+          "read": "Przeczytaj nowy artykuł",
+          "check": "Sprawdź czy dotyczy Twoich zadań",
+          "apply": "Zastosuj wiedzę w praktyce"
+        },
+        "dbr77Instruction": {
+          "read": "Przeczytaj nową instrukcję",
+          "adjust": "Dostosuj swój workflow",
+          "confirm": "Potwierdź wdrożenie zmian"
+        },
+        "dbr77Update": {
+          "review": "Przejrzyj listę zmian",
+          "check": "Sprawdź wpływ na swoje zadania",
+          "test": "Przetestuj nowe funkcje"
+        },
+        "systemAlert": {
+          "read": "Przeczytaj szczegóły alertu",
+          "assess": "Oceń wpływ na Twoją pracę",
+          "act": "Podejmij wymagane działanie"
+        },
+        "milestone": {
+          "review": "Przejrzyj podsumowanie",
+          "dismiss": "Zamknij powiadomienie"
+        },
+        "default": {
+          "review": "Przejrzyj szczegóły powiadomienia",
+          "act": "Podejmij odpowiednią akcję"
+        }
+      },
+      "defaultTitle": "Powiadomienie"
+    }
   },
   "task": {
     "status": "Status"
