@@ -15796,5 +15796,61 @@
       "artifact": "Output",
       "assessment": "Assessment"
     }
+  },
+  "notificationDropdown": {
+    "title": "Inbox",
+    "new": "New",
+    "inbox": "Inbox",
+    "center": "Center",
+    "openInbox": "Open Inbox (Action Queue)",
+    "openCenter": "Open Notification Center",
+    "markAllRead": "Mark all as read",
+    "markAllReadShort": "Mark all read",
+    "open": "Open",
+    "openChat": "Open chat",
+    "snooze": "Snooze",
+    "markAsRead": "Mark as read",
+    "clearRead": "Clear read",
+    "clearReadFull": "Clear read notifications",
+    "clearAll": "Clear all",
+    "deleteAllFull": "Delete all notifications",
+    "countLabel_one": "{{count}} notification",
+    "countLabel_other": "{{count}} notifications",
+    "snoozedLabel_one": "{{count}} snoozed",
+    "snoozedLabel_other": "{{count}} snoozed",
+    "time": {
+      "justNow": "Just now",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
+    },
+    "snoozePreset": {
+      "1h": "1 hour",
+      "4h": "4 hours",
+      "1d": "1 day",
+      "3d": "3 days"
+    },
+    "toast": {
+      "markReadFailed": "Failed to mark as read",
+      "allMarkedRead": "All marked as read",
+      "actionFailed": "Action failed",
+      "deleteFailed": "Failed to delete",
+      "allDeleted": "All notifications deleted",
+      "deleteAllFailed": "Failed to delete all notifications",
+      "readCleared": "Read notifications cleared",
+      "clearReadFailed": "Failed to clear read notifications",
+      "chatOpened": "Chat opened",
+      "snoozedFor": "Notification snoozed for {{duration}}"
+    },
+    "snoozeDuration": {
+      "1h": "1 hour",
+      "4h": "4 hours",
+      "1d": "1 day",
+      "3d": "3 days"
+    }
+  },
+  "statusChangeToast": {
+    "updatedTo": "Status updated to {{status}}",
+    "viewIn": "View in {{module}}"
   }
 }

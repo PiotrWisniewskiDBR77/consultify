@@ -16843,5 +16843,65 @@
       "artifact": "Materiał",
       "assessment": "Ocena"
     }
+  },
+  "notificationDropdown": {
+    "title": "Skrzynka",
+    "new": "Nowe",
+    "inbox": "Skrzynka",
+    "center": "Centrum",
+    "openInbox": "Otwórz skrzynkę (kolejka działań)",
+    "openCenter": "Otwórz centrum powiadomień",
+    "markAllRead": "Oznacz wszystkie jako przeczytane",
+    "markAllReadShort": "Przeczytane",
+    "open": "Otwórz",
+    "openChat": "Otwórz czat",
+    "snooze": "Odłóż",
+    "markAsRead": "Oznacz jako przeczytane",
+    "clearRead": "Wyczyść przeczytane",
+    "clearReadFull": "Wyczyść przeczytane powiadomienia",
+    "clearAll": "Usuń wszystkie",
+    "deleteAllFull": "Usuń wszystkie powiadomienia",
+    "countLabel_one": "{{count}} powiadomienie",
+    "countLabel_few": "{{count}} powiadomienia",
+    "countLabel_many": "{{count}} powiadomień",
+    "countLabel_other": "{{count}} powiadomień",
+    "snoozedLabel_one": "{{count}} odłożone",
+    "snoozedLabel_few": "{{count}} odłożone",
+    "snoozedLabel_many": "{{count}} odłożonych",
+    "snoozedLabel_other": "{{count}} odłożonych",
+    "time": {
+      "justNow": "Przed chwilą",
+      "minutesAgo": "{{count}} min temu",
+      "hoursAgo": "{{count}} godz. temu",
+      "daysAgo": "{{count}} dni temu"
+    },
+    "snoozePreset": {
+      "1h": "1 godz.",
+      "4h": "4 godz.",
+      "1d": "1 dzień",
+      "3d": "3 dni"
+    },
+    "toast": {
+      "markReadFailed": "Nie udało się oznaczyć jako przeczytane",
+      "allMarkedRead": "Oznaczono wszystkie jako przeczytane",
+      "actionFailed": "Akcja nie powiodła się",
+      "deleteFailed": "Nie udało się usunąć",
+      "allDeleted": "Usunięto wszystkie powiadomienia",
+      "deleteAllFailed": "Nie udało się usunąć wszystkich powiadomień",
+      "readCleared": "Wyczyszczono przeczytane powiadomienia",
+      "clearReadFailed": "Nie udało się wyczyścić przeczytanych powiadomień",
+      "chatOpened": "Otwarto czat",
+      "snoozedFor": "Powiadomienie odłożone na {{duration}}"
+    },
+    "snoozeDuration": {
+      "1h": "1 godzinę",
+      "4h": "4 godziny",
+      "1d": "1 dzień",
+      "3d": "3 dni"
+    }
+  },
+  "statusChangeToast": {
+    "updatedTo": "Status zmieniony na {{status}}",
+    "viewIn": "Zobacz w module {{module}}"
   }
 }
