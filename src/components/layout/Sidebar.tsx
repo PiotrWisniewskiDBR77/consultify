@@ -630,6 +630,20 @@ export const Sidebar: React.FC = () => {
       >
         <button
           data-chat-toggle={item.id === 'AI_CHAT' ? 'true' : undefined}
+          aria-haspopup={hasSubItems ? 'menu' : undefined}
+          aria-expanded={hasSubItems ? activeFloating?.id === item.id : undefined}
+          onFocus={(e) => {
+            // Keyboard users: open the flyout when the parent item receives focus
+            if (hasSubItems || !showFull) {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setActiveFloating({
+                id: item.id,
+                rect,
+                items: item.subItems || [],
+                title: item.label,
+              });
+            }
+          }}
           onClick={() => {
             console.log('[Sidebar-old] Button clicked:', item.id, item.viewId);
 
@@ -757,6 +771,7 @@ export const Sidebar: React.FC = () => {
       {/* Mobile/Tablet Overlay - shown when sidebar is open on touch devices */}
       {isSidebarOpen && (
         <div
+          aria-hidden="true"
           className="fixed inset-0 bg-navy-950/80 backdrop-blur-sm z-overlay lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
@@ -803,6 +818,8 @@ export const Sidebar: React.FC = () => {
 
               <button
                 onClick={toggleSidebarCollapse}
+                aria-label={t('sidebar.collapse', 'Collapse')}
+                aria-expanded={true}
                 className={`
                   p-2 rounded-lg transition-colors
                   text-slate-600 dark:text-slate-500 hover:text-navy-900 hover:bg-slate-100 dark:hover:bg-navy-800/30
@@ -820,6 +837,8 @@ export const Sidebar: React.FC = () => {
               </span>
               <button
                 onClick={toggleSidebarCollapse}
+                aria-label={t('sidebar.expand', 'Expand')}
+                aria-expanded={false}
                 className={`
                   p-2 rounded-lg transition-colors flex justify-center items-center
                   text-slate-600 dark:text-slate-500 hover:text-navy-900 hover:bg-slate-100 dark:hover:bg-navy-800/30
@@ -834,7 +853,10 @@ export const Sidebar: React.FC = () => {
         </div>
 
         {/* Scrollable Navigation */}
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10 scrollbar-track-transparent">
+        <nav
+          aria-label={t('sidebar.mainNavigation', 'Main navigation')}
+          className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10 scrollbar-track-transparent"
+        >
           {/* PMO Phase Indicator - Always visible */}
           <div className={`${showFull ? 'px-3 pt-4' : 'px-2 pt-4'}`}>
             <PhaseIndicator compact={!showFull} />

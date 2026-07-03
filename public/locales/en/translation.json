@@ -1786,6 +1786,7 @@
     "recommendationsCount": "Recommendations"
   },
   "sidebar": {
+    "mainNavigation": "Main navigation",
     "module3_1": "Initiatives",
     "dashboard": "Dashboard",
     "settings": "Settings",
