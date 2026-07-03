@@ -169,7 +169,7 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
   );
 
   return (
-    <footer className="border-t border-slate-200/90 bg-slate-50/95 py-16 px-6 backdrop-blur-sm dark:border-white/[0.08] dark:bg-[#0F172A]/95">
+    <footer className="border-t border-c-border bg-c-bg py-16 px-6 backdrop-blur-sm">
       <div className="max-w-7xl mx-auto">
         {/* Main Footer Grid */}
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-[1.45fr_repeat(5,minmax(0,0.9fr))] lg:gap-8 xl:gap-10">
@@ -191,23 +191,23 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
 
             {/* Offices */}
             <div className="space-y-2.5">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-c-text">
                 {t('landing.footer.offices', 'Offices')}
               </h4>
 
-              <div className="rounded-xl bg-slate-100 px-3.5 py-3 dark:bg-white/[0.04]">
+              <div className="rounded-xl bg-c-surface-raised px-3.5 py-3">
                 <div className="flex items-start gap-2.5">
                   <span
-                    className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-200/80 text-sm dark:bg-white/[0.08]"
+                    className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-c-surface-raised text-sm"
                     aria-hidden="true"
                   >
                     🇺🇸
                   </span>
                   <div className="min-w-0">
-                    <p className="text-[13px] font-semibold text-slate-800 dark:text-white">
+                    <p className="text-[13px] font-semibold text-c-text">
                       {COMPANY.usa.name}
                     </p>
-                    <p className="mt-0.5 text-[11px] leading-5 text-slate-500 dark:text-slate-400">
+                    <p className="mt-0.5 text-[11px] leading-5 text-c-text-muted">
                       {COMPANY.usa.address}
                       <br />
                       {COMPANY.usa.city}
@@ -216,19 +216,19 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
                 </div>
               </div>
 
-              <div className="rounded-xl bg-slate-100 px-3.5 py-3 dark:bg-white/[0.04]">
+              <div className="rounded-xl bg-c-surface-raised px-3.5 py-3">
                 <div className="flex items-start gap-2.5">
                   <span
-                    className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-200/80 text-sm dark:bg-white/[0.08]"
+                    className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-c-surface-raised text-sm"
                     aria-hidden="true"
                   >
                     🇩🇪
                   </span>
                   <div className="min-w-0">
-                    <p className="text-[13px] font-semibold text-slate-800 dark:text-white">
+                    <p className="text-[13px] font-semibold text-c-text">
                       {COMPANY.germany.name}
                     </p>
-                    <p className="mt-0.5 text-[11px] leading-5 text-slate-500 dark:text-slate-400">
+                    <p className="mt-0.5 text-[11px] leading-5 text-c-text-muted">
                       {COMPANY.germany.address}
                       <br />
                       {COMPANY.germany.city}
@@ -242,7 +242,7 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
           {/* Navigation Columns */}
           {sections.map((section, idx) => (
             <div key={idx} className="space-y-4 min-w-0">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-c-text">
                 {section.title}
               </h4>
               <ul className="space-y-2.5">
@@ -252,14 +252,14 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
                       <button
                         type="button"
                         onClick={(link as any).onClick}
-                        className="text-sm text-slate-600 transition-colors hover:text-primary-600 dark:text-slate-300 dark:hover:text-primary-400"
+                        className="text-sm text-c-text-secondary transition-colors hover:text-c-accent"
                       >
                         {link.label}
                       </button>
                     ) : (
                       <a
                         href={link.href}
-                        className="text-sm text-slate-600 transition-colors hover:text-primary-600 dark:text-slate-300 dark:hover:text-primary-400"
+                        className="text-sm text-c-text-secondary transition-colors hover:text-c-accent"
                       >
                         {link.label}
                       </a>
@@ -272,12 +272,12 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
         </div>
 
         {/* Become Partner CTA */}
-        <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-slate-200/90 py-8 sm:flex-row dark:border-white/[0.08]">
+        <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-c-border py-8 sm:flex-row">
           <div>
-            <p className="text-sm font-black text-slate-900 dark:text-white mb-0.5">
+            <p className="text-sm font-black text-c-text mb-0.5">
               {t('partner.footerCta.title', 'Become a Consultify Partner')}
             </p>
-            <p className="text-xs text-slate-600 dark:text-slate-400">
+            <p className="text-xs text-c-text-secondary">
               {t('partner.footerCta.sub', 'Resell, integrate, or co-create with us globally.')}
             </p>
           </div>
@@ -295,7 +295,7 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
         </div>
 
         {/* Social Links Row */}
-        <div className="border-t border-slate-200/80 pt-8 dark:border-white/[0.08]">
+        <div className="border-t border-c-border pt-8">
           <div className="flex justify-center items-center gap-5">
             <a
               href={SOCIAL_LINKS.linkedin}
@@ -371,23 +371,23 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
               <a
                 key={idx}
                 href={link.href}
-                className="text-[11px] text-slate-400 hover:text-primary-500 transition-colors dark:text-slate-500 dark:hover:text-primary-400"
+                className="text-[11px] text-c-text-muted hover:text-c-accent transition-colors"
               >
                 {link.label}
               </a>
             ))}
           </div>
 
-          <p className="mt-7 text-center text-[11px] text-slate-500 dark:text-slate-400">
+          <p className="mt-7 text-center text-[11px] text-c-text-muted">
             {legalOperatorLine}:{' '}
-            <span className="font-semibold text-slate-700 dark:text-slate-300">
+            <span className="font-semibold text-c-text-secondary">
               {COMPANY.headquarters.name}
             </span>
             {` (${COMPANY.headquarters.address}, ${COMPANY.headquarters.city}, NIP ${COMPANY.headquarters.nip}, KRS ${COMPANY.headquarters.krs})`}
           </p>
 
           {/* Copyright */}
-          <p className="mt-4 text-center text-[11px] font-medium text-slate-400 dark:text-slate-500">
+          <p className="mt-4 text-center text-[11px] font-medium text-c-text-muted">
             © 2026 {COMPANY.headquarters.name}{' '}
             {t('landing.footer.copyright', 'All rights reserved.')}
           </p>
