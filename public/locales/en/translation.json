@@ -1,5 +1,6 @@
 {
   "layout": {
+    "openMenu": "Open menu",
     "aiPanel": {
       "open": "Open AI panel",
       "close": "Close AI panel"
