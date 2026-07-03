@@ -19,6 +19,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState, LoadingState } from '@/components/shared/states';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
 interface DistributionBuilderProps {
@@ -172,20 +173,20 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
       onClick={onClose}
     >
       <div
-        className="w-[600px] max-w-[95vw] max-h-[85vh] bg-white dark:bg-navy-950 rounded-2xl border border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden flex flex-col"
+        className="w-[600px] max-w-[95vw] max-h-[85vh] bg-c-surface rounded-2xl border border-c-border-subtle shadow-2xl overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-700">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
           <div className="flex items-center gap-2">
             <Send size={16} className="text-blue-600 dark:text-blue-400" />
-            <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+            <h2 className="text-sm font-semibold text-c-text">
               {isPl ? 'Dystrybucja' : 'Distributions'}
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            className="p-1 rounded-lg text-c-text-secondary hover:text-c-text-secondary transition-colors"
           >
             <X size={16} />
           </button>
@@ -206,29 +207,29 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
 
           {/* Create form */}
           {showForm && (
-            <div className="rounded-xl border border-slate-200 dark:border-navy-700 p-4 space-y-3 bg-slate-50 dark:bg-navy-900">
+            <div className="rounded-xl border border-c-border-subtle p-4 space-y-3 bg-c-surface-raised">
               <div>
-                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                <label className="block text-[11px] font-medium text-c-text-muted mb-1">
                   {isPl ? 'Nazwa' : 'Name'}
                 </label>
                 <input
                   type="text"
                   value={form.name}
                   onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-blue-500 outline-none"
+                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-c-border bg-c-surface text-c-text focus:ring-1 focus:ring-blue-500 outline-none"
                   placeholder={isPl ? 'np. Raport tygodniowy' : 'e.g. Weekly Report'}
                 />
               </div>
 
               {/* Source type */}
               <div>
-                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                <label className="block text-[11px] font-medium text-c-text-muted mb-1">
                   {isPl ? 'Typ źródła' : 'Source Type'}
                 </label>
                 <select
                   value={form.sourceType}
                   onChange={(e) => setForm((p) => ({ ...p, sourceType: e.target.value as any }))}
-                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-200 outline-none"
+                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-c-border bg-c-surface text-c-text outline-none"
                 >
                   <option value="table">{isPl ? 'Tabela' : 'Table'}</option>
                   <option value="view">{isPl ? 'Widok' : 'View'}</option>
@@ -237,21 +238,21 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
 
               {/* Source ID */}
               <div>
-                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                <label className="block text-[11px] font-medium text-c-text-muted mb-1">
                   {isPl ? 'ID źródła' : 'Source ID'}
                 </label>
                 <input
                   type="text"
                   value={form.sourceId}
                   onChange={(e) => setForm((p) => ({ ...p, sourceId: e.target.value }))}
-                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-blue-500 outline-none"
+                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-c-border bg-c-surface text-c-text focus:ring-1 focus:ring-blue-500 outline-none"
                   placeholder={isPl ? 'ID tabeli lub widoku' : 'Table or view ID'}
                 />
               </div>
 
               {/* Channel */}
               <div>
-                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                <label className="block text-[11px] font-medium text-c-text-muted mb-1">
                   {isPl ? 'Kanał' : 'Channel'}
                 </label>
                 <div className="flex gap-1.5">
@@ -266,7 +267,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                         className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors ${
                           form.channel === ch.id
                             ? 'bg-blue-600 text-white'
-                            : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700'
+                            : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-border-subtle'
                         }`}
                       >
                         <Icon size={12} />
@@ -281,7 +282,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
               <div>
                 {form.channel === 'email' && (
                   <div>
-                    <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                    <label className="block text-[11px] font-medium text-c-text-muted mb-1">
                       {isPl
                         ? 'Adresy email (oddzielone przecinkami)'
                         : 'Email addresses (comma-separated)'}
@@ -290,35 +291,35 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                       type="text"
                       value={(form.channelConfig.to as string) || ''}
                       onChange={(e) => updateChannelConfig('to', e.target.value)}
-                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-blue-500 outline-none"
+                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-c-border bg-c-surface text-c-text focus:ring-1 focus:ring-blue-500 outline-none"
                       placeholder="user@example.com, team@example.com"
                     />
                   </div>
                 )}
                 {(form.channel === 'slack' || form.channel === 'teams') && (
                   <div>
-                    <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                    <label className="block text-[11px] font-medium text-c-text-muted mb-1">
                       Webhook URL
                     </label>
                     <input
                       type="url"
                       value={(form.channelConfig.webhookUrl as string) || ''}
                       onChange={(e) => updateChannelConfig('webhookUrl', e.target.value)}
-                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-blue-500 outline-none"
+                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-c-border bg-c-surface text-c-text focus:ring-1 focus:ring-blue-500 outline-none"
                       placeholder="https://hooks.slack.com/services/..."
                     />
                   </div>
                 )}
                 {form.channel === 'webhook' && (
                   <div>
-                    <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                    <label className="block text-[11px] font-medium text-c-text-muted mb-1">
                       Webhook URL
                     </label>
                     <input
                       type="url"
                       value={(form.channelConfig.url as string) || ''}
                       onChange={(e) => updateChannelConfig('url', e.target.value)}
-                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-blue-500 outline-none"
+                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-c-border bg-c-surface text-c-text focus:ring-1 focus:ring-blue-500 outline-none"
                       placeholder="https://api.example.com/webhook"
                     />
                   </div>
@@ -327,7 +328,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
 
               {/* Format */}
               <div>
-                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                <label className="block text-[11px] font-medium text-c-text-muted mb-1">
                   {isPl ? 'Format' : 'Format'}
                 </label>
                 <div className="flex gap-1.5">
@@ -338,7 +339,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                       className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors ${
                         form.format === f.id
                           ? 'bg-blue-600 text-white'
-                          : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700'
+                          : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-border-subtle'
                       }`}
                     >
                       {f.label}
@@ -349,14 +350,14 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
 
               {/* Schedule */}
               <div>
-                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                <label className="block text-[11px] font-medium text-c-text-muted mb-1">
                   {isPl ? 'Harmonogram (cron, opcjonalnie)' : 'Schedule (cron, optional)'}
                 </label>
                 <input
                   type="text"
                   value={form.schedule}
                   onChange={(e) => setForm((p) => ({ ...p, schedule: e.target.value }))}
-                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-blue-500 outline-none"
+                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-c-border bg-c-surface text-c-text focus:ring-1 focus:ring-blue-500 outline-none"
                   placeholder="0 9 * * 1 (Mon 9am)"
                 />
               </div>
@@ -376,7 +377,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                     setShowForm(false);
                     setForm({ ...INITIAL_FORM });
                   }}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-c-text-muted hover:text-c-text transition-colors"
                 >
                   {isPl ? 'Anuluj' : 'Cancel'}
                 </button>
@@ -386,13 +387,17 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
 
           {/* Distribution list */}
           {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 size={20} className="animate-spin text-slate-600" />
-            </div>
+            <LoadingState template="list" rows={3} />
           ) : distributions.length === 0 && !showForm ? (
-            <div className="text-center py-8 text-xs text-slate-600">
-              {isPl ? 'Brak dystrybucji. Utwórz pierwszą!' : 'No distributions yet. Create one!'}
-            </div>
+            <EmptyState
+              variant="new"
+              icon={Send}
+              compact
+              title={isPl ? 'Brak dystrybucji' : 'No distributions yet'}
+              description={
+                isPl ? 'Utwórz pierwszą dystrybucję, aby udostępnić tabelę.' : 'Create your first distribution to share this table.'
+              }
+            />
           ) : (
             <div className="space-y-2">
               {distributions.map((dist) => {
@@ -403,15 +408,15 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                 return (
                   <div
                     key={dist.id}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-slate-300 dark:hover:border-navy-600 transition-colors"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-c-border-subtle bg-c-surface hover:border-c-border transition-colors"
                   >
                     <ChannelIcon
                       size={14}
-                      className="text-slate-500 dark:text-slate-400 shrink-0"
+                      className="text-c-text-muted shrink-0"
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
+                        <span className="text-xs font-medium text-c-text truncate">
                           {dist.name}
                         </span>
                         {!dist.is_active && (
@@ -420,7 +425,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                           </span>
                         )}
                       </div>
-                      <div className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
+                      <div className="text-[10px] text-c-text-secondary mt-0.5">
                         {dist.format?.toUpperCase()} ·{' '}
                         {isPl ? channelDef?.labelPl : channelDef?.labelEn}
                         {dist.send_count > 0 && (
