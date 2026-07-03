@@ -1899,7 +1899,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           type="button"
           onClick={() => void handleMaterializePortfolio('deck')}
           disabled={isMaterializing}
-          className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           title={
             i18n.language?.startsWith('pl')
               ? 'Zrób materiał z portfela (prezentacja)'
@@ -1917,7 +1917,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       <button
         type="button"
         onClick={() => navigate(ROUTES.ROI)}
-        className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors"
+        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors"
         title={i18n.language?.startsWith('pl') ? 'Widok ROI i realizacji wartości' : 'ROI & Value Realization'}
       >
         <TrendingUp size={13} />
