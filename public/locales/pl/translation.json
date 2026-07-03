@@ -16843,5 +16843,16 @@
       "artifact": "Materiał",
       "assessment": "Ocena"
     }
+  },
+  "superAdmin": {
+    "signalCenter": {
+      "loading": "Wczytywanie sygnałów…",
+      "empty": "Brak aktywnych sygnałów w tej kategorii.",
+      "loadFailed": "Nie udało się wczytać sygnałów.",
+      "dismissFailed": "Nie udało się odrzucić sygnału. Spróbuj ponownie."
+    },
+    "integrations": {
+      "loadFailed": "Nie udało się wczytać integracji."
+    }
   }
 }
