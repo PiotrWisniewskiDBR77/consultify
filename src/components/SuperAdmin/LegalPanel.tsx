@@ -10,6 +10,7 @@ import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { DegradedState } from '../Admin/AdminState';
 import { InfoButton } from '../shared/InfoButton';
+import { EmptyState, LoadingState } from '../shared/states';
 
 const DOC_TYPES = [
   'TERMS_OF_SERVICE',
@@ -182,10 +183,10 @@ export const LegalPanel: React.FC = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+          <h2 className="text-lg font-semibold text-c-text">
             Legal Documents
           </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+          <p className="text-sm text-c-text-secondary">
             Manage versions, activation status, and publication of legal documents.
           </p>
         </div>
@@ -193,7 +194,7 @@ export const LegalPanel: React.FC = () => {
           <InfoButton cardId="superadmin-legal" showLabel label="Help" />
           <button
             onClick={fetchDocs}
-            className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-navy-900 hover:bg-slate-50 dark:hover:bg-navy-800/30 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-slate-100 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 bg-c-surface hover:bg-c-surface-raised border border-c-border rounded-lg text-sm text-c-text transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
             Refresh
@@ -215,40 +216,38 @@ export const LegalPanel: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="p-4 rounded-lg bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400"
+          className="p-4 rounded-lg bg-c-danger/10 text-c-danger"
         >
           {actionError}
         </div>
       )}
 
       {loading ? (
-        <div className="flex items-center justify-center py-16 text-slate-600 dark:text-slate-400">
-          <Loader2 className="w-6 h-6 animate-spin" />
-        </div>
+        <LoadingState template="list" />
       ) : loadError ? (
         <DegradedState title="Legal documents unavailable" description={loadError} />
       ) : docs.length === 0 ? (
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-10 text-center">
-          <div className="text-slate-900 dark:text-slate-100 font-medium">No legal documents</div>
-          <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-            Publish a document to start tracking legal versions.
-          </div>
-        </div>
+        <EmptyState
+          variant="new"
+          icon={CheckCircle2}
+          title="No legal documents"
+          description="Publish a document to start tracking legal versions."
+        />
       ) : (
         <div className="space-y-6">
           {grouped.map(([type, items]) => (
             <div
               key={type}
-              className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden"
+              className="bg-c-surface border border-c-border rounded-xl overflow-hidden"
             >
-              <div className="px-6 py-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
-                <div className="font-medium text-slate-900 dark:text-slate-100">{type}</div>
-                <div className="text-xs text-slate-600 dark:text-slate-400">
+              <div className="px-6 py-4 border-b border-c-border-subtle flex items-center justify-between">
+                <div className="font-medium text-c-text">{type}</div>
+                <div className="text-xs text-c-text-secondary">
                   {items.length} version{items.length === 1 ? '' : 's'}
                 </div>
               </div>
               <table /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */  className="w-full text-left text-sm">
-                <thead className="bg-slate-50 dark:bg-navy-950 text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider">
+                <thead className="bg-c-surface-raised text-c-text-secondary text-xs uppercase tracking-wider">
                   <tr>
                     <th className="px-6 py-3 font-medium">Title</th>
                     <th className="px-6 py-3 font-medium">Version</th>
@@ -257,48 +256,48 @@ export const LegalPanel: React.FC = () => {
                     <th className="px-6 py-3 font-medium text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-white/5">
+                <tbody className="divide-y divide-c-border-subtle">
                   {items.map((d) => {
                     const active = isActive(d);
                     return (
-                      <tr key={d.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
+                      <tr key={d.id} className="hover:bg-c-surface-raised">
                         <td className="px-6 py-4">
-                          <div className="font-medium text-slate-900 dark:text-slate-100">
+                          <div className="font-medium text-c-text">
                             {d.title || d.name || type}
                           </div>
                           {d.change_summary && (
-                            <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                            <div className="text-xs text-c-text-secondary mt-0.5">
                               {d.change_summary}
                             </div>
                           )}
                         </td>
-                        <td className="px-6 py-4 font-mono text-slate-700 dark:text-slate-300">
+                        <td className="px-6 py-4 font-mono text-c-text-secondary">
                           {d.version}
                         </td>
-                        <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
+                        <td className="px-6 py-4 text-c-text-secondary">
                           {formatDate(d.effective_from || d.effective_date)}
                         </td>
                         <td className="px-6 py-4">
                           {active ? (
-                            <span className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
+                            <span className="inline-flex items-center gap-1.5 text-c-success">
                               <CheckCircle2 className="w-4 h-4" />
                               Active
                             </span>
                           ) : (
-                            <span className="text-slate-600 dark:text-slate-400">Archived</span>
+                            <span className="text-c-text-secondary">Archived</span>
                           )}
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => handleToggle(d.id, !active)}
-                              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 hover:bg-slate-50 dark:hover:bg-navy-800/30 text-slate-900 dark:text-slate-100 transition-colors"
+                              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-c-border bg-c-surface hover:bg-c-surface-raised text-c-text transition-colors"
                               title={active ? 'Archive' : 'Activate'}
                             >
                               {active ? (
-                                <ToggleRight className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+                                <ToggleRight className="w-4 h-4 text-c-success" />
                               ) : (
-                                <ToggleLeft className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                                <ToggleLeft className="w-4 h-4 text-c-text-secondary" />
                               )}
                               {active ? 'Active' : 'Archived'}
                             </button>
@@ -316,27 +315,27 @@ export const LegalPanel: React.FC = () => {
 
       {showPublishModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay p-4">
-          <div className="bg-white dark:bg-navy-800 rounded-xl shadow-2xl max-w-lg w-full">
-            <div className="p-6 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+          <div className="bg-c-surface rounded-xl shadow-2xl max-w-lg w-full">
+            <div className="p-6 border-b border-c-border flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-c-text">
                 Publish Legal Document
               </h3>
               <button
                 onClick={() => setShowPublishModal(false)}
-                className="p-1 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg"
+                className="p-1 hover:bg-c-surface-raised rounded-lg"
               >
-                <X className="w-5 h-5 text-slate-600" />
+                <X className="w-5 h-5 text-c-text-secondary" />
               </button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-c-text-secondary mb-1">
                   Document Type
                 </label>
                 <select
                   value={newDoc.doc_type}
                   onChange={(e) => setNewDoc({ ...newDoc, doc_type: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
                 >
                   {DOC_TYPES.map((t) => (
                     <option key={t} value={t}>
@@ -346,7 +345,7 @@ export const LegalPanel: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-c-text-secondary mb-1">
                   Title
                 </label>
                 <input
@@ -354,12 +353,12 @@ export const LegalPanel: React.FC = () => {
                   value={newDoc.title}
                   onChange={(e) => setNewDoc({ ...newDoc, title: e.target.value })}
                   placeholder="e.g., Terms of Service v2.0"
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-1">
                     Version
                   </label>
                   <input
@@ -367,23 +366,23 @@ export const LegalPanel: React.FC = () => {
                     value={newDoc.version}
                     onChange={(e) => setNewDoc({ ...newDoc, version: e.target.value })}
                     placeholder="1.0"
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+                    className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-1">
                     Effective From
                   </label>
                   <input
                     type="date"
                     value={newDoc.effective_from}
                     onChange={(e) => setNewDoc({ ...newDoc, effective_from: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+                    className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-c-text-secondary mb-1">
                   Content (Markdown)
                 </label>
                 <textarea
@@ -391,11 +390,11 @@ export const LegalPanel: React.FC = () => {
                   onChange={(e) => setNewDoc({ ...newDoc, content_md: e.target.value })}
                   placeholder="Enter document content in Markdown format..."
                   rows={4}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white resize-none font-mono text-sm"
+                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text resize-none font-mono text-sm"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-c-text-secondary mb-1">
                   Change Summary
                 </label>
                 <textarea
@@ -403,14 +402,14 @@ export const LegalPanel: React.FC = () => {
                   onChange={(e) => setNewDoc({ ...newDoc, change_summary: e.target.value })}
                   placeholder="Brief description of changes in this version..."
                   rows={2}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white resize-none"
+                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text resize-none"
                 />
               </div>
             </div>
-            <div className="p-6 border-t border-slate-200 dark:border-navy-700 flex justify-end gap-3">
+            <div className="p-6 border-t border-c-border flex justify-end gap-3">
               <button
                 onClick={() => setShowPublishModal(false)}
-                className="px-4 py-2 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/20"
+                className="px-4 py-2 border border-c-border rounded-lg text-c-text-secondary hover:bg-c-surface-raised"
               >
                 Cancel
               </button>

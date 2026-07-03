@@ -20,7 +20,6 @@ import {
   Download,
   FileText,
   Globe,
-  Loader2,
   Mail,
   Plus,
   RefreshCw,
@@ -34,6 +33,7 @@ import { toast } from 'react-hot-toast';
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState, ReadOnlyState } from '../../Admin/AdminState';
+import { LoadingState } from '../../shared/states';
 
 interface MetricCard {
   id: string;
@@ -94,6 +94,13 @@ const asText = (value: unknown, fallback = 'Unknown') => {
 const formatDate = (value: string) => {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+};
+
+const METRIC_COLOR_STYLES: Record<string, { bg: string; border: string; icon: string }> = {
+  primary: { bg: 'bg-c-accent/10', border: 'border-c-accent/30', icon: 'text-c-accent' },
+  purple: { bg: 'bg-c-accent/10', border: 'border-c-accent/30', icon: 'text-c-accent' },
+  emerald: { bg: 'bg-c-success/10', border: 'border-c-success/30', icon: 'text-c-success' },
+  amber: { bg: 'bg-c-warning/10', border: 'border-c-warning/30', icon: 'text-c-warning' },
 };
 
 const TIME_RANGES = [
@@ -310,10 +317,10 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+          <h2 className="text-2xl font-bold text-c-text">
             Analytics & Reporting
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 text-sm">
+          <p className="text-c-text-secondary text-sm">
             Monitor system performance and generate insights
           </p>
         </div>
@@ -321,7 +328,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-navy-950/20 hover:bg-slate-50 dark:hover:bg-navy-800/40 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-2 bg-c-surface hover:bg-c-surface-raised border border-c-border text-c-text-secondary rounded-lg transition-colors"
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
@@ -330,7 +337,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
             <select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
-              className="appearance-none pl-3 pr-8 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100"
+              className="appearance-none pl-3 pr-8 py-2 bg-c-surface border border-c-border rounded-lg text-c-text"
             >
               {TIME_RANGES.map((r) => (
                 <option key={r.id} value={r.id}>
@@ -338,21 +345,21 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                 </option>
               ))}
             </select>
-            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 dark:text-slate-500 pointer-events-none" />
+            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-c-text-secondary pointer-events-none" />
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-slate-200 dark:border-white/10 pb-1">
+      <div className="flex gap-2 border-b border-c-border-subtle pb-1">
         {analyticsTabs.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             onClick={() => setActiveTab(id)}
             className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${
               activeTab === id
-                ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-slate-100 border-b-2 border-primary-500'
-                : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800/20'
+                ? 'bg-c-surface-raised text-c-text border-b-2 border-c-accent'
+                : 'text-c-text-secondary hover:bg-c-surface-raised'
             }`}
           >
             <Icon className="w-4 h-4" />
@@ -362,16 +369,14 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-slate-600 dark:text-slate-500 animate-spin" />
-        </div>
+        <LoadingState template="card" />
       ) : (
         <>
           {/* Dashboard Tab */}
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
               {loadError ? (
-                <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+                <div className="rounded-xl border border-c-border bg-c-surface p-6">
                   <DegradedState title="Analytics dashboard unavailable" description={loadError} />
                 </div>
               ) : (
@@ -381,15 +386,17 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                     {metrics.map((metric) => {
                       const Icon = metric.icon;
                       const isPositive = metric.change >= 0;
+                      const colorStyle =
+                        METRIC_COLOR_STYLES[metric.color] || METRIC_COLOR_STYLES.primary;
                       return (
                         <div
                           key={metric.id}
-                          className={`p-4 bg-${metric.color}-500/10 rounded-xl border border-${metric.color}-500/30`}
+                          className={`p-4 ${colorStyle.bg} rounded-xl border ${colorStyle.border}`}
                         >
                           <div className="flex items-center justify-between mb-2">
-                            <Icon className={`w-5 h-5 text-${metric.color}-400`} />
+                            <Icon className={`w-5 h-5 ${colorStyle.icon}`} />
                             <div
-                              className={`flex items-center text-xs ${isPositive ? 'text-emerald-400' : 'text-danger-400'}`}
+                              className={`flex items-center text-xs ${isPositive ? 'text-c-success' : 'text-c-danger'}`}
                             >
                               {isPositive ? (
                                 <ArrowUpRight className="w-3 h-3" />
@@ -399,10 +406,10 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                               {Math.abs(metric.change)}%
                             </div>
                           </div>
-                          <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                          <div className="text-2xl font-bold text-c-text">
                             {metric.value}
                           </div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                          <div className="text-xs text-c-text-muted">
                             {metric.title}
                           </div>
                         </div>
@@ -413,15 +420,15 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                   {/* Charts */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* API Chart */}
-                    <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                    <div className="p-6 bg-c-surface-raised rounded-xl border border-c-border">
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                          <Globe className="w-5 h-5 text-primary-500 dark:text-primary-400" />
+                        <h3 className="font-medium text-c-text flex items-center gap-2">
+                          <Globe className="w-5 h-5 text-c-accent" />
                           API Traffic
                         </h3>
                         <button
                           onClick={() => handleExport('csv')}
-                          className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 flex items-center gap-1"
+                          className="text-xs text-c-text-secondary hover:text-c-text flex items-center gap-1"
                         >
                           <Download className="w-3 h-3" />
                           Export
@@ -438,15 +445,15 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                     </div>
 
                     {/* AI Chart */}
-                    <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                    <div className="p-6 bg-c-surface-raised rounded-xl border border-c-border">
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                          <Zap className="w-5 h-5 text-primary-400" />
+                        <h3 className="font-medium text-c-text flex items-center gap-2">
+                          <Zap className="w-5 h-5 text-c-accent" />
                           AI Usage
                         </h3>
                         <button
                           onClick={() => handleExport('csv')}
-                          className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 flex items-center gap-1"
+                          className="text-xs text-c-text-secondary hover:text-c-text flex items-center gap-1"
                         >
                           <Download className="w-3 h-3" />
                           Export
@@ -464,7 +471,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                   </div>
 
                   {/* Performance Breakdown */}
-                  <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                  <div className="p-6 bg-c-surface-raised rounded-xl border border-c-border">
                     <ReadOnlyState
                       title="Performance breakdown unavailable"
                       description="Endpoint-level latency, top endpoints, and error-type distribution require backend analytics fields that are not provided to this panel yet."
@@ -479,7 +486,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
           {activeTab === 'reports' && (
             <div className="space-y-6">
               {loadError ? (
-                <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+                <div className="rounded-xl border border-c-border bg-c-surface p-6">
                   <DegradedState title="Report generation unavailable" description={loadError} />
                 </div>
               ) : (
@@ -490,18 +497,18 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                       return (
                         <div
                           key={report.id}
-                          className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:border-primary-500/50 transition-colors cursor-pointer"
+                          className="p-6 bg-c-surface-raised rounded-xl border border-c-border hover:border-c-accent/50 transition-colors cursor-pointer"
                           onClick={() => handleExport('pdf')}
                         >
                           <div className="flex items-center gap-3 mb-3">
-                            <div className="w-10 h-10 rounded-lg bg-primary-600/10 flex items-center justify-center">
-                              <Icon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                            <div className="w-10 h-10 rounded-lg bg-c-accent/10 flex items-center justify-center">
+                              <Icon className="w-5 h-5 text-c-accent" />
                             </div>
-                            <h3 className="font-medium text-slate-900 dark:text-slate-100">
+                            <h3 className="font-medium text-c-text">
                               {report.label}
                             </h3>
                           </div>
-                          <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                          <p className="text-sm text-c-text-secondary mb-4">
                             Generate a comprehensive {report.label.toLowerCase()} report for the
                             selected time period.
                           </p>
@@ -509,10 +516,10 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                             <button className="px-3 py-1.5 text-xs bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg">
                               PDF
                             </button>
-                            <button className="px-3 py-1.5 text-xs bg-slate-50/50 dark:bg-navy-950/30 hover:bg-white/20 text-slate-900 dark:text-white rounded-lg">
+                            <button className="px-3 py-1.5 text-xs bg-c-surface hover:bg-c-surface-raised text-c-text rounded-lg">
                               CSV
                             </button>
-                            <button className="px-3 py-1.5 text-xs bg-slate-50/50 dark:bg-navy-950/30 hover:bg-white/20 text-slate-900 dark:text-white rounded-lg">
+                            <button className="px-3 py-1.5 text-xs bg-c-surface hover:bg-c-surface-raised text-c-text rounded-lg">
                               Excel
                             </button>
                           </div>
@@ -521,7 +528,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                     })}
                   </div>
 
-                  <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                  <div className="p-6 bg-c-surface-raised rounded-xl border border-c-border">
                     <ReadOnlyState
                       title="Custom report builder unavailable"
                       description="The export buttons can download the currently loaded analytics snapshot, but the custom report builder workflow is not wired to an audited backend yet."
@@ -536,7 +543,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
           {activeTab === 'scheduled' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
+                <h3 className="text-lg font-medium text-c-text">
                   Scheduled Reports
                 </h3>
                 <button
@@ -557,14 +564,14 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
               )}
 
               {scheduledLoadError ? (
-                <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+                <div className="rounded-xl border border-c-border bg-c-surface p-6">
                   <DegradedState
                     title="Scheduled reports unavailable"
                     description={scheduledLoadError}
                   />
                 </div>
               ) : scheduledReports.length === 0 ? (
-                <div className="text-center py-12 text-slate-600 dark:text-slate-500">
+                <div className="text-center py-12 text-c-text-secondary">
                   <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>No scheduled reports</p>
                   <p className="text-sm mt-1">
@@ -578,25 +585,25 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                       key={report.id}
                       className={`p-4 rounded-xl border transition-colors ${
                         report.is_active
-                          ? 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-white/20'
-                          : 'bg-slate-800/30 border-slate-700/50'
+                          ? 'bg-c-surface-raised border-c-border hover:border-c-border-strong'
+                          : 'bg-c-surface-raised/50 border-c-border-subtle'
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="flex items-center gap-2">
                             <span
-                              className={`font-medium ${report.is_active ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}
+                              className={`font-medium ${report.is_active ? 'text-c-text' : 'text-c-text-muted'}`}
                             >
                               {report.name}
                             </span>
                             {!report.is_active && (
-                              <span className="px-2 py-0.5 text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 rounded">
+                              <span className="px-2 py-0.5 text-xs bg-c-surface-raised text-c-text-secondary rounded">
                                 Paused
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          <div className="flex items-center gap-3 text-xs text-c-text-muted mt-1">
                             <span className="capitalize">{report.schedule}</span>
                             <span>•</span>
                             <span>{report.recipients.length} recipients</span>
@@ -609,11 +616,11 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <button className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg">
-                            <Settings className="w-4 h-4 text-slate-600 dark:text-slate-500" />
+                          <button className="p-2 hover:bg-c-surface-raised rounded-lg">
+                            <Settings className="w-4 h-4 text-c-text-secondary" />
                           </button>
-                          <button className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg">
-                            <Mail className="w-4 h-4 text-slate-600 dark:text-slate-500" />
+                          <button className="p-2 hover:bg-c-surface-raised rounded-lg">
+                            <Mail className="w-4 h-4 text-c-text-secondary" />
                           </button>
                         </div>
                       </div>
@@ -640,7 +647,7 @@ const SimpleBarChart: React.FC<{ data: ChartData }> = ({ data }) => {
         {data.datasets.map((dataset) => (
           <div key={dataset.label} className="flex items-center gap-2">
             <div className="w-3 h-3 rounded" style={{ backgroundColor: dataset.color }} />
-            <span className="text-xs text-slate-600 dark:text-slate-500">{dataset.label}</span>
+            <span className="text-xs text-c-text-secondary">{dataset.label}</span>
           </div>
         ))}
       </div>
@@ -662,7 +669,7 @@ const SimpleBarChart: React.FC<{ data: ChartData }> = ({ data }) => {
                 />
               ))}
             </div>
-            <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 truncate w-full text-center">
+            <span className="text-[10px] text-c-text-muted mt-1 truncate w-full text-center">
               {label}
             </span>
           </div>
