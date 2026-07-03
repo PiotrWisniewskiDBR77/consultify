@@ -161,7 +161,7 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
       case 'down':
         return 'text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-900/30';
       default:
-        return 'text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/30';
+        return 'text-c-text-secondary bg-c-surface-raised';
     }
   };
 
@@ -174,7 +174,7 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
       case 'down':
         return <XCircle size={16} className="text-rose-500" />;
       default:
-        return <Clock size={16} className="text-slate-500 dark:text-slate-400" />;
+        return <Clock size={16} className="text-c-text-muted" />;
     }
   };
 
@@ -191,17 +191,17 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-lg font-medium text-c-text flex items-center gap-2">
             <Activity size={20} />
             {t('settings.health.title', 'Integration Health')}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-muted mt-1">
             {t('settings.health.description', 'Monitor connection health and configure alerts')}
           </p>
         </div>
         <button
           onClick={fetchAllHealthStatuses}
-          className="p-2 text-slate-600 dark:text-slate-500 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+          className="p-2 text-c-text-secondary hover:text-brand rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-700 transition-colors"
           title={t('common.refresh', 'Refresh')}
         >
           <RefreshCw size={18} />
@@ -239,11 +239,11 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
                     <div className="flex items-center gap-2">
                       {getStatusIcon(status.status)}
                       <div>
-                        <p className="font-semibold text-slate-900 dark:text-white text-sm">
+                        <p className="font-semibold text-c-text text-sm">
                           {integration.provider}
                         </p>
                         {integration.name && (
-                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                          <p className="text-xs text-c-text-muted">
                             {integration.name}
                           </p>
                         )}
@@ -257,7 +257,7 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
                   </div>
 
                   {status.latency_ms !== undefined && (
-                    <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 mb-2">
+                    <div className="flex items-center gap-2 text-xs text-c-text-secondary mb-2">
                       <Zap size={12} />
                       <span>
                         {status.latency_ms}ms {t('settings.health.latency', 'latency')}
@@ -272,7 +272,7 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
                   )}
 
                   {status.checked_at && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                    <p className="text-xs text-c-text-muted mb-3">
                       {t('settings.health.lastChecked', 'Last checked')}:{' '}
                       {new Date(status.checked_at).toLocaleString()}
                     </p>
@@ -281,14 +281,14 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
                   <div className="flex items-center gap-2 mt-3">
                     <button
                       onClick={() => runHealthCheck(integration.id)}
-                      className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-brand border border-slate-200 dark:border-navy-700 rounded hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                      className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-c-text-secondary hover:text-brand border border-c-border-subtle dark:border-navy-700 rounded hover:bg-c-surface-raised dark:hover:bg-navy-700 transition-colors"
                     >
                       <RefreshCw size={12} />
                       {t('settings.health.checkNow', 'Check Now')}
                     </button>
                     <button
                       onClick={() => setSelectedIntegration(integration.id)}
-                      className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-brand border border-slate-200 dark:border-navy-700 rounded hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                      className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-c-text-secondary hover:text-brand border border-c-border-subtle dark:border-navy-700 rounded hover:bg-c-surface-raised dark:hover:bg-navy-700 transition-colors"
                     >
                       <Settings size={12} />
                       {t('common.details', 'Details')}
@@ -303,9 +303,9 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
           {selectedIntegration && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Health History */}
-              <div className="lg:col-span-2 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700">
-                <div className="p-4 border-b border-slate-200 dark:border-navy-700">
-                  <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
+              <div className="lg:col-span-2 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700">
+                <div className="p-4 border-b border-c-border-subtle dark:border-navy-700">
+                  <h4 className="text-sm font-semibold text-c-text">
                     {t('settings.health.history', 'Health Check History')}
                   </h4>
                 </div>
@@ -315,22 +315,22 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
                       {healthHistory[selectedIntegration].slice(0, 20).map((check) => (
                         <div
                           key={check.id}
-                          className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-800/50 rounded-lg"
+                          className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg"
                         >
                           <div className="flex items-center gap-3">
                             {getStatusIcon(check.status)}
                             <div>
-                              <p className="text-sm font-medium text-slate-900 dark:text-white">
+                              <p className="text-sm font-medium text-c-text">
                                 {t(`settings.health.status.${check.status}`, check.status)}
                               </p>
-                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                              <p className="text-xs text-c-text-muted">
                                 {check.check_type} •{' '}
                                 {check.latency_ms ? `${check.latency_ms}ms` : 'N/A'}
                               </p>
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                            <p className="text-xs text-c-text-muted">
                               {new Date(check.checked_at).toLocaleString()}
                             </p>
                             {check.error_message && (
@@ -355,9 +355,9 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
               {/* Alert & Reconnection Settings */}
               <div className="space-y-4">
                 {/* Auto Reconnection */}
-                <div className="p-4 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700">
+                <div className="p-4 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700">
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-2">
+                    <label className="text-sm font-medium text-c-text flex items-center gap-2">
                       <Zap size={14} />
                       {t('settings.health.autoReconnect', 'Auto Reconnect')}
                     </label>
@@ -373,10 +373,10 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-[color:var(--c-focus)] rounded-full peer dark:bg-navy-700 peer-checked:after:translate-x-full peer-checked:bg-brand after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                      <div className="w-11 h-6 bg-c-surface-raised peer-focus:ring-2 peer-focus:ring-[color:var(--c-focus)] rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-brand after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-c-surface after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                     </label>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-c-text-muted">
                     {t(
                       'settings.health.autoReconnectDesc',
                       'Automatically attempt to reconnect when connection fails'
@@ -385,9 +385,9 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
                 </div>
 
                 {/* Alert Configuration */}
-                <div className="p-4 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700">
+                <div className="p-4 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700">
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-2">
+                    <label className="text-sm font-medium text-c-text flex items-center gap-2">
                       <Bell size={14} />
                       {t('settings.health.alerts', 'Alerts')}
                     </label>
@@ -403,10 +403,10 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-[color:var(--c-focus)] rounded-full peer dark:bg-navy-700 peer-checked:after:translate-x-full peer-checked:bg-brand after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                      <div className="w-11 h-6 bg-c-surface-raised peer-focus:ring-2 peer-focus:ring-[color:var(--c-focus)] rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-brand after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-c-surface after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                     </label>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-c-text-muted">
                     {t(
                       'settings.health.alertsDesc',
                       'Receive notifications when integration health degrades'
@@ -415,26 +415,26 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
                 </div>
 
                 {/* Health Check Schedule */}
-                <div className="p-4 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700">
-                  <h5 className="text-sm font-medium text-slate-900 dark:text-white mb-3">
+                <div className="p-4 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700">
+                  <h5 className="text-sm font-medium text-c-text mb-3">
                     {t('settings.health.checkSchedule', 'Check Schedule')}
                   </h5>
                   <div className="space-y-2">
                     <label className="flex items-center gap-2 text-xs">
                       <input type="radio" name="schedule" defaultChecked className="text-brand" />
-                      <span className="text-slate-600 dark:text-slate-400">
+                      <span className="text-c-text-secondary">
                         {t('settings.health.every5min', 'Every 5 minutes')}
                       </span>
                     </label>
                     <label className="flex items-center gap-2 text-xs">
                       <input type="radio" name="schedule" className="text-brand" />
-                      <span className="text-slate-600 dark:text-slate-400">
+                      <span className="text-c-text-secondary">
                         {t('settings.health.every15min', 'Every 15 minutes')}
                       </span>
                     </label>
                     <label className="flex items-center gap-2 text-xs">
                       <input type="radio" name="schedule" className="text-brand" />
-                      <span className="text-slate-600 dark:text-slate-400">
+                      <span className="text-c-text-secondary">
                         {t('settings.health.everyHour', 'Every hour')}
                       </span>
                     </label>

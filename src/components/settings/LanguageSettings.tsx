@@ -93,11 +93,11 @@ export const LanguageSettings: React.FC<LanguageSettingsProps> = ({ className = 
   return (
     <div className={`space-y-6 ${className}`}>
       <div>
-        <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+        <h3 className="text-lg font-medium text-c-text flex items-center gap-2">
           <Globe size={20} />
           {t('settings.appearance.languageTitle', 'Language')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        <p className="text-sm text-c-text-muted mt-1">
           {t(
             'settings.appearance.languageDesc',
             'Select your preferred language for the interface.'
@@ -139,13 +139,13 @@ export const LanguageSettings: React.FC<LanguageSettingsProps> = ({ className = 
             onClick={() => handleLanguageChange(lang.code)}
             className={`w-full flex items-center justify-between p-4 rounded-lg transition-colors ${
               currentLang === lang.code
-                ? 'bg-slate-100 dark:bg-white/[0.08] border-2 border-[var(--c-info)]'
-                : 'bg-slate-50 dark:bg-navy-800/50 border-2 border-transparent hover:border-slate-200 dark:border-navy-700 dark:hover:border-navy-600'
+                ? 'bg-c-surface-raised.08] border-2 border-[var(--c-info)]'
+                : 'bg-c-surface-raised border-2 border-transparent hover:border-c-border-subtle dark:border-navy-700 dark:hover:border-navy-600'
             }`}
           >
             <div className="flex items-center gap-3">
               <span className="text-2xl">{lang.flag}</span>
-              <span className="font-medium text-slate-900 dark:text-white">{lang.name}</span>
+              <span className="font-medium text-c-text">{lang.name}</span>
             </div>
             {currentLang === lang.code && <Check size={20} className="text-[var(--c-info)]" />}
           </button>

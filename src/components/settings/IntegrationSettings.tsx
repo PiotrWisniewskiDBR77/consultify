@@ -250,7 +250,7 @@ function getIntegrationReadinessMeta(
         integration.status === 'disabled'
           ? t('settings.integrations.readiness.disabled', 'Disabled')
           : t('settings.integrations.readiness.disconnected', 'Disconnected'),
-      badgeClassName: 'bg-slate-100 text-slate-700 dark:bg-white/5 dark:text-slate-300',
+      badgeClassName: 'bg-c-surface-raised text-c-text-secondary',
       guidance: t(
         'settings.integrations.readiness.disconnectedGuidance',
         'This provider is not currently connected on the governed sync path.'
@@ -266,7 +266,7 @@ function getIntegrationReadinessMeta(
     isReady: false,
     isPending: false,
     badgeLabel: integration.status,
-    badgeClassName: 'bg-slate-100 text-slate-700 dark:bg-white/5 dark:text-slate-300',
+    badgeClassName: 'bg-c-surface-raised text-c-text-secondary',
     guidance: null,
     nextStep: null,
   };
@@ -363,7 +363,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
           ? t('integrations.scope.readOnly', 'Read-only sync')
           : t('integrations.scope.bidirectional', 'Bidirectional sync'),
         className: readOnly
-          ? 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300'
+          ? 'bg-c-surface-raised text-c-text-secondary'
           : 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300',
       };
     },
@@ -521,8 +521,8 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
     return (
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Integrations</h2>
-          <p className="text-slate-500 dark:text-slate-400">
+          <h2 className="text-2xl font-bold text-c-text">Integrations</h2>
+          <p className="text-c-text-muted">
             Connect external tools to streamline your workflow.
           </p>
         </div>
@@ -544,7 +544,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-primary-600" />
+        <Loader2 size={32} className="animate-spin text-c-accent" />
       </div>
     );
   }
@@ -961,22 +961,22 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
     <div className="max-w-4xl mx-auto space-y-6 relative">
       <InfoButton cardId="settings-integrations" position="top-right" />
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+        <h2 className="text-2xl font-bold text-c-text">
           {t('settings.integrations.title', 'Integrations')}
         </h2>
-        <p className="text-slate-500 dark:text-slate-400">
+        <p className="text-c-text-muted">
           {t('settings.integrations.description', 'Connect external tools and configure webhooks.')}
         </p>
       </div>
       <EasySyncSetupShellPanel compact />
       {/* Tabs */}
-      <div className="flex gap-1 bg-slate-100 dark:bg-navy-800/40 dark:bg-navy-900 p-1 rounded-lg w-fit">
+      <div className="flex gap-1 bg-c-surface-raised p-1 rounded-lg w-fit">
         <button
           onClick={() => setActiveTab('integrations')}
           className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
             activeTab === 'integrations'
-              ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-white shadow'
-              : 'text-slate-500 hover:text-slate-700 dark:text-slate-300'
+              ? 'bg-c-surface text-c-text shadow'
+              : 'text-c-text-muted hover:text-c-text-secondary'
           }`}
         >
           External Tools
@@ -985,8 +985,8 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
           onClick={() => setActiveTab('webhooks')}
           className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors flex items-center gap-2 ${
             activeTab === 'webhooks'
-              ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-white shadow'
-              : 'text-slate-500 hover:text-slate-700 dark:text-slate-300'
+              ? 'bg-c-surface text-c-text shadow'
+              : 'text-c-text-muted hover:text-c-text-secondary'
           }`}
         >
           <Webhook size={16} />
@@ -996,8 +996,8 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
           onClick={() => setActiveTab('mcp')}
           className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors flex items-center gap-2 ${
             activeTab === 'mcp'
-              ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-white shadow'
-              : 'text-slate-500 hover:text-slate-700 dark:text-slate-300'
+              ? 'bg-c-surface text-c-text shadow'
+              : 'text-c-text-muted hover:text-c-text-secondary'
           }`}
         >
           <Database size={16} />
@@ -1032,14 +1032,14 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
               return (
                 <div
                   key={p.id}
-                  className="bg-white dark:bg-navy-800 p-6 rounded-xl border border-slate-200 dark:border-navy-700 flex flex-col justify-between hover:shadow-lg transition-shadow"
+                  className="bg-c-surface p-6 rounded-xl border border-c-border-subtle dark:border-navy-700 flex flex-col justify-between hover:shadow-lg transition-shadow"
                 >
                   <div>
                     <div className="flex items-center gap-3 mb-4">
                       <div
                         className={`p-2 rounded-lg ${
                           !connected
-                            ? 'bg-slate-100 text-slate-600 dark:bg-white/5 dark:text-slate-300'
+                            ? 'bg-c-surface-raised text-c-text-secondary'
                             : readiness.isReady
                               ? 'bg-green-100 text-green-600 dark:bg-green-900/30'
                               : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
@@ -1048,10 +1048,10 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                         <Icon size={24} />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-slate-900 dark:text-white">
+                        <h3 className="font-semibold text-c-text">
                           {p.displayName}
                         </h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                        <p className="text-xs text-c-text-muted">
                           {p.description || p.category}
                         </p>
                       </div>
@@ -1079,16 +1079,16 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                               getSyncScopeMeta(connected.sync_scope).label}
                           </div>
                         ) : null}
-                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                        <div className="text-xs text-c-text-muted">
                           <div>
                             Status:{' '}
-                            <span className="font-medium text-slate-700 dark:text-slate-200">
+                            <span className="font-medium text-c-text-secondary">
                               {readiness.badgeLabel || connected.status || 'active'}
                             </span>
                           </div>
                           <div>
                             {lastOperationalLabel}:{' '}
-                            <span className="font-medium text-slate-700 dark:text-slate-200">
+                            <span className="font-medium text-c-text-secondary">
                               {lastOperationalValue}
                             </span>
                           </div>
@@ -1105,7 +1105,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                           {readiness.nextStep ? (
                             <div className="mt-2">
                               Next step:{' '}
-                              <span className="font-medium text-slate-700 dark:text-slate-200">
+                              <span className="font-medium text-c-text-secondary">
                                 {readiness.nextStep}
                               </span>
                             </div>
@@ -1130,7 +1130,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                         <button
                           onClick={() => handleSyncNow(connected.id)}
                           disabled={syncingIntegrationId === connected.id}
-                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10 flex items-center justify-center gap-2 disabled:opacity-60"
+                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised flex items-center justify-center gap-2 disabled:opacity-60"
                         >
                           {syncingIntegrationId === connected.id ? (
                             <Loader2 size={16} className="animate-spin" />
@@ -1141,21 +1141,21 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                         </button>
                         <button
                           onClick={() => handleOpenLogs(connected.id, p.displayName)}
-                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800 flex items-center justify-center gap-2"
+                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-800 flex items-center justify-center gap-2"
                         >
                           <Eye size={16} />
                           View logs
                         </button>
                         <button
                           onClick={() => handleEditConfig(connected)}
-                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 dark:bg-navy-800 dark:text-slate-200 dark:hover:bg-navy-700 dark:border-navy-700 flex items-center justify-center gap-2"
+                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-c-surface text-c-text-secondary hover:bg-c-surface-raised border border-c-border-subtle dark:hover:bg-navy-700 dark:border-navy-700 flex items-center justify-center gap-2"
                         >
                           <Settings size={16} />
                           Edit config
                         </button>
                         <button
                           onClick={() => handleDelete(connected.id)}
-                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-600 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-rose-900/20 dark:hover:text-rose-400"
+                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-c-surface-raised text-c-text-secondary hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/20 dark:hover:text-rose-400"
                         >
                           Disconnect
                         </button>
@@ -1197,7 +1197,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                           connected.status === 'error') && (
                           <button
                             onClick={() => handleOpenLogs(connected.id, p.displayName)}
-                            className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800 flex items-center justify-center gap-2"
+                            className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-800 flex items-center justify-center gap-2"
                           >
                             <Eye size={16} />
                             View governed status
@@ -1205,7 +1205,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                         )}
                         <button
                           onClick={() => handleDelete(connected.id)}
-                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-600 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-rose-900/20 dark:hover:text-rose-400"
+                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-c-surface-raised text-c-text-secondary hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/20 dark:hover:text-rose-400"
                         >
                           Disconnect
                         </button>
@@ -1227,26 +1227,26 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
       {/* Connection Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white dark:bg-navy-800 rounded-xl max-w-md w-full p-6 shadow-2xl">
-            <h3 className="text-lg font-bold mb-4 text-slate-900 dark:text-white">
+          <div className="bg-c-surface rounded-xl max-w-md w-full p-6 shadow-2xl">
+            <h3 className="text-lg font-bold mb-4 text-c-text">
               {editingIntegrationId ? 'Edit' : 'Connect'}{' '}
               {providers.find((p) => p.name === selectedProvider)?.displayName || selectedProvider}
             </h3>
             <div className="space-y-4">
               {isCommunicationProvider && (
-                <div className="space-y-4 rounded-xl border border-slate-200 dark:border-navy-700 p-4 bg-slate-50 dark:bg-navy-900/40">
+                <div className="space-y-4 rounded-xl border border-c-border-subtle dark:border-navy-700 p-4 bg-c-surface-raised">
                   <div>
-                    <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                    <div className="text-sm font-medium text-c-text">
                       Project channel mappings
                     </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    <div className="text-xs text-c-text-muted mt-1">
                       Assign at least one project to a Slack or Teams channel. Optional mapping
                       webhook URLs can override the default webhook per project.
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-sm font-medium text-c-text-secondary mb-1">
                       Default webhook URL
                     </label>
                     <input
@@ -1258,7 +1258,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                           projectChannelMappings: communicationMappings,
                         })
                       }
-                      className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm"
+                      className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg text-sm"
                       placeholder="https://hooks.slack.com/... or Teams incoming webhook"
                     />
                   </div>
@@ -1279,7 +1279,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                               projectChannelMappings: next,
                             });
                           }}
-                          className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm"
+                          className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg text-sm"
                         >
                           <option value="">Select project</option>
                           {projects.map((project) => (
@@ -1298,7 +1298,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                               projectChannelMappings: next,
                             });
                           }}
-                          className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm"
+                          className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg text-sm"
                           placeholder="channel-id"
                         />
                         <input
@@ -1311,7 +1311,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                               projectChannelMappings: next,
                             });
                           }}
-                          className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm"
+                          className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg text-sm"
                           placeholder="Optional project-specific webhook URL"
                         />
                         <button
@@ -1325,7 +1325,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                               projectChannelMappings: next,
                             });
                           }}
-                          className="px-3 py-2 rounded-lg text-sm bg-white border border-slate-200 text-slate-600 hover:text-rose-600 hover:bg-rose-50 dark:bg-navy-950 dark:border-navy-700 dark:text-slate-300"
+                          className="px-3 py-2 rounded-lg text-sm bg-c-surface border border-c-border-subtle text-c-text-secondary hover:text-rose-600 hover:bg-rose-50 dark:border-navy-700"
                         >
                           Remove
                         </button>
@@ -1343,7 +1343,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                           ],
                         })
                       }
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 dark:bg-navy-950 dark:border-navy-700 dark:text-slate-200"
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm bg-c-surface border border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised dark:border-navy-700"
                     >
                       <Plus size={14} />
                       Add project mapping
@@ -1353,20 +1353,20 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
               )}
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-c-text-secondary mb-1">
                   Webhook URL / API Token / JSON config
                 </label>
                 <textarea
                   value={configInput}
                   onChange={(e) => setConfigInput(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px] font-mono text-xs"
+                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px] font-mono text-xs"
                   placeholder="https://hooks.slack.com/..."
                 />
               </div>
               <div className="flex gap-3 justify-end pt-4">
                 <button
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg font-medium"
+                  className="px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg font-medium"
                 >
                   Cancel
                 </button>
@@ -1392,16 +1392,16 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
       {/* Logs Modal */}
       {logsModal.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white dark:bg-navy-800 rounded-xl max-w-2xl w-full p-6 shadow-2xl">
+          <div className="bg-c-surface rounded-xl max-w-2xl w-full p-6 shadow-2xl">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+              <h3 className="text-lg font-bold text-c-text">
                 Sync logs{logsModal.providerLabel ? ` — ${logsModal.providerLabel}` : ''}
               </h3>
               <button
                 onClick={() =>
                   setLogsModal({ open: false, integrationId: null, loading: false, logs: [] })
                 }
-                className="px-3 py-1 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg"
+                className="px-3 py-1 text-sm text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg"
               >
                 Close
               </button>
@@ -1412,38 +1412,38 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                 <Loader2 size={24} className="animate-spin text-blue-600" />
               </div>
             ) : logsModal.logs.length === 0 ? (
-              <div className="text-sm text-slate-500 dark:text-slate-400 py-10 text-center">
+              <div className="text-sm text-c-text-muted py-10 text-center">
                 No sync logs yet.
               </div>
             ) : (
-              <div className="overflow-auto border border-slate-200 dark:border-navy-700 rounded-xl">
+              <div className="overflow-auto border border-c-border-subtle dark:border-navy-700 rounded-xl">
                 <table className="w-full text-sm">
-                  <thead className="bg-slate-50 dark:bg-navy-900">
+                  <thead className="bg-c-surface-raised">
                     <tr>
-                      <th className="text-left p-3 text-slate-600 dark:text-slate-300 font-medium">
+                      <th className="text-left p-3 text-c-text-secondary font-medium">
                         Started
                       </th>
-                      <th className="text-left p-3 text-slate-600 dark:text-slate-300 font-medium">
+                      <th className="text-left p-3 text-c-text-secondary font-medium">
                         Status
                       </th>
-                      <th className="text-left p-3 text-slate-600 dark:text-slate-300 font-medium">
+                      <th className="text-left p-3 text-c-text-secondary font-medium">
                         Type
                       </th>
-                      <th className="text-left p-3 text-slate-600 dark:text-slate-300 font-medium">
+                      <th className="text-left p-3 text-c-text-secondary font-medium">
                         Processed
                       </th>
-                      <th className="text-left p-3 text-slate-600 dark:text-slate-300 font-medium">
+                      <th className="text-left p-3 text-c-text-secondary font-medium">
                         Scope
                       </th>
-                      <th className="text-left p-3 text-slate-600 dark:text-slate-300 font-medium">
+                      <th className="text-left p-3 text-c-text-secondary font-medium">
                         Duration
                       </th>
                     </tr>
                   </thead>
                   <tbody>
                     {logsModal.logs.map((l: any) => (
-                      <tr key={l.id} className="border-t border-slate-200 dark:border-navy-700">
-                        <td className="p-3 text-slate-800 dark:text-slate-100">
+                      <tr key={l.id} className="border-t border-c-border-subtle dark:border-navy-700">
+                        <td className="p-3 text-c-text">
                           {l.startedAt ? new Date(l.startedAt).toLocaleString() : '—'}
                         </td>
                         <td className="p-3">
@@ -1453,16 +1453,16 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                                 ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
                                 : l.status === 'failed'
                                   ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/20 dark:text-rose-400'
-                                  : 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300'
+                                  : 'bg-c-surface-raised text-c-text-secondary'
                             }`}
                           >
                             {l.status || 'unknown'}
                           </span>
                         </td>
-                        <td className="p-3 text-slate-700 dark:text-slate-200">
+                        <td className="p-3 text-c-text-secondary">
                           {l.syncType || '—'}
                         </td>
-                        <td className="p-3 text-slate-700 dark:text-slate-200">
+                        <td className="p-3 text-c-text-secondary">
                           {typeof l.itemsProcessed === 'number' ? l.itemsProcessed : '—'}
                         </td>
                         <td className="p-3">
@@ -1472,7 +1472,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                             {l.syncScopeLabel || getSyncScopeMeta(l.syncScope).label}
                           </span>
                         </td>
-                        <td className="p-3 text-slate-700 dark:text-slate-200">
+                        <td className="p-3 text-c-text-secondary">
                           {typeof l.durationMs === 'number' ? `${l.durationMs}ms` : '—'}
                         </td>
                       </tr>
@@ -1505,7 +1505,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
           <div className="flex justify-end">
             <button
               onClick={() => setIsWebhookModalOpen(true)}
-              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium flex items-center gap-2"
+              className="px-4 py-2 bg-c-accent hover:bg-c-accent text-white rounded-lg font-medium flex items-center gap-2"
             >
               <Plus size={18} />
               Add Webhook
@@ -1514,12 +1514,12 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
 
           {/* Webhooks List */}
           {webhooks.length === 0 ? (
-            <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-12 text-center">
-              <Webhook size={48} className="mx-auto text-slate-600 dark:text-slate-400 mb-4" />
-              <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">
+            <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 p-12 text-center">
+              <Webhook size={48} className="mx-auto text-c-text-secondary mb-4" />
+              <h3 className="text-lg font-semibold text-c-text-secondary mb-2">
                 No webhooks configured
               </h3>
-              <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
+              <p className="text-c-text-muted text-sm mb-4">
                 Create a webhook to start receiving real-time event notifications.
               </p>
             </div>
@@ -1528,23 +1528,23 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
               {webhooks.map((webhook) => (
                 <div
                   key={webhook.id}
-                  className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6"
+                  className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 p-6"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div>
-                      <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                      <h3 className="font-semibold text-c-text flex items-center gap-2">
                         {webhook.name}
                         {webhook.isActive ? (
                           <span className="px-2 py-0.5 text-xs font-medium bg-green-500/10 text-green-600 rounded-full">
                             Active
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 text-xs font-medium bg-slate-50 dark:bg-navy-800/300/10 text-slate-600 dark:text-slate-400 rounded-full">
+                          <span className="px-2 py-0.5 text-xs font-medium bg-c-surface-raised text-c-text-secondary rounded-full">
                             Inactive
                           </span>
                         )}
                       </h3>
-                      <p className="text-sm text-slate-500 dark:text-slate-400 font-mono mt-1 break-all">
+                      <p className="text-sm text-c-text-muted font-mono mt-1 break-all">
                         {webhook.targetUrl}
                       </p>
                     </div>
@@ -1552,7 +1552,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                       <button
                         onClick={() => handleTestWebhook(webhook.targetUrl)}
                         disabled={testingWebhook}
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-500 dark:text-slate-400 hover:text-primary-600 transition-colors"
+                        className="p-2 hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg text-c-text-muted hover:text-c-accent transition-colors"
                         title="Test webhook"
                       >
                         {testingWebhook ? (
@@ -1563,7 +1563,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                       </button>
                       <button
                         onClick={() => handleDeleteWebhook(webhook.id)}
-                        className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg text-slate-500 dark:text-slate-400 hover:text-rose-600 transition-colors"
+                        className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg text-c-text-muted hover:text-rose-600 transition-colors"
                         title="Delete webhook"
                       >
                         <Trash2 size={18} />
@@ -1575,7 +1575,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                     {webhook.eventTypes.map((event) => (
                       <span
                         key={event}
-                        className="px-2 py-1 text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-400 rounded"
+                        className="px-2 py-1 text-xs font-medium bg-c-accent-soft text-c-accent rounded"
                       >
                         {event}
                       </span>
@@ -1583,25 +1583,25 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                   </div>
 
                   {webhook.secretKey && (
-                    <div className="pt-4 border-t border-slate-200 dark:border-navy-700">
+                    <div className="pt-4 border-t border-c-border-subtle dark:border-navy-700">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                        <span className="text-xs text-c-text-muted">
                           Secret Key:
                         </span>
-                        <code className="text-xs bg-slate-100 dark:bg-navy-800/40 dark:bg-navy-900 px-2 py-1 rounded font-mono">
+                        <code className="text-xs bg-c-surface-raised px-2 py-1 rounded font-mono">
                           {showSecret === webhook.id ? webhook.secretKey : '••••••••••••••••'}
                         </code>
                         <button
                           onClick={() =>
                             setShowSecret(showSecret === webhook.id ? null : webhook.id)
                           }
-                          className="p-1 hover:bg-slate-100 dark:hover:bg-white/10 rounded text-slate-600 dark:text-slate-500"
+                          className="p-1 hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded text-c-text-secondary"
                         >
                           {showSecret === webhook.id ? <EyeOff size={14} /> : <Eye size={14} />}
                         </button>
                         <button
                           onClick={() => copyToClipboard(webhook.secretKey || '')}
-                          className="p-1 hover:bg-slate-100 dark:hover:bg-white/10 rounded text-slate-600 dark:text-slate-500"
+                          className="p-1 hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded text-c-text-secondary"
                         >
                           <Copy size={14} />
                         </button>
@@ -1617,45 +1617,45 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
       {/* Webhook Modal */}
       {isWebhookModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white dark:bg-navy-800 rounded-xl max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-bold mb-4 text-slate-900 dark:text-white">
+          <div className="bg-c-surface rounded-xl max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-bold mb-4 text-c-text">
               Create Webhook
             </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-c-text-secondary mb-1">
                   Name *
                 </label>
                 <input
                   type="text"
                   value={webhookForm.name}
                   onChange={(e) => setWebhookForm({ ...webhookForm, name: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
+                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
                   placeholder="My Webhook"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-c-text-secondary mb-1">
                   Target URL *
                 </label>
                 <input
                   type="url"
                   value={webhookForm.targetUrl}
                   onChange={(e) => setWebhookForm({ ...webhookForm, targetUrl: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
+                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
                   placeholder="https://your-server.com/webhook"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-c-text-secondary mb-2">
                   Events to Subscribe *
                 </label>
-                <div className="space-y-4 max-h-60 overflow-y-auto border border-slate-200 dark:border-navy-700 rounded-lg p-4">
+                <div className="space-y-4 max-h-60 overflow-y-auto border border-c-border-subtle dark:border-navy-700 rounded-lg p-4">
                   {availableEvents.map((category) => (
                     <div key={category.category}>
-                      <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                      <h4 className="text-sm font-semibold text-c-text-secondary mb-2">
                         {category.category}
                       </h4>
                       <div className="space-y-2">
@@ -1668,13 +1668,13 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                               type="checkbox"
                               checked={webhookForm.eventTypes.includes(event.type)}
                               onChange={() => toggleEventType(event.type)}
-                              className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-[color:var(--c-focus)]"
+                              className="w-4 h-4 rounded border-c-border dark:border-navy-700 text-c-accent focus:ring-[color:var(--c-focus)]"
                             />
                             <div>
-                              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                              <span className="text-sm font-medium text-c-text-secondary">
                                 {event.type}
                               </span>
-                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                              <p className="text-xs text-c-text-muted">
                                 {event.description}
                               </p>
                             </div>
@@ -1692,7 +1692,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                     setIsWebhookModalOpen(false);
                     setWebhookForm({ name: '', targetUrl: '', eventTypes: [] });
                   }}
-                  className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg font-medium"
+                  className="px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg font-medium"
                 >
                   Cancel
                 </button>
@@ -1704,7 +1704,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                     !webhookForm.targetUrl ||
                     webhookForm.eventTypes.length === 0
                   }
-                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 font-medium flex items-center gap-2"
+                  className="px-4 py-2 bg-c-accent text-white rounded-lg hover:bg-c-accent disabled:opacity-50 font-medium flex items-center gap-2"
                 >
                   {connecting && <Loader2 size={16} className="animate-spin" />}
                   {connecting ? 'Creating...' : 'Create Webhook'}
@@ -1747,7 +1747,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
               <button
                 onClick={() => openMcpPreset('marketplace')}
                 disabled={!isAdmin}
-                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50"
+                className="px-4 py-2 bg-c-surface hover:bg-c-surface text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50"
               >
                 <Plus size={18} />
                 {t('settings.mcp.addMarketplace', 'Add Marketplace preset')}
@@ -1755,7 +1755,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
             </div>
             <button
               onClick={fetchMcpProviders}
-              className="px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700 flex items-center gap-2"
+              className="px-3 py-2 rounded-lg bg-c-surface border border-c-border-subtle dark:border-navy-700 text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-700 flex items-center gap-2"
             >
               <RefreshCw size={16} />
               {t('common.refresh', 'Refresh')}
@@ -1767,12 +1767,12 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
               <Loader2 size={24} className="animate-spin text-indigo-600" />
             </div>
           ) : mcpProviders.length === 0 ? (
-            <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-12 text-center">
-              <Database size={48} className="mx-auto text-slate-600 dark:text-slate-400 mb-4" />
-              <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">
+            <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 p-12 text-center">
+              <Database size={48} className="mx-auto text-c-text-secondary mb-4" />
+              <h3 className="text-lg font-semibold text-c-text-secondary mb-2">
                 {t('settings.mcp.emptyTitle', 'No MCP providers configured')}
               </h3>
-              <p className="text-slate-500 dark:text-slate-400 text-sm">
+              <p className="text-c-text-muted text-sm">
                 {t('settings.mcp.emptyHint', 'Add IRIS or Marketplace preset to start.')}
               </p>
             </div>
@@ -1781,17 +1781,17 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
               {mcpProviders.map((p: any) => (
                 <div
                   key={p.id}
-                  className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6"
+                  className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 p-6"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-slate-900 dark:text-white">{p.name}</h3>
+                        <h3 className="font-semibold text-c-text">{p.name}</h3>
                         <span
                           className={`px-2 py-0.5 text-xs font-medium rounded-full ${
                             String(p.status || '').toLowerCase() === 'active'
                               ? 'bg-green-500/10 text-green-600'
-                              : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300'
+                              : 'bg-c-surface-raised text-c-text-secondary'
                           }`}
                         >
                           {String(p.status || 'active')}
@@ -1810,7 +1810,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                       <button
                         onClick={() => testMcpProvider(p.id)}
                         disabled={!isAdmin || testingMcpProviderId === p.id}
-                        className="px-3 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10 flex items-center gap-2 disabled:opacity-60"
+                        className="px-3 py-2 rounded-lg bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised flex items-center gap-2 disabled:opacity-60"
                       >
                         {testingMcpProviderId === p.id ? (
                           <Loader2 size={16} className="animate-spin" />
@@ -1822,7 +1822,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                       <button
                         onClick={() => openMcpTools(p.id, p.name)}
                         disabled={!isAdmin}
-                        className="px-3 py-2 rounded-lg bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800 flex items-center gap-2 disabled:opacity-60"
+                        className="px-3 py-2 rounded-lg bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-800 flex items-center gap-2 disabled:opacity-60"
                       >
                         <Eye size={16} />
                         {t('settings.mcp.viewTools', 'View tools')}
@@ -1830,7 +1830,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                       <button
                         onClick={() => openAllowlist(p.id)}
                         disabled={!isAdmin}
-                        className="px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 dark:bg-navy-800 dark:border-navy-700 dark:text-slate-200 dark:hover:bg-navy-700 flex items-center gap-2 disabled:opacity-60"
+                        className="px-3 py-2 rounded-lg bg-c-surface border border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised dark:border-navy-700 dark:hover:bg-navy-700 flex items-center gap-2 disabled:opacity-60"
                       >
                         <CheckSquare size={16} />
                         {t('settings.mcp.allowlist', 'Allowlist')}
@@ -1838,7 +1838,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                       <button
                         onClick={() => openEditMcpProvider(p)}
                         disabled={!isAdmin}
-                        className="px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 dark:bg-navy-800 dark:border-navy-700 dark:text-slate-200 dark:hover:bg-navy-700 flex items-center gap-2 disabled:opacity-60"
+                        className="px-3 py-2 rounded-lg bg-c-surface border border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised dark:border-navy-700 dark:hover:bg-navy-700 flex items-center gap-2 disabled:opacity-60"
                       >
                         <Settings size={16} />
                         {t('common.edit', 'Edit')}
@@ -1874,8 +1874,8 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
           {/* MCP Provider Modal */}
           {mcpModal.open && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-              <div className="bg-white dark:bg-navy-800 rounded-xl max-w-xl w-full p-6 shadow-2xl">
-                <h3 className="text-lg font-bold mb-4 text-slate-900 dark:text-white">
+              <div className="bg-c-surface rounded-xl max-w-xl w-full p-6 shadow-2xl">
+                <h3 className="text-lg font-bold mb-4 text-c-text">
                   {mcpModal.providerId
                     ? t('settings.mcp.edit', 'Edit MCP provider')
                     : t('settings.mcp.add', 'Add MCP provider')}
@@ -1883,23 +1883,23 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      <label className="block text-sm font-medium text-c-text-secondary mb-1">
                         {t('common.name', 'Name')}
                       </label>
                       <input
                         value={mcpModal.name}
                         onChange={(e) => setMcpModal((s) => ({ ...s, name: e.target.value }))}
-                        className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      <label className="block text-sm font-medium text-c-text-secondary mb-1">
                         {t('common.status', 'Status')}
                       </label>
                       <select
                         value={mcpModal.status}
                         onChange={(e) => setMcpModal((s) => ({ ...s, status: e.target.value }))}
-                        className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       >
                         <option value="active">active</option>
                         <option value="disabled">disabled</option>
@@ -1908,13 +1908,13 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-sm font-medium text-c-text-secondary mb-1">
                       {t('settings.mcp.configJson', 'Config (JSON)')}
                     </label>
                     <textarea
                       value={mcpModal.configInput}
                       onChange={(e) => setMcpModal((s) => ({ ...s, configInput: e.target.value }))}
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[180px] font-mono text-xs"
+                      className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[180px] font-mono text-xs"
                       placeholder='{"baseUrl":"https://...","mcpPath":"/mcp"}'
                     />
                   </div>
@@ -1929,7 +1929,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                           configInput: '',
                         })
                       }
-                      className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg font-medium"
+                      className="px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg font-medium"
                     >
                       {t('common.cancel', 'Cancel')}
                     </button>
@@ -1948,9 +1948,9 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
           {/* MCP Tools Modal */}
           {mcpToolsModal.open && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-              <div className="bg-white dark:bg-navy-800 rounded-xl max-w-3xl w-full p-6 shadow-2xl">
+              <div className="bg-c-surface rounded-xl max-w-3xl w-full p-6 shadow-2xl">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                  <h3 className="text-lg font-bold text-c-text">
                     {t('settings.mcp.toolsCache', 'Tools cache')}
                     {mcpToolsModal.name ? ` — ${mcpToolsModal.name}` : ''}
                   </h3>
@@ -1963,7 +1963,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                         tools: null,
                       })
                     }
-                    className="px-3 py-1 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg"
+                    className="px-3 py-1 text-sm text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg"
                   >
                     {t('common.close', 'Close')}
                   </button>
@@ -1973,7 +1973,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                     <Loader2 size={24} className="animate-spin text-indigo-600" />
                   </div>
                 ) : (
-                  <pre className="text-xs bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 overflow-auto max-h-[60vh]">
+                  <pre className="text-xs bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-xl p-4 overflow-auto max-h-[60vh]">
                     {JSON.stringify(mcpToolsModal.tools, null, 2)}
                   </pre>
                 )}
@@ -1984,9 +1984,9 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
           {/* Allowlist Modal */}
           {allowlistModal.open && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-              <div className="bg-white dark:bg-navy-800 rounded-xl max-w-xl w-full p-6 shadow-2xl">
+              <div className="bg-c-surface rounded-xl max-w-xl w-full p-6 shadow-2xl">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                  <h3 className="text-lg font-bold text-c-text">
                     {t('settings.mcp.allowlistTitle', 'Provider allowlist')}
                   </h3>
                   <button
@@ -1998,7 +1998,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                         loading: false,
                       }))
                     }
-                    className="px-3 py-1 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg"
+                    className="px-3 py-1 text-sm text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg"
                   >
                     {t('common.close', 'Close')}
                   </button>
@@ -2011,7 +2011,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                 ) : (
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      <label className="block text-sm font-medium text-c-text-secondary mb-1">
                         {t('settings.mcp.allowlistMode', 'Mode')}
                       </label>
                       <select
@@ -2022,14 +2022,14 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                             mode: e.target.value === 'deny' ? 'deny' : 'allow',
                           }))
                         }
-                        className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       >
                         <option value="allow">allow</option>
                         <option value="deny">deny</option>
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      <label className="block text-sm font-medium text-c-text-secondary mb-1">
                         {t('settings.mcp.toolsJson', 'Tools (JSON array)')}
                       </label>
                       <textarea
@@ -2037,10 +2037,10 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                         onChange={(e) =>
                           setAllowlistModal((s) => ({ ...s, toolsText: e.target.value }))
                         }
-                        className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[140px] font-mono text-xs"
+                        className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[140px] font-mono text-xs"
                         placeholder='["*"]'
                       />
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                      <p className="text-xs text-c-text-muted mt-2">
                         {t(
                           'settings.mcp.allowlistHint',
                           'Use ["*"] to allow/deny everything, or list specific tool names.'
@@ -2057,7 +2057,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                             loading: false,
                           }))
                         }
-                        className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg font-medium"
+                        className="px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg font-medium"
                       >
                         {t('common.cancel', 'Cancel')}
                       </button>

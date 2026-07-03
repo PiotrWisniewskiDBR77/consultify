@@ -28,7 +28,7 @@ export const FeatureFlagsDevToolsToggleButton: React.FC = () => {
         rounded-l-md rounded-r-none
         bg-transparent
         border border-white/20
-        hover:bg-white/[0.06]
+        hover:bg-c-surface/[0.06]
         hover:border-white/30
         active:scale-95
         transition-all duration-150
@@ -44,7 +44,7 @@ export const FeatureFlagsDevToolsToggleButton: React.FC = () => {
         className="
           absolute right-full mr-2
           px-2.5 py-1.5
-          bg-navy-900/95 dark:bg-slate-800/95
+          bg-navy-900/95/95
           backdrop-blur-sm
           text-white text-[11px] font-medium
           rounded-md
@@ -58,7 +58,7 @@ export const FeatureFlagsDevToolsToggleButton: React.FC = () => {
         "
       >
         {t('widgets.ab.tooltip', 'A/B Experiments')}
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-[4px] w-1.5 h-1.5 bg-navy-900/95 dark:bg-slate-800/95 rotate-45 border-r border-t border-white/10" />
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-[4px] w-1.5 h-1.5 bg-navy-900/95/95 rotate-45 border-r border-t border-white/10" />
       </div>
     </button>
   );
