@@ -14,7 +14,6 @@
  */
 
 import { Api } from '../api';
-
 import type { ADMAConclusionModel } from './admaConclusion';
 import type { SIRIConclusionModel } from './siriConclusion';
 
@@ -117,10 +116,7 @@ export function buildAdmaConclusionPayload(
     ],
     confidenceLevel: exec.confidence,
     limits: `Deterministic ADMA conclusion vs FoF benchmark ${model?.fofRoad?.benchmark ?? 4}. Numbers engine-exact; validate targets with the sponsor.`,
-    evidenceRefs: [
-      ...gapCardEvidence(model?.gapCards || [], 'adma_dimension'),
-      ...fofEvidence,
-    ],
+    evidenceRefs: [...gapCardEvidence(model?.gapCards || [], 'adma_dimension'), ...fofEvidence],
     recommendedNextAction: exec.k4_whatFirst || null,
     status: 'candidate',
     projectId: source.projectId ?? null,

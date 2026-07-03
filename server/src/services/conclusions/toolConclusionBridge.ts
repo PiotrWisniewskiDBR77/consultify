@@ -21,14 +21,13 @@
  *     persisting the Conclusion MUST NOT break tool output generation/saving.
  */
 
-import { conclusionService } from './ConclusionService.js';
-
 import type {
   ArtifactRef,
   ConclusionStatus,
   CreateConclusionParams,
   EvidenceRef,
 } from './ConclusionService.js';
+import { conclusionService } from './ConclusionService.js';
 
 /** Collections that carry evidence-bearing, acceptable elements across the 19 tool data shapes. */
 const EVIDENCE_COLLECTION_KEYS = [
@@ -256,9 +255,10 @@ export function extractToolConclusion(
     recommendedNextAction = asNonEmptyString(applied[0]);
   }
 
-  const title = (
-    asNonEmptyString(params.name) || `${params.toolType || 'Tool'} conclusion`
-  ).slice(0, MAX_TITLE_LENGTH);
+  const title = (asNonEmptyString(params.name) || `${params.toolType || 'Tool'} conclusion`).slice(
+    0,
+    MAX_TITLE_LENGTH
+  );
 
   return {
     title,

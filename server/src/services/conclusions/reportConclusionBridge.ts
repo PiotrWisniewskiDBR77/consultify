@@ -18,10 +18,9 @@
  * client bridge (src/services/report/conclusionPush.ts → POST /api/conclusions).
  */
 
-import { conclusionService } from './ConclusionService.js';
-
 import type { DrdReportModel } from '../report/drdReportModel.js';
 import type { ArtifactRef, CreateConclusionParams, EvidenceRef } from './ConclusionService.js';
+import { conclusionService } from './ConclusionService.js';
 
 export interface DrdReportConclusionSource {
   reportId: string;
@@ -73,9 +72,7 @@ export function buildDrdReportConclusion(
     : null;
 
   const orgName = model.meta?.organizationName || 'Organization';
-  const title = (
-    source.reportTitle || `DRD Report — ${orgName}`
-  ).slice(0, 180);
+  const title = (source.reportTitle || `DRD Report — ${orgName}`).slice(0, 180);
 
   return {
     title,
