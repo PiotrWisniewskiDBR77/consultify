@@ -188,7 +188,7 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
               <select
                 value={soundPerType[type.id] || 'default'}
                 onChange={(e) => setSoundPerType({ ...soundPerType, [type.id]: e.target.value })}
-                className="px-3 py-1.5 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
+                className="px-3 py-1.5 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
               >
                 {SOUND_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>

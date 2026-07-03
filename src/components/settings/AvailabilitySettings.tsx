@@ -254,7 +254,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
   const sectionLabel =
     'text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 mb-4';
   const inputClass =
-    'w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all';
+    'w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none transition-all';
 
   return (
     <SettingsSection

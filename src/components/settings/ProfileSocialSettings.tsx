@@ -136,7 +136,7 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({
               value={twitter.replace('https://twitter.com/', '').replace('@', '')}
               onChange={(e) => setTwitter(e.target.value.replace('@', ''))}
               placeholder={t('settings.profile.social.twitterPlaceholder', 'username')}
-              className="flex-1 px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
+              className="flex-1 px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
             />
           </div>
         </div>
@@ -154,7 +154,7 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({
               value={github.replace('https://github.com/', '')}
               onChange={(e) => setGithub(e.target.value)}
               placeholder={t('settings.profile.social.githubPlaceholder', 'username')}
-              className="flex-1 px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
+              className="flex-1 px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
             />
           </div>
         </div>
@@ -170,7 +170,7 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({
             value={website}
             onChange={(e) => setWebsite(e.target.value)}
             placeholder={t('settings.profile.social.websitePlaceholder', 'https://example.com')}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
+            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
           />
         </div>
       </div>

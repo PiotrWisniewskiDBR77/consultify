@@ -719,7 +719,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                             type="checkbox"
                             checked={keySettings[key.id]?.scopes?.includes(scope.id) || false}
                             onChange={() => toggleScope(key.id, scope.id)}
-                            className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-brand focus:ring-brand"
+                            className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-brand focus:ring-[color:var(--c-focus)]"
                           />
                           <div>
                             <span className="text-sm font-medium text-slate-700 dark:text-slate-300">

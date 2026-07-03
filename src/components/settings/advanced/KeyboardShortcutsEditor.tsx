@@ -225,7 +225,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('settings.shortcuts.search', 'Search shortcuts...')}
-              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)]"
             />
           </div>
           <div className="flex items-center gap-2">

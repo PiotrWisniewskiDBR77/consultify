@@ -512,7 +512,7 @@ const AddMemberModal: FC<{
                 spellCheck={false}
                 data-lpignore="true"
                 data-form-type="other"
-                className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors"
+                className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-c-accent transition-colors"
               />
               {searching && (
                 <Loader2

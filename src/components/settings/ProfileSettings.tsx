@@ -528,14 +528,14 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
 
   // Input class for consistent styling
   const inputClass =
-    'w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all';
+    'w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none transition-all';
   const firstNameInputClass = firstNameValidationError
     ? 'w-full px-3 py-2 bg-danger-50 dark:bg-danger-900/20 border border-danger-500 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-danger-500/50 outline-none transition-all'
     : inputClass;
   const inputWithIconClass =
-    'w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all';
+    'w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none transition-all';
   const selectClass =
-    'w-full pl-9 pr-8 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all appearance-none cursor-pointer';
+    'w-full pl-9 pr-8 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none transition-all appearance-none cursor-pointer';
   const labelClass = 'text-xs font-medium text-slate-500 dark:text-slate-400';
   const sectionTitleClass =
     'text-sm font-bold text-navy-900 dark:text-white mb-6 uppercase tracking-wider border-b border-slate-200 dark:border-navy-700 pb-2';
@@ -577,7 +577,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
               onClick={() => navigate('/settings/avatar')}
               title={t('settings.profile.changePhoto', 'Change Photo')}
               aria-label={t('settings.profile.changePhoto', 'Change Photo')}
-              className="relative group cursor-pointer mb-4 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="relative group cursor-pointer mb-4 rounded-full focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
             >
               <div className="w-32 h-32 rounded-full bg-slate-100 dark:bg-navy-800 border-4 border-white dark:border-navy-900 shadow-xl overflow-hidden flex items-center justify-center">
                 {currentUser.avatarUrl ? (

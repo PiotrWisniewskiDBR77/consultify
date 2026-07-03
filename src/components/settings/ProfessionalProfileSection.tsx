@@ -235,7 +235,7 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
             'Tell us about yourself, your experience, and what you do...'
           )}
           rows={6}
-          className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none resize-none"
+          className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none resize-none"
         />
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
           {bio.length} / 2000 {t('settings.profile.professional.characters', 'characters')}
@@ -271,7 +271,7 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
             onChange={(e) => setNewSkill(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && addSkill()}
             placeholder={t('settings.profile.professional.addSkill', 'Add a skill...')}
-            className="flex-1 px-4 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
+            className="flex-1 px-4 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
           />
           <button
             onClick={addSkill}
@@ -843,7 +843,7 @@ const SocialLinkInput: React.FC<SocialLinkInputProps> = ({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
+          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
         />
       </div>
     </div>

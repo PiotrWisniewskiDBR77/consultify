@@ -264,7 +264,7 @@ export const AIInstructionsSettings: React.FC<AIInstructionsSettingsProps> = ({
                   }
                   className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg
                                              text-slate-900 dark:text-white transition-all duration-200
-                                             focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                             focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
                 >
                   {contextLengthOptions.map((opt) => (
                     <option key={opt.value} value={opt.value}>

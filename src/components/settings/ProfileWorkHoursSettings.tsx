@@ -186,7 +186,7 @@ export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> =
               type="time"
               value={workHoursStart}
               onChange={(e) => setWorkHoursStart(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
             />
           </div>
           <div className="space-y-1.5">
@@ -197,7 +197,7 @@ export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> =
               type="time"
               value={workHoursEnd}
               onChange={(e) => setWorkHoursEnd(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
             />
           </div>
         </div>
@@ -244,7 +244,7 @@ export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> =
             id="outOfOffice"
             checked={outOfOffice}
             onChange={(e) => setOutOfOffice(e.target.checked)}
-            className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
+            className="w-4 h-4 text-primary-600 rounded focus:ring-[color:var(--c-focus)]"
           />
           <label htmlFor="outOfOffice" className="text-sm text-slate-700 dark:text-slate-300">
             {t('settings.profile.workHours.markAsOutOfOffice', 'Mark as out of office')}
@@ -260,7 +260,7 @@ export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> =
               type="date"
               value={vacationStart}
               onChange={(e) => setVacationStart(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
             />
           </div>
           <div className="space-y-1.5">
@@ -272,7 +272,7 @@ export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> =
               value={vacationEnd}
               onChange={(e) => setVacationEnd(e.target.value)}
               min={vacationStart}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
             />
           </div>
         </div>

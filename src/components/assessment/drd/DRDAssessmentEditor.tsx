@@ -586,7 +586,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
             <select
               value={axisId}
               onChange={(e) => handleAxisChange(Number(e.target.value))}
-              className="w-full h-10 px-3 pr-10 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+              className="w-full h-10 px-3 pr-10 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
             >
               {DRD_STRUCTURE.map((a) => (
                 <option key={a.id} value={a.id}>
@@ -741,7 +741,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                           type="checkbox"
                           checked={!matrixCompact}
                           onChange={(e) => setMatrixCompact(!e.target.checked)}
-                          className="h-4 w-4 rounded border-slate-300 dark:border-white/20 bg-slate-100 dark:bg-white/5 text-primary-500 focus:ring-primary-500/30"
+                          className="h-4 w-4 rounded border-slate-300 dark:border-white/20 bg-slate-100 dark:bg-white/5 text-primary-500 focus:ring-[color:var(--c-focus)]"
                         />
                         Spacious
                       </label>
@@ -1745,7 +1745,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                               placeholder="Facts: what exists? Gaps: what's missing? Context: scope/owners/tools?"
                               disabled={readOnly}
                               rows={3}
-                              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+                              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
                             />
                           </div>
                         )}
@@ -2025,7 +2025,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             type="checkbox"
                             checked={!matrixCompact}
                             onChange={(e) => setMatrixCompact(!e.target.checked)}
-                            className="h-4 w-4 rounded border-slate-300 dark:border-white/20 bg-slate-100 dark:bg-white/5 text-primary-500 focus:ring-primary-500/30"
+                            className="h-4 w-4 rounded border-slate-300 dark:border-white/20 bg-slate-100 dark:bg-white/5 text-primary-500 focus:ring-[color:var(--c-focus)]"
                           />
                           Spacious
                         </label>

@@ -349,7 +349,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
                     placeholder={
                       formData.requestType === 'ROLE_CHANGE' ? 'ADMIN' : 'Enter value...'
                     }
-                    className="w-full px-3 py-2 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
                   />
                 </div>
               </div>
@@ -394,7 +394,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
                   'Explain why you need this change...'
                 )}
                 rows={4}
-                className="w-full px-3 py-2 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none resize-none"
+                className="w-full px-3 py-2 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none resize-none"
               />
             </div>
 

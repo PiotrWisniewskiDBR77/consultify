@@ -232,7 +232,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                     value={newOrgName}
                     onChange={(e) => setNewOrgName(e.target.value)}
                     placeholder="e.g., Acme Corporation"
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-navy-900 dark:text-white"
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] text-navy-900 dark:text-white"
                     onKeyDown={(e) => e.key === 'Enter' && handleCreateOrganization()}
                     autoFocus
                   />

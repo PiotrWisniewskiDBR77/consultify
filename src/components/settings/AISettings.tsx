@@ -1191,7 +1191,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   onChange={(e) =>
                     setPreferences({ ...preferences, maxTokens: parseInt(e.target.value) })
                   }
-                  className="w-full bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-primary-500/50 outline-none transition font-mono"
+                  className="w-full bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-c-accent outline-none transition font-mono"
                 />
                 <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-2">
                   Maximum length of generated response.

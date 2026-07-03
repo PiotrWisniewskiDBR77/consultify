@@ -178,7 +178,7 @@ export const DNDModeSettings: React.FC<DNDModeSettingsProps> = ({ currentUser, o
             }
           }}
           min={new Date().toISOString().slice(0, 16)}
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
+          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
         />
       </div>
 

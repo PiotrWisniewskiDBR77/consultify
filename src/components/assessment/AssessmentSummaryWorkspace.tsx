@@ -191,7 +191,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                 }}
                 autoFocus={isEditingName}
                 placeholder="Nazwa assessmentu..."
-                className="text-2xl font-bold bg-transparent border-b-2 border-primary-500 focus:border-primary-400 outline-none text-navy-900 dark:text-white placeholder-slate-400 w-full max-w-md"
+                className="text-2xl font-bold bg-transparent border-b-2 border-primary-500 focus:border-c-accent outline-none text-navy-900 dark:text-white placeholder-slate-400 w-full max-w-md"
               />
               <button
                 onClick={() => {

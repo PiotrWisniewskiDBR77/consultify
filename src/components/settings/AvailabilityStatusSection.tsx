@@ -259,7 +259,7 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
             'e.g., 🎉 On vacation until Jan 15'
           )}
           maxLength={100}
-          className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
+          className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
         />
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
           {statusMessage.length} / 100 {t('settings.availability.characters', 'characters')}

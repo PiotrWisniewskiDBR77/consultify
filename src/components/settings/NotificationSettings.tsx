@@ -470,7 +470,7 @@ const NotificationToggle: React.FC<{ checked: boolean; onChange: () => void }> =
     aria-checked={checked}
     className={cn(
       'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200',
-      'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-navy-900',
+      'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:ring-offset-2 focus:ring-offset-navy-900',
       checked ? 'bg-navy-900' : 'bg-white/10'
     )}
   >

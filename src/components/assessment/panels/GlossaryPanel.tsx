@@ -101,7 +101,7 @@ export const GlossaryPanel: React.FC<GlossaryPanelProps> = ({ isOpen, onClose })
               placeholder={
                 isPl ? 'Szukaj terminu (np. SWOT, WACC)...' : 'Search a term (e.g. SWOT, WACC)...'
               }
-              className="w-full h-9 pl-9 pr-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+              className="w-full h-9 pl-9 pr-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
             />
           </div>
           <div className="flex flex-wrap gap-1.5">

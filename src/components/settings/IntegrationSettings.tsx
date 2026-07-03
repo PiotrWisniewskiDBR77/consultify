@@ -1630,7 +1630,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                   type="text"
                   value={webhookForm.name}
                   onChange={(e) => setWebhookForm({ ...webhookForm, name: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
                   placeholder="My Webhook"
                 />
               </div>
@@ -1643,7 +1643,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                   type="url"
                   value={webhookForm.targetUrl}
                   onChange={(e) => setWebhookForm({ ...webhookForm, targetUrl: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
                   placeholder="https://your-server.com/webhook"
                 />
               </div>
@@ -1668,7 +1668,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                               type="checkbox"
                               checked={webhookForm.eventTypes.includes(event.type)}
                               onChange={() => toggleEventType(event.type)}
-                              className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
+                              className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-[color:var(--c-focus)]"
                             />
                             <div>
                               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">

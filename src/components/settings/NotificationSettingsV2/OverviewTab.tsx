@@ -26,7 +26,7 @@ const Toggle: React.FC<{ checked: boolean; onChange: () => void; disabled?: bool
   <button
     onClick={onChange}
     disabled={disabled}
-    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
       checked ? 'bg-navy-900' : 'bg-slate-200 dark:bg-navy-700'
     }`}
   >
