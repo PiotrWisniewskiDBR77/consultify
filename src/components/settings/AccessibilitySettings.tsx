@@ -210,7 +210,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                       'p-4 rounded-xl border-2 transition-all duration-200 text-center',
                       'hover:scale-[1.02] active:scale-[0.98]',
                       isSelected
-                        ? 'border-c-border-strong bg-c-surface-raised.08]'
+                        ? 'border-c-border-strong bg-c-surface-raised'
                         : 'border-c-border-subtle hover:border-c-border dark:hover:border-white/20 bg-c-surface-raised'
                     )}
                   >
@@ -254,8 +254,8 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                     className={cn(
                       'p-3 rounded-lg border-2 transition-all duration-200 text-left',
                       isSelected
-                        ? 'border-c-border-strong bg-c-surface-raised.08]'
-                        : 'border-white/10 hover:border-white/20'
+                        ? 'border-c-border-strong bg-c-surface-raised'
+                        : 'border-c-border hover:border-c-border-strong'
                     )}
                   >
                     <span
@@ -277,7 +277,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
           {/* Line Height */}
           <div className="flex items-center justify-between">
             <div>
-              <span className="block text-sm font-medium text-white">
+              <span className="block text-sm font-medium text-c-text">
                 {t('settings.accessibility.lineHeightTitle', 'Line Height')}
               </span>
               <span className="text-xs text-c-text-muted">
@@ -307,7 +307,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
           {/* Letter Spacing */}
           <div className="flex items-center justify-between">
             <div>
-              <span className="block text-sm font-medium text-white">
+              <span className="block text-sm font-medium text-c-text">
                 {t('settings.accessibility.letterSpacingTitle', 'Letter Spacing')}
               </span>
               <span className="text-xs text-c-text-muted">
@@ -336,7 +336,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
           {/* Caret Width */}
           <div className="flex items-center justify-between">
             <div>
-              <span className="block text-sm font-medium text-white">
+              <span className="block text-sm font-medium text-c-text">
                 {t('settings.accessibility.caretWidthTitle', 'Text Cursor Width')}
               </span>
               <span className="text-xs text-c-text-muted">
@@ -416,7 +416,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
           {/* Text Spacing */}
           <div className="flex items-center justify-between">
             <div>
-              <span className="block text-sm font-medium text-white">
+              <span className="block text-sm font-medium text-c-text">
                 {t('settings.accessibility.textSpacing', 'Text Spacing')}
               </span>
               <span className="text-xs text-c-text-muted">
@@ -445,7 +445,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
 
           {/* Color Vision */}
           <div>
-            <label className="block text-sm font-medium text-white mb-1">
+            <label className="block text-sm font-medium text-c-text mb-1">
               {t('settings.accessibility.colorVisionTitle', 'Color Vision')}
             </label>
             <p className="text-xs text-c-text-muted mb-3">
@@ -469,8 +469,8 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                     className={cn(
                       'p-3 rounded-xl border-2 transition-all duration-200 text-left',
                       isSelected
-                        ? 'border-c-border-strong bg-c-surface-raised.08]'
-                        : 'border-white/10 hover:border-white/20'
+                        ? 'border-c-border-strong bg-c-surface-raised'
+                        : 'border-c-border hover:border-c-border-strong'
                     )}
                   >
                     <div
@@ -494,7 +494,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
 
           {/* Focus Indicator Style */}
           <div>
-            <label className="block text-sm font-medium text-white mb-1">
+            <label className="block text-sm font-medium text-c-text mb-1">
               {t('settings.accessibility.focusStyleTitle', 'Focus Indicator Style')}
             </label>
             <p className="text-xs text-c-text-muted mb-3">
@@ -521,8 +521,8 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                     className={cn(
                       'p-4 rounded-xl border-2 transition-all duration-200 text-center',
                       isSelected
-                        ? 'border-c-border-strong bg-c-surface-raised.08]'
-                        : 'border-white/10 hover:border-white/20'
+                        ? 'border-c-border-strong bg-c-surface-raised'
+                        : 'border-c-border hover:border-c-border-strong'
                     )}
                   >
                     <span
@@ -583,7 +583,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
           {/* Cursor Size */}
           <div className="flex items-center justify-between">
             <div>
-              <span className="block text-sm font-medium text-white">
+              <span className="block text-sm font-medium text-c-text">
                 {t('settings.accessibility.cursorSize', 'Cursor Size')}
               </span>
               <span className="text-xs text-c-text-muted">

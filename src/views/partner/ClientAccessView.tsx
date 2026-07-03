@@ -308,7 +308,7 @@ export const ClientAccessView: React.FC = () => {
       </div>
 
       {/* Tabs - HubSpot Style */}
-      <div className="flex items-center justify-between border-b border-white/10 pb-0">
+      <div className="flex items-center justify-between border-b border-c-border-subtle pb-0">
         <div className="flex items-center gap-1">
           <button
             onClick={() => setActiveTab('clients')}
