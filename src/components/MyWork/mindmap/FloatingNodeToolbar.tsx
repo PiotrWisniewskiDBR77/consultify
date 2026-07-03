@@ -134,8 +134,8 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
   const btnClass = (active: boolean) =>
     `flex h-9 w-9 items-center justify-center rounded-hig-lg transition-all duration-150 ${
       active
-        ? 'bg-slate-200/70 dark:bg-navy-800 text-slate-900 dark:text-slate-100'
-        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/[0.04]'
+        ? 'bg-c-surface-raised dark:bg-c-surface text-c-text dark:text-c-text'
+        : 'text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
     }`;
 
   return (
@@ -148,14 +148,14 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
         transform: 'translateX(-50%)',
       }}
     >
-      <div className="flex items-center gap-0.5 rounded-hig-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm border border-slate-200/60 dark:border-navy-700/60 shadow-hig-xl px-1 py-0.5">
+      <div className="flex items-center gap-0.5 rounded-hig-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm border border-c-border-subtle dark:border-c-border shadow-hig-xl px-1 py-0.5">
         {/* 0a. Add child — primary growth affordance */}
         <button
           onClick={onAddChild}
           disabled={disabled}
           title={isPl ? 'Dodaj gałąź (Tab)' : 'Add child (Tab)'}
           aria-label={isPl ? 'Dodaj gałąź (Tab)' : 'Add child (Tab)'}
-          className={`flex h-9 items-center gap-1 px-1.5 rounded-hig-lg transition-all duration-150 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 ${disabled ? 'opacity-40 pointer-events-none' : ''}`}
+          className={`flex h-9 items-center gap-1 px-1.5 rounded-hig-lg transition-all duration-150 text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface ${disabled ? 'opacity-40 pointer-events-none' : ''}`}
         >
           <Plus size={14} strokeWidth={2.5} />
           <span className="text-[10px] font-semibold">{isPl ? 'Gałąź' : 'Child'}</span>
@@ -168,7 +168,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             disabled={disabled}
             title={isPl ? 'Dodaj sąsiada (Shift+Enter)' : 'Add sibling (Shift+Enter)'}
             aria-label={isPl ? 'Dodaj sąsiada (Shift+Enter)' : 'Add sibling (Shift+Enter)'}
-            className={`flex h-9 items-center gap-1 px-1.5 rounded-hig-lg transition-all duration-150 text-slate-500 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/[0.04] ${disabled ? 'opacity-40 pointer-events-none' : ''}`}
+            className={`flex h-9 items-center gap-1 px-1.5 rounded-hig-lg transition-all duration-150 text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised ${disabled ? 'opacity-40 pointer-events-none' : ''}`}
           >
             <GitBranch size={13} />
             <span className="text-[10px] font-medium">{isPl ? 'Sąsiad' : 'Sibling'}</span>
@@ -206,7 +206,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
           </button>
         )}
 
-        <div className="w-px h-4 bg-slate-200/50 dark:bg-white/[0.06] mx-0.5" />
+        <div className="w-px h-4 bg-c-surface-raised dark:bg-c-surface-raised mx-0.5" />
 
         {/* 1. Semantic Type */}
         <div className="relative">
@@ -297,8 +297,8 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             className={btnClass(openDropdown === 'color')}
           >
             <div
-              className="w-3.5 h-3.5 rounded-full border border-slate-300 dark:border-white/20"
-              style={{ backgroundColor: style.color || 'var(--color-primary-500, #A51C30)' }}
+              className="w-3.5 h-3.5 rounded-full border border-c-border-subtle dark:border-c-border"
+              style={{ backgroundColor: style.color || 'var(--c-tag-2)' }}
             />
           </button>
           {openDropdown === 'color' && (
@@ -346,7 +346,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
           <Bold size={13} />
         </button>
 
-        <div className="w-px h-4 bg-slate-200/50 dark:bg-white/[0.06] mx-0.5" />
+        <div className="w-px h-4 bg-c-surface-raised dark:bg-c-surface-raised mx-0.5" />
 
         {/* 7. Link / Artifact */}
         <div className="relative">
@@ -418,8 +418,8 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
               <GitPullRequest size={13} />
             </button>
             {openDropdown === 'convertBranch' && (
-              <div className="absolute top-full right-0 mt-1 z-[100] min-w-[180px] py-1.5 px-1 rounded-hig-xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border border-slate-200/60 dark:border-navy-700/60 shadow-hig-xl animate-in fade-in zoom-in-95 duration-100">
-                <div className="px-3 pt-1 pb-1 text-[9px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
+              <div className="absolute top-full right-0 mt-1 z-[100] min-w-[180px] py-1.5 px-1 rounded-hig-xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-border-subtle dark:border-c-border shadow-hig-xl animate-in fade-in zoom-in-95 duration-100">
+                <div className="px-3 pt-1 pb-1 text-[9px] font-semibold uppercase tracking-wider text-c-text-secondary dark:text-c-text-secondary">
                   {isPl ? 'Konwertuj gałąź na...' : 'Convert branch to...'}
                 </div>
                 {(
@@ -458,9 +458,9 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
                       onAction(item.id);
                       closeDD();
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-[6px] text-left text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-white/[0.04] rounded-hig-md transition-colors"
+                    className="w-full flex items-center gap-2 px-3 py-[6px] text-left text-[11px] font-medium text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-hig-md transition-colors"
                   >
-                    <item.icon size={13} className="shrink-0 text-slate-600 dark:text-slate-500" />
+                    <item.icon size={13} className="shrink-0 text-c-text-secondary dark:text-c-text-secondary" />
                     <span className="flex-1 truncate">{item.label}</span>
                   </button>
                 ))}
@@ -550,7 +550,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
           )}
         </div>
 
-        <div className="w-px h-4 bg-slate-200/50 dark:bg-white/[0.06] mx-0.5" />
+        <div className="w-px h-4 bg-c-surface-raised dark:bg-c-surface-raised mx-0.5" />
 
         {/* 10. AI */}
         <div className="relative">

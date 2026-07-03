@@ -92,61 +92,61 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({
   if (!open) return null;
 
   const STATUS_COLORS: Record<string, string> = {
-    idea: 'bg-slate-400',
-    exploring: 'bg-blue-500',
-    validated: 'bg-emerald-500',
-    ready_to_convert: 'bg-amber-500',
-    converted: 'bg-sky-500',
+    idea: 'bg-c-surface-raised',
+    exploring: 'bg-c-info',
+    validated: 'bg-c-success',
+    ready_to_convert: 'bg-c-warning',
+    converted: 'bg-c-info',
   };
 
   const renderColumn = (stats: BranchStats | null) => {
     if (!stats)
       return (
-        <div className="flex-1 flex items-center justify-center text-[11px] text-slate-600">
+        <div className="flex-1 flex items-center justify-center text-[11px] text-c-text-secondary">
           {isPl ? 'Wybierz gałąź' : 'Select a branch'}
         </div>
       );
     return (
       <div className="flex-1 min-w-0">
-        <div className="text-[13px] font-bold text-slate-700 dark:text-slate-200 mb-3 capitalize">
+        <div className="text-[13px] font-bold text-c-text-secondary dark:text-c-text mb-3 capitalize">
           {stats.label}
         </div>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-2">
-            <div className="p-2 rounded-lg bg-slate-50/50 dark:bg-navy-950/20 text-center">
-              <div className="text-[18px] font-bold text-slate-700 dark:text-slate-200">
+            <div className="p-2 rounded-lg bg-c-surface-raised dark:bg-c-surface text-center">
+              <div className="text-[18px] font-bold text-c-text-secondary dark:text-c-text">
                 {stats.nodeCount}
               </div>
-              <div className="text-[9px] text-slate-600">{isPl ? 'Pomysłów' : 'Ideas'}</div>
+              <div className="text-[9px] text-c-text-secondary">{isPl ? 'Pomysłów' : 'Ideas'}</div>
             </div>
-            <div className="p-2 rounded-lg bg-slate-50/50 dark:bg-navy-950/20 text-center">
-              <div className="text-[18px] font-bold text-amber-600">{stats.avgPriority}</div>
-              <div className="text-[9px] text-slate-600">
+            <div className="p-2 rounded-lg bg-c-surface-raised dark:bg-c-surface text-center">
+              <div className="text-[18px] font-bold text-c-warning">{stats.avgPriority}</div>
+              <div className="text-[9px] text-c-text-secondary">
                 {isPl ? 'Śr. priorytet' : 'Avg priority'}
               </div>
             </div>
-            <div className="p-2 rounded-lg bg-slate-50/50 dark:bg-navy-950/20 text-center">
-              <div className="text-[18px] font-bold text-blue-600">{stats.maxDepth}</div>
-              <div className="text-[9px] text-slate-600">{isPl ? 'Głębokość' : 'Depth'}</div>
+            <div className="p-2 rounded-lg bg-c-surface-raised dark:bg-c-surface text-center">
+              <div className="text-[18px] font-bold text-c-info">{stats.maxDepth}</div>
+              <div className="text-[9px] text-c-text-secondary">{isPl ? 'Głębokość' : 'Depth'}</div>
             </div>
-            <div className="p-2 rounded-lg bg-slate-50/50 dark:bg-navy-950/20 text-center">
-              <div className="text-[18px] font-bold text-emerald-600">
+            <div className="p-2 rounded-lg bg-c-surface-raised dark:bg-c-surface text-center">
+              <div className="text-[18px] font-bold text-c-success">
                 {stats.statusCounts.converted || 0}
               </div>
-              <div className="text-[9px] text-slate-600">
+              <div className="text-[9px] text-c-text-secondary">
                 {isPl ? 'Skonwertowane' : 'Converted'}
               </div>
             </div>
           </div>
           <div>
-            <div className="text-[9px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+            <div className="text-[9px] font-bold text-c-text-secondary uppercase tracking-wider mb-1">
               Status
             </div>
-            <div className="flex gap-1 h-3 rounded-full overflow-hidden bg-slate-200 dark:bg-navy-700">
+            <div className="flex gap-1 h-3 rounded-full overflow-hidden bg-c-surface-raised dark:bg-c-surface">
               {Object.entries(stats.statusCounts).map(([st, count]) => (
                 <div
                   key={st}
-                  className={`h-full ${STATUS_COLORS[st] || 'bg-slate-400'}`}
+                  className={`h-full ${STATUS_COLORS[st] || 'bg-c-surface-raised'}`}
                   style={{ width: `${(count / Math.max(stats.nodeCount, 1)) * 100}%` }}
                   title={`${st}: ${count}`}
                 />
@@ -154,12 +154,12 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({
             </div>
           </div>
           <div>
-            <div className="text-[9px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+            <div className="text-[9px] font-bold text-c-text-secondary uppercase tracking-wider mb-1">
               {isPl ? 'Pomysły' : 'Ideas'}
             </div>
             <div className="space-y-1 max-h-[200px] overflow-y-auto">
               {stats.nodeLabels.map((label, idx) => (
-                <div key={idx} className="text-[10px] text-slate-600 dark:text-slate-300 truncate">
+                <div key={idx} className="text-[10px] text-c-text-secondary dark:text-c-text-muted truncate">
                   {label}
                 </div>
               ))}
@@ -171,16 +171,16 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[92] bg-white/95 dark:bg-navy-950/95 backdrop-blur-xl flex flex-col">
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+    <div className="fixed inset-0 z-[92] bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl flex flex-col">
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-c-border-subtle dark:border-c-border">
         <button
           onClick={onClose}
-          className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          className="p-2 rounded-lg text-c-text-secondary hover:text-c-text-secondary dark:text-c-text-muted dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
         >
           <ChevronLeft size={16} />
         </button>
-        <ArrowLeftRight size={16} className="text-indigo-500" />
-        <h2 className="text-sm font-bold text-slate-800 dark:text-white">
+        <ArrowLeftRight size={16} className="text-c-info" />
+        <h2 className="text-sm font-bold text-c-text dark:text-c-text">
           {isPl ? 'Porównanie gałęzi' : 'Branch Comparison'}
         </h2>
       </div>
@@ -191,7 +191,7 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({
             <select
               value={leftBranch}
               onChange={(e) => setLeftBranch(e.target.value)}
-              className="flex-1 px-3 py-2 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/50 dark:bg-navy-950/30 text-[11px] font-bold text-slate-700 dark:text-slate-200"
+              className="flex-1 px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface text-[11px] font-bold text-c-text-secondary dark:text-c-text"
             >
               <option value="">{isPl ? '-- Wybierz --' : '-- Select --'}</option>
               {branches.map((b) => (
@@ -200,11 +200,11 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({
                 </option>
               ))}
             </select>
-            <ArrowLeftRight size={16} className="text-slate-600 shrink-0" />
+            <ArrowLeftRight size={16} className="text-c-text-secondary shrink-0" />
             <select
               value={rightBranch}
               onChange={(e) => setRightBranch(e.target.value)}
-              className="flex-1 px-3 py-2 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/50 dark:bg-navy-950/30 text-[11px] font-bold text-slate-700 dark:text-slate-200"
+              className="flex-1 px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface text-[11px] font-bold text-c-text-secondary dark:text-c-text"
             >
               <option value="">{isPl ? '-- Wybierz --' : '-- Select --'}</option>
               {branches.map((b) => (
@@ -217,7 +217,7 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({
 
           <div className="flex gap-6">
             {renderColumn(leftStats)}
-            <div className="w-px bg-slate-200 dark:bg-navy-700 shrink-0" />
+            <div className="w-px bg-c-surface-raised dark:bg-c-surface shrink-0" />
             {renderColumn(rightStats)}
           </div>
         </div>

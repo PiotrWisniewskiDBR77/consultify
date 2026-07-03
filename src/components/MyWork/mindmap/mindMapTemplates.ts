@@ -52,7 +52,7 @@ function buildTemplateGraph(
       target: branchId,
       type: 'smoothstep',
       animated: true,
-      style: { stroke: '#94a3b8', strokeWidth: 2.5, opacity: 0.35 },
+      style: { stroke: 'var(--c-tag-8)', strokeWidth: 2.5, opacity: 0.35 },
       data: { system: true, kind: 'frames' },
     } as any);
   });

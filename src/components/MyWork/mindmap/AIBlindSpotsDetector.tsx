@@ -145,29 +145,29 @@ export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
   if (visibleSpots.length === 0 && !loading) return null;
 
   const severityColor = {
-    high: 'text-danger-500',
-    medium: 'text-amber-500',
-    low: 'text-blue-500',
+    high: 'text-c-danger',
+    medium: 'text-c-warning',
+    low: 'text-c-info',
   };
 
   return (
     <div className="absolute bottom-16 right-3 z-[88] w-[320px] max-w-[90vw]">
-      <div className="rounded-2xl bg-white/90 dark:bg-navy-900/90 backdrop-blur-xl border border-amber-400/30 dark:border-amber-500/20 shadow-2xl overflow-hidden">
+      <div className="rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-warning dark:border-c-warning shadow-2xl overflow-hidden">
         {/* Header */}
         <button
           onClick={() => setExpanded(!expanded)}
-          className="w-full flex items-center gap-2.5 px-4 py-3 hover:bg-amber-500/5 transition-colors"
+          className="w-full flex items-center gap-2.5 px-4 py-3 hover:bg-c-warning transition-colors"
         >
-          <Eye size={14} className="text-amber-500 shrink-0" />
-          <span className="text-[11px] font-bold text-amber-700 dark:text-amber-300 flex-1 text-left">
+          <Eye size={14} className="text-c-warning shrink-0" />
+          <span className="text-[11px] font-bold text-c-warning dark:text-c-warning flex-1 text-left">
             {isPl ? 'Blind Spots AI' : 'AI Blind Spots'}
           </span>
-          {loading && <Loader2 size={12} className="animate-spin text-amber-500" />}
-          <span className="text-[10px] text-slate-600 font-medium">{visibleSpots.length}</span>
+          {loading && <Loader2 size={12} className="animate-spin text-c-warning" />}
+          <span className="text-[10px] text-c-text-secondary font-medium">{visibleSpots.length}</span>
           {expanded ? (
-            <ChevronDown size={12} className="text-slate-600" />
+            <ChevronDown size={12} className="text-c-text-secondary" />
           ) : (
-            <ChevronUp size={12} className="text-slate-600" />
+            <ChevronUp size={12} className="text-c-text-secondary" />
           )}
         </button>
 
@@ -177,18 +177,18 @@ export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
             {visibleSpots.map((spot) => (
               <div
                 key={spot.id}
-                className="flex items-start gap-2 p-2.5 rounded-xl bg-slate-50/50 dark:bg-navy-950/20 border border-slate-200/30 dark:border-navy-700/30"
+                className="flex items-start gap-2 p-2.5 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border"
               >
                 <AlertTriangle
                   size={12}
                   className={`mt-0.5 shrink-0 ${severityColor[spot.severity]}`}
                 />
                 <div className="min-w-0 flex-1">
-                  <div className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">
+                  <div className="text-[11px] font-semibold text-c-text-secondary dark:text-c-text">
                     {spot.area}
                   </div>
                   {spot.description && (
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                    <div className="text-[10px] text-c-text-secondary dark:text-c-text-muted mt-0.5 leading-relaxed">
                       {spot.description}
                     </div>
                   )}
@@ -196,14 +196,14 @@ export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
                     <button
                       onClick={() => handleAdd(spot)}
                       disabled={locked}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 transition-colors disabled:opacity-40"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold bg-c-surface-raised text-c-warning dark:text-c-warning hover:bg-c-surface-raised transition-colors disabled:opacity-40"
                     >
                       <Plus size={9} />
                       {isPl ? 'Dodaj' : 'Add'}
                     </button>
                     <button
                       onClick={() => handleDismiss(spot.id)}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-medium text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-medium text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
                     >
                       <X size={9} />
                       {isPl ? 'Odrzuć' : 'Dismiss'}
@@ -216,7 +216,7 @@ export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
             <button
               onClick={detectBlindSpots}
               disabled={loading}
-              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100/50 dark:hover:bg-navy-800/50 transition-colors disabled:opacity-40"
+              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-medium text-c-text-secondary hover:text-c-text-secondary dark:text-c-text-muted dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors disabled:opacity-40"
             >
               <RefreshCw size={10} className={loading ? 'animate-spin' : ''} />
               {isPl ? 'Sprawdź ponownie' : 'Re-check'}

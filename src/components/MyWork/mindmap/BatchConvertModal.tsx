@@ -78,14 +78,14 @@ export const BatchConvertModal: React.FC<BatchConvertModalProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-black/40">
-      <div className="w-full max-w-md rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
-        <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+    <div className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-c-bg">
+      <div className="w-full max-w-md rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
           <div>
-            <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+            <h3 className="text-sm font-bold text-c-text dark:text-c-text">
               {isPl ? 'Konwersja zbiorcza' : 'Batch Convert'}
             </h3>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mt-0.5">
               {isPl
                 ? `${eligibleNodes.length} elementów do konwersji`
                 : `${eligibleNodes.length} items available`}
@@ -93,7 +93,7 @@ export const BatchConvertModal: React.FC<BatchConvertModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-c-text-secondary hover:text-c-text-secondary dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
           >
             <X size={16} />
           </button>
@@ -102,12 +102,12 @@ export const BatchConvertModal: React.FC<BatchConvertModalProps> = ({
         <div className="px-5 py-3 max-h-[50vh] overflow-y-auto">
           <button
             onClick={toggleAll}
-            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-white/[0.04] transition-colors mb-2"
+            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-medium text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors mb-2"
           >
             {selected.size === eligibleNodes.length ? (
-              <CheckSquare size={14} className="text-amber-500" />
+              <CheckSquare size={14} className="text-c-warning" />
             ) : (
-              <Square size={14} className="text-slate-600" />
+              <Square size={14} className="text-c-text-secondary" />
             )}
             {isPl ? 'Zaznacz wszystko' : 'Select all'}
           </button>
@@ -116,22 +116,22 @@ export const BatchConvertModal: React.FC<BatchConvertModalProps> = ({
             {eligibleNodes.map((node) => (
               <label
                 key={node.id}
-                className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-slate-100/60 dark:hover:bg-white/[0.03] transition-colors cursor-pointer"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors cursor-pointer"
               >
                 <input
                   type="checkbox"
                   checked={selected.has(node.id)}
                   onChange={() => toggleNode(node.id)}
-                  className="rounded border-slate-300 text-amber-500 focus:ring-amber-500"
+                  className="rounded border-c-border-subtle text-c-warning focus:ring-c-warning"
                 />
                 <div className="min-w-0 flex-1">
-                  <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200 truncate">
+                  <div className="text-[11px] font-medium text-c-text-secondary dark:text-c-text truncate">
                     {node.label}
                   </div>
-                  <div className="text-[9px] text-slate-600">{node.branchKey}</div>
+                  <div className="text-[9px] text-c-text-secondary">{node.branchKey}</div>
                 </div>
                 {node.status && node.status !== 'idea' && (
-                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400">
+                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-c-surface-raised dark:bg-c-surface text-c-text-secondary dark:text-c-text-muted">
                     {node.status.replace(/_/g, ' ')}
                   </span>
                 )}
@@ -140,11 +140,11 @@ export const BatchConvertModal: React.FC<BatchConvertModalProps> = ({
           </div>
         </div>
 
-        <div className="px-5 py-3 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center gap-2">
+        <div className="px-5 py-3 border-t border-c-border-subtle dark:border-c-border flex items-center gap-2">
           <button
             onClick={() => handleConvert('initiative')}
             disabled={locked || selected.size === 0 || converting}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold bg-gradient-to-r from-amber-500/15 to-amber-500/10 text-amber-700 dark:text-amber-300 hover:from-amber-500/25 hover:to-amber-500/15 border border-amber-500/10 transition-all disabled:opacity-40"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold bg-c-surface-raised text-c-warning dark:text-c-warning border border-c-warning transition-all disabled:opacity-40"
           >
             {converting ? <Loader2 size={12} className="animate-spin" /> : <Rocket size={12} />}
             {isPl

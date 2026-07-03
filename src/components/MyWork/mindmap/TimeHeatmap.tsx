@@ -35,11 +35,11 @@ function getIntensity(count: number, max: number): number {
 }
 
 const INTENSITY_COLORS = [
-  'bg-slate-100 dark:bg-navy-800',
-  'bg-emerald-200 dark:bg-emerald-900/40',
-  'bg-emerald-300 dark:bg-emerald-800/50',
-  'bg-emerald-400 dark:bg-emerald-700/60',
-  'bg-emerald-500 dark:bg-emerald-600/70',
+  'bg-c-surface-raised dark:bg-c-surface',
+  'bg-c-success dark:bg-c-success',
+  'bg-c-success dark:bg-c-success',
+  'bg-c-success dark:bg-c-success',
+  'bg-c-success dark:bg-c-success',
 ];
 
 export const TimeHeatmap: React.FC<TimeHeatmapProps> = ({ open, onClose, ideaId }) => {
@@ -86,19 +86,19 @@ export const TimeHeatmap: React.FC<TimeHeatmapProps> = ({ open, onClose, ideaId 
     : ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
   return (
-    <div className="fixed inset-0 z-[92] bg-white/95 dark:bg-navy-950/95 backdrop-blur-xl flex flex-col">
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+    <div className="fixed inset-0 z-[92] bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl flex flex-col">
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-c-border-subtle dark:border-c-border">
         <button
           onClick={onClose}
-          className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          className="p-2 rounded-lg text-c-text-secondary hover:text-c-text-secondary dark:text-c-text-muted dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
         >
           <ChevronLeft size={16} />
         </button>
-        <Calendar size={16} className="text-emerald-500" />
-        <h2 className="text-sm font-bold text-slate-800 dark:text-white">
+        <Calendar size={16} className="text-c-success" />
+        <h2 className="text-sm font-bold text-c-text dark:text-c-text">
           {isPl ? 'Mapa ciepła aktywności' : 'Activity Heatmap'}
         </h2>
-        <span className="text-[10px] text-slate-600 ml-auto">
+        <span className="text-[10px] text-c-text-secondary ml-auto">
           {totalActivity} {isPl ? 'akcji w 30 dni' : 'actions in 30 days'}
         </span>
       </div>
@@ -109,7 +109,7 @@ export const TimeHeatmap: React.FC<TimeHeatmapProps> = ({ open, onClose, ideaId 
           <div className="mb-6">
             <div className="flex gap-1 mb-2">
               {weekDays.map((d) => (
-                <div key={d} className="w-8 text-center text-[8px] text-slate-600 font-bold">
+                <div key={d} className="w-8 text-center text-[8px] text-c-text-secondary font-bold">
                   {d}
                 </div>
               ))}
@@ -118,7 +118,7 @@ export const TimeHeatmap: React.FC<TimeHeatmapProps> = ({ open, onClose, ideaId 
               {days.map((day) => (
                 <div
                   key={day.date}
-                  className={`w-8 h-8 rounded-md ${INTENSITY_COLORS[day.intensity]} flex items-center justify-center text-[8px] font-medium transition-colors cursor-default ${day.count > 0 ? 'text-slate-700 dark:text-slate-200' : 'text-slate-600 dark:text-slate-400'}`}
+                  className={`w-8 h-8 rounded-md ${INTENSITY_COLORS[day.intensity]} flex items-center justify-center text-[8px] font-medium transition-colors cursor-default ${day.count > 0 ? 'text-c-text-secondary dark:text-c-text' : 'text-c-text-secondary dark:text-c-text-muted'}`}
                   title={`${day.date}: ${day.count} ${isPl ? 'akcji' : 'actions'}`}
                 >
                   {day.dayLabel}
@@ -129,17 +129,17 @@ export const TimeHeatmap: React.FC<TimeHeatmapProps> = ({ open, onClose, ideaId 
 
           {/* Legend */}
           <div className="flex items-center gap-2 mb-6">
-            <span className="text-[9px] text-slate-600">{isPl ? 'Mniej' : 'Less'}</span>
+            <span className="text-[9px] text-c-text-secondary">{isPl ? 'Mniej' : 'Less'}</span>
             {INTENSITY_COLORS.map((c, i) => (
               <div key={i} className={`w-4 h-4 rounded-sm ${c}`} />
             ))}
-            <span className="text-[9px] text-slate-600">{isPl ? 'Więcej' : 'More'}</span>
+            <span className="text-[9px] text-c-text-secondary">{isPl ? 'Więcej' : 'More'}</span>
           </div>
 
           {/* Activity type breakdown */}
           {Object.keys(typeCounts).length > 0 && (
-            <div className="pt-4 border-t border-slate-200/40 dark:border-navy-700/40">
-              <h3 className="text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-3">
+            <div className="pt-4 border-t border-c-border-subtle dark:border-c-border">
+              <h3 className="text-[11px] font-bold text-c-text-secondary dark:text-c-text-muted mb-3">
                 {isPl ? 'Podział wg typu' : 'Breakdown by type'}
               </h3>
               <div className="grid grid-cols-3 gap-2">
@@ -148,12 +148,12 @@ export const TimeHeatmap: React.FC<TimeHeatmapProps> = ({ open, onClose, ideaId 
                   .map(([type, count]) => (
                     <div
                       key={type}
-                      className="p-2 rounded-lg bg-slate-50/50 dark:bg-navy-950/20 border border-slate-200/30 dark:border-navy-700/30"
+                      className="p-2 rounded-lg bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border"
                     >
-                      <div className="text-[10px] font-medium text-slate-600 dark:text-slate-300 capitalize">
+                      <div className="text-[10px] font-medium text-c-text-secondary dark:text-c-text-muted capitalize">
                         {type.replace(/_/g, ' ')}
                       </div>
-                      <div className="text-[14px] font-bold text-slate-700 dark:text-slate-200">
+                      <div className="text-[14px] font-bold text-c-text-secondary dark:text-c-text">
                         {count}
                       </div>
                     </div>

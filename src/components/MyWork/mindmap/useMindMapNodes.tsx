@@ -467,7 +467,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
                   'button',
                   {
                     className:
-                      'ml-2 px-2 py-0.5 rounded bg-danger-600 text-white text-xs font-medium hover:bg-danger-700',
+                      'ml-2 px-2 py-0.5 rounded bg-c-danger text-c-text text-xs font-medium hover:bg-c-danger',
                     onClick: () => {
                       toast.dismiss(t.id);
                       deleteSelected({ confirmed: true });
@@ -479,7 +479,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
                   'button',
                   {
                     className:
-                      'px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-xs font-medium hover:bg-slate-300',
+                      'px-2 py-0.5 rounded bg-c-surface-raised dark:bg-c-surface text-xs font-medium hover:bg-c-surface-raised',
                     onClick: () => toast.dismiss(t.id),
                   },
                   isPolish ? 'Anuluj' : 'Cancel'

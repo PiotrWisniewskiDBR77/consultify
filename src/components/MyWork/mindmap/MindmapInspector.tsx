@@ -17,15 +17,16 @@ export interface MindmapInspectorProps {
 
 const BRANCH_STYLES = ['curved', 'straight', 'step'] as const;
 const FONT_SIZES = [10, 11, 12, 14, 16] as const;
+// Node text-color swatches = DATA (categorical). Canonical identity palette.
 const NODE_COLOR_PALETTE = [
-  '#6366f1',
-  '#3b82f6',
-  '#10b981',
-  '#f59e0b',
-  '#f43f5e',
-  '#ec4899',
-  '#6366f1',
-  '#64748b',
+  'var(--c-tag-2)',
+  'var(--c-tag-1)',
+  'var(--c-success)',
+  'var(--c-warning)',
+  'var(--c-danger)',
+  'var(--c-tag-4)',
+  'var(--c-tag-3)',
+  'var(--c-tag-8)',
 ];
 
 const STRUCTURES = [
@@ -84,16 +85,16 @@ const THEMES = [
 
 const TAB_BTN =
   'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors';
-const TAB_ACTIVE = 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm';
+const TAB_ACTIVE = 'bg-c-surface text-c-text dark:bg-c-surface-raised dark:text-c-text shadow-sm';
 const TAB_INACTIVE =
-  'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04]';
+  'text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised';
 
 const CTRL_ROW = 'flex items-center gap-2';
-const CTRL_LABEL = 'text-[11px] text-slate-500 dark:text-slate-400 w-24 shrink-0';
+const CTRL_LABEL = 'text-[11px] text-c-text-secondary dark:text-c-text-muted w-24 shrink-0';
 const PILL_BTN =
-  'h-7 px-2.5 rounded-lg text-[10px] font-medium bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors';
+  'h-7 px-2.5 rounded-lg text-[10px] font-medium bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors';
 const PILL_ACTIVE =
-  'h-7 px-2.5 rounded-lg text-[10px] font-semibold bg-slate-200/70 dark:bg-navy-800 text-slate-900 dark:text-slate-100 ring-1 ring-slate-300/40 dark:ring-navy-700';
+  'h-7 px-2.5 rounded-lg text-[10px] font-semibold bg-c-surface-raised dark:bg-c-surface text-c-text dark:text-c-text ring-1 ring-c-border dark:ring-c-border';
 
 export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
   selectedNodeId,
@@ -122,7 +123,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
   return (
     <div className="space-y-3">
       {/* Tab bar */}
-      <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-50 dark:bg-white/[0.02]">
+      <div className="flex items-center gap-1 p-1 rounded-xl bg-c-surface-raised dark:bg-c-surface-raised">
         {[
           { id: 'style' as const, icon: Brush, labelEn: 'Style', labelPl: 'Styl' },
           { id: 'layout' as const, icon: Layout, labelEn: 'Layout', labelPl: 'Układ' },
@@ -143,7 +144,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
       {tab === 'style' && (
         <div className="space-y-3">
           {!selectedNodeId ? (
-            <div className="text-[11px] text-slate-600 dark:text-slate-500 italic py-4 text-center">
+            <div className="text-[11px] text-c-text-secondary dark:text-c-text-secondary italic py-4 text-center">
               {isPl ? 'Zaznacz węzeł, aby edytować styl' : 'Select a node to edit its style'}
             </div>
           ) : (
@@ -176,9 +177,9 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
                   onChange={(e) =>
                     patchNode({ style: { ...nodeStyle, width: Number(e.target.value) } })
                   }
-                  className="flex-1 h-1.5 accent-slate-500"
+                  className="flex-1 h-1.5 accent-c-accent"
                 />
-                <span className="text-[10px] text-slate-600 w-8 text-right">
+                <span className="text-[10px] text-c-text-secondary w-8 text-right">
                   {nodeStyle.width || 200}
                 </span>
               </div>
@@ -220,8 +221,8 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
                       onClick={() => patchNode({ style: { ...nodeStyle, color: c } })}
                       className={`w-5 h-5 rounded-full border-2 shadow-sm hover:scale-110 transition-transform ${
                         nodeStyle.color === c
-                          ? 'border-primary-500 ring-2 ring-primary-500/30'
-                          : 'border-white dark:border-navy-800'
+                          ? 'border-c-accent ring-2 ring-c-accent'
+                          : 'border-c-border dark:border-c-border'
                       }`}
                       style={{ backgroundColor: c }}
                     />
@@ -241,9 +242,9 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
                   onChange={(e) =>
                     patchNode({ style: { ...nodeStyle, fillOpacity: Number(e.target.value) } })
                   }
-                  className="flex-1 h-1.5 accent-slate-500"
+                  className="flex-1 h-1.5 accent-c-accent"
                 />
-                <span className="text-[10px] text-slate-600 w-8 text-right">
+                <span className="text-[10px] text-c-text-secondary w-8 text-right">
                   {nodeStyle.fillOpacity ?? 100}%
                 </span>
               </div>
@@ -257,7 +258,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
         <div className="space-y-3">
           {/* Structure type */}
           <div>
-            <div className="text-[10px] font-medium text-slate-600 dark:text-slate-500 mb-1.5 uppercase tracking-wide">
+            <div className="text-[10px] font-medium text-c-text-secondary dark:text-c-text-secondary mb-1.5 uppercase tracking-wide">
               {isPl ? 'Typ struktury' : 'Structure type'}
             </div>
             <div className="flex gap-1.5 flex-wrap">
@@ -275,7 +276,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
 
           {/* Layout mode */}
           <div>
-            <div className="text-[10px] font-medium text-slate-600 dark:text-slate-500 mb-1.5 uppercase tracking-wide">
+            <div className="text-[10px] font-medium text-c-text-secondary dark:text-c-text-secondary mb-1.5 uppercase tracking-wide">
               {isPl ? 'Tryb układu' : 'Layout mode'}
             </div>
             <div className="flex gap-1.5">
@@ -297,9 +298,9 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
               type="checkbox"
               checked={autoLayout}
               onChange={(e) => setAutoLayout(e.target.checked)}
-              className="w-3.5 h-3.5 rounded accent-slate-500"
+              className="w-3.5 h-3.5 rounded accent-c-accent"
             />
-            <span className="text-[11px] text-slate-600 dark:text-slate-300">
+            <span className="text-[11px] text-c-text-secondary dark:text-c-text-muted">
               {isPl ? 'Auto-layout przy zmianach' : 'Auto-layout on changes'}
             </span>
           </label>
@@ -312,7 +313,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
           {THEMES.map((theme) => (
             <div
               key={theme.id}
-              className="flex items-center gap-3 p-2.5 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/50 dark:bg-white/[0.02] hover:bg-slate-100/80 dark:hover:bg-white/[0.04] transition-colors"
+              className="flex items-center gap-3 p-2.5 rounded-xl border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
             >
               <div className="flex gap-0.5 shrink-0">
                 {theme.colors.map((c, i) => (
@@ -323,12 +324,12 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
                   />
                 ))}
               </div>
-              <span className="flex-1 text-[11px] font-medium text-slate-700 dark:text-slate-300">
+              <span className="flex-1 text-[11px] font-medium text-c-text-secondary dark:text-c-text-muted">
                 {isPl ? theme.labelPl : theme.labelEn}
               </span>
               <button
                 onClick={() => onApplyTheme(theme.id)}
-                className="px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-slate-200/70 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-300/70 dark:hover:bg-navy-700 transition-colors"
+                className="px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-c-surface-raised dark:bg-c-surface text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
               >
                 {isPl ? 'Zastosuj' : 'Apply'}
               </button>

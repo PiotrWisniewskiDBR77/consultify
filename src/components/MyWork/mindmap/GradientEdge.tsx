@@ -7,23 +7,26 @@ import { getBezierPath } from '@reactflow/core';
 import React from 'react';
 import { type EdgeProps } from 'reactflow';
 
+// Branch edge colors = DATA (categorical). Mapped onto the canonical identity
+// palette (--c-tag-1..12) + status tokens so edges stay on-brand and theme-aware.
+// CSS-var strings resolve in SVG stroke / gradient stop-color attributes.
 const BRANCH_EDGE_COLORS: Record<string, string> = {
-  problem: '#fb7185',
-  goal: '#34d399',
-  options: '#fbbf24',
-  evidence: '#38bdf8',
-  risks: '#a78bfa',
-  experiments: '#22d3ee',
-  plan: '#60a5fa',
-  strengths: '#34d399',
-  weaknesses: '#fb7185',
-  opportunities: '#fbbf24',
-  threats: '#a78bfa',
-  uncategorized: '#94a3b8',
+  problem: 'var(--c-danger)',
+  goal: 'var(--c-success)',
+  options: 'var(--c-warning)',
+  evidence: 'var(--c-tag-1)',
+  risks: 'var(--c-tag-3)',
+  experiments: 'var(--c-tag-6)',
+  plan: 'var(--c-tag-10)',
+  strengths: 'var(--c-success)',
+  weaknesses: 'var(--c-danger)',
+  opportunities: 'var(--c-warning)',
+  threats: 'var(--c-tag-3)',
+  uncategorized: 'var(--c-tag-8)',
 };
 
 function getColor(branchKey?: string): string {
-  return BRANCH_EDGE_COLORS[branchKey || ''] || '#94a3b8';
+  return BRANCH_EDGE_COLORS[branchKey || ''] || 'var(--c-tag-8)';
 }
 
 export const GradientEdge: React.FC<EdgeProps> = ({

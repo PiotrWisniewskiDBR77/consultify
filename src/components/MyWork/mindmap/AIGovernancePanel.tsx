@@ -121,25 +121,25 @@ const STATUS_CONFIG: Record<
   draft: {
     labelPl: 'Szkic',
     labelEn: 'Draft',
-    color: 'text-slate-500 bg-slate-100 dark:bg-slate-800',
+    color: 'text-c-text-secondary bg-c-surface-raised dark:bg-c-surface',
     icon: FileCheck,
   },
   in_review: {
     labelPl: 'W przeglądzie',
     labelEn: 'In Review',
-    color: 'text-amber-600 bg-amber-100 dark:bg-amber-900/30',
+    color: 'text-c-warning bg-c-surface-raised dark:bg-c-surface',
     icon: Eye,
   },
   approved: {
     labelPl: 'Zatwierdzony',
     labelEn: 'Approved',
-    color: 'text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30',
+    color: 'text-c-success bg-c-surface-raised dark:bg-c-surface',
     icon: ShieldCheck,
   },
   changes_requested: {
     labelPl: 'Zmiany wymagane',
     labelEn: 'Changes Requested',
-    color: 'text-danger-600 bg-danger-100 dark:bg-danger-900/30',
+    color: 'text-c-danger bg-c-surface-raised dark:bg-c-surface',
     icon: AlertCircle,
   },
 };
@@ -262,8 +262,8 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
       title={isPl ? 'Governance AI' : 'AI Governance'}
       subtitle={isPl ? 'Przegląd i kontrola' : 'Review & control'}
       icon={
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-sm shadow-primary-500/20">
-          <Shield size={13} className="text-white" />
+        <div className="w-7 h-7 rounded-lg bg-c-surface-raised flex items-center justify-center shadow-sm ">
+          <Shield size={13} className="text-c-text" />
         </div>
       }
       onClose={onClose}
@@ -271,15 +271,15 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
       <div className="px-3 py-3 flex-1 overflow-auto space-y-3">
         {/* Unreviewed changes alert */}
         {unreviewed && (
-          <div className="rounded-xl border border-amber-300/50 dark:border-amber-700/40 bg-amber-50/60 dark:bg-amber-900/15 p-2.5 flex items-start gap-2">
+          <div className="rounded-xl border border-c-warning dark:border-c-warning bg-c-surface-raised dark:bg-c-surface p-2.5 flex items-start gap-2">
             <div className="mt-0.5">
-              <AlertCircle size={14} className="text-amber-500" />
+              <AlertCircle size={14} className="text-c-warning" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-[11px] font-semibold text-amber-700 dark:text-amber-300">
+              <div className="text-[11px] font-semibold text-c-warning dark:text-c-warning">
                 {isPl ? 'Niesprawdzone zmiany AI' : 'Unreviewed AI changes'}
               </div>
-              <div className="text-[10px] text-amber-600/80 dark:text-amber-400/70 mt-0.5">
+              <div className="text-[10px] text-c-warning dark:text-c-warning mt-0.5">
                 {isPl
                   ? 'AI dokonało zmian, które nie zostały jeszcze zrecenzowane.'
                   : 'AI made changes that have not been reviewed yet.'}
@@ -297,35 +297,35 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
             {isPl ? statusCfg.labelPl : statusCfg.labelEn}
           </div>
           {governance.reviewedBy && (
-            <span className="text-[9px] text-slate-600 dark:text-slate-500">
+            <span className="text-[9px] text-c-text-secondary dark:text-c-text-secondary">
               {isPl ? 'przez' : 'by'} {governance.reviewedBy}
             </span>
           )}
         </div>
 
         {/* ── AI Activity Timeline ─────────────────────────────────── */}
-        <div className="rounded-xl border border-slate-200/40 dark:border-navy-700/30 bg-slate-50/20 dark:bg-navy-900/10 p-2.5">
+        <div className="rounded-xl border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface p-2.5">
           <button
             type="button"
             onClick={() => toggleSection('timeline')}
             className="flex items-center gap-1.5 w-full text-left"
           >
-            <Activity size={12} className="text-slate-500" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 flex-1">
+            <Activity size={12} className="text-c-text-secondary" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-c-text-secondary dark:text-c-text-muted flex-1">
               {isPl ? 'Oś czasu AI' : 'AI Activity Timeline'}
             </span>
-            <span className="text-[9px] text-slate-600 mr-1">{sortedLog.length}</span>
+            <span className="text-[9px] text-c-text-secondary mr-1">{sortedLog.length}</span>
             {expandedSections.has('timeline') ? (
-              <ChevronUp size={12} className="text-slate-400" />
+              <ChevronUp size={12} className="text-c-text-muted" />
             ) : (
-              <ChevronDown size={12} className="text-slate-400" />
+              <ChevronDown size={12} className="text-c-text-muted" />
             )}
           </button>
 
           {expandedSections.has('timeline') && (
             <div className="mt-2 space-y-1.5">
               {sortedLog.length === 0 ? (
-                <div className="text-[10px] text-slate-600 dark:text-slate-500 text-center py-3">
+                <div className="text-[10px] text-c-text-secondary dark:text-c-text-secondary text-center py-3">
                   {isPl
                     ? 'Brak akcji AI — canvas jest w pełni ręczny'
                     : 'No AI actions — canvas is fully manual'}
@@ -340,59 +340,59 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                   return (
                     <div
                       key={entry.id}
-                      className="rounded-lg border border-slate-200/30 dark:border-navy-700/20 bg-white/50 dark:bg-white/[0.02] overflow-hidden"
+                      className="rounded-lg border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface-raised overflow-hidden"
                     >
                       <button
                         type="button"
                         onClick={() => setExpandedEntryId(isExpanded ? null : entry.id)}
-                        className="w-full flex items-center gap-2 px-2.5 py-2 text-left hover:bg-slate-50/60 dark:hover:bg-navy-800/40 transition-colors"
+                        className="w-full flex items-center gap-2 px-2.5 py-2 text-left hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
                       >
-                        <TeresaMark size={12} className="text-slate-500 shrink-0" />
+                        <TeresaMark size={12} className="text-c-text-secondary shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <div className="text-[11px] font-medium text-slate-700 dark:text-slate-300 truncate">
+                          <div className="text-[11px] font-medium text-c-text-secondary dark:text-c-text-muted truncate">
                             {isPl ? genLabel.pl : genLabel.en}
                           </div>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[9px] text-slate-600">
+                            <span className="text-[9px] text-c-text-secondary">
                               <Clock size={8} className="inline mr-0.5 -mt-px" />
                               {formatTimestamp(entry.acceptedAt, !!isPl)}
                             </span>
-                            <span className="text-[9px] text-slate-500/70">
+                            <span className="text-[9px] text-c-text-secondary">
                               {proposalCount} {isPl ? 'propozycji' : 'proposals'}
                             </span>
                           </div>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
-                          <CheckCircle2 size={10} className="text-emerald-500" />
+                          <CheckCircle2 size={10} className="text-c-success" />
                           {isExpanded ? (
-                            <ChevronUp size={10} className="text-slate-600" />
+                            <ChevronUp size={10} className="text-c-text-secondary" />
                           ) : (
-                            <ChevronDown size={10} className="text-slate-600" />
+                            <ChevronDown size={10} className="text-c-text-secondary" />
                           )}
                         </div>
                       </button>
 
                       {isExpanded && (
-                        <div className="px-2.5 pb-2.5 space-y-1.5 border-t border-slate-200/20 dark:border-navy-700/15">
+                        <div className="px-2.5 pb-2.5 space-y-1.5 border-t border-c-border-subtle dark:border-c-border">
                           <div className="pt-2">
-                            <div className="text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-1">
+                            <div className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-1">
                               {isPl ? 'Narzędzie' : 'Tool'}
                             </div>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300">
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-c-surface-raised dark:bg-c-surface text-c-text-secondary dark:text-c-text-muted">
                               {entry.tool}
                             </span>
                           </div>
 
                           {entry.rationale?.length > 0 && (
                             <div>
-                              <div className="text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-1">
+                              <div className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-1">
                                 {isPl ? 'Uzasadnienie' : 'Rationale'}
                               </div>
                               <div className="space-y-1">
                                 {entry.rationale.map((r, i) => (
                                   <div
                                     key={i}
-                                    className="text-[10px] text-slate-600 dark:text-slate-300 bg-slate-50/50 dark:bg-navy-900/30 rounded-lg p-1.5"
+                                    className="text-[10px] text-c-text-secondary dark:text-c-text-muted bg-c-surface-raised dark:bg-c-surface rounded-lg p-1.5"
                                   >
                                     {r}
                                   </div>
@@ -403,14 +403,14 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
 
                           {entry.citations?.length > 0 && (
                             <div>
-                              <div className="text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-1">
+                              <div className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-1">
                                 {isPl ? 'Cytowania' : 'Citations'}
                               </div>
                               <div className="flex flex-wrap gap-1">
                                 {entry.citations.map((c, i) => (
                                   <span
                                     key={i}
-                                    className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300"
+                                    className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-full bg-c-surface-raised dark:bg-c-surface-raised text-c-info dark:text-c-info"
                                   >
                                     {c.kind && (
                                       <span className="font-bold uppercase text-[7px] opacity-60">
@@ -424,7 +424,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                             </div>
                           )}
 
-                          <div className="text-[9px] text-slate-600">
+                          <div className="text-[9px] text-c-text-secondary">
                             IDs: {entry.proposalIds?.join(', ')}
                           </div>
                         </div>
@@ -438,20 +438,20 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
         </div>
 
         {/* ── Review Controls ──────────────────────────────────────── */}
-        <div className="rounded-xl border border-emerald-200/40 dark:border-emerald-800/30 bg-emerald-50/20 dark:bg-emerald-900/10 p-2.5">
+        <div className="rounded-xl border border-c-success dark:border-c-success bg-c-surface-raised dark:bg-c-surface p-2.5">
           <button
             type="button"
             onClick={() => toggleSection('review')}
             className="flex items-center gap-1.5 w-full text-left"
           >
-            <ShieldCheck size={12} className="text-emerald-500" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex-1">
+            <ShieldCheck size={12} className="text-c-success" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-c-success dark:text-c-success flex-1">
               {isPl ? 'Kontrola review' : 'Review Controls'}
             </span>
             {expandedSections.has('review') ? (
-              <ChevronUp size={12} className="text-emerald-400" />
+              <ChevronUp size={12} className="text-c-success" />
             ) : (
-              <ChevronDown size={12} className="text-emerald-400" />
+              <ChevronDown size={12} className="text-c-success" />
             )}
           </button>
 
@@ -459,7 +459,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
             <div className="mt-2 space-y-2">
               {/* Review note */}
               <div>
-                <label className="text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-1 block">
+                <label className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-1 block">
                   {isPl ? 'Notatka review' : 'Review note'}
                 </label>
                 <textarea
@@ -469,7 +469,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                     isPl ? 'Opcjonalny komentarz do review...' : 'Optional review comment...'
                   }
                   rows={2}
-                  className="w-full text-[10px] px-2.5 py-1.5 rounded-lg border border-emerald-200/40 dark:border-emerald-800/30 bg-white/50 dark:bg-white/[0.02] text-slate-700 dark:text-slate-300 placeholder:text-slate-400/50 outline-none focus:ring-1 focus:ring-emerald-400/40 resize-none"
+                  className="w-full text-[10px] px-2.5 py-1.5 rounded-lg border border-c-success dark:border-c-success bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text-muted placeholder:text-c-text-muted outline-none focus:ring-1 focus:ring-c-success resize-none"
                 />
               </div>
 
@@ -495,7 +495,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                       className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[10px] font-semibold transition-all ${
                         isActive
                           ? `${cfg.color} ring-1 ring-current/20`
-                          : 'text-slate-500 dark:text-slate-400 bg-white/40 dark:bg-white/[0.03] hover:bg-slate-50 dark:hover:bg-white/[0.05] border border-slate-200/30 dark:border-navy-700/30'
+                          : 'text-c-text-secondary dark:text-c-text-muted bg-c-surface-raised dark:bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-c-surface-raised border border-c-border-subtle dark:border-c-border'
                       }`}
                     >
                       <Icon size={11} />
@@ -507,7 +507,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
 
               {/* Last review info */}
               {governance.lastReviewedAt && (
-                <div className="text-[9px] text-slate-600 dark:text-slate-500 flex items-center gap-1">
+                <div className="text-[9px] text-c-text-secondary dark:text-c-text-secondary flex items-center gap-1">
                   <Clock size={9} />
                   {isPl ? 'Ostatni review' : 'Last review'}:{' '}
                   {formatTimestamp(governance.lastReviewedAt, !!isPl)}
@@ -515,8 +515,8 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                 </div>
               )}
               {governance.reviewNote && (
-                <div className="text-[10px] text-slate-500 dark:text-slate-400 bg-white/40 dark:bg-white/[0.02] rounded-lg p-2 border border-slate-200/20 dark:border-navy-700/20">
-                  <MessageSquare size={9} className="inline mr-1 text-slate-600" />
+                <div className="text-[10px] text-c-text-secondary dark:text-c-text-muted bg-c-surface-raised dark:bg-c-surface-raised rounded-lg p-2 border border-c-border-subtle dark:border-c-border">
+                  <MessageSquare size={9} className="inline mr-1 text-c-text-secondary" />
                   {governance.reviewNote}
                 </div>
               )}
@@ -525,20 +525,20 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
         </div>
 
         {/* ── AI Statistics ─────────────────────────────────────────── */}
-        <div className="rounded-xl border border-blue-200/40 dark:border-blue-800/30 bg-blue-50/20 dark:bg-blue-900/10 p-2.5">
+        <div className="rounded-xl border border-c-info dark:border-c-info bg-c-surface-raised dark:bg-c-surface p-2.5">
           <button
             type="button"
             onClick={() => toggleSection('stats')}
             className="flex items-center gap-1.5 w-full text-left"
           >
-            <BarChart3 size={12} className="text-blue-500" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 flex-1">
+            <BarChart3 size={12} className="text-c-info" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-c-info dark:text-c-info flex-1">
               {isPl ? 'Statystyki AI' : 'AI Statistics'}
             </span>
             {expandedSections.has('stats') ? (
-              <ChevronUp size={12} className="text-blue-400" />
+              <ChevronUp size={12} className="text-c-info" />
             ) : (
-              <ChevronDown size={12} className="text-blue-400" />
+              <ChevronDown size={12} className="text-c-info" />
             )}
           </button>
 
@@ -546,35 +546,35 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
             <div className="mt-2 space-y-2">
               {/* Stat cards */}
               <div className="grid grid-cols-2 gap-1.5">
-                <div className="rounded-lg bg-white/50 dark:bg-white/[0.03] p-2 border border-blue-200/20 dark:border-blue-800/15">
-                  <div className="text-[16px] font-bold text-slate-800 dark:text-slate-200">
+                <div className="rounded-lg bg-c-surface-raised dark:bg-c-surface-raised p-2 border border-c-info dark:border-c-info">
+                  <div className="text-[16px] font-bold text-c-text dark:text-c-text">
                     {stats.totalActions}
                   </div>
-                  <div className="text-[9px] text-slate-600">
+                  <div className="text-[9px] text-c-text-secondary">
                     {isPl ? 'Akcji AI' : 'AI actions'}
                   </div>
                 </div>
-                <div className="rounded-lg bg-white/50 dark:bg-white/[0.03] p-2 border border-blue-200/20 dark:border-blue-800/15">
-                  <div className="text-[16px] font-bold text-slate-800 dark:text-slate-200">
+                <div className="rounded-lg bg-c-surface-raised dark:bg-c-surface-raised p-2 border border-c-info dark:border-c-info">
+                  <div className="text-[16px] font-bold text-c-text dark:text-c-text">
                     {stats.totalProposals}
                   </div>
-                  <div className="text-[9px] text-slate-600">
+                  <div className="text-[9px] text-c-text-secondary">
                     {isPl ? 'Propozycji' : 'Proposals'}
                   </div>
                 </div>
               </div>
 
               {/* AI vs Manual nodes */}
-              <div className="rounded-lg bg-white/50 dark:bg-white/[0.03] p-2 border border-blue-200/20 dark:border-blue-800/15">
-                <div className="text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+              <div className="rounded-lg bg-c-surface-raised dark:bg-c-surface-raised p-2 border border-c-info dark:border-c-info">
+                <div className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-1.5">
                   {isPl ? 'Węzły: AI vs ręczne' : 'Nodes: AI vs manual'}
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="flex-1">
-                    <div className="h-2 rounded-full bg-slate-200 dark:bg-navy-800 overflow-hidden">
+                    <div className="h-2 rounded-full bg-c-surface-raised dark:bg-c-surface overflow-hidden">
                       {stats.totalNodes > 0 && (
                         <div
-                          className="h-full rounded-full bg-gradient-to-r from-slate-500 to-slate-600"
+                          className="h-full rounded-full bg-c-surface-raised  "
                           style={{
                             width: `${Math.round((stats.nodesFromAI / stats.totalNodes) * 100)}%`,
                           }}
@@ -582,8 +582,8 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                       )}
                     </div>
                   </div>
-                  <div className="text-[10px] text-slate-500 dark:text-slate-400 shrink-0">
-                    <span className="font-semibold text-slate-700 dark:text-slate-200">
+                  <div className="text-[10px] text-c-text-secondary dark:text-c-text-muted shrink-0">
+                    <span className="font-semibold text-c-text-secondary dark:text-c-text">
                       {stats.nodesFromAI}
                     </span>
                     {' / '}
@@ -591,11 +591,11 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                   </div>
                 </div>
                 <div className="flex items-center gap-3 mt-1">
-                  <span className="text-[9px] text-slate-500 flex items-center gap-1">
+                  <span className="text-[9px] text-c-text-secondary flex items-center gap-1">
                     <TeresaMark size={8} />
                     {isPl ? 'AI' : 'AI'}: {stats.nodesFromAI}
                   </span>
-                  <span className="text-[9px] text-slate-600 flex items-center gap-1">
+                  <span className="text-[9px] text-c-text-secondary flex items-center gap-1">
                     <Sparkles size={8} />
                     {isPl ? 'Ręczne' : 'Manual'}: {stats.manualNodes}
                   </span>
@@ -604,18 +604,18 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
 
               {/* Most used generator */}
               {stats.mostUsedGenerator && (
-                <div className="rounded-lg bg-white/50 dark:bg-white/[0.03] p-2 border border-blue-200/20 dark:border-blue-800/15">
-                  <div className="text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-1">
+                <div className="rounded-lg bg-c-surface-raised dark:bg-c-surface-raised p-2 border border-c-info dark:border-c-info">
+                  <div className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-1">
                     {isPl ? 'Najczęściej używany generator' : 'Most used generator'}
                   </div>
-                  <div className="text-[11px] font-medium text-slate-700 dark:text-slate-300">
+                  <div className="text-[11px] font-medium text-c-text-secondary dark:text-c-text-muted">
                     {isPl
                       ? (GENERATOR_LABELS[stats.mostUsedGenerator.type] || GENERATOR_LABELS.unknown)
                           .pl
                       : (GENERATOR_LABELS[stats.mostUsedGenerator.type] || GENERATOR_LABELS.unknown)
                           .en}
                   </div>
-                  <div className="text-[9px] text-slate-600 mt-0.5">
+                  <div className="text-[9px] text-c-text-secondary mt-0.5">
                     {stats.mostUsedGenerator.count}× {isPl ? 'użyć' : 'uses'}
                   </div>
                 </div>
@@ -623,7 +623,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
 
               {/* Last AI action */}
               {stats.lastAiAction && (
-                <div className="text-[9px] text-slate-600 dark:text-slate-500 flex items-center gap-1">
+                <div className="text-[9px] text-c-text-secondary dark:text-c-text-secondary flex items-center gap-1">
                   <Clock size={9} />
                   {isPl ? 'Ostatnia akcja AI' : 'Last AI action'}:{' '}
                   {formatTimestamp(stats.lastAiAction, !!isPl)}
@@ -669,8 +669,8 @@ export const AIGovernanceBadge: React.FC<AIGovernanceBadgeProps> = ({ mapExtensi
       onClick={onClick}
       className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-semibold transition-all hover:scale-[1.02] ${
         unreviewed
-          ? 'bg-amber-100/80 dark:bg-amber-900/25 text-amber-700 dark:text-amber-300 border border-amber-300/50 dark:border-amber-700/40 animate-pulse'
-          : 'bg-white/80 dark:bg-navy-900/60 text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-navy-700/40'
+          ? 'bg-c-surface-raised dark:bg-c-surface-raised text-c-warning dark:text-c-warning border border-c-warning dark:border-c-warning animate-pulse'
+          : 'bg-c-surface-raised dark:bg-c-surface text-c-text-secondary dark:text-c-text-muted border border-c-border-subtle dark:border-c-border'
       }`}
       title={
         isPl
@@ -678,8 +678,8 @@ export const AIGovernanceBadge: React.FC<AIGovernanceBadgeProps> = ({ mapExtensi
           : `AI Governance: ${statusCfg.labelEn}${unreviewed ? ' — unreviewed changes' : ''}`
       }
     >
-      <Shield size={11} className={unreviewed ? 'text-amber-500' : 'text-slate-500'} />
-      {unreviewed && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />}
+      <Shield size={11} className={unreviewed ? 'text-c-warning' : 'text-c-text-secondary'} />
+      {unreviewed && <span className="w-1.5 h-1.5 rounded-full bg-c-warning animate-pulse" />}
       <span>{aiCount}</span>
     </button>
   );
