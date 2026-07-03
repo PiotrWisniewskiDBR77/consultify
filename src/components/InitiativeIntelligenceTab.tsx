@@ -44,7 +44,7 @@ export const InitiativeIntelligenceTab: React.FC<Props> = ({ initiative, onChang
       {/* Left Column: Retrospective */}
       <div className="space-y-6 overflow-y-auto pr-2">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-white font-bold flex items-center gap-2">
+          <h3 className="text-c-text font-bold flex items-center gap-2">
             <BookOpen size={18} className="text-primary-400" /> {t('intelligence.title')}
           </h3>
           <Button
@@ -60,36 +60,36 @@ export const InitiativeIntelligenceTab: React.FC<Props> = ({ initiative, onChang
         </div>
 
         <div className="space-y-4">
-          <div className="bg-navy-950/50 rounded-xl p-4 border border-white/5 group focus-within:border-primary-500/50 transition-colors">
+          <div className="bg-c-surface-raised rounded-xl p-4 border border-c-border group focus-within:border-primary-500/50 transition-colors">
             <label className="flex items-center gap-2 text-sm font-bold text-green-400 mb-2">
               <Lightbulb size={16} /> {t('intelligence.learnedTitle')}
             </label>
             <textarea
-              className="w-full bg-transparent text-slate-600 text-sm focus:outline-none resize-none min-h-[100px]"
+              className="w-full bg-transparent text-c-text text-sm focus:outline-none resize-none min-h-[100px]"
               placeholder={t('intelligence.learnedPlaceholder')}
               value={initiative.lessonsLearned || ''}
               onChange={(e) => onChange({ lessonsLearned: e.target.value })}
             />
           </div>
 
-          <div className="bg-navy-950/50 rounded-xl p-4 border border-white/5 group focus-within:border-amber-500/50 transition-colors">
+          <div className="bg-c-surface-raised rounded-xl p-4 border border-c-border group focus-within:border-amber-500/50 transition-colors">
             <label className="flex items-center gap-2 text-sm font-bold text-amber-400 mb-2">
               <AlertOctagon size={16} /> {t('intelligence.surprisedTitle')}
             </label>
             <textarea
-              className="w-full bg-transparent text-slate-600 text-sm focus:outline-none resize-none min-h-[100px]"
+              className="w-full bg-transparent text-c-text text-sm focus:outline-none resize-none min-h-[100px]"
               placeholder={t('intelligence.surprisedPlaceholder')}
               value={initiative.strategicSurprises || ''}
               onChange={(e) => onChange({ strategicSurprises: e.target.value })}
             />
           </div>
 
-          <div className="bg-navy-950/50 rounded-xl p-4 border border-white/5 group focus-within:border-danger-500/50 transition-colors">
+          <div className="bg-c-surface-raised rounded-xl p-4 border border-c-border group focus-within:border-danger-500/50 transition-colors">
             <label className="flex items-center gap-2 text-sm font-bold text-danger-400 mb-2">
               <GitBranch size={16} /> {t('intelligence.differentlyTitle')}
             </label>
             <textarea
-              className="w-full bg-transparent text-slate-600 text-sm focus:outline-none resize-none min-h-[100px]"
+              className="w-full bg-transparent text-c-text text-sm focus:outline-none resize-none min-h-[100px]"
               placeholder={t('intelligence.differentlyPlaceholder')}
               value={initiative.nextTimeAvoid || ''}
               onChange={(e) => onChange({ nextTimeAvoid: e.target.value })}
@@ -100,8 +100,8 @@ export const InitiativeIntelligenceTab: React.FC<Props> = ({ initiative, onChang
 
       {/* Right Column: Pattern Recognition */}
       <div className="space-y-6">
-        <div className="bg-navy-950 rounded-xl p-6 border border-white/5 h-full flex flex-col">
-          <h3 className="text-white font-bold flex items-center gap-2 mb-6">
+        <div className="bg-c-surface-raised rounded-xl p-6 border border-c-border h-full flex flex-col">
+          <h3 className="text-c-text font-bold flex items-center gap-2 mb-6">
             <Brain size={18} className="text-blue-400" /> {t('intelligence.patternsTitle')}
           </h3>
 
@@ -140,9 +140,9 @@ export const InitiativeIntelligenceTab: React.FC<Props> = ({ initiative, onChang
                   </h4>
                   <p className="text-xs text-slate-600 dark:text-slate-500 leading-relaxed">
                     {t('intelligence.knowledgeGraphSharing')}{' '}
-                    <span className="text-white font-bold">85%</span>{' '}
+                    <span className="text-c-text font-bold">85%</span>{' '}
                     {t('intelligence.knowledgeGraphSimilarity')}{' '}
-                    <span className="italic text-slate-600">Project Alpha (2024)</span>. Consider
+                    <span className="italic text-c-text-muted">Project Alpha (2024)</span>. Consider
                     reviewing their " stakeholder engagement plan".
                   </p>
                   <button className="mt-3 text-xs text-blue-400 hover:text-blue-300 underline">
