@@ -2657,6 +2657,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       style={{ touchAction: 'none' }}
       role="region"
       aria-label={isPolish ? 'Obszar roboczy mapy idei' : 'Idea map workspace'}
+      // Signals the global command palette to yield Cmd+K to this scoped palette.
+      data-local-command-palette="idea-map"
     >
       {/* Canvas area */}
       <div

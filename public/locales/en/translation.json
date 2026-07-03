@@ -15077,5 +15077,26 @@
       },
       "cost": "cost"
     }
+  },
+  "commandPalette": {
+    "placeholder": "Search commands, initiatives, tasks, notes…",
+    "searching": "Searching…",
+    "noResults": "No results found for \"{{query}}\"",
+    "category": {
+      "search": "Search results",
+      "recent": "Recent",
+      "navigation": "Navigation",
+      "action": "Actions",
+      "settings": "Settings"
+    },
+    "entity": {
+      "initiative": "Initiative",
+      "task": "Task",
+      "decision": "Decision",
+      "idea": "Idea",
+      "note": "Note",
+      "artifact": "Output",
+      "assessment": "Assessment"
+    }
   }
 }

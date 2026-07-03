@@ -16124,5 +16124,26 @@
       },
       "cost": "koszt"
     }
+  },
+  "commandPalette": {
+    "placeholder": "Szukaj poleceń, inicjatyw, zadań, notatek…",
+    "searching": "Szukam…",
+    "noResults": "Brak wyników dla „{{query}}”",
+    "category": {
+      "search": "Wyniki wyszukiwania",
+      "recent": "Ostatnie",
+      "navigation": "Nawigacja",
+      "action": "Akcje",
+      "settings": "Ustawienia"
+    },
+    "entity": {
+      "initiative": "Inicjatywa",
+      "task": "Zadanie",
+      "decision": "Decyzja",
+      "idea": "Pomysł",
+      "note": "Notatka",
+      "artifact": "Materiał",
+      "assessment": "Ocena"
+    }
   }
 }

@@ -236,6 +236,7 @@ import reportEnterpriseRoutes from './routes/report-enterprise.routes.js';
 import reportImportRoutes from './routes/report-import.routes.js';
 import reportInitiativesRoutes from './routes/report-initiatives.routes.js';
 import reportsRoutes from './routes/reports.routes.js';
+import globalSearchRoutes from './routes/search.routes.js';
 import researchRoutes from './routes/research.routes.js';
 import resourceManagementRoutes from './routes/resourceManagement.routes.js';
 import resultsEnterpriseRoutes from './routes/results-enterprise.routes.js';
@@ -475,6 +476,8 @@ export class ApiGateway {
       // Core routes
       app.use('/api/sessions', sessionsRoutes);
       app.use('/api/teams', teamsRoutes);
+      // Global cross-module search (HARVARD H6.12) — org-scoped Cmd+K backend.
+      app.use('/api/search', gatewayVerifyToken, globalSearchRoutes);
       // F2/F0/F4 — kandydaci + from-audit + portfolio-health. MUSZĄ być PRZED initiativesRoutes:
       // GET /candidates, GET /portfolio-health łapią się inaczej na GET /:id; POST /from-audit
       // na POST /:id (status-alias). Konkretne ścieżki przed parametrycznymi.
