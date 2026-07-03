@@ -184,7 +184,7 @@ export const TransformationScorecard: React.FC<Props> = ({ projectId, fetcher })
       {(data.decisions || []).length > 0 && (
         <div className="mt-4" data-testid="scorecard-decisions">
           <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-            Rekomendacje
+            Recommendations
           </p>
           <ul className="flex flex-col gap-1">
             {data.decisions.slice(0, 6).map((d) => (
