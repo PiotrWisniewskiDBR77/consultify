@@ -363,7 +363,7 @@ export const NotificationDropdown = () => {
                 className="text-xs text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/5"
                 title={isPolish ? 'Otwórz skrzynkę' : 'Open Inbox (Action Queue)'}
               >
-                <ArrowRight size={12} /> {isPolish ? 'Skrzynka' : 'Inbox'}
+                <ArrowRight size={14} /> {isPolish ? 'Skrzynka' : 'Inbox'}
               </button>
               <button
                 onClick={() => {
@@ -374,7 +374,7 @@ export const NotificationDropdown = () => {
                 className="text-xs text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/5"
                 title={isPolish ? 'Otwórz centrum powiadomień' : 'Open Notification Center'}
               >
-                <ArrowRight size={12} /> {isPolish ? 'Centrum' : 'Center'}
+                <ArrowRight size={14} /> {isPolish ? 'Centrum' : 'Center'}
               </button>
               {unreadCount > 0 && (
                 <button
@@ -382,7 +382,7 @@ export const NotificationDropdown = () => {
                   className="text-xs text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/5"
                   title={isPolish ? 'Oznacz wszystkie jako przeczytane' : 'Mark all as read'}
                 >
-                  <Check size={12} /> {isPolish ? 'Przeczytane' : 'Mark all read'}
+                  <Check size={14} /> {isPolish ? 'Przeczytane' : 'Mark all read'}
                 </button>
               )}
               <button
@@ -474,7 +474,7 @@ export const NotificationDropdown = () => {
                                   {contract.priority}
                                 </span>
                                 <span className="inline-flex items-center gap-1 text-xs font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 bg-primary-50 dark:bg-primary-900/20 px-2.5 py-1 rounded-md transition-colors hover:bg-primary-100 dark:hover:bg-primary-900/30">
-                                  {primaryLabel} <ArrowRight size={12} />
+                                  {primaryLabel} <ArrowRight size={14} />
                                 </span>
                               </div>
                             </div>
