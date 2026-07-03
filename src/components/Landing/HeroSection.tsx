@@ -285,7 +285,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 <p className="text-2xl lg:text-3xl font-black text-white tracking-tight leading-tight">
                   {t('landing.hero.tagline.line1', 'AI consulting.')}
                 </p>
-                <p className="text-2xl lg:text-3xl font-black bg-gradient-to-r from-primary-400 to-primary-300 bg-clip-text text-transparent tracking-tight leading-tight">
+                <p className="text-2xl lg:text-3xl font-black text-c-accent tracking-tight leading-tight">
                   {t('landing.hero.tagline.line2', 'No slides.')}
                 </p>
                 <p className="text-2xl lg:text-3xl font-black text-white tracking-tight leading-tight">
