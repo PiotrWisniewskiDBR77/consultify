@@ -113,7 +113,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                 </div>
                 <button
                   onClick={onCancel}
-                  className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors shrink-0"
+                  className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
                   <X size={16} />
                 </button>
@@ -122,7 +122,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50">
               <button
                 onClick={onCancel}
-                className="h-9 px-4 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 border border-slate-200 dark:border-navy-600 transition-colors"
+                className="h-9 px-4 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 border border-slate-200 dark:border-navy-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 {cancelLabel}
               </button>
