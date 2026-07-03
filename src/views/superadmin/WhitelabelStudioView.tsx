@@ -535,7 +535,7 @@ export const WhitelabelStudioView: React.FC = () => {
               backgroundColor:
                 previewMode === 'dark' ? branding.darkPrimaryColor : branding.primaryColor,
             }}
-            className="px-4 py-2 rounded-lg text-white font-medium"
+            className="px-4 py-2 rounded-lg text-c-text font-medium"
           >
             Primary Button
           </button>
@@ -544,13 +544,13 @@ export const WhitelabelStudioView: React.FC = () => {
               backgroundColor:
                 previewMode === 'dark' ? branding.darkSecondaryColor : branding.secondaryColor,
             }}
-            className="px-4 py-2 rounded-lg text-white font-medium"
+            className="px-4 py-2 rounded-lg text-c-text font-medium"
           >
             Secondary Button
           </button>
           <button
             style={{ backgroundColor: branding.accentColor }}
-            className="px-4 py-2 rounded-lg text-white font-medium"
+            className="px-4 py-2 rounded-lg text-c-text font-medium"
           >
             Accent Button
           </button>
@@ -704,7 +704,7 @@ export const WhitelabelStudioView: React.FC = () => {
                 disabled
               />
               <button
-                className="w-full py-3 rounded-lg text-white font-medium"
+                className="w-full py-3 rounded-lg text-c-text font-medium"
                 style={{ backgroundColor: branding.primaryColor }}
               >
                 Sign In

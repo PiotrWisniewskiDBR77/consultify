@@ -497,7 +497,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-primary-600 flex items-center justify-center">
-              <Building2 size={20} className="text-white" />
+              <Building2 size={20} className="text-c-text" />
             </div>
             Organizations
           </h1>

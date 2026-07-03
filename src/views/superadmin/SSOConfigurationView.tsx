@@ -580,7 +580,7 @@ export const SSOConfigurationView: React.FC = () => {
       <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
         <div className="flex items-start gap-4 mb-6">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-danger-500 flex items-center justify-center">
-            <Globe size={24} className="text-white" />
+            <Globe size={24} className="text-c-text" />
           </div>
           <div className="flex-1">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -721,7 +721,7 @@ export const SSOConfigurationView: React.FC = () => {
       <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
         <div className="flex items-start gap-4 mb-6">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
-            <Shield size={24} className="text-white" />
+            <Shield size={24} className="text-c-text" />
           </div>
           <div className="flex-1">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -945,7 +945,7 @@ export const SSOConfigurationView: React.FC = () => {
       <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
         <div className="flex items-start gap-4 mb-6">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-blue-600 flex items-center justify-center">
-            <Globe size={24} className="text-white" />
+            <Globe size={24} className="text-c-text" />
           </div>
           <div className="flex-1">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Domain Mapping</h3>

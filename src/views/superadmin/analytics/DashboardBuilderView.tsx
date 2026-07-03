@@ -487,7 +487,7 @@ const DashboardBuilderView: React.FC = () => {
                       </button>
                       <button
                         onClick={() => setIsEditing(false)}
-                        className="flex items-center gap-2 bg-slate-600 hover:bg-slate-700 text-white px-3 py-2 rounded-lg text-sm transition-colors"
+                        className="flex items-center gap-2 bg-slate-600 hover:bg-c-surface-raised text-c-text px-3 py-2 rounded-lg text-sm transition-colors"
                       >
                         <X className="w-4 h-4" />
                         Cancel
@@ -497,14 +497,14 @@ const DashboardBuilderView: React.FC = () => {
                     <>
                       <button
                         onClick={() => setIsEditing(true)}
-                        className="flex items-center gap-2 bg-slate-600 hover:bg-slate-700 text-white px-3 py-2 rounded-lg text-sm transition-colors"
+                        className="flex items-center gap-2 bg-slate-600 hover:bg-c-surface-raised text-c-text px-3 py-2 rounded-lg text-sm transition-colors"
                       >
                         <Edit className="w-4 h-4" />
                         Edit
                       </button>
                       <button
                         onClick={() => handleShareDashboard(selectedDashboard.id)}
-                        className="flex items-center gap-2 bg-slate-600 hover:bg-slate-700 text-white px-3 py-2 rounded-lg text-sm transition-colors"
+                        className="flex items-center gap-2 bg-slate-600 hover:bg-c-surface-raised text-c-text px-3 py-2 rounded-lg text-sm transition-colors"
                       >
                         <Share2 className="w-4 h-4" />
                         Share

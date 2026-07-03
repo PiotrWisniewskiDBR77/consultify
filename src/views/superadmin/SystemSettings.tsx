@@ -227,7 +227,7 @@ export const SystemSettings: React.FC = () => {
         onClick={() => setActiveTab('GENERAL')}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
           activeTab === 'GENERAL'
-            ? 'bg-navy-900 text-white'
+            ? 'bg-primary-600 text-white'
             : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
         }`}
       >
@@ -237,7 +237,7 @@ export const SystemSettings: React.FC = () => {
         onClick={() => setActiveTab('SECURITY')}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
           activeTab === 'SECURITY'
-            ? 'bg-navy-900 text-white'
+            ? 'bg-primary-600 text-white'
             : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
         }`}
       >
@@ -247,7 +247,7 @@ export const SystemSettings: React.FC = () => {
         onClick={() => setActiveTab('EMAIL')}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
           activeTab === 'EMAIL'
-            ? 'bg-navy-900 text-white'
+            ? 'bg-primary-600 text-white'
             : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
         }`}
       >
@@ -257,7 +257,7 @@ export const SystemSettings: React.FC = () => {
         onClick={() => setActiveTab('LEGAL')}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
           activeTab === 'LEGAL'
-            ? 'bg-navy-900 text-white'
+            ? 'bg-primary-600 text-white'
             : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
         }`}
       >
@@ -267,7 +267,7 @@ export const SystemSettings: React.FC = () => {
         onClick={() => setActiveTab('ADMINS')}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
           activeTab === 'ADMINS'
-            ? 'bg-navy-900 text-white'
+            ? 'bg-primary-600 text-white'
             : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
         }`}
       >
@@ -277,7 +277,7 @@ export const SystemSettings: React.FC = () => {
         onClick={() => setActiveTab('STORAGE')}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
           activeTab === 'STORAGE'
-            ? 'bg-navy-900 text-white'
+            ? 'bg-primary-600 text-white'
             : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
         }`}
       >
@@ -287,7 +287,7 @@ export const SystemSettings: React.FC = () => {
         onClick={() => setActiveTab('AUDIT')}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
           activeTab === 'AUDIT'
-            ? 'bg-navy-900 text-white'
+            ? 'bg-primary-600 text-white'
             : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
         }`}
       >
@@ -693,8 +693,8 @@ export const SystemSettings: React.FC = () => {
       {/* Add Admin Modal */}
       {showAddAdmin && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-navy-900 border border-white/10 rounded-xl p-6 w-full max-w-md shadow-2xl">
-            <h3 className="text-xl font-bold mb-4 text-white">Add Super Admin</h3>
+          <div className="bg-c-surface border border-white/10 rounded-xl p-6 w-full max-w-md shadow-2xl">
+            <h3 className="text-xl font-bold mb-4 text-c-text">Add Super Admin</h3>
             <form onSubmit={handleCreateAdmin} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -886,7 +886,7 @@ export const SystemSettings: React.FC = () => {
                 onClick={() => setAuditFilter(f)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   auditFilter === f
-                    ? 'bg-navy-900 text-white'
+                    ? 'bg-primary-600 text-white'
                     : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
                 }`}
               >

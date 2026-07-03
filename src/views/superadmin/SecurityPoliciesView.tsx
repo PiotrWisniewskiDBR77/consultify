@@ -603,7 +603,7 @@ export const SecurityPoliciesView: React.FC = () => {
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center text-white font-bold">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center text-c-text font-bold">
                   {org.name.charAt(0).toUpperCase()}
                 </div>
                 <div>
