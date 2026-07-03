@@ -9,7 +9,7 @@
  * Shape intentionally matches the risk-uncertainty summary contract used by the
  * existing handler (src/hooks/discovery/toolAi/riskUncertainty.ts):
  *   input  -> assumptions + risks + scenarios + mission context
- *   output -> { insights[], moves[], initiatives[], outputCandidates[] }
+ *   output -> { summary{verdict,tradeoffs,expectedEffect}, moves[], initiatives[], outputCandidates[] } (W2)
  * with rationale/tradeOff/rejectedVariant on every move (W2).
  */
 
@@ -99,10 +99,31 @@ ${seqLines || '- (no moves synthesized)'}
 Rules:
 ${rules.map((r) => `- ${r}`).join('\n')}
 
+W2 STRUCTURE (mandatory):
+1. "summary.verdict" — answer-first, 1-2 sentences: what the risk landscape means for the decision — which assumption or exposure gates the plan.
+2. "summary.executiveSummary" — 3-4 sentences: restates the verdict, then the why, anchored in the exposure ranking and assumption fragility above (cite ids).
+3. "summary.tradeoffs" — >= 1 at recommendation level: what we protect AT THE COST of what; the canonical rejected alternative is "mitigate everything at once -> diluted response".
+4. "moves" (3-5) — each a resilience DECISION (validate/mitigate/monitor/hedge/escalate) with its trade-off (chosen at the cost of what) and rejected variant folded into "rationale", plus firstStep, linked to risk/assumption ids.
+5. "summary.expectedEffect" — exposure change, behaviorally observable, WITH a time horizon; no probabilities absent from the facts.
+
+QUALITY BARS:
+- Risk priority is probability × impact from the ranking above — do not re-score.
+- Zero filler and zero AI meta-phrases ("As an AI", "Based on the provided data", "In conclusion") — write like a partner signing the work with their name.
+- Numbers exclusively from the facts above; do not compute or invent new ones.
+- Every sentence falsifiable: with opposite facts it would read differently.
+- Respond in ${isPolish ? 'Polish' : 'English'}, active voice, partner tone.
+
 Return JSON:
 {
-  "insights": ["..."],
-  "moves": [{"title":"...","category":"validate|mitigate|monitor|hedge|escalate","rationale":"...","tradeOff":"...","rejectedVariant":"...","linkedRiskIds":[],"linkedAssumptionIds":[],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","confidence":4,"firstStep":"..."}],
+  "summary": {
+    "verdict": "answer-first, 1-2 sentences: which assumption or exposure gates the plan and what to do about it first",
+    "executiveSummary": "3-4 sentences: restate the verdict, then why — anchored in the exposure ranking and assumption fragility above",
+    "keyInsights": ["3 insights, each tied to named session elements"],
+    "appliedConclusions": ["what to validate first", "what to mitigate", "what to monitor", "what NOT to do"],
+    "tradeoffs": [{"chosen":"...","rejected":"...","why":"..."}],
+    "expectedEffect": {"text":"exposure change, behaviorally observable","horizon":"..."}
+  },
+  "moves": [{"title":"...","category":"validate|mitigate|monitor|hedge|escalate","rationale":"why — anchored in listed element ids; MUST name the trade-off (chosen at the cost of what) and the rejected variant","linkedRiskIds":[],"linkedAssumptionIds":[],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","confidence":4,"firstStep":"verb + artifact + role"}],
   "initiatives": [{"title":"...","description":"...","type":"strategic|operational","estimatedImpact":"high|medium|low","estimatedEffort":"high|medium|low","rationale":"...","linkedItems":[]}],
   "outputCandidates": [{"outputType":"initiative|report|presentation|idea","title":"...","description":"...","linkedRiskIds":[],"linkedScenarioIds":[],"rationale":"...","readiness":"ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
 }`;

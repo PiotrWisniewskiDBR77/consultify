@@ -102,13 +102,25 @@ ${seqLines}
 Rules:
 ${rules.map((r) => `- ${r}`).join('\n')}
 
+QUALITY BARS:
+- Answer-first: "verdict" is a thesis about the decision, not a recap of the inputs.
+- Numbers exclusively from the facts above; do not compute or invent new ones.
+- Zero filler and zero AI meta-phrases ("As an AI", "Based on the provided data", "In conclusion") — write like a partner signing the work with their name.
+- Every sentence falsifiable: with opposite facts it would read differently.
+- Map the grounded W2 sequence above into 3-5 "initiatives", preserving its order (order = priority).
+- Respond in ${isPolish ? 'Polish' : 'English'}, active voice, partner tone.
+
 Return JSON:
 {
-  "verdict": "answer-first, 1-2 sentences: what this process automation analysis means for the operation's decision",
-  "rationale": "why — anchored in the baseline hours and phase scores above",
-  "tradeoffs": [{"chosen":"...","rejected":"...","why":"..."}],
-  "moves": [{"title":"...","phase":"map|standardize|automate|sustain","rationale":"...","tradeOff":"...","rejectedVariant":"...","expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","confidence":4,"firstStep":"..."}],
-  "expectedEffect": {"text":"cycle-time / error-rate change, behaviorally observable","horizon":"..."}
+  "summary": {
+    "verdict": "answer-first, 1-2 sentences: what this process automation analysis means for the operation's decision",
+    "executiveSummary": "3-4 sentences: restate the verdict, then why — anchored in the baseline hours and phase scores above",
+    "keyInsights": ["3 insights, each tied to the facts above"],
+    "appliedConclusions": ["what to do first", "what NOT to do", "what to validate next"],
+    "tradeoffs": [{"chosen":"...","rejected":"...","why":"..."}],
+    "expectedEffect": {"text":"cycle-time / error-rate change, behaviorally observable","horizon":"..."}
+  },
+  "initiatives": [{"title":"...","description":"what to do + first step (verb + artifact + role)","type":"operational","estimatedImpact":"high|medium|low","estimatedEffort":"high|medium|low","rationale":"why — names the trade-off (chosen at the cost of what) and the rejected variant"}]
 }`;
 }
 

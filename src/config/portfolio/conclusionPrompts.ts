@@ -115,24 +115,30 @@ ${blockedLine}
 ${buildPortfolioMovePromptRules(isPolish ? 'pl' : 'en')}
 
 W2 STRUCTURE (mandatory):
-1. "verdict" — answer-first, 1-2 sentences: what to fund FIRST and what to stop/defer, leading with the quick-wins that self-fund the rest.
-2. "rationale" — why, anchored in the quadrant classification and the funding sequence above.
-3. "tradeoffs" — >= 1 at portfolio level: what we fund AT THE COST of what deferred item; the canonical rejected alternative is "everything at once -> resource dilution".
-4. "moves" (3-5) — each a funding DECISION (invest/maintain/test/harvest/stop), each with tradeOff + rejectedVariant + firstStep, linked to element ids.
-5. "expectedEffect" — portfolio outcome, behaviorally observable, WITH a time horizon; no amounts absent from the facts.
+1. "summary.verdict" — answer-first, 1-2 sentences: what to fund FIRST and what to stop/defer, leading with the quick-wins that self-fund the rest.
+2. "summary.executiveSummary" — 3-4 sentences: restates the verdict, then the why, anchored in the quadrant classification and the funding sequence above.
+3. "summary.tradeoffs" — >= 1 at portfolio level: what we fund AT THE COST of what deferred item; the canonical rejected alternative is "everything at once -> resource dilution".
+4. "moves" (3-5) — each a funding DECISION (invest/maintain/test/harvest/stop), each with its trade-off (chosen at the cost of what) and rejected variant folded into "rationale", plus firstStep, linked to element ids.
+5. "summary.expectedEffect" — portfolio outcome, behaviorally observable, WITH a time horizon; no amounts absent from the facts.
 
 QUALITY BARS:
 - The quadrant and order are the engine's — do not override them; numbers only from the facts block.
-- Zero filler; every sentence falsifiable — with a different portfolio it would read differently.
+- Zero filler and zero AI meta-phrases ("As an AI", "Based on the provided data", "In conclusion"); every sentence falsifiable — with a different portfolio it would read differently.
 - Respond in ${isPolish ? 'Polish' : 'English'}, active voice, partner tone.
 
 Return JSON:
 {
-  "verdict": "answer-first: what to fund first, what to stop/defer",
-  "rationale": "why — anchored in the quadrants and the funding sequence above",
-  "tradeoffs": [{"chosen":"...","rejected":"...","why":"..."}],
-  "moves": [{"title":"...","category":"invest|maintain|test|harvest|stop","rationale":"...","tradeOff":"...","rejectedVariant":"...","linkedItemIds":["element-id"],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
-  "expectedEffect": {"text":"portfolio outcome, behaviorally observable","horizon":"..."},
+  "summary": {
+    "verdict": "answer-first: what to fund first, what to stop/defer",
+    "executiveSummary": "3-4 sentences: restate the verdict, then why — anchored in the quadrants and the funding sequence above",
+    "keyInsights": ["3 insights, each tied to named session elements"],
+    "appliedConclusions": ["what to fund first", "what to stop or defer", "what NOT to do", "what to validate next"],
+    "tradeoffs": [{"chosen":"...","rejected":"...","why":"..."}],
+    "expectedEffect": {"text":"portfolio outcome, behaviorally observable","horizon":"..."}
+  },
+  "moves": [{"title":"...","category":"invest|maintain|test|harvest|stop","rationale":"why — anchored in listed element ids; MUST name the trade-off (chosen at the cost of what) and the rejected variant","linkedItemIds":["element-id"],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"verb + artifact + role"}],
+  "initiatives": [{"title":"...","description":"...","type":"strategic|growth|operational","estimatedImpact":"high|medium|low","estimatedEffort":"high|medium|low","rationale":"...","linkedItems":["element-id"]}],
+  "outputCandidates": [{"outputType":"initiative|report|presentation|idea","title":"...","description":"...","linkedItemIds":["element-id"],"rationale":"...","readiness":"ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}],
   "selfCheck": {"signature":"pass|fail","formulaComplete":"pass|fail","numbersFromFacts":"pass|fail","falsifiable":"pass|fail","tradeoffPresent":"pass|fail","effectHasHorizon":"pass|fail"}
 }`;
 }
