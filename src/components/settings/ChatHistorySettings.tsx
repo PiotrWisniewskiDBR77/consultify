@@ -33,11 +33,11 @@ export const ChatHistorySettings: React.FC<ChatHistorySettingsProps> = ({ classN
   return (
     <div className={`space-y-6 ${className}`}>
       <div>
-        <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+        <h3 className="text-lg font-medium text-c-text flex items-center gap-2">
           <History size={20} />
           {t('settings.chat.title', 'Chat History')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        <p className="text-sm text-c-text-muted mt-1">
           {t('settings.chat.desc', 'Manage your conversation history and data retention.')}
         </p>
       </div>
@@ -50,7 +50,7 @@ export const ChatHistorySettings: React.FC<ChatHistorySettingsProps> = ({ classN
               <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
                 {t('settings.chat.comingSoonTitle', 'Coming soon')}
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-xs text-c-text-muted mt-1">
                 {t(
                   'settings.chat.comingSoonDesc',
                   'Exporting and clearing your full conversation history is not available yet. You can delete individual conversations from the chat itself in the meantime.'
@@ -66,7 +66,7 @@ export const ChatHistorySettings: React.FC<ChatHistorySettingsProps> = ({ classN
               disabled
               aria-disabled="true"
               title={t('settings.chat.comingSoonTitle', 'Coming soon')}
-              className="flex items-center gap-2 px-4 py-2 border border-slate-300 dark:border-navy-600 rounded-lg opacity-50 cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 border border-c-border dark:border-navy-600 rounded-lg opacity-50 cursor-not-allowed"
             >
               <Download size={16} />
               {t('settings.chat.export', 'Export History')}

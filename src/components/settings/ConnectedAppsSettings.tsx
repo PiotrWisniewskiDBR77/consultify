@@ -1007,7 +1007,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
     return (
       <div className={`space-y-6 ${className}`}>
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <Link2 size={20} />
             {t('settings.integrations.appsTitle', 'Connected Apps')}
           </h3>
@@ -1022,11 +1022,11 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <Link2 size={20} />
             {t('settings.integrations.appsTitle', 'Connected Apps')}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-muted mt-1">
             {t(
               'settings.integrations.appsDesc',
               'Connect your favourite tools. We use secure OAuth — we never store your passwords.'
@@ -1042,7 +1042,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
           )}
           <button
             onClick={refresh}
-            className="p-2 text-slate-600 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+            className="p-2 text-c-text-secondary hover:text-brand rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-700 transition-colors"
             title={t('common.refresh', 'Refresh')}
           >
             <RefreshCw size={16} />
@@ -1054,18 +1054,18 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
       {actionError && <Banner variant="danger" title={actionError} />}
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-c-text-secondary" />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={t('settings.integrations.searchPlaceholder', 'Search apps...')}
-          className="w-full pl-10 pr-10 py-2.5 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-c-accent"
+          className="w-full pl-10 pr-10 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-xl text-sm text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-c-accent"
         />
         {searchQuery && (
           <button
             onClick={() => setSearchQuery('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-c-text-secondary hover:text-c-text-secondary"
           >
             <X size={14} />
           </button>
@@ -1081,12 +1081,12 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
             className={`px-3.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
               selectedCategory === cat.id
                 ? 'bg-navy-900 text-white shadow-sm'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+                : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-700'
             }`}
           >
             {t(cat.labelKey, cat.fallback)}
             <span
-              className={`ml-1.5 ${selectedCategory === cat.id ? 'text-white/70' : 'text-slate-600 dark:text-slate-500'}`}
+              className={`ml-1.5 ${selectedCategory === cat.id ? 'text-white/70' : 'text-c-text-secondary'}`}
             >
               {categoryCounts[cat.id] || 0}
             </span>
@@ -1109,7 +1109,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
             return (
               <div key={catId}>
                 {selectedCategory === 'all' && (
-                  <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
+                  <h4 className="text-xs font-semibold text-c-text-muted uppercase tracking-wider mb-3">
                     {t(meta.labelKey, meta.fallback)}
                   </h4>
                 )}
@@ -1131,7 +1131,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                             ? 'bg-green-50/40 dark:bg-green-900/10 border-green-200 dark:border-green-900/30'
                             : needsReauth
                               ? 'bg-amber-50/40 dark:bg-amber-900/10 border-amber-200 dark:border-amber-900/30'
-                              : 'bg-white dark:bg-navy-800/40 border-slate-200 dark:border-navy-700 hover:border-brand/30'
+                              : 'bg-c-surface-raised border-c-border-subtle dark:border-navy-700 hover:border-brand/30'
                         }`}
                       >
                         <div className="flex items-start gap-3">
@@ -1140,7 +1140,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                             className={`w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl ${
                               isConnected
                                 ? 'bg-green-100 dark:bg-green-900/30'
-                                : 'bg-slate-50 dark:bg-navy-700/60'
+                                : 'bg-c-surface-raised'
                             }`}
                           >
                             <Icon />
@@ -1149,7 +1149,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                           {/* Info */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-sm text-slate-900 dark:text-white">
+                              <span className="font-medium text-sm text-c-text">
                                 {app.name}
                               </span>
                               {isConnected && (
@@ -1166,14 +1166,14 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+                            <p className="text-xs text-c-text-muted mt-0.5 line-clamp-2">
                               {app.description}
                             </p>
                             <div className="flex flex-wrap gap-1 mt-2">
                               {app.features.map((f) => (
                                 <span
                                   key={f}
-                                  className="text-[10px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-700/50 px-1.5 py-0.5 rounded"
+                                  className="text-[10px] text-c-text-muted bg-c-surface-raised px-1.5 py-0.5 rounded"
                                 >
                                   {f}
                                 </span>
@@ -1199,7 +1199,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                                 <button
                                   onClick={() => handleTest(app.id)}
                                   disabled={testingProvider === app.id}
-                                  className="p-1.5 text-slate-600 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors disabled:opacity-50"
+                                  className="p-1.5 text-c-text-secondary hover:text-brand rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-700 transition-colors disabled:opacity-50"
                                   title="Test connection"
                                 >
                                   {testingProvider === app.id ? (
@@ -1210,7 +1210,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                                 </button>
                                 <button
                                   onClick={() => setMappingIntegrationId(app.id)}
-                                  className="p-1.5 text-slate-600 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                                  className="p-1.5 text-c-text-secondary hover:text-brand rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-700 transition-colors"
                                   title={t('settings.integrations.viewMappings', 'View Mappings')}
                                 >
                                   <GitMerge size={14} />
@@ -1233,7 +1233,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                             )}
                             {!isConnected && !needsReauth && unavailable && (
                               <span
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-700/50 rounded-lg cursor-not-allowed"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-c-text-muted bg-c-surface-raised rounded-lg cursor-not-allowed"
                                 title={t(
                                   'settings.integrations.notConfigured',
                                   'This integration is not available yet — it has not been configured on the server.'
@@ -1277,20 +1277,20 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
           onClick={() => setConnectModalApp(null)}
         >
           <div
-            className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-2xl"
+            className="w-full max-w-md rounded-2xl border border-c-border-subtle dark:border-navy-700 bg-c-surface shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center gap-3 p-5 border-b border-slate-200 dark:border-navy-700">
-              <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-navy-700/60">
+            <div className="flex items-center gap-3 p-5 border-b border-c-border-subtle dark:border-navy-700">
+              <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-c-surface-raised">
                 {React.createElement(connectModalApp.icon)}
               </div>
               <div className="flex-1">
-                <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
+                <h4 className="text-sm font-semibold text-c-text">
                   {t('settings.integrations.connectProvider', 'Connect {{name}}', {
                     name: connectModalApp.name,
                   })}
                 </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-xs text-c-text-muted mt-0.5">
                   {connectModalApp.authType === 'basic'
                     ? 'Provide your Apple ID and app-specific password.'
                     : 'Provide the required configuration below.'}
@@ -1298,7 +1298,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
               </div>
               <button
                 onClick={() => setConnectModalApp(null)}
-                className="p-1.5 text-slate-600 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                className="p-1.5 text-c-text-secondary hover:text-c-text-secondary dark:hover:text-white rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-800 transition-colors"
               >
                 <X size={16} />
               </button>
@@ -1307,7 +1307,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
               {connectModalApp.authType === 'basic' ? (
                 <>
                   <div className="space-y-1">
-                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                    <label className="text-xs font-medium text-c-text-secondary">
                       Apple ID Email
                     </label>
                     <input
@@ -1315,13 +1315,13 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                       onChange={(e) =>
                         setDraftConfig((prev) => ({ ...prev, username: e.target.value }))
                       }
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
+                      className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-sm text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
                       placeholder="your@icloud.com"
                       type="email"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                    <label className="text-xs font-medium text-c-text-secondary">
                       App-Specific Password
                     </label>
                     <input
@@ -1329,7 +1329,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                       onChange={(e) =>
                         setDraftConfig((prev) => ({ ...prev, password: e.target.value }))
                       }
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
+                      className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-sm text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
                       placeholder="xxxx-xxxx-xxxx-xxxx"
                       type="password"
                     />
@@ -1356,7 +1356,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
               ) : (
                 connectModalApp.configFields.map((field) => (
                   <div key={field} className="space-y-1">
-                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300 capitalize">
+                    <label className="text-xs font-medium text-c-text-secondary capitalize">
                       {field.replace(/_/g, ' ')}
                     </label>
                     <input
@@ -1364,7 +1364,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                       onChange={(e) =>
                         setDraftConfig((prev) => ({ ...prev, [field]: e.target.value }))
                       }
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
+                      className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-sm text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
                       placeholder={`Enter ${field.replace(/_/g, ' ')}`}
                     />
                   </div>
@@ -1374,7 +1374,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
             <div className="flex items-center justify-end gap-2 p-5 pt-0">
               <button
                 onClick={() => setConnectModalApp(null)}
-                className="px-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                className="px-4 py-2 text-sm rounded-lg border border-c-border-subtle dark:border-navy-700 text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-800 transition-colors"
               >
                 {t('common.cancel', 'Cancel')}
               </button>
@@ -1394,7 +1394,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
 
       {/* Mapping Drift Panel (per-integration detail view) */}
       {mappingIntegrationId && (
-        <div className="rounded-xl border border-slate-200 dark:border-navy-700/50 bg-white dark:bg-navy-800/40 p-4">
+        <div className="rounded-xl border border-c-border-subtle dark:border-navy-700/50 bg-c-surface-raised p-4">
           <MappingDriftPanel
             integrationId={mappingIntegrationId}
             onBack={() => setMappingIntegrationId(null)}
@@ -1403,11 +1403,11 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
       )}
 
       {/* Footer note */}
-      <div className="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-800/30 rounded-xl p-3.5 space-y-1">
-        <p className="font-medium text-slate-600 dark:text-slate-300">
+      <div className="text-xs text-c-text-muted bg-c-surface-raised rounded-xl p-3.5 space-y-1">
+        <p className="font-medium text-c-text-secondary">
           {t('settings.integrations.note', 'Note:')}
         </p>
-        <ul className="list-disc list-inside space-y-0.5 text-slate-600 dark:text-slate-500">
+        <ul className="list-disc list-inside space-y-0.5 text-c-text-secondary">
           <li>
             {t(
               'settings.integrations.notePersonal',
