@@ -34,12 +34,12 @@ export const DocsCategoryView: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-6">
-        <Link to="/docs" className="hover:text-primary-600 dark:hover:text-primary-400">
+      <nav className="flex items-center gap-2 text-sm text-c-text-muted mb-6">
+        <Link to="/docs" className="hover:text-c-accent">
           {t('docs.common.docs', 'Docs')}
         </Link>
         <ChevronRight size={14} />
-        <span className="text-slate-900 dark:text-white font-medium">
+        <span className="text-c-text font-medium">
           {currentCategory?.name || categorySlug}
         </span>
       </nav>
@@ -50,7 +50,7 @@ export const DocsCategoryView: React.FC = () => {
           {currentCategory?.name || t('docs.category.fallbackTitle', 'Category')}
         </h1>
         {currentCategory?.description && (
-          <p className="text-lg text-slate-600 dark:text-slate-400">
+          <p className="text-lg text-c-text-secondary">
             {currentCategory.description}
           </p>
         )}
@@ -58,13 +58,13 @@ export const DocsCategoryView: React.FC = () => {
 
       {/* Search */}
       <div className="relative mb-6">
-        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
+        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-muted" />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={t('docs.category.searchPlaceholder', 'Search in this category...')}
-          className="w-full pl-10 pr-4 py-3 rounded-lg bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all"
+          className="w-full pl-10 pr-4 py-3 rounded-lg bg-c-surface-raised border border-c-border focus:outline-none focus:ring-2 focus:ring-c-focus transition-all"
         />
       </div>
 
@@ -75,20 +75,20 @@ export const DocsCategoryView: React.FC = () => {
           Array.from({ length: 5 }).map((_, i) => (
             <div
               key={i}
-              className="p-6 rounded-xl border border-slate-200 dark:border-navy-800 animate-pulse"
+              className="p-6 rounded-xl border border-c-border animate-pulse"
             >
-              <div className="h-5 w-3/4 rounded bg-slate-200 dark:bg-navy-800 mb-2" />
-              <div className="h-4 w-full rounded bg-slate-200 dark:bg-navy-800 mb-4" />
-              <div className="h-3 w-32 rounded bg-slate-200 dark:bg-navy-800" />
+              <div className="h-5 w-3/4 rounded bg-c-border mb-2" />
+              <div className="h-4 w-full rounded bg-c-border mb-4" />
+              <div className="h-3 w-32 rounded bg-c-border" />
             </div>
           ))
         ) : articles.length === 0 ? (
           <div className="text-center py-12">
-            <Book size={48} className="mx-auto text-slate-600 dark:text-slate-400 mb-4" />
-            <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">
+            <Book size={48} className="mx-auto text-c-text-secondary mb-4" />
+            <h3 className="text-lg font-medium text-c-text-secondary mb-2">
               {t('docs.category.emptyTitle', 'No articles found')}
             </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-500">
+            <p className="text-sm text-c-text-muted">
               {searchQuery
                 ? t('docs.category.emptySearch', 'Try adjusting your search query')
                 : t('docs.category.emptyCategory', 'This category is empty')}
@@ -104,17 +104,17 @@ export const DocsCategoryView: React.FC = () => {
             >
               <Link
                 to={`/docs/${categorySlug}/${article.slug}`}
-                className="block p-6 rounded-xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900/50 hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-md transition-all group"
+                className="block p-6 rounded-xl border border-c-border bg-c-surface hover:border-c-accent hover:shadow-md transition-all group"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold mb-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                    <h3 className="text-lg font-semibold mb-1 group-hover:text-c-accent transition-colors">
                       {article.title}
                     </h3>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-3 line-clamp-2">
+                    <p className="text-sm text-c-text-secondary mb-3 line-clamp-2">
                       {article.summary}
                     </p>
-                    <div className="flex items-center gap-4 text-xs text-slate-500">
+                    <div className="flex items-center gap-4 text-xs text-c-text-muted">
                       <span className="flex items-center gap-1">
                         <Clock size={12} />
                         {t('docs.common.readTime', '{{count}} min read', {
@@ -134,7 +134,7 @@ export const DocsCategoryView: React.FC = () => {
                   </div>
                   <ChevronRight
                     size={20}
-                    className="text-slate-600 group-hover:text-primary-500 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1"
+                    className="text-c-text-muted group-hover:text-c-accent group-hover:translate-x-1 transition-all flex-shrink-0 mt-1"
                   />
                 </div>
               </Link>
@@ -147,7 +147,7 @@ export const DocsCategoryView: React.FC = () => {
       <div className="mt-8">
         <Link
           to="/docs"
-          className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+          className="inline-flex items-center gap-2 text-sm text-c-text-secondary hover:text-c-accent transition-colors"
         >
           <ArrowLeft size={16} />
           {t('docs.category.backToCategories', 'Back to all categories')}

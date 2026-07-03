@@ -122,12 +122,12 @@ export const DocsArticleView: React.FC = () => {
   if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8 animate-pulse">
-        <div className="h-4 w-48 rounded bg-slate-200 dark:bg-navy-800 mb-6" />
-        <div className="h-10 w-3/4 rounded bg-slate-200 dark:bg-navy-800 mb-4" />
-        <div className="h-4 w-32 rounded bg-slate-200 dark:bg-navy-800 mb-8" />
+        <div className="h-4 w-48 rounded bg-c-border mb-6" />
+        <div className="h-10 w-3/4 rounded bg-c-border mb-4" />
+        <div className="h-4 w-32 rounded bg-c-border mb-8" />
         <div className="space-y-4">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-4 w-full rounded bg-slate-200 dark:bg-navy-800" />
+            <div key={i} className="h-4 w-full rounded bg-c-border" />
           ))}
         </div>
       </div>
@@ -137,11 +137,11 @@ export const DocsArticleView: React.FC = () => {
   if (error || !article) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-16 text-center">
-        <Book size={64} className="mx-auto text-slate-600 dark:text-slate-400 mb-4" />
+        <Book size={64} className="mx-auto text-c-text-secondary mb-4" />
         <h1 className="text-2xl font-bold mb-2">
           {t('docs.article.notFoundTitle', 'Article Not Found')}
         </h1>
-        <p className="text-slate-600 dark:text-slate-400 mb-6">
+        <p className="text-c-text-secondary mb-6">
           {t(
             'docs.article.notFoundBody',
             "The article you're looking for doesn't exist or has been moved."
@@ -163,19 +163,19 @@ export const DocsArticleView: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-6">
-        <Link to="/docs" className="hover:text-primary-600 dark:hover:text-primary-400">
+      <nav className="flex items-center gap-2 text-sm text-c-text-muted mb-6">
+        <Link to="/docs" className="hover:text-c-accent">
           {t('docs.common.docs', 'Docs')}
         </Link>
         <ChevronRight size={14} />
         <Link
           to={`/docs/${categorySlug}`}
-          className="hover:text-primary-600 dark:hover:text-primary-400"
+          className="hover:text-c-accent"
         >
           {article.category_name}
         </Link>
         <ChevronRight size={14} />
-        <span className="text-slate-900 dark:text-white font-medium truncate max-w-[200px]">
+        <span className="text-c-text font-medium truncate max-w-[200px]">
           {article.title}
         </span>
       </nav>
@@ -188,7 +188,7 @@ export const DocsArticleView: React.FC = () => {
             {/* Category Badge */}
             <Link
               to={`/docs/${categorySlug}`}
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs font-medium mb-3 hover:bg-primary-200 dark:hover:bg-primary-900/50 transition-colors"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-c-accent-soft text-c-accent text-xs font-medium mb-3 hover:bg-c-accent/15 transition-colors"
             >
               <Book size={12} />
               {article.category_name}
@@ -197,7 +197,7 @@ export const DocsArticleView: React.FC = () => {
             <h1 className="text-3xl lg:text-4xl font-bold mb-4">{article.title}</h1>
 
             {/* Meta */}
-            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
+            <div className="flex flex-wrap items-center gap-4 text-sm text-c-text-muted">
               <span className="flex items-center gap-1">
                 <Clock size={14} />
                 {t('docs.common.readTime', '{{count}} min read', {
@@ -210,7 +210,7 @@ export const DocsArticleView: React.FC = () => {
               </span>
               <button
                 onClick={handleCopyLink}
-                className="flex items-center gap-1 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                className="flex items-center gap-1 hover:text-c-accent transition-colors"
               >
                 {copied ? <Check size={14} /> : <Share2 size={14} />}
                 {copied ? t('docs.article.copied', 'Copied!') : t('docs.article.share', 'Share')}
@@ -220,7 +220,7 @@ export const DocsArticleView: React.FC = () => {
 
           {/* Video (if available) */}
           {article.video_url && (
-            <div className="mb-8 rounded-xl overflow-hidden border border-slate-200 dark:border-navy-700">
+            <div className="mb-8 rounded-xl overflow-hidden border border-c-border">
               <a
                 href={article.video_url}
                 target="_blank"
@@ -241,7 +241,7 @@ export const DocsArticleView: React.FC = () => {
           )}
 
           {/* Markdown Content */}
-          <div className="prose prose-slate dark:prose-invert prose-headings:scroll-mt-20 prose-a:text-primary-600 dark:prose-a:text-primary-400 prose-code:before:content-none prose-code:after:content-none max-w-none">
+          <div className="prose prose-slate dark:prose-invert prose-headings:scroll-mt-20 prose-a:text-c-accent prose-code:before:content-none prose-code:after:content-none max-w-none">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{
@@ -274,7 +274,7 @@ export const DocsArticleView: React.FC = () => {
                   const inline = !match;
                   return inline ? (
                     <code
-                      className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-sm"
+                      className="px-1.5 py-0.5 rounded bg-c-surface-raised text-sm"
                       {...props}
                     >
                       {children}
@@ -302,24 +302,24 @@ export const DocsArticleView: React.FC = () => {
           </div>
 
           {/* Feedback Section */}
-          <div className="mt-12 p-6 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/50">
+          <div className="mt-12 p-6 rounded-xl border border-c-border bg-c-surface-raised">
             <h3 className="text-lg font-semibold mb-3">Was this article helpful?</h3>
             {feedbackGiven ? (
-              <p className="text-sm text-slate-600 dark:text-slate-400">
+              <p className="text-sm text-c-text-secondary">
                 Thank you for your feedback! 🙏
               </p>
             ) : (
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => handleFeedback('up')}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-300 dark:hover:border-green-700 hover:text-green-600 dark:hover:text-green-400 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-c-border hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-300 dark:hover:border-green-700 hover:text-green-600 dark:hover:text-green-400 transition-colors"
                 >
                   <ThumbsUp size={16} />
                   Yes
                 </button>
                 <button
                   onClick={() => handleFeedback('down')}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 hover:bg-danger-50 dark:hover:bg-danger-900/20 hover:border-danger-300 dark:hover:border-danger-700 hover:text-danger-600 dark:hover:text-danger-400 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-c-border hover:bg-danger-50 dark:hover:bg-danger-900/20 hover:border-danger-300 dark:hover:border-danger-700 hover:text-danger-600 dark:hover:text-danger-400 transition-colors"
                 >
                   <ThumbsDown size={16} />
                   No
@@ -332,7 +332,7 @@ export const DocsArticleView: React.FC = () => {
           <div className="mt-8 flex items-center justify-between">
             <Link
               to={`/docs/${categorySlug}`}
-              className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+              className="inline-flex items-center gap-2 text-sm text-c-text-secondary hover:text-c-accent transition-colors"
             >
               <ArrowLeft size={16} />
               Back to {article.category_name}
@@ -344,7 +344,7 @@ export const DocsArticleView: React.FC = () => {
         {headings.length > 0 && (
           <aside className="hidden xl:block w-64 shrink-0">
             <div className="sticky top-20">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-c-text-muted mb-3">
                 On this page
               </h4>
               <nav className="space-y-1">
@@ -358,8 +358,8 @@ export const DocsArticleView: React.FC = () => {
                       h.level === 2 && 'pl-3',
                       h.level === 3 && 'pl-6',
                       activeHeading === h.id
-                        ? 'text-primary-600 dark:text-primary-400 font-medium'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        ? 'text-c-accent font-medium'
+                        : 'text-c-text-secondary hover:text-c-text'
                     )}
                   >
                     {h.text}
