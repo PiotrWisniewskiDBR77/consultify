@@ -249,7 +249,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                     {roleLabel}
                   </span>
                   <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700 max-w-full">
-                    <Building2 size={11} />
+                    <Building2 size={14} />
                     <span className="truncate max-w-[150px]">{activeOrganizationName}</span>
                   </span>
                 </div>
@@ -323,7 +323,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                           >
                             <div className="w-4 shrink-0 flex items-center justify-center">
                               {isSwitching ? (
-                                <Loader2 size={13} className="animate-spin text-primary-500" />
+                                <Loader2 size={14} className="animate-spin text-primary-500" />
                               ) : isCurrent ? (
                                 <Check size={14} className="text-primary-500" />
                               ) : null}
