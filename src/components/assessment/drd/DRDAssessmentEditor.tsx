@@ -1,6 +1,7 @@
 import {
   ArrowLeft,
   ArrowRight,
+  BookOpen,
   CheckCircle2,
   ChevronDown,
   ChevronLeft,
@@ -19,10 +20,14 @@ import {
   X,
 } from 'lucide-react';
 import React, { useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { AssessmentToolShell } from '@/components/assessment/AssessmentToolShell';
 import { LevelAttachments } from '@/components/assessment/LevelAttachments';
+import { GlossaryPanel } from '@/components/assessment/panels/GlossaryPanel';
+import { Tooltip } from '@/components/ui/primitives';
 import { getDRDKnowledge } from '@/services/assessmentKnowledge/drdKnowledge';
+import { getDRDAxisWhyHint } from '@/services/assessmentKnowledge/whyThisMatters';
 import { DRD_AXIS_KEY_MAP, DRD_STRUCTURE, DRDArea, DRDAxis } from '@/services/drdStructure';
 
 type AreaState = {
@@ -124,12 +129,15 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
   assignmentByAreaId,
   onAssignToMe,
 }) => {
+  const { t, i18n } = useTranslation();
+  const isPl = (i18n.language || '').toLowerCase().startsWith('pl');
   const [axisId, setAxisId] = useState<number>(currentAxisId ?? 1);
   const [areaId, setAreaId] = useState<string>(
     currentAreaId ?? DRD_STRUCTURE[0]?.areas?.[0]?.id ?? '1A'
   );
   // Default to Matrix: new primary UX for assessment navigation.
   const [viewMode, setViewMode] = useState<'surveys' | 'matrix'>('matrix');
+  const [isGlossaryOpen, setIsGlossaryOpen] = useState(false);
   const [isMatrixFullscreen, setIsMatrixFullscreen] = useState(false);
   const [activeLevel, setActiveLevel] = useState<number>(currentLevel ?? 1);
   const [isDetailsOpen, setIsDetailsOpen] = useState(true);
@@ -256,6 +264,10 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
   const levelCount = selectedAxis?.levelCount || 5;
   const state = getAreaState(value, areaId, levelCount);
   const axisKey = getAxisKey(selectedAxis?.id || 1);
+  const whyThisMattersHint = useMemo(
+    () => getDRDAxisWhyHint(selectedAxis?.id || 1),
+    [selectedAxis?.id]
+  );
 
   // When area changes, default focus to "next likely" level (achieved+1), unless controlled externally.
   React.useEffect(() => {
@@ -1326,14 +1338,47 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
             <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
               <div>
                 <div className="text-xs font-mono text-slate-600">{areaId}</div>
-                <div className="text-xl md:text-2xl font-semibold text-navy-900 dark:text-white">
-                  {selectedArea?.name || 'Area'}
+                <div className="flex items-center gap-2">
+                  <div className="text-xl md:text-2xl font-semibold text-navy-900 dark:text-white">
+                    {selectedArea?.name || 'Area'}
+                  </div>
+                  <Tooltip
+                    content={
+                      <div className="max-w-[280px]">
+                        <div className="text-xs font-bold mb-1">
+                          {t('assessment.drd.whyThisMatters.title', 'Why we ask this')}
+                        </div>
+                        <div className="text-xs leading-relaxed">
+                          {isPl ? whyThisMattersHint.pl : whyThisMattersHint.en}
+                        </div>
+                      </div>
+                    }
+                    placement="bottom-start"
+                    maxWidth={300}
+                  >
+                    <button
+                      type="button"
+                      aria-label={t('assessment.drd.whyThisMatters.ariaLabel', 'Why this question')}
+                      className="shrink-0 p-1 rounded-full text-primary-500 hover:bg-primary-500/10 transition-colors"
+                    >
+                      <HelpCircle className="w-4 h-4" />
+                    </button>
+                  </Tooltip>
                 </div>
                 <div className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1">
                   Axis: {selectedAxis?.id}. {selectedAxis?.name} · Answers: Yes/No per level ·
                   Attachments per level
                 </div>
               </div>
+
+              <button
+                type="button"
+                onClick={() => setIsGlossaryOpen(true)}
+                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors shrink-0"
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                {t('assessment.drd.glossary.button', isPl ? 'Słownik' : 'Glossary')}
+              </button>
             </div>
 
             {/* Make room for the pinned decision bar */}
@@ -2178,13 +2223,16 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
   );
 
   return (
-    <AssessmentToolShell
-      left={contentWithExpandButton}
-      right={navPanel}
-      isRightOpen={isSidebarOpen && !isNavCollapsed}
-      rightWidthClass="w-[320px]"
-      rightSide="right"
-    />
+    <>
+      <AssessmentToolShell
+        left={contentWithExpandButton}
+        right={navPanel}
+        isRightOpen={isSidebarOpen && !isNavCollapsed}
+        rightWidthClass="w-[320px]"
+        rightSide="right"
+      />
+      <GlossaryPanel isOpen={isGlossaryOpen} onClose={() => setIsGlossaryOpen(false)} />
+    </>
   );
 };
 

@@ -26,11 +26,11 @@ export const DRD_AXIS_WHY_HINTS: Record<number, WhyThisMattersHint> = {
     pl: 'Pytamy o kluczowe procesy (sprzedaż, marketing, zakupy, logistyka, produkcja...), bo to tam na co dzień powstaje albo ucieka wartość. Cyfryzacja procesu zwykle szybko się zwraca: mniej błędów ręcznych, krótszy czas realizacji, dane, którym można naprawdę zaufać przy podejmowaniu decyzji.',
   },
   2: {
-    en: "We ask about your products/services because \"digital\" isn't only about internal tools — it's also about what you sell and how customers experience it. A more digital product (self-service, data-driven features, connected devices) usually means new revenue and stickier customers.",
+    en: 'We ask about your products/services because "digital" isn\'t only about internal tools — it\'s also about what you sell and how customers experience it. A more digital product (self-service, data-driven features, connected devices) usually means new revenue and stickier customers.',
     pl: 'Pytamy o Twoje produkty/usługi, bo "cyfrowe" to nie tylko narzędzia wewnętrzne — to też to, co sprzedajesz i jak klient tego doświadcza. Bardziej cyfrowy produkt (samoobsługa, funkcje oparte na danych, urządzenia połączone) zwykle oznacza nowy przychód i bardziej lojalnych klientów.',
   },
   3: {
-    en: "We ask about your business model because technology can change not just HOW you work but WHAT you sell and how you make money (e.g. subscriptions instead of one-off sales, platforms instead of pure products). This is often the highest-value but hardest-to-copy transformation.",
+    en: 'We ask about your business model because technology can change not just HOW you work but WHAT you sell and how you make money (e.g. subscriptions instead of one-off sales, platforms instead of pure products). This is often the highest-value but hardest-to-copy transformation.',
     pl: 'Pytamy o model biznesowy, bo technologia potrafi zmienić nie tylko SPOSÓB pracy, ale też CO sprzedajesz i jak zarabiasz (np. subskrypcje zamiast jednorazowej sprzedaży, platformy zamiast czystego produktu). To często transformacja o najwyższej wartości i najtrudniejsza do skopiowania przez konkurencję.',
   },
   4: {

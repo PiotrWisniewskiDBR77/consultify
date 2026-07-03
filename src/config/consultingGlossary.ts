@@ -213,7 +213,7 @@ export const CONSULTING_GLOSSARY: GlossaryTerm[] = [
     term: 'Benchmark',
     category: 'strategy',
     definition: {
-      en: "A reference point — often an industry average or a best-in-class competitor — used to judge whether your own performance is good, average, or lagging.",
+      en: 'A reference point — often an industry average or a best-in-class competitor — used to judge whether your own performance is good, average, or lagging.',
       pl: 'Punkt odniesienia — często średnia branżowa lub najlepszy konkurent — używany do oceny, czy Twoje wyniki są dobre, przeciętne, czy słabsze od rynku.',
     },
   },
@@ -302,7 +302,9 @@ export function getGlossaryTermById(id: string): GlossaryTerm | undefined {
 
 /** Looks up a term by its display name or any known alias (case-insensitive). */
 export function findGlossaryTerm(nameOrAlias: string): GlossaryTerm | undefined {
-  const key = String(nameOrAlias || '').toLowerCase().trim();
+  const key = String(nameOrAlias || '')
+    .toLowerCase()
+    .trim();
   return GLOSSARY_BY_ALIAS.get(key) || GLOSSARY_BY_ID.get(key);
 }
 
