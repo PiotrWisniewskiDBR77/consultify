@@ -41,9 +41,9 @@ const CHIP_COLORS = [
     hover: 'hover:bg-blue-100 dark:hover:bg-blue-900/40',
   },
   {
-    bg: 'bg-primary-50 dark:bg-primary-900/25',
-    text: 'text-primary-700 dark:text-primary-300',
-    hover: 'hover:bg-primary-100 dark:hover:bg-primary-900/40',
+    bg: 'bg-c-accent-soft',
+    text: 'text-c-accent',
+    hover: 'hover:bg-c-accent-soft',
   },
   {
     bg: 'bg-emerald-50 dark:bg-emerald-900/25',
@@ -95,7 +95,7 @@ const HoverPreviewCard: React.FC<{
   if (loading) {
     return (
       <div className="flex items-center justify-center p-3">
-        <Loader2 className="h-4 w-4 animate-spin text-slate-600" />
+        <Loader2 className="h-4 w-4 animate-spin text-c-text-secondary" />
       </div>
     );
   }
@@ -109,10 +109,10 @@ const HoverPreviewCard: React.FC<{
         if (val == null || val === '') return null;
         return (
           <div key={fm.id} className="flex items-start gap-2">
-            <span className="w-20 flex-shrink-0 truncate text-[10px] font-medium text-slate-600 dark:text-zinc-500">
+            <span className="w-20 flex-shrink-0 truncate text-[10px] font-medium text-c-text-secondary">
               {fm.name}
             </span>
-            <span className="text-[10px] text-slate-600 dark:text-zinc-300 truncate">
+            <span className="text-[10px] text-c-text-secondary truncate">
               {Array.isArray(val) ? val.join(', ') : String(val)}
             </span>
           </div>
@@ -219,7 +219,7 @@ export const LinkedRecordDisplay: React.FC<LinkedRecordDisplayProps> = React.mem
     }, []);
 
     if (loading) {
-      return <span className="text-xs text-slate-600">...</span>;
+      return <span className="text-xs text-c-text-secondary">...</span>;
     }
 
     if (links.length === 0) {
@@ -227,7 +227,7 @@ export const LinkedRecordDisplay: React.FC<LinkedRecordDisplayProps> = React.mem
         <button
           onClick={onOpenPicker}
           disabled={locked}
-          className="flex items-center gap-1.5 text-xs text-slate-600 transition-colors hover:text-blue-500 disabled:cursor-default disabled:hover:text-slate-400"
+          className="flex items-center gap-1.5 text-xs text-c-text-secondary transition-colors hover:text-blue-500 disabled:cursor-default disabled:hover:text-c-text-muted"
         >
           <Link2 className="h-3.5 w-3.5" />
           <span>{isPl ? 'Brak powiązań' : 'No linked records'}</span>
@@ -258,7 +258,7 @@ export const LinkedRecordDisplay: React.FC<LinkedRecordDisplayProps> = React.mem
               </button>
               {/* Hover preview */}
               {hoveredId === link.id && (
-                <div className="absolute bottom-full left-0 z-50 mb-1 w-56 rounded-xl border border-slate-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
+                <div className="absolute bottom-full left-0 z-50 mb-1 w-56 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl">
                   <HoverPreviewCard
                     recordId={link.id}
                     linkedTableId={linkedTableId}
@@ -272,7 +272,7 @@ export const LinkedRecordDisplay: React.FC<LinkedRecordDisplayProps> = React.mem
         {overflow > 0 && (
           <button
             onClick={onOpenPicker}
-            className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500 transition-colors hover:bg-slate-200 hover:text-blue-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
+            className="rounded-full bg-c-surface-raised px-2 py-0.5 text-[10px] font-bold text-c-text-muted transition-colors hover:bg-c-border-subtle hover:text-blue-600"
           >
             +{overflow} {isPl ? 'więcej' : 'more'}
           </button>
@@ -280,7 +280,7 @@ export const LinkedRecordDisplay: React.FC<LinkedRecordDisplayProps> = React.mem
         {!locked && (
           <button
             onClick={onOpenPicker}
-            className="rounded-full p-1 text-slate-600 transition-colors hover:bg-slate-100 hover:text-blue-500 dark:hover:bg-zinc-800"
+            className="rounded-full p-1 text-c-text-secondary transition-colors hover:bg-c-surface-raised hover:text-blue-500"
           >
             <Link2 className="h-3 w-3" />
           </button>

@@ -64,11 +64,11 @@ export default function PublicViewPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-navy-950">
+      <div className="flex min-h-screen items-center justify-center bg-c-surface-raised">
         <div className="space-y-3 w-full max-w-2xl p-8">
-          <div className="h-10 bg-slate-200 dark:bg-navy-800 rounded-xl animate-pulse" />
-          <div className="h-8 bg-slate-200 dark:bg-navy-800 rounded-lg animate-pulse" />
-          <div className="h-8 bg-slate-200 dark:bg-navy-800 rounded-lg animate-pulse w-3/4" />
+          <div className="h-10 bg-c-border-subtle rounded-xl animate-pulse" />
+          <div className="h-8 bg-c-border-subtle rounded-lg animate-pulse" />
+          <div className="h-8 bg-c-border-subtle rounded-lg animate-pulse w-3/4" />
         </div>
       </div>
     );
@@ -76,21 +76,21 @@ export default function PublicViewPage() {
 
   if (needsPassword) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-navy-950">
+      <div className="flex min-h-screen items-center justify-center bg-c-surface-raised">
         <form
           onSubmit={handlePasswordSubmit}
-          className="rounded-2xl border border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900 p-8 w-full max-w-sm shadow-sm text-center space-y-4"
+          className="rounded-2xl border border-c-border-subtle bg-c-surface p-8 w-full max-w-sm shadow-sm text-center space-y-4"
         >
           <div className="flex justify-center">
-            <div className="p-3 rounded-full bg-slate-100 dark:bg-navy-800">
-              <Lock size={20} className="text-slate-600 dark:text-slate-400" />
+            <div className="p-3 rounded-full bg-c-surface-raised">
+              <Lock size={20} className="text-c-text-secondary" />
             </div>
           </div>
           <div>
-            <h2 className="text-base font-semibold text-slate-800 dark:text-white">
+            <h2 className="text-base font-semibold text-c-text">
               {t('table.passwordProtected')}
             </h2>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            <p className="mt-1 text-xs text-c-text-muted">
               {t('table.enterPasswordToView')}
             </p>
           </div>
@@ -100,7 +100,7 @@ export default function PublicViewPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder={t('table.enterPasswordPlaceholder')}
-            className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 px-3 py-2 text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400"
+            className="w-full rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm text-c-text placeholder:text-c-text-muted dark:placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-border"
           />
           {passwordError && (
             <p className="text-xs text-danger-600 dark:text-danger-400">{passwordError}</p>
@@ -108,7 +108,7 @@ export default function PublicViewPage() {
           <button
             type="submit"
             disabled={!password.trim() || checking}
-            className="w-full rounded-lg bg-slate-800 dark:bg-slate-700 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 dark:hover:bg-slate-600 disabled:opacity-50 transition-colors"
+            className="w-full rounded-lg bg-c-text px-4 py-2 text-sm font-medium text-c-bg hover:bg-c-text-secondary disabled:opacity-50 transition-colors"
           >
             {checking ? t('table.verifying') : t('table.viewTable')}
           </button>
@@ -119,7 +119,7 @@ export default function PublicViewPage() {
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-navy-950">
+      <div className="flex min-h-screen items-center justify-center bg-c-surface-raised">
         <div className="rounded-xl border border-danger-200 bg-danger-50 dark:border-danger-800 dark:bg-danger-900/20 p-8 max-w-md text-center">
           <h2 className="text-lg font-semibold text-danger-800 dark:text-danger-200">
 
@@ -135,12 +135,12 @@ export default function PublicViewPage() {
   if (!data) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-navy-950 p-4 md:p-8">
+    <div className="min-h-screen bg-c-surface-raised p-4 md:p-8">
       <div className="mx-auto max-w-7xl">
-        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-navy-700 dark:bg-navy-900 overflow-hidden">
+        <div className="rounded-2xl border border-c-border-subtle bg-c-surface shadow-sm overflow-hidden">
           <GridView rows={data.rows} columns={data.columns} locked={true} />
         </div>
-        <p className="mt-4 text-center text-xs text-slate-600 dark:text-slate-500">
+        <p className="mt-4 text-center text-xs text-c-text-secondary">
           {t('table.sharedViewReadOnly')}
         </p>
       </div>

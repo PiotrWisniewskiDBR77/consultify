@@ -90,21 +90,21 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-[480px] max-w-[90vw] max-h-[80vh] rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 shadow-2xl overflow-hidden"
+        className="w-[480px] max-w-[90vw] max-h-[80vh] rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-200/60 dark:border-navy-700/60">
-          <Keyboard size={16} className="text-primary-500" />
-          <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+        <div className="flex items-center gap-2 px-5 py-3.5 border-b border-c-border-subtle">
+          <Keyboard size={16} className="text-c-accent" />
+          <span className="text-sm font-bold text-c-text">
             {isPl ? 'Skróty klawiszowe' : 'Keyboard Shortcuts'}
           </span>
           <div className="flex-1" />
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-c-surface-raised transition-colors"
           >
-            <X size={14} className="text-slate-600" />
+            <X size={14} className="text-c-text-secondary" />
           </button>
         </div>
 
@@ -112,7 +112,7 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({
         <div className="overflow-auto p-5 space-y-5" style={{ maxHeight: 'calc(80vh - 60px)' }}>
           {GROUPS.map((group) => (
             <div key={group.titleEn}>
-              <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5">
+              <h3 className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted mb-2.5">
                 {isPl ? group.titlePl : group.titleEn}
               </h3>
               <div className="space-y-1.5">
@@ -121,14 +121,14 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({
                     <div className="flex items-center gap-1 flex-shrink-0">
                       {sc.keys.map((key, i) => (
                         <React.Fragment key={i}>
-                          {i > 0 && <span className="text-[9px] text-slate-600">+</span>}
-                          <kbd className="inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 rounded-md bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-[10px] font-bold text-slate-600 dark:text-slate-300 shadow-sm">
+                          {i > 0 && <span className="text-[9px] text-c-text-secondary">+</span>}
+                          <kbd className="inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 rounded-md bg-c-surface-raised border border-c-border-subtle text-[10px] font-bold text-c-text-secondary shadow-sm">
                             {key}
                           </kbd>
                         </React.Fragment>
                       ))}
                     </div>
-                    <span className="text-[11px] text-slate-600 dark:text-slate-300">
+                    <span className="text-[11px] text-c-text-secondary">
                       {isPl ? sc.labelPl : sc.labelEn}
                     </span>
                   </div>
