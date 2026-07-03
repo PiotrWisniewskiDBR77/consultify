@@ -3465,8 +3465,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div className="rounded-2xl border border-navy-700 bg-navy-900/40 p-4">
-                      <h4 className="text-sm font-semibold text-white">
+                    <div className="rounded-2xl border border-c-border-subtle bg-c-surface-raised p-4">
+                      <h4 className="text-sm font-semibold text-c-text">
                         {isPolish ? 'Ograniczenia materiału' : 'Material limitations'}
                       </h4>
                       {quality.limitations.length > 0 ? (
@@ -3487,8 +3487,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       )}
                     </div>
 
-                    <div className="rounded-2xl border border-navy-700 bg-navy-900/40 p-4">
-                      <h4 className="text-sm font-semibold text-white">
+                    <div className="rounded-2xl border border-c-border-subtle bg-c-surface-raised p-4">
+                      <h4 className="text-sm font-semibold text-c-text">
                         {isPolish ? 'Braki i follow-up' : 'Gaps and follow-up'}
                       </h4>
                       <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600">
