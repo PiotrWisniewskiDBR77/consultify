@@ -162,17 +162,23 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              aria-invalid={errors.name ? true : undefined}
+              aria-describedby={errors.name ? 'initiative-name-error' : undefined}
               className={`
                                 w-full px-4 py-2.5 rounded-lg border bg-white dark:bg-navy-950 text-navy-900 dark:text-white
                                 ${
                                   errors.name
-                                    ? 'border-danger-300 dark:border-danger-500/50 focus:ring-danger-500'
+                                    ? 'border-c-danger focus:ring-c-danger/35'
                                     : 'border-slate-200 dark:border-navy-700 focus:ring-[color:var(--c-focus)]'
                                 }
                             `}
               placeholder={t('initiatives.form.namePlaceholder')}
             />
-            {errors.name && <p className="text-xs text-danger-500">{errors.name}</p>}
+            {errors.name && (
+              <p id="initiative-name-error" className="text-xs text-c-danger">
+                {errors.name}
+              </p>
+            )}
           </div>
 
           {/* Description */}
@@ -184,17 +190,23 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
+              aria-invalid={errors.description ? true : undefined}
+              aria-describedby={errors.description ? 'initiative-description-error' : undefined}
               className={`
                                 w-full px-4 py-2.5 rounded-lg border bg-white dark:bg-navy-950 text-navy-900 dark:text-white resize-none
                                 ${
                                   errors.description
-                                    ? 'border-danger-300 dark:border-danger-500/50 focus:ring-danger-500'
+                                    ? 'border-c-danger focus:ring-c-danger/35'
                                     : 'border-slate-200 dark:border-navy-700 focus:ring-[color:var(--c-focus)]'
                                 }
                             `}
               placeholder={t('initiatives.form.descriptionPlaceholder')}
             />
-            {errors.description && <p className="text-xs text-danger-500">{errors.description}</p>}
+            {errors.description && (
+              <p id="initiative-description-error" className="text-xs text-c-danger">
+                {errors.description}
+              </p>
+            )}
           </div>
 
           {/* Grid: Axis + Risk */}
@@ -244,17 +256,21 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
                 type="number"
                 value={estimatedBudget}
                 onChange={(e) => setEstimatedBudget(parseInt(e.target.value) || 0)}
+                aria-invalid={errors.estimatedBudget ? true : undefined}
+                aria-describedby={errors.estimatedBudget ? 'initiative-budget-error' : undefined}
                 className={`
                                     w-full px-4 py-2.5 rounded-lg border bg-white dark:bg-navy-950 text-navy-900 dark:text-white
                                     ${
                                       errors.estimatedBudget
-                                        ? 'border-danger-300 dark:border-danger-500/50'
+                                        ? 'border-c-danger focus:ring-c-danger/35'
                                         : 'border-slate-200 dark:border-navy-700'
                                     }
                                 `}
               />
               {errors.estimatedBudget && (
-                <p className="text-xs text-danger-500">{errors.estimatedBudget}</p>
+                <p id="initiative-budget-error" className="text-xs text-c-danger">
+                  {errors.estimatedBudget}
+                </p>
               )}
             </div>
 
@@ -267,17 +283,21 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
                 step="0.1"
                 value={estimatedROI}
                 onChange={(e) => setEstimatedROI(parseFloat(e.target.value) || 0)}
+                aria-invalid={errors.estimatedROI ? true : undefined}
+                aria-describedby={errors.estimatedROI ? 'initiative-roi-error' : undefined}
                 className={`
                                     w-full px-4 py-2.5 rounded-lg border bg-white dark:bg-navy-950 text-navy-900 dark:text-white
                                     ${
                                       errors.estimatedROI
-                                        ? 'border-danger-300 dark:border-danger-500/50'
+                                        ? 'border-c-danger focus:ring-c-danger/35'
                                         : 'border-slate-200 dark:border-navy-700'
                                     }
                                 `}
               />
               {errors.estimatedROI && (
-                <p className="text-xs text-danger-500">{errors.estimatedROI}</p>
+                <p id="initiative-roi-error" className="text-xs text-c-danger">
+                  {errors.estimatedROI}
+                </p>
               )}
             </div>
 

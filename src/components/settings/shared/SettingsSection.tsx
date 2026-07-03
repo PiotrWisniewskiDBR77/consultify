@@ -197,7 +197,7 @@ export const SettingsFormRow: React.FC<SettingsFormRowProps> = ({
   <div className={cn('space-y-2', className)}>
     <label htmlFor={htmlFor} className="block text-sm font-medium text-slate-600">
       {label}
-      {required && <span className="text-danger-400 ml-1">*</span>}
+      {required && <span className="text-c-danger ml-1">*</span>}
     </label>
     {children}
     {description && <p className="text-xs text-slate-500 dark:text-slate-400">{description}</p>}
@@ -211,21 +211,40 @@ interface SettingsInputProps extends React.InputHTMLAttributes<HTMLInputElement>
   error?: string;
 }
 
-export const SettingsInput: React.FC<SettingsInputProps> = ({ error, className, ...props }) => (
-  <div>
-    <input
-      {...props}
-      className={cn(
-        'w-full px-4 py-2.5 bg-white dark:bg-navy-800 border rounded-lg text-slate-900 dark:text-white',
-        'placeholder:text-slate-400 transition-all duration-200',
-        'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent',
-        error ? 'border-danger-500 focus:ring-danger-500' : 'border-slate-300 dark:border-white/10 hover:border-slate-400 dark:hover:border-white/20',
-        className
+export const SettingsInput: React.FC<SettingsInputProps> = ({
+  error,
+  className,
+  id,
+  ...props
+}) => {
+  const reactId = React.useId();
+  const fieldId = id ?? reactId;
+  const errorId = error ? `${fieldId}-error` : undefined;
+  return (
+    <div>
+      <input
+        {...props}
+        id={fieldId}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={errorId}
+        className={cn(
+          'w-full px-4 py-2.5 bg-white dark:bg-navy-800 border rounded-lg text-slate-900 dark:text-white',
+          'placeholder:text-slate-400 transition-all duration-200',
+          'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent',
+          error
+            ? 'border-c-danger focus:ring-c-danger/35'
+            : 'border-slate-300 dark:border-white/10 hover:border-slate-400 dark:hover:border-white/20',
+          className
+        )}
+      />
+      {error && (
+        <p id={errorId} className="mt-1 text-xs text-c-danger">
+          {error}
+        </p>
       )}
-    />
-    {error && <p className="mt-1 text-xs text-danger-400">{error}</p>}
-  </div>
-);
+    </div>
+  );
+};
 
 /**
  * Settings textarea - consistent textarea styling
@@ -237,22 +256,37 @@ interface SettingsTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAre
 export const SettingsTextarea: React.FC<SettingsTextareaProps> = ({
   error,
   className,
+  id,
   ...props
-}) => (
-  <div>
-    <textarea
-      {...props}
-      className={cn(
-        'w-full px-4 py-3 bg-white dark:bg-navy-800 border rounded-lg text-slate-900 dark:text-white resize-none',
-        'placeholder:text-slate-400 transition-all duration-200',
-        'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent',
-        error ? 'border-danger-500 focus:ring-danger-500' : 'border-slate-300 dark:border-white/10 hover:border-slate-400 dark:hover:border-white/20',
-        className
+}) => {
+  const reactId = React.useId();
+  const fieldId = id ?? reactId;
+  const errorId = error ? `${fieldId}-error` : undefined;
+  return (
+    <div>
+      <textarea
+        {...props}
+        id={fieldId}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={errorId}
+        className={cn(
+          'w-full px-4 py-3 bg-white dark:bg-navy-800 border rounded-lg text-slate-900 dark:text-white resize-none',
+          'placeholder:text-slate-400 transition-all duration-200',
+          'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent',
+          error
+            ? 'border-c-danger focus:ring-c-danger/35'
+            : 'border-slate-300 dark:border-white/10 hover:border-slate-400 dark:hover:border-white/20',
+          className
+        )}
+      />
+      {error && (
+        <p id={errorId} className="mt-1 text-xs text-c-danger">
+          {error}
+        </p>
       )}
-    />
-    {error && <p className="mt-1 text-xs text-danger-400">{error}</p>}
-  </div>
-);
+    </div>
+  );
+};
 
 /**
  * Settings select - consistent select styling
@@ -266,28 +300,43 @@ export const SettingsSelect: React.FC<SettingsSelectProps> = ({
   options,
   error,
   className,
+  id,
   ...props
-}) => (
-  <div>
-    <select
-      {...props}
-      className={cn(
-        'w-full px-4 py-2.5 bg-white dark:bg-navy-800 border rounded-lg text-slate-900 dark:text-white',
-        'transition-all duration-200 cursor-pointer',
-        'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent',
-        error ? 'border-danger-500 focus:ring-danger-500' : 'border-slate-300 dark:border-white/10 hover:border-slate-400 dark:hover:border-white/20',
-        className
+}) => {
+  const reactId = React.useId();
+  const fieldId = id ?? reactId;
+  const errorId = error ? `${fieldId}-error` : undefined;
+  return (
+    <div>
+      <select
+        {...props}
+        id={fieldId}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={errorId}
+        className={cn(
+          'w-full px-4 py-2.5 bg-white dark:bg-navy-800 border rounded-lg text-slate-900 dark:text-white',
+          'transition-all duration-200 cursor-pointer',
+          'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent',
+          error
+            ? 'border-c-danger focus:ring-c-danger/35'
+            : 'border-slate-300 dark:border-white/10 hover:border-slate-400 dark:hover:border-white/20',
+          className
+        )}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      {error && (
+        <p id={errorId} className="mt-1 text-xs text-c-danger">
+          {error}
+        </p>
       )}
-    >
-      {options.map((option) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
-      ))}
-    </select>
-    {error && <p className="mt-1 text-xs text-danger-400">{error}</p>}
-  </div>
-);
+    </div>
+  );
+};
 
 /**
  * Settings toggle - consistent toggle switch
