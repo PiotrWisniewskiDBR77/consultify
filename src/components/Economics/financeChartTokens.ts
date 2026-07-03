@@ -56,6 +56,8 @@ export interface FinanceChartColors {
   benefit: string;
   /** net flow series (semantic info) */
   net: string;
+  /** variance / caution series (semantic warning) */
+  warning: string;
   /** translucent fill for the net-flow area */
   netFill: string;
   /** cumulative / trend series (categorical periwinkle) */
@@ -84,9 +86,11 @@ export function readFinanceChartColors(): FinanceChartColors {
     benefit: readCssToken('--c-success', '#026833'),
     net,
     netFill,
+    warning: readCssToken('--c-warning', '#ae6429'),
     cumulative: ramp[1], // periwinkle
-    target: readCssToken('--c-success', '#026833'),
-    actual: info,
+    // Plan/target reads as the neutral "info" blue; actual/realised reads green.
+    target: info,
+    actual: readCssToken('--c-success', '#026833'),
     ramp,
   };
 }

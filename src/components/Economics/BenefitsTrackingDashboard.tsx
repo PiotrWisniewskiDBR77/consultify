@@ -42,6 +42,7 @@ import {
 
 import { Api } from '../../services/api';
 import { LoadingState } from '../ui/primitives';
+import { useFinanceChartColors } from './financeChartTokens';
 
 interface BenefitTrackingEntry {
   id: string;
@@ -67,6 +68,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
   currency = 'PLN',
   onClose,
 }) => {
+  const chart = useFinanceChartColors();
   const [benefits, setBenefits] = useState<BenefitTrackingEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showMeasurementModal, setShowMeasurementModal] = useState(false);
@@ -298,27 +300,27 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
           </h3>
           <ResponsiveContainer width="100%" height={350}>
             <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.2)" />
-              <XAxis dataKey="period" tick={{ fill: '#64748b', fontSize: 12 }} />
+              <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
+              <XAxis dataKey="period" tick={{ fill: chart.axis, fontSize: 12 }} />
               <YAxis
                 tickFormatter={(value) => formatCurrency(value).replace(' PLN', 'k')}
-                tick={{ fill: '#64748b', fontSize: 12 }}
+                tick={{ fill: chart.axis, fontSize: 12 }}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend />
-              <ReferenceLine y={0} stroke="#94a3b8" strokeDasharray="3 3" />
+              <ReferenceLine y={0} stroke={chart.reference} strokeDasharray="3 3" />
 
               <Bar
                 dataKey="planned"
                 name="Plan"
-                fill="#3b82f6"
+                fill={chart.target}
                 radius={[4, 4, 0, 0]}
                 barSize={30}
               />
               <Bar
                 dataKey="actual"
                 name="Realizacja"
-                fill="#10b981"
+                fill={chart.benefit}
                 radius={[4, 4, 0, 0]}
                 barSize={30}
               />
@@ -326,9 +328,9 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
                 type="monotone"
                 dataKey="variance"
                 name="Odchylenie"
-                stroke="#f59e0b"
+                stroke={chart.warning}
                 strokeWidth={2}
-                dot={{ fill: '#f59e0b', r: 4 }}
+                dot={{ fill: chart.warning, r: 4 }}
               />
             </ComposedChart>
           </ResponsiveContainer>
