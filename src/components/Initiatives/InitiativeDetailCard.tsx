@@ -229,7 +229,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
   // Loading state
   if (isLoading) {
     return (
-      <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950">
+      <div className="h-full flex items-center justify-center bg-c-surface-raised dark:bg-c-bg">
         <LoadingState variant="spinner" label="Loading initiative..." />
       </div>
     );
@@ -238,11 +238,11 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
   // Error state
   if (error || !initiative) {
     return (
-      <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950">
+      <div className="h-full flex items-center justify-center bg-c-surface-raised dark:bg-c-bg">
         <div className="text-center">
           <AlertTriangle className="w-12 h-12 text-danger-400 mx-auto mb-4" />
-          <p className="text-slate-900 dark:text-white text-lg mb-2">Failed to load initiative</p>
-          <p className="text-slate-500 dark:text-slate-400">{error || 'Initiative not found'}</p>
+          <p className="text-c-text text-lg mb-2">Failed to load initiative</p>
+          <p className="text-c-text-muted">{error || 'Initiative not found'}</p>
         </div>
       </div>
     );
@@ -294,30 +294,30 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'DRAFT':
-        return 'bg-slate-500/20 text-slate-600';
+        return 'bg-c-surface-raised text-c-text-secondary';
       case 'PLANNING':
-        return 'bg-blue-500/20 text-blue-400';
+        return 'bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)] text-c-info';
       case 'REVIEW':
-        return 'bg-amber-500/20 text-amber-400';
+        return 'bg-[color-mix(in_srgb,var(--c-warning)_15%,transparent)] text-c-warning';
       case 'APPROVED':
-        return 'bg-emerald-500/20 text-emerald-400';
+        return 'bg-[color-mix(in_srgb,var(--c-success)_15%,transparent)] text-c-success';
       case 'EXECUTING':
-        return 'bg-blue-500/20 text-blue-400';
+        return 'bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)] text-c-info';
       case 'BLOCKED':
-        return 'bg-danger-500/20 text-danger-400';
+        return 'bg-[color-mix(in_srgb,var(--c-danger)_15%,transparent)] text-c-danger';
       case 'DONE':
-        return 'bg-green-500/20 text-green-400';
+        return 'bg-[color-mix(in_srgb,var(--c-success)_15%,transparent)] text-c-success';
       default:
-        return 'bg-slate-500/20 text-slate-600';
+        return 'bg-c-surface-raised text-c-text-secondary';
     }
   };
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 dark:bg-navy-950 overflow-hidden">
+    <div className="h-full flex flex-col bg-c-surface-raised dark:bg-c-bg overflow-hidden">
       {/* Header with Status Indicator */}
-      <div className="border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
+      <div className="border-b border-c-border-subtle bg-c-surface">
         {/* Module Progress Indicator */}
-        <div className="h-10 border-b border-slate-200 dark:border-navy-800 flex items-center px-6 gap-0">
+        <div className="h-10 border-b border-c-border-subtle flex items-center px-6 gap-0">
           {[
             { module: 'Overview', statuses: ['DRAFT'], color: 'slate', icon: '1' },
             {
@@ -348,19 +348,19 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
                 <div
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
                     isActive
-                      ? 'bg-blue-500/20 text-blue-400 shadow-sm'
+                      ? 'bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)] text-c-info shadow-sm'
                       : isPassed
-                        ? 'bg-green-500/10 text-green-400'
-                        : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-500'
+                        ? 'bg-[color-mix(in_srgb,var(--c-success)_10%,transparent)] text-c-success'
+                        : 'bg-c-surface-raised text-c-text-secondary dark:text-c-text-muted'
                   }`}
                 >
                   <span
                     className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
                       isActive
-                        ? 'bg-blue-500 text-white'
+                        ? 'bg-c-info text-white'
                         : isPassed
-                          ? 'bg-green-500 text-white'
-                          : 'bg-slate-600 text-white'
+                          ? 'bg-c-success text-white'
+                          : 'bg-c-surface-raised text-c-text-secondary'
                     }`}
                   >
                     {isPassed && !isActive ? '✓' : mod.icon}
@@ -369,7 +369,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
                 </div>
                 {idx < arr.length - 1 && (
                   <div
-                    className={`w-8 h-0.5 mx-1 ${isPassed || isActive ? 'bg-green-500/30' : 'bg-slate-700'}`}
+                    className={`w-8 h-0.5 mx-1 ${isPassed || isActive ? 'bg-[color-mix(in_srgb,var(--c-success)_30%,transparent)]' : 'bg-c-border'}`}
                   />
                 )}
               </React.Fragment>
@@ -386,18 +386,18 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
         {/* Main Header */}
         <div className="h-16 flex items-center justify-between px-6">
           <div className="flex items-center gap-4">
-            <div className="p-2.5 rounded-lg bg-blue-500/20 text-blue-400">
+            <div className="p-2.5 rounded-lg bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)] text-c-info">
               <Target size={22} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+              <h2 className="text-xl font-bold text-c-text">
                 {initiative.name}
               </h2>
-              <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+              <div className="flex items-center gap-2 text-xs text-c-text-muted">
                 <span>ID: {initiative.id?.slice(0, 8)}</span>
-                <span className="w-1 h-1 bg-slate-600 rounded-full" />
+                <span className="w-1 h-1 bg-c-border rounded-full" />
                 <span>Progress: {readiness.total}%</span>
-                <span className="w-1 h-1 bg-slate-600 rounded-full" />
+                <span className="w-1 h-1 bg-c-border rounded-full" />
                 <span className="capitalize">{initiative.axis}</span>
               </div>
             </div>
@@ -406,15 +406,15 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
           {/* Readiness Score */}
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+              <div className="text-xs text-c-text-muted mb-1">
                 Charter Readiness
               </div>
               <div
                 className={`text-2xl font-bold ${
                   readiness.total >= 70
-                    ? 'text-green-400'
+                    ? 'text-c-success'
                     : readiness.total >= 40
-                      ? 'text-amber-400'
+                      ? 'text-c-warning'
                       : 'text-danger-400'
                 }`}
               >
@@ -424,7 +424,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
             <Button
               onClick={handleSave}
               disabled={isSaving}
-              className="bg-blue-600 hover:bg-blue-500 text-white"
+              className="bg-c-info text-white hover:opacity-90"
             >
               <Save size={16} className="mr-2" />
               {isSaving ? 'Saving...' : 'Save Initiative Charter'}
@@ -440,8 +440,8 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-all ${
                 activeTab === tab.id
-                  ? 'bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white border-t border-x border-slate-200 dark:border-navy-700'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800'
+                  ? 'bg-c-surface-raised dark:bg-c-bg text-c-text border-t border-x border-c-border-subtle'
+                  : 'text-c-text-muted hover:text-c-text dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
               }`}
             >
               {tab.icon}
@@ -456,10 +456,10 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
         {activeTab === 'overview' && (
           <div className="space-y-6">
             {/* Decision to Make */}
-            <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
+            <div className="bg-c-surface rounded-xl border border-c-border-subtle p-5">
               <div className="flex items-center gap-2 mb-3">
-                <AlertOctagon size={16} className="text-amber-400" />
-                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                <AlertOctagon size={16} className="text-c-warning" />
+                <span className="text-xs font-semibold text-c-text-muted uppercase">
                   Decision to Be Made
                 </span>
               </div>
@@ -468,19 +468,19 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
                 value={initiative.decisionToMake || ''}
                 onChange={(e) => setInitiative({ ...initiative, decisionToMake: e.target.value })}
                 placeholder="e.g. Approve Pilot Budget of $50k"
-                className="w-full text-xl font-semibold text-slate-900 dark:text-white bg-transparent border-none focus:outline-none placeholder:text-slate-500 dark:placeholder:text-slate-600"
+                className="w-full text-xl font-semibold text-c-text bg-transparent border-none focus:outline-none placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary"
               />
-              <p className="text-xs text-slate-500 mt-2">
+              <p className="text-xs text-c-text-muted mt-2">
                 Define the specific decision executives need to make today.
               </p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Executive One-Liner */}
-              <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
+              <div className="bg-c-surface rounded-xl border border-c-border-subtle p-5">
                 <div className="flex items-center gap-2 mb-3">
-                  <Sparkles size={16} className="text-primary-400" />
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                  <Sparkles size={16} className="text-c-accent" />
+                  <span className="text-xs font-semibold text-c-text-muted uppercase">
                     Executive One-Liner
                   </span>
                 </div>
@@ -490,20 +490,20 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
                     setInitiative({ ...initiative, applicantOneLiner: e.target.value })
                   }
                   placeholder="Achieve [X] by changing [Y] so that [Z improves]"
-                  className="w-full h-24 text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 rounded-lg p-3 focus:outline-none focus:border-blue-500 resize-none"
+                  className="w-full h-24 text-sm text-c-text-secondary bg-c-surface-raised border border-c-border rounded-lg p-3 focus:outline-none focus:border-c-accent resize-none"
                 />
               </div>
 
               {/* Strategic Fit */}
-              <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
+              <div className="bg-c-surface rounded-xl border border-c-border-subtle p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <Target size={16} className="text-blue-400" />
-                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                    <Target size={16} className="text-c-info" />
+                    <span className="text-xs font-semibold text-c-text-muted uppercase">
                       Strategic Fit
                     </span>
                   </div>
-                  <button className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1">
+                  <button className="text-xs text-c-info hover:opacity-80 flex items-center gap-1">
                     <Sparkles size={12} />
                     Analyze
                   </button>
@@ -512,10 +512,10 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
                   {['Alignment with Axis', 'Corporate Goal', 'Pain Point'].map((item) => (
                     <div
                       key={item}
-                      className="flex items-center justify-between p-2 bg-slate-50 dark:bg-navy-800 rounded-lg"
+                      className="flex items-center justify-between p-2 bg-c-surface-raised rounded-lg"
                     >
-                      <span className="text-sm text-slate-700 dark:text-slate-300">{item}</span>
-                      <button className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300">
+                      <span className="text-sm text-c-text-secondary">{item}</span>
+                      <button className="text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted">
                         ×
                       </button>
                     </div>
@@ -525,16 +525,16 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
             </div>
 
             {/* Problem Statement */}
-            <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
+            <div className="bg-c-surface rounded-xl border border-c-border-subtle p-5">
               <div className="flex items-center gap-2 mb-4">
-                <AlertTriangle size={16} className="text-amber-400" />
-                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                <AlertTriangle size={16} className="text-c-warning" />
+                <span className="text-xs font-semibold text-c-text-muted uppercase">
                   Problem Statement (The Why)
                 </span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="text-xs font-semibold text-slate-600 uppercase mb-2 block">
+                  <label className="text-xs font-semibold text-c-text-secondary uppercase mb-2 block">
                     Symptom
                   </label>
                   <input
@@ -551,11 +551,11 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
                       })
                     }
                     placeholder="What is visible?"
-                    className="w-full text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 rounded-lg p-3 focus:outline-none focus:border-blue-500"
+                    className="w-full text-sm text-c-text-secondary bg-c-surface-raised border border-c-border rounded-lg p-3 focus:outline-none focus:border-c-accent"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-600 uppercase mb-2 block">
+                  <label className="text-xs font-semibold text-c-text-secondary uppercase mb-2 block">
                     Root Cause
                   </label>
                   <input
@@ -572,11 +572,11 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
                       })
                     }
                     placeholder="Why is it happening?"
-                    className="w-full text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 rounded-lg p-3 focus:outline-none focus:border-blue-500"
+                    className="w-full text-sm text-c-text-secondary bg-c-surface-raised border border-c-border rounded-lg p-3 focus:outline-none focus:border-c-accent"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-600 uppercase mb-2 block">
+                  <label className="text-xs font-semibold text-c-text-secondary uppercase mb-2 block">
                     Cost of Inaction
                   </label>
                   <input
@@ -593,7 +593,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
                       })
                     }
                     placeholder="What if we do nothing?"
-                    className="w-full text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 rounded-lg p-3 focus:outline-none focus:border-blue-500"
+                    className="w-full text-sm text-c-text-secondary bg-c-surface-raised border border-c-border rounded-lg p-3 focus:outline-none focus:border-c-accent"
                   />
                 </div>
               </div>
@@ -605,10 +605,10 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
             />
 
             {/* Summary */}
-            <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
+            <div className="bg-c-surface rounded-xl border border-c-border-subtle p-5">
               <div className="flex items-center gap-2 mb-3">
-                <FileText size={16} className="text-slate-600" />
-                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                <FileText size={16} className="text-c-text-secondary" />
+                <span className="text-xs font-semibold text-c-text-muted uppercase">
                   Summary
                 </span>
               </div>
@@ -616,7 +616,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
                 value={initiative.summary || ''}
                 onChange={(e) => setInitiative({ ...initiative, summary: e.target.value })}
                 placeholder="Brief description of this initiative..."
-                className="w-full h-32 text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 rounded-lg p-3 focus:outline-none focus:border-blue-500 resize-none"
+                className="w-full h-32 text-sm text-c-text-secondary bg-c-surface-raised border border-c-border rounded-lg p-3 focus:outline-none focus:border-c-accent resize-none"
               />
             </div>
           </div>
@@ -641,10 +641,10 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
         {['definition', 'execution', 'governance', 'team', 'comments', 'history'].includes(
           activeTab
         ) && (
-          <div className="flex items-center justify-center h-64 text-slate-500 dark:text-slate-400">
+          <div className="flex items-center justify-center h-64 text-c-text-muted">
             <div className="text-center">
               <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p className="text-lg font-medium text-slate-900 dark:text-white mb-2">
+              <p className="text-lg font-medium text-c-text mb-2">
                 {tabs.find((t) => t.id === activeTab)?.label}
               </p>
               <p className="text-sm">This section is available in the full modal view</p>

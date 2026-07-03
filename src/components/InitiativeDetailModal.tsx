@@ -440,12 +440,12 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
     };
 
     return (
-      <div className="fixed inset-0 z-overlay flex items-center justify-center bg-slate-900/50 dark:bg-black/80 backdrop-blur-sm p-4 transition-all">
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl w-full max-w-5xl h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+      <div className="fixed inset-0 z-overlay flex items-center justify-center bg-c-surface dark:bg-black/80 backdrop-blur-sm p-4 transition-all">
+        <div className="bg-c-surface border border-c-border-subtle rounded-xl w-full max-w-5xl h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
           {/* Header with Module Indicator */}
-          <div className="border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950">
+          <div className="border-b border-c-border-subtle bg-c-surface-raised dark:bg-c-bg">
             {/* Module Transition Indicator */}
-            <div className="h-8 border-b border-slate-200 dark:border-navy-700 flex items-center px-6 gap-0">
+            <div className="h-8 border-b border-c-border-subtle flex items-center px-6 gap-0">
               {[
                 {
                   module: t('initiative.tabs.overview'),
@@ -477,19 +477,19 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     <div
                       className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold transition-all ${
                         isActive
-                          ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 shadow-sm'
+                          ? 'bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)] dark:bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)] text-c-info dark:text-c-info shadow-sm'
                           : isPassed
-                            ? 'bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-500'
+                            ? 'bg-[color-mix(in_srgb,var(--c-success)_10%,transparent)] text-c-success'
+                            : 'bg-c-surface-raised text-c-text-secondary dark:text-c-text-muted'
                       }`}
                     >
                       <span
                         className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] ${
                           isActive
-                            ? 'bg-blue-500 text-white'
+                            ? 'bg-c-info text-white'
                             : isPassed
-                              ? 'bg-green-500 text-white'
-                              : 'bg-slate-300 dark:bg-slate-600 text-white'
+                              ? 'bg-c-success text-white'
+                              : 'bg-c-border dark:bg-c-surface-raised text-white'
                         }`}
                       >
                         {isPassed && !isActive ? '✓' : mod.icon}
@@ -498,14 +498,14 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     </div>
                     {idx < arr.length - 1 && (
                       <div
-                        className={`w-8 h-0.5 ${isPassed || isActive ? 'bg-green-300 dark:bg-green-500/30' : 'bg-slate-200 dark:bg-slate-700'}`}
+                        className={`w-8 h-0.5 ${isPassed || isActive ? 'bg-c-success' : 'bg-c-surface-raised'}`}
                       />
                     )}
                   </React.Fragment>
                 );
               })}
               <div className="flex-1" />
-              <span className="text-[10px] text-slate-600 dark:text-slate-500">
+              <span className="text-[10px] text-c-text-secondary dark:text-c-text-muted">
                 {initiative.status === 'ARCHIVED'
                   ? `📦 ${t('status.ARCHIVED')}`
                   : initiative.status === 'CANCELLED'
@@ -518,44 +518,44 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
             <div className="h-14 flex items-center justify-between px-6">
               <div className="flex items-center gap-3">
                 <div
-                  className={`p-2 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400`}
+                  className={`p-2 rounded-lg bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)] text-c-info dark:bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)] dark:text-c-info`}
                 >
                   <Target size={20} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-navy-900 dark:text-white">
+                  <h2 className="text-lg font-bold text-c-text">
                     {t('initiative.charterTitle')}
                   </h2>
-                  <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500">
+                  <div className="flex items-center gap-2 text-xs text-c-text-secondary dark:text-c-text-muted">
                     <span className="uppercase">
                       {initiative.id
                         ? `${t('initiative.idLabel')} ${initiative.id.slice(0, 8)}`
                         : t('initiative.newInitiative')}
                     </span>
-                    <span className="w-1 h-1 bg-slate-600 rounded-full"></span>
+                    <span className="w-1 h-1 bg-c-surface-raised rounded-full"></span>
                     <span
                       className={`uppercase font-bold ${
                         initiative.status === 'BLOCKED'
                           ? 'text-danger-400'
                           : initiative.status === 'DONE'
-                            ? 'text-green-400'
+                            ? 'text-c-success'
                             : initiative.status === 'EXECUTING'
-                              ? 'text-blue-400'
-                              : 'text-amber-400'
+                              ? 'text-c-info'
+                              : 'text-c-warning'
                       }`}
                     >
                       {t(`status.${initiative.status || 'DRAFT'}`).replace('_', ' ')}
                     </span>
-                    <span className="w-1 h-1 bg-slate-600 rounded-full"></span>
-                    <div className="flex items-center gap-1 text-blue-400">
+                    <span className="w-1 h-1 bg-c-surface-raised rounded-full"></span>
+                    <div className="flex items-center gap-1 text-c-info">
                       <TrendingUp size={12} />
                       <span>
                         {t('initiative.progressLabel')} {initiative.progress || 0}%
                       </span>
                     </div>
-                    <span className="w-1 h-1 bg-slate-600 rounded-full"></span>
+                    <span className="w-1 h-1 bg-c-surface-raised rounded-full"></span>
                     <div
-                      className={`flex items-center gap-1 ${isReady ? 'text-green-400' : 'text-amber-400'}`}
+                      className={`flex items-center gap-1 ${isReady ? 'text-c-success' : 'text-c-warning'}`}
                     >
                       <Brain size={12} />
                       <span>
@@ -574,7 +574,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
           </div>
 
           {/* Tabs */}
-          <div className="flex border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900/50 px-6 gap-6">
+          <div className="flex border-b border-c-border-subtle bg-c-surface px-6 gap-6">
             {[
               { id: 'overview', label: t('initiative.tabs.overview'), icon: FileText },
               { id: 'tasks', label: t('initiative.tabs.tasks'), icon: CheckCircle },
@@ -592,8 +592,8 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                 onClick={() => setActiveTab(tab.id as typeof activeTab)}
                 className={`flex items-center gap-2 py-3 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === tab.id
-                    ? 'text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-500'
-                    : 'text-slate-500 dark:text-slate-400 border-transparent hover:text-navy-900 dark:hover:text-white'
+                    ? 'text-c-info border-c-info'
+                    : 'text-c-text-muted border-transparent hover:text-c-text dark:hover:text-c-text'
                 } `}
               >
                 <tab.icon size={16} />
@@ -603,7 +603,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto p-6 bg-white dark:bg-navy-900">
+          <div className="flex-1 overflow-y-auto p-6 bg-c-surface">
             {/* TASKS TAB */}
             {activeTab === 'tasks' && (
               <InitiativeTasksTab
@@ -618,21 +618,21 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
             {activeTab === 'overview' && (
               <div className="space-y-8 pb-10">
                 {/* Relevant ideas (T009) */}
-                <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-4 border border-slate-200 dark:border-navy-700 space-y-3">
+                <div className="bg-c-surface-raised dark:bg-c-bg rounded-xl p-4 border border-c-border-subtle space-y-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
-                      <Lightbulb size={16} className="text-amber-500 dark:text-amber-400" />{' '}
+                    <h3 className="text-sm font-bold text-c-text flex items-center gap-2">
+                      <Lightbulb size={16} className="text-c-warning dark:text-c-warning" />{' '}
                       {t('myWork.ideas.suggestions', 'Relevant ideas')}
                     </h3>
                     {suggestedIdeasLoading ? (
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                      <span className="text-xs text-c-text-muted">
                         {t('common.loading', 'Loading…')}
                       </span>
                     ) : null}
                   </div>
 
                   {suggestedIdeas.length === 0 ? (
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                    <p className="text-xs text-c-text-muted">
                       {t(
                         'myWork.ideas.suggestionsEmpty',
                         'No suggestions yet. Save ideas from chat to build your private library.'
@@ -643,15 +643,15 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                       {suggestedIdeas.map((idea) => (
                         <div
                           key={idea.id}
-                          className="bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700 p-3"
+                          className="bg-c-surface rounded-lg border border-c-border-subtle p-3"
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
-                              <div className="text-sm font-medium text-navy-900 dark:text-white truncate">
+                              <div className="text-sm font-medium text-c-text truncate">
                                 {idea.title}
                               </div>
                               {idea.body ? (
-                                <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
+                                <div className="mt-1 text-xs text-c-text-secondary dark:text-c-text-muted line-clamp-2">
                                   {idea.body}
                                 </div>
                               ) : null}
@@ -687,21 +687,21 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                 </div>
 
                 {/* Relevant notes (T011) */}
-                <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-4 border border-slate-200 dark:border-navy-700 space-y-3">
+                <div className="bg-c-surface-raised dark:bg-c-bg rounded-xl p-4 border border-c-border-subtle space-y-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
-                      <BookOpen size={16} className="text-slate-700 dark:text-slate-300" />{' '}
+                    <h3 className="text-sm font-bold text-c-text flex items-center gap-2">
+                      <BookOpen size={16} className="text-c-text-secondary" />{' '}
                       {t('myWork.notebook.suggestions', 'Relevant notes')}
                     </h3>
                     {suggestedNotesLoading ? (
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                      <span className="text-xs text-c-text-muted">
                         {t('common.loading', 'Loading…')}
                       </span>
                     ) : null}
                   </div>
 
                   {suggestedNotes.length === 0 ? (
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                    <p className="text-xs text-c-text-muted">
                       {t(
                         'myWork.notebook.suggestionsEmpty',
                         'No suggestions yet. Create notebook pages to build a searchable library.'
@@ -712,15 +712,15 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                       {suggestedNotes.map((note) => (
                         <div
                           key={note.id}
-                          className="bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700 p-3"
+                          className="bg-c-surface rounded-lg border border-c-border-subtle p-3"
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
-                              <div className="text-sm font-medium text-navy-900 dark:text-white truncate">
+                              <div className="text-sm font-medium text-c-text truncate">
                                 {note.title}
                               </div>
                               {note.contentText ? (
-                                <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
+                                <div className="mt-1 text-xs text-c-text-secondary dark:text-c-text-muted line-clamp-2">
                                   {note.contentText}
                                 </div>
                               ) : null}
@@ -763,25 +763,25 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                 </div>
 
                 {/* 1. Decision Framing */}
-                <div className="bg-slate-50 dark:bg-navy-950 p-4 rounded-xl border border-slate-200 dark:border-blue-500/30 shadow-sm dark:shadow-blue-900/10 flex items-start gap-6">
+                <div className="bg-c-surface-raised dark:bg-c-bg p-4 rounded-xl border border-c-border shadow-sm dark:shadow-blue-900/10 flex items-start gap-6">
                   <div className="flex-1 space-y-2">
-                    <label className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-2">
+                    <label className="text-xs font-bold text-c-info uppercase tracking-wider flex items-center gap-2">
                       <AlertOctagon size={14} /> {t('initiative.decisionToMake')}
                     </label>
                     <input
-                      className="w-full bg-white dark:bg-navy-900 border-b-2 border-blue-500/50 text-xl font-bold text-navy-900 dark:text-white focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 py-2 placeholder:text-slate-400 dark:placeholder:text-blue-900/50"
+                      className="w-full bg-c-surface border-b-2 border-c-info text-xl font-bold text-c-text focus:outline-none focus:border-c-accent dark:focus:border-c-info py-2 placeholder:text-c-text-muted dark:placeholder:text-c-info"
                       placeholder="e.g. Approve Pilot Budget of $50k"
                       value={initiative.decisionToMake || ''}
                       onChange={(e) =>
                         setInitiative({ ...initiative, decisionToMake: e.target.value })
                       }
                     />
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                    <p className="text-xs text-c-text-muted">
                       Define the specific decision executives need to make today.
                     </p>
                   </div>
                   <div className="w-64 space-y-2">
-                    <label className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider">
+                    <label className="text-xs font-bold text-c-text-secondary dark:text-c-text-muted uppercase tracking-wider">
                       {t('initiative.decisionOwner')}
                     </label>
                     <Select
@@ -801,17 +801,17 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                 {/* 2. Executive Definition */}
                 <div className="grid grid-cols-12 gap-6">
                   <div className="col-span-8 space-y-6">
-                    <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-4 border border-slate-200 dark:border-navy-700 space-y-4">
-                      <h3 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
-                        <Sparkles size={16} className="text-primary-600 dark:text-primary-400" />{' '}
+                    <div className="bg-c-surface-raised dark:bg-c-bg rounded-xl p-4 border border-c-border-subtle space-y-4">
+                      <h3 className="text-sm font-bold text-c-text flex items-center gap-2">
+                        <Sparkles size={16} className="text-c-accent dark:text-c-accent" />{' '}
                         {t('initiative.oneLiner')}
                       </h3>
-                      <div className="bg-white dark:bg-navy-900 p-4 rounded-lg border border-slate-200 dark:border-navy-700 space-y-3">
-                        <p className="text-xs text-slate-500 dark:text-slate-400 font-mono mb-2">
+                      <div className="bg-c-surface p-4 rounded-lg border border-c-border-subtle space-y-3">
+                        <p className="text-xs text-c-text-muted font-mono mb-2">
                           Structure: Achieve [X] by changing [Y] so that [Z improves]
                         </p>
                         <textarea
-                          className="w-full bg-transparent text-lg font-medium text-navy-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none resize-none h-20"
+                          className="w-full bg-transparent text-lg font-medium text-c-text placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary focus:outline-none resize-none h-20"
                           placeholder="This initiative exists to..."
                           value={initiative.applicantOneLiner || ''}
                           onChange={(e) =>
@@ -824,18 +824,18 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                       </div>
                     </div>
 
-                    <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-4 border border-slate-200 dark:border-navy-700 space-y-4">
-                      <h3 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
-                        <AlertTriangle size={16} className="text-amber-500 dark:text-amber-400" />{' '}
+                    <div className="bg-c-surface-raised dark:bg-c-bg rounded-xl p-4 border border-c-border-subtle space-y-4">
+                      <h3 className="text-sm font-bold text-c-text flex items-center gap-2">
+                        <AlertTriangle size={16} className="text-c-warning dark:text-c-warning" />{' '}
                         {t('initiative.problemStatement')}
                       </h3>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="col-span-2">
-                          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 block">
+                          <label className="text-xs font-bold text-c-text-muted uppercase mb-1 block">
                             {t('initiative.symptom')}
                           </label>
                           <input
-                            className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-2 text-navy-900 dark:text-white text-sm"
+                            className="w-full bg-c-surface border border-c-border-subtle rounded p-2 text-c-text text-sm"
                             placeholder="What is visible?"
                             value={initiative.problemStructured?.symptom || ''}
                             onChange={(e) =>
@@ -854,11 +854,11 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           />
                         </div>
                         <div>
-                          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 block">
+                          <label className="text-xs font-bold text-c-text-muted uppercase mb-1 block">
                             {t('initiative.rootCause')}
                           </label>
                           <input
-                            className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-2 text-navy-900 dark:text-white text-sm"
+                            className="w-full bg-c-surface border border-c-border-subtle rounded p-2 text-c-text text-sm"
                             placeholder="Why is it happening?"
                             value={initiative.problemStructured?.rootCause || ''}
                             onChange={(e) =>
@@ -877,11 +877,11 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           />
                         </div>
                         <div>
-                          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 block">
+                          <label className="text-xs font-bold text-c-text-muted uppercase mb-1 block">
                             {t('initiative.costOfInaction')}
                           </label>
                           <input
-                            className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-2 text-navy-900 dark:text-white text-sm"
+                            className="w-full bg-c-surface border border-c-border-subtle rounded p-2 text-c-text text-sm"
                             placeholder="What if we do nothing?"
                             value={initiative.problemStructured?.costOfInaction || ''}
                             onChange={(e) =>
@@ -902,11 +902,11 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
 
                         {/* Legacy Textarea Fallback (if user wants to write generic text) */}
                         <div className="col-span-2 mt-2">
-                          <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">
+                          <p className="text-xs text-c-text-secondary dark:text-c-text-muted mb-1">
                             {t('initiative.fullDescriptionLabel')}
                           </p>
                           <textarea
-                            className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-2 text-slate-600 dark:text-slate-400 text-xs h-16 resize-none"
+                            className="w-full bg-c-surface border border-c-border-subtle rounded p-2 text-c-text-secondary dark:text-c-text-muted text-xs h-16 resize-none"
                             value={initiative.problemStatement || ''}
                             onChange={(e) =>
                               setInitiative({
@@ -924,7 +924,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     <div className="grid grid-cols-2 gap-4">
                       <InputGroup label={t('initiative.nameLabel')}>
                         <input
-                          className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg p-3 text-navy-900 dark:text-white focus:border-blue-500 outline-none"
+                          className="w-full bg-c-surface dark:bg-c-bg border border-c-border-subtle rounded-lg p-3 text-c-text focus:border-c-accent outline-none"
                           value={initiative.name}
                           onChange={(e) => setInitiative({ ...initiative, name: e.target.value })}
                         />
@@ -953,68 +953,68 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
 
                   <div className="col-span-4 space-y-6">
                     {/* Strategic Fit Panel */}
-                    <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-4 border border-slate-200 dark:border-navy-700 h-full">
+                    <div className="bg-c-surface-raised dark:bg-c-bg rounded-xl p-4 border border-c-border-subtle h-full">
                       <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-sm font-bold text-navy-900 dark:text-white">
+                        <h3 className="text-sm font-bold text-c-text">
                           {t('initiative.strategicFitTitle')}
                         </h3>
                         <button
                           onClick={handleCheckStrategicFit}
                           disabled={isGenerating}
-                          className="text-blue-600 dark:text-blue-400 hover:text-navy-900 dark:hover:text-white"
+                          className="text-c-info hover:text-c-text dark:hover:text-c-text"
                         >
                           {isGenerating ? (
-                            <div className="w-4 h-4 rounded-full border-2 border-t-transparent border-blue-500 animate-spin" />
+                            <div className="w-4 h-4 rounded-full border-2 border-t-transparent border-c-info animate-spin" />
                           ) : (
                             <Sparkles size={14} />
                           )}
                         </button>
                       </div>
                       <div className="space-y-3">
-                        <div className="flex items-center justify-between p-2 bg-white dark:bg-navy-900 rounded border border-slate-200 dark:border-navy-700">
-                          <span className="text-xs text-slate-500 dark:text-slate-400">
+                        <div className="flex items-center justify-between p-2 bg-c-surface rounded border border-c-border-subtle">
+                          <span className="text-xs text-c-text-muted">
                             {t('initiative.alignmentWithAxis')}
                           </span>
                           {initiative.strategicFit?.axisAlign ? (
-                            <CheckCircle size={14} className="text-green-500" />
+                            <CheckCircle size={14} className="text-c-success" />
                           ) : (
-                            <X size={14} className="text-slate-600 dark:text-slate-400" />
+                            <X size={14} className="text-c-text-secondary dark:text-c-text-muted" />
                           )}
                         </div>
-                        <div className="flex items-center justify-between p-2 bg-white dark:bg-navy-900 rounded border border-slate-200 dark:border-navy-700">
-                          <span className="text-xs text-slate-500 dark:text-slate-400">
+                        <div className="flex items-center justify-between p-2 bg-c-surface rounded border border-c-border-subtle">
+                          <span className="text-xs text-c-text-muted">
                             {t('initiative.corporateGoal')}
                           </span>
                           {initiative.strategicFit?.goalAlign ? (
-                            <CheckCircle size={14} className="text-green-500" />
+                            <CheckCircle size={14} className="text-c-success" />
                           ) : (
-                            <X size={14} className="text-slate-600 dark:text-slate-400" />
+                            <X size={14} className="text-c-text-secondary dark:text-c-text-muted" />
                           )}
                         </div>
-                        <div className="flex items-center justify-between p-2 bg-white dark:bg-navy-900 rounded border border-slate-200 dark:border-navy-700">
-                          <span className="text-xs text-slate-500 dark:text-slate-400">
+                        <div className="flex items-center justify-between p-2 bg-c-surface rounded border border-c-border-subtle">
+                          <span className="text-xs text-c-text-muted">
                             {t('initiative.painPoint')}
                           </span>
                           {initiative.strategicFit?.painPointAlign ? (
-                            <CheckCircle size={14} className="text-green-500" />
+                            <CheckCircle size={14} className="text-c-success" />
                           ) : (
-                            <X size={14} className="text-slate-600 dark:text-slate-400" />
+                            <X size={14} className="text-c-text-secondary dark:text-c-text-muted" />
                           )}
                         </div>
-                        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-500/10 rounded border border-blue-100 dark:border-blue-500/20">
-                          <p className="text-xs text-blue-700 dark:text-blue-300 italic h-24 overflow-y-auto">
+                        <div className="mt-4 p-3 bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)] dark:bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)] rounded border border-c-info">
+                          <p className="text-xs text-c-info italic h-24 overflow-y-auto">
                             {initiative.strategicFit?.reasoning || 'Click Sparkles to analyze...'}
                           </p>
                         </div>
 
                         {/* Enhanced Readiness Breakdown v2 */}
-                        <div className="mt-6 pt-6 border-t border-slate-200 dark:border-navy-700">
+                        <div className="mt-6 pt-6 border-t border-c-border-subtle">
                           <div className="flex items-center justify-between mb-4">
-                            <h4 className="text-xs font-bold text-navy-900 dark:text-white">
+                            <h4 className="text-xs font-bold text-c-text">
                               {t('initiative.charterReadiness')}
                             </h4>
                             <div
-                              className={`text-lg font-bold ${readiness >= 80 ? 'text-green-500' : readiness >= 50 ? 'text-amber-500' : 'text-danger-500'}`}
+                              className={`text-lg font-bold ${readiness >= 80 ? 'text-c-success' : readiness >= 50 ? 'text-c-warning' : 'text-danger-500'}`}
                             >
                               {readiness}%
                             </div>
@@ -1030,19 +1030,19 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                               return (
                                 <div key={key} className="flex items-center gap-3">
                                   <div
-                                    className={`w-2 h-2 rounded-full ${isComplete ? 'bg-green-500' : percentage > 50 ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-600'}`}
+                                    className={`w-2 h-2 rounded-full ${isComplete ? 'bg-c-success' : percentage > 50 ? 'bg-c-warning' : 'bg-c-border dark:bg-c-surface-raised'}`}
                                   />
-                                  <span className="text-xs text-slate-500 dark:text-slate-400 capitalize flex-1">
+                                  <span className="text-xs text-c-text-muted capitalize flex-1">
                                     {key}
                                   </span>
-                                  <div className="w-24 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                                  <div className="w-24 h-1.5 bg-c-surface-raised rounded-full overflow-hidden">
                                     <div
-                                      className={`h-full transition-all ${isComplete ? 'bg-green-500' : percentage > 50 ? 'bg-amber-500' : 'bg-blue-500'}`}
+                                      className={`h-full transition-all ${isComplete ? 'bg-c-success' : percentage > 50 ? 'bg-c-warning' : 'bg-c-info'}`}
                                       style={{ width: `${percentage}%` }}
                                     />
                                   </div>
                                   <span
-                                    className={`text-xs font-medium ${isComplete ? 'text-green-500' : 'text-slate-500 dark:text-slate-400'}`}
+                                    className={`text-xs font-medium ${isComplete ? 'text-c-success' : 'text-c-text-muted'}`}
                                   >
                                     {score}/{maxScore}
                                   </span>
@@ -1051,8 +1051,8 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                             })}
                           </div>
                           {readiness < 80 && (
-                            <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-200 dark:border-amber-500/20">
-                              <p className="text-xs text-amber-700 dark:text-amber-400">
+                            <div className="mt-4 p-3 bg-[color-mix(in_srgb,var(--c-warning)_10%,transparent)] dark:bg-[color-mix(in_srgb,var(--c-warning)_10%,transparent)] rounded-lg border border-c-warning">
+                              <p className="text-xs text-c-warning">
                                 <span className="font-bold">{t('initiative.incompleteLabel')}</span>{' '}
                                 Fill in missing sections to reach 80% before advancing to Review.
                               </p>
@@ -1065,23 +1065,23 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                 </div>
 
                 {/* 3. Target State Snapshot */}
-                <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-                  <h3 className="text-sm font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-                    <Target size={16} className="text-blue-500 dark:text-blue-400" />{' '}
+                <div className="bg-c-surface-raised dark:bg-c-bg rounded-xl p-4 border border-c-border-subtle">
+                  <h3 className="text-sm font-bold text-c-text mb-4 flex items-center gap-2">
+                    <Target size={16} className="text-c-info dark:text-c-info" />{' '}
                     {t('initiative.targetStateSnapshot')}
                   </h3>
                   <div className="grid grid-cols-3 gap-4">
                     {['Process', 'Behavior', 'Capability'].map((type) => (
                       <div
                         key={type}
-                        className="bg-white dark:bg-navy-900 p-3 rounded-lg border border-slate-200 dark:border-navy-700"
+                        className="bg-c-surface p-3 rounded-lg border border-c-border-subtle"
                       >
-                        <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 border-b border-slate-200 dark:border-navy-700 pb-1 flex justify-between">
+                        <h4 className="text-xs font-bold text-c-text-muted uppercase mb-2 border-b border-c-border-subtle pb-1 flex justify-between">
                           {t(`initiative.${type.toLowerCase()}Changes`)}
                           <button
                             onClick={() => handleGenerateList('targetState', type.toLowerCase())}
                             disabled={isGenerating}
-                            className="text-blue-500 hover:text-primary-500"
+                            className="text-c-info hover:text-c-accent"
                           >
                             <Sparkles size={10} />
                           </button>
@@ -1093,9 +1093,9 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                             ] || []
                           ).map((item: string, idx: number) => (
                             <div key={idx} className="flex gap-1 group">
-                              <span className="text-blue-500">•</span>
+                              <span className="text-c-info">•</span>
                               <input
-                                className="w-full bg-transparent text-xs text-slate-700 dark:text-slate-300 focus:outline-none border-none p-0"
+                                className="w-full bg-transparent text-xs text-c-text-secondary focus:outline-none border-none p-0"
                                 value={item}
                                 onChange={(e) => {
                                   const newState = {
@@ -1133,7 +1133,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                     targetState: newState,
                                   });
                                 }}
-                                className="opacity-0 group-hover:opacity-100 text-slate-600 dark:text-slate-400 hover:text-danger-500"
+                                className="opacity-0 group-hover:opacity-100 text-c-text-secondary dark:text-c-text-muted hover:text-danger-500"
                               >
                                 <X size={12} />
                               </button>
@@ -1152,7 +1152,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                               (newState[key] as string[]).push('New item...');
                               setInitiative({ ...initiative, targetState: newState });
                             }}
-                            className="text-xs text-blue-500 hover:text-blue-400"
+                            className="text-xs text-c-info hover:text-c-info"
                           >
                             + {t('initiative.addBullet')}
                           </button>
@@ -1165,26 +1165,26 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                 {/* 4. Governance & Evidence */}
                 <div className="grid grid-cols-2 gap-6">
                   {/* Attachments */}
-                  <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-                    <h3 className="text-sm font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-                      <FileText size={16} className="text-blue-500 dark:text-blue-400" />{' '}
+                  <div className="bg-c-surface-raised dark:bg-c-bg rounded-xl p-4 border border-c-border-subtle">
+                    <h3 className="text-sm font-bold text-c-text mb-4 flex items-center gap-2">
+                      <FileText size={16} className="text-c-info dark:text-c-info" />{' '}
                       {t('initiative.evidenceTitle')}
                     </h3>
                     <div className="space-y-2">
                       {(initiative.attachments || []).map((att, idx) => (
                         <div
                           key={idx}
-                          className="flex items-center justify-between bg-white dark:bg-navy-900 p-2 rounded border border-slate-200 dark:border-navy-700"
+                          className="flex items-center justify-between bg-c-surface p-2 rounded border border-c-border-subtle"
                         >
                           <div className="flex items-center gap-2">
-                            <div className="p-1 bg-blue-100 dark:bg-blue-500/20 rounded">
-                              <FileText size={12} className="text-blue-600 dark:text-blue-400" />
+                            <div className="p-1 bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)] dark:bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)] rounded">
+                              <FileText size={12} className="text-c-info" />
                             </div>
                             <div>
-                              <p className="text-xs text-navy-900 dark:text-white font-medium">
+                              <p className="text-xs text-c-text font-medium">
                                 {att.name}
                               </p>
-                              <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase">
+                              <span className="text-[10px] text-c-text-muted uppercase">
                                 {att.type}
                               </span>
                             </div>
@@ -1195,7 +1195,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                               list.splice(idx, 1);
                               setInitiative({ ...initiative, attachments: list });
                             }}
-                            className="text-slate-600 dark:text-slate-400 hover:text-danger-500"
+                            className="text-c-text-secondary dark:text-c-text-muted hover:text-danger-500"
                           >
                             <X size={12} />
                           </button>
@@ -1213,7 +1213,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           });
                           setInitiative({ ...initiative, attachments: list });
                         }}
-                        className="text-xs text-blue-500 hover:text-blue-400"
+                        className="text-xs text-c-info hover:text-c-info"
                       >
                         + {t('initiative.addAttachmentMock')}
                       </button>
@@ -1221,27 +1221,27 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                   </div>
 
                   {/* Change Log */}
-                  <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-                    <h3 className="text-sm font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-                      <TrendingUp size={16} className="text-primary-600 dark:text-primary-400" />{' '}
+                  <div className="bg-c-surface-raised dark:bg-c-bg rounded-xl p-4 border border-c-border-subtle">
+                    <h3 className="text-sm font-bold text-c-text mb-4 flex items-center gap-2">
+                      <TrendingUp size={16} className="text-c-accent dark:text-c-accent" />{' '}
                       {t('initiative.strategicChangeLog')}
                     </h3>
                     <div className="space-y-3">
                       {(initiative.changeLog || []).map((log, idx) => (
                         <div
                           key={idx}
-                          className="bg-white dark:bg-navy-900 p-2 rounded border border-slate-200 dark:border-navy-700"
+                          className="bg-c-surface p-2 rounded border border-c-border-subtle"
                         >
                           <div className="flex justify-between mb-1">
-                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                            <span className="text-xs font-bold text-c-text-secondary">
                               {log.date}
                             </span>
-                            <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-1 rounded">
+                            <span className="text-[10px] bg-c-surface-raised text-c-text-muted px-1 rounded">
                               {log.user}
                             </span>
                           </div>
-                          <p className="text-xs text-navy-900 dark:text-white mb-1">{log.change}</p>
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400 italic">
+                          <p className="text-xs text-c-text mb-1">{log.change}</p>
+                          <p className="text-[10px] text-c-text-muted italic">
                             Why: {log.reason}
                           </p>
                         </div>
@@ -1259,7 +1259,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           });
                           setInitiative({ ...initiative, changeLog: list });
                         }}
-                        className="text-xs text-primary-500 hover:text-primary-400"
+                        className="text-xs text-c-accent hover:text-c-accent"
                       >
                         + {t('initiative.addLogEntry')}
                       </button>
@@ -1274,15 +1274,15 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
               <div className="grid grid-cols-2 gap-8 h-full">
                 <div className="space-y-8 overflow-y-auto pr-2">
                   {/* Strategic Roadmap Attributes (New) */}
-                  <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-4 border border-slate-200 dark:border-navy-700 space-y-4">
-                    <h3 className="text-navy-900 dark:text-white font-bold flex items-center gap-2 border-b border-slate-200 dark:border-navy-700 pb-2">
-                      <GitBranch size={18} className="text-blue-500" />{' '}
+                  <div className="bg-c-surface-raised dark:bg-c-bg rounded-xl p-4 border border-c-border-subtle space-y-4">
+                    <h3 className="text-c-text font-bold flex items-center gap-2 border-b border-c-border-subtle pb-2">
+                      <GitBranch size={18} className="text-c-info" />{' '}
                       {t('initiative.strategicRoadmapAttributes')}
                     </h3>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="col-span-2 md:col-span-1">
-                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 block">
+                        <label className="text-xs font-bold text-c-text-muted uppercase mb-1 block">
                           {t('initiative.strategicRole')}
                         </label>
                         <Select
@@ -1307,7 +1307,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
 
                     <div>
                       <div className="flex justify-between items-center mb-1">
-                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">
+                        <label className="text-xs font-bold text-c-text-muted uppercase">
                           {t('initiative.placementReason')}
                         </label>
                         <button
@@ -1330,14 +1330,14 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                             setIsGenerating(false);
                           }}
                           disabled={isGenerating}
-                          className="text-[10px] text-blue-400 hover:text-white flex items-center gap-1"
+                          className="text-[10px] text-c-info hover:text-white flex items-center gap-1"
                         >
                           <Sparkles size={10} />{' '}
                           {isGenerating ? t('common.generating') : t('initiative.autoFillWithAI')}
                         </button>
                       </div>
                       <textarea
-                        className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-2 text-sm text-navy-900 dark:text-slate-300 h-20 focus:outline-none focus:border-blue-500/50"
+                        className="w-full bg-c-surface border border-c-border-subtle rounded p-2 text-sm text-c-text-secondary h-20 focus:outline-none focus:border-c-accent"
                         placeholder={t('initiative.placementReasonPlaceholder')}
                         value={initiative.placementReason || ''}
                         onChange={(e) =>
@@ -1347,7 +1347,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     </div>
 
                     <div>
-                      <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-3 block">
+                      <label className="text-xs font-bold text-c-text-muted uppercase mb-3 block">
                         {t('initiative.effortProfile')}
                       </label>
                       <div className="space-y-3">
@@ -1355,12 +1355,12 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           {
                             label: t('initiative.analytical'),
                             key: 'analytical',
-                            color: 'bg-blue-500',
+                            color: 'bg-c-info',
                           },
                           {
                             label: t('initiative.operational'),
                             key: 'operational',
-                            color: 'bg-emerald-500',
+                            color: 'bg-c-success',
                           },
                           {
                             label: t('initiative.changeMgmt'),
@@ -1369,7 +1369,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           },
                         ].map((metric) => (
                           <div key={metric.key} className="flex items-center gap-3">
-                            <span className="text-xs text-slate-500 dark:text-slate-400 w-20">
+                            <span className="text-xs text-c-text-muted w-20">
                               {metric.label}
                             </span>
                             <div className="flex-1 flex items-center gap-3">
@@ -1378,7 +1378,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 min="1"
                                 max="5"
                                 step="1"
-                                className="w-full accent-blue-500 h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                                className="w-full accent-blue-500 h-1 bg-c-surface-raised rounded-lg appearance-none cursor-pointer"
                                 value={
                                   initiative.effortProfile?.[
                                     metric.key as keyof typeof initiative.effortProfile
@@ -1398,7 +1398,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 }}
                               />
                               <span
-                                className={`text-xs font-bold w-4 text-center ${initiative.effortProfile?.[metric.key as keyof typeof initiative.effortProfile] === 5 ? 'text-danger-500 dark:text-danger-400' : 'text-slate-600 dark:text-slate-300'}`}
+                                className={`text-xs font-bold w-4 text-center ${initiative.effortProfile?.[metric.key as keyof typeof initiative.effortProfile] === 5 ? 'text-danger-500 dark:text-danger-400' : 'text-c-text-secondary'}`}
                               >
                                 {initiative.effortProfile?.[
                                   metric.key as keyof typeof initiative.effortProfile
@@ -1412,14 +1412,14 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                   </div>
 
                   {/* Success Criteria (Enhanced) */}
-                  <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-4 border border-slate-200 dark:border-navy-700 space-y-4">
-                    <h3 className="text-navy-900 dark:text-white font-bold flex items-center gap-2 border-b border-slate-200 dark:border-navy-700 pb-2">
-                      <Award size={18} className="text-blue-500" />{' '}
+                  <div className="bg-c-surface-raised dark:bg-c-bg rounded-xl p-4 border border-c-border-subtle space-y-4">
+                    <h3 className="text-c-text font-bold flex items-center gap-2 border-b border-c-border-subtle pb-2">
+                      <Award size={18} className="text-c-info" />{' '}
                       {t('initiative.successCriteriaTyped')}
                       <button
                         onClick={() => handleGenerateList('successCriteria')}
                         disabled={isGenerating}
-                        className="ml-auto text-xs flex items-center gap-1 text-primary-500 bg-primary-100 dark:bg-primary-500/10 px-2 py-1 rounded hover:bg-primary-200"
+                        className="ml-auto text-xs flex items-center gap-1 text-c-accent bg-c-accent-soft dark:bg-c-accent-soft px-2 py-1 rounded hover:bg-c-accent-soft"
                       >
                         <Sparkles size={12} /> {t('initiative.autoSuggest')}
                       </button>
@@ -1432,10 +1432,10 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     ).map((item: any, idx: number) => (
                       <div
                         key={idx}
-                        className="flex gap-2 bg-slate-50 dark:bg-navy-950 p-2 rounded border border-slate-200 dark:border-navy-700"
+                        className="flex gap-2 bg-c-surface-raised dark:bg-c-bg p-2 rounded border border-c-border-subtle"
                       >
                         <select
-                          className="bg-white dark:bg-navy-900 text-xs text-blue-600 dark:text-blue-400 font-bold border-none outline-none rounded p-1 w-24"
+                          className="bg-c-surface text-xs text-c-info font-bold border-none outline-none rounded p-1 w-24"
                           value={item.type}
                           onChange={(e) => {
                             const list = [
@@ -1459,7 +1459,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           <option value="Capability">{t('initiative.capability')}</option>
                         </select>
                         <input
-                          className="flex-1 bg-transparent border-none p-1 text-sm text-navy-900 dark:text-white focus:ring-0"
+                          className="flex-1 bg-transparent border-none p-1 text-sm text-c-text focus:ring-0"
                           value={item.value}
                           onChange={(e) => {
                             const list = [
@@ -1494,7 +1494,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                               structuredSuccessCriteria: list,
                             });
                           }}
-                          className="text-slate-500 dark:text-slate-400 hover:text-danger-500"
+                          className="text-c-text-muted hover:text-danger-500"
                         >
                           <X size={16} />
                         </button>
@@ -1513,7 +1513,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                         list.push({ type: 'Metric', value: '' });
                         setInitiative({ ...initiative, structuredSuccessCriteria: list });
                       }}
-                      className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-medium"
+                      className="text-sm text-c-info hover:text-c-info dark:hover:text-c-info font-medium"
                     >
                       + {t('initiative.addCriteria')}
                     </button>
@@ -1521,24 +1521,24 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
 
                   {/* EXPLICIT ASSUMPTIONS (NEW) */}
                   <div className="space-y-4">
-                    <h3 className="text-navy-900 dark:text-white font-bold flex items-center gap-2 border-b border-slate-200 dark:border-navy-700 pb-2">
-                      <AlertOctagon size={18} className="text-primary-600 dark:text-primary-500" />{' '}
+                    <h3 className="text-c-text font-bold flex items-center gap-2 border-b border-c-border-subtle pb-2">
+                      <AlertOctagon size={18} className="text-c-accent dark:text-c-accent" />{' '}
                       {t('initiative.explicitAssumptions')}
-                      <span className="text-xs text-slate-600 dark:text-slate-500 font-normal ml-2">
+                      <span className="text-xs text-c-text-secondary dark:text-c-text-muted font-normal ml-2">
                         ({t('common.clickLabelToAutoFill')})
                       </span>
                     </h3>
 
                     <div className="grid grid-cols-1 gap-4">
-                      <div className="bg-slate-50 dark:bg-navy-950 p-3 rounded border border-slate-200 dark:border-navy-700">
+                      <div className="bg-c-surface-raised dark:bg-c-bg p-3 rounded border border-c-border-subtle">
                         <label
-                          className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 flex items-center gap-2 cursor-pointer hover:text-primary-500"
+                          className="text-xs font-bold text-c-text-muted uppercase mb-1 flex items-center gap-2 cursor-pointer hover:text-c-accent"
                           onClick={() => handleGenerateList('assumptions', 'org')}
                         >
                           {t('initiative.organizational')} <Sparkles size={10} />
                         </label>
                         <input
-                          className="w-full bg-transparent text-sm text-navy-900 dark:text-slate-300 focus:outline-none"
+                          className="w-full bg-transparent text-sm text-c-text-secondary focus:outline-none"
                           placeholder={t('initiative.organizationalPlaceholder')}
                           value={initiative.assumptions?.org || ''}
                           onChange={(e) =>
@@ -1552,15 +1552,15 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           }
                         />
                       </div>
-                      <div className="bg-slate-50 dark:bg-navy-950 p-3 rounded border border-slate-200 dark:border-navy-700">
+                      <div className="bg-c-surface-raised dark:bg-c-bg p-3 rounded border border-c-border-subtle">
                         <label
-                          className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 flex items-center gap-2 cursor-pointer hover:text-primary-500"
+                          className="text-xs font-bold text-c-text-muted uppercase mb-1 flex items-center gap-2 cursor-pointer hover:text-c-accent"
                           onClick={() => handleGenerateList('assumptions', 'data')}
                         >
                           {t('initiative.dataTech')} <Sparkles size={10} />
                         </label>
                         <input
-                          className="w-full bg-transparent text-sm text-navy-900 dark:text-slate-300 focus:outline-none"
+                          className="w-full bg-transparent text-sm text-c-text-secondary focus:outline-none"
                           placeholder={t('initiative.dataTechPlaceholder')}
                           value={initiative.assumptions?.data || ''}
                           onChange={(e) =>
@@ -1574,15 +1574,15 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           }
                         />
                       </div>
-                      <div className="bg-slate-50 dark:bg-navy-950 p-3 rounded border border-slate-200 dark:border-navy-700">
+                      <div className="bg-c-surface-raised dark:bg-c-bg p-3 rounded border border-c-border-subtle">
                         <label
-                          className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 flex items-center gap-2 cursor-pointer hover:text-primary-500"
+                          className="text-xs font-bold text-c-text-muted uppercase mb-1 flex items-center gap-2 cursor-pointer hover:text-c-accent"
                           onClick={() => handleGenerateList('assumptions', 'budget')}
                         >
                           {t('initiative.budgetResources')} <Sparkles size={10} />
                         </label>
                         <input
-                          className="w-full bg-transparent text-sm text-navy-900 dark:text-slate-300 focus:outline-none"
+                          className="w-full bg-transparent text-sm text-c-text-secondary focus:outline-none"
                           placeholder={t('initiative.budgetResourcesPlaceholder')}
                           value={initiative.assumptions?.budget || ''}
                           onChange={(e) =>
@@ -1596,15 +1596,15 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           }
                         />
                       </div>
-                      <div className="bg-slate-50 dark:bg-navy-950 p-3 rounded border border-slate-200 dark:border-navy-700">
+                      <div className="bg-c-surface-raised dark:bg-c-bg p-3 rounded border border-c-border-subtle">
                         <label
-                          className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 flex items-center gap-2 cursor-pointer hover:text-primary-500"
+                          className="text-xs font-bold text-c-text-muted uppercase mb-1 flex items-center gap-2 cursor-pointer hover:text-c-accent"
                           onClick={() => handleGenerateList('assumptions', 'people')}
                         >
                           {t('initiative.peopleSkills')} <Sparkles size={10} />
                         </label>
                         <input
-                          className="w-full bg-transparent text-sm text-navy-900 dark:text-slate-300 focus:outline-none"
+                          className="w-full bg-transparent text-sm text-c-text-secondary focus:outline-none"
                           placeholder={t('initiative.peopleSkillsPlaceholder')}
                           value={initiative.assumptions?.people || ''}
                           onChange={(e) =>
@@ -1623,13 +1623,13 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="text-navy-900 dark:text-white font-bold flex items-center gap-2 border-b border-slate-200 dark:border-navy-700 pb-2">
-                    <CheckCircle size={18} className="text-green-500" />{' '}
+                  <h3 className="text-c-text font-bold flex items-center gap-2 border-b border-c-border-subtle pb-2">
+                    <CheckCircle size={18} className="text-c-success" />{' '}
                     {t('initiative.keyDeliverables')}
                     <button
                       onClick={() => handleGenerateList('deliverables')}
                       disabled={isGenerating}
-                      className="ml-auto text-xs flex items-center gap-1 text-primary-500 bg-primary-100 dark:bg-primary-500/10 px-2 py-1 rounded hover:bg-primary-200"
+                      className="ml-auto text-xs flex items-center gap-1 text-c-accent bg-c-accent-soft dark:bg-c-accent-soft px-2 py-1 rounded hover:bg-c-accent-soft"
                     >
                       <Sparkles size={12} /> {t('initiative.autoSuggest')}
                     </button>
@@ -1637,14 +1637,14 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                   {initiative.deliverables?.map((item, idx) => (
                     <div key={idx} className="flex gap-2">
                       <input
-                        className="flex-1 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded p-2 text-sm text-navy-900 dark:text-white"
+                        className="flex-1 bg-c-surface dark:bg-c-bg border border-c-border-subtle rounded p-2 text-sm text-c-text"
                         value={item}
                         onChange={(e) => handleArrayChange('deliverables', idx, e.target.value)}
                         placeholder="Deliverable description..."
                       />
                       <button
                         onClick={() => removeArrayItem('deliverables', idx)}
-                        className="text-slate-500 dark:text-slate-400 hover:text-danger-500"
+                        className="text-c-text-muted hover:text-danger-500"
                       >
                         <X size={16} />
                       </button>
@@ -1652,22 +1652,22 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                   ))}
                   <button
                     onClick={() => addArrayItem('deliverables')}
-                    className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-medium"
+                    className="text-sm text-c-info hover:text-c-info dark:hover:text-c-info font-medium"
                   >
                     + {t('initiative.addDeliverable')}
                   </button>
 
                   <div className="mt-8">
-                    <h3 className="text-navy-900 dark:text-white font-bold flex items-center gap-2 border-b border-slate-200 dark:border-navy-700 pb-2">
-                      <Target size={18} className="text-amber-500" /> {t('initiative.scopeGuard')}
+                    <h3 className="text-c-text font-bold flex items-center gap-2 border-b border-c-border-subtle pb-2">
+                      <Target size={18} className="text-c-warning" /> {t('initiative.scopeGuard')}
                     </h3>
-                    <div className="bg-amber-500/5 p-4 rounded border border-amber-500/10 mt-2">
-                      <p className="text-xs text-amber-800 dark:text-amber-200 mb-2">
+                    <div className="bg-[color-mix(in_srgb,var(--c-warning)_13%,transparent)] p-4 rounded border border-c-warning mt-2">
+                      <p className="text-xs text-c-warning mb-2">
                         Scope In / Out definition determines the boundary of AI monitoring.
                       </p>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <h4 className="text-xs font-bold text-green-600 dark:text-green-400 uppercase mb-2 flex justify-between">
+                          <h4 className="text-xs font-bold text-c-success uppercase mb-2 flex justify-between">
                             {t('initiative.inScope')}{' '}
                             <button onClick={() => handleGenerateList('scopeIn')}>
                               <Sparkles size={10} />
@@ -1676,18 +1676,18 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           {initiative.scopeIn?.map((s, idx) => (
                             <div key={idx} className="flex gap-1 mb-1">
                               <input
-                                className="w-full bg-white dark:bg-navy-900 text-xs p-1 rounded border border-amber-500/20 dark:border-navy-700 text-navy-900 dark:text-white"
+                                className="w-full bg-c-surface text-xs p-1 rounded border border-c-warning dark:border-c-border-subtle text-c-text"
                                 value={s}
                                 onChange={(e) => handleArrayChange('scopeIn', idx, e.target.value)}
                               />
                               <button onClick={() => removeArrayItem('scopeIn', idx)}>
-                                <X size={12} className="text-slate-500 dark:text-slate-400" />
+                                <X size={12} className="text-c-text-muted" />
                               </button>
                             </div>
                           ))}
                           <button
                             onClick={() => addArrayItem('scopeIn')}
-                            className="text-xs text-green-600 dark:text-green-400"
+                            className="text-xs text-c-success"
                           >
                             + {t('common.add')}
                           </button>
@@ -1702,12 +1702,12 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           {initiative.scopeOut?.map((s, idx) => (
                             <div key={idx} className="flex gap-1 mb-1">
                               <input
-                                className="w-full bg-white dark:bg-navy-900 text-xs p-1 rounded border border-amber-500/20 dark:border-navy-700 text-navy-900 dark:text-white"
+                                className="w-full bg-c-surface text-xs p-1 rounded border border-c-warning dark:border-c-border-subtle text-c-text"
                                 value={s}
                                 onChange={(e) => handleArrayChange('scopeOut', idx, e.target.value)}
                               />
                               <button onClick={() => removeArrayItem('scopeOut', idx)}>
-                                <X size={12} className="text-slate-500 dark:text-slate-400" />
+                                <X size={12} className="text-c-text-muted" />
                               </button>
                             </div>
                           ))}
@@ -1729,34 +1729,34 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
             {activeTab === 'execution' && (
               <div className="grid grid-cols-2 gap-8">
                 <div className="space-y-6">
-                  <div className="bg-blue-500/5 p-4 rounded border border-blue-500/10 flex items-start gap-3">
-                    <Brain size={24} className="text-blue-500 mt-1" />
+                  <div className="bg-[color-mix(in_srgb,var(--c-info)_8%,transparent)] p-4 rounded border border-c-info flex items-start gap-3">
+                    <Brain size={24} className="text-c-info mt-1" />
                     <div>
-                      <h4 className="text-sm font-bold text-navy-900 dark:text-white">
+                      <h4 className="text-sm font-bold text-c-text">
                         {t('initiative.autoFill')}
                       </h4>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                      <p className="text-xs text-c-text-muted mb-3">
                         {t('initiative.autoFillDescription')}
                       </p>
                       <button
                         onClick={handleAutoFill}
                         disabled={isGenerating}
-                        className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20"
+                        className="bg-c-info hover:opacity-90 text-white text-xs font-bold px-4 py-2 rounded flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20"
                       >
                         <Sparkles size={14} className={isGenerating ? 'animate-spin' : ''} />
                         {isGenerating ? t('common.analyzing') : t('initiative.autoFillExecution')}
                       </button>
                     </div>
                   </div>
-                  <h3 className="text-navy-900 dark:text-white font-bold mb-4 flex items-center justify-between">
+                  <h3 className="text-c-text font-bold mb-4 flex items-center justify-between">
                     <span>{t('initiative.timelineMilestones')}</span>
                     <button
                       onClick={generateExecutionStrategy}
                       disabled={isGenerating}
                       className={`text-xs flex items-center gap-1 border rounded px-2 py-1 transition-colors ${
                         isGenerating
-                          ? 'text-slate-500 dark:text-slate-400 border-slate-700 bg-transparent cursor-not-allowed'
-                          : 'text-primary-400 hover:text-primary-300 border-primary-500/30 bg-primary-500/10'
+                          ? 'text-c-text-muted border-c-border-strong bg-transparent cursor-not-allowed'
+                          : 'text-c-accent hover:text-c-accent border-c-accent bg-c-accent-soft'
                       }`}
                     >
                       <Sparkles size={12} className={isGenerating ? 'animate-spin' : ''} />
@@ -1771,7 +1771,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                         <span>{t('initiative.stopConditions')}</span>
                       </div>
                       <textarea
-                        className="w-full bg-transparent border-none p-0 text-slate-700 dark:text-slate-300 focus:ring-0 placeholder:text-slate-400 dark:placeholder:text-slate-600 h-24 resize-none text-sm"
+                        className="w-full bg-transparent border-none p-0 text-c-text-secondary focus:ring-0 placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary h-24 resize-none text-sm"
                         value={
                           Array.isArray(initiative.killCriteria)
                             ? initiative.killCriteria.join('\n')
@@ -1792,7 +1792,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     <InputGroup label={t('initiative.startDate')}>
                       <input
                         type="date"
-                        className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded p-2 text-navy-900 dark:text-white"
+                        className="w-full bg-c-surface dark:bg-c-bg border border-c-border-subtle rounded p-2 text-c-text"
                         value={initiative.startDate ? initiative.startDate.split('T')[0] : ''}
                         onChange={(e) =>
                           setInitiative({ ...initiative, startDate: e.target.value })
@@ -1802,7 +1802,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     <InputGroup label={t('initiative.endDate')}>
                       <input
                         type="date"
-                        className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded p-2 text-navy-900 dark:text-white"
+                        className="w-full bg-c-surface dark:bg-c-bg border border-c-border-subtle rounded p-2 text-c-text"
                         value={initiative.endDate ? initiative.endDate.split('T')[0] : ''}
                         onChange={(e) => setInitiative({ ...initiative, endDate: e.target.value })}
                       />
@@ -1810,7 +1810,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     <InputGroup label={t('initiative.pilotEnd')}>
                       <input
                         type="date"
-                        className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded p-2 text-navy-900 dark:text-white"
+                        className="w-full bg-c-surface dark:bg-c-bg border border-c-border-subtle rounded p-2 text-c-text"
                         value={initiative.pilotEndDate ? initiative.pilotEndDate.split('T')[0] : ''}
                         onChange={(e) =>
                           setInitiative({ ...initiative, pilotEndDate: e.target.value })
@@ -1820,8 +1820,8 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                   </div>
 
                   {/* Milestones UI */}
-                  <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-                    <h4 className="text-sm font-bold text-navy-900 dark:text-white mb-2 flex justify-between items-center">
+                  <div className="bg-c-surface-raised dark:bg-c-bg rounded-xl p-4 border border-c-border-subtle">
+                    <h4 className="text-sm font-bold text-c-text mb-2 flex justify-between items-center">
                       <span>{t('initiative.milestonesAndGates')}</span>
                       <button
                         onClick={() => {
@@ -1831,7 +1831,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           ];
                           setInitiative({ ...initiative, milestones: newMilestones });
                         }}
-                        className="text-xs text-blue-600 dark:text-blue-400 hover:text-navy-900 dark:hover:text-white"
+                        className="text-xs text-c-info hover:text-c-text dark:hover:text-c-text"
                       >
                         + {t('common.add')}
                       </button>
@@ -1840,12 +1840,12 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                       {initiative.milestones?.map((m, idx: number) => (
                         <div
                           key={idx}
-                          className={`p-3 rounded border transition-colors ${m.isDecisionGate ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-500/30' : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700'} `}
+                          className={`p-3 rounded border transition-colors ${m.isDecisionGate ? 'bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)] dark:bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)] border-c-info' : 'bg-c-surface border-c-border-subtle'} `}
                         >
                           <div className="flex gap-2 mb-2">
                             <input
                               type="date"
-                              className="w-24 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded p-1 text-xs text-navy-900 dark:text-white"
+                              className="w-24 bg-c-surface dark:bg-c-bg border border-c-border-subtle rounded p-1 text-xs text-c-text"
                               value={m.date}
                               onChange={(e) => {
                                 const list = [...(initiative.milestones || [])];
@@ -1854,7 +1854,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                               }}
                             />
                             <input
-                              className="flex-1 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded p-1 text-xs text-navy-900 dark:text-white"
+                              className="flex-1 bg-c-surface dark:bg-c-bg border border-c-border-subtle rounded p-1 text-xs text-c-text"
                               placeholder={t('initiative.milestoneNamePlaceholder')}
                               value={m.name}
                               onChange={(e) => {
@@ -1869,14 +1869,14 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 list.splice(idx, 1);
                                 setInitiative({ ...initiative, milestones: list });
                               }}
-                              className="text-slate-500 dark:text-slate-400 hover:text-danger-500"
+                              className="text-c-text-muted hover:text-danger-500"
                             >
                               <X size={14} />
                             </button>
                           </div>
 
                           <div className="flex items-center gap-4 pl-1">
-                            <label className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-300 cursor-pointer select-none">
+                            <label className="flex items-center gap-2 text-xs text-c-text-muted dark:text-c-text-secondary cursor-pointer select-none">
                               <input
                                 type="checkbox"
                                 checked={m.isDecisionGate || false}
@@ -1888,14 +1888,14 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                   };
                                   setInitiative({ ...initiative, milestones: list });
                                 }}
-                                className="rounded bg-white dark:bg-navy-950 border-slate-300 dark:border-white/20 text-blue-600 dark:text-blue-500 focus:ring-offset-white dark:focus:ring-offset-navy-900"
+                                className="rounded bg-c-surface dark:bg-c-bg border-c-border dark:border-white/20 text-c-info dark:text-c-info focus:ring-offset-white dark:focus:ring-offset-navy-900"
                               />
                               {t('initiative.decisionGate')}
                             </label>
 
                             {m.isDecisionGate && (
                               <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-200">
-                                <span className="text-xs text-slate-500 dark:text-slate-400">
+                                <span className="text-xs text-c-text-muted">
                                   {t('initiative.decision')}:
                                 </span>
                                 <select
@@ -1903,8 +1903,8 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                     m.decision === 'stop'
                                       ? 'bg-danger-500/20 text-danger-400 border-danger-500/30'
                                       : m.decision === 'adjust'
-                                        ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
-                                        : 'bg-green-500/20 text-green-400 border-green-500/30'
+                                        ? 'bg-[color-mix(in_srgb,var(--c-warning)_15%,transparent)] text-c-warning border-c-warning'
+                                        : 'bg-[color-mix(in_srgb,var(--c-success)_25%,transparent)] text-c-success border-c-success'
                                   } `}
                                   value={m.decision || 'continue'}
                                   onChange={(e) => {
@@ -1929,12 +1929,12 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     </div>
                   </div>
 
-                  <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-                    <h4 className="text-sm font-bold text-navy-900 dark:text-white mb-2">
+                  <div className="bg-c-surface-raised dark:bg-c-bg rounded-xl p-4 border border-c-border-subtle">
+                    <h4 className="text-sm font-bold text-c-text mb-2">
                       {t('initiative.requiredCompetencies')}
                     </h4>
                     <input
-                      className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-2 text-sm text-slate-600 dark:text-slate-300"
+                      className="w-full bg-c-surface border border-c-border-subtle rounded p-2 text-sm text-c-text-secondary"
                       placeholder={t('initiative.competenciesPlaceholder')}
                       value={initiative.competenciesRequired?.join(', ') || ''}
                       onChange={(e) =>
@@ -1948,13 +1948,13 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="text-navy-900 dark:text-white font-bold mb-4 flex items-center gap-2">
-                    <AlertTriangle size={18} className="text-amber-500" />{' '}
+                  <h3 className="text-c-text font-bold mb-4 flex items-center gap-2">
+                    <AlertTriangle size={18} className="text-c-warning" />{' '}
                     {t('initiative.keyRisks')}
                   </h3>
                   {/* Simplified Risk Input for now (future: array of objects) */}
-                  <div className="bg-amber-50 dark:bg-amber-500/5 border border-amber-200 dark:border-amber-500/10 rounded-xl p-4">
-                    <p className="text-sm text-amber-800 dark:text-amber-200 mb-2">
+                  <div className="bg-[color-mix(in_srgb,var(--c-warning)_10%,transparent)] border border-c-warning rounded-xl p-4">
+                    <p className="text-sm text-c-warning mb-2">
                       {t('initiative.keyRisksDescription')}
                     </p>
                     {/* We are storing risks as simple array in JSON for this iteration, or strictly adhering to types updated */}
@@ -1963,10 +1963,10 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     {initiative.keyRisks?.map((risk, idx: number) => (
                       <div
                         key={idx}
-                        className="mb-4 bg-white dark:bg-navy-900 p-3 rounded border border-slate-200 dark:border-navy-700"
+                        className="mb-4 bg-c-surface p-3 rounded border border-c-border-subtle"
                       >
                         <input
-                          className="w-full bg-transparent border-b border-slate-200 dark:border-navy-700 mb-2 text-sm text-navy-900 dark:text-white focus:outline-none"
+                          className="w-full bg-transparent border-b border-c-border-subtle mb-2 text-sm text-c-text focus:outline-none"
                           placeholder={t('initiative.riskDescriptionPlaceholder')}
                           value={risk.risk || ''}
                           onChange={(e) => {
@@ -1976,7 +1976,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           }}
                         />
                         <input
-                          className="w-full bg-transparent text-xs text-slate-600 dark:text-slate-500 focus:outline-none"
+                          className="w-full bg-transparent text-xs text-c-text-secondary dark:text-c-text-muted focus:outline-none"
                           placeholder={t('initiative.mitigationStrategyPlaceholder')}
                           value={risk.mitigation || ''}
                           onChange={(e) => {
@@ -2075,7 +2075,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     <InputGroup label={t('initiative.capexEst')}>
                       <input
                         type="number"
-                        className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg p-3 text-navy-900 dark:text-white focus:border-blue-500 outline-none"
+                        className="w-full bg-c-surface dark:bg-c-bg border border-c-border-subtle rounded-lg p-3 text-c-text focus:border-c-accent outline-none"
                         value={initiative.costCapex || 0}
                         onChange={(e) =>
                           setInitiative({
@@ -2088,7 +2088,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     <InputGroup label={t('initiative.opexEst')}>
                       <input
                         type="number"
-                        className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg p-3 text-navy-900 dark:text-white focus:border-blue-500 outline-none"
+                        className="w-full bg-c-surface dark:bg-c-bg border border-c-border-subtle rounded-lg p-3 text-c-text focus:border-c-accent outline-none"
                         value={initiative.costOpex || 0}
                         onChange={(e) =>
                           setInitiative({ ...initiative, costOpex: parseInt(e.target.value) })
@@ -2111,47 +2111,47 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                   </InputGroup>
                 </div>
 
-                <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-6 border border-slate-200 dark:border-navy-700 flex flex-col items-center justify-center text-center relative">
+                <div className="bg-c-surface-raised dark:bg-c-bg rounded-xl p-6 border border-c-border-subtle flex flex-col items-center justify-center text-center relative">
                   <TrendingUp
                     size={48}
-                    className={`mb-4 opacity-50 ${initiative.valueDriver === 'Capability' ? 'text-primary-500' : 'text-green-500'} `}
+                    className={`mb-4 opacity-50 ${initiative.valueDriver === 'Capability' ? 'text-c-accent' : 'text-c-success'} `}
                   />
-                  <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-2">
+                  <h3 className="text-xl font-bold text-c-text mb-2">
                     {t('initiative.financialSummary')}
                   </h3>
 
                   <div className="mb-4">
                     {initiative.valueDriver === 'Capability' ? (
-                      <span className="px-3 py-1 rounded-full bg-primary-500/20 text-primary-400 text-xs font-bold border border-primary-500/30">
+                      <span className="px-3 py-1 rounded-full bg-c-accent-soft text-c-accent text-xs font-bold border border-c-accent">
                         {t('initiative.capabilityPlay')}
                       </span>
                     ) : initiative.valueDriver ? (
-                      <span className="px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-bold border border-green-500/30">
+                      <span className="px-3 py-1 rounded-full bg-[color-mix(in_srgb,var(--c-success)_25%,transparent)] text-c-success text-xs font-bold border border-c-success">
                         {t('initiative.cashPlay')}
                       </span>
                     ) : null}
                   </div>
 
-                  <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
+                  <p className="text-c-text-muted text-sm mb-6">
                     {t('initiative.totalInvestment')}:{' '}
-                    <span className="text-navy-900 dark:text-white font-mono">
+                    <span className="text-c-text font-mono">
                       ${((initiative.costCapex || 0) + (initiative.costOpex || 0)).toLocaleString()}
                     </span>
                   </p>
 
                   {/* Sanity Check Logic Display */}
                   {initiative.costCapex && initiative.costCapex > 0 && !initiative.valueDriver && (
-                    <div className="flex items-center gap-2 text-amber-400 text-xs bg-amber-500/10 p-2 rounded w-full justify-center mb-4">
+                    <div className="flex items-center gap-2 text-c-warning text-xs bg-[color-mix(in_srgb,var(--c-warning)_18%,transparent)] p-2 rounded w-full justify-center mb-4">
                       <AlertTriangle size={12} />
                       <span>{t('initiative.missingValueDriverWarning')}</span>
                     </div>
                   )}
 
-                  <div className="w-full bg-white dark:bg-navy-900 rounded-lg p-4 border border-slate-200 dark:border-navy-700 text-left">
-                    <span className="text-xs uppercase text-slate-500 dark:text-slate-400">
+                  <div className="w-full bg-c-surface rounded-lg p-4 border border-c-border-subtle text-left">
+                    <span className="text-xs uppercase text-c-text-muted">
                       {t('initiative.socialImpact')}
                     </span>
-                    <p className="text-navy-900 dark:text-white mt-1 text-sm">
+                    <p className="text-c-text mt-1 text-sm">
                       {initiative.socialImpact || t('common.notDefined')}
                     </p>
                   </div>
@@ -2182,16 +2182,16 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
             {activeTab === 'governance' && (
               <div className="space-y-8 pb-10">
                 {/* Roles & Ownership */}
-                <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
-                  <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-6 flex items-center gap-2">
-                    <Users size={20} className="text-blue-500" /> {t('initiative.rolesOwnership')}
+                <div className="bg-c-surface-raised dark:bg-c-bg rounded-xl p-6 border border-c-border-subtle">
+                  <h3 className="text-lg font-bold text-c-text mb-6 flex items-center gap-2">
+                    <Users size={20} className="text-c-info" /> {t('initiative.rolesOwnership')}
                   </h3>
                   <div className="grid grid-cols-3 gap-6">
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase flex items-center gap-2">
+                      <label className="text-xs font-bold text-c-text-muted uppercase flex items-center gap-2">
                         <UserCheck size={12} /> {t('initiative.businessOwner')}
                       </label>
-                      <p className="text-[10px] text-slate-600 dark:text-slate-500 mb-2">
+                      <p className="text-[10px] text-c-text-secondary dark:text-c-text-muted mb-2">
                         {t('initiative.businessOwnerDescription')}
                       </p>
                       <Select
@@ -2205,10 +2205,10 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase flex items-center gap-2">
+                      <label className="text-xs font-bold text-c-text-muted uppercase flex items-center gap-2">
                         <UserCheck size={12} /> {t('initiative.executionOwner')}
                       </label>
-                      <p className="text-[10px] text-slate-600 dark:text-slate-500 mb-2">
+                      <p className="text-[10px] text-c-text-secondary dark:text-c-text-muted mb-2">
                         {t('initiative.executionOwnerDescription')}
                       </p>
                       <Select
@@ -2222,10 +2222,10 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase flex items-center gap-2">
+                      <label className="text-xs font-bold text-c-text-muted uppercase flex items-center gap-2">
                         <Shield size={12} /> {t('initiative.sponsor')}
                       </label>
-                      <p className="text-[10px] text-slate-600 dark:text-slate-500 mb-2">
+                      <p className="text-[10px] text-c-text-secondary dark:text-c-text-muted mb-2">
                         {t('initiative.sponsorDescription')}
                       </p>
                       <Select
@@ -2242,9 +2242,9 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                 </div>
 
                 {/* Approval Workflow Status */}
-                <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
-                  <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-6 flex items-center gap-2">
-                    <Clock size={20} className="text-primary-500" />{' '}
+                <div className="bg-c-surface-raised dark:bg-c-bg rounded-xl p-6 border border-c-border-subtle">
+                  <h3 className="text-lg font-bold text-c-text mb-6 flex items-center gap-2">
+                    <Clock size={20} className="text-c-accent" />{' '}
                     {t('initiative.approvalWorkflow')}
                   </h3>
 
@@ -2280,10 +2280,10 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           <div
                             className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all ${
                               initiative.status === step.status
-                                ? 'bg-blue-500 border-blue-500 text-white'
+                                ? 'bg-c-info border-c-info text-white'
                                 : step.done
-                                  ? 'bg-green-500/20 border-green-500 text-green-400'
-                                  : 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-500'
+                                  ? 'bg-[color-mix(in_srgb,var(--c-success)_25%,transparent)] border-c-success text-c-success'
+                                  : 'bg-c-surface-raised border-c-border text-c-text-secondary dark:text-c-text-muted'
                             }`}
                           >
                             {step.done && initiative.status !== step.status ? '✓' : idx + 1}
@@ -2291,10 +2291,10 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           <span
                             className={`text-xs mt-2 font-medium ${
                               initiative.status === step.status
-                                ? 'text-blue-400'
+                                ? 'text-c-info'
                                 : step.done
-                                  ? 'text-green-400'
-                                  : 'text-slate-500 dark:text-slate-400'
+                                  ? 'text-c-success'
+                                  : 'text-c-text-muted'
                             }`}
                           >
                             {step.label}
@@ -2302,7 +2302,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                         </div>
                         {idx < arr.length - 1 && (
                           <div
-                            className={`flex-1 h-1 mx-2 rounded ${step.done ? 'bg-green-500/50' : 'bg-slate-300 dark:bg-slate-700'}`}
+                            className={`flex-1 h-1 mx-2 rounded ${step.done ? 'bg-[color-mix(in_srgb,var(--c-success)_25%,transparent)]' : 'bg-c-border'}`}
                           />
                         )}
                       </React.Fragment>
@@ -2311,8 +2311,8 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
 
                   {/* Current Status Info */}
                   <div className="grid grid-cols-2 gap-6">
-                    <div className="bg-white dark:bg-navy-900 p-4 rounded-lg border border-slate-200 dark:border-navy-700">
-                      <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-3">
+                    <div className="bg-c-surface p-4 rounded-lg border border-c-border-subtle">
+                      <h4 className="text-xs font-bold text-c-text-muted uppercase mb-3">
                         {t('initiative.currentStatus')}
                       </h4>
                       <div className="flex items-center gap-3">
@@ -2321,13 +2321,13 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                             initiative.status === 'BLOCKED'
                               ? 'bg-danger-500'
                               : initiative.status === 'DONE'
-                                ? 'bg-green-500'
+                                ? 'bg-c-success'
                                 : initiative.status === 'EXECUTING'
-                                  ? 'bg-blue-500 animate-pulse'
-                                  : 'bg-amber-500'
+                                  ? 'bg-c-info animate-pulse'
+                                  : 'bg-c-warning'
                           }`}
                         />
-                        <span className="text-lg font-bold text-navy-900 dark:text-white">
+                        <span className="text-lg font-bold text-c-text">
                           {initiative.status.replace('_', ' ')}
                         </span>
                       </div>
@@ -2339,44 +2339,44 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                       )}
                     </div>
 
-                    <div className="bg-white dark:bg-navy-900 p-4 rounded-lg border border-slate-200 dark:border-navy-700">
-                      <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-3">
+                    <div className="bg-c-surface p-4 rounded-lg border border-c-border-subtle">
+                      <h4 className="text-xs font-bold text-c-text-muted uppercase mb-3">
                         {t('initiative.nextAction')}
                       </h4>
                       {initiative.status === 'DRAFT' && (
-                        <p className="text-sm text-slate-600 dark:text-slate-300">
+                        <p className="text-sm text-c-text-secondary">
                           {t('initiative.nextActionDraft')}{' '}
-                          <span className="text-amber-400 font-medium">{t('status.PLANNING')}</span>
+                          <span className="text-c-warning font-medium">{t('status.PLANNING')}</span>
                         </p>
                       )}
                       {initiative.status === 'PLANNING' && (
-                        <p className="text-sm text-slate-600 dark:text-slate-300">
+                        <p className="text-sm text-c-text-secondary">
                           {t('initiative.nextActionPlanning')}{' '}
-                          <span className="text-primary-400 font-medium">{t('status.REVIEW')}</span>
+                          <span className="text-c-accent font-medium">{t('status.REVIEW')}</span>
                         </p>
                       )}
                       {initiative.status === 'REVIEW' && (
-                        <p className="text-sm text-slate-600 dark:text-slate-300">
+                        <p className="text-sm text-c-text-secondary">
                           {t('initiative.nextActionReview')}{' '}
-                          <span className="text-blue-400 font-medium">
+                          <span className="text-c-info font-medium">
                             {t('initiative.sponsorApproval')}
                           </span>
                         </p>
                       )}
                       {initiative.status === 'APPROVED' && (
-                        <p className="text-sm text-slate-600 dark:text-slate-300">
+                        <p className="text-sm text-c-text-secondary">
                           {t('initiative.nextActionApproved')}{' '}
-                          <span className="text-blue-400 font-medium">{t('status.EXECUTING')}</span>
+                          <span className="text-c-info font-medium">{t('status.EXECUTING')}</span>
                         </p>
                       )}
                       {initiative.status === 'EXECUTING' && (
-                        <p className="text-sm text-slate-600 dark:text-slate-300">
+                        <p className="text-sm text-c-text-secondary">
                           {t('initiative.nextActionExecuting')}{' '}
-                          <span className="text-green-400 font-medium">{t('status.DONE')}</span>
+                          <span className="text-c-success font-medium">{t('status.DONE')}</span>
                         </p>
                       )}
                       {initiative.status === 'DONE' && (
-                        <p className="text-sm text-green-400 font-medium">
+                        <p className="text-sm text-c-success font-medium">
                           ✓ {t('initiative.completedSuccessfully')}
                         </p>
                       )}
@@ -2386,19 +2386,19 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
 
                 {/* Decision Required (if pending) */}
                 {initiative.decisionToMake && (
-                  <div className="bg-gradient-to-r from-blue-500/10 to-primary-500/10 rounded-xl p-6 border border-blue-500/20">
-                    <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-                      <AlertOctagon size={20} className="text-blue-400" />{' '}
+                  <div className="bg-c-accent-soft rounded-xl p-6 border border-c-info">
+                    <h3 className="text-lg font-bold text-c-text mb-4 flex items-center gap-2">
+                      <AlertOctagon size={20} className="text-c-info" />{' '}
                       {t('initiative.decisionRequired')}
                     </h3>
-                    <div className="bg-white dark:bg-navy-900 p-4 rounded-lg border border-blue-500/20 mb-4">
-                      <p className="text-lg text-navy-900 dark:text-white font-medium">
+                    <div className="bg-c-surface p-4 rounded-lg border border-c-info mb-4">
+                      <p className="text-lg text-c-text font-medium">
                         {initiative.decisionToMake}
                       </p>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <span className="text-xs text-slate-600 dark:text-slate-500">
+                        <span className="text-xs text-c-text-secondary dark:text-c-text-muted">
                           {t('initiative.decisionOwner')}:
                         </span>
                         <span className="text-sm text-white font-medium">
@@ -2423,9 +2423,9 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                 )}
 
                 {/* Audit Trail */}
-                <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
-                  <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-                    <FileText size={20} className="text-slate-600 dark:text-slate-500" />{' '}
+                <div className="bg-c-surface-raised dark:bg-c-bg rounded-xl p-6 border border-c-border-subtle">
+                  <h3 className="text-lg font-bold text-c-text mb-4 flex items-center gap-2">
+                    <FileText size={20} className="text-c-text-secondary dark:text-c-text-muted" />{' '}
                     {t('initiative.governanceAuditTrail')}
                   </h3>
                   <div className="space-y-3 max-h-48 overflow-y-auto">
@@ -2436,12 +2436,12 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                         .map((log, idx) => (
                           <div
                             key={idx}
-                            className="flex items-start gap-3 p-3 bg-white dark:bg-navy-900 rounded border border-slate-200 dark:border-navy-700"
+                            className="flex items-start gap-3 p-3 bg-c-surface rounded border border-c-border-subtle"
                           >
-                            <div className="w-2 h-2 rounded-full bg-blue-500 mt-2" />
+                            <div className="w-2 h-2 rounded-full bg-c-info mt-2" />
                             <div className="flex-1">
-                              <p className="text-sm text-navy-900 dark:text-white">{log.change}</p>
-                              <div className="flex items-center gap-2 mt-1 text-xs text-slate-500 dark:text-slate-400">
+                              <p className="text-sm text-c-text">{log.change}</p>
+                              <div className="flex items-center gap-2 mt-1 text-xs text-c-text-muted">
                                 <span>{log.user}</span>
                                 <span>•</span>
                                 <span>{new Date(log.date).toLocaleDateString()}</span>
@@ -2450,7 +2450,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           </div>
                         ))
                     ) : (
-                      <p className="text-sm text-slate-500 dark:text-slate-400 italic">
+                      <p className="text-sm text-c-text-muted italic">
                         {t('initiative.noGovernanceEvents')}
                       </p>
                     )}
@@ -2463,10 +2463,10 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
             {activeTab === 'team' && (
               <div className="space-y-8 pb-10">
                 {/* Team Members Grid */}
-                <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
+                <div className="bg-c-surface-raised dark:bg-c-bg rounded-xl p-6 border border-c-border-subtle">
                   <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
-                      <Users size={20} className="text-blue-500" /> {t('initiative.teamMembers')}
+                    <h3 className="text-lg font-bold text-c-text flex items-center gap-2">
+                      <Users size={20} className="text-c-info" /> {t('initiative.teamMembers')}
                     </h3>
                     <button
                       onClick={() => {
@@ -2484,7 +2484,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           teamMembers: [...(initiative.teamMembers || []), newMember],
                         });
                       }}
-                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
+                      className="px-3 py-1.5 bg-c-info hover:opacity-90 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
                     >
                       <UserPlus size={14} /> {t('initiative.addMember')}
                     </button>
@@ -2493,7 +2493,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                   {/* Team Members List */}
                   <div className="space-y-3">
                     {(initiative.teamMembers || []).length === 0 ? (
-                      <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+                      <div className="text-center py-8 text-c-text-muted">
                         <Users size={40} className="mx-auto mb-2 opacity-30" />
                         <p>{t('initiative.noTeamMembersAssigned')}</p>
                       </div>
@@ -2501,9 +2501,9 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                       (initiative.teamMembers || []).map((member, idx) => (
                         <div
                           key={member.id}
-                          className="bg-white dark:bg-navy-900 p-4 rounded-lg border border-slate-200 dark:border-navy-700 flex items-center gap-4"
+                          className="bg-c-surface p-4 rounded-lg border border-c-border-subtle flex items-center gap-4"
                         >
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-primary-500 flex items-center justify-center text-white font-bold">
+                          <div className="w-10 h-10 rounded-full bg-c-accent flex items-center justify-center text-white font-bold">
                             {member.user?.firstName?.[0] || '?'}
                           </div>
                           <div className="flex-1">
@@ -2519,14 +2519,14 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 };
                                 setInitiative({ ...initiative, teamMembers: updated });
                               }}
-                              className="bg-transparent text-sm font-medium text-navy-900 dark:text-white outline-none border-b border-dashed border-slate-300 dark:border-slate-600 w-48"
+                              className="bg-transparent text-sm font-medium text-c-text outline-none border-b border-dashed border-c-border w-48"
                             >
                               <option value="">{t('initiative.selectMember')}</option>
                               {users.map((u) => (
                                 <option
                                   key={u.id}
                                   value={u.id}
-                                  className="bg-white dark:bg-navy-900"
+                                  className="bg-c-surface"
                                 >
                                   {u.firstName} {u.lastName}
                                 </option>
@@ -2543,7 +2543,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                               };
                               setInitiative({ ...initiative, teamMembers: updated });
                             }}
-                            className="text-xs bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 px-2 py-1 rounded border border-slate-200 dark:border-navy-700"
+                            className="text-xs bg-c-surface-raised text-c-text-secondary px-2 py-1 rounded border border-c-border-subtle"
                           >
                             <option value="CONTRIBUTOR">{t('role.CONTRIBUTOR')}</option>
                             <option value="REVIEWER">{t('role.REVIEWER')}</option>
@@ -2552,7 +2552,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                             <option value="OBSERVER">{t('role.OBSERVER')}</option>
                           </select>
                           <div className="flex items-center gap-2">
-                            <span className="text-xs text-slate-500 dark:text-slate-400">
+                            <span className="text-xs text-c-text-muted">
                               {t('initiative.allocation')}:
                             </span>
                             <input
@@ -2568,9 +2568,9 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 };
                                 setInitiative({ ...initiative, teamMembers: updated });
                               }}
-                              className="w-14 text-center text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded px-2 py-1"
+                              className="w-14 text-center text-sm bg-c-surface-raised border border-c-border-subtle rounded px-2 py-1"
                             />
-                            <span className="text-xs text-slate-500 dark:text-slate-400">%</span>
+                            <span className="text-xs text-c-text-muted">%</span>
                           </div>
                           <button
                             onClick={() => {
@@ -2579,7 +2579,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                               );
                               setInitiative({ ...initiative, teamMembers: updated });
                             }}
-                            className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded transition-colors"
+                            className="p-1.5 text-c-text-secondary dark:text-c-text-muted hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded transition-colors"
                           >
                             <X size={14} />
                           </button>
@@ -2590,10 +2590,10 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                 </div>
 
                 {/* Related Initiatives */}
-                <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
+                <div className="bg-c-surface-raised dark:bg-c-bg rounded-xl p-6 border border-c-border-subtle">
                   <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
-                      <Link2 size={20} className="text-primary-500" />{' '}
+                    <h3 className="text-lg font-bold text-c-text flex items-center gap-2">
+                      <Link2 size={20} className="text-c-accent" />{' '}
                       {t('initiative.relatedInitiatives')}
                     </h3>
                     <button
@@ -2614,7 +2614,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           ],
                         });
                       }}
-                      className="px-3 py-1.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
+                      className="px-3 py-1.5 bg-c-text text-c-surface hover:opacity-90 text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
                     >
                       <Link2 size={14} /> {t('initiative.linkInitiative')}
                     </button>
@@ -2622,7 +2622,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
 
                   <div className="space-y-3">
                     {(initiative.relatedInitiatives || []).length === 0 ? (
-                      <div className="text-center py-6 text-slate-500 dark:text-slate-400 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-lg">
+                      <div className="text-center py-6 text-c-text-muted border-2 border-dashed border-c-border-subtle rounded-lg">
                         <GitBranch size={32} className="mx-auto mb-2 opacity-30" />
                         <p className="text-sm">{t('initiative.noLinkedInitiatives')}</p>
                       </div>
@@ -2630,7 +2630,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                       (initiative.relatedInitiatives || []).map((rel, idx) => (
                         <div
                           key={rel.id}
-                          className="bg-white dark:bg-navy-900 p-3 rounded-lg border border-slate-200 dark:border-navy-700 flex items-center gap-3"
+                          className="bg-c-surface p-3 rounded-lg border border-c-border-subtle flex items-center gap-3"
                         >
                           <select
                             value={rel.relationType}
@@ -2645,7 +2645,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 relatedInitiatives: updated,
                               });
                             }}
-                            className="text-xs bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 px-2 py-1 rounded border border-primary-200 dark:border-primary-500/20"
+                            className="text-xs bg-c-accent-soft dark:bg-c-accent-soft text-c-accent dark:text-c-accent px-2 py-1 rounded border border-c-accent"
                           >
                             <option value="DEPENDS_ON">{t('relation.DEPENDS_ON')}</option>
                             <option value="BLOCKS">{t('relation.BLOCKS')}</option>
@@ -2668,7 +2668,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                               });
                             }}
                             placeholder={t('initiative.initiativeIdOrNamePlaceholder')}
-                            className="flex-1 bg-transparent text-sm text-navy-900 dark:text-white outline-none border-b border-dashed border-slate-300 dark:border-slate-600"
+                            className="flex-1 bg-transparent text-sm text-c-text outline-none border-b border-dashed border-c-border"
                           />
                           <button
                             onClick={() => {
@@ -2680,7 +2680,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 relatedInitiatives: updated,
                               });
                             }}
-                            className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-danger-500 rounded"
+                            className="p-1.5 text-c-text-secondary dark:text-c-text-muted hover:text-danger-500 rounded"
                           >
                             <X size={14} />
                           </button>
@@ -2696,9 +2696,9 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
             {activeTab === 'comments' && (
               <div className="space-y-6 pb-10">
                 {/* New Comment Input */}
-                <div className="bg-white dark:bg-navy-950 rounded-xl p-4 border border-slate-200 dark:border-navy-700 shadow-sm">
+                <div className="bg-c-surface dark:bg-c-bg rounded-xl p-4 border border-c-border-subtle shadow-sm">
                   <div className="flex gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-400 flex items-center justify-center text-white font-bold shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-c-info flex items-center justify-center text-white font-bold shrink-0">
                       {t('common.you')}
                     </div>
                     <div className="flex-1">
@@ -2706,7 +2706,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                         value={newComment}
                         onChange={(e) => setNewComment(e.target.value)}
                         placeholder={t('initiative.addCommentPlaceholder')}
-                        className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-3 text-sm text-navy-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-blue-500/50 resize-none h-20"
+                        className="w-full bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle rounded-lg p-3 text-sm text-c-text placeholder:text-c-text-muted outline-none focus:border-c-accent resize-none h-20"
                       />
                       <div className="flex justify-end mt-2">
                         <button
@@ -2732,7 +2732,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                             setNewComment('');
                           }}
                           disabled={!newComment.trim()}
-                          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
+                          className="px-4 py-2 bg-c-info hover:opacity-90 disabled:bg-c-border disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
                         >
                           <Send size={14} /> {t('initiative.postComment')}
                         </button>
@@ -2744,7 +2744,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                 {/* Comments List */}
                 <div className="space-y-4">
                   {(initiative.comments || []).length === 0 ? (
-                    <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+                    <div className="text-center py-12 text-c-text-muted">
                       <MessageSquare size={48} className="mx-auto mb-3 opacity-20" />
                       <p className="text-lg font-medium">{t('initiative.noCommentsYet')}</p>
                       <p className="text-sm">{t('initiative.startDiscussion')}</p>
@@ -2753,29 +2753,29 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     (initiative.comments || []).map((comment) => (
                       <div
                         key={comment.id}
-                        className="bg-white dark:bg-navy-950 rounded-xl p-4 border border-slate-200 dark:border-navy-700"
+                        className="bg-c-surface dark:bg-c-bg rounded-xl p-4 border border-c-border-subtle"
                       >
                         <div className="flex gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-400 to-slate-500 flex items-center justify-center text-white font-bold shrink-0">
+                          <div className="w-10 h-10 rounded-full bg-c-tag-8 flex items-center justify-center text-white font-bold shrink-0">
                             {comment.user?.firstName?.[0] || '?'}
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-navy-900 dark:text-white">
+                              <span className="font-medium text-c-text">
                                 {comment.user?.firstName} {comment.user?.lastName}
                               </span>
-                              <span className="text-xs text-slate-600 dark:text-slate-500">
+                              <span className="text-xs text-c-text-secondary dark:text-c-text-muted">
                                 {new Date(comment.createdAt).toLocaleString()}
                               </span>
                             </div>
-                            <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">
+                            <p className="text-sm text-c-text-secondary whitespace-pre-wrap">
                               {comment.content}
                             </p>
                             <div className="flex gap-4 mt-2">
-                              <button className="text-xs text-slate-600 dark:text-slate-500 hover:text-blue-500">
+                              <button className="text-xs text-c-text-secondary dark:text-c-text-muted hover:text-c-info">
                                 {t('common.reply')}
                               </button>
-                              <button className="text-xs text-slate-600 dark:text-slate-500 hover:text-blue-500">
+                              <button className="text-xs text-c-text-secondary dark:text-c-text-muted hover:text-c-info">
                                 {t('common.react')}
                               </button>
                             </div>
@@ -2787,7 +2787,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                               );
                               setInitiative({ ...initiative, comments: updated });
                             }}
-                            className="p-1 text-slate-600 dark:text-slate-500 hover:text-danger-500"
+                            className="p-1 text-c-text-secondary dark:text-c-text-muted hover:text-danger-500"
                           >
                             <X size={14} />
                           </button>
@@ -2816,7 +2816,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                       a.click();
                       URL.revokeObjectURL(url);
                     }}
-                    className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
+                    className="px-4 py-2 bg-c-success hover:opacity-90 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
                   >
                     <Download size={16} /> {t('initiative.exportCharter')}
                   </button>
@@ -2838,16 +2838,16 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                         `Clone created: "${clone.name}"\n\nIn production, this would save as a new initiative.`
                       );
                     }}
-                    className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
+                    className="px-4 py-2 bg-c-text text-c-surface hover:opacity-90 text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
                   >
                     <Copy size={16} /> {t('initiative.cloneAsTemplate')}
                   </button>
                 </div>
 
                 {/* Version History */}
-                <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
-                  <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-6 flex items-center gap-2">
-                    <History size={20} className="text-amber-500" />{' '}
+                <div className="bg-c-surface-raised dark:bg-c-bg rounded-xl p-6 border border-c-border-subtle">
+                  <h3 className="text-lg font-bold text-c-text mb-6 flex items-center gap-2">
+                    <History size={20} className="text-c-warning" />{' '}
                     {t('initiative.versionHistory')}
                   </h3>
 
@@ -2855,19 +2855,19 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     {/* Current Version Indicator */}
                     <div className="flex gap-4">
                       <div className="flex flex-col items-center">
-                        <div className="w-4 h-4 rounded-full bg-green-500 border-4 border-green-200 dark:border-green-500/30" />
-                        <div className="w-0.5 h-full bg-slate-200 dark:bg-slate-700" />
+                        <div className="w-4 h-4 rounded-full bg-c-success border-4 border-c-success" />
+                        <div className="w-0.5 h-full bg-c-surface-raised" />
                       </div>
                       <div className="pb-6">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-navy-900 dark:text-white">
+                          <span className="text-sm font-bold text-c-text">
                             {t('initiative.currentVersion')}
                           </span>
-                          <span className="text-[10px] px-2 py-0.5 bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 rounded-full">
+                          <span className="text-[10px] px-2 py-0.5 bg-[color-mix(in_srgb,var(--c-success)_15%,transparent)] text-c-success dark:text-c-success rounded-full">
                             {t('initiative.live')}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        <p className="text-xs text-c-text-muted mt-1">
                           {t('common.statusLabel')} {t(`status.${initiative.status}`)} • Last
                           updated:{' '}
                           {initiative.updatedAt
@@ -2881,13 +2881,13 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     {(initiative.versions || []).length === 0 ? (
                       <div className="flex gap-4">
                         <div className="flex flex-col items-center">
-                          <div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600" />
+                          <div className="w-3 h-3 rounded-full bg-c-border dark:bg-c-surface-raised" />
                         </div>
                         <div className="pb-4">
-                          <p className="text-sm text-slate-500 dark:text-slate-400">
+                          <p className="text-sm text-c-text-muted">
                             {t('initiative.initialCreation')}
                           </p>
-                          <p className="text-xs text-slate-600 dark:text-slate-500">
+                          <p className="text-xs text-c-text-secondary dark:text-c-text-muted">
                             {initiative.createdAt
                               ? new Date(initiative.createdAt).toLocaleString()
                               : 'Unknown'}
@@ -2901,37 +2901,37 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                             <div
                               className={`w-3 h-3 rounded-full ${
                                 version.changeType === 'APPROVAL'
-                                  ? 'bg-blue-500'
+                                  ? 'bg-c-info'
                                   : version.changeType === 'STATUS_CHANGE'
-                                    ? 'bg-blue-500'
-                                    : 'bg-slate-400'
+                                    ? 'bg-c-info'
+                                    : 'bg-c-border-strong'
                               }`}
                             />
                             {idx < (initiative.versions || []).length - 1 && (
-                              <div className="w-0.5 h-full bg-slate-200 dark:bg-slate-700" />
+                              <div className="w-0.5 h-full bg-c-surface-raised" />
                             )}
                           </div>
                           <div className="pb-4">
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-navy-900 dark:text-white">
+                              <span className="text-sm font-medium text-c-text">
                                 v{version.version}
                               </span>
                               <span
                                 className={`text-[10px] px-1.5 py-0.5 rounded ${
                                   version.changeType === 'APPROVAL'
-                                    ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400'
+                                    ? 'bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)] dark:bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)] text-c-info dark:text-c-info'
                                     : version.changeType === 'STATUS_CHANGE'
-                                      ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400'
-                                      : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                                      ? 'bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)] dark:bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)] text-c-info dark:text-c-info'
+                                      : 'bg-c-surface-raised text-c-text-secondary dark:text-c-text-muted'
                                 }`}
                               >
                                 {version.changeType.replace('_', ' ')}
                               </span>
                             </div>
-                            <p className="text-sm text-slate-600 dark:text-slate-300 mt-0.5">
+                            <p className="text-sm text-c-text-secondary mt-0.5">
                               {version.changeSummary}
                             </p>
-                            <div className="flex items-center gap-2 mt-1 text-xs text-slate-600 dark:text-slate-500">
+                            <div className="flex items-center gap-2 mt-1 text-xs text-c-text-secondary dark:text-c-text-muted">
                               <span>
                                 {version.createdByUser?.firstName} {version.createdByUser?.lastName}
                               </span>
@@ -2963,7 +2963,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                         versions: [newVersion, ...(initiative.versions || [])],
                       });
                     }}
-                    className="mt-4 w-full py-2 border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-blue-500 hover:text-blue-500 text-sm font-medium rounded-lg transition-colors"
+                    className="mt-4 w-full py-2 border-2 border-dashed border-c-border text-c-text-muted hover:border-c-info hover:text-c-info text-sm font-medium rounded-lg transition-colors"
                   >
                     + Save Version Snapshot
                   </button>
@@ -2981,10 +2981,10 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
           </div>
 
           {/* Footer */}
-          <div className="h-20 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 px-6 flex items-center justify-between shrink-0">
+          <div className="h-20 border-t border-c-border-subtle bg-c-surface-raised dark:bg-c-bg px-6 flex items-center justify-between shrink-0">
             <button
               onClick={onClose}
-              className="text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white text-sm font-medium"
+              className="text-c-text-muted hover:text-c-text dark:hover:text-c-text text-sm font-medium"
             >
               Cancel
             </button>
@@ -3011,7 +3011,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
 // Helper for Input fields
 const InputGroup = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="mb-4">
-    <label className="block text-xs uppercase text-slate-500 dark:text-slate-400 font-bold mb-1">
+    <label className="block text-xs uppercase text-c-text-muted font-bold mb-1">
       {label}
     </label>
     {children}

@@ -147,19 +147,19 @@ export const SubmitForReviewModal: React.FC<SubmitForReviewModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay p-4">
-      <div className="bg-white dark:bg-navy-900 rounded-xl w-full max-w-lg shadow-xl overflow-hidden">
+      <div className="bg-c-surface rounded-xl w-full max-w-lg shadow-xl overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700">
+        <div className="px-6 py-4 border-b border-c-border-subtle">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-bold text-navy-900 dark:text-white">
+              <h3 className="text-lg font-bold text-c-text">
                 Wyślij do recenzji
               </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{assessmentName}</p>
+              <p className="text-sm text-c-text-muted mt-0.5">{assessmentName}</p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+              className="p-2 text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-white/10 rounded-lg transition-colors"
             >
               <X size={20} />
             </button>
@@ -170,30 +170,30 @@ export const SubmitForReviewModal: React.FC<SubmitForReviewModalProps> = ({
         <div className="px-6 py-4 max-h-[400px] overflow-y-auto">
           {success ? (
             <div className="flex flex-col items-center justify-center py-8">
-              <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-500/20 flex items-center justify-center mb-4">
-                <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
+              <div className="w-16 h-16 rounded-full bg-[color-mix(in_srgb,var(--c-success)_15%,transparent)] flex items-center justify-center mb-4">
+                <CheckCircle2 className="w-8 h-8 text-c-success" />
               </div>
-              <p className="text-lg font-medium text-navy-900 dark:text-white">
+              <p className="text-lg font-medium text-c-text">
                 Wysłano do recenzji!
               </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-sm text-c-text-muted mt-1">
                 Recenzenci otrzymają powiadomienie
               </p>
             </div>
           ) : loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+              <Loader2 className="w-8 h-8 text-c-accent animate-spin" />
             </div>
           ) : users.length === 0 ? (
             <div className="text-center py-8">
-              <Users className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
-              <p className="text-slate-500 dark:text-slate-400">
+              <Users className="w-12 h-12 text-c-text-secondary dark:text-c-text-muted mx-auto mb-3" />
+              <p className="text-c-text-muted">
                 Brak użytkowników z uprawnieniami do recenzji
               </p>
             </div>
           ) : (
             <>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+              <p className="text-sm text-c-text-muted mb-4">
                 Wybierz recenzentów, którzy ocenią ten assessment:
               </p>
 
@@ -201,18 +201,18 @@ export const SubmitForReviewModal: React.FC<SubmitForReviewModalProps> = ({
               <div className="flex items-center gap-2 mb-4">
                 <button
                   onClick={selectAll}
-                  className="text-xs text-primary-600 dark:text-primary-400 hover:underline"
+                  className="text-xs text-c-accent dark:text-c-accent hover:underline"
                 >
                   Zaznacz wszystkich
                 </button>
-                <span className="text-slate-500 dark:text-slate-400">|</span>
+                <span className="text-c-text-muted">|</span>
                 <button
                   onClick={clearSelection}
-                  className="text-xs text-slate-500 dark:text-slate-400 hover:underline"
+                  className="text-xs text-c-text-muted hover:underline"
                 >
                   Wyczyść wybór
                 </button>
-                <span className="ml-auto text-xs text-slate-500 dark:text-slate-400">
+                <span className="ml-auto text-xs text-c-text-muted">
                   Wybrano: {selectedReviewers.length}
                 </span>
               </div>
@@ -222,7 +222,7 @@ export const SubmitForReviewModal: React.FC<SubmitForReviewModalProps> = ({
                 {Object.entries(groupedUsers).map(([dept, deptUsers]) => (
                   <div key={dept}>
                     {Object.keys(groupedUsers).length > 1 && (
-                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                      <p className="text-xs font-medium text-c-text-muted uppercase tracking-wider mb-2">
                         {dept}
                       </p>
                     )}
@@ -236,8 +236,8 @@ export const SubmitForReviewModal: React.FC<SubmitForReviewModalProps> = ({
                                                             flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all
                                                             ${
                                                               isSelected
-                                                                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                                                                : 'border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-white/5'
+                                                                ? 'border-c-accent bg-c-accent-soft'
+                                                                : 'border-c-border-subtle hover:bg-c-surface-raised dark:hover:bg-white/5'
                                                             }
                                                         `}
                           >
@@ -245,16 +245,16 @@ export const SubmitForReviewModal: React.FC<SubmitForReviewModalProps> = ({
                               type="checkbox"
                               checked={isSelected}
                               onChange={() => toggleReviewer(user.id)}
-                              className="w-4 h-4 text-primary-600 rounded border-slate-300 dark:border-navy-700 focus:ring-primary-500"
+                              className="w-4 h-4 text-c-accent rounded border-c-border-subtle focus:ring-c-focus"
                             />
-                            <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
-                              <User size={16} className="text-slate-500 dark:text-slate-400" />
+                            <div className="w-8 h-8 rounded-full bg-c-surface-raised flex items-center justify-center">
+                              <User size={16} className="text-c-text-muted" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-navy-900 dark:text-white text-sm truncate">
+                              <p className="font-medium text-c-text text-sm truncate">
                                 {user.firstName} {user.lastName}
                               </p>
-                              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                              <p className="text-xs text-c-text-muted truncate">
                                 {user.role || user.email}
                               </p>
                             </div>
@@ -279,11 +279,11 @@ export const SubmitForReviewModal: React.FC<SubmitForReviewModalProps> = ({
 
         {/* Footer */}
         {!success && (
-          <div className="px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950">
+          <div className="px-6 py-4 border-t border-c-border-subtle bg-c-surface-raised dark:bg-c-bg">
             <div className="flex items-center gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 px-4 py-2.5 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 rounded-lg font-medium hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                className="flex-1 px-4 py-2.5 border border-c-border-subtle text-c-text-secondary dark:text-c-text-muted rounded-lg font-medium hover:bg-c-surface-raised dark:hover:bg-white/5 transition-colors"
               >
                 Anuluj
               </button>
@@ -294,8 +294,8 @@ export const SubmitForReviewModal: React.FC<SubmitForReviewModalProps> = ({
                                     flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all
                                     ${
                                       selectedReviewers.length > 0 && !submitting
-                                        ? 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]'
-                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
+                                        ? 'bg-c-text text-c-surface hover:opacity-90'
+                                        : 'bg-c-surface-raised text-c-text-secondary dark:text-c-text-muted cursor-not-allowed'
                                     }
                                 `}
               >
