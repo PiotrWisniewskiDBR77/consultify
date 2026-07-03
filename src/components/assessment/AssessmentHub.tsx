@@ -1442,8 +1442,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
               <div className="max-w-4xl mx-auto">
                 <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-8">
                   <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-xl flex items-center justify-center mx-auto mb-4">
-                      <Activity className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+                    <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center mx-auto mb-4">
+                      <Activity className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
                     </div>
                     <h3 className="text-xl font-semibold text-navy-900 dark:text-white mb-2">
                       {doc.name}
@@ -1693,7 +1693,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500 mx-auto mb-4"></div>
           <p className="text-slate-500 dark:text-slate-400">Loading assessments...</p>
         </div>
       </div>
@@ -1813,8 +1813,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/80">
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-primary-500/20 flex items-center justify-center">
-                  <FileText size={14} className="text-primary-400" />
+                <div className="w-7 h-7 rounded-lg bg-indigo-500/20 flex items-center justify-center">
+                  <FileText size={14} className="text-indigo-400" />
                 </div>
                 <h3 className="text-slate-900 dark:text-white font-semibold text-sm">
                   Report Summary
@@ -1860,7 +1860,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                     const targetId = slideOverBuilderReportId || slideOverReportId;
                     if (targetId) navigate(`/reports/builder/${targetId}`);
                   }}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-primary-500/20 text-primary-300 hover:bg-primary-500/30 border border-primary-500/30 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30 transition-colors"
                 >
                   Open Full Editor
                   <ArrowRight size={14} />
@@ -2062,7 +2062,7 @@ const ReportSlideOverContent: React.FC<{
   if (loading) {
     return (
       <div className="flex items-center justify-center h-32">
-        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500" />
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-500" />
       </div>
     );
   }
@@ -2312,7 +2312,7 @@ const ReportSlideOverContent: React.FC<{
                   : section?.title || section?.name || `Section ${idx + 1}`;
               return (
                 <div key={idx} className="flex items-center gap-2 py-1">
-                  <span className="w-4 h-4 rounded bg-primary-500/15 text-primary-400 text-[10px] font-bold flex items-center justify-center shrink-0">
+                  <span className="w-4 h-4 rounded bg-indigo-500/15 text-indigo-400 text-[10px] font-bold flex items-center justify-center shrink-0">
                     {idx + 1}
                   </span>
                   <span className="text-xs text-slate-500 dark:text-slate-400 truncate">
