@@ -15859,8 +15859,10 @@
     "clearReadFull": "Clear read notifications",
     "clearAll": "Clear all",
     "deleteAllFull": "Delete all notifications",
+    "countLabel": "{{count}} notifications",
     "countLabel_one": "{{count}} notification",
     "countLabel_other": "{{count}} notifications",
+    "snoozedLabel": "{{count}} snoozed",
     "snoozedLabel_one": "{{count}} snoozed",
     "snoozedLabel_other": "{{count}} snoozed",
     "time": {
