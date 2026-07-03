@@ -57,19 +57,19 @@ export const InterviewPipelineStepper: React.FC<InterviewPipelineStepperProps> =
 
   return (
     <div
-      className="border-b border-slate-200 bg-slate-50/70 px-3 py-2.5 dark:border-white/[0.08] dark:bg-navy-950/30"
+      className="border-b border-[var(--c-border-subtle)] bg-[var(--c-surface-raised)] px-3 py-2.5"
       aria-label={isPolish ? 'Proces wywiadu' : 'Interview process'}
     >
       {/* Progress bar */}
       <div
-        className="mb-2.5 h-1 w-full overflow-hidden rounded-full bg-slate-200/80 dark:bg-navy-800"
+        className="mb-2.5 h-1 w-full overflow-hidden rounded-token-pill bg-[var(--c-border-subtle)]"
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={total}
         aria-valuenow={activeIndex + 1}
       >
         <div
-          className="h-full rounded-full bg-navy-900 transition-[width] duration-300 ease-out"
+          className="h-full rounded-token-pill bg-[var(--c-text)] transition-[width] duration-300 ease-out"
           style={{ width: `${Math.round(progress * 100)}%` }}
         />
       </div>
@@ -90,22 +90,22 @@ export const InterviewPipelineStepper: React.FC<InterviewPipelineStepperProps> =
                 type="button"
                 onClick={() => onStepChange(step.id)}
                 aria-current={isActive ? 'step' : undefined}
-                className={`group relative w-full rounded-xl border px-2 py-1.5 text-left transition-all hover:border-slate-400/60 dark:hover:border-white/20 ${
+                className={`group relative w-full rounded-token-md border px-2 py-1.5 text-left transition-all hover:border-[var(--c-border-strong)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] ${
                   isActive
-                    ? 'border-slate-400 dark:border-white/30 bg-slate-100 dark:bg-white/[0.08] ring-1 ring-slate-300/60'
+                    ? 'border-[var(--c-border-strong)] bg-[var(--c-surface)] ring-1 ring-[var(--c-border)]'
                     : isComplete
-                      ? 'border-emerald-300/50 bg-white text-slate-600 dark:border-emerald-500/20 dark:bg-navy-900/70 dark:text-slate-300'
-                      : 'border-slate-200 bg-slate-100/70 text-slate-500 dark:border-white/[0.08] dark:bg-navy-900/50 dark:text-slate-400'
+                      ? 'border-[var(--c-border-subtle)] bg-[var(--c-surface)] text-[var(--c-text-secondary)]'
+                      : 'border-[var(--c-border-subtle)] bg-[var(--c-surface-raised)] text-[var(--c-text-muted)]'
                 }`}
               >
                 <div className="flex items-center gap-2">
                   <span
-                    className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold transition-colors ${
+                    className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-token-pill text-[10px] font-semibold transition-colors ${
                       isActive
-                        ? 'bg-navy-900 text-white shadow-sm'
+                        ? 'bg-[var(--c-text)] text-[var(--c-surface)] shadow-sm'
                         : isComplete
-                          ? 'bg-emerald-500 text-white'
-                          : 'bg-slate-200/80 text-slate-500 dark:bg-navy-800 dark:text-slate-400'
+                          ? 'bg-[var(--c-success)] text-white'
+                          : 'bg-[var(--c-border-subtle)] text-[var(--c-text-muted)]'
                     }`}
                   >
                     {isComplete ? <Check size={12} strokeWidth={3} /> : step.numeral}
@@ -113,16 +113,16 @@ export const InterviewPipelineStepper: React.FC<InterviewPipelineStepperProps> =
                   <span className="min-w-0 flex-1">
                     <span
                       className={`flex items-center gap-1.5 truncate text-xs font-semibold leading-tight ${
-                        isActive ? 'text-slate-900 dark:text-white' : ''
+                        isActive ? 'text-[var(--c-text)]' : ''
                       }`}
                     >
                       <span className="truncate">{step.label}</span>
                       {hasCount ? (
                         <span
-                          className={`inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full px-1 text-[10px] font-semibold ${
+                          className={`inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-token-pill px-1 text-[10px] font-semibold ${
                             isActive
-                              ? 'bg-navy-900 text-white'
-                              : 'bg-slate-200 text-slate-600 dark:bg-navy-800 dark:text-slate-300'
+                              ? 'bg-[var(--c-text)] text-[var(--c-surface)]'
+                              : 'bg-[var(--c-border-subtle)] text-[var(--c-text-secondary)]'
                           }`}
                         >
                           {step.count}

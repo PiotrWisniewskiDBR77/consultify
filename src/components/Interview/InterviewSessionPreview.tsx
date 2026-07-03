@@ -59,16 +59,16 @@ export const InterviewSessionPreviewBody: React.FC<InterviewSessionPreviewBodyPr
     {
       label: isPolish ? 'Sesja' : 'Session',
       className:
-        'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300 border-blue-200/40 dark:border-blue-400/20',
+        'bg-[var(--c-info)]/10 text-[var(--c-info)] border-[var(--c-info)]/20',
     },
     {
       label: `${isPolish ? 'Postęp' : 'Progress'}: ${progress}%`,
-      className: 'bg-slate-500/10 text-slate-700 dark:text-slate-200',
+      className: 'bg-[var(--c-surface-raised)] text-[var(--c-text-secondary)]',
     },
     {
       label: started,
       icon: Calendar,
-      className: 'bg-slate-500/10 text-slate-700 dark:text-slate-200',
+      className: 'bg-[var(--c-surface-raised)] text-[var(--c-text-secondary)]',
     },
   ];
 
@@ -158,7 +158,7 @@ export const InterviewSessionPreviewFooter: React.FC<InterviewSessionPreviewFoot
 }) => {
   const relationItems: RelationItem[] = relations.map((r) => ({
     label: r.label,
-    tone: r.tone ?? 'text-slate-600 dark:text-slate-300',
+    tone: r.tone ?? 'text-[var(--c-text-secondary)]',
   }));
 
   // NOTE: "Open" lives exclusively in PreviewPaneShell header (canon §7.3 anty-duplikacja).
@@ -187,7 +187,7 @@ export const InterviewSessionPreviewFooter: React.FC<InterviewSessionPreviewFoot
   return (
     // canon §7.3: space-y-2.5, NO border-t dividers between footer cards
     <div className="space-y-2.5">
-      <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
+      <div className="rounded-token-md border border-[var(--c-border-subtle)] bg-[var(--c-surface-raised)] p-2.5">
         <PreviewAIHintStrip
           hints={aiHints}
           onRunHint={onRunAiHint}

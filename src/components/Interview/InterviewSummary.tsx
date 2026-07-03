@@ -29,43 +29,51 @@ const SUMMARY_CATEGORY_CONFIG: Record<
     icon: React.ComponentType<{ size?: number; className?: string }>;
     color: string;
     bgColor: string;
+    /** Solid dot colour (category identity) for the insight-count dots. */
+    dot: string;
   }
 > = {
   strategy: {
     label: 'Strategy',
     icon: Target,
-    color: 'text-blue-600 dark:text-blue-400',
-    bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+    color: 'text-[var(--c-tag-1)]',
+    bgColor: 'bg-[var(--c-tag-1)]/12',
+    dot: 'bg-[var(--c-tag-1)]',
   },
   operations: {
     label: 'Operations',
     icon: Settings,
-    color: 'text-green-600 dark:text-green-400',
-    bgColor: 'bg-green-100 dark:bg-green-900/30',
+    color: 'text-[var(--c-tag-3)]',
+    bgColor: 'bg-[var(--c-tag-3)]/12',
+    dot: 'bg-[var(--c-tag-3)]',
   },
   digital: {
     label: 'Digital',
     icon: Monitor,
-    color: 'text-primary-600 dark:text-primary-400',
-    bgColor: 'bg-primary-100 dark:bg-primary-900/30',
+    color: 'text-[var(--c-tag-5)]',
+    bgColor: 'bg-[var(--c-tag-5)]/12',
+    dot: 'bg-[var(--c-tag-5)]',
   },
   people: {
     label: 'People',
     icon: Users,
-    color: 'text-amber-600 dark:text-amber-400',
-    bgColor: 'bg-amber-100 dark:bg-amber-900/30',
+    color: 'text-[var(--c-tag-7)]',
+    bgColor: 'bg-[var(--c-tag-7)]/12',
+    dot: 'bg-[var(--c-tag-7)]',
   },
   finance: {
     label: 'Finance',
     icon: DollarSign,
-    color: 'text-emerald-600 dark:text-emerald-400',
-    bgColor: 'bg-emerald-100 dark:bg-emerald-900/30',
+    color: 'text-[var(--c-tag-9)]',
+    bgColor: 'bg-[var(--c-tag-9)]/12',
+    dot: 'bg-[var(--c-tag-9)]',
   },
   general: {
     label: 'General',
     icon: CheckCircle,
-    color: 'text-slate-600 dark:text-slate-400',
-    bgColor: 'bg-slate-100 dark:bg-slate-900/30',
+    color: 'text-[var(--c-text-secondary)]',
+    bgColor: 'bg-[var(--c-surface-raised)]',
+    dot: 'bg-[var(--c-text-muted)]',
   },
 };
 
@@ -105,32 +113,32 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
   const highImpactInsights = insights.filter((i) => i.impactLevel === 'high').length;
 
   return (
-    <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+    <div className="bg-[var(--c-surface)] rounded-token-lg border border-[var(--c-border-subtle)] overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-slate-200 dark:border-navy-700 bg-gradient-to-r from-primary-50 to-crimson-50 dark:from-primary-900/20 dark:to-crimson-900/20">
-        <h3 className="font-bold text-navy-900 dark:text-white">Interview Summary</h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+      <div className="p-4 border-b border-[var(--c-border-subtle)] bg-[var(--c-surface-raised)]">
+        <h3 className="font-bold text-[var(--c-text)]">Interview Summary</h3>
+        <p className="text-sm text-[var(--c-text-muted)] mt-1">
           {completedCategories.length} of {CATEGORY_KEYS.length} categories completed
         </p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 p-4 border-b border-slate-200 dark:border-navy-700">
+      <div className="grid grid-cols-3 gap-4 p-4 border-b border-[var(--c-border-subtle)]">
         <div className="text-center">
-          <div className="text-2xl font-bold text-navy-900 dark:text-white">{totalInsights}</div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">Total Insights</div>
+          <div className="text-2xl font-bold text-[var(--c-text)]">{totalInsights}</div>
+          <div className="text-xs text-[var(--c-text-muted)]">Total Insights</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+          <div className="text-2xl font-bold text-[var(--c-success)]">
             {confirmedInsights}
           </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">Confirmed</div>
+          <div className="text-xs text-[var(--c-text-muted)]">Confirmed</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+          <div className="text-2xl font-bold text-[var(--c-warning)]">
             {highImpactInsights}
           </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">High Impact</div>
+          <div className="text-xs text-[var(--c-text-muted)]">High Impact</div>
         </div>
       </div>
 
@@ -147,27 +155,27 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
               key={category}
               onClick={() => onViewDetails?.(category)}
               className={`
-                flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all
+                flex items-center gap-3 p-3 rounded-token-md cursor-pointer transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]
                 ${
                   isCompleted
-                    ? 'bg-slate-50 dark:bg-navy-800/50 hover:bg-slate-100 dark:hover:bg-navy-800'
-                    : 'bg-slate-50/50 dark:bg-navy-950/50 opacity-60'
+                    ? 'bg-[var(--c-surface-raised)] hover:bg-[var(--c-surface)] border border-[var(--c-border-subtle)]'
+                    : 'bg-[var(--c-surface-raised)] opacity-60'
                 }
               `}
             >
               <div
-                className={`w-8 h-8 rounded-lg ${config.bgColor} flex items-center justify-center`}
+                className={`w-8 h-8 rounded-token-md ${config.bgColor} flex items-center justify-center`}
               >
                 <CategoryIcon size={16} className={config.color} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-sm text-navy-900 dark:text-white">
+                  <span className="font-medium text-sm text-[var(--c-text)]">
                     {config.label}
                   </span>
-                  {isCompleted && <CheckCircle size={14} className="text-emerald-500" />}
+                  {isCompleted && <CheckCircle size={14} className="text-[var(--c-success)]" />}
                 </div>
-                <span className="text-xs text-slate-500 dark:text-slate-400">
+                <span className="text-xs text-[var(--c-text-muted)]">
                   {categoryInsights.length} insights
                 </span>
               </div>
@@ -176,11 +184,11 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
                   {categoryInsights.slice(0, 3).map((_, i) => (
                     <div
                       key={i}
-                      className={`w-1.5 h-1.5 rounded-full ${config.bgColor.replace('100', '400').replace('900/30', '500')}`}
+                      className={`w-1.5 h-1.5 rounded-token-pill ${config.dot}`}
                     />
                   ))}
                   {categoryInsights.length > 3 && (
-                    <span className="text-xs text-slate-600">+{categoryInsights.length - 3}</span>
+                    <span className="text-xs text-[var(--c-text-muted)]">+{categoryInsights.length - 3}</span>
                   )}
                 </div>
               )}
@@ -191,15 +199,15 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
 
       {/* Organization Context Preview */}
       {context && context.completenessPercent > 0 && (
-        <div className="p-4 border-t border-slate-200 dark:border-navy-700">
-          <h4 className="font-medium text-sm text-navy-900 dark:text-white mb-3">
+        <div className="p-4 border-t border-[var(--c-border-subtle)]">
+          <h4 className="font-medium text-sm text-[var(--c-text)] mb-3">
             Organization Context
           </h4>
           <div className="space-y-2">
             {context.keyMetrics.length > 0 && (
               <div className="text-xs">
-                <span className="text-slate-500 dark:text-slate-400">Key Metrics:</span>
-                <span className="ml-1 text-slate-700 dark:text-slate-300">
+                <span className="text-[var(--c-text-muted)]">Key Metrics:</span>
+                <span className="ml-1 text-[var(--c-text-secondary)]">
                   {context.keyMetrics
                     .slice(0, 2)
                     .map((m) => `${m.name}: ${m.value}`)
@@ -210,8 +218,8 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
             )}
             {context.stakeholders.length > 0 && (
               <div className="text-xs">
-                <span className="text-slate-500 dark:text-slate-400">Stakeholders:</span>
-                <span className="ml-1 text-slate-700 dark:text-slate-300">
+                <span className="text-[var(--c-text-muted)]">Stakeholders:</span>
+                <span className="ml-1 text-[var(--c-text-secondary)]">
                   {context.stakeholders
                     .slice(0, 2)
                     .map((s) => `${s.name} (${s.role})`)
@@ -222,13 +230,13 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
             )}
           </div>
           <div className="mt-3 flex items-center gap-2">
-            <div className="flex-1 h-1.5 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
+            <div className="flex-1 h-1.5 bg-[var(--c-border-subtle)] rounded-token-pill overflow-hidden">
               <div
-                className="h-full bg-navy-900 rounded-full"
+                className="h-full bg-[var(--c-text)] rounded-token-pill"
                 style={{ width: `${context.completenessPercent}%` }}
               />
             </div>
-            <span className="text-xs text-slate-500 dark:text-slate-400">
+            <span className="text-xs text-[var(--c-text-muted)]">
               {context.completenessPercent}%
             </span>
           </div>
@@ -236,21 +244,21 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
       )}
 
       {/* Export Actions */}
-      <div className="p-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50">
-        <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+      <div className="p-4 border-t border-[var(--c-border-subtle)] bg-[var(--c-surface-raised)]">
+        <p className="text-xs text-[var(--c-text-muted)] mb-3">
           Export this context to enrich your Tools or Assessment
         </p>
         <div className="flex gap-2">
           <button
             onClick={onExportToTools}
-            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-lg transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-[var(--c-border)] bg-[var(--c-surface)] text-[var(--c-text)] hover:bg-[var(--c-surface-raised)] text-sm font-medium rounded-token-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
           >
             <Download size={14} />
             Export to Tools
           </button>
           <button
             onClick={onExportToAssessment}
-            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-lg transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[var(--c-text)] text-[var(--c-surface)] hover:brightness-110 text-sm font-medium rounded-token-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
           >
             <ExternalLink size={14} />
             Export to Assessment

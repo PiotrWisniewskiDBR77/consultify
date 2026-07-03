@@ -63,7 +63,7 @@ export const InterviewInsightPreviewBody: React.FC<InterviewInsightPreviewBodyPr
   const pills: MetaPill[] = [
     {
       label: isPolish ? 'Wniosek' : 'Insight',
-      className: 'bg-slate-200/60 dark:bg-white/[0.06] text-slate-700 dark:text-slate-200',
+      className: 'bg-[var(--c-surface-raised)] text-[var(--c-text-secondary)]',
     },
     {
       label: typeLabel,
@@ -77,17 +77,17 @@ export const InterviewInsightPreviewBody: React.FC<InterviewInsightPreviewBodyPr
       ? [
           {
             label: `${isPolish ? 'Pewność' : 'Confidence'}: ${insight.confidence}`,
-            className: 'bg-slate-200/40 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300',
+            className: 'bg-[var(--c-surface-raised)] text-[var(--c-text-muted)]',
           },
         ]
       : []),
     {
       label: sourceLabel,
-      className: 'bg-slate-200/40 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300',
+      className: 'bg-[var(--c-surface-raised)] text-[var(--c-text-muted)]',
     },
     {
       label: dateStr,
-      className: 'bg-slate-200/40 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300',
+      className: 'bg-[var(--c-surface-raised)] text-[var(--c-text-muted)]',
     },
   ];
 
@@ -182,7 +182,7 @@ export const InterviewInsightPreviewFooter: React.FC<InterviewInsightPreviewFoot
   // minimal gap between sections (space-y-2.5), no heavy dividers between bordered cards.
   return (
     <div className="space-y-2.5 pb-1">
-      <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
+      <div className="rounded-token-md border border-[var(--c-border-subtle)] bg-[var(--c-surface-raised)] p-2.5">
         <PreviewAIHintStrip hints={aiHints} />
       </div>
       {showActionPanel && (
