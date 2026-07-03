@@ -286,14 +286,14 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
         if (e.target === overlayRef.current) onClose();
       }}
     >
-      <div className="w-full max-w-xl mx-4 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-800">
+      <div className="w-full max-w-xl mx-4 rounded-2xl bg-c-surface border border-c-border shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-c-border-subtle">
           <div className="flex items-center gap-2 min-w-0">
             {(selectedType || bundleStep) && (
               <button
                 onClick={() => { setBundleStep(false); setSelectedType(null); }}
                 data-testid="launcher-back"
-                className="p-1 rounded-lg text-slate-600 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+                className="p-1 rounded-lg text-c-text-muted hover:text-c-text hover:bg-c-surface-raised"
                 aria-label={t('rap.outputs.launcher.back', 'Back')}
               >
                 <ArrowLeft size={18} />
@@ -301,7 +301,7 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
             )}
             <h2
               id="outputs-launcher-title"
-              className="text-base font-semibold text-slate-900 dark:text-white truncate"
+              className="text-base font-semibold text-c-text truncate"
             >
               {bundleStep
                 ? t('rap.outputs.launcher.bundleTitle', 'Komplet AI — brief')
@@ -313,7 +313,7 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
           <button
             onClick={onClose}
             data-testid="launcher-close"
-            className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+            className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text hover:bg-c-surface-raised"
             aria-label={t('common.close', 'Close')}
           >
             <X size={18} />
@@ -324,7 +324,7 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
           {bundleStep ? (
             /* W3.5 — Komplet AI: brief textarea → ZIP generation */
             <div className="flex flex-col gap-4">
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t('rap.outputs.launcher.bundleSubtitle', 'Describe your company, product, market, and ask in one paragraph. The AI will produce DOCX + XLSX + PPTX and download them as a ZIP.')}
               </p>
               <textarea
@@ -335,9 +335,9 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
                 rows={5}
                 maxLength={4000}
                 placeholder={t('rap.outputs.launcher.bundleBriefPlaceholder', 'e.g. Acme is a SaaS B2B platform for logistics companies in Central Europe. TAM €3B, asking €500k seed. Primary KPIs: MRR €40k, NRR 115%, burn €25k/mo…')}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-400 resize-none"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-c-border bg-c-bg text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus resize-none"
               />
-              <div className="text-[11px] text-slate-400 -mt-2">
+              <div className="text-[11px] text-c-text-muted -mt-2">
                 {bundleBrief.length}/4000 {t('common.characters', 'characters')}
               </div>
               {bundleError && (
@@ -359,18 +359,18 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
                         idx < bundlePhase
                           ? 'bg-violet-600 text-white'
                           : idx === bundlePhase
-                          ? 'border-2 border-violet-500 bg-white dark:bg-navy-900'
-                          : 'border-2 border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
+                          ? 'border-2 border-violet-500 bg-c-surface'
+                          : 'border-2 border-c-border bg-c-surface'
                       }`}>
                         {idx < bundlePhase && '✓'}
                         {idx === bundlePhase && <span className="block w-2 h-2 rounded-full bg-violet-500 animate-pulse" />}
                       </div>
-                      <span className={`text-xs ${idx === bundlePhase ? 'text-slate-900 dark:text-white font-medium' : idx < bundlePhase ? 'text-slate-400 line-through' : 'text-slate-300 dark:text-navy-600'}`}>
+                      <span className={`text-xs ${idx === bundlePhase ? 'text-c-text font-medium' : idx < bundlePhase ? 'text-c-text-muted line-through' : 'text-c-text-muted'}`}>
                         {label}
                       </span>
                     </div>
                   ))}
-                  <p className="mt-1 text-[11px] text-slate-400 dark:text-navy-600">
+                  <p className="mt-1 text-[11px] text-c-text-muted">
                     {t('rap.outputs.launcher.phaseEstimateNote', 'Szacowany przebieg — generacja trwa zwykle 1–2 min, pobieranie ruszy po zakończeniu.')}
                   </p>
                 </div>
@@ -389,7 +389,7 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
             </div>
           ) : !selectedType ? (
             <>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+              <p className="text-sm text-c-text-muted mb-4">
                 {t('rap.outputs.launcher.subtitle', 'Pick what you want to create')}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -402,7 +402,7 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
                       data-testid={`launcher-type-${tile.type}`}
                       onClick={() => setSelectedType(tile.type)}
                       aria-label={label}
-                      className="group flex flex-col items-start gap-3 w-full p-4 rounded-xl text-left border border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600 hover:shadow-md bg-white dark:bg-navy-950 transition-all duration-150 hover:-translate-y-0.5"
+                      className="group flex flex-col items-start gap-3 w-full p-4 rounded-xl text-left border border-c-border hover:border-c-border-strong hover:shadow-md bg-c-surface transition-all duration-150 hover:-translate-y-0.5"
                     >
                       <div
                         className={`shrink-0 p-2.5 rounded-lg bg-gradient-to-br ${tile.gradient} text-white`}
@@ -410,10 +410,10 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
                         {tile.icon}
                       </div>
                       <div className="min-w-0">
-                        <div className="font-medium text-sm text-slate-900 dark:text-white">
+                        <div className="font-medium text-sm text-c-text">
                           {label}
                         </div>
-                        <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        <div className="text-[11px] text-c-text-muted mt-0.5">
                           {t(tile.hintKey, tile.hintFallback)}
                         </div>
                       </div>
@@ -449,7 +449,7 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
             </>
           ) : (
             <>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
+              <p className="text-sm text-c-text-muted mb-3">
                 {t('rap.outputs.launcher.templateSubtitle', 'Start blank or from a template')}
               </p>
 
@@ -463,7 +463,7 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
                   onKeyDown={(e) => { if (e.key === 'Enter') handleSuggest(); }}
                   placeholder={t('rap.outputs.launcher.suggestPlaceholder', 'Describe what you need…')}
                   maxLength={1000}
-                  className="flex-1 min-w-0 px-3 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                  className="flex-1 min-w-0 px-3 py-1.5 text-sm rounded-lg border border-c-border bg-c-bg text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
                 />
                 <button
                   type="button"
@@ -505,7 +505,7 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
 
               {/* Loading */}
               {tplLoading && (
-                <div className="flex items-center justify-center py-8 text-slate-400">
+                <div className="flex items-center justify-center py-8 text-c-text-muted">
                   <Loader2 size={20} className="animate-spin mr-2" />
                   <span className="text-sm">{t('common.loading', 'Loading...')}</span>
                 </div>
@@ -527,13 +527,13 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
                     data-testid="launcher-template-blank"
                     onClick={() => handlePickTemplate('blank')}
                     aria-label={t(BLANK_CARD.labelKey, BLANK_CARD.labelFallback)}
-                    className="group flex items-start gap-2.5 w-full p-3.5 rounded-xl text-left border border-slate-200 dark:border-navy-700 hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-md bg-white dark:bg-navy-950 transition-all duration-150 hover:-translate-y-0.5"
+                    className="group flex items-start gap-2.5 w-full p-3.5 rounded-xl text-left border border-c-border hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-md bg-c-surface transition-all duration-150 hover:-translate-y-0.5"
                   >
-                    <div className="shrink-0 p-2 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300">
+                    <div className="shrink-0 p-2 rounded-lg bg-c-surface-raised text-c-text-secondary">
                       <Sparkles size={18} />
                     </div>
                     <div className="min-w-0 pt-0.5">
-                      <div className="font-medium text-[13px] text-slate-900 dark:text-white leading-tight">
+                      <div className="font-medium text-[13px] text-c-text leading-tight">
                         {t(BLANK_CARD.labelKey, BLANK_CARD.labelFallback)}
                       </div>
                     </div>
@@ -549,17 +549,17 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
                         data-testid={`launcher-template-${tpl.id}`}
                         onClick={() => handlePickTemplate(tpl.id)}
                         aria-label={tpl.name}
-                        className="group flex items-start gap-2.5 w-full p-3.5 rounded-xl text-left border border-slate-200 dark:border-navy-700 hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-md bg-white dark:bg-navy-950 transition-all duration-150 hover:-translate-y-0.5"
+                        className="group flex items-start gap-2.5 w-full p-3.5 rounded-xl text-left border border-c-border hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-md bg-c-surface transition-all duration-150 hover:-translate-y-0.5"
                       >
-                        <div className="shrink-0 p-2 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300">
+                        <div className="shrink-0 p-2 rounded-lg bg-c-surface-raised text-c-text-secondary">
                           <FileText size={18} />
                         </div>
                         <div className="min-w-0 pt-0.5">
-                          <div className="font-medium text-[13px] text-slate-900 dark:text-white leading-tight">
+                          <div className="font-medium text-[13px] text-c-text leading-tight">
                             {tpl.name}
                           </div>
                           {tpl.description && (
-                            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+                            <div className="text-[11px] text-c-text-muted mt-0.5 line-clamp-2">
                               {tpl.description}
                             </div>
                           )}

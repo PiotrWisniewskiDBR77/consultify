@@ -91,7 +91,7 @@ interface TrustBadgeProps {
 const TrustBadge: React.FC<TrustBadgeProps> = ({ state, label }) => {
   const text = label || displayLabel(state);
   if (text === '—') {
-    return <span className="text-[10px] text-slate-600 dark:text-slate-500">—</span>;
+    return <span className="text-[10px] text-c-text-muted">—</span>;
   }
   return (
     <span className={`${TRUST_BADGE_BASE} ${badgeVariant(state)}`}>
@@ -144,8 +144,8 @@ export const TrustStatePreviewSection: React.FC<TrustStatePreviewSectionProps> =
       : '—';
 
   return (
-    <div className="space-y-2 pt-2 border-t border-slate-200/60 dark:border-white/[0.06]">
-      <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
+    <div className="space-y-2 pt-2 border-t border-c-border-subtle">
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
         {t('rap.outputs.preview.trustState', 'Trust state')}
       </div>
 
@@ -165,32 +165,32 @@ export const TrustStatePreviewSection: React.FC<TrustStatePreviewSectionProps> =
         <Row label={t('rap.outputs.preview.review', 'Review')}>
           <TrustBadge state={governance.publishState} />
           {typeof governance.reviewGateCount === 'number' && governance.reviewGateCount > 0 ? (
-            <span className="text-[10px] text-slate-600 dark:text-slate-500 ml-0.5">
+            <span className="text-[10px] text-c-text-muted ml-0.5">
               ({governance.reviewGateCount} {t('rap.outputs.preview.reviewersShort', 'gates')})
             </span>
           ) : null}
         </Row>
 
         <Row label={t('rap.outputs.preview.source', 'Source')}>
-          <span className="text-[10px] font-medium text-slate-700 dark:text-slate-200">
+          <span className="text-[10px] font-medium text-c-text-secondary">
             {displayLabel(governance.originSummary?.type as string) || '—'}
           </span>
         </Row>
 
         <Row label={t('rap.outputs.preview.lineage', 'Lineage')}>
-          <span className="text-[10px] font-medium text-slate-700 dark:text-slate-200">
+          <span className="text-[10px] font-medium text-c-text-secondary">
             {lineageSummary}
           </span>
         </Row>
 
         <Row label={t('rap.outputs.preview.artifactId', 'Artifact ID')}>
-          <span className="text-[10px] font-mono text-slate-600 dark:text-slate-300">
+          <span className="text-[10px] font-mono text-c-text-secondary">
             {artifactId || '—'}
           </span>
         </Row>
 
         <Row label={t('rap.outputs.preview.executionRunId', 'Execution run')}>
-          <span className="text-[10px] font-mono text-slate-600 dark:text-slate-300">
+          <span className="text-[10px] font-mono text-c-text-secondary">
             {governance.executionRunId || '—'}
           </span>
           {governance.executionRunId && onTrace ? (
@@ -202,7 +202,7 @@ export const TrustStatePreviewSection: React.FC<TrustStatePreviewSectionProps> =
                   lineagePaths: governance.lineagePaths || null,
                 })
               }
-              className="ml-1.5 inline-flex items-center rounded-full border border-slate-200/70 bg-white/60 px-2 py-0.5 text-[9px] font-medium text-slate-700 hover:bg-white dark:border-slate-700/70 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900 transition-colors"
+              className="ml-1.5 inline-flex items-center rounded-full border border-c-border bg-c-surface px-2 py-0.5 text-[9px] font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors"
             >
               {t('rap.outputs.preview.trace', 'Trace')}
             </button>
@@ -211,20 +211,20 @@ export const TrustStatePreviewSection: React.FC<TrustStatePreviewSectionProps> =
 
         {exportFormats && exportFormats.length > 0 ? (
           <Row label={t('rap.outputs.preview.exports', 'Exports')}>
-            <span className="text-[10px] font-medium text-slate-700 dark:text-slate-200">
+            <span className="text-[10px] font-medium text-c-text-secondary">
               {exportFormats.join(', ').toUpperCase()}
             </span>
           </Row>
         ) : null}
 
         <Row label={t('rap.outputs.preview.exportTrace', 'Export trace')}>
-          <span className="text-[10px] font-medium text-slate-700 dark:text-slate-200">
+          <span className="text-[10px] font-medium text-c-text-secondary">
             {exportTraceText}
           </span>
         </Row>
 
         <Row label={t('rap.outputs.preview.accessControl', 'Access control')}>
-          <span className="text-[10px] font-medium text-slate-700 dark:text-slate-200">
+          <span className="text-[10px] font-medium text-c-text-secondary">
             {typeof governance.canManageAccess === 'boolean'
               ? governance.canManageAccess
                 ? t('rap.outputs.preview.canManageAccess', 'Can manage')
@@ -234,7 +234,7 @@ export const TrustStatePreviewSection: React.FC<TrustStatePreviewSectionProps> =
         </Row>
 
         <Row label={t('rap.outputs.preview.trustBoundary', 'Trust boundary')}>
-          <span className="text-[10px] font-medium text-slate-700 dark:text-slate-200">
+          <span className="text-[10px] font-medium text-c-text-secondary">
             {t('rap.outputs.preview.executionAuthority', 'Execution')}:{' '}
             {authorityLabel(governance.executionAuthority)}
             {' · '}
@@ -244,7 +244,7 @@ export const TrustStatePreviewSection: React.FC<TrustStatePreviewSectionProps> =
         </Row>
 
         <Row label={t('rap.outputs.preview.validationChecks', 'Validation checks')}>
-          <span className="text-[10px] font-medium text-slate-700 dark:text-slate-200">
+          <span className="text-[10px] font-medium text-c-text-secondary">
             {validationChecksText}
           </span>
         </Row>
@@ -255,7 +255,7 @@ export const TrustStatePreviewSection: React.FC<TrustStatePreviewSectionProps> =
 
 const Row: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
   <div className="flex items-center gap-2">
-    <span className="text-[10px] text-slate-500 dark:text-slate-400 w-24 shrink-0">{label}</span>
+    <span className="text-[10px] text-c-text-muted w-24 shrink-0">{label}</span>
     <div className="flex items-center gap-1 flex-wrap min-w-0">{children}</div>
   </div>
 );

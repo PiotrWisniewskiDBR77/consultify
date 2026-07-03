@@ -228,26 +228,26 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
     return (
       <div className="p-4">
         <div className="mx-auto max-w-3xl rounded-2xl border border-c-border-subtle bg-c-surface p-6">
-          <div className="text-lg font-semibold text-slate-900 dark:text-white">
+          <div className="text-lg font-semibold text-c-text">
             {t('results.initiatives.emptyTitle', 'No tracked initiatives in this bucket')}
           </div>
-          <div className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+          <div className="mt-2 text-sm text-c-text-secondary">
             {t(
               'results.initiatives.empty',
               'No tracked initiatives for the selected lifecycle bucket yet.'
             )}
           </div>
-          <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
-            <span className="rounded-full bg-slate-100 dark:bg-white/[0.06] px-3 py-1">
+          <div className="mt-4 flex flex-wrap gap-2 text-xs text-c-text-muted">
+            <span className="rounded-full bg-c-surface-raised px-3 py-1">
               {t('results.lifecycle.inRealization', 'In realization')}
             </span>
-            <span className="rounded-full bg-slate-100 dark:bg-white/[0.06] px-3 py-1">
+            <span className="rounded-full bg-c-surface-raised px-3 py-1">
               {t('results.lifecycle.realized', 'Realized')}
             </span>
-            <span className="rounded-full bg-slate-100 dark:bg-white/[0.06] px-3 py-1">
+            <span className="rounded-full bg-c-surface-raised px-3 py-1">
               {t('results.tabs.kpi', 'KPI')}
             </span>
-            <span className="rounded-full bg-slate-100 dark:bg-white/[0.06] px-3 py-1">
+            <span className="rounded-full bg-c-surface-raised px-3 py-1">
               {t('results.tabs.kpiReports', 'Reports')}
             </span>
           </div>
@@ -284,8 +284,8 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
               editable: Boolean(onChangeInitiativeStatus),
               renderEditor: onChangeInitiativeStatus
                 ? (onClose) => (
-                    <div className="w-56 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-xl p-2">
-                      <div className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <div className="w-56 rounded-xl border border-c-border bg-c-surface-raised shadow-xl p-2">
+                      <div className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
                         {t('common.status', 'Status')}
                       </div>
                       <div className="max-h-64 overflow-auto space-y-1">
@@ -300,7 +300,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                             className={`w-full rounded-lg px-2.5 py-2 text-left text-sm transition-colors ${
                               status === initiative.initiativeStatus
                                 ? 'bg-c-surface-raised text-c-text'
-                                : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
+                                : 'text-c-text-secondary hover:bg-c-surface'
                             }`}
                           >
                             {status}
@@ -365,18 +365,18 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
               <PreviewMetaCard pills={metaPills}>
                 <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
                   <div>
-                    <div className="text-slate-500 dark:text-slate-400">
+                    <div className="text-c-text-muted">
                       {t('results.initiatives.lifecycle', 'Lifecycle')}
                     </div>
-                    <div className="text-slate-900 dark:text-white">
+                    <div className="text-c-text">
                       {initiative.lifecycleLabel}
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-slate-500 dark:text-slate-400">
+                    <div className="text-c-text-muted">
                       {t('common.updated', 'Updated')}
                     </div>
-                    <div className="text-slate-900 dark:text-white">
+                    <div className="text-c-text">
                       {initiative.lastReportCreatedAt
                         ? new Date(initiative.lastReportCreatedAt).toLocaleDateString()
                         : '—'}
@@ -390,31 +390,31 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                 text={initiative.summaryText}
                 compact
               >
-                <div className="mt-3 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
-                  <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <div className="mt-3 rounded-xl border border-c-border-subtle bg-c-surface p-3">
+                  <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
                     {t('results.initiatives.management', 'Initiative & KPI governance')}
                   </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs text-slate-500 dark:text-slate-400">
-                    <div className="rounded-lg bg-slate-50/80 dark:bg-white/[0.03] px-3 py-2">
+                  <div className="grid grid-cols-2 gap-2 text-xs text-c-text-muted">
+                    <div className="rounded-lg bg-c-surface-raised px-3 py-2">
                       {t('results.initiatives.status', 'Status')}: {initiative.initiativeStatus}
                     </div>
-                    <div className="rounded-lg bg-slate-50/80 dark:bg-white/[0.03] px-3 py-2">
+                    <div className="rounded-lg bg-c-surface-raised px-3 py-2">
                       {t('results.initiatives.kpis', 'Tracked KPI')}: {initiative.trackedKpiCount}
                     </div>
-                    <div className="rounded-lg bg-slate-50/80 dark:bg-white/[0.03] px-3 py-2">
+                    <div className="rounded-lg bg-c-surface-raised px-3 py-2">
                       {t('results.initiatives.realizationKpis', '{{count}} realization KPI', {
                         count: initiative.realizationKpiCount,
                       })}
                     </div>
-                    <div className="rounded-lg bg-slate-50/80 dark:bg-white/[0.03] px-3 py-2">
+                    <div className="rounded-lg bg-c-surface-raised px-3 py-2">
                       {t('results.initiatives.postImplementationKpis', '{{count}} post KPI', {
                         count: initiative.postImplementationKpiCount,
                       })}
                     </div>
-                    <div className="rounded-lg bg-slate-50/80 dark:bg-white/[0.03] px-3 py-2">
+                    <div className="rounded-lg bg-c-surface-raised px-3 py-2">
                       {t('results.initiatives.reports', 'Reports')}: {initiative.openReportCount}
                     </div>
-                    <div className="rounded-lg bg-slate-50/80 dark:bg-white/[0.03] px-3 py-2">
+                    <div className="rounded-lg bg-c-surface-raised px-3 py-2">
                       {t('results.runtime.reconciliation', 'Reconciliation')}:{' '}
                       {initiative.openDeviationCount}
                     </div>
@@ -423,7 +423,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
               </PreviewDetailsSection>
 
               <div>
-                <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <div className="text-[11px] font-semibold text-c-text-muted uppercase tracking-wider">
                   {t('common.relations', 'Relations')}
                 </div>
                 <PreviewRelations
@@ -485,7 +485,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
       >
         <div className="pl-4 pr-1.5 pt-3 pb-4">
           <div className="mb-3 flex items-center justify-between gap-3">
-            <div className="text-xs text-slate-500 dark:text-slate-400">
+            <div className="text-xs text-c-text-muted">
               {t('portfolio.ai.selectionCount', '{{count}} selected', {
                 count: selectedIds.size,
               })}
@@ -493,7 +493,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
           </div>
 
           {/* §27-exempt: TableWithPreviewLayout-coupled — checkbox selection drives the right-hand initiative preview pane; custom resizable columns + fixed minWidth layout */}
-          <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl overflow-x-auto">
+          <div className="bg-c-surface backdrop-blur border border-c-border-subtle rounded-xl overflow-x-auto">
             <table className="w-full table-fixed" style={{ minWidth: 1100 }}>
               <colgroup>
                 <col className="w-10" />
@@ -508,7 +508,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                 <col className="w-10" />
               </colgroup>
 
-              <thead className="sticky top-0 z-10 bg-slate-50/80 dark:bg-navy-900/50 backdrop-blur-hig">
+              <thead className="sticky top-0 z-10 bg-c-surface-raised backdrop-blur-hig">
                 <tr>
                   <th className="w-10 px-4 py-2">
                     <input
@@ -519,42 +519,42 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                     />
                   </th>
                   <th className="text-left px-4 py-2">
-                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-c-text-muted uppercase tracking-wider">
                       {t('results.initiatives.name', 'Initiative')}
                     </div>
                   </th>
                   <th className="text-left px-4 py-2 w-32">
-                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-c-text-muted uppercase tracking-wider">
                       {t('common.status', 'Status')}
                     </div>
                   </th>
                   <th className="text-left px-4 py-2 w-28">
-                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-c-text-muted uppercase tracking-wider">
                       {t('results.initiatives.lifecycle', 'Lifecycle')}
                     </div>
                   </th>
                   <th className="text-left px-4 py-2 w-28">
-                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-c-text-muted uppercase tracking-wider">
                       {t('results.initiatives.kpis', 'Tracked KPI')}
                     </div>
                   </th>
                   <th className="text-left px-4 py-2 w-28">
-                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-c-text-muted uppercase tracking-wider">
                       {t('results.initiatives.health', 'Health')}
                     </div>
                   </th>
                   <th className="text-left px-4 py-2 w-44">
-                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-c-text-muted uppercase tracking-wider">
                       {t('results.initiatives.nextStep', 'Next step')}
                     </div>
                   </th>
                   <th className="text-left px-4 py-2 w-28">
-                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-c-text-muted uppercase tracking-wider">
                       {t('results.initiatives.alerts', 'Needs attention')}
                     </div>
                   </th>
                   <th className="text-left px-4 py-2 w-24">
-                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-c-text-muted uppercase tracking-wider">
                       {t('common.updated', 'Updated')}
                     </div>
                   </th>
@@ -562,7 +562,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-slate-200/60 dark:divide-white/[0.03]">
+              <tbody className="divide-y divide-c-border-subtle">
                 {sortedItems.map((initiative) => {
                   const statusTone = statusChipTone(initiative.initiativeStatus);
                   const statusDotVar =
@@ -570,7 +570,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                   return (
                     <tr
                       key={initiative.id}
-                      className="group cursor-pointer transition-colors hover:bg-slate-50/70 dark:hover:bg-white/[0.03]"
+                      className="group cursor-pointer transition-colors hover:bg-c-surface-raised"
                       onClick={() => setSelectedId(initiative.id)}
                       onDoubleClick={() => onOpenInitiativeDocument(initiative)}
                     >
@@ -584,7 +584,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                       </td>
 
                       <td className="px-4 py-2">
-                        <div className="font-medium text-sm text-slate-900 dark:text-slate-100 truncate whitespace-nowrap">
+                        <div className="font-medium text-sm text-c-text truncate whitespace-nowrap">
                           {initiative.initiativeName}
                         </div>
                       </td>
@@ -597,7 +597,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                             onChange={(e) =>
                               void onChangeInitiativeStatus?.(initiative, e.target.value)
                             }
-                            className="appearance-none bg-transparent text-xs font-medium cursor-pointer pr-4 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-c-focus"
+                            className="appearance-none bg-transparent text-xs font-medium cursor-pointer pr-4 text-c-text-secondary focus:outline-none focus:ring-2 focus:ring-c-focus"
                           >
                             {statusOptions.map((status) => (
                               <option key={status} value={status}>
@@ -607,22 +607,22 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                           </select>
                           <ChevronDown
                             size={12}
-                            className="absolute right-0 text-slate-600 pointer-events-none"
+                            className="absolute right-0 text-c-text-muted pointer-events-none"
                           />
                         </div>
                       </td>
 
                       <td className="px-4 py-2">
-                        <span className="text-xs text-slate-600 dark:text-slate-400">
+                        <span className="text-xs text-c-text-muted">
                           {initiative.lifecycleLabel}
                         </span>
                       </td>
 
                       <td className="px-4 py-2">
-                        <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                        <div className="text-sm font-medium text-c-text">
                           {initiative.trackedKpiCount}
                         </div>
-                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400 truncate">
+                        <div className="mt-1 text-xs text-c-text-muted truncate">
                           {initiative.realizationKpiCount}/{initiative.postImplementationKpiCount}{' '}
                           {t('results.initiatives.phaseSplit', 'realization/post')}
                         </div>
@@ -640,7 +640,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                                 : 'bg-emerald-500'
                             }`}
                           />
-                          <span className="text-xs text-slate-500 dark:text-slate-400">
+                          <span className="text-xs text-c-text-muted">
                             {getAttentionLabel(initiative)}
                           </span>
                         </div>
@@ -648,17 +648,17 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
 
                       <td className="px-4 py-2">
                         <div
-                          className="text-xs text-slate-600 dark:text-slate-400 truncate"
+                          className="text-xs text-c-text-muted truncate"
                           title={getLifecycleNextStep(initiative)}
                         >
-                          <span className="font-medium text-slate-700 dark:text-slate-300">
+                          <span className="font-medium text-c-text-secondary">
                             {getLifecycleNextStep(initiative)}
                           </span>
                         </div>
                       </td>
 
                       <td className="px-4 py-2">
-                        <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                        <div className="text-sm font-medium text-c-text">
                           {initiative.attentionCount}
                         </div>
                         <div className={`mt-1 text-xs truncate ${getAttentionTone(initiative)}`}>
@@ -669,7 +669,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                       </td>
 
                       <td className="px-4 py-2">
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                        <span className="text-xs text-c-text-muted">
                           {formatRelativeTime(initiative.lastReportCreatedAt || undefined)}
                         </span>
                       </td>
