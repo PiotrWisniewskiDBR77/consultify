@@ -161,11 +161,11 @@ const FieldRow: React.FC<{
     <div
       className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border border-transparent ${bgClass} transition-colors`}
     >
-      <Columns3 size={12} className="text-slate-600 dark:text-zinc-500 flex-shrink-0" />
-      <span className="text-xs font-medium text-slate-700 dark:text-zinc-200 min-w-[100px]">
+      <Columns3 size={12} className="text-c-text-secondary flex-shrink-0" />
+      <span className="text-xs font-medium text-c-text min-w-[100px]">
         {field.name}
       </span>
-      <span className="text-[10px] text-slate-500 dark:text-zinc-400 font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-zinc-800">
+      <span className="text-[10px] text-c-text-muted font-mono px-1.5 py-0.5 rounded bg-c-surface-raised">
         {field.type}
       </span>
       {field.required && (
@@ -174,7 +174,7 @@ const FieldRow: React.FC<{
         </span>
       )}
       {field.options && Object.keys(field.options).length > 0 && (
-        <span className="text-[9px] text-slate-600 dark:text-zinc-500">
+        <span className="text-[9px] text-c-text-secondary">
           {Object.keys(field.options).length} {isPl ? 'opcji' : 'opts'}
         </span>
       )}
@@ -220,18 +220,18 @@ const TableSection: React.FC<{
     ? 'border-emerald-500/30 bg-emerald-500/5 dark:bg-emerald-500/10'
     : isDeleted
       ? 'border-danger-500/30 bg-danger-500/5 dark:bg-danger-500/10 opacity-60'
-      : 'border-slate-200/60 dark:border-zinc-700/60';
+      : 'border-c-border-subtle';
 
   return (
     <div className={`rounded-xl border overflow-hidden transition-all duration-200 ${tableBg}`}>
       <button
         onClick={() => setExpanded((v) => !v)}
-        className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-slate-50/50 dark:hover:bg-zinc-800/30 transition-colors"
+        className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-c-surface-raised transition-colors"
       >
         {expanded ? (
-          <ChevronDown size={14} className="text-slate-600" />
+          <ChevronDown size={14} className="text-c-text-secondary" />
         ) : (
-          <ChevronRight size={14} className="text-slate-600" />
+          <ChevronRight size={14} className="text-c-text-secondary" />
         )}
         <Table2
           size={14}
@@ -240,15 +240,15 @@ const TableSection: React.FC<{
               ? 'text-emerald-600 dark:text-emerald-400'
               : isDeleted
                 ? 'text-danger-600 dark:text-danger-400'
-                : 'text-primary-600 dark:text-primary-400'
+                : 'text-c-accent'
           }
         />
         <span
-          className={`text-xs font-semibold ${isDeleted ? 'text-danger-700 dark:text-danger-300 line-through' : 'text-slate-700 dark:text-zinc-200'}`}
+          className={`text-xs font-semibold ${isDeleted ? 'text-danger-700 dark:text-danger-300 line-through' : 'text-c-text'}`}
         >
           {table.name}
         </span>
-        <span className="text-[10px] text-slate-600 dark:text-zinc-500 ml-auto">
+        <span className="text-[10px] text-c-text-secondary ml-auto">
           {table.fields.length} {isPl ? 'pól' : 'fields'}
         </span>
         {isNew && (
@@ -314,11 +314,11 @@ export const SchemaDiffPreview: React.FC<SchemaDiffPreviewProps> = ({
   ).length;
 
   return (
-    <div className="rounded-2xl border border-sky-500/30 bg-white dark:bg-zinc-900 dark:border-zinc-700 shadow-xl overflow-hidden transition-all duration-200">
+    <div className="rounded-2xl border border-sky-500/30 bg-c-surface shadow-xl overflow-hidden transition-all duration-200">
       {/* Header */}
-      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-slate-200/60 dark:border-zinc-700/60 bg-gradient-to-r from-sky-50/50 to-transparent dark:from-sky-950/20">
+      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-c-border-subtle bg-gradient-to-r from-sky-50/50 to-transparent dark:from-sky-950/20">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-300">
+          <span className="text-xs font-bold uppercase tracking-wider text-c-text-secondary">
             {isPl ? 'Podgląd zmian' : 'Schema Diff'}
           </span>
           <div className="flex items-center gap-1.5 ml-2">
@@ -341,7 +341,7 @@ export const SchemaDiffPreview: React.FC<SchemaDiffPreviewProps> = ({
         </div>
         <button
           onClick={onClose}
-          className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
+          className="p-1 rounded-lg hover:bg-c-surface-raised text-c-text-secondary hover:text-c-text-secondary transition-colors"
         >
           <X size={14} />
         </button>
@@ -393,15 +393,15 @@ export const SchemaDiffPreview: React.FC<SchemaDiffPreviewProps> = ({
         })}
 
         {proposedTables.length === 0 && currentSchema.length === 0 && (
-          <div className="text-center py-6 text-xs text-slate-600 dark:text-zinc-500">
+          <div className="text-center py-6 text-xs text-c-text-secondary">
             {isPl ? 'Brak zmian do wyświetlenia' : 'No changes to display'}
           </div>
         )}
       </div>
 
       {/* Legend */}
-      <div className="px-4 py-2 border-t border-slate-200/40 dark:border-zinc-700/40 bg-slate-50/30 dark:bg-zinc-800/20">
-        <div className="flex items-center gap-4 text-[10px] text-slate-600 dark:text-zinc-500">
+      <div className="px-4 py-2 border-t border-c-border-subtle bg-c-surface-raised">
+        <div className="flex items-center gap-4 text-[10px] text-c-text-secondary">
           <span className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
             {isPl ? 'Dodane' : 'Added'}

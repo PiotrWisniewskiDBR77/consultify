@@ -237,19 +237,19 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-[380px] max-w-[90vw] h-full bg-white dark:bg-navy-950 border-l border-slate-200 dark:border-navy-700 shadow-2xl flex flex-col"
+        className="w-[380px] max-w-[90vw] h-full bg-c-surface border-l border-c-border-subtle shadow-2xl flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200/60 dark:border-navy-700/60">
-          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
+          <h3 className="text-sm font-bold text-c-text">
             {isPl ? 'Pola' : 'Fields'}
           </h3>
           <div className="flex items-center gap-1">
             {!locked && (
               <button
                 onClick={() => setShowAddField(true)}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-c-accent hover:bg-c-accent-soft transition-colors"
               >
                 <Plus size={12} />
                 {isPl ? 'Dodaj' : 'Add'}
@@ -257,9 +257,9 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
             )}
             <button
               onClick={onClose}
-              className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+              className="p-1 rounded-lg hover:bg-c-surface-raised transition-colors"
             >
-              <X size={16} className="text-slate-600" />
+              <X size={16} className="text-c-text-secondary" />
             </button>
           </div>
         </div>
@@ -269,13 +269,13 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
           <div className="relative">
             <Search
               size={12}
-              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-600"
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-c-text-secondary"
             />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={isPl ? 'Szukaj pola...' : 'Search fields...'}
-              className="w-full pl-7 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500/30"
+              className="w-full pl-7 pr-3 py-1.5 rounded-lg border border-c-border-subtle bg-c-surface text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
             />
           </div>
         </div>
@@ -298,8 +298,8 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
                 onDragEnd={handleDragEnd}
                 className={`mb-0.5 rounded-xl border transition-all ${
                   overIdx === idx && dragIdx !== null
-                    ? 'border-primary-400 bg-primary-50/50 dark:bg-primary-900/10'
-                    : 'border-transparent hover:border-slate-200 dark:hover:border-navy-700'
+                    ? 'border-c-accent bg-c-accent-soft'
+                    : 'border-transparent hover:border-c-border-subtle'
                 } ${dragIdx === idx ? 'opacity-40' : ''}`}
               >
                 <div
@@ -309,15 +309,15 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
                   {!locked && !searchQuery && (
                     <GripVertical
                       size={12}
-                      className="text-slate-600 dark:text-slate-400 cursor-grab flex-shrink-0"
+                      className="text-c-text-secondary cursor-grab flex-shrink-0"
                     />
                   )}
-                  <div className="w-6 h-6 rounded-md flex items-center justify-center bg-slate-100 dark:bg-navy-800 flex-shrink-0">
-                    <Icon size={12} className="text-slate-500 dark:text-slate-400" />
+                  <div className="w-6 h-6 rounded-md flex items-center justify-center bg-c-surface-raised flex-shrink-0">
+                    <Icon size={12} className="text-c-text-muted" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 truncate">
+                      <span className="text-[11px] font-semibold text-c-text truncate">
                         {field.name}
                       </span>
                       {isPrimary && (
@@ -326,13 +326,13 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
                         </span>
                       )}
                     </div>
-                    <span className="text-[9px] text-slate-600 dark:text-slate-500">
+                    <span className="text-[9px] text-c-text-secondary">
                       {isPl ? label?.pl : label?.en}
                     </span>
                   </div>
                   <ChevronRight
                     size={12}
-                    className={`text-slate-600 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                    className={`text-c-text-secondary transition-transform ${isExpanded ? 'rotate-90' : ''}`}
                   />
                 </div>
 
@@ -371,24 +371,24 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
           })}
 
           {sortedFields.length === 0 && (
-            <div className="text-center py-8 text-[11px] text-slate-600">
+            <div className="text-center py-8 text-[11px] text-c-text-secondary">
               {isPl ? 'Brak pól' : 'No fields'}
             </div>
           )}
 
           {showDateDependencies && (
-            <div className="mt-4 pt-3 border-t border-slate-200 dark:border-navy-700">
+            <div className="mt-4 pt-3 border-t border-c-border-subtle">
               <button
                 type="button"
                 onClick={() => setDateDepsExpanded(!dateDepsExpanded)}
-                className="flex items-center gap-2 w-full text-left rounded-lg px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
+                className="flex items-center gap-2 w-full text-left rounded-lg px-2 py-1.5 hover:bg-c-surface-raised transition-colors"
               >
                 <ChevronRight
                   size={12}
-                  className={`text-slate-600 transition-transform ${dateDepsExpanded ? 'rotate-90' : ''}`}
+                  className={`text-c-text-secondary transition-transform ${dateDepsExpanded ? 'rotate-90' : ''}`}
                 />
-                <Calendar size={12} className="text-slate-500" />
-                <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                <Calendar size={12} className="text-c-text-muted" />
+                <span className="text-[11px] font-semibold text-c-text">
                   {isPl ? 'Zależności dat' : 'Date Dependencies'}
                 </span>
               </button>
@@ -477,20 +477,20 @@ const FieldEditPanel: React.FC<FieldEditPanelProps> = ({
     <div className="px-3 pb-3 space-y-2">
       {/* Name */}
       <div>
-        <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-0.5">
+        <label className="block text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-0.5">
           {isPl ? 'Nazwa' : 'Name'}
         </label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           disabled={locked}
-          className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
+          className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
         />
       </div>
 
       {/* Description */}
       <div>
-        <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-0.5">
+        <label className="block text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-0.5">
           {isPl ? 'Opis' : 'Description'}
         </label>
         <textarea
@@ -499,7 +499,7 @@ const FieldEditPanel: React.FC<FieldEditPanelProps> = ({
           disabled={locked}
           rows={2}
           placeholder={isPl ? 'Opcjonalny opis pola...' : 'Optional field description...'}
-          className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500/30 resize-none disabled:opacity-50"
+          className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 resize-none disabled:opacity-50"
         />
       </div>
 
@@ -523,7 +523,7 @@ const FieldEditPanel: React.FC<FieldEditPanelProps> = ({
                 </button>
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="px-2 py-0.5 rounded text-[10px] font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                  className="px-2 py-0.5 rounded text-[10px] font-semibold text-c-text-muted hover:bg-c-surface-raised transition-colors"
                 >
                   {isPl ? 'Nie' : 'No'}
                 </button>
@@ -540,14 +540,14 @@ const FieldEditPanel: React.FC<FieldEditPanelProps> = ({
           </>
         )}
         {isPrimary && (
-          <span className="text-[9px] text-slate-600 italic">
+          <span className="text-[9px] text-c-text-secondary italic">
             {isPl ? 'Pole główne nie może być usunięte' : 'Primary field cannot be deleted'}
           </span>
         )}
         <button
           onClick={handleSave}
           disabled={!hasChanges || locked || saving}
-          className="ml-auto px-3 py-1 rounded-lg text-[10px] font-semibold bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors disabled:opacity-40"
+          className="ml-auto px-3 py-1 rounded-lg text-[10px] font-semibold bg-c-text text-c-bg hover:bg-c-text-secondary transition-colors disabled:opacity-40"
         >
           {saving ? <Loader2 size={10} className="animate-spin" /> : isPl ? 'Zapisz' : 'Save'}
         </button>
@@ -616,13 +616,13 @@ const FieldOptionsDisplay: React.FC<{ field: TablePlatformField; isPl: boolean }
   if (items.length === 0) return null;
 
   return (
-    <div className="rounded-lg bg-slate-50 dark:bg-navy-900/50 p-2 space-y-1">
+    <div className="rounded-lg bg-c-surface-raised p-2 space-y-1">
       {items.map((item, i) => (
         <div key={i} className="flex items-start gap-2">
-          <span className="text-[9px] font-bold text-slate-600 whitespace-nowrap">
+          <span className="text-[9px] font-bold text-c-text-secondary whitespace-nowrap">
             {item.label}:
           </span>
-          <span className="text-[9px] text-slate-600 dark:text-slate-400 break-all">
+          <span className="text-[9px] text-c-text-secondary break-all">
             {item.value}
           </span>
         </div>
@@ -687,40 +687,40 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
       onClick={onClose}
     >
       <div
-        className="w-[420px] max-h-[80vh] overflow-auto rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-2xl"
+        className="w-[420px] max-h-[80vh] overflow-auto rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
-          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
+          <h3 className="text-sm font-bold text-c-text">
             {isPl ? 'Nowe pole' : 'New Field'}
           </h3>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-1 rounded-lg hover:bg-c-surface-raised transition-colors"
           >
-            <X size={16} className="text-slate-600" />
+            <X size={16} className="text-c-text-secondary" />
           </button>
         </div>
 
         <div className="px-5 py-4 space-y-4">
           {/* Name */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+            <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
               {isPl ? 'Nazwa' : 'Name'}
             </label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={isPl ? 'np. Status, Priorytet...' : 'e.g. Status, Priority...'}
-              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
+              className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
               autoFocus
             />
           </div>
 
           {/* Type selector */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1.5">
+            <label className="block text-[11px] font-bold text-c-text-secondary mb-1.5">
               {isPl ? 'Typ' : 'Type'}
             </label>
             <div className="grid grid-cols-4 gap-1 max-h-[200px] overflow-y-auto">
@@ -734,8 +734,8 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
                     onClick={() => setFieldType(ft)}
                     className={`flex flex-col items-center gap-0.5 px-1.5 py-2 rounded-xl text-[9px] font-medium transition-all ${
                       isActive
-                        ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400 ring-1 ring-primary-500/30'
-                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                        ? 'bg-c-accent-soft text-c-accent ring-1 ring-c-focus'
+                        : 'text-c-text-secondary hover:bg-c-surface-raised'
                     }`}
                   >
                     <Icon size={14} />
@@ -749,49 +749,49 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
           {/* Type-specific config */}
           {(fieldType === 'singleSelect' || fieldType === 'multiSelect') && (
             <div>
-              <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+              <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
                 {isPl ? 'Opcje (oddzielone przecinkiem)' : 'Options (comma-separated)'}
               </label>
               <input
                 value={selectOptions}
                 onChange={(e) => setSelectOptions(e.target.value)}
                 placeholder="Option 1, Option 2, Option 3"
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
+                className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
               />
             </div>
           )}
 
           {fieldType === 'linkedRecord' && (
             <div>
-              <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+              <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
                 {isPl ? 'ID tabeli docelowej' : 'Linked table ID'}
               </label>
               <input
                 value={linkedTableId}
                 onChange={(e) => setLinkedTableId(e.target.value)}
                 placeholder="table-uuid..."
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
+                className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
               />
             </div>
           )}
 
           {fieldType === 'formula' && (
             <div>
-              <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+              <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
                 {isPl ? 'Wyrażenie formuły' : 'Formula expression'}
               </label>
               <input
                 value={formulaExpr}
                 onChange={(e) => setFormulaExpr(e.target.value)}
                 placeholder="IF({Status} = 'Done', 1, 0)"
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs font-mono text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
+                className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs font-mono text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
               />
             </div>
           )}
 
           {fieldType === 'rating' && (
             <div>
-              <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+              <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
                 Max
               </label>
               <input
@@ -800,20 +800,20 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
                 max={10}
                 value={ratingMax}
                 onChange={(e) => setRatingMax(Number(e.target.value))}
-                className="w-20 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
+                className="w-20 rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
               />
             </div>
           )}
 
           {fieldType === 'currency' && (
             <div>
-              <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+              <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
                 {isPl ? 'Symbol waluty' : 'Currency symbol'}
               </label>
               <select
                 value={currencySymbol}
                 onChange={(e) => setCurrencySymbol(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
+                className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
               >
                 {['$', '€', 'zł', '£', '¥', 'CHF'].map((s) => (
                   <option key={s} value={s}>
@@ -826,17 +826,17 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-slate-200/60 dark:border-navy-700/60">
+        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-c-border-subtle">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="px-4 py-2 rounded-xl text-xs font-semibold text-c-text-secondary hover:bg-c-surface-raised transition-colors"
           >
             {isPl ? 'Anuluj' : 'Cancel'}
           </button>
           <button
             onClick={handleCreate}
             disabled={!name.trim() || adding}
-            className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors disabled:opacity-40"
+            className="px-4 py-2 rounded-xl text-xs font-semibold bg-c-text text-c-bg hover:bg-c-text-secondary transition-colors disabled:opacity-40"
           >
             {adding ? (
               <Loader2 size={12} className="animate-spin" />

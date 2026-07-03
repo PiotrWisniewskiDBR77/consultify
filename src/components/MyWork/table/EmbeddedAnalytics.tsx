@@ -36,7 +36,7 @@ export const Sparkline: React.FC<SparklineProps> = ({
   values,
   width = 60,
   height = 18,
-  color = '#6366f1',
+  color = 'var(--c-info)',
   showDots = false,
 }) => {
   if (values.length < 2) return null;
@@ -103,7 +103,7 @@ export const TrendIndicator: React.FC<TrendIndicatorProps> = ({
 
   if (Math.abs(diff) < 0.01) {
     return (
-      <span className="inline-flex items-center gap-0.5 text-[8px] font-bold text-slate-600">
+      <span className="inline-flex items-center gap-0.5 text-[8px] font-bold text-c-text-secondary">
         <Minus size={8} />
         {showLabel && '0%'}
       </span>
@@ -209,14 +209,14 @@ export const HeatmapControls: React.FC<HeatmapControlsProps> = ({
   if (!open) return null;
 
   return (
-    <div className="absolute right-0 top-full mt-1 z-50 w-56 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl p-3">
+    <div className="absolute right-0 top-full mt-1 z-50 w-56 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl p-3">
       <div className="flex items-center gap-2 mb-2">
         <Flame size={12} className="text-amber-500" />
-        <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">
+        <span className="text-[10px] font-bold text-c-text">
           {isPl ? 'Heatmapa' : 'Heatmap'}
         </span>
         <div className="flex-1" />
-        <button onClick={onClose} className="text-slate-600 hover:text-slate-600">
+        <button onClick={onClose} className="text-c-text-secondary hover:text-c-text-secondary">
           <X size={10} />
         </button>
       </div>
@@ -227,7 +227,7 @@ export const HeatmapControls: React.FC<HeatmapControlsProps> = ({
           <button
             key={p}
             onClick={() => onPaletteChange(p)}
-            className={`flex-1 px-2 py-1 rounded-lg text-[8px] font-bold transition-colors ${palette === p ? 'bg-primary-500/10 text-primary-600' : 'text-slate-600 hover:text-slate-600'}`}
+            className={`flex-1 px-2 py-1 rounded-lg text-[8px] font-bold transition-colors ${palette === p ? 'bg-c-accent-soft text-c-accent' : 'text-c-text-secondary hover:text-c-text-secondary'}`}
           >
             {p === 'warm' ? '🔥' : p === 'cool' ? '❄️' : '↕️'} {p}
           </button>
@@ -239,19 +239,19 @@ export const HeatmapControls: React.FC<HeatmapControlsProps> = ({
         {numericCols.map((col) => (
           <label
             key={col.key}
-            className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 cursor-pointer"
+            className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-c-surface-raised cursor-pointer"
           >
             <input
               type="checkbox"
               checked={enabledColumns.has(col.key)}
               onChange={() => onToggleColumn(col.key)}
-              className="w-3 h-3 rounded border-slate-300 text-primary-500 focus:ring-primary-500"
+              className="w-3 h-3 rounded border-c-border text-c-accent focus:ring-c-focus"
             />
-            <span className="text-[10px] text-slate-600 dark:text-slate-300">{col.header}</span>
+            <span className="text-[10px] text-c-text-secondary">{col.header}</span>
           </label>
         ))}
         {numericCols.length === 0 && (
-          <p className="text-[9px] text-slate-600 text-center py-2">
+          <p className="text-[9px] text-c-text-secondary text-center py-2">
             {isPl ? 'Brak kolumn numerycznych' : 'No numeric columns'}
           </p>
         )}
@@ -278,8 +278,8 @@ export const AnalyticsSummaryStrip: React.FC<AnalyticsSummaryStripProps> = ({
   if (!visible || numericCols.length === 0 || nodes.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-3 px-4 py-1.5 border-t border-slate-200/30 dark:border-white/[0.04] bg-slate-50/50 dark:bg-navy-900/30 overflow-x-auto flex-shrink-0">
-      <Activity size={10} className="text-slate-600 flex-shrink-0" />
+    <div className="flex items-center gap-3 px-4 py-1.5 border-t border-c-border-subtle bg-c-surface-raised overflow-x-auto flex-shrink-0">
+      <Activity size={10} className="text-c-text-secondary flex-shrink-0" />
       {numericCols.slice(0, 4).map((col) => {
         const values = nodes.map((n) => Number(n.data?.[col.key]) || 0);
         const avg = values.reduce((a, b) => a + b, 0) / values.length;
@@ -288,11 +288,11 @@ export const AnalyticsSummaryStrip: React.FC<AnalyticsSummaryStripProps> = ({
 
         return (
           <div key={col.key} className="flex items-center gap-1.5 flex-shrink-0">
-            <span className="text-[8px] font-bold uppercase tracking-wider text-slate-600">
+            <span className="text-[8px] font-bold uppercase tracking-wider text-c-text-secondary">
               {col.header}
             </span>
-            <Sparkline values={sparkValues} width={40} height={14} color="#6366f1" />
-            <span className="text-[9px] font-bold text-slate-600 dark:text-slate-300 tabular-nums">
+            <Sparkline values={sparkValues} width={40} height={14} color="var(--c-info)" />
+            <span className="text-[9px] font-bold text-c-text-secondary tabular-nums">
               ø{Math.round(avg * 10) / 10}
             </span>
           </div>

@@ -171,7 +171,7 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-navy-950">
+      <div className="flex min-h-screen items-center justify-center bg-c-surface-raised">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     );
@@ -181,13 +181,13 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
 
   if (error && !form) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-navy-950">
-        <div className="mx-4 max-w-md rounded-2xl border border-rose-200 bg-white p-8 text-center dark:border-rose-800 dark:bg-navy-900">
+      <div className="flex min-h-screen items-center justify-center bg-c-surface-raised">
+        <div className="mx-4 max-w-md rounded-2xl border border-rose-200 bg-c-surface p-8 text-center dark:border-rose-800">
           <AlertCircle className="mx-auto mb-4 h-12 w-12 text-rose-500" />
-          <h2 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
+          <h2 className="mb-2 text-lg font-semibold text-c-text">
             Form not found
           </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">{error}</p>
+          <p className="text-sm text-c-text-muted">{error}</p>
         </div>
       </div>
     );
@@ -199,12 +199,12 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
 
   if (submitted) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-navy-950">
-        <div className="mx-4 max-w-md rounded-2xl border border-green-200 bg-white p-8 text-center dark:border-green-800 dark:bg-navy-900">
+      <div className="flex min-h-screen items-center justify-center bg-c-surface-raised">
+        <div className="mx-4 max-w-md rounded-2xl border border-green-200 bg-c-surface p-8 text-center dark:border-green-800">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
             <Check className="h-8 w-8 text-green-600 dark:text-green-400" />
           </div>
-          <h2 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
+          <h2 className="mb-2 text-lg font-semibold text-c-text">
             {config.submitMessage || 'Thank you for your submission!'}
           </h2>
           {config.allowMultiple && (
@@ -223,13 +223,13 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
   // ── Form ───────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex min-h-screen items-start justify-center bg-gray-50 px-4 py-12 dark:bg-navy-950">
+    <div className="flex min-h-screen items-start justify-center bg-c-surface-raised px-4 py-12">
       <div className="w-full max-w-lg">
-        <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-8 shadow-sm">
           {/* Header */}
-          <h1 className="mb-1 text-2xl font-bold text-gray-900 dark:text-white">{form.name}</h1>
+          <h1 className="mb-1 text-2xl font-bold text-c-text">{form.name}</h1>
           {form.description && (
-            <p className="mb-8 text-sm text-gray-500 dark:text-gray-400">{form.description}</p>
+            <p className="mb-8 text-sm text-c-text-muted">{form.description}</p>
           )}
 
           {/* Error banner */}
@@ -268,7 +268,7 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
           </form>
         </div>
 
-        <p className="mt-4 text-center text-xs text-gray-600 dark:text-gray-500">
+        <p className="mt-4 text-center text-xs text-c-text-secondary">
           Powered by Table Platform
         </p>
       </div>
@@ -291,12 +291,12 @@ function FormField({ field, config, value, error, onChange }: FormFieldProps) {
 
   return (
     <div>
-      <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+      <label className="mb-1.5 block text-sm font-medium text-c-text">
         {label}
         {config.required && <span className="ml-1 text-rose-500">*</span>}
       </label>
       {config.helpText && (
-        <p className="mb-1.5 text-xs text-gray-600 dark:text-gray-500">{config.helpText}</p>
+        <p className="mb-1.5 text-xs text-c-text-secondary">{config.helpText}</p>
       )}
       <FieldInput
         fieldType={field.field_type}
@@ -319,8 +319,8 @@ interface FieldInputProps {
 }
 
 function FieldInput({ fieldType, options, value, onChange, hasError }: FieldInputProps) {
-  const baseClass = `w-full rounded-lg border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-navy-900 dark:text-white ${
-    hasError ? 'border-rose-300 dark:border-rose-700' : 'border-gray-200 dark:border-navy-600'
+  const baseClass = `w-full rounded-lg border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+    hasError ? 'border-rose-300 dark:border-rose-700' : 'border-c-border-subtle'
   }`;
 
   switch (fieldType) {
@@ -367,12 +367,12 @@ function FieldInput({ fieldType, options, value, onChange, hasError }: FieldInpu
         <button
           type="button"
           onClick={() => onChange(!value)}
-          className="flex items-center gap-2 rounded-lg px-1 py-1 text-sm text-gray-700 dark:text-gray-300"
+          className="flex items-center gap-2 rounded-lg px-1 py-1 text-sm text-c-text"
         >
           {value ? (
             <CheckSquare className="h-5 w-5 text-blue-600" />
           ) : (
-            <Square className="h-5 w-5 text-gray-600" />
+            <Square className="h-5 w-5 text-c-text-secondary" />
           )}
           {value ? 'Yes' : 'No'}
         </button>
@@ -427,7 +427,7 @@ function FieldInput({ fieldType, options, value, onChange, hasError }: FieldInpu
             return (
               <label
                 key={val}
-                className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-gray-50 dark:hover:bg-navy-700"
+                className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-c-surface-raised"
               >
                 <input
                   type="checkbox"
@@ -436,9 +436,9 @@ function FieldInput({ fieldType, options, value, onChange, hasError }: FieldInpu
                     const next = isChecked ? selected.filter((v) => v !== val) : [...selected, val];
                     onChange(next.length > 0 ? next : undefined);
                   }}
-                  className="h-4 w-4 rounded border-gray-300"
+                  className="h-4 w-4 rounded border-c-border"
                 />
-                <span className="text-gray-700 dark:text-gray-300">{o.name ?? val}</span>
+                <span className="text-c-text">{o.name ?? val}</span>
               </label>
             );
           })}

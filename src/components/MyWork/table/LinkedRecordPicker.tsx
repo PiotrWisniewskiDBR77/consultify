@@ -309,26 +309,26 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[1px]">
         <div
           ref={containerRef}
-          className="flex h-[620px] max-h-[85vh] w-[520px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900"
+          className="flex h-[620px] max-h-[85vh] w-[520px] flex-col overflow-hidden rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl"
         >
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3 dark:border-zinc-700">
-            <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-zinc-200">
+          <div className="flex items-center justify-between border-b border-c-border-subtle px-5 py-3">
+            <div className="flex items-center gap-2 text-sm font-semibold text-c-text">
               <Link2 className="h-4 w-4 text-blue-500" />
               {isPl ? 'Powiązane rekordy' : 'Linked Records'}
             </div>
             <button
               onClick={onClose}
-              className="rounded-lg p-1.5 transition-colors hover:bg-slate-100 dark:hover:bg-zinc-800"
+              className="rounded-lg p-1.5 transition-colors hover:bg-c-surface-raised"
             >
-              <X className="h-4 w-4 text-slate-600" />
+              <X className="h-4 w-4 text-c-text-secondary" />
             </button>
           </div>
 
           {/* Selected chips */}
           {selectedList.length > 0 && (
-            <div className="border-b border-slate-200 px-5 py-2.5 dark:border-zinc-800">
-              <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-500">
+            <div className="border-b border-c-border-subtle px-5 py-2.5">
+              <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-c-text-secondary">
                 {isPl ? 'Wybrane' : 'Selected'} ({selectedList.length})
               </div>
               <div className="flex flex-wrap gap-1.5">
@@ -357,8 +357,8 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
                     </span>
                     {/* Expand popover */}
                     {expandedChipId === link.id && expandData && (
-                      <div className="absolute left-0 top-full z-50 mt-1 w-64 rounded-xl border border-slate-200 bg-white p-3 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
-                        <div className="mb-2 text-xs font-bold text-slate-700 dark:text-zinc-200">
+                      <div className="absolute left-0 top-full z-50 mt-1 w-64 rounded-xl border border-c-border-subtle bg-c-surface p-3 shadow-xl">
+                        <div className="mb-2 text-xs font-bold text-c-text">
                           {link.displayValue}
                         </div>
                         <div className="space-y-1">
@@ -367,10 +367,10 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
                             if (val == null) return null;
                             return (
                               <div key={fm.id} className="flex items-start gap-2">
-                                <span className="w-20 flex-shrink-0 truncate text-[10px] font-medium text-slate-600">
+                                <span className="w-20 flex-shrink-0 truncate text-[10px] font-medium text-c-text-secondary">
                                   {fm.name}
                                 </span>
-                                <span className="text-[10px] text-slate-600 dark:text-zinc-300">
+                                <span className="text-[10px] text-c-text-secondary">
                                   {String(val)}
                                 </span>
                               </div>
@@ -395,9 +395,9 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
           )}
 
           {/* Search */}
-          <div className="border-b border-slate-200 px-5 py-2.5 dark:border-zinc-800">
-            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-800">
-              <Search className="h-4 w-4 text-slate-600" />
+          <div className="border-b border-c-border-subtle px-5 py-2.5">
+            <div className="flex items-center gap-2 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2">
+              <Search className="h-4 w-4 text-c-text-secondary" />
               <input
                 ref={inputRef}
                 value={search}
@@ -407,9 +407,9 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
                 }}
                 onKeyDown={handleKeyDown}
                 placeholder={isPl ? 'Szukaj rekordów...' : 'Search records...'}
-                className="flex-1 bg-transparent text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/30 placeholder:text-slate-400 dark:text-zinc-200"
+                className="flex-1 bg-transparent text-sm text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 placeholder:text-c-text-muted"
               />
-              {loading && <Loader2 className="h-4 w-4 animate-spin text-slate-600" />}
+              {loading && <Loader2 className="h-4 w-4 animate-spin text-c-text-secondary" />}
             </div>
           </div>
 
@@ -417,10 +417,10 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
           <div ref={listRef} className="flex-1 overflow-y-auto px-2 py-1">
             {loading && filteredCandidates.length === 0 ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-5 w-5 animate-spin text-slate-600" />
+                <Loader2 className="h-5 w-5 animate-spin text-c-text-secondary" />
               </div>
             ) : filteredCandidates.length === 0 && !loading ? (
-              <div className="py-8 text-center text-sm text-slate-600">
+              <div className="py-8 text-center text-sm text-c-text-secondary">
                 {isPl ? 'Brak rekordów' : 'No records found'}
               </div>
             ) : (
@@ -440,20 +440,20 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
                         ? 'bg-blue-50 dark:bg-blue-900/20'
                         : isSelected
                           ? 'bg-emerald-50/60 dark:bg-emerald-900/10'
-                          : 'hover:bg-slate-50 dark:hover:bg-zinc-800'
+                          : 'hover:bg-c-surface-raised'
                     }`}
                   >
                     <div
                       className={`mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border transition-colors ${
                         isSelected
                           ? 'border-blue-500 bg-blue-500 text-white'
-                          : 'border-slate-300 dark:border-zinc-600'
+                          : 'border-c-border'
                       }`}
                     >
                       {isSelected && <span className="text-[10px]">✓</span>}
                     </div>
                     <div className="flex-1 min-w-0 text-left">
-                      <div className="truncate font-medium text-slate-700 dark:text-zinc-200">
+                      <div className="truncate font-medium text-c-text">
                         {c.displayValue || c.id}
                       </div>
                       {secondaryEntries.length > 0 && (
@@ -461,7 +461,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
                           {secondaryEntries.map(([key, val]) => (
                             <span
                               key={key}
-                              className="text-[10px] text-slate-600 dark:text-zinc-500"
+                              className="text-[10px] text-c-text-secondary"
                             >
                               <span className="font-medium">{key}:</span> {val}
                             </span>
@@ -486,14 +486,14 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
                 onClick={onCreateNew}
                 className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
                   highlightIdx === filteredCandidates.length
-                    ? 'bg-primary-50 dark:bg-primary-900/20'
-                    : 'hover:bg-slate-50 dark:hover:bg-zinc-800'
+                    ? 'bg-c-accent-soft'
+                    : 'hover:bg-c-surface-raised'
                 }`}
               >
-                <div className="flex h-4 w-4 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/30">
-                  <Plus className="h-3 w-3 text-primary-600 dark:text-primary-400" />
+                <div className="flex h-4 w-4 items-center justify-center rounded-full bg-c-accent-soft">
+                  <Plus className="h-3 w-3 text-c-accent" />
                 </div>
-                <span className="font-medium text-primary-600 dark:text-primary-400">
+                <span className="font-medium text-c-accent">
                   {isPl ? 'Utwórz nowy rekord' : 'Create new record'}
                 </span>
               </button>
@@ -502,14 +502,14 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
 
           {/* Footer */}
           {!locked && (
-            <div className="flex items-center justify-between border-t border-slate-200 px-5 py-3 dark:border-zinc-700">
-              <span className="text-[10px] text-slate-600">
+            <div className="flex items-center justify-between border-t border-c-border-subtle px-5 py-3">
+              <span className="text-[10px] text-c-text-secondary">
                 {selected.size} {isPl ? 'zaznaczonych' : 'selected'}
               </span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={onClose}
-                  className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold transition-colors hover:bg-slate-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                  className="rounded-xl border border-c-border-subtle px-4 py-2 text-xs font-semibold transition-colors hover:bg-c-surface-raised"
                 >
                   {isPl ? 'Anuluj' : 'Cancel'}
                 </button>

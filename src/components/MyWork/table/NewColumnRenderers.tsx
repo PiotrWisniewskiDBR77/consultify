@@ -58,7 +58,7 @@ export const FileCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
       {files.map((f, i) => (
         <span
           key={i}
-          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-300 max-w-[120px] truncate"
+          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-c-surface-raised text-[10px] text-c-text-secondary max-w-[120px] truncate"
         >
           <File size={9} className="flex-shrink-0" />
           {f.url ? (
@@ -83,7 +83,7 @@ export const FileCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
             const url = prompt(isPl ? 'URL (opcjonalnie):' : 'URL (optional):');
             onChange([...files, { name, url: url || undefined }]);
           }}
-          className="text-[9px] text-primary-500 hover:text-primary-600 font-semibold"
+          className="text-[9px] text-c-accent hover:text-c-accent font-semibold"
         >
           + {isPl ? 'Plik' : 'File'}
         </button>
@@ -133,8 +133,8 @@ export const RelationCell: React.FC<CellProps & { allNodes?: { id: string; label
 
 export const RollupCell: React.FC<CellProps> = ({ value }) => {
   return (
-    <span className="inline-flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-300 font-mono">
-      <Sigma size={10} className="text-slate-600" />
+    <span className="inline-flex items-center gap-1 text-[11px] text-c-text-secondary font-mono">
+      <Sigma size={10} className="text-c-text-secondary" />
       {value != null ? String(value) : '—'}
     </span>
   );
@@ -149,10 +149,10 @@ export const EmojiCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
         onClick={() => !locked && setShowPicker(!showPicker)}
         className="text-lg hover:scale-110 transition-transform"
       >
-        {value || <Smile size={14} className="text-slate-600" />}
+        {value || <Smile size={14} className="text-c-text-secondary" />}
       </button>
       {showPicker && !locked && (
-        <div className="absolute left-0 top-full mt-1 z-50 p-2 rounded-xl bg-white dark:bg-navy-900 shadow-xl border border-slate-200 dark:border-navy-700 flex flex-wrap gap-1 w-[180px]">
+        <div className="absolute left-0 top-full mt-1 z-50 p-2 rounded-xl bg-c-surface shadow-xl border border-c-border-subtle flex flex-wrap gap-1 w-[180px]">
           {EMOJI_QUICK.map((e) => (
             <button
               key={e}
@@ -178,12 +178,12 @@ export const ColorCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
     <div className="relative flex items-center gap-1.5">
       <button
         onClick={() => !locked && setShowPicker(!showPicker)}
-        className="w-5 h-5 rounded-md border-2 border-white dark:border-navy-800 shadow-sm hover:scale-110 transition-transform"
+        className="w-5 h-5 rounded-md border-2 border-c-border shadow-sm hover:scale-110 transition-transform"
         style={{ backgroundColor: value || '#e2e8f0' }}
       />
-      <span className="text-[10px] text-slate-500 font-mono">{value || '#—'}</span>
+      <span className="text-[10px] text-c-text-muted font-mono">{value || '#—'}</span>
       {showPicker && !locked && (
-        <div className="absolute left-0 top-full mt-1 z-50 p-2 rounded-xl bg-white dark:bg-navy-900 shadow-xl border border-slate-200 dark:border-navy-700 flex flex-wrap gap-1 w-[140px]">
+        <div className="absolute left-0 top-full mt-1 z-50 p-2 rounded-xl bg-c-surface shadow-xl border border-c-border-subtle flex flex-wrap gap-1 w-[140px]">
           {COLOR_QUICK.map((c) => (
             <button
               key={c}
@@ -191,7 +191,7 @@ export const ColorCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
                 onChange(c);
                 setShowPicker(false);
               }}
-              className="w-5 h-5 rounded-md border-2 border-white dark:border-navy-800 hover:scale-110 transition-transform"
+              className="w-5 h-5 rounded-md border-2 border-c-border hover:scale-110 transition-transform"
               style={{ backgroundColor: c }}
             />
           ))}
@@ -210,7 +210,7 @@ export const CurrencyCell: React.FC<CellProps> = ({ value, onChange, locked }) =
         value={value ?? ''}
         onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
         disabled={locked}
-        className="w-full bg-transparent border-0 outline-none text-[11px] text-slate-700 dark:text-slate-300 font-mono text-right"
+        className="w-full bg-transparent border-0 outline-none text-[11px] text-c-text font-mono text-right"
         placeholder="0.00"
       />
     </div>
@@ -220,13 +220,13 @@ export const CurrencyCell: React.FC<CellProps> = ({ value, onChange, locked }) =
 export const PhoneCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
   return (
     <div className="flex items-center gap-1">
-      <Phone size={10} className="text-slate-600 flex-shrink-0" />
+      <Phone size={10} className="text-c-text-secondary flex-shrink-0" />
       <input
         type="tel"
         value={String(value || '')}
         onChange={(e) => onChange(e.target.value)}
         disabled={locked}
-        className="w-full bg-transparent border-0 outline-none text-[11px] text-slate-700 dark:text-slate-300"
+        className="w-full bg-transparent border-0 outline-none text-[11px] text-c-text"
         placeholder="+48..."
       />
     </div>
@@ -236,7 +236,7 @@ export const PhoneCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
 export const EmailCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
   return (
     <div className="flex items-center gap-1">
-      <Mail size={10} className="text-slate-600 flex-shrink-0" />
+      <Mail size={10} className="text-c-text-secondary flex-shrink-0" />
       <input
         type="email"
         value={String(value || '')}

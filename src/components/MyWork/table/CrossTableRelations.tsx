@@ -65,11 +65,11 @@ const RELATION_TYPES: {
   labelPl: string;
   color: string;
 }[] = [
-  { id: 'related_to', label: 'Related to', labelPl: 'Powiązany z', color: '#6366f1' },
-  { id: 'depends_on', label: 'Depends on', labelPl: 'Zależy od', color: '#f59e0b' },
-  { id: 'blocks', label: 'Blocks', labelPl: 'Blokuje', color: '#f43f5e' },
-  { id: 'duplicates', label: 'Duplicates', labelPl: 'Duplikuje', color: '#94a3b8' },
-  { id: 'parent_of', label: 'Parent of', labelPl: 'Rodzic', color: '#10b981' },
+  { id: 'related_to', label: 'Related to', labelPl: 'Powiązany z', color: 'var(--c-info)' },
+  { id: 'depends_on', label: 'Depends on', labelPl: 'Zależy od', color: 'var(--c-warning)' },
+  { id: 'blocks', label: 'Blocks', labelPl: 'Blokuje', color: 'var(--c-danger)' },
+  { id: 'duplicates', label: 'Duplicates', labelPl: 'Duplikuje', color: 'var(--c-text-muted)' },
+  { id: 'parent_of', label: 'Parent of', labelPl: 'Rodzic', color: 'var(--c-success)' },
 ];
 
 export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
@@ -211,31 +211,31 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-[600px] max-w-[95vw] max-h-[85vh] rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 shadow-2xl overflow-hidden flex flex-col"
+        className="w-[600px] max-w-[95vw] max-h-[85vh] rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-200/60 dark:border-navy-700/60">
-          <Network size={16} className="text-primary-500" />
-          <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+        <div className="flex items-center gap-2 px-5 py-3.5 border-b border-c-border-subtle">
+          <Network size={16} className="text-c-accent" />
+          <span className="text-sm font-bold text-c-text">
             {isPl ? 'Relacje między tabelami' : 'Cross-Table Relations'}
           </span>
           <div className="flex-1" />
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-c-surface-raised transition-colors"
           >
-            <X size={14} className="text-slate-600" />
+            <X size={14} className="text-c-text-secondary" />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex items-center gap-1 px-5 py-2 border-b border-slate-200/30 dark:border-white/[0.04]">
+        <div className="flex items-center gap-1 px-5 py-2 border-b border-c-border-subtle">
           {(['relations', 'network', 'rollups'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${activeTab === tab ? 'bg-slate-200/70 dark:bg-white/[0.08] text-slate-900 dark:text-white' : 'text-slate-600 hover:text-slate-600'}`}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${activeTab === tab ? 'bg-c-border-subtle text-c-text' : 'text-c-text-secondary hover:text-c-text-secondary'}`}
             >
               {tab === 'relations'
                 ? isPl
@@ -256,22 +256,22 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
           {activeTab === 'relations' && (
             <div className="flex h-full">
               {/* Left: external maps */}
-              <div className="w-48 border-r border-slate-200/30 dark:border-navy-700/30 p-3 overflow-auto flex-shrink-0">
-                <span className="text-[9px] font-bold uppercase tracking-wider text-slate-600 block mb-2">
+              <div className="w-48 border-r border-c-border-subtle p-3 overflow-auto flex-shrink-0">
+                <span className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary block mb-2">
                   {isPl ? 'Inne mapy pomysłów' : 'Other idea maps'}
                 </span>
                 {loading && externalMaps.length === 0 ? (
-                  <Loader2 size={14} className="animate-spin text-slate-600 mx-auto mt-4" />
+                  <Loader2 size={14} className="animate-spin text-c-text-secondary mx-auto mt-4" />
                 ) : (
                   <div className="space-y-1">
                     {externalMaps.map((map) => (
                       <button
                         key={map.id}
                         onClick={() => handleSelectMap(map)}
-                        className={`w-full text-left px-2 py-1.5 rounded-lg text-[10px] transition-colors ${selectedMap?.id === map.id ? 'bg-slate-200/70 dark:bg-white/[0.08] text-slate-900 dark:text-white font-bold' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'}`}
+                        className={`w-full text-left px-2 py-1.5 rounded-lg text-[10px] transition-colors ${selectedMap?.id === map.id ? 'bg-c-border-subtle text-c-text font-bold' : 'text-c-text-secondary hover:bg-c-surface-raised'}`}
                       >
                         <div className="font-medium truncate">{map.title}</div>
-                        <div className="text-[8px] text-slate-600">
+                        <div className="text-[8px] text-c-text-secondary">
                           {map.nodeCount} {isPl ? 'elementów' : 'items'}
                         </div>
                       </button>
@@ -284,8 +284,8 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
               <div className="flex-1 p-3 overflow-auto">
                 {!selectedMap ? (
                   <div className="text-center py-8">
-                    <Link2 size={20} className="text-slate-600 mx-auto mb-2" />
-                    <p className="text-xs text-slate-600">
+                    <Link2 size={20} className="text-c-text-secondary mx-auto mb-2" />
+                    <p className="text-xs text-c-text-secondary">
                       {isPl ? 'Wybierz mapę aby zobaczyć elementy' : 'Select a map to see items'}
                     </p>
                   </div>
@@ -295,20 +295,20 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
                       <div className="relative flex-1">
                         <Search
                           size={10}
-                          className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-600"
+                          className="absolute left-2 top-1/2 -translate-y-1/2 text-c-text-secondary"
                         />
                         <input
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                           placeholder={isPl ? 'Szukaj…' : 'Search…'}
-                          className="w-full h-7 pl-7 pr-2 rounded-lg text-[10px] bg-slate-50 dark:bg-navy-800/50 border border-slate-200/60 dark:border-navy-700/60 text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
+                          className="w-full h-7 pl-7 pr-2 rounded-lg text-[10px] bg-c-surface-raised border border-c-border-subtle text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
                         />
                       </div>
                       {linkSource && (
                         <select
                           value={linkRelType}
                           onChange={(e) => setLinkRelType(e.target.value as any)}
-                          className="h-7 px-1 rounded-lg text-[9px] bg-slate-50 dark:bg-navy-800/50 border border-slate-200/60 dark:border-navy-700/60 text-slate-700 dark:text-slate-300"
+                          className="h-7 px-1 rounded-lg text-[9px] bg-c-surface-raised border border-c-border-subtle text-c-text"
                         >
                           {RELATION_TYPES.map((rt) => (
                             <option key={rt.id} value={rt.id}>
@@ -332,7 +332,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
                             <button
                               key={n.id}
                               onClick={() => setLinkSource(n.id)}
-                              className="px-2 py-1 rounded-lg text-[9px] font-medium bg-white dark:bg-navy-800 border border-slate-200/40 dark:border-navy-700/40 text-slate-600 dark:text-slate-300 hover:border-primary-500/40 transition-colors truncate max-w-[120px]"
+                              className="px-2 py-1 rounded-lg text-[9px] font-medium bg-c-surface border border-c-border-subtle text-c-text-secondary hover:border-c-accent transition-colors truncate max-w-[120px]"
                             >
                               {n.data?.label || n.id}
                             </button>
@@ -342,17 +342,17 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
                     )}
 
                     {linkSource && (
-                      <div className="mb-2 flex items-center gap-1 text-[9px] text-primary-600">
+                      <div className="mb-2 flex items-center gap-1 text-[9px] text-c-accent">
                         <span className="font-bold">
                           {currentNodes.find((n) => n.id === linkSource)?.data?.label || linkSource}
                         </span>
                         <ArrowRight size={9} />
-                        <span className="text-slate-600">
+                        <span className="text-c-text-secondary">
                           {isPl ? 'wybierz cel…' : 'select target…'}
                         </span>
                         <button
                           onClick={() => setLinkSource(null)}
-                          className="ml-auto text-slate-600 hover:text-slate-600"
+                          className="ml-auto text-c-text-secondary hover:text-c-text-secondary"
                         >
                           <X size={9} />
                         </button>
@@ -366,25 +366,25 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
                         return (
                           <div
                             key={node.id}
-                            className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
+                            className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-c-surface-raised transition-colors"
                           >
                             <div
                               className="w-2 h-2 rounded-full flex-shrink-0"
                               style={{ backgroundColor: color }}
                             />
-                            <span className="text-[10px] font-medium text-slate-700 dark:text-slate-300 flex-1 truncate">
+                            <span className="text-[10px] font-medium text-c-text flex-1 truncate">
                               {node.data?.label || node.id}
                             </span>
                             {linkSource && (
                               <button
                                 onClick={() => handleCreateLink(node.id)}
-                                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-lg text-[8px] font-bold text-primary-600 bg-primary-500/10 hover:bg-primary-500/20 transition-colors"
+                                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-lg text-[8px] font-bold text-c-accent bg-c-accent-soft hover:bg-c-accent-soft transition-colors"
                               >
                                 <Link2 size={8} />
                                 {isPl ? 'Połącz' : 'Link'}
                               </button>
                             )}
-                            <ExternalLink size={9} className="text-slate-600" />
+                            <ExternalLink size={9} className="text-c-text-secondary" />
                           </div>
                         );
                       })}
@@ -398,16 +398,16 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
           {activeTab === 'network' && (
             <div className="p-5">
               <div className="text-center mb-4">
-                <Network size={32} className="text-primary-500/30 mx-auto mb-2" />
-                <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                <Network size={32} className="text-c-accent mx-auto mb-2" />
+                <p className="text-xs font-bold text-c-text">
                   {isPl ? 'Sieć pomysłów' : 'Idea Network'}
                 </p>
-                <p className="text-[10px] text-slate-600">
+                <p className="text-[10px] text-c-text-secondary">
                   {allRelations.length} {isPl ? 'połączeń' : 'connections'}
                 </p>
               </div>
               {allRelations.length === 0 ? (
-                <p className="text-xs text-slate-600 text-center">
+                <p className="text-xs text-c-text-secondary text-center">
                   {isPl
                     ? 'Brak relacji — utwórz pierwszą w zakładce Relacje'
                     : 'No relations — create one in the Relations tab'}
@@ -419,21 +419,21 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
                     return (
                       <div
                         key={rel.id}
-                        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50/80 dark:bg-navy-900/50"
+                        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-c-surface-raised"
                       >
-                        <span className="text-[10px] font-medium text-slate-700 dark:text-slate-300 truncate flex-1">
+                        <span className="text-[10px] font-medium text-c-text truncate flex-1">
                           {rel.sourceLabel}
                         </span>
                         <span
                           className="text-[8px] font-bold px-1.5 py-0.5 rounded-md"
                           style={{
-                            backgroundColor: `${relType?.color || '#6366f1'}15`,
-                            color: relType?.color,
+                            backgroundColor: `color-mix(in srgb, ${relType?.color || 'var(--c-info)'} 12%, transparent)`,
+                            color: relType?.color || 'var(--c-info)',
                           }}
                         >
                           {isPl ? relType?.labelPl : relType?.label}
                         </span>
-                        <span className="text-[10px] font-medium text-slate-700 dark:text-slate-300 truncate flex-1 text-right">
+                        <span className="text-[10px] font-medium text-c-text truncate flex-1 text-right">
                           {rel.targetLabel}
                         </span>
                       </div>
@@ -447,11 +447,11 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
           {activeTab === 'rollups' && (
             <div className="p-5">
               <div className="text-center py-6">
-                <Sigma size={24} className="text-slate-600 mx-auto mb-2" />
-                <p className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <Sigma size={24} className="text-c-text-secondary mx-auto mb-2" />
+                <p className="text-xs font-bold text-c-text mb-1">
                   {isPl ? 'Rollup agregacje' : 'Rollup Aggregations'}
                 </p>
-                <p className="text-[10px] text-slate-600 mb-4">
+                <p className="text-[10px] text-c-text-secondary mb-4">
                   {isPl ? 'Agreguj dane z powiązanych tabel' : 'Aggregate data from related tables'}
                 </p>
                 {onAddRollupColumn && (
@@ -464,7 +464,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
                         label: 'Cross-table count',
                       })
                     }
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-bold text-primary-600 bg-primary-500/10 hover:bg-primary-500/20 transition-colors"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-bold text-c-accent bg-c-accent-soft hover:bg-c-accent-soft transition-colors"
                   >
                     <Plus size={10} />
                     {isPl ? 'Dodaj kolumnę rollup' : 'Add rollup column'}
