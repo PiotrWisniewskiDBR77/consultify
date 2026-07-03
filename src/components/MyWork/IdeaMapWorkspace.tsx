@@ -24,7 +24,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import type { WorkspacePanelKey } from '@/components/shared/WorkspacePanelStrip';
-import { LoadingState } from '@/components/ui/primitives';
+import { LoadingState } from '@/components/shared/states';
 import { Api, getMapVersionFromPayload } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
@@ -2644,8 +2644,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
   if (loading) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-white dark:bg-navy-950">
-        <LoadingState variant="spinner" />
+      <div className="h-full w-full bg-[var(--c-surface)] p-6">
+        <LoadingState template="panel" />
       </div>
     );
   }
