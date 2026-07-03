@@ -16,7 +16,6 @@ import {
   Clock,
   Globe,
   Link,
-  Loader2,
   Lock,
   Play,
   Plus,
@@ -31,6 +30,8 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { LoadingState } from '@/components/shared/states';
 
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
@@ -511,9 +512,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-slate-600 dark:text-slate-500 animate-spin" />
-        </div>
+        <LoadingState template="card" count={6} />
       ) : (
         <>
           {/* Connected Integrations Tab */}

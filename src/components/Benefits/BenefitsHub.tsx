@@ -13,7 +13,6 @@ import {
   CheckCircle2,
   DollarSign,
   FileText,
-  Loader2,
   PieChart,
   Plus,
   Target,
@@ -24,6 +23,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/shared/states';
 import { Api } from '@/services/api';
 import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
 import type { InitiativeKPI } from '@/types/core';
@@ -635,8 +635,8 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
   const renderContent = () => {
     if (isLoading) {
       return (
-        <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 text-green-500 animate-spin" />
+        <div className="h-full p-6">
+          <LoadingState template="list" rows={6} />
         </div>
       );
     }

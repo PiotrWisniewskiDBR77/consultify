@@ -27,6 +27,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/shared/states';
+
 import { Api } from '../../../services/api';
 import { trackFunnelEvent } from '../../../services/funnelAnalytics';
 
@@ -443,8 +445,8 @@ export const ReportingAutomationWorkspace: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+      <div className="h-full p-6">
+        <LoadingState template="list" rows={6} />
       </div>
     );
   }

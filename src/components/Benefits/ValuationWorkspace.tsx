@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { EmptyState, LoadingState } from '@/components/shared/states';
 import { API_URL, getHeaders } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
@@ -513,10 +514,25 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
               {loading && <Loader2 className="w-4 h-4 animate-spin text-c-text-secondary" />}
             </div>
             <div className="max-h-[520px] overflow-auto divide-y divide-c-border-subtle dark:divide-c-border-subtle">
-              {valuations.length === 0 ? (
-                <div className="p-4 text-sm text-c-text-muted dark:text-c-text-muted">
-                  {t('valuation.list.empty', 'No valuations yet. Create one to start.')}
+              {loading && valuations.length === 0 ? (
+                <div className="p-4">
+                  <LoadingState template="list" rows={4} />
                 </div>
+              ) : valuations.length === 0 ? (
+                <EmptyState
+                  variant="new"
+                  compact
+                  title={t('valuation.list.empty', 'No valuations yet. Create one to start.')}
+                  description={t(
+                    'valuation.list.emptyDesc',
+                    'Create a valuation to estimate value from a model or budget.',
+                  )}
+                  primaryAction={{
+                    label: t('valuation.create.cta', 'New valuation'),
+                    onClick: () => setShowCreate(true),
+                    icon: Plus,
+                  }}
+                />
               ) : (
                 valuations.map((v) => (
                   <button

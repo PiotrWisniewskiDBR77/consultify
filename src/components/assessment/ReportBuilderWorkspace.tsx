@@ -22,13 +22,14 @@ import {
   MessageCircle,
   MessageSquare,
   Minimize2,
-  RefreshCw,
   Sparkles,
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { EmptyState, LoadingState } from '@/components/shared/states';
 
 import { type AIAction, useReportSections } from '../../hooks/useReportSections';
 import { useAppStore } from '../../store/useAppStore';
@@ -39,7 +40,6 @@ import { ReportCommentPanel } from '../Reports/ReportCommentPanel';
 import { ReportHeader } from '../Reports/ReportHeader';
 import { StickyNavigation } from '../Reports/StickyNavigation';
 import { TableOfContents } from '../Reports/TableOfContents';
-import { LoadingState } from '../ui/primitives';
 
 interface ReportBuilderWorkspaceProps {
   reportId: string;
@@ -351,43 +351,33 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
   // Loading state
   if (isLoading && !report) {
     return (
-      <LoadingState
-        variant="spinner"
-        className="h-full bg-slate-50 dark:bg-navy-950"
-        label={t('assessment.reportBuilder.loading', 'Loading report...')}
-      />
+      <div className="h-full bg-[var(--c-surface)]">
+        <LoadingState
+          variant="progress"
+          label={t('assessment.reportBuilder.loading', 'Loading report…')}
+        />
+      </div>
     );
   }
 
   // Error state
   if (error && !report) {
     return (
-      <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950">
-        <div className="text-center max-w-md px-6">
-          <FileWarning className="w-16 h-16 text-danger-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-2">
-            {t('assessment.reportBuilder.errorLoading', 'Error loading report')}
-          </h2>
-          <p className="text-slate-600 dark:text-slate-400 mb-6">{error}</p>
-          <div className="flex items-center justify-center gap-3">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
-            >
-              {t('assessment.reportBuilder.goBack', 'Go back')}
-            </button>
-            <button
-              onClick={() => {
-                clearError();
-                fetchReport();
-              }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-            >
-              <RefreshCw className="w-4 h-4" />
-              {t('assessment.reportBuilder.tryAgain', 'Try again')}
-            </button>
-          </div>
-        </div>
+      <div className="h-full flex items-center justify-center bg-[var(--c-surface)]">
+        <EmptyState
+          variant="error"
+          icon={FileWarning}
+          title={t('assessment.reportBuilder.errorLoading', 'Error loading report')}
+          description={error}
+          secondaryAction={{
+            label: t('assessment.reportBuilder.goBack', 'Go back'),
+            onClick: onClose,
+          }}
+          onRetry={() => {
+            clearError();
+            fetchReport();
+          }}
+        />
       </div>
     );
   }

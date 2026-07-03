@@ -15,7 +15,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { LoadingState } from '@/components/ui/primitives';
+import { EmptyState, LoadingState } from '@/components/shared/states';
 import Api, { getHeaders } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
@@ -378,11 +378,17 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
           </span>
         </div>
         {capLoading ? (
-          <LoadingState variant="spinner" />
+          <LoadingState template="list" rows={3} />
         ) : capabilities.length === 0 ? (
-          <p className="text-sm text-slate-500 py-4 text-center">
-            {t('capability.empty', 'No capabilities defined yet.')}
-          </p>
+          <EmptyState
+            variant="new"
+            compact
+            title={t('capability.empty', 'No capabilities defined yet.')}
+            description={t(
+              'capability.emptyDesc',
+              'Define capabilities to plan the change effort.',
+            )}
+          />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {capabilities.map((cap) => (
@@ -665,11 +671,17 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
           <span className="text-xs text-slate-500">{segments.length}</span>
         </div>
         {commLoading ? (
-          <LoadingState variant="spinner" />
+          <LoadingState template="list" rows={3} />
         ) : segments.length === 0 ? (
-          <p className="text-sm text-slate-500 text-center py-3">
-            {t('stakeholder.noSegments', 'No segments defined.')}
-          </p>
+          <EmptyState
+            variant="new"
+            compact
+            title={t('stakeholder.noSegments', 'No segments defined.')}
+            description={t(
+              'stakeholder.noSegmentsDesc',
+              'Add stakeholder segments to tailor communications.',
+            )}
+          />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {segments.map((s) => (

@@ -35,6 +35,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/shared/states';
 import { V8AssessmentApi } from '@/services/api/v8';
 
 import { useDeviceType } from '../../hooks/useDeviceType';
@@ -44,7 +45,6 @@ import { AssessmentFramework, useMultiFrameworkStore } from '../../store/useMult
 import { AppView } from '../../types';
 import { DRDAxis } from '../../types';
 import { SplitLayout } from '../layout/SplitLayout';
-import { LoadingState } from '../ui/primitives';
 import { AssessmentAxisWorkspace } from './AssessmentAxisWorkspace';
 import { AssessmentInitiativesDrawer } from './AssessmentInitiativesDrawer';
 import { AssessmentSummaryWorkspace } from './AssessmentSummaryWorkspace';
@@ -732,7 +732,9 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
     }
 
     const FallbackLoader = () => (
-      <LoadingState variant="spinner" className="h-full bg-transparent" />
+      <div className="h-full p-6">
+        <LoadingState template="panel" />
+      </div>
     );
 
     switch (activeTab) {
@@ -750,11 +752,12 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
         // Show loading spinner while fetching assessment data
         if (isLoadingAssessment) {
           return (
-            <LoadingState
-              variant="spinner"
-              className="h-full bg-slate-50 dark:bg-navy-950/50"
-              label={t('assessment.hub.loadingData', 'Loading assessment data...')}
-            />
+            <div className="h-full bg-[var(--c-surface)]">
+              <LoadingState
+                variant="progress"
+                label={t('assessment.hub.loadingData', 'Loading assessment data…')}
+              />
+            </div>
           );
         }
 

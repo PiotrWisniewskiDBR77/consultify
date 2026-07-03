@@ -46,6 +46,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState, LoadingState } from '@/components/shared/states';
 import {
   V8MultiplayerApi,
   type V8MultiplayerLockRecord,
@@ -3050,12 +3051,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
       {/* Integrations list */}
       {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="animate-spin text-primary-400" size={24} />
-          <span className="ml-3 text-slate-400 dark:text-slate-500 text-sm">
-            {t('integrations.syncHub.loading', 'Loading integrations…')}
-          </span>
-        </div>
+        <LoadingState template="list" rows={5} />
       ) : filtered.length === 0 ? (
         <div className="text-center py-16">
           <Zap className="mx-auto text-slate-600 dark:text-slate-400 mb-3" size={36} />
@@ -4270,13 +4266,18 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         </div>
 
         {v8RunsLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="animate-spin text-slate-500 dark:text-slate-400" size={24} />
-          </div>
+          <LoadingState template="list" rows={4} />
         ) : v8Runs.length === 0 ? (
-          <div className="text-center py-12 text-slate-500 dark:text-slate-400 text-sm">
-            {t('integrations.syncHub.noRuns', 'No sync runs recorded yet')}
-          </div>
+          <EmptyState
+            variant="new"
+            compact
+            icon={Activity}
+            title={t('integrations.syncHub.noRuns', 'No sync runs recorded yet')}
+            description={t(
+              'integrations.syncHub.noRunsDesc',
+              'Trigger a sync to see run history here.',
+            )}
+          />
         ) : (
           <div className="border border-navy-700/50 rounded-lg overflow-hidden">
             <table className="w-full text-sm">

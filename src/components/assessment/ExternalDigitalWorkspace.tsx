@@ -7,6 +7,9 @@ import axios from 'axios';
 import { Activity, AlertTriangle, CheckCircle, FileText, Upload } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
+import { useTranslation } from 'react-i18next';
+
+import { EmptyState } from '@/components/shared/states';
 
 interface ExternalDigitalWorkspaceProps {
   projectId?: string;
@@ -24,6 +27,7 @@ export const ExternalDigitalWorkspace: React.FC<ExternalDigitalWorkspaceProps> =
   projectId,
   organizationId,
 }) => {
+  const { t } = useTranslation();
   const [selectedFramework, setSelectedFramework] = useState('SIRI');
   const [assessments, setAssessments] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -157,10 +161,16 @@ export const ExternalDigitalWorkspace: React.FC<ExternalDigitalWorkspaceProps> =
         <h3 className="text-xl font-semibold mb-4">Uploaded Assessments</h3>
 
         {assessments.length === 0 ? (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            <FileText className="w-12 h-12 mx-auto mb-2 opacity-30" />
-            No assessments uploaded yet
-          </div>
+          <EmptyState
+            variant="new"
+            compact
+            icon={FileText}
+            title={t('externalDigital.empty.title', 'No assessments uploaded yet')}
+            description={t(
+              'externalDigital.empty.desc',
+              'Upload an external assessment file above to see it listed here.',
+            )}
+          />
         ) : (
           <div className="space-y-3">
             {assessments.map((assessment) => (
