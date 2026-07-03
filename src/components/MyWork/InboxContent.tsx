@@ -46,7 +46,6 @@ import {
   Inbox,
   Layers,
   Lightbulb,
-  Loader2,
   type LucideIcon,
   MessageSquare,
   Minus,
@@ -88,6 +87,10 @@ import {
   PREVIEW_SELECTED_ROW_CLASS,
   SELECTED_ROW_CLASS,
 } from '@/components/shared/selectionTokens';
+import {
+  EmptyState as SharedEmptyState,
+  LoadingState as SharedLoadingState,
+} from '@/components/shared/states';
 import { ErrorState } from '@/components/ui/primitives';
 import { DueChip } from '@/components/ui/primitives/chips/DueChip';
 import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
@@ -173,8 +176,8 @@ const ENTITY_KIND_CONFIG: Record<
     icon: CheckCircle2,
     labelEn: 'Survey',
     labelPl: 'Ankieta',
-    pill: 'border border-slate-300/80 bg-slate-100 text-slate-700 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200',
-    borderLeft: 'border-l-slate-400 dark:border-l-slate-500',
+    pill: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
+    borderLeft: 'border-l-c-border-strong',
   },
   decision: {
     icon: Scale,
@@ -187,8 +190,8 @@ const ENTITY_KIND_CONFIG: Record<
     icon: Bell,
     labelEn: 'Notification',
     labelPl: 'Notyfikacja',
-    pill: 'border border-slate-300/80 bg-slate-100 text-slate-700 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200',
-    borderLeft: 'border-l-slate-400 dark:border-l-slate-500',
+    pill: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
+    borderLeft: 'border-l-c-border-strong',
   },
 };
 
@@ -543,15 +546,15 @@ const urgencyConfig: Record<
   },
   normal: {
     icon: Clock,
-    pill: 'border border-slate-200 bg-white text-slate-700 [&>svg]:text-slate-500 dark:bg-navy-800 dark:text-slate-200 dark:border-transparent',
+    pill: 'border border-c-border bg-c-surface-raised text-c-text-secondary [&>svg]:text-c-text-muted dark:border-transparent',
     label: 'Normal',
-    heatColor: 'border-l-slate-300 dark:border-l-navy-600',
+    heatColor: 'border-l-c-border',
   },
   low: {
     icon: Calendar,
-    pill: 'border border-slate-200 bg-white text-slate-600 [&>svg]:text-slate-400 dark:bg-navy-900/40 dark:text-slate-300 dark:border-transparent',
+    pill: 'border border-c-border bg-c-surface-raised text-c-text-secondary [&>svg]:text-c-text-muted dark:border-transparent',
     label: 'Low',
-    heatColor: 'border-l-slate-200 dark:border-l-navy-700',
+    heatColor: 'border-l-c-border-subtle',
   },
 };
 
@@ -579,6 +582,10 @@ const typeLabel: Record<InboxItemType, string> = {
   billing_alert: 'billing',
   project_update: 'project',
 };
+
+// S1-U3b: cards view — max cards visible per section before "show more (N)".
+// 6 = two full rows on xl (3-col grid), one clean row on sm.
+const SECTION_CARD_LIMIT = 6;
 
 // ── Section config for smart grouping ──
 const SMART_SECTIONS: {
@@ -635,7 +642,7 @@ const SMART_SECTIONS: {
     labelEn: 'System Notifications',
     labelPl: 'Powiadomienia systemowe',
     icon: Bell,
-    color: 'text-slate-500',
+    color: 'text-c-text-muted',
   },
   {
     id: 'fyi_mentions',
@@ -644,7 +651,7 @@ const SMART_SECTIONS: {
     icon: MessageSquare,
     color: 'text-amber-500',
   },
-  { id: 'other', labelEn: 'Other', labelPl: 'Inne', icon: Inbox, color: 'text-slate-600' },
+  { id: 'other', labelEn: 'Other', labelPl: 'Inne', icon: Inbox, color: 'text-c-text-secondary' },
 ];
 
 // ── Relative time formatting ──
@@ -689,8 +696,7 @@ const AGING_STYLES = {
 const slaPill = (
   sla: InboxItem['sla']
 ): { label: string; className: string; dot: string; title?: string } => {
-  if (!sla)
-    return { label: '-', className: 'text-slate-600 dark:text-slate-400', dot: 'bg-slate-400' };
+  if (!sla) return { label: '-', className: 'text-c-text-secondary', dot: 'bg-slate-400' };
   const abs = Math.abs(sla.remainingMs);
   const days = Math.floor(abs / 86400000);
   const hours = Math.floor((abs % 86400000) / 3600000);
@@ -704,10 +710,10 @@ const slaPill = (
   const isOverdue = sla.isBreached || sla.level === 'L2' || sla.level === 'L3';
   const className =
     sla.level === 'none'
-      ? 'border border-slate-200 bg-white text-slate-700 dark:bg-navy-800 dark:text-slate-200 dark:border-transparent'
+      ? 'border border-c-border bg-c-surface-raised text-c-text-secondary dark:border-transparent'
       : sla.level === 'L1'
-        ? 'border border-slate-200 bg-white text-slate-700 dark:bg-amber-500/15 dark:text-amber-300 dark:border-transparent'
-        : 'border border-slate-200 bg-white text-slate-700 dark:bg-danger-500/15 dark:text-danger-300 dark:border-transparent';
+        ? 'border border-c-border bg-c-surface-raised text-c-text-secondary dark:bg-amber-500/15 dark:text-amber-300 dark:border-transparent'
+        : 'border border-c-border bg-c-surface-raised text-c-text-secondary dark:bg-danger-500/15 dark:text-danger-300 dark:border-transparent';
   const dot = sla.level === 'none' ? 'bg-slate-400' : isOverdue ? 'bg-danger-500' : 'bg-amber-500';
   return { label, className, dot, title: sla.dueAt ? `due: ${sla.dueAt}` : undefined };
 };
@@ -731,8 +737,8 @@ const INBOX_STATUS_FILTER_OPTIONS = [
 const INBOX_URGENCY_FILTER_OPTIONS = [
   { value: 'critical', label: 'Critical', color: 'text-danger-500' },
   { value: 'high', label: 'High', color: 'text-amber-500' },
-  { value: 'normal', label: 'Normal', color: 'text-slate-500' },
-  { value: 'low', label: 'Low', color: 'text-slate-600' },
+  { value: 'normal', label: 'Normal', color: 'text-c-text-muted' },
+  { value: 'low', label: 'Low', color: 'text-c-text-secondary' },
 ];
 
 const INBOX_TYPE_FILTER_OPTIONS = [
@@ -928,9 +934,9 @@ const InboxSortIcon: React.FC<{
   if (sortConfig?.field !== field)
     return <ChevronsUpDown size={12} className="text-slate-300 dark:text-slate-600" />;
   return sortConfig.direction === 'asc' ? (
-    <ChevronUp size={12} className="text-primary-500" />
+    <ChevronUp size={12} className="text-c-text-secondary" />
   ) : (
-    <ChevronDown size={12} className="text-primary-500" />
+    <ChevronDown size={12} className="text-c-text-secondary" />
   );
 };
 
@@ -1204,7 +1210,7 @@ const PreviewPane: React.FC<{
       <span className={`text-[11px] font-medium ${AGING_STYLES[agingLevel]}`}>{receivedText}</span>
       {item.sla && sla.label !== '-' ? (
         <>
-          <span className="text-slate-600 dark:text-navy-600">·</span>
+          <span className="text-c-text-muted">·</span>
           <span
             className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${sla.className}`}
           >
@@ -1237,6 +1243,9 @@ const PreviewPane: React.FC<{
       : []),
   ];
 
+  // S1-U3a + Artifact Anatomy §9.2① — ONE primary action per panel
+  // ("Today" = the next-best triage), everything else secondary/neutral.
+  // Never a color-per-button rainbow (Today green / Save yellow / Done green…).
   const actionRows: ActionRow[] = [
     {
       buttons: [
@@ -1244,7 +1253,7 @@ const PreviewPane: React.FC<{
           label: isPolish ? 'Dziś' : 'Today',
           icon: Zap,
           onClick: () => onTriage('accept_today'),
-          colorScheme: 'emerald',
+          colorScheme: 'primary',
           flex: true,
           shortcut: 'T',
         },
@@ -1252,7 +1261,7 @@ const PreviewPane: React.FC<{
           label: isPolish ? 'Tydzień' : 'Week',
           icon: CalendarClock,
           onClick: () => onTriage('accept_week'),
-          colorScheme: 'blue',
+          colorScheme: 'neutral',
           flex: true,
           shortcut: 'W',
         },
@@ -1273,14 +1282,14 @@ const PreviewPane: React.FC<{
           label: isPolish ? 'Gotowe' : 'Done',
           icon: CheckCircle2,
           onClick: () => onTriage('done'),
-          colorScheme: 'green',
+          colorScheme: 'neutral',
           shortcut: 'D',
         },
         {
           label: isPolish ? 'Zapisz' : 'Save',
           icon: Bookmark,
           onClick: () => onTriage('save'),
-          colorScheme: 'amber',
+          colorScheme: 'neutral',
           shortcut: 'S',
         },
         ...(onSaveAsNote
@@ -1340,7 +1349,7 @@ const PreviewPane: React.FC<{
       actions={
         <button
           onClick={onOpen}
-          className="inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+          className="inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-xs font-medium border border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
         >
           <Eye size={12} />
           {isPolish ? 'Otwórz' : 'Open'}
@@ -1372,7 +1381,7 @@ const PreviewPane: React.FC<{
           <div className="pt-1.5">
             <button
               onClick={() => setSnoozeOpen(!snoozeOpen)}
-              className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+              className="inline-flex items-center gap-1 text-xs font-medium text-c-text-muted hover:text-c-text-secondary transition-colors"
             >
               <Clock size={14} />
               {isPolish ? 'Odłóż na…' : 'Snooze…'}
@@ -1397,10 +1406,10 @@ const PreviewPane: React.FC<{
             ) : null}
           </div>
           {onUndoLastAI ? (
-            <div className="pt-2 border-t border-slate-200/50 dark:border-white/[0.06]">
+            <div className="pt-2 border-t border-c-border-subtle">
               <button
                 onClick={onUndoLastAI}
-                className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-300 transition-colors"
+                className="inline-flex items-center gap-1 text-xs font-medium text-c-text-muted hover:text-c-text transition-colors"
               >
                 <Minus size={12} />
                 {isPolish ? 'Cofnij ostatnią sugestię AI' : 'Undo last AI suggestion'}
@@ -1427,7 +1436,7 @@ const PreviewPane: React.FC<{
 };
 
 const AI_HINT_CHIPCLASS =
-  'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer active:scale-[0.98]';
+  'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full text-[11px] font-medium border border-c-border-subtle bg-transparent text-c-text-muted hover:bg-black/[0.04] dark:hover:bg-white/[0.04] transition-colors cursor-pointer active:scale-[0.98]';
 
 const AIHintStrip: React.FC<{
   item: InboxItem;
@@ -1443,7 +1452,6 @@ const AIHintStrip: React.FC<{
   } | null;
   onClear: () => void;
 }> = ({ item, isPolish, loading, onRun, onApplyAction, result, onClear }) => {
-
   const hints = useMemo(() => {
     const isCritical = item.urgency === 'critical' || item.urgency === 'high';
     const isDecision = String(item._key || '').startsWith('decision:');
@@ -1496,7 +1504,7 @@ const AIHintStrip: React.FC<{
   return (
     <div className="py-1">
       <div className="flex items-center justify-between gap-2 mb-1.5">
-        <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-500">
+        <div className="flex items-center gap-1.5 text-c-text-muted">
           <Sparkles size={12} />
           <span className="text-[10px] font-medium uppercase tracking-wider">AI</span>
         </div>
@@ -1535,7 +1543,9 @@ const AIHintStrip: React.FC<{
                       if (result) {
                         navigator.clipboard
                           .writeText(
-                            [result.brief, ...(result.bullets || []).map((b) => `- ${b}`)].join('\n')
+                            [result.brief, ...(result.bullets || []).map((b) => `- ${b}`)].join(
+                              '\n'
+                            )
                           )
                           .then(() => toast.success(isPolish ? 'Skopiowano' : 'Copied'));
                       }
@@ -1692,6 +1702,10 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
   // Collapsed sections (for smart sections view)
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+
+  // S1-U3b: sections view is capped per section ("wall of 152 cards" fix) —
+  // sections show up to SECTION_CARD_LIMIT cards + a "show more (N)" control.
+  const [uncappedSections, setUncappedSections] = useState<Set<string>>(new Set());
 
   // Preview pane (A3)
   const [previewItem, setPreviewItem] = useState<InboxItem | null>(null);
@@ -2414,12 +2428,12 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         key={item.id}
         data-index={index}
         className={`
-          group cursor-pointer border-b border-slate-200 dark:border-navy-700/50
+          group cursor-pointer border-b border-c-border-subtle
           ${isSelected ? SELECTED_ROW_CLASS : ''}
           ${isPreviewed ? PREVIEW_SELECTED_ROW_CLASS : ''}
           ${isFocused && !isPreviewed ? FOCUSED_ROW_CLASS : ''}
           transition-colors duration-150
-          hover:bg-slate-50 dark:hover:bg-navy-800/50
+          hover:bg-slate-50/70 dark:hover:bg-white/[0.03]
         `}
         onClick={() => preview(item)}
         onDoubleClick={() => open(item)}
@@ -2433,8 +2447,8 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             }}
             className={`h-3.5 w-3.5 rounded-[4px] border flex items-center justify-center transition-all ${
               isSelected
-                ? 'bg-navy-900 border-navy-900 text-white opacity-100'
-                : 'border-slate-400/70 bg-white/80 text-transparent opacity-0 hover:border-primary-400 group-hover:opacity-100 focus:opacity-100 dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]'
+                ? 'bg-c-text border-c-text text-c-surface opacity-100'
+                : 'border-c-border-strong bg-white/80 text-transparent opacity-0 hover:border-c-border-strong group-hover:opacity-100 focus:opacity-100 dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]'
             }`}
           >
             {isSelected && <CheckSquare size={12} />}
@@ -2444,15 +2458,12 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         {/* Title */}
         <td className="px-3 py-3" style={{ width: columnWidths.title }}>
           <div className="flex items-center gap-2">
-            <span
-              className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate block"
-              title={item.title}
-            >
+            <span className="text-sm font-semibold text-c-text truncate block" title={item.title}>
               {item.title}
             </span>
             {item.suggestedAction && (
               <span
-                className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full border border-slate-300/80 bg-slate-100 text-[10px] font-medium text-slate-700 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200 cursor-help"
+                className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full border border-c-border bg-c-surface-raised text-[10px] font-medium text-c-text-secondary cursor-help"
                 title={item.suggestedReason || (isPolish ? 'Sugestia AI' : 'AI suggestion')}
               >
                 AI:{' '}
@@ -2477,7 +2488,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                       return next;
                     });
                 }}
-                className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-[10px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
+                className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-c-surface-raised text-[10px] font-semibold text-c-text-secondary hover:bg-c-border-subtle transition-colors"
                 title={isPolish ? `${groupCount} podobnych` : `${groupCount} similar`}
               >
                 <Layers size={10} />x{groupCount}
@@ -2486,7 +2497,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             )}
           </div>
           {showRowDescription && (item.description || item.reason) ? (
-            <div className="mt-0.5 truncate pr-6 text-[11px] leading-4 text-slate-500 dark:text-slate-400">
+            <div className="mt-0.5 truncate pr-6 text-[11px] leading-4 text-c-text-muted">
               {item.description || item.reason}
             </div>
           ) : null}
@@ -2531,7 +2542,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         {/* Type */}
         {!hiddenSet.has('type') && (
           <td className="px-3 py-2 text-left" style={{ width: columnWidths.type }}>
-            <span className="inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+            <span className="inline-flex items-center gap-1.5 text-xs text-c-text-secondary">
               <span className="truncate">
                 {typeLabel[item.type] || item.type.replace(/_/g, ' ')}
               </span>
@@ -2542,7 +2553,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         {/* Section */}
         {!hiddenSet.has('section') && (
           <td className="px-3 py-2 text-left" style={{ width: columnWidths.section }}>
-            <span className="text-xs text-slate-600 dark:text-slate-400">
+            <span className="text-xs text-c-text-secondary">
               {SMART_SECTIONS.find((s) => s.id === item.section)?.[
                 isPolish ? 'labelPl' : 'labelEn'
               ] || item.section}
@@ -2558,7 +2569,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               const cfg: Record<string, { icon: typeof Bell; color: string; label: string }> = {
                 system: {
                   icon: Bell,
-                  color: 'text-slate-500',
+                  color: 'text-c-text-muted',
                   label: isPolish ? 'System' : 'System',
                 },
                 ai: { icon: Star, color: 'text-primary-500', label: 'AI' },
@@ -2593,7 +2604,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         {!hiddenSet.has('sla') && (
           <td className="px-3 py-2 text-left" style={{ width: columnWidths.sla }}>
             {sla.label === '-' ? (
-              <span className="text-slate-400 dark:text-slate-500">—</span>
+              <span className="text-c-text-muted">—</span>
             ) : (
               <DueChip
                 label={sla.label}
@@ -2719,17 +2730,17 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   // ── Render table header ──
   const renderTableHeader = () => (
     <thead>
-      <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
+      <tr className="border-b border-c-border-subtle bg-c-surface sticky top-0 z-10">
         {/* Select All */}
         <th className="w-10 px-2 py-2">
           <button
             onClick={() => handleSelectAll(!allSelected)}
             className={`h-3.5 w-3.5 rounded-[4px] border flex items-center justify-center transition-colors ${
               allSelected
-                ? 'bg-navy-900 border-navy-900 text-white'
+                ? 'bg-c-text border-c-text text-c-surface'
                 : someSelected
-                  ? 'bg-primary-500/50 border-primary-500 text-white'
-                  : 'border-slate-300 text-transparent hover:border-primary-400 hover:text-slate-400 dark:border-white/[0.10] dark:text-slate-400'
+                  ? 'bg-c-text/60 border-c-text text-c-surface'
+                  : 'border-c-border text-transparent hover:border-c-border-strong hover:text-c-text-muted'
             }`}
           >
             {allSelected ? (
@@ -2743,13 +2754,13 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         </th>
 
         <th
-          className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+          className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
           style={{ width: columnWidths.title }}
         >
           <button
             type="button"
             onClick={() => handleSort('title')}
-            className="inline-flex items-center gap-1 transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+            className="inline-flex items-center gap-1 transition-colors hover:text-c-text-secondary"
           >
             {isPolish ? 'Tytuł' : 'Title'}
             <InboxSortIcon field="title" sortConfig={sortConfig} />
@@ -2771,15 +2782,20 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           const hasFilter = isFilterable && col.filterOptions?.length;
           const isResizable = Boolean(col.resizable);
           // Canon §3.3: chip/text columns left-aligned (status/urgency/type/section/source).
-          const leftAligned = ['status', 'urgency', 'type', 'section', 'source', 'received'].includes(
-            colId
-          );
+          const leftAligned = [
+            'status',
+            'urgency',
+            'type',
+            'section',
+            'source',
+            'received',
+          ].includes(colId);
           // Canon §5/§27.O: every column except SLA is sortable (sla has no stable order).
           const isSortable = colId !== 'sla';
           return (
             <th
               key={colId}
-              className={`px-3 py-2 ${leftAligned ? 'text-left' : 'text-center'} text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header`}
+              className={`px-3 py-2 ${leftAligned ? 'text-left' : 'text-center'} text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header`}
               style={{ width: columnWidths[colId] }}
             >
               <div
@@ -2789,8 +2805,8 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                   <button
                     type="button"
                     onClick={() => handleSort(colId as InboxSortField)}
-                    className={`inline-flex items-center gap-1 transition-colors hover:text-slate-700 dark:hover:text-slate-200 ${
-                      (tableFilters[colId] as string[])?.length ? 'text-primary-500' : ''
+                    className={`inline-flex items-center gap-1 transition-colors hover:text-c-text-secondary ${
+                      (tableFilters[colId] as string[])?.length ? 'text-c-text-secondary' : ''
                     }`}
                   >
                     {getColumnLabel(colId)}
@@ -2798,7 +2814,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                   </button>
                 ) : (
                   <span
-                    className={(tableFilters[colId] as string[])?.length ? 'text-primary-500' : ''}
+                    className={
+                      (tableFilters[colId] as string[])?.length ? 'text-c-text-secondary' : ''
+                    }
                   >
                     {getColumnLabel(colId)}
                   </span>
@@ -2828,7 +2846,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         })}
 
         <th
-          className="relative px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+          className="relative px-3 py-2 text-right text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
           style={{ width: columnWidths.actions }}
         >
           <div className="flex items-center justify-end normal-case tracking-normal">
@@ -2908,8 +2926,8 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         <div
           key={item.id}
           className={[
-            'group relative rounded-xl border border-slate-200/60 dark:border-white/[0.06] transition-all duration-150 overflow-hidden',
-            'bg-white dark:bg-navy-900',
+            'group relative rounded-xl border border-c-border-subtle transition-all duration-150 overflow-hidden',
+            'bg-c-surface',
             'hover:shadow-md',
             isSelected ? 'ring-2 ring-[var(--c-info)]/50' : '',
             isPreviewed ? 'ring-2 ring-[var(--c-info)]/40' : '',
@@ -2917,7 +2935,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           onClick={() => preview(item)}
           onDoubleClick={() => open(item)}
         >
-          <div className="p-3 flex flex-col gap-2.5">
+          <div className="p-2.5 flex flex-col gap-2">
             {/* Row 1: Title + actions */}
             <div className="flex items-start gap-2">
               <button
@@ -2927,8 +2945,8 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 }}
                 className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center transition-all shrink-0 ${
                   isSelected
-                    ? 'bg-navy-900 border-navy-900 text-white'
-                    : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
+                    ? 'bg-c-text border-c-text text-c-surface'
+                    : 'border-c-border hover:border-c-border-strong'
                 }`}
                 aria-label={
                   isSelected ? (isPolish ? 'Odznacz' : 'Deselect') : isPolish ? 'Zaznacz' : 'Select'
@@ -2940,7 +2958,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-1.5">
                   <h3
-                    className="text-[13px] font-semibold text-slate-900 dark:text-white leading-snug line-clamp-2"
+                    className="text-[13px] font-semibold text-c-text leading-snug line-clamp-1"
                     title={item.title}
                   >
                     {item.title}
@@ -3032,13 +3050,14 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
             {/* Row 2: Brief */}
             {showRowDescription && cardBriefText ? (
-              <p className="-mt-0.5 line-clamp-2 text-[11px] leading-4 text-slate-500 dark:text-slate-400">
+              <p className="-mt-0.5 line-clamp-1 text-[11px] leading-4 text-c-text-muted">
                 {cardBriefText}
               </p>
             ) : null}
 
-            {/* Row 3: Meta pills */}
+            {/* Row 3: Meta pills (incl. status — no reserved hover row, S1-U3b) */}
             <div className="flex flex-wrap items-center gap-1.5">
+              {renderStatusPill(item)}
               <span
                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap ${kindCfg.pill}`}
               >
@@ -3076,7 +3095,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                       return next;
                     });
                   }}
-                  className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-slate-200/60 dark:bg-white/[0.06] text-[10px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/[0.08] transition-colors"
+                  className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-c-surface-raised text-[10px] font-semibold text-c-text-secondary hover:bg-c-border-subtle dark:hover:bg-white/[0.08] transition-colors"
                   title={isPolish ? `${groupCount} podobnych` : `${groupCount} similar`}
                 >
                   <Layers size={10} />x{groupCount}
@@ -3103,40 +3122,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               </div>
             ) : null}
 
-            {/* Row 5: Quick actions (visible on hover) */}
-            <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity -mt-0.5">
-              {renderStatusPill(item)}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  triage(item, 'accept_today');
-                }}
-                className="inline-flex items-center gap-1 h-6 px-2 rounded-full text-[10px] font-medium border border-emerald-300/40 dark:border-emerald-500/20 bg-transparent text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/10 transition-colors"
-              >
-                <Zap size={10} />
-                {isPolish ? 'Dziś' : 'Today'}
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  triage(item, 'done');
-                }}
-                className="inline-flex items-center gap-1 h-6 px-2 rounded-full text-[10px] font-medium border border-emerald-300/40 dark:border-emerald-500/20 bg-transparent text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/10 transition-colors"
-              >
-                <CheckCircle2 size={10} />
-                {isPolish ? 'Gotowe' : 'Done'}
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  triage(item, 'dismiss');
-                }}
-                className="inline-flex items-center gap-1 h-6 px-2 rounded-full text-[10px] font-medium border border-slate-200/60 dark:border-white/[0.06] bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors"
-              >
-                <Archive size={10} />
-                {isPolish ? 'Odłóż' : 'Dismiss'}
-              </button>
-            </div>
+            {/* S1-U3b: no reserved hover-actions row — triage lives in the
+                kebab + preview panel; status pill moved into the meta row.
+                Cards stay compact so sections fit the viewport. */}
           </div>
         </div>
       );
@@ -3153,7 +3141,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
           return (
             <div key={section.id} className="mb-4 last:mb-0">
-              <div className="flex items-center justify-between px-2 py-2 rounded-lg bg-slate-50/80 dark:bg-navy-800/40 border border-slate-200 dark:border-navy-700/50">
+              <div className="flex items-center justify-between px-2 py-2 rounded-lg bg-c-surface-raised border border-c-border-subtle">
                 <button
                   onClick={() =>
                     setCollapsedSections((prev) => {
@@ -3163,40 +3151,84 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                       return next;
                     })
                   }
-                  className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white transition-colors"
+                  className="flex items-center gap-2 text-xs font-semibold text-c-text-secondary hover:text-c-text transition-colors"
                 >
                   {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
                   <SectionIcon size={14} className={section.color} />
                   {isPolish ? section.labelPl : section.labelEn}
-                  <span className="px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-navy-700 text-[10px] font-medium text-slate-600 dark:text-slate-300">
+                  <span className="px-1.5 py-0.5 rounded-full bg-c-surface-raised text-[10px] font-medium text-c-text-secondary">
                     {totalCount}
                   </span>
                 </button>
                 <button
                   onClick={() => handleSelectSection(section.id)}
-                  className="text-[10px] font-medium text-slate-500 dark:text-slate-400 hover:text-primary-500 transition-colors"
+                  className="text-[10px] font-medium text-c-text-muted hover:text-c-text-secondary transition-colors"
                 >
                   {isPolish ? 'Zaznacz wszystkie' : 'Select all'}
                 </button>
               </div>
 
-              {!isCollapsed && (
-                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-                  {sectionData.flatMap((group) => {
+              {!isCollapsed &&
+                (() => {
+                  // S1-U3b: flatten groups, then cap the section height —
+                  // max SECTION_CARD_LIMIT cards + "show more (N)" instead of
+                  // an unbounded vertical wall.
+                  const flatCards = sectionData.flatMap((group) => {
                     const itemsToRender =
                       group.count > 1 && expandedGroups.has(group.key)
                         ? group.items
                         : [group.representative];
-                    return itemsToRender.map((it, idx) =>
-                      renderCard(
-                        it,
-                        idx === 0 ? group.count : undefined,
-                        idx === 0 ? group.key : undefined
-                      )
-                    );
-                  })}
-                </div>
-              )}
+                    return itemsToRender.map((it, idx) => ({
+                      it,
+                      groupCount: idx === 0 ? group.count : undefined,
+                      groupKey: idx === 0 ? group.key : undefined,
+                    }));
+                  });
+                  const isUncapped = uncappedSections.has(section.id);
+                  const visibleCards = isUncapped
+                    ? flatCards
+                    : flatCards.slice(0, SECTION_CARD_LIMIT);
+                  const hiddenCount = flatCards.length - visibleCards.length;
+                  const toggleCap = () =>
+                    setUncappedSections((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(section.id)) next.delete(section.id);
+                      else next.add(section.id);
+                      return next;
+                    });
+
+                  return (
+                    <>
+                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                        {visibleCards.map(({ it, groupCount, groupKey }) =>
+                          renderCard(it, groupCount, groupKey)
+                        )}
+                      </div>
+                      {hiddenCount > 0 ? (
+                        <button
+                          type="button"
+                          onClick={toggleCap}
+                          data-testid={`inbox-section-show-more-${section.id}`}
+                          className="mt-2 inline-flex h-7 items-center gap-1.5 rounded-full border border-c-border px-3 text-[11px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
+                        >
+                          <ChevronDown size={12} />
+                          {isPolish
+                            ? `Pokaż więcej (${hiddenCount})`
+                            : `Show more (${hiddenCount})`}
+                        </button>
+                      ) : isUncapped && flatCards.length > SECTION_CARD_LIMIT ? (
+                        <button
+                          type="button"
+                          onClick={toggleCap}
+                          className="mt-2 inline-flex h-7 items-center gap-1.5 rounded-full border border-c-border px-3 text-[11px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
+                        >
+                          <ChevronUp size={12} />
+                          {isPolish ? 'Pokaż mniej' : 'Show less'}
+                        </button>
+                      ) : null}
+                    </>
+                  );
+                })()}
             </div>
           );
         })}
@@ -3233,30 +3265,35 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   // Render
   // ═══════════════════════════════════════════════════════════════════════════
   return (
-    <div
-      className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50 dark:bg-navy-950"
-      ref={tableRef}
-    >
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-c-bg" ref={tableRef}>
       {/* Main content + Preview pane */}
       <div className="flex-1 flex min-h-0 gap-1.5">
         {/* Table content */}
         <div className="flex-1 min-w-0 overflow-y-auto pl-4 pr-1.5 pt-3 pb-4 transition-all duration-200">
           {loading ? (
-            <div className="flex items-center justify-center py-12 text-slate-600 dark:text-slate-300">
-              <Loader2 className="animate-spin mr-2" size={18} />
-              {isPolish ? 'Ładowanie...' : 'Loading...'}
-            </div>
+            <SharedLoadingState template="list" rows={6} />
           ) : loadError ? (
             <ErrorState message={loadError} retry={() => void fetchInbox()} />
+          ) : filteredItems.length === 0 &&
+            ((searchQuery || '').trim().length > 0 || actionRequiredOnly) ? (
+            <SharedEmptyState
+              variant="filter"
+              title={isPolish ? 'Nic nie pasuje do filtra' : 'Nothing matches this filter'}
+              description={
+                isPolish
+                  ? 'Zmień wyszukiwanie lub wyłącz filtr „wymaga działania”, aby zobaczyć więcej.'
+                  : 'Change your search or turn off the “action required” filter to see more.'
+              }
+            />
           ) : filteredItems.length === 0 ? (
-            <div className="py-16 text-center text-slate-600 dark:text-slate-300">
+            <div className="py-16 text-center text-c-text-secondary">
               {statusTab === 'done' ? (
                 <>
                   <CheckCircle2 size={40} className="mx-auto mb-4 text-emerald-400" />
                   <p className="text-base font-semibold mb-1">
                     {isPolish ? 'Brak zakończonych elementów' : 'No completed items'}
                   </p>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-c-text-muted">
                     {isPolish
                       ? 'Oznaczaj elementy jako gotowe (E), żeby tu trafiały.'
                       : "Mark items as Done (E) and they'll appear here."}
@@ -3268,7 +3305,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                   <p className="text-base font-semibold mb-1">
                     {isPolish ? 'Brak zapisanych elementów' : 'No saved items'}
                   </p>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-c-text-muted">
                     {isPolish
                       ? 'Użyj Zapisz (B) aby odłożyć elementy na później.'
                       : 'Use Save (B) to bookmark items for later.'}
@@ -3276,13 +3313,13 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 </>
               ) : (
                 <>
-                  <Inbox size={40} className="mx-auto mb-4 text-slate-600" />
+                  <Inbox size={40} className="mx-auto mb-4 text-c-text-muted" />
                   <p className="text-base font-semibold mb-1">
                     {isPolish
                       ? 'Inbox jest pusty — zero zaległości!'
                       : 'Inbox is empty — zero backlog!'}
                   </p>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-c-text-muted">
                     {isPolish
                       ? 'Wszystko przetworzone. Świetna robota!'
                       : 'Everything processed. Great job!'}
@@ -3291,7 +3328,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               )}
             </div>
           ) : (
-            <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] rounded-xl backdrop-blur">
+            <div className="bg-c-surface border border-c-border-subtle rounded-xl">
               {viewMode === 'sections' ? renderSectionsView() : renderFlatView()}
             </div>
           )}
@@ -3299,10 +3336,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
         {/* Preview Pane (A3) */}
         {previewItem && (
-          <div
-            className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3"
-            style={{ width: 'clamp(340px, 28%, 480px)' }}
-          >
+          <div className="shrink-0 bg-c-bg p-3" style={{ width: 'clamp(340px, 28%, 480px)' }}>
             <PreviewPane
               item={previewItem}
               isPolish={isPolish}

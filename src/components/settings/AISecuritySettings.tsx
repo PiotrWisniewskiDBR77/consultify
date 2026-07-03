@@ -192,7 +192,7 @@ export function AISecuritySettings() {
       </div>
 
       {error && (
-        <div className="bg-danger-50 border border-danger-200 rounded-lg p-4 text-danger-700 flex items-center gap-2">
+        <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 text-rose-700 flex items-center gap-2">
           <AlertCircle className="w-5 h-5" />
           {error}
         </div>
@@ -255,7 +255,7 @@ export function AISecuritySettings() {
                   key={model.id}
                   className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer ${
                     settings.disabled_models.includes(model.id)
-                      ? 'border-danger-300 bg-danger-50 dark:bg-danger-900/20'
+                      ? 'border-rose-300 bg-rose-50 dark:bg-rose-900/20'
                       : 'border-gray-200 dark:border-gray-700'
                   }`}
                 >
@@ -356,7 +356,7 @@ export function AISecuritySettings() {
                       </p>
                     </div>
                     <Button variant="ghost" size="sm" onClick={() => deleteRateLimit(limit.id)}>
-                      <Trash2 className="w-4 h-4 text-danger-500" />
+                      <Trash2 className="w-4 h-4 text-rose-500" />
                     </Button>
                   </div>
                 ))}

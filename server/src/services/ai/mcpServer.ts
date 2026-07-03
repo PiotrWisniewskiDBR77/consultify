@@ -111,6 +111,7 @@ export const ToolSchemas: Record<string, Omit<ToolEntry, 'handler'>> = {
     description:
       'Create a deliverable artifact (document, spreadsheet, or presentation) from the user request and open it in the canvas on the right. ' +
       'Use this WHENEVER the user wants something written, drafted, generated, prepared, turned into a document/sheet/deck, or shown/saved in the canvas — including loose phrasings like "I want this in the canvas", "show it on the side", "put this together for me". ' +
+      'DO NOT use this when the user asks to create/start/draft an INITIATIVE (a PMO entity) — e.g. "stwórz/zrób/załóż inicjatywę", "create an initiative" — even when that initiative is about planning a plan, transformation, or strategy. Those go to generate_initiative, not here. This tool is only for a document/sheet/deck the user wants as output. ' +
       'After the tool returns, briefly confirm what was created in one sentence. Do NOT claim you created anything unless this tool returned ok:true.',
     type: TOOL_TYPE.READ,
     parameters: z.object({
@@ -124,13 +125,42 @@ export const ToolSchemas: Record<string, Omit<ToolEntry, 'handler'>> = {
         .describe(
           'A clear restatement of what the user wants in the artifact (topic, scope, key points). Use the user language.'
         ),
-      title: z.string().optional().describe('Optional title; if omitted one is derived from intent.'),
+      title: z
+        .string()
+        .optional()
+        .describe('Optional title; if omitted one is derived from intent.'),
     }),
     returns: z.object({
       ok: z.boolean(),
       kind: z.string().optional(),
       title: z.string().optional(),
       generationId: z.string().optional(),
+      message: z.string(),
+    }),
+  },
+  // ── M13 Depth · C2 — Teresa creates a DRAFT initiative (READ/auto, reversible) ──
+  // Mirrors generate_deliverable: a draft never promotes/approves, so no approval
+  // gate (MUTATION would require consent and not execute). Reuses the canonical
+  // Postgres-correct create path (NOT the legacy SQLite create_initiative).
+  generate_initiative: {
+    name: 'generate_initiative',
+    description:
+      'Create a new DRAFT initiative (a real PMO entity — the initiative backbone) from the user request. ' +
+      'Use this whenever the user wants to create/start/draft/found an initiative (e.g. "create an initiative for X", "stwórz/zrób/załóż inicjatywę ...") — INCLUDING when the initiative is about planning a plan, transformation, roadmap or strategy (e.g. "zrób inicjatywę polegającą na zaplanowaniu planu transformacji"). ' +
+      'An initiative is an entity, NOT a document about a plan — prefer this over generate_deliverable for any "create an initiative" request; words like "plan", "transformation" or "strategy" do not make it a deliverable. ' +
+      'It only creates a reversible DRAFT — it never promotes or approves. After it returns ok:true, confirm in one sentence. Do NOT claim you created an initiative unless this tool returned ok:true.',
+    type: TOOL_TYPE.READ,
+    parameters: z.object({
+      title: z.string().describe('Short title of the initiative. Use the user language.'),
+      problem: z
+        .string()
+        .optional()
+        .describe('The problem/context the initiative addresses, if stated.'),
+    }),
+    returns: z.object({
+      ok: z.boolean(),
+      id: z.string().optional(),
+      title: z.string().optional(),
       message: z.string(),
     }),
   },

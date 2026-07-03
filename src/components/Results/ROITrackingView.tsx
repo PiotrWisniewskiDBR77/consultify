@@ -26,6 +26,8 @@ import {
   type V8ResultsRoiPortfolioSummary,
 } from '@/services/api/v8/results';
 
+import { LoadingState as SharedLoadingState } from '@/components/shared/states';
+
 import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import { ReconciliationPanel } from './ReconciliationPanel';
 import { ROIDetailDrawer } from './ROIDetailDrawer';
@@ -83,7 +85,7 @@ function normalizePortfolioSummary(
 }
 
 const STATUS_STYLES: Record<ROIStatus, { bg: string; text: string; dot: string }> = {
-  'on-track': { bg: 'bg-slate-500/10', text: 'text-slate-600', dot: 'bg-slate-400' },
+  'on-track': { bg: 'bg-c-surface-raised/10', text: 'text-c-text-secondary', dot: 'bg-c-border-strong' },
   below: { bg: 'bg-danger-500/10', text: 'text-danger-400', dot: 'bg-danger-500' },
   above: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' },
 };
@@ -128,8 +130,8 @@ const ColumnFilterDropdown: React.FC<{
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className={`h-9 px-2 rounded-lg border border-slate-300 dark:border-navy-600 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors flex items-center gap-1 ${
-          activeValues.length > 0 ? 'text-primary-400 border-primary-500/40' : 'text-slate-500'
+        className={`h-9 px-2 rounded-lg border border-c-border-strong dark:border-c-border-strong hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors flex items-center gap-1 ${
+          activeValues.length > 0 ? 'text-c-info border-c-focus' : 'text-c-text-muted'
         }`}
       >
         <ChevronDown size={14} />
@@ -137,32 +139,32 @@ const ColumnFilterDropdown: React.FC<{
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute top-full left-0 mt-1 z-50 min-w-[180px] bg-navy-900 border border-navy-700 rounded-lg shadow-xl overflow-hidden">
+          <div className="absolute top-full left-0 mt-1 z-50 min-w-[180px] bg-c-surface border border-c-border rounded-lg shadow-xl overflow-hidden">
             <div className="max-h-[200px] overflow-y-auto p-2">
               {options.map((o) => (
                 <label
                   key={o.value}
-                  className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-navy-800 cursor-pointer"
+                  className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-c-surface-raised cursor-pointer"
                 >
                   <input
                     type="checkbox"
                     checked={selected.includes(o.value)}
                     onChange={() => toggle(o.value)}
-                    className="rounded border-navy-600 bg-navy-800 text-primary-500 focus:ring-primary-500"
+                    className="rounded border-c-border-strong bg-c-surface-raised text-c-focus-solid focus:ring-c-focus"
                   />
                   {o.color && <span className={`w-2 h-2 rounded-full ${o.color}`} />}
-                  <span className="text-sm text-slate-600">{o.label}</span>
+                  <span className="text-sm text-c-text-secondary">{o.label}</span>
                 </label>
               ))}
             </div>
-            <div className="flex items-center justify-between p-2 border-t border-navy-700">
+            <div className="flex items-center justify-between p-2 border-t border-c-border">
               <button
                 onClick={() => {
                   setSelected([]);
                   onApply([]);
                   setOpen(false);
                 }}
-                className="text-xs text-slate-500 hover:text-white transition-colors"
+                className="text-xs text-c-text-muted hover:text-c-text transition-colors"
               >
                 Clear
               </button>
@@ -171,7 +173,7 @@ const ColumnFilterDropdown: React.FC<{
                   onApply(selected);
                   setOpen(false);
                 }}
-                className="h-9 px-3 text-xs font-medium rounded-full bg-primary-500 text-white hover:bg-primary-400 transition-colors"
+                className="h-9 px-3 text-xs font-medium rounded-full bg-c-text text-c-bg hover:opacity-90 transition-colors"
               >
                 Apply
               </button>
@@ -348,18 +350,15 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
   const variancePct = totalPlanned !== 0 ? (totalVariance / Math.abs(totalPlanned)) * 100 : 0;
 
   const statusFilterOptions: FilterOption[] = [
-    { value: 'on-track', label: t('results.roi.statusOnTrack', 'On track'), color: 'bg-slate-400' },
+    { value: 'on-track', label: t('results.roi.statusOnTrack', 'On track'), color: 'bg-c-border-strong' },
     { value: 'below', label: t('results.roi.statusBelow', 'Below plan'), color: 'bg-danger-500' },
     { value: 'above', label: t('results.roi.statusAbove', 'Above plan'), color: 'bg-emerald-500' },
   ];
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <div className="flex items-center gap-3 text-slate-600">
-          <BarChart3 size={20} className="animate-pulse" />
-          <span className="text-sm">{t('common.loading', 'Loading...')}</span>
-        </div>
+      <div className="p-4">
+        <SharedLoadingState template="list" rows={6} />
       </div>
     );
   }
@@ -368,32 +367,32 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
     <div className="p-4 space-y-4">
       {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-xl bg-gradient-to-br from-navy-900 to-navy-800 border border-navy-700 p-4">
+        <div className="rounded-xl bg-gradient-to-br from-c-surface to-c-surface-raised border border-c-border p-4">
           <div className="flex items-center gap-2 mb-1">
-            <DollarSign size={16} className="text-slate-600" />
-            <span className="text-xs font-medium text-slate-500 uppercase">
+            <DollarSign size={16} className="text-c-text-secondary" />
+            <span className="text-xs font-medium text-c-text-muted uppercase">
               {t('results.roi.totalPlanned', 'Total Planned ROI')}
             </span>
           </div>
           <p className="text-lg font-semibold text-white">{formatCurrency(totalPlanned)}</p>
         </div>
-        <div className="rounded-xl bg-gradient-to-br from-navy-900 to-navy-800 border border-navy-700 p-4">
+        <div className="rounded-xl bg-gradient-to-br from-c-surface to-c-surface-raised border border-c-border p-4">
           <div className="flex items-center gap-2 mb-1">
-            <Target size={16} className="text-slate-600" />
-            <span className="text-xs font-medium text-slate-500 uppercase">
+            <Target size={16} className="text-c-text-secondary" />
+            <span className="text-xs font-medium text-c-text-muted uppercase">
               {t('results.roi.totalRealized', 'Total Realized ROI')}
             </span>
           </div>
           <p className="text-lg font-semibold text-white">{formatCurrency(totalRealized)}</p>
         </div>
-        <div className="rounded-xl bg-gradient-to-br from-navy-900 to-navy-800 border border-navy-700 p-4">
+        <div className="rounded-xl bg-gradient-to-br from-c-surface to-c-surface-raised border border-c-border p-4">
           <div className="flex items-center gap-2 mb-1">
             {totalVariance >= 0 ? (
               <TrendingUp size={16} className="text-emerald-400" />
             ) : (
               <TrendingDown size={16} className="text-danger-400" />
             )}
-            <span className="text-xs font-medium text-slate-500 uppercase">
+            <span className="text-xs font-medium text-c-text-muted uppercase">
               {t('results.roi.overallVariance', 'Overall Variance')}
             </span>
           </div>
@@ -403,7 +402,7 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
                 ? 'text-emerald-400'
                 : totalVariance < 0
                   ? 'text-danger-400'
-                  : 'text-slate-600'
+                  : 'text-c-text-secondary'
             }`}
           >
             {formatCurrency(totalVariance)} ({formatPercent(variancePct)})
@@ -413,12 +412,12 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
 
       {/* Initiative ROI Table */}
       {/* §27-exempt: financial-calculation — bespoke sort/filter state drives both table and KPI summary cards above; inline MoreVertical action menus are context-specific */}
-      <div className="bg-navy-900 border border-navy-700 rounded-xl overflow-hidden">
+      <div className="bg-c-surface border border-c-border rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-navy-900/50 border-b border-navy-700/50">
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[20%]">
+              <tr className="bg-c-surface/50 border-b border-c-border/50">
+                <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted uppercase tracking-wider w-[20%]">
                   <button
                     onClick={() => handleSort('initiativeName')}
                     className="hover:text-white transition-colors flex items-center gap-1"
@@ -427,7 +426,7 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
                     {sortCol === 'initiativeName' && (sortDir === 'asc' ? ' ↑' : ' ↓')}
                   </button>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[12%]">
+                <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted uppercase tracking-wider w-[12%]">
                   <button
                     onClick={() => handleSort('projectedBenefit')}
                     className="hover:text-white transition-colors"
@@ -436,7 +435,7 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
                     {sortCol === 'projectedBenefit' && (sortDir === 'asc' ? ' ↑' : ' ↓')}
                   </button>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[12%]">
+                <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted uppercase tracking-wider w-[12%]">
                   <button
                     onClick={() => handleSort('realizedBenefit')}
                     className="hover:text-white transition-colors"
@@ -445,7 +444,7 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
                     {sortCol === 'realizedBenefit' && (sortDir === 'asc' ? ' ↑' : ' ↓')}
                   </button>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[10%]">
+                <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted uppercase tracking-wider w-[10%]">
                   <button
                     onClick={() => handleSort('variance')}
                     className="hover:text-white transition-colors"
@@ -454,7 +453,7 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
                     {sortCol === 'variance' && (sortDir === 'asc' ? ' ↑' : ' ↓')}
                   </button>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[12%]">
+                <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted uppercase tracking-wider w-[12%]">
                   <div className="flex items-center gap-1">
                     <span>{t('results.roi.columns.status', 'Status')}</span>
                     <ColumnFilterDropdown
@@ -464,21 +463,21 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
                     />
                   </div>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[10%]">
+                <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted uppercase tracking-wider w-[10%]">
                   {t('results.roi.columns.period', 'Period')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[10%]">
+                <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted uppercase tracking-wider w-[10%]">
                   {t('results.roi.columns.owner', 'Owner')}
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider w-16" />
+                <th className="px-4 py-3 text-right text-xs font-medium text-c-text-muted uppercase tracking-wider w-16" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-navy-700/50">
+            <tbody className="divide-y divide-c-border-subtle/50">
               {filteredItems.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-16 text-center text-slate-500">
+                  <td colSpan={8} className="px-4 py-16 text-center text-c-text-muted">
                     <div className="flex flex-col items-center gap-2">
-                      <BarChart3 size={24} className="text-slate-600" />
+                      <BarChart3 size={24} className="text-c-text-secondary" />
                       <span>{t('results.roi.emptyState', 'No initiatives with ROI data')}</span>
                     </div>
                   </td>
@@ -497,23 +496,23 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
                       ? 'text-emerald-400'
                       : varPct < 0
                         ? 'text-danger-400'
-                        : 'text-slate-600';
+                        : 'text-c-text-secondary';
 
                   return (
                     <tr
                       key={item.initiativeId}
                       onClick={() => setDrawerInitiativeId(item.initiativeId)}
-                      className="group hover:bg-navy-800/50 cursor-pointer transition-colors"
+                      className="group hover:bg-c-surface-raised/50 cursor-pointer transition-colors"
                     >
                       <td className="px-4 py-3">
                         <span className="text-sm font-medium text-white">
                           {item.initiativeName || '—'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-600">
+                      <td className="px-4 py-3 text-sm text-c-text-secondary">
                         {formatCurrency(item.projectedBenefit)}
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-600">
+                      <td className="px-4 py-3 text-sm text-c-text-secondary">
                         {formatCurrency(item.realizedBenefit)}
                       </td>
                       <td className={`px-4 py-3 text-sm font-medium ${varColor}`}>
@@ -522,10 +521,10 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
                       <td className="px-4 py-3">
                         <StatusBadge status={roiStatus} />
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-500">
+                      <td className="px-4 py-3 text-sm text-c-text-muted">
                         {t('results.roi.periodYtd', 'YTD')}
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-500">{item.ownerName || '—'}</td>
+                      <td className="px-4 py-3 text-sm text-c-text-muted">{item.ownerName || '—'}</td>
                       <td className="px-4 py-3 text-right">
                         <div className="relative">
                           <button
@@ -535,7 +534,7 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
                                 menuRowId === item.initiativeId ? null : item.initiativeId
                               );
                             }}
-                            className="p-1.5 rounded hover:bg-navy-700 text-slate-500 hover:text-white transition-colors h-9"
+                            className="p-1.5 rounded hover:bg-c-surface-raised text-c-text-muted hover:text-white transition-colors h-9"
                           >
                             <MoreVertical size={14} />
                           </button>
@@ -545,13 +544,13 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
                                 className="fixed inset-0 z-40"
                                 onClick={() => setMenuRowId(null)}
                               />
-                              <div className="absolute right-0 top-full mt-1 z-50 w-48 bg-navy-800 border border-navy-700 rounded-lg shadow-xl overflow-hidden">
+                              <div className="absolute right-0 top-full mt-1 z-50 w-48 bg-c-surface-raised border border-c-border rounded-lg shadow-xl overflow-hidden">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleRowAction('open', item);
                                   }}
-                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-600 hover:bg-navy-700"
+                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-c-text-secondary hover:bg-c-surface-raised"
                                 >
                                   <Maximize2 size={14} />
                                   {t('results.roi.actions.openDetail', 'Open detail')}
@@ -561,7 +560,7 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
                                     e.stopPropagation();
                                     handleRowAction('record', item);
                                   }}
-                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-600 hover:bg-navy-700"
+                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-c-text-secondary hover:bg-c-surface-raised"
                                 >
                                   <Plus size={14} />
                                   {t('results.roi.actions.recordActual', 'Record actual')}
@@ -571,7 +570,7 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
                                     e.stopPropagation();
                                     handleRowAction('history', item);
                                   }}
-                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-600 hover:bg-navy-700"
+                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-c-text-secondary hover:bg-c-surface-raised"
                                 >
                                   <Edit3 size={14} />
                                   {t('results.roi.actions.viewHistory', 'View history')}

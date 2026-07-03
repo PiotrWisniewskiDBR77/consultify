@@ -564,7 +564,8 @@
       "searchArtifacts": "Szukaj projektu, badania, raportu, inicjatywy...",
       "loadingArtifacts": "Ładowanie artefaktów...",
       "noArtifacts": "Nie znaleziono jeszcze żadnych zarejestrowanych artefaktów. Możesz nadal wybrać typ źródła poniżej, aby utworzyć roboczą prezentację.",
-      "selectedEvidence": "Wybrane dowody"
+      "selectedEvidence": "Wybrane dowody",
+      "showDrafts": "Pokaż robocze"
     },
     "setup": {
       "title": "Skonfiguruj swój deck",
@@ -869,6 +870,8 @@
       "alternativeLayout": "Alternatywny układ",
       "regenerateSlide": "Wygeneruj slajd ponownie",
       "regenerating": "Generowanie ponowne…",
+      "rewritePlaceholder": "Przerób ten slajd…",
+      "rewriteSlide": "Przerób",
       "notesPlaceholder": "Notatki prelegenta do tego slajdu..."
     },
     "agent": {
@@ -1623,7 +1626,9 @@
         "bgGrid": "Siatka",
         "bgLines": "Linie",
         "bgBlank": "Puste",
-        "saving": "Zapisuję…"
+        "saving": "Zapisuję…",
+        "more": "Więcej",
+        "follow": "Śledź"
       },
       "selectionBar": {
         "ariaLabel": "Akcje zaznaczenia",
@@ -2143,9 +2148,63 @@
       "relatedHint": "Powiązane z aktualnym assessmentem",
       "goAfterPlanning": "Przejdź do Inicjatyw po PLANNING",
       "goTo": "Idź do Inicjatyw"
+    },
+    "drd": {
+      "whyThisMatters": {
+        "title": "Dlaczego o to pytamy",
+        "ariaLabel": "Dlaczego to pytanie"
+      },
+      "glossary": {
+        "button": "Słownik"
+      }
+    },
+    "glossary": {
+      "title": "Słownik konsultingowy"
     }
   },
   "initiatives": {
+    "gateAi": {
+      "pill": {
+        "ariaReady": "Gotowość AI: gotowe, wynik {{score}} na 100",
+        "ariaBelow": "Gotowość AI: poniżej progu, wynik {{score}} na 100",
+        "ariaLoading": "Ocena gotowości AI w toku",
+        "loading": "Ocena…",
+        "label": "Gotowość AI",
+        "scoreSuffix": "/100"
+      },
+      "panel": {
+        "title": "Gotowość do bramki — analiza AI",
+        "readyTitle": "Inicjatywa gotowa do przejścia",
+        "readyDescription": "Wszystkie wymagane sekcje spełniają próg i nie wykryto blokad na linii czasu.",
+        "scoreLabel": "Wynik gotowości",
+        "thresholdLabel": "Próg",
+        "gapsTitle": "Braki merytoryczne",
+        "gapSectionScore": "wynik {{score}}/100",
+        "fixesTitle": "Sugerowane naprawy",
+        "timelineTitle": "Sygnały na linii czasu",
+        "timelineBlock": "Blokada",
+        "timelineWarn": "Ostrzeżenie",
+        "timelineKind": {
+          "dependency": "Zależność",
+          "date_conflict": "Konflikt dat",
+          "resource_conflict": "Konflikt zasobów"
+        },
+        "noTimeline": "Brak analizy linii czasu dla tej bramki.",
+        "emptyTitle": "Brak danych gotowości",
+        "emptyDescription": "Ocena AI nie jest dostępna dla tej bramki."
+      },
+      "override": {
+        "title": "Przejście poniżej progu gotowości",
+        "description": "Inicjatywa nie spełnia progu gotowości AI. Możesz przejść mimo to — podaj uzasadnienie, które zostanie zapisane.",
+        "summaryScore": "Wynik {{score}}/100 (próg {{threshold}})",
+        "gapsTitle": "Główne braki",
+        "timelineTitle": "Blokady na linii czasu",
+        "reasonLabel": "Uzasadnienie (wymagane)",
+        "reasonPlaceholder": "Opisz, dlaczego przechodzisz mimo braków…",
+        "confirm": "Przejdź mimo to",
+        "cancel": "Anuluj"
+      }
+    },
     "roi": {
       "title": "Realizacja wartości i ROI",
       "subtitle": "Analizy ekonomiczne powiązane z inicjatywami",
@@ -2356,7 +2415,10 @@
     },
     "tabs": {
       "portfolio": "Portfolio",
-      "analysis": "Analiza"
+      "analysis": "Analiza",
+      "observability": "Obserwowalność",
+      "candidates": "Kandydaci",
+      "portfolioHealth": "Zdrowie portfela"
     },
     "analysis": {
       "resources": {
@@ -3240,7 +3302,8 @@
       "intangiblesToAdd": "Licencje/szkolenia — do dodania",
       "noAdditionsForTable": "AI nie zaproponowało dodatków dla tej tabeli.",
       "noMissingResources": "AI nie zaproponowało brakujących zasobów do dodania.",
-      "invalidAiFormat": "Odpowiedź AI ma nieprawidłowy format (nie można zastosować)."
+      "invalidAiFormat": "Odpowiedź AI ma nieprawidłowy format (nie można zastosować).",
+      "english": "Polish"
     },
     "timelinePlanner": {
       "initiativeStart": "Start inicjatywy",
@@ -3497,7 +3560,8 @@
       "requiredApproval": "Wymagana aprobata",
       "requiredApprovalsForStatus": "Wymagane zatwierdzenia dla statusu",
       "notRequested": "Nie zgłoszono",
-      "allGatesPassed": "Wszystkie bramki przejdzone!"
+      "allGatesPassed": "Wszystkie bramki przejdzone!",
+      "english": "Polish"
     },
     "tasksMilestonesSection": {
       "aiReturnedNoTaskTitle": "AI nie zwróciło tytułu taska",
@@ -3565,7 +3629,12 @@
       "none": "— Brak —",
       "creating": "Tworzenie...",
       "createTask": "Utwórz task",
-      "done": "ukończone"
+      "done": "ukończone",
+      "english": "Polish",
+      "emptyPlanTitle": "Ta inicjatywa nie ma jeszcze planu",
+      "emptyPlanHint": "Zadania zasilają harmonogram (Gantt) i postęp inicjatywy. Dodaj pierwsze zadanie albo pozwól AI zaproponować kompletny plan.",
+      "emptyPlanAddFirst": "Dodaj pierwsze zadanie",
+      "emptyPlanGenerateAi": "Wygeneruj plan z AI"
     },
     "decisionsSection": {
       "missingInitiativeId": "Brak ID inicjatywy",
@@ -3631,7 +3700,9 @@
       "none": "— Brak —",
       "creating": "Tworzenie...",
       "createDecision": "Utwórz decyzję",
-      "approved": "zatwierdzonych"
+      "approved": "zatwierdzonych",
+      "english": "Polish",
+      "gateDecisionRequiredBeforePromotion": "Decyzja bramki — wymagana przed promocją"
     },
     "kpisSection": {
       "failedToLoadKpis": "Nie udało się pobrać KPI",
@@ -3684,7 +3755,8 @@
       "noKpisDefined": "Brak zdefiniowanych KPI",
       "addFirstKpi": "Dodaj pierwszy KPI dla tej inicjatywy.",
       "newKpi": "Nowy KPI",
-      "noKpis": "Brak KPI"
+      "noKpis": "Brak KPI",
+      "english": "Polish"
     },
     "overviewSection": {
       "initiativeDescription": "Opis inicjatywy",
@@ -3774,7 +3846,8 @@
       "control": "Sterowanie",
       "currentModule": "Aktualny moduł",
       "goTo": "Przejdź →",
-      "priority": "Priorytet"
+      "priority": "Priorytet",
+      "owner": "Właściciel"
     },
     "raidSection": {
       "convertedFrom": "Konwersja z {{type}}: {{title}}",
@@ -3797,7 +3870,8 @@
     },
     "linkedItemsSection": {
       "itemLinked": "Element powiązany",
-      "linkRemoved": "Powiązanie usunięte"
+      "linkRemoved": "Powiązanie usunięte",
+      "linkError": "Nie udało się zapisać powiązania"
     },
     "tagsSection": {
       "tags": "Tagi",
@@ -3839,7 +3913,8 @@
       "addSuccessCriteriaPlaceholder": "Dodaj kryterium sukcesu...",
       "deliverablesDescription": "Konkretne produkty i rezultaty do dostarczenia",
       "deliverablesListLabel": "Produkty — lista",
-      "addDeliverablePlaceholder": "Dodaj produkt..."
+      "addDeliverablePlaceholder": "Dodaj produkt...",
+      "english": "Polish"
     },
     "initiativeGatesWorkflowTable": {
       "stage": "Etap",
@@ -3900,7 +3975,8 @@
       "noAdditionsProposed": "Brak propozycji do dodania.",
       "applyApiNote": "Po akceptacji dodamy/usuniemy wybrane zależności przez API (bez wymyślania nowych zadań).",
       "cancel": "Anuluj",
-      "apply": "Zastosuj"
+      "apply": "Zastosuj",
+      "english": "Polish"
     },
     "scopeSection": {
       "scopeAndKillCriteria": "Zakres i kryteria rezygnacji",
@@ -4097,10 +4173,74 @@
     "archive": {
       "hint": "Zakończ lub anuluj najpierw"
     },
+    "archiveAction": "Archiwizuj",
+    "calendarView": {
+      "month": "Miesiąc",
+      "week": "Tydzień",
+      "today": "Dziś",
+      "prev": "Poprzedni",
+      "next": "Następny",
+      "allStatuses": "Wszystkie statusy",
+      "undated": "Bez daty",
+      "loading": "Ładowanie…",
+      "empty": "Brak zadań i kamieni z datą.",
+      "show": "Pokaż kalendarz",
+      "hide": "Ukryj kalendarz",
+      "calendar": "Kalendarz",
+      "gantt": "Gantt"
+    },
     "confirmDelete": "Trwale usunąć „{{name}}\"? Tej operacji nie można cofnąć.",
     "thisInitiative": "tę inicjatywę",
     "card": {
       "nextStep": "Następny krok"
+    },
+    "observability": {
+      "funnelTitle": "Lejek konwersji portfela",
+      "lineageTitle": "Łańcuch pochodzenia inicjatywy",
+      "created": "Utworzone",
+      "inExecution": "W wykonaniu",
+      "tracking": "Rezultaty",
+      "conversion": "Konwersja",
+      "byStatus": "Wg statusu",
+      "bySource": "Wg źródła",
+      "source": "Źródło",
+      "sourceManual": "ręczne",
+      "initiative": "Inicjatywa",
+      "execution": "Wykonanie",
+      "results": "Rezultaty",
+      "kpiCount": "{{count}} KPI",
+      "pickInitiative": "Wybierz inicjatywę",
+      "empty": "Brak danych obserwowalności.",
+      "noLineage": "Brak łańcucha dla wybranej inicjatywy."
+    },
+    "initiativeDocumentView": {
+      "less": "Mniej",
+      "more": "Więcej",
+      "creatingMaterial": "Tworzę materiał…",
+      "materialReady": "Materiał gotowy",
+      "failedToCreateMaterial": "Nie udało się utworzyć materiału"
+    },
+    "initiativePreviewV3": {
+      "linkedFinanceModels": "Powiązane modele finansowe",
+      "openInFinance": "Otwórz w module Finanse",
+      "generate3QuickHintsWhatTo": "Wygeneruj 3 szybkie hinty (co zrobić / na co uważać / jak mierzyć).",
+      "source": "Źródło",
+      "tasks": "Zadania",
+      "helpMeRefineThisInitiativeMissing": "Pomóż mi dopracować tę inicjatywę: brakujące pola, ryzyka, KPI i następne kroki.",
+      "open": "Otwórz",
+      "inModule": "W module",
+      "chat": "Czat",
+      "copyLink": "Kopiuj link"
+    },
+    "draftJourney": {
+      "badge": "Szkic",
+      "headline": "To jest dokument roboczy inicjatywy — trzy kroki do startu",
+      "contentTitle": "Treść dokumentu",
+      "contentCta": "Wypełnij z AI",
+      "planTitle": "Plan i zadania",
+      "planCta": "Zaplanuj zadania",
+      "advanceTitle": "Dalej w procesie",
+      "advanceCta": "Prześlij do przeglądu"
     }
   },
   "execution": {
@@ -4369,6 +4509,13 @@
       "summarizePrompt": "Podsumuj tę inicjatywę w 5 punktach i zaproponuj 3 kolejne kroki."
     },
     "reports": {
+      "preset": {
+        "weekly": "Tygodniowy",
+        "monthly": "Miesięczny",
+        "biweekly": "Dwutygodniowy",
+        "onDemand": "Na żądanie",
+        "sponsor": "Sponsorski"
+      },
       "title": "Raporty realizacji",
       "subtitle": "Generuj prosty pakiet tygodniowy i raporty pogłębione bez dokładania narzutu procesowego.",
       "open": "Otwórz Raporty",
@@ -7634,6 +7781,14 @@
       "personal": "Osobisty",
       "status": "Status",
       "connected": "Połączony"
+    },
+    "chat": {
+      "comingSoonTitle": "Wkrótce",
+      "comingSoonDesc": "Eksport i wyczyszczenie całej historii rozmów nie są jeszcze dostępne. W międzyczasie możesz usuwać pojedyncze rozmowy bezpośrednio z czatu.",
+      "title": "Historia czatu",
+      "desc": "Zarządzaj historią rozmów i przechowywaniem danych.",
+      "export": "Eksportuj historię",
+      "clear": "Wyczyść całą historię"
     }
   },
   "showcase": {
@@ -10504,6 +10659,18 @@
     "researching": "Badanie"
   },
   "admin": {
+    "health": {
+      "title": "Health — dowody działania",
+      "subtitle": "Wewnętrzne probe'y, które potwierdzają, że każdy podsystem realnie działa end-to-end.",
+      "passing": "Zielone",
+      "failing": "Czerwone",
+      "notRun": "Nie uruchomiono",
+      "runAll": "Uruchom wszystkie",
+      "envDisabled": "Probe'y health są wyłączone w tym środowisku.",
+      "empty": "Brak zarejestrowanych probe'ów.",
+      "lastRun": "Ostatnie uruchomienie",
+      "rerun": "Uruchom ponownie"
+    },
     "strategicProfile": {
       "industryCode": "Kod branżowy ({{system}})",
       "annualRevenue": "Roczny przychód ({{currency}})",
@@ -12944,6 +13111,108 @@
       "total": "Łącznie",
       "active": "Aktywny",
       "empty": "Brak prezentacji."
+    },
+    "strategic": {
+      "bsc": "Balanced Scorecard",
+      "bscHealth": "zdrowie",
+      "bscUnbalanced": "Scorecard niezrównoważony — brakuje KPI w co najmniej jednej perspektywie.",
+      "bscNoData": "Brak KPI — dodaj KPI i powiąż je z inicjatywami.",
+      "perspectiveNoKpi": "Brak KPI",
+      "bdn": "Benefits Dependency Network",
+      "bdnBenefits": "Korzyści",
+      "bdnEnablers": "Enablerzy",
+      "bdnLinks": "Powiązania",
+      "adoption": "Adopcja → ryzyko korzyści",
+      "adoptionSourceCm": "Dane: zarządzanie zmianą (ADKAR)",
+      "adoptionSourceProxy": "Dane: proxy z realizacji (v1)",
+      "adoptionOk": "Brak inicjatyw zagrożonych słabą adopcją.",
+      "adoptionScore": "Adopcja",
+      "sentiment": "Nastrój",
+      "championCoverage": "Liderzy zmiany",
+      "riskReasons": "Powody ryzyka",
+      "adoptionProxyMore": "+{{count}} oznaczonych z danych proxy (bez sygnału nastroju)",
+      "benefitProfiles": "Profil korzyści",
+      "benefitProfilesSummary": "{{total}} korzyści · {{financial}} finansowa · {{withTarget}} z celem",
+      "disBenefits": "{{count}} dis-korzyść",
+      "benefitProfilesNoData": "Brak profili korzyści — zdefiniuj KPI z typem i celem.",
+      "disBenefitTag": "dis-korzyść",
+      "benefitNoTarget": "brak celu",
+      "okr": "OKR — kaskada celów",
+      "okrAvg": "śr.",
+      "okrOnTrack": "na torze",
+      "okrAtRisk": "zagrożone",
+      "okrOffTrack": "poza torem",
+      "okrNoData": "Brak zdefiniowanych OKR",
+      "sustainment": "Utrzymanie wartości",
+      "narrative": "Narracja zarządcza"
+    },
+    "ai": {
+      "narrative": "Narracja wartości",
+      "noNarrative": "Brak danych do narracji — dodaj cele ROI dla inicjatyw.",
+      "counterfactual": "Atrybucja — co bez inicjatywy?",
+      "realized": "Zrealizowane",
+      "counterfactualProjected": "Bez inicjatywy (proj.)",
+      "attributableDelta": "Atrybucja do inicjatywy",
+      "confidence": "pewność",
+      "noCounterfactual": "Brak historycznych pomiarów do analizy kontrfaktycznej.",
+      "anomalyTitle": "Wykrywanie anomalii KPI",
+      "premiumBadge": "AI premium",
+      "anomalyCopy": "Automatyczne wykrywanie punktów odstających w szeregu pomiarów KPI — metodą z-score (|z| > 2) oraz IQR (poza Q1−1.5·IQR / Q3+1.5·IQR). Punkt wskazany przez obie metody lub przy |z| ≥ 3 oznaczany jest jako poważny (severe).",
+      "anomalySevere": "Poważne",
+      "anomalyMild": "Łagodne",
+      "anomalyMinPoints": "Wymaga min. 6 pomiarów na KPI",
+      "anomalyServerNote": "Anomalie liczone po stronie serwera (silnik kpiAnomalyService) — wynik pojawi się tu po podpięciu endpointu pomiarów KPI.",
+      "forecastTitle": "Prognoza trajektorii KPI",
+      "forecastCopy": "Regresja liniowa (least squares) na historii pomiarów każdego KPI: prognoza wartości, szacowany termin osiągnięcia celu (ETA) oraz alert wyprzedzający, gdy trend nie trafia w cel przed deadline.",
+      "forecastOnTrack": "Na trajektorii do celu",
+      "forecastAtRisk": "Cel zagrożony",
+      "forecastConfidence": "Pewność: low / medium / high (z liczby pomiarów + dopasowania R²)",
+      "forecastMinPoints": "Wymaga min. 6 pomiarów na KPI. Silnik kpiForecastService — dostępne po konfiguracji AI premium.",
+      "rcaTitle": "Sugestia RCA / akcji naprawczej",
+      "rcaCopy": "Dla każdego odchylenia KPI heurystyczny silnik (bez LLM, deterministyczny) generuje hipotezy przyczyn źródłowych na podstawie sygnałów: odchylenie, trend, adopcja, świeżość danych, zmiana zakresu, przeciążenie zasobów — i mapuje je na konkretne akcje naprawcze z właścicielem.",
+      "rcaServerNote": "Sugestie liczone po stronie serwera (silnik deviationRcaSuggestService) — pojawią się tu dla wykrytych odchyleń po podpięciu endpointu RCA."
+    },
+    "portfolio": {
+      "funnelStageIdeas": "Pomysły",
+      "funnelStageValidated": "Zwalidowane",
+      "funnelStageInflight": "W realizacji",
+      "funnelStageRealized": "Zrealizowane",
+      "funnel": "Lejek wartości portfela",
+      "funnelInitiatives": "inicjatyw",
+      "funnelRiskAdjusted": "po ryzyku",
+      "funnelLeakage": "wyciek",
+      "funnelValueAtRisk": "Wartość zagrożona",
+      "signals": "Sygnały do M14 Wdrożenie",
+      "goToM14": "Przejdź do M14 Wdrożenie",
+      "runRate": "Run-rate vs in-year",
+      "annualizedRunRate": "Run-rate annualizowany",
+      "projectedFullYear": "Prognoza do końca roku",
+      "alreadyRealized": "Zrealizowane",
+      "runRateAssumed": "założenie: 6 mies. okno pomiaru",
+      "runRateMeasured": "okno pomiaru: {{months}} mies. (z danych)",
+      "reallocation": "Rekomendowane przesunięcia zasobów",
+      "reallocCapacityAssumed": "pojemność FTE = założenie (brak danych kadrowych)",
+      "scenarios": "Scenariusze + IRR",
+      "scenario": "Scenariusz",
+      "scenariosAssumptionNote": "IRR / cashflow — model i założenia v1",
+      "financeLink": "Spięcie z Finansami (M16)",
+      "noFinanceLink": "Brak mapowań KPI→Finanse. Skonfiguruj w module Finanse (M16) — tabela kpi_financial_mappings.",
+      "positiveImpact": "Pozytywny wpływ",
+      "negativeImpact": "Negatywny wpływ",
+      "netImpact": "Wpływ netto",
+      "boardPack": "Board-pack / Auto-narracja wartości",
+      "boardPackDesc": "Eksportuj raport PDF / deck / tabelę przez generatory M17–M20. Dostępne po konfiguracji Deliverables.",
+      "boardPackGo": "Przejdź do Outputs →"
+    },
+    "driverTree": {
+      "error": "Nie udało się załadować drzewa.",
+      "noData": "Brak danych drzewa wartości.",
+      "stats": {
+        "kpis": "KPI",
+        "initiatives": "Inicjatywy",
+        "nodes": "Węzły"
+      },
+      "noLinks": "Brak powiązań KPI z inicjatywami. Połącz KPI z inicjatywami w zakładce KPI."
     }
   },
   "traceability": {
@@ -12983,7 +13252,8 @@
       "documents": "Dokumenty",
       "mine": "Moje",
       "needsReview": "Wymaga przeglądu",
-      "sheets": "Arkusze"
+      "sheets": "Arkusze",
+      "data": "Dane"
     },
     "columns": {
       "name": "Nazwa",
@@ -13017,7 +13287,8 @@
         "exported": "Wyeksportowany",
         "shared": "Udostępniony",
         "deprecated": "Wycofany"
-      }
+      },
+      "showDrafts": "Pokaż robocze"
     },
     "actions": {
       "newTemplate": "Nowy wzorzec",
@@ -13100,6 +13371,47 @@
       "retry": "Spróbuj ponownie"
     },
     "outputs": {
+      "launcher": {
+        "title": "Nowy output",
+        "subtitle": "Wybierz, co chcesz utworzyć",
+        "report": "Raport",
+        "reportHint": "Dokument doradczy — Teresa pomoże go napisać",
+        "presentation": "Prezentacja",
+        "presentationHint": "Slajdy w jakości Gamma — układ i grafika",
+        "table": "Tabela",
+        "tableHint": "Otypowany arkusz z formatami — styl Airtable/Excel",
+        "chooseTemplate": "Wybierz szablon",
+        "templateSubtitle": "Zacznij od zera lub z szablonu",
+        "back": "Wstecz",
+        "suggestPlaceholder": "Opisz, czego potrzebujesz…",
+        "suggestBtn": "Teresa zaproponuje",
+        "suggestDefaultIntent": "dobierz dla mnie najlepszy szablon",
+        "suggestResult": "Teresa rekomenduje",
+        "suggestAccept": "Użyj tego szablonu",
+        "bundle": "Komplet AI",
+        "bundleHint": "Jeden brief → DOCX + XLSX + PPTX pobrane jako ZIP",
+        "bundleTitle": "Komplet AI — brief",
+        "bundleSubtitle": "Opisz swoją firmę, produkt, rynek i ask w jednym akapicie. AI wygeneruje DOCX + XLSX + PPTX i pobierze je jako ZIP.",
+        "bundleGenerating": "Generowanie…",
+        "bundleGenerate": "Generuj i pobierz ZIP",
+        "bundleBriefTooShort": "Brief musi mieć co najmniej 20 znaków",
+        "bundleError": "Generowanie nie powiodło się — spróbuj ponownie",
+        "phase0": "Analiza briefu i ekstrakcja KPI…",
+        "phase1": "Budowanie modelu finansowego…",
+        "phase2": "Pisanie sekcji raportu…",
+        "phase3": "Komponowanie deck'u…",
+        "phase4": "Renderowanie DOCX + XLSX + PPTX…",
+        "phaseEstimateNote": "Szacowany przebieg — generacja trwa zwykle 1–2 min, pobieranie ruszy po zakończeniu.",
+        "tpl": {
+          "blank": "Pusty",
+          "auditReport": "Raport audytowy",
+          "execMemo": "Memo zarządcze",
+          "boardDeck": "Deck zarządczy",
+          "diagnostic": "Read-out diagnostyczny",
+          "riskRegister": "Rejestr ryzyk",
+          "kpiDashboard": "KPI Dashboard"
+        }
+      },
       "kind": {
         "presentation": "Prezentacja",
         "sheet": "Tabela",
@@ -13187,6 +13499,24 @@
       "breadcrumb": {
         "library": "Biblioteka"
       }
+    },
+    "bundles": {
+      "title": "Komplet AI — historia generacji",
+      "empty": "Brak wygenerowanych materiałów",
+      "loading": "Ładowanie historii…",
+      "qualityOk": "Jakość OK",
+      "qualityIssues": "Problemy z jakością",
+      "qualityUnknown": "Jakość nieznana",
+      "statusDraft": "Szkic",
+      "statusGenerating": "Generowanie",
+      "statusReady": "Gotowy",
+      "statusError": "Błąd",
+      "detailTitle": "Szczegóły wiązki",
+      "detailClose": "Zamknij",
+      "redownload": "Pobierz ponownie",
+      "redownloadUnavailable": "Ponowne pobranie niedostępne (brak zapisanego briefu)",
+      "showHistory": "Historia generacji Komplet AI",
+      "hideHistory": "Ukryj historię"
     },
     "errors": {
       "realReportsTitle": "Źródło rzeczywistych raportów wymaga uwagi",
@@ -13652,6 +13982,7 @@
         "rejected": "Odrzucone",
         "caption": "Pole schematu wyrenderowane jako blok dokumentu tabeli operacyjnej",
         "proposalCaption": "Powiązane z propozycją schematu {{proposalId}}",
+        "typeCaption": "Pole typu {{fieldType}}",
         "unnamedField": "pole_bez_nazwy",
         "defaultType": "tekst"
       },
@@ -13781,7 +14112,27 @@
       }
     },
     "rightRail": {
-      "search": "Wyszukiwanie"
+      "search": "Wyszukiwanie",
+      "aiEditor": {
+        "promptRequired": "Polecenie jest wymagane",
+        "proposalRejected": "Propozycja odrzucona",
+        "panelAria": "Edytor AI Tabele"
+      },
+      "qa": {
+        "reportRefreshed": "Odświeżono raport QA",
+        "suggestionDismissed": "Sugestię oznaczono jako nieadekwatną",
+        "panelAria": "Raport QA Tabele"
+      },
+      "sourcePack": {
+        "nameRequired": "Nazwa paczki jest wymagana",
+        "needOneRecord": "Dodaj co najmniej jeden rekord do paczki",
+        "searchPlaceholder": "Szukaj rekordów wg treści",
+        "namePlaceholder": "Nazwa paczki"
+      },
+      "share": {
+        "conversionFailed": "Konwersja nie powiodła się. Zobacz ostatnie konwersje po szczegóły.",
+        "panelAria": "Udostępnianie i konwersje Tabele"
+      }
     },
     "back": "Wstecz",
     "leftRail": {
@@ -14805,7 +15156,9 @@
       "fresh": "aktualne",
       "notTracked": "nie śledzono",
       "error": "Błąd",
-      "noRunsYet": "Brak uruchomień."
+      "noRunsYet": "Brak uruchomień.",
+      "accessRevoked": "; dostęp cofnięty",
+      "accessRevokedWithReason": "; dostęp cofnięty ({{reason}})"
     },
     "unknown": "nieznana",
     "tokenExpiry": "wygaśnięcie tokenu",
@@ -14903,7 +15256,11 @@
       "runFinalAcceptance": "Uruchom akceptację końcową",
       "decision": "Decyzja",
       "linkedRuns": "Powiązane przebiegi",
-      "none": "brak"
+      "none": "brak",
+      "reportTypeClientReady": "Dla klienta",
+      "reportTypeInvestorReady": "Dla inwestora",
+      "reportTypeSteeringCommittee": "Dla komitetu sterującego",
+      "reportTypeCisoSecurity": "CISO / Bezpieczeństwo"
     },
     "confidence": "pewność"
   },
@@ -15323,7 +15680,11 @@
       "reject": "Odrzuć"
     },
     "editor": {
-      "teresaWriting": "Teresa pisze..."
+      "teresaWriting": "Teresa pisze...",
+      "toolbar": {
+        "insertTable": "Wstaw tabelę",
+        "insertLink": "Wstaw link"
+      }
     },
     "versionHistory": {
       "justNow": "przed chwilą",
@@ -15418,7 +15779,11 @@
       },
       "export": {
         "saving": "Zapisywanie…",
-        "saveToOutputs": "Zapisz do Outputs"
+        "saveToOutputs": "Zapisz do Outputs",
+        "saveMarkdown": "Zapisz Markdown",
+        "downloadMarkdown": "Pobierz Markdown",
+        "downloadWord": "Pobierz Word (.docx)",
+        "downloadPowerPoint": "Pobierz PowerPoint (.pptx)"
       },
       "mdProps": {
         "title": "Właściwości pliku MD",
@@ -15440,7 +15805,11 @@
       },
       "source": {
         "note": "Źródło: notatka"
-      }
+      },
+      "newCanvas": "Nowy Canvas",
+      "menuAria": "Menu Canvas",
+      "save": "Zapisz",
+      "companyAiChat": "Firmowy czat AI"
     }
   },
   "chatProposal": {
@@ -15494,7 +15863,515 @@
     "error": "Błąd",
     "all": "Wszystkie",
     "search": "Wyszukiwanie",
-    "cancel": "Anuluj"
+    "cancel": "Anuluj",
+    "detail": {
+      "activityLog": {
+        "decisionCreated": "Decyzja utworzona",
+        "approval": "Zatwierdzenie",
+        "rejection": "Odrzucenie",
+        "escalation": "Eskalacja",
+        "deferral": "Odroczenie",
+        "assignment": "Przypisanie",
+        "comment": "Komentarz",
+        "deadline": "Termin",
+        "statusChange": "Zmiana statusu",
+        "edit": "Edycja",
+        "created": "Utworzenie",
+        "entriesTab": "Wpisy",
+        "changesTab": "Zmiany",
+        "escalationsTab": "Eskalacje",
+        "collaborationTab": "Współpraca",
+        "noEntries": "Brak wpisów w logu.",
+        "from": "Było",
+        "to": "Jest",
+        "title": "Logi aktywności",
+        "commentAdded": "Dodano komentarz",
+        "decisionDelegated": "Decyzja delegowana"
+      },
+      "escalationMode": {
+        "notifyOnly": "Powiadomienie tylko",
+        "managerReview": "Przegląd managera",
+        "executiveAlert": "Alert executive"
+      },
+      "channels": {
+        "noChannels": "Brak kanałów",
+        "disabled": "Wyłączone"
+      },
+      "raci": {
+        "responsible": "Odpowiedzialny",
+        "accountable": "Rozliczany",
+        "accountableAlt": "Rozliczalny",
+        "consulted": "Konsultowany",
+        "informed": "Informowany"
+      },
+      "draftAutosaved": "Szkic autozapisany {{time}}",
+      "toast": {
+        "loadFailed": "Nie udało się załadować decyzji",
+        "titleRequired": "Tytuł jest wymagany",
+        "decisionUpdated": "Decyzja zaktualizowana",
+        "decisionCreated": "Decyzja utworzona",
+        "saveFailed": "Nie udało się zapisać decyzji",
+        "decisionApproved": "Decyzja zatwierdzona",
+        "pending": "Oczekująca",
+        "approved": "Zatwierdzona",
+        "approveFailed": "Nie udało się zatwierdzić",
+        "workflowStageChanged": "Zmieniono etap workflow decyzji",
+        "workflowUpdateFailed": "Nie udało się zmienić workflow decyzji",
+        "publishedWithTasks": "Opublikowano decyzję i utworzono {{count}} task{{taskSuffix}}",
+        "workflowSetTo": "Workflow ustawiony na: {{label}}",
+        "decisionRejected": "Decyzja odrzucona",
+        "rejected": "Odrzucona",
+        "rejectFailed": "Nie udało się odrzucić",
+        "decisionDeferred": "Decyzja odroczona",
+        "deferred": "Odroczona",
+        "deferFailed": "Nie udało się odroczyć",
+        "escalatedFromDetail": "Eskalacja z widoku decyzji",
+        "decisionEscalated": "Decyzja eskalowana",
+        "escalated": "Eskalowana",
+        "escalateFailed": "Nie udało się eskalować",
+        "requestMoreInfoComment": "Proszę o dostarczenie dodatkowych informacji przed podjęciem decyzji.",
+        "requestSent": "Prośba o więcej informacji została wysłana",
+        "requestFailed": "Nie udało się wysłać prośby",
+        "contentLocked": "W etapie podejmowania decyzji treść jest zablokowana",
+        "aiGenAvailableOnlyBeforeDecision": "AI generowanie jest dostępne tylko przed etapem decyzji",
+        "addTitleOrDescription": "Dodaj tytuł lub opis decyzji",
+        "aiAddedProsCons": "AI dodało propozycje za i przeciw",
+        "alternativesGenerated": "Wygenerowano alternatywy",
+        "generationFailed": "Błąd generowania",
+        "descriptionGenerated": "Opis wygenerowany przez AI",
+        "descriptionGenerationError": "Błąd generowania opisu",
+        "aiCommentGenerated": "Komentarz AI wygenerowany",
+        "aiCommentFallbackAdded": "Dodano komentarz pomocniczy AI",
+        "aiRaciApplied": "AI zaproponowało i zastosowało skład RACI ({{count}} osób).",
+        "aiRaciSuggestFailed": "Nie udało się wygenerować składu RACI przez AI",
+        "aiRemindersApplied": "AI zaproponowało i zastosowało reminders ({{count}}).",
+        "remindersFallbackApplied": "Zastosowano domyślne reminders.",
+        "aiEscalationsApplied": "AI zaproponowało i zastosowało eskalacje ({{count}}).",
+        "escalationFallbackApplied": "Zastosowano domyślną regułę eskalacji.",
+        "aiRaciPersonFormFilled": "AI uzupełniło formularz osoby RACI.",
+        "raciPersonFallbackApplied": "Zastosowano domyślną konfigurację osoby RACI.",
+        "aiReminderFormFilled": "AI uzupełniło formularz remindera.",
+        "reminderFormFallbackApplied": "Zastosowano domyślne uzupełnienie remindera.",
+        "aiEscalationFormFilled": "AI uzupełniło formularz eskalacji.",
+        "escalationFormFallbackApplied": "Zastosowano domyślne uzupełnienie eskalacji.",
+        "consequencesGenerated": "Wygenerowano konsekwencje braku decyzji",
+        "riskAnalysisGenerated": "Wygenerowano analizę ryzyka",
+        "consequenceScenariosUpdated": "Scenariusze konsekwencji zaktualizowane przez AI",
+        "consequenceScenariosFallback": "Użyto scenariuszy awaryjnych. AI chwilowo niedostępne.",
+        "enterContentFirst": "Najpierw wpisz treść do edycji AI",
+        "aiEditFallbackApplied": "Użyto trybu awaryjnego edycji lokalnej (AI chwilowo niedostępne).",
+        "contentUpdatedByAI": "Treść zaktualizowana przez AI. Jeśli efekt Ci nie pasuje, kliknij Undo AI.",
+        "aiRefineFailed": "Nie udało się poprawić treści przez AI",
+        "previousTextRestored": "Przywrócono poprzednią wersję tekstu",
+        "aiCommentPrepared": "AI przygotowało treść komentarza",
+        "localAiFallbackUsed": "Użyto lokalnej podpowiedzi AI",
+        "linkAlreadyExists": "To powiązanie już istnieje",
+        "linkAddedSyncFailed": "Link dodany, ale nie udało się zsynchronizować danych. To sygnał, że linkowanie może nie działać poprawnie.",
+        "noTargetLink": "Brak docelowego linku",
+        "delegationSavedRefreshFailed": "Delegacja zapisana, ale nie udało się odświeżyć danych",
+        "tasksCreated": "Utworzono {{count}} zadań"
+      },
+      "ai": {
+        "fallbackProsShort": "Krótszy czas wdrożenia",
+        "fallbackProsScale": "Lepsza skalowalność",
+        "fallbackProsPredictability": "Wyższa przewidywalność efektu",
+        "fallbackConsCost": "Wyższy koszt początkowy",
+        "fallbackConsCapability": "Wymaga kompetencji zespołu",
+        "fallbackConsIntegrationRisk": "Ryzyko integracyjne",
+        "prosConsPrompt": "Dla opcji decyzyjnej wygeneruj 3 konkretne \"za\" i 3 konkretne \"przeciw\". Zwróć wyłącznie JSON: {\"pros\":[\"...\"],\"cons\":[\"...\"]}.\n\nTytuł opcji: {{altTitle}}\nOpis: {{altDescription}}\nKontekst decyzji: {{decisionTitle}}",
+        "pmoJsonSystemInstruction": "Jesteś asystentem PMO. Zwróć tylko poprawny JSON bez markdown.",
+        "commentPrompt": "Wygeneruj JEDEN konkretny komentarz do decyzji projektowej.\nCel: pomóc zespołowi podjąć najlepszy kolejny krok decyzyjny.\n\nZasady:\n- 2-4 krótkie zdania.\n- Maksymalnie 450 znaków.\n- Bez markdown, bez emoji, bez list numerowanych.\n- Nie powtarzaj treści podobnej do ostatnich komentarzy.\n- Komentarz ma być praktyczny i oparty na podanym kontekście.\n\nKontekst decyzji:\n- Tytuł: {{title}}\n- Opis: {{description}}\n- Status: {{status}}\n- Priorytet: {{priority}}\n- Termin: {{dueDate}}\n- Interesariusze: {{stakeholdersCount}}\n- Ryzyka: {{risksCount}}\n- Alternatywy: {{alternativesCount}}\n\nOstatnie komentarze:\n{{recentComments}}\n\nZwróć WYŁĄCZNIE gotowy tekst komentarza.",
+        "decisionCoachSystemInstruction": "Jesteś praktycznym PMO coachem decyzyjnym. Odpowiadasz konkretnie i bez ogólników.",
+        "commentNoStatus": "brak statusu",
+        "commentNoPriority": "brak priorytetu",
+        "duplicateCommentAppend": "Skoncentrujmy się na jednym mierzalnym kroku do końca dnia.",
+        "commentFallback": "Przed finalną decyzją doprecyzujmy jeden krytyczny warunek akceptacji i przypiszmy właściciela następnego kroku. To obniży ryzyko opóźnień i niejasności odpowiedzialności.",
+        "raciTeamPrompt": "Na podstawie danych decyzji zaproponuj skład RACI. Zwróć WYŁĄCZNIE JSON:\n{{schema}}\nWymagania:\n- Dokładnie 1 osoba accountable\n- 1-2 osoby responsible\n- 1-3 osoby consulted/informed\n- Użyj TYLKO userId z listy użytkowników\n\nDecyzja:\n- Tytuł: {{title}}\n- Opis: {{description}}\n- Kategoria: {{category}}\n- Priorytet: {{priority}}\n- Termin: {{dueDate}}\n- Requester: {{requesterName}}\n- Aktualny deciderId: {{deciderId}}\n\nUżytkownicy (preferuj członków projektu):\n{{roster}}",
+        "remindersPrompt": "Zaproponuj przypomnienia dla decyzji. Zwróć WYŁĄCZNIE JSON:\n{{schema}}\nUwzględnij priorytet {{priority}}, termin {{dueDate}} i status {{status}}.",
+        "escalationsPrompt": "Zaproponuj 1-3 reguły eskalacji dla decyzji. Zwróć WYŁĄCZNIE JSON:\n{{schema}}\nUżyj userId wyłącznie z listy użytkowników:\n{{userList}}",
+        "raciPersonPrompt": "Wypełnij konfigurację pojedynczej osoby RACI. Zwróć WYŁĄCZNIE JSON:\n{{schema}}\nKontekst: priorytet={{priority}}, status={{status}}, deadline={{dueDate}}",
+        "reminderFormPrompt": "Wypełnij pojedynczą regułę remindera dla decyzji. Zwróć WYŁĄCZNIE JSON:\n{{schema}}\nKontekst: priorytet={{priority}}, status={{status}}, deadline={{dueDate}}",
+        "escalationFormPrompt": "Wypełnij pojedynczą regułę eskalacji. Zwróć WYŁĄCZNIE JSON:\n{{schema}}\nUżyj userId tylko z listy:\n{{userList}}",
+        "consequencesOfInaction": "Jeśli decyzja \"{{title}}\" nie zostanie podjęta, najbardziej prawdopodobne konsekwencje to:\n- narastająca niepewność operacyjna i opóźnienie wykonawcze,\n- zwiększone koszty (czas, zasoby, ryzyko reworku),\n- ryzyko eskalacji i utraty momentum biznesowego.\n\nRekomendacja: wyznaczyć decydenta, termin i minimalny zakres decyzji do zatwierdzenia.",
+        "consequencesTitleFallbackDecision": "ta decyzja",
+        "consequenceScenariosPrompt": "Na podstawie kontekstu projektu wygeneruj konsekwencje braku decyzji w 3 scenariuszach: pessimistic, neutral, optimistic. Dla każdego scenariusza podaj d7, d30, d90. Zwróć WYŁĄCZNIE JSON w formacie:\n{{schema}}\nKontekst: {{context}}",
+        "pmoAdvisorSystemInstruction": "Jesteś doradcą PMO. Zwróć wyłącznie poprawny JSON zgodny ze schematem.",
+        "refineImprove": "Popraw tekst tak, aby był klarowny, profesjonalny i konkretny. Zachowaj sens, usuń powtórzenia.",
+        "refineShorten": "Skróć tekst o 30-40%, zachowując kluczowy sens i decyzjotwórcze informacje.",
+        "refineExpand": "Rozwiń tekst, dodając istotny kontekst, ryzyka i implikacje biznesowe bez lania wody.",
+        "refineFormal": "Przeredaguj tekst w bardziej formalnym, zarządczym tonie.",
+        "refineTextPrompt": "Sekcja: {{sectionLabel}}\nTryb edycji: {{mode}}\nTytuł decyzji: {{title}}\nStatus: {{status}}\nPriorytet: {{priority}}\n\nInstrukcja: {{instruction}}\n\nTekst do edycji:\n{{currentValue}}",
+        "contentEditorSystemInstruction": "Jesteś redaktorem treści decyzyjnych PMO. Zwróć tylko poprawiony tekst, bez komentarzy.",
+        "commentDraftPrompt": "Przygotuj zwięzły i profesjonalny komentarz do decyzji. Priorytet komentarza: {{priority}}. Tytuł decyzji: \"{{title}}\". Opis: \"{{description}}\". Obecny szkic użytkownika: \"{{draft}}\". Zwróć sam tekst komentarza (bez cudzysłowów i bez listy).",
+        "pmConsultantSystemInstruction": "Jesteś konsultantem PM. Zwracaj krótki komentarz gotowy do publikacji.",
+        "commentDraftFallback": "Proponuję krótką walidację opcji na danych historycznych oraz doprecyzowanie właściciela wykonania.",
+        "commentDraftAppend": "Warto też doprecyzować właściciela i termin."
+      },
+      "altGen": {
+        "option1Title": "Opcja 1: Podejście konserwatywne",
+        "option1Desc": "Minimalne zmiany, niskie ryzyko, stopniowa implementacja",
+        "lowRisk": "Niskie ryzyko",
+        "easyImplementation": "Łatwa implementacja",
+        "slowerResults": "Wolniejsze rezultaty",
+        "option2Title": "Opcja 2: Podejście agresywne",
+        "option2Desc": "Szybka implementacja, wyższe ryzyko, szybsze rezultaty",
+        "fastResults": "Szybkie rezultaty",
+        "competitiveAdvantage": "Przewaga konkurencyjna",
+        "higherRisk": "Wyższe ryzyko",
+        "higherCosts": "Wyższe koszty",
+        "option3Title": "Opcja 3: Podejście hybrydowe",
+        "option3Desc": "Balans między szybkością a bezpieczeństwem",
+        "balancedRisk": "Zbalansowane ryzyko",
+        "flexibility": "Elastyczność",
+        "moreCoordination": "Wymaga więcej koordynacji"
+      },
+      "riskGen": {
+        "budgetRisk": "Ryzyko budżetowe",
+        "budgetMitigation": "Regularne przeglądy budżetu, bufor 15%",
+        "budgetContingency": "Redukcja zakresu lub przesunięcie terminu",
+        "technicalRisk": "Ryzyko techniczne",
+        "technicalMitigation": "POC przed pełną implementacją",
+        "technicalContingency": "Alternatywne rozwiązanie techniczne",
+        "resourceRisk": "Ryzyko zasobów",
+        "resourceMitigation": "Cross-training zespołu, dokumentacja",
+        "resourceContingency": "Zewnętrzni konsultanci"
+      },
+      "workflow": {
+        "sendToReview": "Wyślij do review",
+        "approveStage": "Zatwierdź etap",
+        "backToDraft": "Cofnij do draftu",
+        "publishAndCreateTasks": "Publikuj i utwórz taski",
+        "backToReview": "Cofnij do review",
+        "label": "Workflow"
+      },
+      "quickArgs": {
+        "proLowerCost": "Niższy koszt",
+        "proLowerRisk": "Mniejsze ryzyko",
+        "proFaster": "Szybciej",
+        "proBetterQuality": "Lepsza jakość",
+        "proScalability": "Skalowalność",
+        "conHigherCost": "Wyższy koszt",
+        "conHigherRisk": "Większe ryzyko",
+        "conSlower": "Wolniej",
+        "conComplexity": "Większa złożoność",
+        "conVendorDependency": "Zależność od dostawcy",
+        "mitigationPOC": "POC przed wdrożeniem",
+        "mitigationWeeklyReview": "Przegląd tygodniowy",
+        "mitigationQAPlan": "Plan kontroli jakości",
+        "contingencyManualFallback": "Tryb ręczny fallback",
+        "contingencyEscalatePMO": "Eskalacja do PMO",
+        "contingencyTimelineShift": "Przesunięcie terminu + komunikat"
+      },
+      "riskCategory": {
+        "technical": "Techniczne",
+        "business": "Biznesowe",
+        "financial": "Finansowe",
+        "operational": "Operacyjne",
+        "security": "Bezpieczeństwo"
+      },
+      "riskLevel": {
+        "critical": "Krytyczny",
+        "high": "Wysoki",
+        "medium": "Średni",
+        "low": "Niski"
+      },
+      "pressure": {
+        "linkedItemsBlocked": "{{count}} element(y) mogą się zablokować operacyjnie",
+        "manualWorkloadIncrease": "Wzrost pracy manualnej o ok. {{hours}}h/tydzień",
+        "escalationRisk": "Wysokie ryzyko eskalacji i utraty tempa wykonawczego"
+      },
+      "consequences": {
+        "selectedOptionFallback": "wybraną opcję",
+        "decisionOwnerFallback": "właściciel decyzji",
+        "dateFallback": "[DATA]",
+        "riskLineFallback": "ryzyka operacyjne i jakościowe",
+        "conservativeTemplate": "1) Jeśli decyzja nie zapadnie do {{due}}, w ciągu 7 dni:\n- {{d7}}\n\n2) W ciągu 30 dni:\n- {{d30}}\n- Najbardziej narażone obszary: {{riskLine}}\n\n3) W ciągu 90 dni:\n- {{d90}}\n\n4) Minimalna decyzja na teraz:\n- Zatwierdzić: {{recommendation}}\n- Właściciel: {{decider}}",
+        "executiveTemplate": "Podsumowanie zarządcze:\nBrak decyzji do {{due}} zwiększa koszt bezczynności i ryzyko opóźnień wykonawczych.\n\nWpływ:\n- 7 dni: {{d7}}\n- 30 dni: {{d30}}\n- 90 dni: {{d90}}\n\nRekomendacja:\nZatwierdzić {{recommendation}} oraz przypisać odpowiedzialność do: {{decider}}.",
+        "actionForcingTemplate": "ALERT: brak decyzji do {{due}} uruchamia negatywny scenariusz.\n\nCo stracimy:\n- Natychmiast: {{d7}}\n- 30 dni: {{d30}}\n- 90 dni: {{d90}}\n\nNajwyższe ryzyka: {{riskLine}}.\n\nDecyzja wymagana TERAZ:\n- Zatwierdzić {{recommendation}}\n- Potwierdzić właściciela: {{decider}}\n- Utrzymać termin: {{due}}",
+        "pessimisticD7": "Natychmiastowe ryzyko blokady: {{d7}}.",
+        "pessimisticD30": "Koszt bezczynności rośnie: {{d30}}.",
+        "pessimisticD90": "Scenariusz krytyczny: {{d90}}.",
+        "neutralD7": "Utrzymuje się niepewność wykonawcza i spada tempo decyzji.",
+        "neutralD30": "Rosną zależności między zadaniami, możliwe lokalne opóźnienia.",
+        "neutralD90": "Projekt wymaga korekty planu i dodatkowych zasobów.",
+        "optimisticD7": "Ryzyko materializacji ograniczone przy monitoringu dziennym.",
+        "optimisticD30": "Przy częściowych decyzjach wpływ można utrzymać pod kontrolą.",
+        "optimisticD90": "Skutki umiarkowane, jeśli właściciel i termin będą egzekwowane."
+      },
+      "altFallback": {
+        "prosFaster": "Szybsze dostarczenie wartości biznesowej",
+        "prosPredictability": "Lepsza przewidywalność wykonania",
+        "prosAccountability": "Czytelna odpowiedzialność zespołu",
+        "consCost": "Ryzyko wzrostu kosztów początkowych",
+        "consCoordination": "Wymaga dodatkowej koordynacji",
+        "consCapability": "Potrzebne wsparcie kompetencyjne"
+      },
+      "refine": {
+        "expandAppendix": "\n\nUzasadnienie biznesowe: decyzja wpływa na terminowość, ryzyko operacyjne i jakość dostarczanych rezultatów. Rekomendowane jest określenie właściciela wdrożenia oraz punktów kontrolnych.",
+        "formalPrefix": "Niniejszym wskazuje się, że {{rest}}",
+        "aiActionsTitle": "Akcje AI dla tego pola",
+        "improve": "Improve",
+        "shorten": "Shorten",
+        "expand": "Expand",
+        "formalTone": "Formal tone"
+      },
+      "commentPriority": {
+        "high": "Wysoki",
+        "low": "Niski",
+        "normal": "Normalny",
+        "highHint": "Wymaga szybkiej reakcji i uwagi decydenta.",
+        "lowHint": "Informacyjny komentarz, bez pilnej akcji.",
+        "normalHint": "Standardowy komentarz roboczy."
+      },
+      "source": {
+        "createdFromIdea": "Utworzone z pomysłu",
+        "createdFromNote": "Utworzone z notatki",
+        "viewSourceInMindmap": "Pokaż źródło w mapie →",
+        "viewSource": "Pokaż źródło →"
+      },
+      "header": {
+        "workflowBadgeLabel": "Workflow"
+      },
+      "actions": {
+        "approve": "Zatwierdź",
+        "reject": "Odrzuć",
+        "requestInfo": "Więcej info",
+        "delegate": "Deleguj",
+        "generateOptionsTitle": "Generuj opcje przez AI",
+        "generateOptions": "Generuj opcje",
+        "analyzeRisksTitle": "Analizuj ryzyka przez AI",
+        "analyzeRisks": "Analizuj ryzyka",
+        "generateRaciTitle": "Generuj RACI przez AI",
+        "generateRaci": "Generuj RACI",
+        "generateCommentTitle": "Generuj komentarz przez AI",
+        "aiComments": "AI komentarze",
+        "analyzeConsequencesTitle": "Uruchom analizę konsekwencji przez AI",
+        "analyzeConsequences": "Analizuj konsekwencje"
+      },
+      "scope": {
+        "title": "Zakres decyzji",
+        "relatedTo": "Dotyczy",
+        "noLinkedItem": "Brak podpiętego elementu",
+        "decisionScopeLabel": "Zakres decyzji",
+        "seeLess": "Pokaż mniej",
+        "seeMore": "Pokaż więcej",
+        "additionalContext": "Kontekst uzupełniający",
+        "descriptionPlaceholder": "Opisz zakres decyzji (co dokładnie podlega decyzji)...",
+        "contextPlaceholder": "Dodatkowe wyjaśnienie, założenia, ograniczenia (opcjonalnie)..."
+      },
+      "options": {
+        "title": "Opcje i trade-offy",
+        "noOptions": "Brak zdefiniowanych opcji.",
+        "addOption": "Dodaj opcję",
+        "namePlaceholder": "Nazwa opcji...",
+        "descriptionPlaceholder": "Opis...",
+        "prosLabel": "za",
+        "consLabel": "przeciw",
+        "proArgumentPlaceholder": "Argument za...",
+        "addProPlaceholder": "+ Dodaj argument za",
+        "conArgumentPlaceholder": "Argument przeciw...",
+        "addConPlaceholder": "+ Dodaj argument przeciw",
+        "riskLabel": "ryzyko"
+      },
+      "consequencesSection": {
+        "title": "Konsekwencje braku decyzji",
+        "aiScenariosRealtime": "Scenariusze AI (real-time)",
+        "sourceAI": "Źródło: AI",
+        "sourceFallback": "Źródło: fallback",
+        "aiUpdating": "AI aktualizuje scenariusze...",
+        "optimistic": "Optymistyczny",
+        "neutral": "Neutralny",
+        "pessimistic": "Pesymistyczny",
+        "decisionNote": "Notatka decyzyjna",
+        "notePlaceholder": "Co się stanie, jeśli decyzja nie zostanie podjęta?",
+        "placeholderClickup": "Konsekwencje braku decyzji..."
+      },
+      "governance": {
+        "title": "RACI i eskalacja",
+        "raciMatrixTitle": "RACI (macierz odpowiedzialności)",
+        "addPerson": "Dodaj osobę",
+        "colPerson": "Osoba",
+        "colRole": "Rola",
+        "colEmail": "Email",
+        "colNotifications": "Notyfikacje",
+        "colNotificationsAlt": "Powiadomienia",
+        "colActions": "Akcje",
+        "noStakeholders": "Brak interesariuszy.",
+        "edit": "Edytuj",
+        "delete": "Usuń",
+        "remindersTitle": "Przypomnienia",
+        "remindersTitlePlain": "Reminders",
+        "addReminder": "Dodaj reminder",
+        "add": "Dodaj",
+        "colType": "Typ",
+        "colDays": "Dni",
+        "colRecipients": "Do kogo",
+        "colRecipientsAlt": "Do kogo",
+        "noReminders": "Brak reminderów.",
+        "beforeDue": "Przed terminem",
+        "afterDue": "Po terminie",
+        "escalationTitle": "Eskalacja i zasady",
+        "escalationTitlePlain": "Escalation",
+        "addEscalation": "Dodaj eskalację",
+        "colStatus": "Status",
+        "colThresholds": "Progi W/C",
+        "colEscalateAfter": "Eskaluj po",
+        "colEscalateAfterDays": "Po ilu dniach",
+        "colEscalateTo": "Eskaluj do",
+        "colMessage": "Komunikat",
+        "colMessageAlt": "Wiadomość",
+        "colMode": "Tryb",
+        "colChannels": "Kanały",
+        "noEscalationRules": "Brak reguł eskalacji.",
+        "noEscalationRule": "Brak reguły eskalacji.",
+        "enabledStatus": "Aktywna",
+        "disabledStatus": "Wyłączona",
+        "escalationModeNotify": "Powiadomienie",
+        "escalationModeManagerReview": "Manager review",
+        "escalationModeExecutiveAlert": "Executive alert",
+        "raciTitleShort": "RACI",
+        "active": "Aktywne",
+        "enabled": "Enabled",
+        "when": "Kiedy",
+        "toWhom": "Do kogo",
+        "reminderTextPlaceholder": "Treść remindera...",
+        "escalationTextPlaceholder": "Treść eskalacji..."
+      },
+      "stakeholderModal": {
+        "addTitle": "Dodaj osobę do RACI",
+        "editTitle": "Edytuj osobę RACI",
+        "hint": "Tutaj opisujemy i konfigurujemy odpowiedzialność osoby w RACI oraz kanały komunikacji.",
+        "person": "Osoba",
+        "role": "Rola",
+        "roleResponsible": "Odpowiedzialny",
+        "roleAccountable": "Rozliczalny",
+        "roleConsulted": "Konsultowany",
+        "roleInformed": "Informowany",
+        "notificationChannels": "Kanały notyfikacji",
+        "coreChannels": "Kanały podstawowe",
+        "enabledChannel": "Aktywne",
+        "integrationChannels": "Kanały integracyjne",
+        "syncTargets": "Cele synchronizacji",
+        "cancel": "Anuluj",
+        "save": "Zapisz"
+      },
+      "reminderModal": {
+        "addTitle": "Dodaj reminder",
+        "editTitle": "Edytuj reminder",
+        "hint": "Tutaj opisujemy cel remindera: kiedy ma się uruchamiać, do kogo trafić i jaką wiadomość wysłać.",
+        "type": "Typ",
+        "days": "Dni",
+        "recipients": "Odbiorcy",
+        "both": "Obaj",
+        "stakeholders": "Interesariusze",
+        "ruleEnabled": "Reguła aktywna",
+        "coreChannels": "Kanały podstawowe",
+        "integrationChannels": "Kanały integracyjne",
+        "syncTargets": "Cele synchronizacji",
+        "message": "Wiadomość",
+        "cancel": "Anuluj",
+        "save": "Zapisz"
+      },
+      "escalationModal": {
+        "addTitle": "Dodaj regułę eskalacji",
+        "editTitle": "Edytuj regułę eskalacji",
+        "hint": "Tutaj opisujemy regułę eskalacji: progi, czas eskalacji, osobę docelową i komunikat.",
+        "warningThreshold": "Próg ostrzeżenia (dni)",
+        "criticalThreshold": "Próg krytyczny (dni)",
+        "escalateAfterDays": "Eskaluj po (dni)",
+        "escalateTo": "Eskaluj do",
+        "select": "Wybierz",
+        "escalationMode": "Tryb eskalacji",
+        "ruleEnabled": "Reguła aktywna",
+        "coreChannels": "Kanały podstawowe",
+        "integrationChannels": "Kanały integracyjne",
+        "syncTargets": "Cele synchronizacji",
+        "escalationMessage": "Komunikat eskalacji",
+        "cancel": "Anuluj",
+        "save": "Zapisz"
+      },
+      "clickupTabs": {
+        "overview": "Overview",
+        "resources": "Załączniki + Linki",
+        "risk": "Ryzyko",
+        "options": "Opcje",
+        "governance": "RACI + Eskalacja",
+        "comments": "Komentarze",
+        "logs": "Logi"
+      },
+      "clickupOverview": {
+        "title": "Przegląd decyzji"
+      },
+      "attachments": {
+        "title": "Załączniki",
+        "add": "Dodaj",
+        "colName": "Nazwa",
+        "colType": "Typ",
+        "colSize": "Rozmiar",
+        "colUploaded": "Dodano",
+        "colBy": "Przez",
+        "colActions": "Akcje",
+        "none": "Brak załączników."
+      },
+      "linkedItems": {
+        "title": "Powiązane elementy",
+        "newLinkedItem": "Nowe powiązanie",
+        "add": "Dodaj",
+        "colType": "Typ",
+        "colTitle": "Tytuł",
+        "colStatus": "Status",
+        "colPriority": "Priorytet",
+        "colActions": "Akcje",
+        "none": "Brak powiązanych elementów."
+      },
+      "infoPane": {
+        "title": "Panel informacji",
+        "status": "Status",
+        "priority": "Priorytet",
+        "deadline": "Termin",
+        "requester": "Wnioskodawca",
+        "decider": "Decydent",
+        "relatedTo": "Dotyczy",
+        "decisionIndex": "Indeks decyzji"
+      },
+      "theCurrentIssue": "bieżącego problemu",
+      "untitled": "Bez tytułu",
+      "noDescription": "Brak opisu",
+      "noDeadline": "Brak terminu",
+      "noCommentsYet": "Brak komentarzy",
+      "decisionDueIn3Days": "Termin decyzji za 3 dni.",
+      "decisionOverdueActionNeeded": "Decyzja po terminie - wymagane działanie.",
+      "decisionEscalatedDueToInactivity": "Decyzja eskalowana z powodu braku aktywności.",
+      "statusValue": {
+        "pending": "Oczekująca",
+        "approved": "Zatwierdzona",
+        "rejected": "Odrzucona",
+        "deferred": "Odroczona",
+        "escalated": "Eskalowana"
+      },
+      "workflowStage": {
+        "proposed": "Propozycja",
+        "review": "W przeglądzie",
+        "approve": "Gotowa do publikacji",
+        "published": "Opublikowana"
+      },
+      "category": {
+        "scope_change": "Zmiana zakresu",
+        "budget_change": "Zmiana budżetu",
+        "schedule_change": "Zmiana harmonogramu",
+        "resource_allocation": "Alokacja zasobów",
+        "risk_response": "Odpowiedź na ryzyko",
+        "technical": "Techniczna",
+        "strategic": "Strategiczna"
+      },
+      "priorityValue": {
+        "low": "Niski",
+        "medium": "Średni",
+        "high": "Wysoki",
+        "critical": "Krytyczny"
+      },
+      "decisionContextTemplate": "## Kontekst decyzji\n\nDecyzja dotyczy wyboru optymalnego rozwiązania dla {{title}}.\n\n### Tło\nW ramach analizy zidentyfikowano następujące kluczowe czynniki:\n- Wymagania biznesowe i techniczne\n- Ograniczenia budżetowe i czasowe\n- Wpływ na obecne procesy\n\n### Zakres\nDecyzja obejmuje:\n1. Wybór dostawcy/technologii\n2. Określenie harmonogramu wdrożenia\n3. Alokację zasobów\n\n### Oczekiwane rezultaty\n- Poprawa efektywności procesów\n- Redukcja kosztów operacyjnych\n- Zwiększenie konkurencyjności"
+    }
   },
   "discovery": {
     "conversion": {
@@ -15648,6 +16525,28 @@
     "editor": {
       "target": "cel",
       "reject": "Odrzuć"
+    },
+    "documentPanel": {
+      "commentAdded": "Dodano komentarz",
+      "shareLinkCreated": "Utworzono link do udostępnienia",
+      "approvalRequested": "Wysłano prośbę o zatwierdzenie",
+      "approvalDecisionRecorded": "Zapisano decyzję zatwierdzenia",
+      "approvalCancelled": "Anulowano zatwierdzenie",
+      "actionDownload": "Pobierz",
+      "actionEdit": "Edytuj",
+      "reviewNamePlaceholder": "Przegląd klienta",
+      "reviewerCommentPlaceholder": "Opcjonalny komentarz recenzenta",
+      "outlineAria": "Konspekt dokumentu"
+    },
+    "view": {
+      "title": "Consultify Document Studio"
+    },
+    "templateArchitect": {
+      "namePlaceholder": "np. Szablon memo kwartalnego dla zarządu",
+      "audiencePlaceholder": "np. Zarząd, CEO, CFO"
+    },
+    "intakeForm": {
+      "audiencePlaceholder": "np. CEO, CFO, Dyrektor ds. Transformacji"
     }
   },
   "priority": {
@@ -15667,7 +16566,196 @@
       "source": "źródło",
       "actions": "Akcje"
     },
-    "delete": "Usuń"
+    "delete": "Usuń",
+    "content": {
+      "why": {
+        "overdueDay": "Termin minął {{count}} dzień temu — rośnie koszt braku reakcji.",
+        "overdueDays": "Termin minął {{count}} dni temu — rośnie koszt braku reakcji.",
+        "overdue": "Termin minął — rośnie koszt braku reakcji.",
+        "dueSoon": "Termin zbliża się — wymaga planu i potwierdzenia.",
+        "escalated": "Brak reakcji spowodował eskalację.",
+        "blocked": "Zablokowane — wymaga natychmiastowej reakcji.",
+        "assigned": "Nowe przypisanie — potrzebny ruch.",
+        "aiRisk": "AI wykryło ryzyko — sprawdź szczegóły.",
+        "ai": "AI sugeruje działanie — sprawdź rekomendację.",
+        "paymentFailed": "Płatność nie powiodła się — może to zatrzymać dostęp do funkcji. Zaktualizuj metodę płatności.",
+        "usageAlertPct": "Zbliżasz się do limitu ({{pct}}%) — zaplanuj działania (upgrade/porządek/limity).",
+        "usageAlert": "Zbliżasz się do limitu — zaplanuj działania (upgrade/porządek/limity).",
+        "subscriptionChange": "Zmieniono subskrypcję lub plan — sprawdź szczegóły rozliczeń.",
+        "dbr77Kb": "Nowa wiedza w bazie wiedzy — warto przeczytać i zastosować.",
+        "dbr77Instruction": "Nowa instrukcja pracy w systemie — ułatwi Ci wykonywanie zadań.",
+        "dbr77Update": "Nowości i aktualizacje DBR77 — sprawdź co się zmieniło.",
+        "dbr77Generic": "Komunikat DBR77 — sprawdź szczegóły.",
+        "gate": "Bramka wymaga Twojej decyzji GO/NO-GO.",
+        "milestone": "Kamień milowy osiągnięty.",
+        "default": "Wymaga reakcji w systemie."
+      },
+      "context": {
+        "daysPastDeadline": "{{count}}d po terminie",
+        "decisionDeadline": "{{title}} — {{count}}d do deadline",
+        "potentialSavings": "Potencjalne oszczędności: {{amount}}/rok",
+        "updateVersion": "Aktualizacja — {{version}}",
+        "invoice": "Faktura {{id}}",
+        "paymentIssue": "Problem z płatnością"
+      },
+      "blocked": {
+        "decision": "Blokuje: decyzję do podjęcia (może blokować taski).",
+        "task": "Blokuje: ruch w tasku (sprawdź blokadę/termin).",
+        "unknown": "Blokuje: nieustalone (sprawdź powiązaną encję)."
+      },
+      "cta": {
+        "openDocument": "Otwórz dokument"
+      },
+      "action": {
+        "taskOverdueCritical": "Natychmiast skontaktuj się{{assigneePart}} i eskaluj do kierownika projektu. {{taskPart}} {{count}}d po terminie.",
+        "taskOverdue": "Sprawdź postęp{{taskPart}} i zaktualizuj deadline{{ownerPart}}.",
+        "taskBlocked": "Usuń blokadę{{blockerPart}} i odblokuj postęp{{taskPart}}.",
+        "taskAssigned": "Przejrzyj przypisane zadanie{{taskPart}}, potwierdź scope i rozpocznij pracę.",
+        "decisionOverdue": "Natychmiast podejmij decyzję{{decisionPart}} — opóźnienie blokuje dalsze prace.",
+        "decisionRequired": "Przeanalizuj kontekst i podejmij decyzję{{decisionPart}}. Skonsultuj z zespołem jeśli potrzeba.",
+        "aiRiskDetected": "Przejrzyj ryzyko{{riskPart}} wykryte przez AI. Zweryfikuj dane i zdecyduj o działaniu.",
+        "aiRecommendation": "Przejrzyj rekomendację AI, zweryfikuj założenia i zastosuj lub odrzuć z uzasadnieniem.",
+        "aiOverload": "AI wykryło przeciążenie zasobów. Przejrzyj obciążenie zespołu i przedystrybuuj zadania.",
+        "aiDependencyConflict": "AI wykryło konflikt zależności. Przejrzyj timeline i rozwiąż konflikty w harmonogramie.",
+        "gate": "Przejrzyj kryteria bramki i podejmij decyzję GO/NO-GO.",
+        "paymentFailed": "Otwórz rozliczenia, zaktualizuj metodę płatności i ponów transakcję.",
+        "usageAlert": "Zbliżasz się do limitu{{metricPart}}{{pctPart}}. Zdecyduj: upgrade planu, porządek danych lub zwiększ limit.",
+        "subscriptionChange": "Sprawdź szczegóły zmiany subskrypcji i potwierdź nowe warunki.",
+        "invoiceReady": "Nowa faktura do pobrania. Sprawdź i przekaż do księgowości.",
+        "dbr77KbNew": "Przeczytaj nowy artykuł w bazie wiedzy i zastosuj w swojej pracy.",
+        "dbr77Instruction": "Przeczytaj nową instrukcję i dostosuj swój workflow.",
+        "dbr77Update": "Zapoznaj się z nowościami w systemie. Sprawdź czy zmiany wpływają na Twoje zadania.",
+        "systemAlert": "Przeczytaj alert systemowy i podejmij wymagane działanie.",
+        "milestone": "Informacja — nie wymaga bezpośredniego działania. Możesz zamknąć.",
+        "doCta": "Wykonaj: {{label}}",
+        "default": "Otwórz powiązaną encję i wykonaj akcję."
+      },
+      "checklist": {
+        "taskOverdueCritical": {
+          "blockers": "Sprawdź blokery i przyczynę opóźnienia",
+          "contactNamed": "Skontaktuj się z {{assignee}}",
+          "contact": "Skontaktuj się z odpowiedzialnym",
+          "deadline": "Ustal nowy realny termin",
+          "escalate": "Eskaluj do kierownika jeśli brak odpowiedzi w 2h",
+          "status": "Zaktualizuj status zadania",
+          "notify": "Powiadom interesariuszy o nowym planie"
+        },
+        "taskOverdue": {
+          "open": "Otwórz zadanie i przejrzyj szczegóły",
+          "blockers": "Sprawdź czy są blokery",
+          "update": "Zaktualizuj deadline lub status",
+          "notify": "Powiadom zespół o zmianie"
+        },
+        "taskBlocked": {
+          "identify": "Zidentyfikuj blokadę",
+          "contact": "Skontaktuj się z osobą blokującą",
+          "plan": "Ustal plan usunięcia blokady",
+          "status": "Zaktualizuj status zadania",
+          "escalate": "Eskaluj jeśli blokada trwa > 24h"
+        },
+        "taskAssigned": {
+          "review": "Przejrzyj opis i zakres zadania",
+          "confirm": "Potwierdź termin wykonania",
+          "dependencies": "Sprawdź zależności i blokery",
+          "start": "Rozpocznij pracę lub zgłoś wątpliwości"
+        },
+        "decisionOverdue": {
+          "analyze": "Przeanalizuj kontekst decyzji",
+          "consult": "Skonsultuj z kluczowymi interesariuszami",
+          "decide": "Podejmij decyzję lub eskaluj",
+          "document": "Udokumentuj uzasadnienie",
+          "notify": "Powiadom zależne zespoły"
+        },
+        "decisionRequired": {
+          "review": "Przejrzyj dane i kontekst decyzji",
+          "consult": "Skonsultuj z zespołem jeśli potrzeba",
+          "decide": "Podejmij decyzję lub deleguj",
+          "document": "Udokumentuj wybór i uzasadnienie"
+        },
+        "aiRiskDetected": {
+          "review": "Przejrzyj szczegóły wykrytego ryzyka",
+          "verify": "Zweryfikuj dane wejściowe AI",
+          "assess": "Oceń realny wpływ na projekt",
+          "act": "Podejmij działanie mitygujące lub odrzuć",
+          "update": "Zaktualizuj rejestr ryzyk"
+        },
+        "aiRecommendation": {
+          "review": "Przejrzyj rekomendację AI",
+          "verify": "Zweryfikuj założenia i dane",
+          "apply": "Zastosuj lub odrzuć z uzasadnieniem"
+        },
+        "aiOverload": {
+          "review": "Przejrzyj obciążenie zespołu",
+          "identify": "Zidentyfikuj najbardziej obciążone osoby",
+          "redistribute": "Przedystrybuuj lub odłóż zadania",
+          "notify": "Powiadom zespół o zmianach"
+        },
+        "aiDependencyConflict": {
+          "review": "Przejrzyj konfliktujące zależności",
+          "compare": "Porównaj timeline'y zadań",
+          "reorder": "Zmień kolejność lub przesuń terminy",
+          "confirm": "Potwierdź nowy harmonogram z zespołem"
+        },
+        "gate": {
+          "review": "Przejrzyj kryteria bramki",
+          "check": "Sprawdź stan deliverables",
+          "decide": "Podejmij decyzję GO/NO-GO",
+          "document": "Udokumentuj decyzję"
+        },
+        "paymentFailed": {
+          "open": "Otwórz sekcję rozliczeń",
+          "check": "Sprawdź metodę płatności",
+          "update": "Zaktualizuj dane karty/konta",
+          "retry": "Ponów transakcję",
+          "confirm": "Potwierdź sukces płatności"
+        },
+        "usageAlert": {
+          "check": "Sprawdź aktualne zużycie",
+          "identify": "Zidentyfikuj co zajmuje zasoby",
+          "decide": "Zdecyduj: upgrade, porządek lub limit",
+          "implement": "Wdróż wybraną strategię"
+        },
+        "subscriptionChange": {
+          "review": "Przejrzyj nowe warunki",
+          "confirm": "Potwierdź dostępność funkcji",
+          "update": "Zaktualizuj budżet jeśli potrzeba"
+        },
+        "invoiceReady": {
+          "download": "Pobierz fakturę",
+          "verify": "Zweryfikuj kwotę i okres",
+          "forward": "Przekaż do księgowości"
+        },
+        "dbr77KbNew": {
+          "read": "Przeczytaj nowy artykuł",
+          "check": "Sprawdź czy dotyczy Twoich zadań",
+          "apply": "Zastosuj wiedzę w praktyce"
+        },
+        "dbr77Instruction": {
+          "read": "Przeczytaj nową instrukcję",
+          "adjust": "Dostosuj swój workflow",
+          "confirm": "Potwierdź wdrożenie zmian"
+        },
+        "dbr77Update": {
+          "review": "Przejrzyj listę zmian",
+          "check": "Sprawdź wpływ na swoje zadania",
+          "test": "Przetestuj nowe funkcje"
+        },
+        "systemAlert": {
+          "read": "Przeczytaj szczegóły alertu",
+          "assess": "Oceń wpływ na Twoją pracę",
+          "act": "Podejmij wymagane działanie"
+        },
+        "milestone": {
+          "review": "Przejrzyj podsumowanie",
+          "dismiss": "Zamknij powiadomienie"
+        },
+        "default": {
+          "review": "Przejrzyj szczegóły powiadomienia",
+          "act": "Podejmij odpowiednią akcję"
+        }
+      },
+      "defaultTitle": "Powiadomienie"
+    }
   },
   "task": {
     "status": "Status"
@@ -15733,6 +16821,27 @@
         "policy": "Polityka"
       },
       "cost": "koszt"
+    }
+  },
+  "commandPalette": {
+    "placeholder": "Szukaj poleceń, inicjatyw, zadań, notatek…",
+    "searching": "Szukam…",
+    "noResults": "Brak wyników dla „{{query}}”",
+    "category": {
+      "search": "Wyniki wyszukiwania",
+      "recent": "Ostatnie",
+      "navigation": "Nawigacja",
+      "action": "Akcje",
+      "settings": "Ustawienia"
+    },
+    "entity": {
+      "initiative": "Inicjatywa",
+      "task": "Zadanie",
+      "decision": "Decyzja",
+      "idea": "Pomysł",
+      "note": "Notatka",
+      "artifact": "Materiał",
+      "assessment": "Ocena"
     }
   }
 }

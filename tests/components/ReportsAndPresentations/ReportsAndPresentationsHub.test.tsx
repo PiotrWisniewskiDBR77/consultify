@@ -168,9 +168,9 @@ describe('ReportsAndPresentationsHub', () => {
     expect(screen.getAllByText('Mine').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Needs review').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Documents').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Prezentacje').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Presentations').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Sheets').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Biblioteka wzorców').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Template Library').length).toBeGreaterThan(0);
     expect(screen.getByTestId('active-tab')).toHaveTextContent('presentations');
   });
 

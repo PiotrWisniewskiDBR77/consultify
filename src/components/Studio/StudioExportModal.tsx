@@ -101,23 +101,23 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-slate-900 border border-white/10 rounded-xl shadow-2xl">
+      <div className="w-full max-w-md bg-c-surface border border-c-border rounded-xl shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-white/10">
+        <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-              <Download size={20} className="text-blue-400" />
+            <div className="w-10 h-10 rounded-lg bg-c-accent-soft flex items-center justify-center">
+              <Download size={20} className="text-c-accent" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-white">Export Diagram</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <h2 className="text-lg font-semibold text-c-text">Export Diagram</h2>
+              <p className="text-xs text-c-text-muted">
                 Choose format and settings
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-slate-500 dark:text-slate-400 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
+            className="p-2 text-c-text-muted hover:text-c-text hover:bg-c-surface-raised rounded-lg transition-colors"
           >
             <X size={18} />
           </button>
@@ -127,7 +127,7 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
         <div className="p-4 space-y-4">
           {/* Format Selection */}
           <div>
-            <label className="block text-sm font-medium text-slate-600 dark:text-slate-500 mb-2">
+            <label className="block text-sm font-medium text-c-text-secondary mb-2">
               Format
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -139,18 +139,18 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
                                         p-3 rounded-lg border-2 transition-all text-center
                                         ${
                                           format === f.id
-                                            ? 'border-blue-500 bg-blue-500/10'
-                                            : 'border-white/10 hover:border-white/20 bg-white/5'
+                                            ? 'border-c-accent bg-c-accent-soft'
+                                            : 'border-c-border hover:border-c-border-strong bg-c-surface-raised'
                                         }
                                     `}
                 >
                   <div
-                    className={`mx-auto mb-2 ${format === f.id ? 'text-blue-400' : 'text-slate-600 dark:text-slate-500'}`}
+                    className={`mx-auto mb-2 ${format === f.id ? 'text-c-accent' : 'text-c-text-muted'}`}
                   >
                     {f.icon}
                   </div>
                   <div
-                    className={`text-xs font-medium ${format === f.id ? 'text-white' : 'text-slate-600 dark:text-slate-500'}`}
+                    className={`text-xs font-medium ${format === f.id ? 'text-c-text' : 'text-c-text-secondary'}`}
                   >
                     {f.label}
                   </div>
@@ -164,19 +164,19 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
             <>
               {/* Background */}
               <div className="flex items-center justify-between">
-                <label className="text-sm text-slate-600 dark:text-slate-500">
+                <label className="text-sm text-c-text-secondary">
                   Include background
                 </label>
                 <button
                   onClick={() => setIncludeBackground(!includeBackground)}
                   className={`
                                         w-10 h-6 rounded-full transition-colors relative
-                                        ${includeBackground ? 'bg-blue-500' : 'bg-slate-600'}
+                                        ${includeBackground ? 'bg-c-accent' : 'bg-c-border-strong'}
                                     `}
                 >
                   <span
                     className={`
-                                        absolute top-1 w-4 h-4 bg-white dark:bg-navy-900 rounded-full transition-transform
+                                        absolute top-1 w-4 h-4 bg-c-surface rounded-full transition-transform
                                         ${includeBackground ? 'left-5' : 'left-1'}
                                     `}
                   />
@@ -186,7 +186,7 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
               {/* Quality (PNG only) */}
               {format === 'png' && (
                 <div>
-                  <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
+                  <label className="block text-sm text-c-text-secondary mb-2">
                     Quality
                   </label>
                   <div className="flex gap-2">
@@ -198,8 +198,8 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
                                                     flex-1 py-2 rounded-lg text-sm font-medium transition-colors
                                                     ${
                                                       quality === q
-                                                        ? 'bg-blue-500 text-white'
-                                                        : 'bg-white/5 text-slate-600 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/40'
+                                                        ? 'bg-c-accent text-white'
+                                                        : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised'
                                                     }
                                                 `}
                       >
@@ -214,17 +214,17 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-4 border-t border-white/10">
+        <div className="flex items-center justify-end gap-3 p-4 border-t border-c-border-subtle">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm text-slate-600 dark:text-slate-500 hover:text-white transition-colors"
+            className="px-4 py-2 text-sm text-c-text-secondary hover:text-c-text transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleExport}
             disabled={exporting}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-c-accent hover:bg-c-accent text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
           >
             {exporting ? (
               <>

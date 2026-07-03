@@ -53,6 +53,10 @@ import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, clearGlobalTransportFailure, resetAuthLoopGuard } from '@/services/api';
+import {
+  type FrameworkId,
+  isFrameworkComingSoon,
+} from '@/services/frameworkRegistry';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
@@ -116,6 +120,11 @@ import {
 import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { ChipBase } from '../ui/primitives/chips/chipBase';
+import { PriorityChip, type PriorityLevel } from '../ui/primitives/chips/PriorityChip';
+import {
+  EmptyState as SharedEmptyState,
+  LoadingState as SharedLoadingState,
+} from '@/components/shared/states';
 
 // Tool category types (V3: includes licensed assessments)
 type ToolCategory = 'strategic' | 'operational' | 'digital' | 'automation' | 'licensed';
@@ -151,8 +160,8 @@ interface StatusFilterOption {
 
 // Discovery tab: DRAFT, PENDING_REVIEW (work in progress)
 const DISCOVERY_STATUSES: StatusFilterOption[] = [
-  { id: 'all', label: 'All', color: 'text-slate-600', bgColor: 'bg-slate-500' },
-  { id: 'draft', label: 'Draft', color: 'text-slate-600', bgColor: 'bg-slate-500' },
+  { id: 'all', label: 'All', color: 'text-c-text-secondary', bgColor: 'bg-c-text-muted' },
+  { id: 'draft', label: 'Draft', color: 'text-c-text-secondary', bgColor: 'bg-c-text-muted' },
   {
     id: 'pending_review',
     label: 'Pending Review',
@@ -169,15 +178,15 @@ const DISCOVERY_STATUSES: StatusFilterOption[] = [
 
 // Reports tab: APPROVED, COMPLETED (finished analyses)
 const REPORTS_STATUSES: StatusFilterOption[] = [
-  { id: 'all', label: 'All', color: 'text-slate-600', bgColor: 'bg-slate-500' },
+  { id: 'all', label: 'All', color: 'text-c-text-secondary', bgColor: 'bg-c-text-muted' },
   { id: 'approved', label: 'Approved', color: 'text-emerald-400', bgColor: 'bg-emerald-500' },
   { id: 'completed', label: 'Completed', color: 'text-emerald-400', bgColor: 'bg-emerald-500' },
 ];
 
 // Initiatives tab: DRAFT, PROPOSED, PLANNED, IN_PROGRESS, COMPLETED, CANCELLED
 const INITIATIVES_STATUSES: StatusFilterOption[] = [
-  { id: 'all', label: 'All', color: 'text-slate-600', bgColor: 'bg-slate-500' },
-  { id: 'draft', label: 'Draft', color: 'text-slate-600', bgColor: 'bg-slate-500' },
+  { id: 'all', label: 'All', color: 'text-c-text-secondary', bgColor: 'bg-c-text-muted' },
+  { id: 'draft', label: 'Draft', color: 'text-c-text-secondary', bgColor: 'bg-c-text-muted' },
   { id: 'proposed', label: 'Proposed', color: 'text-amber-400', bgColor: 'bg-amber-500' },
   { id: 'planned', label: 'Planned', color: 'text-blue-400', bgColor: 'bg-blue-500' },
   { id: 'in_progress', label: 'In Progress', color: 'text-amber-400', bgColor: 'bg-amber-500' },
@@ -1507,7 +1516,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           return (
             <div className="flex items-center gap-2">
               <span className={categoryMeta.textClass}>{categoryMeta.icon}</span>
-              <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
+              <span className="font-mono text-xs font-bold text-c-text-secondary">
                 {meta?.shortName || row.toolType}
               </span>
             </div>
@@ -1519,7 +1528,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         label: t('tools.hub.table.name', 'Name'),
         render: (row) => (
           <div className="min-w-0">
-            <span className="block text-sm text-slate-900 dark:text-white font-medium truncate">
+            <span className="block text-sm font-semibold text-c-text truncate">
               {String(row.name || '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')}
             </span>
           </div>
@@ -1537,7 +1546,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         render: (row) => {
           const meta = CATEGORY_META[row.category as ToolCategory];
           return (
-            <ChipBase leading={<span className={`h-1.5 w-1.5 shrink-0 rounded-full ${meta?.dotClass || 'bg-slate-400'}`} />}>
+            <ChipBase leading={<span className={`h-1.5 w-1.5 shrink-0 rounded-full ${meta?.dotClass || 'bg-c-text-muted'}`} />}>
               {meta?.name || row.category}
             </ChipBase>
           );
@@ -1549,7 +1558,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         width: '140px',
         filterable: true,
         filterOptions: [
-          { value: 'draft', label: t('common.draft', 'Draft'), color: 'bg-slate-400' },
+          { value: 'draft', label: t('common.draft', 'Draft'), color: 'bg-c-text-muted' },
           {
             value: 'pending_review',
             label: t('common.pendingReview', 'Pending Review'),
@@ -1598,7 +1607,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             return (
               <div className="flex items-center gap-2">
                 <span className="text-danger-400">{meta?.icon || <Shield size={16} />}</span>
-                <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
+                <span className="font-mono text-xs font-bold text-c-text-secondary">
                   {fw || 'ASSESS'}
                 </span>
               </div>
@@ -1610,7 +1619,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           return (
             <div className="flex items-center gap-2">
               <span className={categoryMeta.textClass}>{categoryMeta.icon}</span>
-              <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
+              <span className="font-mono text-xs font-bold text-c-text-secondary">
                 {meta?.shortName || toolCode}
               </span>
             </div>
@@ -1622,7 +1631,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         label: t('tools.hub.table.name', 'Name'),
         render: (row: any) => (
           <div className="min-w-0">
-            <span className="block text-sm text-slate-900 dark:text-white font-medium truncate">
+            <span className="block text-sm font-semibold text-c-text truncate">
               {String(row.name || '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')}
             </span>
           </div>
@@ -1640,7 +1649,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         render: (row: any) => {
           const meta = CATEGORY_META[row.category as ToolCategory];
           return (
-            <ChipBase leading={<span className={`h-1.5 w-1.5 shrink-0 rounded-full ${meta?.dotClass || 'bg-slate-400'}`} />}>
+            <ChipBase leading={<span className={`h-1.5 w-1.5 shrink-0 rounded-full ${meta?.dotClass || 'bg-c-text-muted'}`} />}>
               {meta?.name || row.category}
             </ChipBase>
           );
@@ -1652,7 +1661,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         width: '140px',
         filterable: true,
         filterOptions: [
-          { value: 'draft', label: t('common.draft', 'Draft'), color: 'bg-slate-400' },
+          { value: 'draft', label: t('common.draft', 'Draft'), color: 'bg-c-text-muted' },
           {
             value: 'executing',
             label: t('common.inProgress', 'In Progress'),
@@ -1692,17 +1701,15 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           <div className="min-w-0">
             <div className="flex items-center gap-2 min-w-0">
               <div
-                className={`truncate text-sm font-medium ${
-                  row.isActive
-                    ? 'text-slate-900 dark:text-white'
-                    : 'text-slate-600 dark:text-slate-500'
+                className={`truncate text-sm font-semibold ${
+                  row.isActive ? 'text-c-text' : 'text-c-text-muted'
                 }`}
                 title={String(row.name || '').replace(/&amp;/g, '&')}
               >
                 {String(row.name || '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')}
               </div>
               {row.isComingSoon ? (
-                <span className="shrink-0 inline-flex items-center h-5 px-1.5 rounded-full text-[10px] border border-slate-200/70 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] text-slate-500 dark:text-slate-400">
+                <span className="shrink-0 inline-flex items-center h-5 px-1.5 rounded-full text-[10px] border border-c-border bg-c-surface-raised text-c-text-muted">
                   {t('common.comingSoon', 'Soon')}
                 </span>
               ) : null}
@@ -1723,7 +1730,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           const category = (row.libraryCategory || '') as ToolCategory;
           const meta = CATEGORY_META[category];
           return (
-            <span className={`text-xs font-medium ${meta?.textClass || 'text-slate-600'}`}>
+            <span className={`text-xs font-medium ${meta?.textClass || 'text-c-text-secondary'}`}>
               {meta?.name || row.libraryCategory || '-'}
             </span>
           );
@@ -1738,14 +1745,14 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             {(row.tags || []).slice(0, 3).map((tag: string) => (
               <span
                 key={tag}
-                className="shrink-0 px-1.5 py-px rounded text-[10px] bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-navy-700 truncate max-w-[80px]"
+                className="shrink-0 px-1.5 py-px rounded text-[10px] bg-c-surface-raised text-c-text-secondary border border-c-border-subtle truncate max-w-[80px]"
                 title={tag}
               >
                 {tag}
               </span>
             ))}
             {(row.tags || []).length > 3 ? (
-              <span className="shrink-0 text-[10px] text-slate-600">
+              <span className="shrink-0 text-[10px] text-c-text-muted">
                 +{(row.tags || []).length - 3}
               </span>
             ) : null}
@@ -1763,7 +1770,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         ],
         render: (row) => (
           // canon §4.0a: neutral chip shell; signal carried by the leading dot.
-          <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[11px] font-medium border border-slate-200/70 bg-white/60 text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-300">
+          <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[11px] font-medium border border-c-border bg-c-surface-raised text-c-text-secondary">
             <span
               className={`h-1.5 w-1.5 rounded-full ${
                 row.isLicensed ? 'bg-amber-500' : 'bg-emerald-500'
@@ -1787,10 +1794,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         render: (row) => (
           // canon §3.5/§4.0: status carried by signal dot only; chip shell stays neutral
           // (no status-colored background fill).
-          <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[11px] font-medium border border-slate-200/70 bg-white/60 text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-300">
+          <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[11px] font-medium border border-c-border bg-c-surface-raised text-c-text-secondary">
             <span
               className={`h-1.5 w-1.5 rounded-full ${
-                row.isActive ? 'bg-emerald-500' : 'bg-slate-400'
+                row.isActive ? 'bg-emerald-500' : 'bg-c-text-muted'
               }`}
             />
             {row.isActive
@@ -1815,7 +1822,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         label: t('tools.hub.initiatives.columns.initiative', 'Initiative'),
         render: (row) => (
           <div className="min-w-0">
-            <span className="block text-sm text-slate-900 dark:text-white font-medium truncate">
+            <span className="block text-sm font-semibold text-c-text truncate">
               {row.name}
             </span>
           </div>
@@ -1833,13 +1840,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         ],
         render: (row) => {
           const axisColors: Record<string, string> = {
-            strategic: 'text-slate-600 dark:text-slate-300',
-            operational: 'text-slate-600 dark:text-slate-300',
-            digital: 'text-slate-600 dark:text-slate-300',
+            strategic: 'text-c-text-secondary',
+            operational: 'text-c-text-secondary',
+            digital: 'text-c-text-secondary',
           };
           return (
             <span
-              className={`text-xs font-medium capitalize ${axisColors[row.category] || 'text-slate-600'}`}
+              className={`text-xs font-medium capitalize ${axisColors[row.category] || 'text-c-text-secondary'}`}
             >
               {row.category}
             </span>
@@ -1851,21 +1858,14 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         label: t('tools.hub.initiatives.columns.priority', 'Priority'),
         width: '100px',
         render: (row) => {
-          const priority = row._fullData?.priority || 'MEDIUM';
-          const priorityDots: Record<string, string> = {
-            CRITICAL: 'bg-danger-500',
-            HIGH: 'bg-amber-500',
-            MEDIUM: 'bg-blue-500',
-            LOW: 'bg-slate-400',
+          const priority = String(row._fullData?.priority || 'MEDIUM').toUpperCase();
+          const levels: Record<string, PriorityLevel> = {
+            CRITICAL: 'urgent',
+            HIGH: 'high',
+            MEDIUM: 'medium',
+            LOW: 'low',
           };
-          return (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-300/80 bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200">
-              <span
-                className={`h-1.5 w-1.5 rounded-full ${priorityDots[priority] || priorityDots.MEDIUM}`}
-              />
-              {priority}
-            </span>
-          );
+          return <PriorityChip level={levels[priority] || 'medium'} label={priority} />;
         },
       },
       {
@@ -1880,7 +1880,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         render: (row) => {
           const roi = row._fullData?.expectedRoi || row._fullData?.expected_roi;
           return (
-            <span className={`text-xs font-medium ${roi ? 'text-green-400' : 'text-slate-500'}`}>
+            <span className={`text-xs font-medium ${roi ? 'text-green-400' : 'text-c-text-muted'}`}>
               {roi ? `${roi.toFixed(1)}x` : '-'}
             </span>
           );
@@ -1893,7 +1893,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         render: (row) => {
           const taskCount = row._fullData?.tasks?.length || 0;
           return (
-            <span className="text-xs text-slate-600 flex items-center gap-1">
+            <span className="text-xs text-c-text-secondary flex items-center gap-1">
               <ListTodo size={12} />
               {taskCount}
             </span>
@@ -1938,7 +1938,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           const c = cfg[kind] || {
             icon: <FileText size={14} />,
             label: isPolish ? 'Output' : 'Output',
-            color: 'text-slate-600',
+            color: 'text-c-text-secondary',
           };
           return (
             <div className="flex items-center gap-2">
@@ -1953,7 +1953,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         label: t('tools.hub.outputs.columns.name', 'Name'),
         render: (row: any) => (
           <div className="min-w-0">
-            <span className="block text-sm text-slate-900 dark:text-white font-medium truncate">
+            <span className="block text-sm font-semibold text-c-text truncate">
               {String(row?.name || '')}
             </span>
           </div>
@@ -2237,6 +2237,19 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         .trim()
         .toUpperCase();
       if (!assessmentType) return;
+
+      // Honest gate (decision D-B): coming-soon frameworks (CMMI/LEAN) must never
+      // start a session — this is the single choke point for every assessment
+      // start path in the library, so no path can bypass it.
+      if (isFrameworkComingSoon(assessmentType as FrameworkId)) {
+        toast(
+          isPolish
+            ? 'Ten framework jest wkrótce dostępny — nie można jeszcze rozpocząć sesji.'
+            : 'This framework is coming soon — a session cannot be started yet.',
+          { icon: '🔜' }
+        );
+        return;
+      }
 
       try {
         const sessionName =
@@ -2526,7 +2539,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         icon: null,
         isLicensed: true,
         isActive: true,
-        isComingSoon: false,
+        // Honest gate (decision D-B): reflect the framework registry so the
+        // picker cannot claim CMMI/LEAN are startable.
+        isComingSoon: isFrameworkComingSoon(fw as FrameworkId),
         sortOrder: 900 + idx,
         createdAt: null,
         license: 'licensed',
@@ -2766,7 +2781,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       case 'BLOCKED':
         return 'bg-danger-500/20 text-danger-400';
       default:
-        return 'bg-slate-500/20 text-slate-600';
+        return 'bg-slate-500/20 text-c-text-secondary';
     }
   };
 
@@ -2779,7 +2794,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       case 'MEDIUM':
         return 'text-blue-400';
       default:
-        return 'text-slate-600';
+        return 'text-c-text-secondary';
     }
   };
 
@@ -2801,7 +2816,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     if (isLoadingInitiative) {
       return (
         <div className="flex items-center justify-center h-full">
-          <div className="flex flex-col items-center gap-3 text-slate-500 dark:text-slate-400">
+          <div className="flex flex-col items-center gap-3 text-c-text-muted">
             <Loader2 className="w-8 h-8 animate-spin" />
             <span>Loading initiative details...</span>
           </div>
@@ -2811,13 +2826,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
 
     if (!selectedInitiative) {
       return (
-        <div className="flex items-center justify-center h-full text-slate-500">
+        <div className="flex items-center justify-center h-full text-c-text-muted">
           <div className="text-center">
             <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-amber-400/50" />
-            <p className="text-lg text-slate-900 dark:text-white">Initiative not found</p>
+            <p className="text-lg text-c-text">Initiative not found</p>
             <button
               onClick={handleShowList}
-              className="mt-4 px-4 py-2 bg-slate-200 dark:bg-navy-700 hover:bg-slate-300 dark:hover:bg-navy-600 text-slate-900 dark:text-white rounded-lg text-sm transition-colors"
+              className="mt-4 px-4 py-2 bg-c-border-subtle hover:bg-slate-300 dark:hover:bg-navy-600 text-c-text rounded-lg text-sm transition-colors"
             >
               Back to List
             </button>
@@ -2836,19 +2851,19 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       taskStats.total > 0 ? Math.round((taskStats.done / taskStats.total) * 100) : 0;
 
     return (
-      <div className="h-full flex flex-col overflow-hidden bg-slate-50 dark:bg-navy-950">
+      <div className="h-full flex flex-col overflow-hidden bg-c-bg">
         {/* Header */}
-        <div className="shrink-0 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-6 py-4">
+        <div className="shrink-0 border-b border-c-border bg-c-surface px-6 py-4">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
                 <button
                   onClick={handleShowList}
-                  className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"
+                  className="p-1.5 text-c-text-muted hover:text-c-text dark:hover:text-white hover:bg-c-surface-raised rounded-lg transition-colors"
                 >
                   <ChevronRight size={18} className="rotate-180" />
                 </button>
-                <span className="px-2 py-0.5 text-xs font-medium rounded bg-slate-500/20 text-slate-600">
+                <span className="px-2 py-0.5 text-xs font-medium rounded bg-slate-500/20 text-c-text-secondary">
                   DRAFT
                 </span>
                 {selectedInitiative.axis && (
@@ -2864,11 +2879,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                   </span>
                 )}
               </div>
-              <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+              <h1 className="text-xl font-bold text-c-text">
                 {selectedInitiative.name}
               </h1>
               {selectedInitiative.description && (
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                <p className="text-sm text-c-text-muted mt-1 line-clamp-2">
                   {selectedInitiative.description}
                 </p>
               )}
@@ -2880,7 +2895,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                     `/initiatives?open=${encodeURIComponent(selectedInitiative.id)}&mode=doc`
                   )
                 }
-                className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"
+                className="px-3 py-2 text-sm text-c-text-muted hover:text-c-text dark:hover:text-white hover:bg-c-surface-raised rounded-lg transition-colors"
               >
                 Open Full View
               </button>
@@ -2902,21 +2917,21 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             <div className="lg:col-span-2 space-y-6">
               {/* Summary Section */}
               {selectedInitiative.summary && (
-                <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
-                  <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3 flex items-center gap-2">
+                <div className="bg-c-surface rounded-xl border border-c-border p-5">
+                  <h3 className="text-xs font-semibold text-c-text-muted uppercase mb-3 flex items-center gap-2">
                     <FileText size={14} />
                     Summary
                   </h3>
-                  <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                  <p className="text-sm text-c-text-secondary leading-relaxed">
                     {selectedInitiative.summary}
                   </p>
                 </div>
               )}
 
               {/* Tasks Section */}
-              <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
+              <div className="bg-c-surface rounded-xl border border-c-border p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase flex items-center gap-2">
+                  <h3 className="text-xs font-semibold text-c-text-muted uppercase flex items-center gap-2">
                     <ListTodo size={14} />
                     Tasks ({taskStats.total})
                   </h3>
@@ -2932,13 +2947,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 {/* Task Progress Bar */}
                 {taskStats.total > 0 && (
                   <div className="mb-4">
-                    <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+                    <div className="flex items-center justify-between text-xs text-c-text-muted mb-1">
                       <span>Completion</span>
                       <span>{completionPercent}%</span>
                     </div>
-                    <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
+                    <div className="h-2 bg-c-border-subtle rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-primary-500 to-primary-400 rounded-full transition-all"
+                        className="h-full bg-gradient-to-r from-indigo-500 to-indigo-400 rounded-full transition-all"
                         style={{ width: `${completionPercent}%` }}
                       />
                     </div>
@@ -2947,10 +2962,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
 
                 {/* Tasks List */}
                 {initiativeTasks.length === 0 ? (
-                  <div className="text-center py-8 text-slate-500">
+                  <div className="text-center py-8 text-c-text-muted">
                     <ListTodo className="w-10 h-10 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">No tasks yet</p>
-                    <p className="text-xs text-slate-600 mt-1">
+                    <p className="text-xs text-c-text-secondary mt-1">
                       Tasks will be added during planning phase
                     </p>
                   </div>
@@ -2959,7 +2974,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                     {initiativeTasks.map((task) => (
                       <div
                         key={task.id}
-                        className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-primary-500/30 transition-colors"
+                        className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-navy-800 rounded-lg border border-c-border hover:border-c-accent/30 transition-colors"
                       >
                         <div
                           className={`w-2 h-2 rounded-full ${
@@ -2969,12 +2984,12 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                                 ? 'bg-blue-400'
                                 : task.status === 'BLOCKED'
                                   ? 'bg-danger-400'
-                                  : 'bg-slate-400'
+                                  : 'bg-c-text-muted'
                           }`}
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm text-slate-900 dark:text-white font-medium truncate">
+                            <span className="text-sm font-semibold text-c-text truncate">
                               {task.title}
                             </span>
                             <span
@@ -2983,7 +2998,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                               {task.status.replace('_', ' ')}
                             </span>
                           </div>
-                          <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
+                          <div className="flex items-center gap-3 mt-1 text-xs text-c-text-muted">
                             {task.assigneeName && (
                               <span className="flex items-center gap-1">
                                 <User size={10} />
@@ -3013,12 +3028,12 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
 
               {/* Source Info */}
               {selectedInitiative.sourceType && (
-                <div className="bg-slate-100/50 dark:bg-navy-900/50 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                <div className="bg-slate-100/50 dark:bg-navy-900/50 rounded-xl border border-c-border p-4">
+                  <div className="flex items-center gap-2 text-xs text-c-text-muted">
                     <Zap size={12} className="text-amber-400" />
                     <span>
                       Generated from:{' '}
-                      <span className="text-slate-900 dark:text-white capitalize">
+                      <span className="text-c-text capitalize">
                         {getSourceDisplayLabel(
                           selectedInitiative.sourceType,
                           i18n.language === 'pl'
@@ -3026,7 +3041,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                       </span>
                     </span>
                     {selectedInitiative.sourceId && (
-                      <span className="text-slate-500">
+                      <span className="text-c-text-muted">
                         ({selectedInitiative.sourceId.slice(0, 8)}...)
                       </span>
                     )}
@@ -3038,31 +3053,31 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             {/* Right Column - Metrics & Info */}
             <div className="space-y-4">
               {/* Key Metrics */}
-              <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
-                <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-4">
+              <div className="bg-c-surface rounded-xl border border-c-border p-5">
+                <h3 className="text-xs font-semibold text-c-text-muted uppercase mb-4">
                   Key Metrics
                 </h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                    <span className="text-sm text-c-text-muted flex items-center gap-2">
                       <DollarSign size={14} />
                       CAPEX
                     </span>
-                    <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                    <span className="text-sm font-semibold text-c-text">
                       {formatCurrency(selectedInitiative.costCapex)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                    <span className="text-sm text-c-text-muted flex items-center gap-2">
                       <DollarSign size={14} />
                       OPEX
                     </span>
-                    <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                    <span className="text-sm font-semibold text-c-text">
                       {formatCurrency(selectedInitiative.costOpex)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                    <span className="text-sm text-c-text-muted flex items-center gap-2">
                       <TrendingUp size={14} />
                       Expected ROI
                     </span>
@@ -3076,21 +3091,21 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               </div>
 
               {/* Timeline */}
-              <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
-                <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-4 flex items-center gap-2">
+              <div className="bg-c-surface rounded-xl border border-c-border p-5">
+                <h3 className="text-xs font-semibold text-c-text-muted uppercase mb-4 flex items-center gap-2">
                   <Calendar size={14} />
                   Timeline
                 </h3>
                 <div className="space-y-3">
                   <div>
-                    <span className="text-xs text-slate-500">Start Date</span>
-                    <div className="text-sm text-slate-900 dark:text-white">
+                    <span className="text-xs text-c-text-muted">Start Date</span>
+                    <div className="text-sm text-c-text">
                       {formatDate(selectedInitiative.plannedStartDate)}
                     </div>
                   </div>
                   <div>
-                    <span className="text-xs text-slate-500">End Date</span>
-                    <div className="text-sm text-slate-900 dark:text-white">
+                    <span className="text-xs text-c-text-muted">End Date</span>
+                    <div className="text-sm text-c-text">
                       {formatDate(selectedInitiative.plannedEndDate)}
                     </div>
                   </div>
@@ -3098,29 +3113,29 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               </div>
 
               {/* Ownership */}
-              <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
-                <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-4 flex items-center gap-2">
+              <div className="bg-c-surface rounded-xl border border-c-border p-5">
+                <h3 className="text-xs font-semibold text-c-text-muted uppercase mb-4 flex items-center gap-2">
                   <Users size={14} />
                   Ownership
                 </h3>
                 <div className="space-y-3">
                   <div>
-                    <span className="text-xs text-slate-500">Business Owner</span>
-                    <div className="text-sm text-slate-900 dark:text-white">
+                    <span className="text-xs text-c-text-muted">Business Owner</span>
+                    <div className="text-sm text-c-text">
                       {selectedInitiative.ownerBusiness ? (
                         `${selectedInitiative.ownerBusiness.firstName} ${selectedInitiative.ownerBusiness.lastName}`
                       ) : (
-                        <span className="text-slate-500">Not assigned</span>
+                        <span className="text-c-text-muted">Not assigned</span>
                       )}
                     </div>
                   </div>
                   <div>
-                    <span className="text-xs text-slate-500">Execution Owner</span>
-                    <div className="text-sm text-slate-900 dark:text-white">
+                    <span className="text-xs text-c-text-muted">Execution Owner</span>
+                    <div className="text-sm text-c-text">
                       {selectedInitiative.ownerExecution ? (
                         `${selectedInitiative.ownerExecution.firstName} ${selectedInitiative.ownerExecution.lastName}`
                       ) : (
-                        <span className="text-slate-500">Not assigned</span>
+                        <span className="text-c-text-muted">Not assigned</span>
                       )}
                     </div>
                   </div>
@@ -3128,21 +3143,21 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               </div>
 
               {/* Next Steps */}
-              <div className="bg-primary-500/10 rounded-xl border border-primary-500/20 p-5">
-                <h3 className="text-xs font-semibold text-primary-400 uppercase mb-3">
+              <div className="bg-c-accent-soft rounded-xl border border-c-accent/20 p-5">
+                <h3 className="text-xs font-semibold text-c-accent uppercase mb-3">
                   Next Steps
                 </h3>
-                <ul className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
+                <ul className="space-y-2 text-sm text-c-text-secondary">
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 size={14} className="mt-0.5 text-primary-400" />
+                    <CheckCircle2 size={14} className="mt-0.5 text-c-accent" />
                     <span>Review initiative details</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 size={14} className="mt-0.5 text-slate-500" />
+                    <CheckCircle2 size={14} className="mt-0.5 text-c-text-muted" />
                     <span>Assign owners if needed</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 size={14} className="mt-0.5 text-slate-500" />
+                    <CheckCircle2 size={14} className="mt-0.5 text-c-text-muted" />
                     <span>Submit for review (Go/No-Go)</span>
                   </li>
                 </ul>
@@ -3161,7 +3176,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       return (
         <div className="flex flex-col items-center justify-center h-full min-h-screen bg-slate-50 dark:bg-navy-900 p-8 text-center">
           <AlertTriangle className="w-12 h-12 text-danger-500 mb-4" />
-          <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+          <h3 className="text-xl font-semibold text-c-text mb-2">
             {loadError.isTransportBlock
               ? isPolish
                 ? 'Ochrona przed pętlą zapytań (Transport Safeguard)'
@@ -3170,7 +3185,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 ? 'Błąd pobierania danych'
                 : 'Data Loading Error'}
           </h3>
-          <p className="text-slate-500 dark:text-slate-400 max-w-md mb-6">{loadError.message}</p>
+          <p className="text-c-text-muted max-w-md mb-6">{loadError.message}</p>
           <button
             onClick={() => {
               // IMPACT-TR-002: a user-initiated retry must clear any latched
@@ -3181,7 +3196,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               setIsLoading(true);
               fetchData();
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-md font-medium"
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-md font-medium"
           >
             <RefreshCw className="w-4 h-4" />
             {isPolish ? 'Spróbuj ponownie' : 'Retry'}
@@ -3194,7 +3209,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     if (isLoading) {
       return (
         <div className="flex items-center justify-center h-full">
-          <div className="flex flex-col items-center gap-3 text-slate-500 dark:text-slate-400">
+          <div className="flex flex-col items-center gap-3 text-c-text-muted">
             <Loader2 className="w-8 h-8 animate-spin" />
             <span>Loading tool sessions...</span>
           </div>
@@ -3316,40 +3331,31 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     if (activeTab === 'library') {
       if (isKnownToolsLoading && knownTools.length === 0) {
         return (
-          <div className="flex items-center justify-center h-full">
-            <div className="flex flex-col items-center gap-3 text-slate-500 dark:text-slate-400">
-              <Loader2 className="w-8 h-8 animate-spin" />
-              <span>
-                {isPolish ? 'Ładowanie biblioteki narzędzi...' : 'Loading tools library...'}
-              </span>
-            </div>
+          <div className="h-full overflow-auto p-6">
+            <SharedLoadingState
+              template="card"
+              count={6}
+              label={isPolish ? 'Ładowanie biblioteki narzędzi…' : 'Loading tools library…'}
+            />
           </div>
         );
       }
 
       if (knownToolsError && knownTools.length === 0) {
         return (
-          <div className="flex items-center justify-center h-full px-6">
-            <div className="max-w-lg w-full rounded-2xl border border-amber-200/70 bg-amber-50/80 dark:border-amber-900/40 dark:bg-amber-950/20 p-6 text-center">
-              <AlertTriangle className="w-10 h-10 mx-auto mb-3 text-amber-500" />
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                {isPolish ? 'Biblioteka nie została załadowana' : 'Library failed to load'}
-              </h3>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{knownToolsError}</p>
-              <button
-                type="button"
-                onClick={() => {
-                  // IMPACT-TR-002: clear any latched guard before retrying.
-                  clearGlobalTransportFailure();
-                  resetAuthLoopGuard();
-                  void fetchKnownTools();
-                }}
-                className="mt-4 inline-flex items-center justify-center h-9 px-4 rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.06] text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.1]"
-              >
-                {isPolish ? 'Spróbuj ponownie' : 'Try again'}
-              </button>
-            </div>
-          </div>
+          <SharedEmptyState
+            variant="error"
+            title={
+              isPolish ? 'Biblioteka nie została załadowana' : 'Library failed to load'
+            }
+            description={knownToolsError}
+            onRetry={() => {
+              // IMPACT-TR-002: clear any latched guard before retrying.
+              clearGlobalTransportFailure();
+              resetAuthLoopGuard();
+              void fetchKnownTools();
+            }}
+          />
         );
       }
 
@@ -3362,21 +3368,21 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         : null;
       const itemIds = filteredLibraryItems.map((d) => d.id);
       const renderLibrarySearchEmptyState = () => (
-        <div className="flex h-full items-center justify-center px-6 py-12">
-          <div
-            className="max-w-xl rounded-2xl border border-slate-200/70 bg-slate-50/80 px-6 py-7 text-center text-sm text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-slate-300"
-            data-testid="tools-library-search-empty-state"
-          >
-            <Library className="mx-auto mb-3 h-8 w-8 text-slate-600 dark:text-slate-500" />
-            <p className="font-medium text-slate-900 dark:text-white">{libraryEmptyMessage}</p>
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              className="mt-4 inline-flex h-9 items-center justify-center rounded-full border border-slate-200/70 bg-white px-4 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-200 dark:hover:bg-white/[0.1]"
-            >
-              {isPolish ? 'Wyczyść wyszukiwanie' : 'Clear search'}
-            </button>
-          </div>
+        <div data-testid="tools-library-search-empty-state" className="h-full">
+          <SharedEmptyState
+            variant="filter"
+            icon={Library}
+            title={libraryEmptyMessage}
+            description={
+              isPolish
+                ? 'Zmień frazę wyszukiwania lub wyczyść filtry, aby zobaczyć więcej narzędzi.'
+                : 'Try a different phrase or clear the search to see more tools.'
+            }
+            primaryAction={{
+              label: isPolish ? 'Wyczyść wyszukiwanie' : 'Clear search',
+              onClick: () => setSearchQuery(''),
+            }}
+          />
         </div>
       );
 
@@ -3771,8 +3777,8 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 <div className="p-4 space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="text-xs text-slate-500 dark:text-slate-400">{label}</div>
-                      <div className="text-base font-semibold text-slate-900 dark:text-white truncate">
+                      <div className="text-xs text-c-text-muted">{label}</div>
+                      <div className="text-base font-semibold text-c-text truncate">
                         {item.name}
                       </div>
                     </div>
@@ -3786,15 +3792,15 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                     </button>
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-xs">
-                    <div className="text-slate-500 dark:text-slate-400">
+                    <div className="text-c-text-muted">
                       {t('common.status', 'Status')}
-                      <div className="text-slate-900 dark:text-white font-medium mt-0.5">
+                      <div className="text-c-text font-medium mt-0.5">
                         {String((item as any)?.status || '')}
                       </div>
                     </div>
-                    <div className="text-slate-500 dark:text-slate-400">
+                    <div className="text-c-text-muted">
                       {t('common.updated', 'Updated')}
-                      <div className="text-slate-900 dark:text-white font-medium mt-0.5">
+                      <div className="text-c-text font-medium mt-0.5">
                         {(item as any)?.updatedAt
                           ? new Date((item as any).updatedAt).toLocaleString()
                           : '-'}
@@ -3912,8 +3918,8 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               const statusUpper =
                 String(init?.status || item.status || '').toUpperCase() || 'DRAFT';
               const extraPillBase =
-                'inline-flex items-center justify-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-              const extraPillNeutral = `${extraPillBase} border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
+                'inline-flex items-center justify-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+              const extraPillNeutral = `${extraPillBase} border-c-border bg-c-surface-raised text-c-text-secondary hover:bg-c-surface`;
 
               const openChat = async (promptText: string) => {
                 try {
@@ -4288,20 +4294,20 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       {isAddMenuOpen ? (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsAddMenuOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 z-50 w-[520px] max-w-[calc(100vw-24px)] rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-xl shadow-black/20 overflow-hidden">
-            <div className="p-3 border-b border-slate-200/60 dark:border-white/[0.06]">
+          <div className="absolute right-0 top-full mt-2 z-50 w-[520px] max-w-[calc(100vw-24px)] rounded-2xl border border-c-border dark:border-white/[0.08] bg-c-surface shadow-xl shadow-black/20 overflow-hidden">
+            <div className="p-3 border-b border-c-border-subtle dark:border-white/[0.06]">
               <div className="relative">
                 <input
                   value={addMenuQuery}
                   onChange={(e) => setAddMenuQuery(e.target.value)}
                   placeholder={isPolish ? 'Szukaj narzędzia…' : 'Search tools…'}
-                  className="w-full h-9 rounded-full px-4 pr-10 text-sm bg-slate-50 dark:bg-navy-950/70 border border-slate-200/70 dark:border-white/[0.06] text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+                  className="w-full h-9 rounded-full px-4 pr-10 text-sm bg-c-bg/70 border border-c-border text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
                 />
                 {addMenuQuery ? (
                   <button
                     type="button"
                     onClick={() => setAddMenuQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-700 dark:hover:text-slate-200"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-c-text-secondary hover:text-slate-700 dark:hover:text-slate-200"
                     aria-label={isPolish ? 'Wyczyść' : 'Clear'}
                   >
                     <X size={16} />
@@ -4319,16 +4325,16 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                       onClick={() => setAddMenuCategory(c.id)}
                       className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border transition-colors ${
                         active
-                          ? 'border-primary-500/40 bg-primary-500/10 text-slate-900 dark:text-white'
-                          : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
+                          ? 'border-c-accent/40 bg-c-accent-soft text-c-text'
+                          : 'border-c-border bg-c-surface-raised text-c-text-secondary hover:bg-c-surface'
                       }`}
                     >
                       {c.icon ? (
-                        <span className="text-slate-500 dark:text-slate-400">{c.icon}</span>
+                        <span className="text-c-text-muted">{c.icon}</span>
                       ) : null}
                       <span>{c.label}</span>
                       {c.count != null ? (
-                        <span className="ml-1 px-1.5 py-0.5 rounded-full text-[11px] bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300">
+                        <span className="ml-1 px-1.5 py-0.5 rounded-full text-[11px] bg-c-border-subtle text-c-text-secondary">
                           {c.count}
                         </span>
                       ) : null}
@@ -4340,7 +4346,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
 
             <div className="max-h-[60vh] overflow-auto p-2">
               {toolPickerItems.length === 0 ? (
-                <div className="p-4 text-sm text-slate-500 dark:text-slate-400">
+                <div className="p-4 text-sm text-c-text-muted">
                   {isPolish ? 'Brak wyników.' : 'No results.'}
                 </div>
               ) : (
@@ -4375,22 +4381,22 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                       }}
                       className={`w-full flex items-start gap-3 px-3 py-2 rounded-xl text-left transition-colors ${
                         item.isActive || item.kind === 'assessment'
-                          ? 'hover:bg-slate-50 dark:hover:bg-white/[0.04]'
+                          ? 'hover:bg-c-surface-raised dark:hover:bg-white/[0.04]'
                           : 'opacity-60'
                       }`}
                     >
-                      <span className="mt-0.5 font-mono text-xs font-bold text-slate-500 dark:text-slate-400 w-12 truncate">
+                      <span className="mt-0.5 font-mono text-xs font-bold text-c-text-muted w-12 truncate">
                         {item.kind === 'catalog' ? 'DOCS' : item.shortCode}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                        <div className="text-sm font-medium text-c-text truncate">
                           {item.name}
                         </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                        <div className="text-xs text-c-text-muted truncate">
                           {item.description}
                         </div>
                         {item.kind !== 'assessment' ? (
-                          <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                          <div className="mt-1 text-[11px] text-c-text-muted">
                             {item.isActive
                               ? isPolish
                                 ? 'Aktywne'
@@ -4401,7 +4407,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                           </div>
                         ) : null}
                       </div>
-                      <span className="mt-0.5 text-slate-600">
+                      <span className="mt-0.5 text-c-text-secondary">
                         <ArrowRight size={16} />
                       </span>
                     </button>
@@ -4427,12 +4433,12 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           border transition-all duration-200
           ${
             isStatusDropdownOpen
-              ? 'bg-primary-500/15 border-primary-500 text-primary-400'
-              : 'bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
+              ? 'bg-c-accent-soft border-c-accent text-c-accent'
+              : 'bg-c-surface-raised border-c-border text-c-text-secondary hover:bg-c-surface'
           }
         `}
       >
-        <Filter size={16} className="text-slate-600" />
+        <Filter size={16} className="text-c-text-secondary" />
         <span className={`w-2 h-2 rounded-full ${selectedStatusOption.bgColor}`} />
         <span>
           {isPolish ? 'Status' : 'Status'}:{' '}
@@ -4440,7 +4446,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         </span>
         <ChevronDown
           size={16}
-          className={`text-slate-600 transition-transform duration-200 ${isStatusDropdownOpen ? 'rotate-180' : ''}`}
+          className={`text-c-text-secondary transition-transform duration-200 ${isStatusDropdownOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
@@ -4460,8 +4466,8 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                   transition-colors duration-150
                   ${
                     isSelected
-                      ? 'bg-primary-500/15 text-slate-900 dark:text-white'
-                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 hover:text-slate-900 dark:hover:text-white'
+                      ? 'bg-c-accent-soft text-c-text'
+                      : 'text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text dark:hover:text-white'
                   }
                 `}
               >
@@ -4471,7 +4477,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 </span>
                 {isSelected && (
                   <svg
-                    className="w-4 h-4 text-primary-400"
+                    className="w-4 h-4 text-c-accent"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -4504,7 +4510,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                   id: 'all' as const,
                   label: t('common.all', 'All'),
                   count: libraryCatalogItems.length,
-                  dot: 'bg-slate-500',
+                  dot: 'bg-c-text-muted',
                 },
                 {
                   id: 'strategic' as const,
@@ -4540,7 +4546,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                   id: 'other' as const,
                   label: isPolish ? 'Inne' : 'Other',
                   count: libraryCategoryCounts.other,
-                  dot: 'bg-slate-500',
+                  dot: 'bg-c-text-muted',
                 },
               ] as const
             ).map((opt) => {

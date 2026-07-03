@@ -35,7 +35,7 @@ const backendEnv = [
   `DATABASE_URL=${e2eDatabaseUrl}`,
   'DB_TYPE=postgres',
   'DB_MANAGED_SCHEMA=off',
-  'MOCK_DB=true',
+  `MOCK_DB=${process.env.E2E_MOCK_DB ?? 'true'}`,
   'MOCK_REDIS=true',
   'DB_QUERY_TIMEOUT=15000',
   'DB_STATEMENT_TIMEOUT=30000',
@@ -87,7 +87,10 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      // Large viewport so react-flow canvas tools (mind-map / process-flow / whiteboard)
+      // keep their nodes inside the visible area after fitView — headless can then click
+      // them for real (small 1280×720 pushes nodes off-viewport → "outside of viewport").
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1680, height: 1050 } },
     },
     // Visual regression tests
     {
@@ -112,14 +115,14 @@ export default defineConfig({
               ? `mkdir -p "${e2eTmpDir}" && cd server && npm run build && TMPDIR="${e2eTmpDir}" ${backendEnv} node dist/src/index.js`
               : `mkdir -p "${e2eTmpDir}" && cd server && TMPDIR="${e2eTmpDir}" ${backendEnv} tsx src/index.ts`,
           url: `${backendUrl.replace(/\/$/, '')}/api/health/ping`,
-          reuseExistingServer: false,
+          reuseExistingServer: !!process.env.E2E_REUSE_SERVER,
           // Cold starts on shared machines can exceed 4 minutes.
           timeout: backendRunner === 'build' ? 600000 : 420000,
         },
         {
-          command: `VITE_API_TARGET=${backendUrl} npm run build && VITE_API_TARGET=${backendUrl} npx vite preview --port ${frontendPort} --strictPort`,
+          command: `NODE_OPTIONS=--max-old-space-size=8192 VITE_API_TARGET=${backendUrl} npm run build && VITE_API_TARGET=${backendUrl} npx vite preview --port ${frontendPort} --strictPort`,
           url: frontendUrl,
-          reuseExistingServer: false,
+          reuseExistingServer: !!process.env.E2E_REUSE_SERVER,
           timeout: 420000,
         },
       ]

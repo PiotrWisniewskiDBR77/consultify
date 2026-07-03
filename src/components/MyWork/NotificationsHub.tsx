@@ -34,6 +34,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { type CardViewStyle, CardViewSwitcher } from '@/components/shared/CardViewSwitcher';
+import { EmptyState, LoadingState } from '@/components/shared/states';
 import type { GenericListItem, ListColumn, ListSection } from '@/components/shared/ViewLayouts';
 import { ClickUpListView, NotionListView } from '@/components/shared/ViewLayouts';
 import {
@@ -948,19 +949,34 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
       {/* Notifications content — switches layout based on cardViewStyle (A7.2/A7.3) */}
       <div className="flex-1 overflow-y-auto">
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+          <div className="p-4">
+            <LoadingState template="list" rows={6} />
           </div>
         ) : filteredNotifications.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center px-4">
-            <Bell
-              size={40}
-              className="text-slate-700 dark:text-slate-300 dark:text-slate-600 mb-3"
+          filter !== 'all' ? (
+            <EmptyState
+              variant="filter"
+              title={t('myWork.notifications.filterEmptyTitle', 'No notifications match this filter')}
+              description={t(
+                'myWork.notifications.filterEmptyDesc',
+                'Try a different filter to see more notifications.',
+              )}
+              primaryAction={{
+                label: t('common.clearFilters', 'Clear filters'),
+                onClick: () => setFilter('all'),
+              }}
             />
-            <p className="text-[13px] text-slate-500 dark:text-slate-400">
-              {t('myWork.noNotifications', 'No notifications')}
-            </p>
-          </div>
+          ) : (
+            <EmptyState
+              variant="new"
+              icon={Bell}
+              title={t('myWork.noNotifications', 'No notifications')}
+              description={t(
+                'myWork.notifications.newEmptyDesc',
+                'You are all caught up — new notifications will appear here.',
+              )}
+            />
+          )
         ) : cardViewStyle === 'n' ? (
           <div className="p-4">
             <NotionListView

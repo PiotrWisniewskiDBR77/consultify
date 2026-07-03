@@ -86,22 +86,22 @@ export const StudioChat: React.FC<StudioChatProps> = ({
   };
 
   return (
-    <div className={`flex flex-col h-full bg-slate-900 ${className}`}>
+    <div className={`flex flex-col h-full bg-c-surface ${className}`}>
       {/* Header */}
-      <div className="shrink-0 px-4 py-3 border-b border-white/10 flex items-center justify-between">
+      <div className="shrink-0 px-4 py-3 border-b border-c-border-subtle flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-primary-600 flex items-center justify-center">
             <Sparkles size={16} className="text-white" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-white">Studio AI</h3>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400">Describe your diagram</p>
+            <h3 className="text-sm font-semibold text-c-text">Studio AI</h3>
+            <p className="text-[10px] text-c-text-muted">Describe your diagram</p>
           </div>
         </div>
         {onClear && messages.length > 0 && (
           <button
             onClick={onClear}
-            className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-md transition-colors"
+            className="p-1.5 text-c-text-muted hover:text-c-text hover:bg-c-surface-raised rounded-md transition-colors"
             title="Clear chat"
           >
             <Trash2 size={14} />
@@ -114,10 +114,10 @@ export const StudioChat: React.FC<StudioChatProps> = ({
         {messages.length === 0 && (
           <div className="text-center py-8">
             <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-gradient-to-br from-blue-500/20 to-primary-600/20 flex items-center justify-center">
-              <TeresaMark size={28} className="text-blue-400" />
+              <TeresaMark size={28} className="text-c-accent" />
             </div>
-            <h4 className="text-white font-medium mb-2">Start Creating</h4>
-            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-[200px] mx-auto">
+            <h4 className="text-c-text font-medium mb-2">Start Creating</h4>
+            <p className="text-sm text-c-text-muted max-w-[200px] mx-auto">
               Describe the diagram you want to create, and I'll generate it for you.
             </p>
           </div>
@@ -132,7 +132,7 @@ export const StudioChat: React.FC<StudioChatProps> = ({
             <div
               className={`
                             shrink-0 w-7 h-7 rounded-full flex items-center justify-center
-                            ${msg.role === 'user' ? 'bg-blue-500/20 text-blue-400' : 'bg-primary-500/20 text-primary-400'}
+                            ${msg.role === 'user' ? 'bg-c-accent-soft text-c-accent' : 'bg-c-surface-raised text-c-text-secondary'}
                         `}
             >
               {msg.role === 'user' ? <User size={14} /> : <TeresaMark size={14} />}
@@ -148,14 +148,14 @@ export const StudioChat: React.FC<StudioChatProps> = ({
               <div
                 className={`
                                 inline-block px-3 py-2 rounded-lg max-w-[85%] text-left
-                                ${msg.role === 'user' ? 'bg-blue-500/20 text-blue-100' : 'bg-white/5 text-slate-600'}
+                                ${msg.role === 'user' ? 'bg-c-surface-raised text-c-text' : 'bg-c-surface-raised text-c-text-secondary'}
                             `}
               >
                 <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
 
                 {/* Diagram update indicator */}
                 {msg.diagramUpdate && (
-                  <div className="mt-2 pt-2 border-t border-white/10 text-[10px] text-slate-500 dark:text-slate-400">
+                  <div className="mt-2 pt-2 border-t border-c-border-subtle text-[10px] text-c-text-muted">
                     <span className="inline-flex items-center gap-1">
                       <Sparkles size={10} />
                       Diagram {msg.diagramUpdate.action === 'replace' ? 'generated' : 'updated'}
@@ -163,7 +163,7 @@ export const StudioChat: React.FC<StudioChatProps> = ({
                   </div>
                 )}
               </div>
-              <div className="text-[10px] text-slate-600 dark:text-slate-400 mt-1 px-1">
+              <div className="text-[10px] text-c-text-muted mt-1 px-1">
                 {formatTime(msg.timestamp)}
               </div>
             </div>
@@ -173,23 +173,23 @@ export const StudioChat: React.FC<StudioChatProps> = ({
         {/* Processing indicator */}
         {isProcessing && (
           <div className="flex gap-3">
-            <div className="shrink-0 w-7 h-7 rounded-full bg-primary-500/20 flex items-center justify-center">
-              <Loader2 size={14} className="text-primary-400 animate-spin" />
+            <div className="shrink-0 w-7 h-7 rounded-full bg-c-surface-raised flex items-center justify-center">
+              <Loader2 size={14} className="text-c-accent animate-spin" />
             </div>
-            <div className="bg-white/5 px-3 py-2 rounded-lg">
-              <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-500">
+            <div className="bg-c-surface-raised px-3 py-2 rounded-lg">
+              <div className="flex items-center gap-2 text-sm text-c-text-secondary">
                 <span>Generating diagram</span>
                 <span className="flex gap-0.5">
                   <span
-                    className="w-1 h-1 bg-slate-50 dark:bg-navy-800/300 rounded-full animate-bounce"
+                    className="w-1 h-1 bg-c-text-muted rounded-full animate-bounce"
                     style={{ animationDelay: '0ms' }}
                   />
                   <span
-                    className="w-1 h-1 bg-slate-50 dark:bg-navy-800/300 rounded-full animate-bounce"
+                    className="w-1 h-1 bg-c-text-muted rounded-full animate-bounce"
                     style={{ animationDelay: '150ms' }}
                   />
                   <span
-                    className="w-1 h-1 bg-slate-50 dark:bg-navy-800/300 rounded-full animate-bounce"
+                    className="w-1 h-1 bg-c-text-muted rounded-full animate-bounce"
                     style={{ animationDelay: '300ms' }}
                   />
                 </span>
@@ -203,10 +203,10 @@ export const StudioChat: React.FC<StudioChatProps> = ({
 
       {/* Quick Actions */}
       {messages.length === 0 && (
-        <div className="shrink-0 px-4 py-2 border-t border-white/5">
+        <div className="shrink-0 px-4 py-2 border-t border-c-border-subtle">
           <button
             onClick={() => setShowSuggestions(!showSuggestions)}
-            className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 hover:text-white transition-colors mb-2"
+            className="flex items-center gap-2 text-xs text-c-text-muted hover:text-c-text transition-colors mb-2"
           >
             <Lightbulb size={12} />
             Quick actions
@@ -219,7 +219,7 @@ export const StudioChat: React.FC<StudioChatProps> = ({
                 <button
                   key={action.label}
                   onClick={() => handleQuickAction(action.prompt)}
-                  className="px-2 py-1 text-[10px] bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 text-slate-600 dark:text-slate-500 hover:text-white rounded-md transition-colors"
+                  className="px-2 py-1 text-[10px] bg-c-surface-raised hover:bg-c-surface-raised text-c-text-secondary hover:text-c-text rounded-md transition-colors"
                 >
                   {action.label}
                 </button>
@@ -231,7 +231,7 @@ export const StudioChat: React.FC<StudioChatProps> = ({
 
       {/* AI Suggestions (when available) */}
       {suggestions.length > 0 && (
-        <div className="shrink-0 px-4 py-2 border-t border-white/5">
+        <div className="shrink-0 px-4 py-2 border-t border-c-border-subtle">
           <div className="flex items-center gap-2 text-xs text-amber-500 mb-2">
             <Lightbulb size={12} />
             Suggestions
@@ -251,7 +251,7 @@ export const StudioChat: React.FC<StudioChatProps> = ({
       )}
 
       {/* Input */}
-      <div className="shrink-0 p-4 border-t border-white/10">
+      <div className="shrink-0 p-4 border-t border-c-border-subtle">
         <div className="flex gap-2">
           <textarea
             ref={inputRef}
@@ -260,7 +260,7 @@ export const StudioChat: React.FC<StudioChatProps> = ({
             onKeyDown={handleKeyDown}
             placeholder="Describe your diagram..."
             rows={1}
-            className="flex-1 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent"
+            className="flex-1 bg-c-surface-raised border border-c-border rounded-lg px-3 py-2 text-sm text-c-text placeholder-c-text-muted resize-none focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-transparent"
             style={{ minHeight: '38px', maxHeight: '120px' }}
           />
           <button
@@ -270,8 +270,8 @@ export const StudioChat: React.FC<StudioChatProps> = ({
                             shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-all
                             ${
                               input.trim() && !isProcessing
-                                ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                                : 'bg-white/5 text-slate-600 dark:text-slate-400 cursor-not-allowed'
+                                ? 'bg-c-accent hover:bg-c-accent text-white'
+                                : 'bg-c-surface-raised text-c-text-muted cursor-not-allowed'
                             }
                         `}
           >

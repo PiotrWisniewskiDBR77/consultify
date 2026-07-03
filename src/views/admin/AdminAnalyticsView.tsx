@@ -12,7 +12,6 @@ import {
   DollarSign,
   Eye,
   Lightbulb,
-  Loader2,
   MessageSquare,
   RefreshCw,
   Target,
@@ -41,6 +40,7 @@ import {
   YAxis,
 } from 'recharts';
 
+import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 import { Api } from '../../services/api';
 
 // Removed mock data generators - using real API data only
@@ -138,8 +138,8 @@ export const AdminAnalyticsView: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+      <div className="space-y-6">
+        <SharedLoadingState template="card" count={4} />
       </div>
     );
   }
@@ -150,10 +150,10 @@ export const AdminAnalyticsView: React.FC = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-lg font-medium text-navy-900 dark:text-white flex items-center gap-2">
-            <BarChart2 className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+            <BarChart2 className="w-5 h-5 text-c-text-muted" />
             {t('admin.analytics.title', 'AI Strategic Center')}
           </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-500 mt-0.5">
+          <p className="text-sm text-c-text-secondary mt-0.5">
             {t('admin.analytics.subtitle', 'Monitor AI performance, costs, and strategic insights')}
           </p>
         </div>
@@ -175,8 +175,8 @@ export const AdminAnalyticsView: React.FC = () => {
           onClick={() => setActiveTab('kpis')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             activeTab === 'kpis'
-              ? 'bg-slate-200 text-navy-900 dark:bg-white/10 dark:text-white'
-              : 'text-slate-500 dark:text-slate-400 hover:text-navy-900 hover:bg-slate-100 dark:hover:text-white dark:hover:bg-white/5'
+              ? 'bg-slate-200 text-navy-900 dark:bg-c-surface/10 dark:text-white'
+              : 'text-c-text-muted hover:text-navy-900 hover:bg-c-surface-raised dark:hover:text-white dark:hover:bg-c-surface/5'
           }`}
         >
           {t('admin.analytics.performanceKpis', 'Performance & KPIs')}
@@ -185,8 +185,8 @@ export const AdminAnalyticsView: React.FC = () => {
           onClick={() => setActiveTab('ideas')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             activeTab === 'ideas'
-              ? 'bg-slate-200 text-navy-900 dark:bg-white/10 dark:text-white'
-              : 'text-slate-500 dark:text-slate-400 hover:text-navy-900 hover:bg-slate-100 dark:hover:text-white dark:hover:bg-white/5'
+              ? 'bg-slate-200 text-navy-900 dark:bg-c-surface/10 dark:text-white'
+              : 'text-c-text-muted hover:text-navy-900 hover:bg-c-surface-raised dark:hover:text-white dark:hover:bg-c-surface/5'
           }`}
         >
           {t('admin.analytics.strategicIdeas', 'Strategic Ideas')}
@@ -195,8 +195,8 @@ export const AdminAnalyticsView: React.FC = () => {
           onClick={() => setActiveTab('observations')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             activeTab === 'observations'
-              ? 'bg-slate-200 text-navy-900 dark:bg-white/10 dark:text-white'
-              : 'text-slate-500 dark:text-slate-400 hover:text-navy-900 hover:bg-slate-100 dark:hover:text-white dark:hover:bg-white/5'
+              ? 'bg-slate-200 text-navy-900 dark:bg-c-surface/10 dark:text-white'
+              : 'text-c-text-muted hover:text-navy-900 hover:bg-c-surface-raised dark:hover:text-white dark:hover:bg-c-surface/5'
           }`}
         >
           {t('admin.analytics.observations', 'Observations')}
@@ -216,9 +216,9 @@ export const AdminAnalyticsView: React.FC = () => {
                   </p>
                   <p className="admin-metric-value">{formatPercentage(stats?.successRate || 0)}</p>
                 </div>
-                <CheckCircle className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                <CheckCircle className="w-5 h-5 text-c-text-secondary" />
               </div>
-              <div className="mt-2 flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400">
+              <div className="mt-2 flex items-center gap-1 text-xs text-c-text-secondary">
                 {stats?.successRate > 0 ? (
                   <>
                     <CheckCircle className="w-3 h-3 text-emerald-400" />
@@ -241,9 +241,9 @@ export const AdminAnalyticsView: React.FC = () => {
                     {stats?.avgResponseTime?.toFixed(1) || '0.0'}s
                   </p>
                 </div>
-                <Clock className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                <Clock className="w-5 h-5 text-c-text-secondary" />
               </div>
-              <div className="mt-2 flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400">
+              <div className="mt-2 flex items-center gap-1 text-xs text-c-text-secondary">
                 {stats?.avgResponseTime > 0 ? (
                   <>
                     <Zap className="w-3 h-3 text-blue-400" />
@@ -276,9 +276,9 @@ export const AdminAnalyticsView: React.FC = () => {
                     )}
                   </p>
                 </div>
-                <Cpu className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                <Cpu className="w-5 h-5 text-c-text-secondary" />
               </div>
-              <div className="mt-2 text-xs text-slate-600 dark:text-slate-400">
+              <div className="mt-2 text-xs text-c-text-secondary">
                 {t('admin.analytics.thisWeek', 'This week')}
               </div>
             </div>
@@ -291,9 +291,9 @@ export const AdminAnalyticsView: React.FC = () => {
                     {formatCurrency(stats?.estCost || stats?.forecast?.currentCost || 0)}
                   </p>
                 </div>
-                <DollarSign className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                <DollarSign className="w-5 h-5 text-c-text-secondary" />
               </div>
-              <div className="mt-2 text-xs text-slate-600 dark:text-slate-400">
+              <div className="mt-2 text-xs text-c-text-secondary">
                 {t('admin.analytics.thisMonth', 'This month')}
               </div>
             </div>
@@ -304,7 +304,7 @@ export const AdminAnalyticsView: React.FC = () => {
             {/* Failure Modes */}
             <div className="admin-card p-4">
               <h3 className="text-sm font-medium text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                <AlertTriangle className="w-4 h-4 text-c-text-muted" />
                 {t('admin.analytics.failureModes', 'Failure Modes Analysis')}
               </h3>
               <div className="h-64">
@@ -337,7 +337,7 @@ export const AdminAnalyticsView: React.FC = () => {
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-slate-500 dark:text-slate-400">
+                  <div className="flex flex-col items-center justify-center h-full text-c-text-muted">
                     <CheckCircle className="w-12 h-12 mb-2 opacity-50" />
                     <p className="text-sm">
                       {t('admin.analytics.noFailures', 'No failures recorded')}
@@ -350,7 +350,7 @@ export const AdminAnalyticsView: React.FC = () => {
             {/* Token Usage Trend */}
             <div className="admin-card p-4">
               <h3 className="text-sm font-medium text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                <TrendingUp className="w-4 h-4 text-c-text-muted" />
                 {t('admin.analytics.tokenUsageTrend', 'Token Usage Trend')}
               </h3>
               <div className="h-64">
@@ -389,7 +389,7 @@ export const AdminAnalyticsView: React.FC = () => {
                     </AreaChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-slate-500 dark:text-slate-400">
+                  <div className="flex flex-col items-center justify-center h-full text-c-text-muted">
                     <Activity className="w-12 h-12 mb-2 opacity-50" />
                     <p className="text-sm">
                       {t('admin.analytics.noUsageData', 'No usage data available')}
@@ -403,7 +403,7 @@ export const AdminAnalyticsView: React.FC = () => {
           {/* Model Performance - Real data from byProvider */}
           <div className="admin-card p-4">
             <h3 className="text-sm font-medium text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-              <Cpu className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+              <Cpu className="w-4 h-4 text-c-text-muted" />
               {t('admin.analytics.modelPerformance', 'Model Performance by Provider')}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -422,7 +422,7 @@ export const AdminAnalyticsView: React.FC = () => {
                     : 'slate';
 
                   return (
-                    <div key={idx} className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg">
+                    <div key={idx} className="p-4 bg-c-bg dark:bg-c-surface/5 rounded-lg">
                       <div className="flex items-center justify-between mb-3">
                         <span className="font-medium text-navy-900 dark:text-white capitalize">
                           {provider.provider || 'Unknown'}
@@ -433,7 +433,7 @@ export const AdminAnalyticsView: React.FC = () => {
                           {((provider.successRate || 0) * 100).toFixed(1)}% success
                         </span>
                       </div>
-                      <div className="flex justify-between text-sm text-slate-400 dark:text-slate-500">
+                      <div className="flex justify-between text-sm text-c-text-muted">
                         <span>{formatNumber(provider.tokens || 0)} tokens</span>
                         <span>{formatCurrency(provider.cost || 0)}</span>
                       </div>
@@ -441,7 +441,7 @@ export const AdminAnalyticsView: React.FC = () => {
                   );
                 })
               ) : (
-                <div className="col-span-3 text-center py-8 text-slate-500 dark:text-slate-400">
+                <div className="col-span-3 text-center py-8 text-c-text-muted">
                   <Cpu className="w-8 h-8 mx-auto mb-2 opacity-50" />
                   <p className="text-sm">
                     {t('admin.analytics.noProviderData', 'No provider data available')}
@@ -471,7 +471,7 @@ export const AdminAnalyticsView: React.FC = () => {
               ideas.map((idea) => (
                 <div
                   key={idea.id}
-                  className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 p-4 rounded-xl hover:border-primary-500/30 transition-colors"
+                  className="bg-c-surface border border-c-border-subtle p-4 rounded-xl hover:border-primary-500/30 transition-colors"
                 >
                   <div className="flex justify-between items-start mb-3">
                     <span
@@ -485,14 +485,14 @@ export const AdminAnalyticsView: React.FC = () => {
                     >
                       {idea.priority?.toUpperCase() || 'LOW'}
                     </span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                    <span className="text-xs text-c-text-muted">
                       {new Date(idea.createdAt).toLocaleDateString()}
                     </span>
                   </div>
                   <h3 className="text-base font-bold text-navy-900 dark:text-white mb-2">
                     {idea.title}
                   </h3>
-                  <p className="text-slate-400 dark:text-slate-500 text-sm mb-4 line-clamp-3">
+                  <p className="text-c-text-muted text-sm mb-4 line-clamp-3">
                     {idea.description}
                   </p>
                   <div className="flex justify-between items-center pt-3 border-t border-white/5">
@@ -523,7 +523,7 @@ export const AdminAnalyticsView: React.FC = () => {
                           ? 'bg-blue-500/20 text-blue-400'
                           : idea.status === 'approved'
                             ? 'bg-emerald-500/20 text-emerald-400'
-                            : 'bg-white/10 text-slate-400 dark:text-slate-500'
+                            : 'bg-c-surface/10 text-c-text-muted'
                       }`}
                     >
                       {idea.status?.toUpperCase() || 'NEW'}
@@ -532,9 +532,9 @@ export const AdminAnalyticsView: React.FC = () => {
                 </div>
               ))
             ) : (
-              <div className="col-span-full py-12 text-center bg-white dark:bg-navy-900 border border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
-                <Lightbulb className="w-12 h-12 mx-auto text-slate-600 dark:text-slate-400 mb-3" />
-                <p className="text-slate-500 dark:text-slate-400">
+              <div className="col-span-full py-12 text-center bg-c-surface border border-dashed border-c-border-subtle rounded-xl">
+                <Lightbulb className="w-12 h-12 mx-auto text-c-text-secondary mb-3" />
+                <p className="text-c-text-muted">
                   {t('admin.analytics.noIdeas', 'No strategic ideas yet. Start by creating one!')}
                 </p>
                 <button className="mt-4 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm transition-colors">
@@ -548,12 +548,12 @@ export const AdminAnalyticsView: React.FC = () => {
 
       {/* Observations Tab */}
       {activeTab === 'observations' && (
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+        <div className="bg-c-surface border border-c-border-subtle rounded-xl overflow-hidden">
           <div className="p-5 border-b border-white/5">
             <h2 className="text-lg font-semibold text-navy-900 dark:text-white">
               {t('admin.analytics.observationsLog', 'System Observations Log')}
             </h2>
-            <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+            <p className="text-sm text-c-text-muted mt-1">
               {t(
                 'admin.analytics.observationsDesc',
                 'Automated insights and anomalies detected by the AI Monitor'
@@ -565,7 +565,7 @@ export const AdminAnalyticsView: React.FC = () => {
               observations.map((obs) => (
                 <div
                   key={obs.id}
-                  className="p-5 hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
+                  className="p-5 hover:bg-c-surface-raised/20 transition-colors"
                 >
                   <div className="flex items-start">
                     <div
@@ -574,7 +574,7 @@ export const AdminAnalyticsView: React.FC = () => {
                           ? 'bg-danger-500/20 text-danger-400'
                           : obs.category === 'insight'
                             ? 'bg-primary-500/20 text-primary-400'
-                            : 'bg-slate-500/20 text-slate-400 dark:text-slate-500'
+                            : 'bg-slate-500/20 text-c-text-muted'
                       }`}
                     >
                       {obs.category === 'anomaly' ? (
@@ -590,13 +590,13 @@ export const AdminAnalyticsView: React.FC = () => {
                         <span className="font-semibold text-navy-900 dark:text-white">
                           Observation #{obs.id.substring(0, 8)}
                         </span>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                        <span className="text-xs text-c-text-muted">
                           {new Date(obs.created_at).toLocaleString()}
                         </span>
                       </div>
-                      <p className="text-slate-400 dark:text-slate-500 text-sm">{obs.content}</p>
+                      <p className="text-c-text-muted text-sm">{obs.content}</p>
                       <div className="mt-2 flex items-center space-x-4">
-                        <span className="text-xs bg-white/10 text-slate-300 px-2 py-1 rounded">
+                        <span className="text-xs bg-c-surface/10 text-slate-300 px-2 py-1 rounded">
                           Confidence: {(obs.confidence_score * 100).toFixed(0)}%
                         </span>
                       </div>
@@ -606,8 +606,8 @@ export const AdminAnalyticsView: React.FC = () => {
               ))
             ) : (
               <div className="p-12 text-center">
-                <Activity className="w-12 h-12 mx-auto text-slate-600 dark:text-slate-400 mb-3" />
-                <p className="text-slate-500 dark:text-slate-400">
+                <Activity className="w-12 h-12 mx-auto text-c-text-secondary mb-3" />
+                <p className="text-c-text-muted">
                   {t('admin.analytics.noObservations', 'No observations recorded yet.')}
                 </p>
               </div>

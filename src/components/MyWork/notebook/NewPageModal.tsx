@@ -73,7 +73,7 @@ const STATIC_TEMPLATES: PageTemplate[] = [
     labelPl: 'Obserwacja strategiczna',
     description: 'Capture market signals, trends and strategic insights',
     descriptionPl: 'Zapisz sygnały rynkowe, trendy i wnioski strategiczne',
-    gradient: 'from-primary-500 to-primary-600',
+    gradient: 'from-slate-500 to-slate-600',
     defaultTitle: 'Strategic Observation',
     defaultTitlePl: 'Obserwacja strategiczna',
     defaultIcon: '🔭',
@@ -437,7 +437,7 @@ export const NewPageModal: React.FC<NewPageModalProps> = ({
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-slate-300 dark:border-navy-600 hover:border-primary-500 dark:hover:border-primary-500 hover:bg-primary-500/5 transition-colors"
+                className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-slate-300 dark:border-navy-600 hover:border-slate-500 dark:hover:border-slate-500 hover:bg-slate-500/5 transition-colors"
               >
                 <div className="shrink-0 p-2.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400">
                   <Upload size={20} />

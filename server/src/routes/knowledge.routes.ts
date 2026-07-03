@@ -15,6 +15,7 @@ import { fileURLToPath } from 'url';
 import { type AuthRequest, requireSuperAdmin, verifyToken } from '../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import KnowledgeService from '../services/KnowledgeService.js';
+import PDFParserService from '../services/pdfParserService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 
@@ -729,11 +730,8 @@ router.post(
       let text = '';
       try {
         if (mimetype === 'application/pdf') {
-          const pdfParseMod = (await import('pdf-parse')) as any;
-          const pdf = pdfParseMod.default || pdfParseMod;
           const dataBuffer = fs.readFileSync(finalPath);
-          const pdfData = await pdf(dataBuffer);
-          text = pdfData.text;
+          text = await PDFParserService.extractTextFromBuffer(dataBuffer);
         } else {
           text = fs.readFileSync(finalPath, 'utf8');
         }

@@ -22,6 +22,7 @@ const mockGetValidations = vi.fn();
 const mockListEvents = vi.fn();
 const mockListValuations = vi.fn();
 const mockListBudgets = vi.fn();
+const mockCreateBudget = vi.fn();
 const mockListAnalyses = vi.fn();
 const mockGetAnalysisRatios = vi.fn();
 const mockGetAnalysisInsights = vi.fn();
@@ -210,6 +211,7 @@ vi.mock('../../../services/valuationService.js', () => ({
 
 vi.mock('../../../services/budgetingService.js', () => ({
   listBudgets: (...args: unknown[]) => mockListBudgets(...args),
+  createBudget: (...args: unknown[]) => mockCreateBudget(...args),
 }));
 
 vi.mock('../../../services/ratioAnalysisService.js', () => ({
@@ -331,6 +333,7 @@ describe('V8 finance read-only routes', () => {
     mockListModels.mockResolvedValue([]);
     mockListValuations.mockResolvedValue([]);
     mockListBudgets.mockResolvedValue([]);
+    mockCreateBudget.mockResolvedValue({ id: 'budget-new', title: 'Test Budget', status: 'DRAFT' });
     mockListAnalyses.mockResolvedValue([]);
     mockGetAnalysisRatios.mockResolvedValue([]);
     mockGetAnalysisInsights.mockResolvedValue([]);
@@ -551,6 +554,83 @@ describe('V8 finance read-only routes', () => {
       })
     );
     expect(mockGetModel).toHaveBeenCalledWith('model-1');
+  });
+
+  it('POST /models/:id/duplicate — stale source FK → kopiuje bez graftu (NIE 500) [BUG-09 regress]', async () => {
+    // Model źródłowy wskazuje na usuniętą/syntetyczną inicjatywę (jak seed na demo).
+    mockGetModel.mockImplementation((id: string) =>
+      id === 'copy-1'
+        ? Promise.resolve({ id: 'copy-1', organization_id: ORG, name: 'Src (kopia)', start_date: '2026-01-01' })
+        : Promise.resolve({
+            id: 'src-1', organization_id: ORG, name: 'Src',
+            initiative_id: 'ghost-initiative', start_date: '2026-01-01', currency: 'PLN',
+          })
+    );
+    // 1. próba (z FK) rzuca guard cross-org; 2. (bez FK) sukces.
+    mockCreateModel
+      .mockRejectedValueOnce(new Error('Source initiative not found'))
+      .mockResolvedValueOnce('copy-1');
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/finance/models/src-1/duplicate').send({});
+
+    expect(res.status).toBe(201); // KLUCZ: nie 500
+    expect(mockCreateModel).toHaveBeenCalledTimes(2);
+    // retry NIE grafuje martwego initiativeId
+    expect(mockCreateModel.mock.calls[1][0]).not.toHaveProperty('initiativeId');
+    expect(res.body.data?.model?.id).toBe('copy-1');
+  });
+
+  it('POST /models/:id/duplicate — stale FK + stale pack → retry bez obu (NIE 500) [BUG-09b regress]', async () => {
+    // Model ma initiative_id (stale FK) + source_statement_pack_id (niekompletny pack).
+    // 1. próba (z FK) rzuca "not found" → catch → retry BEZ initiativeId I BEZ pack → sukces.
+    mockGetModel.mockImplementation((id: string) =>
+      id === 'copy-2'
+        ? Promise.resolve({ id: 'copy-2', organization_id: ORG, name: 'Src2 (kopia)', start_date: '2026-01-01' })
+        : Promise.resolve({
+            id: 'src-2', organization_id: ORG, name: 'Src2',
+            initiative_id: 'ghost-init-2',
+            source_statement_pack_id: 'ghost-pack',
+            start_date: '2026-01-01', currency: 'PLN',
+          })
+    );
+    mockCreateModel
+      .mockRejectedValueOnce(new Error('Source initiative not found'))
+      .mockResolvedValueOnce('copy-2');
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/finance/models/src-2/duplicate').send({});
+
+    expect(res.status).toBe(201);
+    expect(mockCreateModel).toHaveBeenCalledTimes(2);
+    // retry NIE grafuje martwego initiativeId ANI pack (undefined = falsy → createModel pomija)
+    expect(mockCreateModel.mock.calls[1][0]).not.toHaveProperty('initiativeId');
+    expect(mockCreateModel.mock.calls[1][0].sourceStatementPackId).toBeUndefined();
+    expect(res.body.data?.model?.id).toBe('copy-2');
+  });
+
+  it('POST /models/:id/duplicate — stale pack (bez FK) → retry bez pack (NIE 500) [BUG-09c regress]', async () => {
+    // Model NIE ma stale FK ale pack jest niekompletny → 1. próba rzuca "must contain" → catch → retry bez pack.
+    mockGetModel.mockImplementation((id: string) =>
+      id === 'copy-3'
+        ? Promise.resolve({ id: 'copy-3', organization_id: ORG, name: 'Src3 (kopia)', start_date: '2026-01-01' })
+        : Promise.resolve({
+            id: 'src-3', organization_id: ORG, name: 'Src3',
+            source_statement_pack_id: 'bad-pack',
+            start_date: '2026-01-01', currency: 'PLN',
+          })
+    );
+    mockCreateModel
+      .mockRejectedValueOnce(new Error('Statement pack must contain P&L, Balance Sheet, and Cash Flow'))
+      .mockResolvedValueOnce('copy-3');
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/finance/models/src-3/duplicate').send({});
+
+    expect(res.status).toBe(201);
+    expect(mockCreateModel).toHaveBeenCalledTimes(2);
+    expect(mockCreateModel.mock.calls[1][0].sourceStatementPackId).toBeUndefined();
+    expect(res.body.data?.model?.id).toBe('copy-3');
   });
 
   it('GET /api/v8/finance/models/:id returns envelope and delegates to getModel', async () => {
@@ -1369,6 +1449,40 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.data?.count).toBe(1);
     expect(res.body.data?.budgets?.[0]?.title).toBe('FY26 operating budget');
     expect(mockListBudgets).toHaveBeenCalledWith(ORG);
+  });
+
+  it('POST /api/v8/finance/budgets creates a budget and returns 200', async () => {
+    mockCreateBudget.mockResolvedValue({
+      id: 'budget-created',
+      organizationId: ORG,
+      title: 'FY26 Budget',
+      status: 'DRAFT',
+      periodStart: '2026-01-01',
+      periodEnd: '2026-12-31',
+      currency: 'PLN',
+      granularity: 'monthly',
+    });
+    const app = createApp();
+    const res = await request(app).post('/api/v8/finance/budgets').send({
+      title: 'FY26 Budget',
+      periodStart: '2026-01-01',
+      periodEnd: '2026-12-31',
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data?.budget?.id).toBe('budget-created');
+    expect(mockCreateBudget).toHaveBeenCalledWith(
+      ORG,
+      expect.objectContaining({ title: 'FY26 Budget', periodStart: '2026-01-01' }),
+      expect.any(String)
+    );
+  });
+
+  it('POST /api/v8/finance/budgets — 400 when required fields missing', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/finance/budgets').send({ title: 'No dates' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/required/i);
   });
 
   it('POST /api/v8/finance/analyses returns envelope and delegates to createAnalysis', async () => {

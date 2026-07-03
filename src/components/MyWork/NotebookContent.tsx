@@ -17,15 +17,13 @@ import {
   BookOpen,
   CheckCircle2,
   CheckSquare,
-  ChevronDown,
   ChevronLeft,
   Clock,
   FileText,
-  Filter,
   History,
-  Inbox,
   Layers,
   Lightbulb,
+  MoreHorizontal,
   Network,
   Paperclip,
   Pen,
@@ -34,7 +32,6 @@ import {
   Plus,
   RefreshCw,
   Sparkles,
-  Sun,
   Tag,
   Trash2,
   Type,
@@ -74,18 +71,39 @@ import {
   DetailsSummaryNode,
   EmbeddedRefNode,
   NOTEBOOK_CODE_LANGUAGES,
+  NotebookBookmark,
   NotebookCodeBlock,
   NotebookImage,
 } from './notebook/extensions';
 import { NewPageModal, type PageTemplate } from './notebook/NewPageModal';
-import { CoverImageBar, IconPickerButton } from './notebook/NoteCoverPicker';
 import { NotebookAttachmentsSection } from './notebook/NotebookAttachmentsSection';
-import { NotebookProgressChip } from './notebook/NotebookProgressChip';
-import { NotebookRightRail } from './notebook/NotebookRightRail';
+import { NotebookBacklinksBar } from './notebook/NotebookBacklinksBar';
+import { NotebookBubbleToolbar } from './notebook/NotebookBubbleToolbar';
 import { getNotebookUploadSourceSummary } from './notebook/notebookCaptureSourceSummary';
 import { getNotebookConvertedOutputSummary } from './notebook/notebookConvertedOutputSummary';
 import { expandNotebookPageToCanvasDraft } from './notebook/notebookExpandToDocument';
+import { NotebookExportMenu } from './notebook/NotebookExportMenu';
+import { NotebookGraphView } from './notebook/NotebookGraphView';
+import {
+  type NotebookConvertTarget,
+  NotebookHamburgerMenu,
+} from './notebook/NotebookHamburgerMenu';
+import {
+  detectMentionTrigger,
+  INITIAL_MENTION_STATE,
+  type MentionEntity,
+  mentionEntityToEmbedRef,
+  type MentionMenuState,
+  NotebookMentionMenu,
+} from './notebook/NotebookMentionMenu';
+import { NotebookProgressChip } from './notebook/NotebookProgressChip';
+import { NotebookQuickCapture } from './notebook/NotebookQuickCapture';
+import { NotebookRightRail } from './notebook/NotebookRightRail';
 import { NotebookToolbar } from './notebook/NotebookToolbar';
+import { NotebookTopicChips } from './notebook/NotebookTopicChips';
+import { NotebookTopicView } from './notebook/NotebookTopicView';
+import { NotebookVersionHistory } from './notebook/NotebookVersionHistory';
+import { CoverImageBar, IconPickerButton } from './notebook/NoteCoverPicker';
 import {
   detectSlashTrigger,
   INITIAL_SLASH_STATE,
@@ -93,13 +111,6 @@ import {
   type SlashMenuState,
 } from './notebook/SlashMenu';
 import { buildAskAIMessage } from './shared/askAiHelper';
-import { NotebookExportMenu } from './notebook/NotebookExportMenu';
-import { NotebookGraphView } from './notebook/NotebookGraphView';
-import { NotebookQuickCapture } from './notebook/NotebookQuickCapture';
-import { NotebookTodayView } from './notebook/NotebookTodayView';
-import { NotebookTopicChips } from './notebook/NotebookTopicChips';
-import { NotebookTopicView } from './notebook/NotebookTopicView';
-import { NotebookVersionHistory } from './notebook/NotebookVersionHistory';
 
 interface NotebookContentProps {
   projectId?: string | null;
@@ -625,6 +636,41 @@ const EDITOR_STYLES = `
 }
 .dark .ProseMirror img.ProseMirror-selectednode { outline-color: #6E8AAF; }
 
+/* Bookmark card (rich link preview) */
+.ProseMirror a.nb-bookmark {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin: 0.75rem 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  text-decoration: none;
+  background: #ffffff;
+  transition: border-color 0.15s, background 0.15s;
+  cursor: pointer;
+}
+.ProseMirror a.nb-bookmark:hover { border-color: #cbd5e1; background: #f8fafc; }
+.dark .ProseMirror a.nb-bookmark { border-color: rgba(255,255,255,0.10); background: rgba(255,255,255,0.02); }
+.dark .ProseMirror a.nb-bookmark:hover { border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.04); }
+.ProseMirror a.nb-bookmark.ProseMirror-selectednode { outline: 2px solid #1E3A5F; outline-offset: 2px; }
+.dark .ProseMirror a.nb-bookmark.ProseMirror-selectednode { outline-color: #6E8AAF; }
+.ProseMirror .nb-bookmark-body { flex: 1 1 auto; min-width: 0; padding: 0.7rem 0.85rem; display: flex; flex-direction: column; gap: 0.2rem; }
+.ProseMirror .nb-bookmark-title {
+  font-weight: 600; font-size: 0.9rem; color: #0f172a;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dark .ProseMirror .nb-bookmark-title { color: #e2e8f0; }
+.ProseMirror .nb-bookmark-desc {
+  font-size: 0.8rem; color: #64748b; line-height: 1.35;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.dark .ProseMirror .nb-bookmark-desc { color: #94a3b8; }
+.ProseMirror .nb-bookmark-link { display: flex; align-items: center; gap: 0.35rem; margin-top: 0.1rem; font-size: 0.72rem; color: #94a3b8; }
+.ProseMirror img.nb-bookmark-favicon { width: 14px; height: 14px; margin: 0; border: none; border-radius: 3px; display: inline-block; flex: none; }
+.ProseMirror .nb-bookmark-thumb { flex: none; width: 120px; align-self: stretch; }
+.ProseMirror .nb-bookmark-thumb img { width: 120px; height: 100%; object-fit: cover; margin: 0; border: none; border-radius: 0; display: block; }
+
 /* Code-block language hint */
 .ProseMirror pre.nb-code-block { position: relative; }
 .ProseMirror pre.nb-code-block::after {
@@ -712,7 +758,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     notebookRailTab,
     setNotebookRailOpen,
     setNotebookRailTab,
+    currentUser,
   } = useAppStore();
+  const currentUserId = String(currentUser?.id || '');
   const [pages, setPages] = useState<NotebookPage[]>([]);
   const [pagesLoading, setPagesLoading] = useState(true);
   const [pagesError, setPagesError] = useState(false);
@@ -771,11 +819,16 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
 
   // Slash menu
   const [slashState, setSlashState] = useState<SlashMenuState>(INITIAL_SLASH_STATE);
+  const [mentionState, setMentionState] = useState<MentionMenuState>(INITIAL_MENTION_STATE);
+  // Bumped whenever this note's link graph changes, to refresh the backlinks bar.
+  const [backlinksRefresh, setBacklinksRefresh] = useState(0);
   const editorContainerRef = useRef<HTMLDivElement>(null);
 
   // Inline-image upload bridge — set after the upload helper is defined so the
   // editor's paste/drop handlers (declared earlier inside useEditor) can call it.
   const uploadInlineImageRef = useRef<((file: File) => void) | null>(null);
+  // K2 — fetch a URL's preview (SSRF-guarded) and insert a bookmark card.
+  const insertBookmarkRef = useRef<((url: string) => void) | null>(null);
   // Hidden file input backing the slash "/image" command.
   const imageInputRef = useRef<HTMLInputElement>(null);
   // Cover image (note header) — stored server-side via notebookCover.routes.
@@ -784,7 +837,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const [openTopicId, setOpenTopicId] = useState<string | null>(null);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [showGraphView, setShowGraphView] = useState(false);
-  const [todayRefreshKey, setTodayRefreshKey] = useState(0);
+  // N1: hamburger ⋯ menu position (null = closed)
+  const [hamburgerPos, setHamburgerPos] = useState<{ x: number; y: number } | null>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   // Code-block language picker overlay anchor.
   const [codeLangMenu, setCodeLangMenu] = useState<{
@@ -843,6 +897,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         Highlight.configure({ multicolor: false }),
         Link.configure({ openOnClick: false, HTMLAttributes: { class: 'nb-link' } }),
         EmbeddedRefNode,
+        NotebookBookmark,
         CalloutNode,
         DetailsNode,
         DetailsSummaryNode,
@@ -897,15 +952,27 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         });
         return true;
       },
-      handlePaste: (_view, event) => {
+      handlePaste: (view, event) => {
         const items = Array.from(event.clipboardData?.items || []);
         const imageItem = items.find((it) => it.type.startsWith('image/'));
-        if (!imageItem) return false;
-        const file = imageItem.getAsFile();
-        if (!file || !uploadInlineImageRef.current) return false;
-        event.preventDefault();
-        uploadInlineImageRef.current(file);
-        return true;
+        if (imageItem) {
+          const file = imageItem.getAsFile();
+          if (!file || !uploadInlineImageRef.current) return false;
+          event.preventDefault();
+          uploadInlineImageRef.current(file);
+          return true;
+        }
+        // Pasting a single bare URL into an empty selection → rich bookmark card.
+        // Never inside a code block — there the literal URL text is what's wanted.
+        const text = (event.clipboardData?.getData('text/plain') || '').trim();
+        const isBareUrl = /^https?:\/\/\S+$/i.test(text) && !/\s/.test(text);
+        const inCodeBlock = view.state.selection.$from.parent.type.name === 'codeBlock';
+        if (isBareUrl && !inCodeBlock && view.state.selection.empty && insertBookmarkRef.current) {
+          event.preventDefault();
+          insertBookmarkRef.current(text);
+          return true;
+        }
+        return false;
       },
       handleDrop: (_view, event) => {
         const dt = (event as DragEvent).dataTransfer;
@@ -917,11 +984,20 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       },
     },
     onTransaction({ editor: ed }) {
+      // Slash and @-mention are mutually exclusive (the cursor ends with one or
+      // the other, never both). Detect slash first; fall through to mention.
       const trigger = detectSlashTrigger(ed);
       if (trigger) {
         setSlashState(trigger);
-      } else if (slashState.open) {
-        setSlashState(INITIAL_SLASH_STATE);
+        if (mentionState.open) setMentionState(INITIAL_MENTION_STATE);
+      } else {
+        if (slashState.open) setSlashState(INITIAL_SLASH_STATE);
+        const mention = detectMentionTrigger(ed);
+        if (mention) {
+          setMentionState(mention);
+        } else if (mentionState.open) {
+          setMentionState(INITIAL_MENTION_STATE);
+        }
       }
 
       // Active block highlight — keep block visually marked for 7s
@@ -1036,39 +1112,85 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   }, [fetchPages, refreshTrigger]);
 
   // Sidebar filters & inbox state
-  const [sidebarTab, setSidebarTab] = useState<'inbox' | 'active' | 'all' | 'today'>(
-    pageStatusFilter ?? 'all'
+  // Status axis (Wszystkie/Inbox/Aktywne) is owned by Menu 3 in the hub — the
+  // in-column tab bar that used to duplicate it is gone (N5/U11).
+  const [statusTab, setStatusTab] = useState<'inbox' | 'active' | 'all'>(pageStatusFilter ?? 'all');
+  useEffect(() => {
+    if (pageStatusFilter !== undefined) setStatusTab(pageStatusFilter);
+  }, [pageStatusFilter]);
+
+  // N5 left-column lenses (independent of the status axis):
+  //  • scope — who owns the page (mine vs the rest of the team)
+  //  • view  — flattened "Today" sections (pinned / recent / to-review / fresh)
+  type NotebookScopeLens = 'all' | 'mine' | 'team';
+  type NotebookViewLens = 'all' | 'pinned' | 'recent' | 'toReview' | 'fresh';
+  const [scopeLens, setScopeLens] = useState<NotebookScopeLens>('all');
+  const [viewLens, setViewLens] = useState<NotebookViewLens>('all');
+
+  const isMinePage = useCallback(
+    (p: NotebookPage) => !p.ownerUserId || p.ownerUserId === currentUserId,
+    [currentUserId]
+  );
+  // A page is "to review" when its knowledge is disputed/stale or still in inbox.
+  const isToReviewPage = useCallback(
+    (p: NotebookPage) => p.verificationStatus === 'disputed' || !!p.staleAt || p.status === 'inbox',
+    []
+  );
+  // "Fresh" = arrived via a capture source (quick-capture, email, file, canvas).
+  const isFreshPage = useCallback(
+    (p: NotebookPage) => !!(p.captureSource || p.captureMetadata?.captureSource),
+    []
+  );
+  // "Recent" = touched within the last 7 days.
+  const isRecentPage = useCallback((p: NotebookPage) => {
+    if (!p.updatedAt) return false;
+    const t = new Date(p.updatedAt).getTime();
+    if (Number.isNaN(t)) return false;
+    return Date.now() - t <= 7 * 24 * 60 * 60 * 1000;
+  }, []);
+
+  const matchesView = useCallback(
+    (p: NotebookPage, lens: NotebookViewLens) => {
+      if (lens === 'pinned') return !!p.pinned;
+      if (lens === 'recent') return isRecentPage(p);
+      if (lens === 'toReview') return isToReviewPage(p);
+      if (lens === 'fresh') return isFreshPage(p);
+      return true;
+    },
+    [isRecentPage, isToReviewPage, isFreshPage]
   );
 
-  // Keep sidebarTab in sync when parent (Menu 3 L2) drives the filter
-  useEffect(() => {
-    if (pageStatusFilter !== undefined) setSidebarTab(pageStatusFilter);
-  }, [pageStatusFilter]);
-  const [sortBy, setSortBy] = useState<'updated' | 'created' | 'title'>('updated');
-  const [maturityFilter, setMaturityFilter] = useState<NotebookMaturity | 'all'>('all');
-  const [showFilters, setShowFilters] = useState(false);
+  // Pages after the status (Menu 3) + scope lens — the base the view chips count against.
+  const scopedPages = useMemo(() => {
+    let result = [...pages];
+    if (statusTab === 'inbox') result = result.filter((p) => p.status === 'inbox');
+    else if (statusTab === 'active') result = result.filter((p) => p.status === 'active');
+    if (scopeLens === 'mine') result = result.filter(isMinePage);
+    else if (scopeLens === 'team') result = result.filter((p) => !isMinePage(p));
+    return result;
+  }, [pages, statusTab, scopeLens, isMinePage]);
 
-  const inboxCount = useMemo(() => pages.filter((p) => p.status === 'inbox').length, [pages]);
-  const activeCount = useMemo(() => pages.filter((p) => p.status === 'active').length, [pages]);
+  const viewCounts = useMemo(
+    () => ({
+      all: scopedPages.length,
+      pinned: scopedPages.filter((p) => p.pinned).length,
+      recent: scopedPages.filter(isRecentPage).length,
+      toReview: scopedPages.filter(isToReviewPage).length,
+      fresh: scopedPages.filter(isFreshPage).length,
+    }),
+    [scopedPages, isRecentPage, isToReviewPage, isFreshPage]
+  );
+
+  const teamPagesExist = useMemo(() => pages.some((p) => !isMinePage(p)), [pages, isMinePage]);
 
   const filteredPages = useMemo(() => {
-    let result = [...pages];
-
-    if (sidebarTab === 'inbox') result = result.filter((p) => p.status === 'inbox');
-    else if (sidebarTab === 'active') result = result.filter((p) => p.status === 'active');
-
-    if (maturityFilter !== 'all')
-      result = result.filter((p) => (p.maturity || 'seed') === maturityFilter);
-
+    const result = scopedPages.filter((p) => matchesView(p, viewLens));
     result.sort((a, b) => {
       if ((a.pinned ? 1 : 0) !== (b.pinned ? 1 : 0)) return (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
-      if (sortBy === 'title') return (a.title || '').localeCompare(b.title || '');
-      if (sortBy === 'created') return (b.createdAt || '').localeCompare(a.createdAt || '');
       return (b.updatedAt || '').localeCompare(a.updatedAt || '');
     });
-
     return result;
-  }, [pages, sidebarTab, sortBy, maturityFilter]);
+  }, [scopedPages, viewLens, matchesView]);
 
   const handleTogglePin = useCallback(async (pageId: string) => {
     try {
@@ -1087,6 +1209,45 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       toast.error('Failed to update status');
     }
   }, []);
+
+  // K1 @mention: replace the "@query" with an embeddedRef to the chosen entity
+  // and record a link-graph edge (note → entity) so the mention is bidirectional
+  // — the entity gains a backlink to this note (visible in its Context panel).
+  const handleMentionSelect = useCallback(
+    (entity: MentionEntity) => {
+      if (!editor || !activePage) return;
+      // Delete the literal "@query" deterministically from the trigger position
+      // (length = 1 for "@" + the query). Reading editor.state.selection here is
+      // fragile — clicking the menu can collapse/reset the editor selection,
+      // yielding to < from and a no-op deleteRange.
+      const from = mentionState.triggerPos;
+      const to = from + 1 + mentionState.query.length;
+      const ref = mentionEntityToEmbedRef(entity, isPolish);
+      editor
+        .chain()
+        .focus()
+        .deleteRange({ from, to })
+        .insertContent({ type: 'embeddedRef', attrs: { ...ref, updatedAt: '' } })
+        .insertContent({ type: 'text', text: ' ' })
+        .run();
+      setMentionState(INITIAL_MENTION_STATE);
+
+      Api.createLinkGraphEdge({
+        source: { type: 'notebook', id: activePage.id },
+        target: { type: entity.type, id: entity.id },
+        relation: 'ref',
+        context: { containerType: 'notebook_mention', containerId: activePage.id },
+      }).catch(() => undefined);
+
+      // A mention is an OUTGOING edge (note → entity): it makes this note a
+      // backlink of the entity, but does not change this note's own incoming
+      // "Mentioned in" list — so we don't bump backlinksRefresh here. Just nudge
+      // the side Context panel.
+      emitMyWorkEvent({ type: 'item:updated', entityType: 'notebook', entityId: activePage.id });
+      toast.success(isPolish ? 'Powiązano' : 'Linked');
+    },
+    [editor, activePage, mentionState.triggerPos, mentionState.query, isPolish, emitMyWorkEvent]
+  );
 
   const generateSummary = useCallback(
     (pageId: string, pageTitle: string, contentText: string) => {
@@ -1402,6 +1563,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           } catch {
             /* best-effort */
           }
+          // Incoming edge (task → note) → refresh this note's "Mentioned in" bar.
+          setBacklinksRefresh((k) => k + 1);
         }
         emitMyWorkEvent({
           type: 'item:created',
@@ -1437,6 +1600,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           } catch {
             /* best-effort */
           }
+          setBacklinksRefresh((k) => k + 1);
         }
         emitMyWorkEvent({
           type: 'item:created',
@@ -1473,6 +1637,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           } catch {
             /* best-effort */
           }
+          setBacklinksRefresh((k) => k + 1);
         }
         emitMyWorkEvent({
           type: 'item:created',
@@ -1527,7 +1692,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                       );
                     }
                   }}
-                  className="px-2 py-0.5 text-xs font-semibold rounded bg-primary-500/20 text-primary-700 hover:bg-primary-500/30"
+                  className="px-2 py-0.5 text-xs font-semibold rounded bg-slate-500/20 text-slate-700 hover:bg-slate-500/30"
                 >
                   {isPolish ? 'Konwertuj' : 'Convert'}
                 </button>
@@ -1658,6 +1823,39 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     uploadInlineImageRef.current = uploadInlineImage;
   }, [uploadInlineImage]);
 
+  // K2 — turn a URL into a rich bookmark card: fetch OG metadata via the
+  // SSRF-guarded /api/link-preview, then insert the bookmark node. On failure
+  // we still insert a bookmark with just the URL (degrades, never blocks).
+  const insertBookmarkFromUrl = useCallback(
+    (rawUrl: string) => {
+      if (!editor) return;
+      const url = rawUrl.trim();
+      if (!/^https?:\/\//i.test(url)) return;
+      const toastId = toast.loading(isPolish ? 'Pobieram podgląd…' : 'Fetching preview…');
+      fetch(`/api/link-preview?url=${encodeURIComponent(url)}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((meta) => {
+          toast.dismiss(toastId);
+          (editor.commands as any).setBookmark({
+            url,
+            title: meta?.ogTitle || '',
+            description: meta?.ogDescription || '',
+            image: meta?.ogImage || '',
+            favicon: meta?.favicon || '',
+          });
+        })
+        .catch(() => {
+          toast.dismiss(toastId);
+          (editor.commands as any).setBookmark({ url });
+        });
+    },
+    [editor, isPolish]
+  );
+
+  useEffect(() => {
+    insertBookmarkRef.current = insertBookmarkFromUrl;
+  }, [insertBookmarkFromUrl]);
+
   // Slash "/image" command → open the hidden file picker.
   useEffect(() => {
     const openPicker = () => imageInputRef.current?.click();
@@ -1678,10 +1876,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     let cancelled = false;
     void (async () => {
       try {
-        const res = await fetch(
-          `${API_URL}/v8/notebook/pages/${encodeURIComponent(id)}/cover`,
-          { headers: getHeaders() }
-        );
+        const res = await fetch(`${API_URL}/v8/notebook/pages/${encodeURIComponent(id)}/cover`, {
+          headers: getHeaders(),
+        });
         if (!res.ok || cancelled) return;
         const json = await res.json();
         if (!cancelled) setCoverUrl(json?.data?.coverUrl ?? null);
@@ -1703,14 +1900,11 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       const { API_URL, getHeaders } = apiModule;
       if (typeof getHeaders !== 'function' || !API_URL) return;
       try {
-        const res = await fetch(
-          `${API_URL}/v8/notebook/pages/${encodeURIComponent(id)}/cover`,
-          {
-            method: 'PUT',
-            headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-            body: JSON.stringify({ coverUrl: nextCover }),
-          }
-        );
+        const res = await fetch(`${API_URL}/v8/notebook/pages/${encodeURIComponent(id)}/cover`, {
+          method: 'PUT',
+          headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ coverUrl: nextCover }),
+        });
         if (!res.ok) throw new Error(String(res.status));
       } catch {
         setCoverUrl(previous); // rollback
@@ -1726,7 +1920,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     (file: File) => {
       if (!file.type.startsWith('image/')) return;
       if (file.size > 5 * 1024 * 1024) {
-        toast.error(isPolish ? 'Okładka jest zbyt duża (max 5 MB)' : 'Cover is too large (max 5 MB)');
+        toast.error(
+          isPolish ? 'Okładka jest zbyt duża (max 5 MB)' : 'Cover is too large (max 5 MB)'
+        );
         return;
       }
       const reader = new FileReader();
@@ -1987,9 +2183,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       navigate(chatUrl);
     } catch (error: any) {
       console.error('Failed to expand note into Canvas document', error);
-      toast.error(
-        isPolish ? 'Nie udało się utworzyć dokumentu' : 'Failed to create the document'
-      );
+      toast.error(isPolish ? 'Nie udało się utworzyć dokumentu' : 'Failed to create the document');
     } finally {
       setIsExpandingToDocument(false);
     }
@@ -2113,7 +2307,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       <style>{EDITOR_STYLES}</style>
 
       {/* Sidebar */}
-      <div className="w-80 shrink-0 rounded-2xl border border-slate-200/70 dark:border-white/[0.06] overflow-hidden bg-gradient-to-b from-white via-white to-slate-50/50 dark:from-navy-950 dark:via-navy-950 dark:to-navy-900/30 flex flex-col">
+      <div className="w-80 shrink-0 rounded-2xl border border-slate-200/70 dark:border-white/[0.06] overflow-hidden bg-white dark:bg-navy-900 flex flex-col">
         {/* Sidebar header */}
         <div className="px-4 py-3 border-b border-slate-200/60 dark:border-navy-800/60">
           <div className="flex items-center justify-between mb-2">
@@ -2134,12 +2328,12 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   </TooltipContent>
                 </Tooltip>
               ) : (
-                <div className="w-7 h-7 shrink-0 rounded-lg bg-gradient-to-br from-crimson-500 to-primary-600 flex items-center justify-center shadow-sm">
-                  <BookOpen size={14} className="text-white" />
+                <div className="w-7 h-7 shrink-0 rounded-lg bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
+                  <BookOpen size={14} className="text-slate-500 dark:text-slate-400" />
                 </div>
               )}
               <div className="min-w-0">
-                <div className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                   {notebookTitle || t('myWork.notebook.title', 'Notebook')}
                 </div>
                 <div className="text-[10px] text-slate-600 dark:text-slate-500">
@@ -2160,166 +2354,121 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
               <TooltipContent>{t('myWork.notebook.new', 'New page')}</TooltipContent>
             </Tooltip>
           </div>
-
-          {/* Maturity distribution mini-bar */}
-          {filteredPages.length > 0 && (
-            <div className="flex items-center gap-0.5 h-1.5 rounded-full overflow-hidden bg-slate-100 dark:bg-navy-800">
-              {(['actionable', 'mature', 'growing', 'seed'] as NotebookMaturity[]).map((m) => {
-                const count = filteredPages.filter(
-                  (p) => (p.maturity || computeMaturity(p)) === m
-                ).length;
-                if (!count) return null;
-                const pct = (count / filteredPages.length) * 100;
-                return (
-                  <div
-                    key={m}
-                    className={`h-full ${MATURITY_CONFIG[m].dot} transition-all duration-300`}
-                    style={{ width: `${pct}%` }}
-                    title={`${MATURITY_CONFIG[m].label}: ${count}`}
-                  />
-                );
-              })}
-            </div>
-          )}
         </div>
 
-        {/* Inbox/Active/All/Today tab bar */}
-        <div className="flex items-center border-b border-slate-200/60 dark:border-white/[0.06] px-2">
-          {[
-            { key: 'inbox' as const, label: 'Inbox', count: inboxCount, icon: <Inbox size={12} /> },
-            {
-              key: 'active' as const,
-              label: isPolish ? 'Aktywne' : 'Active',
-              count: activeCount,
-              icon: <Play size={12} />,
-            },
-            {
-              key: 'all' as const,
-              label: isPolish ? 'Wszystkie' : 'All',
-              count: pages.length,
-              icon: <FileText size={12} />,
-            },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => {
-                setSidebarTab(tab.key);
-                onPageStatusFilterChange?.(tab.key);
-              }}
-              className={`flex-1 flex items-center justify-center gap-1 py-2 text-[10px] font-semibold transition-all border-b-2 ${
-                sidebarTab === tab.key
-                  ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                  : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-              }`}
-            >
-              {tab.icon}
-              {tab.label}
-              {tab.count > 0 && (
-                <span
-                  className={`ml-0.5 px-1 py-0 rounded-full text-[9px] ${
-                    sidebarTab === tab.key
-                      ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
-                      : 'bg-slate-100 dark:bg-white/[0.06] text-slate-600'
+        {/* N5 — Capture box: drop a thought or link straight into this notebook */}
+        <div className="px-3 pt-3 pb-2 border-b border-slate-200/60 dark:border-white/[0.06]">
+          <NotebookQuickCapture notebookId={notebookId} onCreated={() => void fetchPages()} />
+        </div>
+
+        {/* N5 — Scope lens (who owns the page). Auto-hides when there is nothing
+            from teammates, so personal notebooks stay clutter-free. */}
+        {teamPagesExist && (
+          <div className="px-3 pt-2.5">
+            <div className="inline-flex w-full items-center rounded-lg bg-slate-100 dark:bg-white/[0.04] p-0.5">
+              {(
+                [
+                  { key: 'all', label: isPolish ? 'Wszystkie' : 'All' },
+                  { key: 'mine', label: isPolish ? 'Moje' : 'Mine' },
+                  { key: 'team', label: isPolish ? 'Zespół' : 'Team' },
+                ] as Array<{ key: NotebookScopeLens; label: string }>
+              ).map((s) => (
+                <button
+                  key={s.key}
+                  onClick={() => setScopeLens(s.key)}
+                  className={`flex-1 rounded-md py-1 text-[11px] font-semibold transition-colors ${
+                    scopeLens === s.key
+                      ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-white shadow-sm'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                   }`}
                 >
-                  {tab.count}
-                </span>
-              )}
-            </button>
-          ))}
-          <button
-            onClick={() => setSidebarTab('today')}
-            className={`flex items-center justify-center gap-1 px-2 py-2 text-[10px] font-semibold transition-all border-b-2 ${
-              sidebarTab === 'today'
-                ? 'border-amber-500 text-amber-600 dark:text-amber-400'
-                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-            }`}
-            title={isPolish ? 'Widok dnia' : "Today's view"}
-          >
-            <Sun size={12} />
-          </button>
-          <button
-            onClick={() => setShowFilters((v) => !v)}
-            className={`p-1.5 rounded-md ml-1 transition-colors ${showFilters ? 'bg-indigo-500/10 text-indigo-500' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
-            title={isPolish ? 'Filtry' : 'Filters'}
-          >
-            <Filter size={12} />
-          </button>
-        </div>
-
-        {/* Filter bar (collapsible) */}
-        {showFilters && (
-          <div className="px-2 py-1.5 border-b border-slate-200/60 dark:border-white/[0.06] flex items-center gap-1.5 flex-wrap bg-slate-50/50 dark:bg-white/[0.01]">
-            <div className="relative">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                className="appearance-none pl-2 pr-5 py-1 rounded-md bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/[0.08] text-[10px] text-slate-600 dark:text-slate-400 font-medium"
-              >
-                <option value="updated">{isPolish ? 'Ostatnio edytowane' : 'Last updated'}</option>
-                <option value="created">{isPolish ? 'Data utworzenia' : 'Created'}</option>
-                <option value="title">{isPolish ? 'Tytuł A-Z' : 'Title A-Z'}</option>
-              </select>
-              <ChevronDown
-                size={10}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none"
-              />
-            </div>
-            <div className="relative">
-              <select
-                value={maturityFilter}
-                onChange={(e) => setMaturityFilter(e.target.value as any)}
-                className="appearance-none pl-2 pr-5 py-1 rounded-md bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/[0.08] text-[10px] text-slate-600 dark:text-slate-400 font-medium"
-              >
-                <option value="all">{isPolish ? 'Wszystkie etapy' : 'All stages'}</option>
-                <option value="seed">🌱 Seed</option>
-                <option value="growing">🌿 Growing</option>
-                <option value="mature">🌳 Mature</option>
-                <option value="actionable">⚡ Actionable</option>
-              </select>
-              <ChevronDown
-                size={10}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none"
-              />
+                  {s.label}
+                </button>
+              ))}
             </div>
           </div>
         )}
 
-        {/* Page list / Today cockpit */}
+        {/* N5 — View lens (flattened "Today" sections as chips). */}
+        <div className="flex flex-wrap items-center gap-1 px-3 py-2.5 border-b border-slate-200/60 dark:border-white/[0.06]">
+          {(
+            [
+              { key: 'all', label: isPolish ? 'Wszystkie' : 'All', icon: null },
+              { key: 'pinned', label: isPolish ? 'Przypięte' : 'Pinned', icon: <Pin size={11} /> },
+              { key: 'recent', label: isPolish ? 'Ostatnie' : 'Recent', icon: <Clock size={11} /> },
+              {
+                key: 'toReview',
+                label: isPolish ? 'Do przeglądu' : 'To review',
+                icon: <AlertTriangle size={11} />,
+              },
+              { key: 'fresh', label: isPolish ? 'Świeże' : 'Fresh', icon: <Sparkles size={11} /> },
+            ] as Array<{ key: NotebookViewLens; label: string; icon: React.ReactNode }>
+          ).map((v) => {
+            const count = viewCounts[v.key];
+            const active = viewLens === v.key;
+            return (
+              <button
+                key={v.key}
+                onClick={() => setViewLens(v.key)}
+                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                  active
+                    ? 'bg-slate-800 dark:bg-white text-white dark:text-navy-900'
+                    : 'bg-slate-100 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/[0.08]'
+                }`}
+              >
+                {v.icon}
+                {v.label}
+                {v.key !== 'all' && count > 0 && (
+                  <span
+                    className={`rounded-full px-1 text-[9px] ${
+                      active
+                        ? 'bg-white/20 dark:bg-navy-900/20'
+                        : 'bg-white dark:bg-white/[0.08] text-slate-500'
+                    }`}
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Page list */}
         <div className="flex-1 overflow-y-auto nb-scroll p-2 space-y-1">
-          {sidebarTab === 'today' ? (
-            <NotebookTodayView
-              isPolish={isPolish}
-              onOpenNote={(id) => {
-                void flushPendingSave().then(() => setActiveId(id));
-                setSidebarTab('all');
-              }}
-              captureSlot={
-                <NotebookQuickCapture
-                  notebookId={notebookId}
-                  onCreated={() => {
-                    setTodayRefreshKey((k) => k + 1);
-                    void fetchPages();
-                  }}
-                />
-              }
-              refreshKey={todayRefreshKey}
-            />
-          ) : filteredPages.length === 0 ? (
+          {filteredPages.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-navy-800 dark:to-navy-700 flex items-center justify-center mb-3">
                 <FileText size={20} className="text-slate-600" />
               </div>
-              <div className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                {sidebarTab === 'inbox'
-                  ? isPolish
-                    ? 'Inbox pusty!'
-                    : 'Inbox zero!'
-                  : t('myWork.notebook.empty', 'No pages yet')}
-              </div>
-              <div className="text-[11px] text-slate-600 dark:text-slate-500 mt-1">
-                {isPolish ? 'Utwórz pierwszą stronę' : 'Create your first page'}
-              </div>
+              {(() => {
+                // A lens/filter is narrowing an otherwise non-empty notebook →
+                // say "no matches", not "create your first page".
+                const isFiltered = statusTab !== 'all' || scopeLens !== 'all' || viewLens !== 'all';
+                const hasAnyPages = pages.length > 0;
+                if (isFiltered && hasAnyPages) {
+                  return (
+                    <>
+                      <div className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                        {isPolish ? 'Brak pasujących stron' : 'No matching pages'}
+                      </div>
+                      <div className="text-[11px] text-slate-600 dark:text-slate-500 mt-1">
+                        {isPolish ? 'Zmień filtr powyżej' : 'Try a different filter above'}
+                      </div>
+                    </>
+                  );
+                }
+                return (
+                  <>
+                    <div className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                      {t('myWork.notebook.empty', 'No pages yet')}
+                    </div>
+                    <div className="text-[11px] text-slate-600 dark:text-slate-500 mt-1">
+                      {isPolish ? 'Utwórz pierwszą stronę' : 'Create your first page'}
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           ) : (
             <>
@@ -2352,16 +2501,19 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                       }}
                       className="w-full text-left px-3 py-2.5"
                     >
+                      {/* S1-U2a: Ideas-list row anatomy — leading signal dot
+                          ("szyna skanu" §14.2), L2 title, L5 meta, neutral
+                          chip shells with color only in the dot. */}
                       <div className="flex items-start gap-2">
-                        <span className="text-lg leading-none mt-0.5 shrink-0">
-                          {p.icon && /\p{Emoji}/u.test(p.icon) ? p.icon : matCfg.icon}
-                        </span>
+                        {p.icon && /\p{Emoji}/u.test(p.icon) ? (
+                          <span className="text-sm leading-none mt-0.5 shrink-0">{p.icon}</span>
+                        ) : null}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
                             <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusDot}`} />
-                            {p.pinned && <Pin size={9} className="text-amber-500 shrink-0" />}
+                            {p.pinned && <Pin size={10} className="text-amber-500 shrink-0" />}
                             {p.visibility === 'project' && (
-                              <Users size={9} className="text-blue-400 shrink-0" />
+                              <Users size={10} className="text-c-text-muted shrink-0" />
                             )}
                             <span
                               className={`font-semibold text-[13px] truncate flex-1 ${
@@ -2373,7 +2525,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                               {p.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
                             </span>
                             {timeAgo && (
-                              <span className="text-[9px] text-slate-600 dark:text-slate-500 shrink-0 tabular-nums">
+                              <span className="text-[10px] text-c-text-muted shrink-0 tabular-nums">
                                 {timeAgo}
                               </span>
                             )}
@@ -2386,9 +2538,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                           )}
 
                           <div className="mt-1.5 flex items-center gap-1 flex-wrap">
-                            <span
-                              className={`inline-flex items-center gap-0.5 rounded-md ${matCfg.bg} ${matCfg.text} px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide`}
-                            >
+                            <span className="inline-flex items-center gap-1 rounded-full border border-c-border-subtle bg-c-surface px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-c-text-secondary">
                               <span className={`w-1.5 h-1.5 rounded-full ${matCfg.dot}`} />
                               {isPolish ? matCfg.labelPl : matCfg.label}
                             </span>
@@ -2419,7 +2569,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                               if (!uploadSource) return null;
                               return (
                                 <span
-                                  className="rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 px-1.5 py-0.5 text-[9px] font-medium"
+                                  className="rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 px-1.5 py-0.5 text-[11px] font-medium"
                                   title={uploadSource.title}
                                 >
                                   {uploadSource.label}
@@ -2433,7 +2583,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                               if (convertedSummary.total === 0) return null;
                               return (
                                 <span
-                                  className="rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 text-[9px] font-medium"
+                                  className="rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 text-[11px] font-medium"
                                   title={convertedSummary.visibleTypes.join(', ')}
                                 >
                                   ✓ {convertedSummary.visibleTypes.join(', ')}
@@ -2447,7 +2597,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                               p.tags.slice(0, 2).map((tag) => (
                                 <span
                                   key={tag}
-                                  className="rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-slate-400 px-1.5 py-0.5 text-[9px] font-medium"
+                                  className="rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-slate-400 px-1.5 py-0.5 text-[11px] font-medium"
                                 >
                                   {tag}
                                 </span>
@@ -2527,7 +2677,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
 
       {/* Editor + Ideas panel */}
       <div className="flex-1 flex min-w-0 gap-1.5 overflow-hidden">
-        <div className="flex-1 min-w-0 flex flex-col rounded-2xl border border-slate-200/70 dark:border-white/[0.06] overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-50/50 dark:from-navy-950 dark:via-navy-950 dark:to-navy-900/20">
+        <div className="flex-1 min-w-0 flex flex-col rounded-2xl border border-slate-200/70 dark:border-white/[0.06] overflow-hidden bg-slate-50 dark:bg-navy-900">
           {!activePage && pagesLoading ? (
             /* Editor skeleton — avoids a blank "white" pane during first load. */
             <div className="flex-1 overflow-hidden">
@@ -2548,14 +2698,17 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           ) : !activePage && pagesError ? (
             <div className="flex h-full items-center justify-center p-8">
               <div className="text-center">
-                <AlertTriangle size={36} className="mx-auto mb-3 text-slate-400 dark:text-slate-500" />
+                <AlertTriangle
+                  size={36}
+                  className="mx-auto mb-3 text-slate-400 dark:text-slate-500"
+                />
                 <p className="mb-3 text-sm text-slate-600 dark:text-slate-300">
                   {isPolish ? 'Nie udało się wczytać notatek.' : 'Failed to load notes.'}
                 </p>
                 <button
                   type="button"
                   onClick={() => void fetchPages()}
-                  className="text-sm font-medium text-primary-600 hover:underline dark:text-primary-400"
+                  className="text-sm font-medium text-slate-600 hover:underline dark:text-slate-400"
                 >
                   {isPolish ? 'Spróbuj ponownie' : 'Retry'}
                 </button>
@@ -2628,9 +2781,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 </div>
 
                 {/* AI suggestion prompt */}
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-crimson-50 to-primary-50 dark:from-crimson-950/30 dark:to-primary-950/20 border border-indigo-200/50 dark:border-indigo-800/30">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-crimson-500 to-primary-600 flex items-center justify-center shrink-0">
-                    <Sparkles size={14} className="text-white" />
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-navy-800/50 border border-slate-200/60 dark:border-white/[0.06]">
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-navy-800 flex items-center justify-center shrink-0">
+                    <Sparkles size={14} className="text-[var(--c-info)]" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-semibold text-indigo-700 dark:text-indigo-300">
@@ -2665,36 +2818,32 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   <button
                     onClick={() => setShowVersionHistory((v) => !v)}
                     title={isPolish ? 'Historia wersji' : 'Version history'}
-                    className={`shrink-0 p-1.5 rounded-lg transition-colors ${showVersionHistory ? 'bg-indigo-500/10 text-indigo-500' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'}`}
+                    aria-label={isPolish ? 'Historia wersji' : 'Version history'}
+                    className={`shrink-0 p-1.5 rounded-lg transition-colors ${showVersionHistory ? 'bg-slate-200/70 dark:bg-navy-800 text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'}`}
                   >
                     <History size={14} />
                   </button>
-                  {/* C3 (KROK 6): expand the note into a Canvas document draft */}
+                  {/* N4 (U12): icon-only + tooltip — expand note into a Canvas document draft */}
                   <button
                     onClick={() => void handleExpandToDocument()}
                     disabled={isExpandingToDocument}
                     data-testid="notebook-expand-to-document"
                     title={
                       isPolish
-                        ? 'Utwórz dokument w Canvas z kopią tej notatki i rozwijaj go z Teresą'
-                        : 'Create a Canvas document from a copy of this note and extend it with Teresa'
+                        ? 'Rozwiń w dokument — utwórz dokument w Canvas z kopią notatki'
+                        : 'Expand into document — create a Canvas doc from this note'
                     }
-                    className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-indigo-200/60 dark:border-indigo-800/40 bg-indigo-50/60 dark:bg-indigo-950/30 px-2.5 py-1 text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100/70 dark:hover:bg-indigo-900/40 transition-colors disabled:opacity-60 disabled:cursor-wait"
+                    aria-label={isPolish ? 'Rozwiń w dokument' : 'Expand into document'}
+                    className="ml-auto shrink-0 p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-60 disabled:cursor-wait"
                   >
-                    <FileText size={12} />
-                    {isExpandingToDocument
-                      ? isPolish
-                        ? 'Tworzenie…'
-                        : 'Creating…'
-                      : isPolish
-                        ? 'Rozwiń w dokument'
-                        : 'Expand into document'}
+                    <FileText size={14} className={isExpandingToDocument ? 'animate-pulse' : ''} />
                   </button>
-                  {/* L-03: Rail toggle button */}
+                  {/* N4 (U12): connection graph — icon-only + tooltip, monochrome active */}
                   <button
                     onClick={() => setShowGraphView((v) => !v)}
                     title={isPolish ? 'Graf powiązań' : 'Connection graph'}
-                    className={`shrink-0 p-1.5 rounded-lg transition-colors ${showGraphView ? 'bg-indigo-500/10 text-indigo-500' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'}`}
+                    aria-label={isPolish ? 'Graf powiązań' : 'Connection graph'}
+                    className={`shrink-0 p-1.5 rounded-lg transition-colors ${showGraphView ? 'bg-slate-200/70 dark:bg-navy-800 text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'}`}
                   >
                     <Network size={14} />
                   </button>
@@ -2718,8 +2867,36 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   >
                     <Layers size={12} />
                   </button>
+                  {/* N1: hamburger ⋯ — all note actions in one menu */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      const r = e.currentTarget.getBoundingClientRect();
+                      setHamburgerPos({ x: Math.max(8, r.right - 240), y: r.bottom + 4 });
+                    }}
+                    title={isPolish ? 'Menu notatki' : 'Note menu'}
+                    aria-label={isPolish ? 'Menu notatki' : 'Note menu'}
+                    className="shrink-0 p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                  >
+                    <MoreHorizontal size={16} />
+                  </button>
                 </div>
               </div>
+
+              {hamburgerPos && activePage && (
+                <NotebookHamburgerMenu
+                  x={hamburgerPos.x}
+                  y={hamburgerPos.y}
+                  isPolish={!!isPolish}
+                  onClose={() => setHamburgerPos(null)}
+                  onExpandDocument={() => void handleExpandToDocument()}
+                  onConvert={(t: NotebookConvertTarget) =>
+                    void handleConvertFromPanel(t as ConvertTarget)
+                  }
+                  onAskAI={() => setAiCommand('action')}
+                  onDelete={() => void handleDeletePage()}
+                />
+              )}
 
               {/* Version History panel (toggleable) */}
               {showVersionHistory && activePage && (
@@ -2803,8 +2980,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                           value={activePage.icon ?? null}
                           fallback={
                             (
-                              MATURITY_CONFIG[(activePage.maturity as NotebookMaturity) || 'seed'] ||
-                              MATURITY_CONFIG.seed
+                              MATURITY_CONFIG[
+                                (activePage.maturity as NotebookMaturity) || 'seed'
+                              ] || MATURITY_CONFIG.seed
                             ).icon
                           }
                           onChange={handleChangeIcon}
@@ -2819,7 +2997,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                             scheduleSave({ title: e.target.value });
                           }}
                           placeholder={isPolish ? 'Bez tytułu' : 'Untitled'}
-                          className="w-full bg-transparent text-3xl font-bold tracking-tight text-slate-900 dark:text-white outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                          className="w-full bg-transparent text-3xl font-semibold tracking-tight text-slate-900 dark:text-white outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
                         />
                         {/* Tags inline */}
                         <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
@@ -2827,7 +3005,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                           {pageTags.map((tag) => (
                             <span
                               key={tag}
-                              className="group/tag inline-flex items-center gap-1 rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-400 px-2 py-0.5 text-[11px] font-medium hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                              className="group/tag inline-flex items-center gap-1 rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-400 px-2 py-0.5 text-[11px] font-medium hover:bg-slate-200 dark:hover:bg-white/[0.1] hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
                             >
                               {tag}
                               <button
@@ -2889,72 +3067,72 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                       </div>
                     </div>
 
-                    {/* V4-NOTE-05: Lifecycle strip — verification, review cadence, stale */}
-                    <div className="mt-3 flex items-center gap-3 flex-wrap">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                          {isPolish ? 'Weryfikacja' : 'Verification'}
-                        </span>
-                        <select
-                          value={
-                            (activePage.verificationStatus as NotebookVerificationStatus) ??
-                            'unverified'
-                          }
-                          onChange={(e) => {
-                            const v = e.target.value as NotebookVerificationStatus;
-                            scheduleSave({ verificationStatus: v });
-                            setPages((prev) =>
-                              prev.map((p) =>
-                                p.id === activePage.id ? { ...p, verificationStatus: v } : p
-                              )
-                            );
-                          }}
-                          className="text-[11px] px-2 py-1 rounded-md bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300"
-                        >
-                          <option value="unverified">
-                            {isPolish ? 'Nieweryfikowana' : 'Unverified'}
-                          </option>
-                          <option value="verified">
-                            {isPolish ? 'Zweryfikowana' : 'Verified'}
-                          </option>
-                          <option value="disputed">
-                            {isPolish ? 'Zakwestionowana' : 'Disputed'}
-                          </option>
-                        </select>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                          {isPolish ? 'Recenzja' : 'Review'}
-                        </span>
-                        <select
-                          value={(activePage.reviewCadence as NotebookReviewCadence) ?? 'monthly'}
-                          onChange={(e) => {
-                            const v = e.target.value as NotebookReviewCadence;
-                            scheduleSave({ reviewCadence: v });
-                            setPages((prev) =>
-                              prev.map((p) =>
-                                p.id === activePage.id ? { ...p, reviewCadence: v } : p
-                              )
-                            );
-                          }}
-                          className="text-[11px] px-2 py-1 rounded-md bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300"
-                        >
-                          <option value="weekly">{isPolish ? 'Tygodniowo' : 'Weekly'}</option>
-                          <option value="monthly">{isPolish ? 'Miesięcznie' : 'Monthly'}</option>
-                          <option value="quarterly">{isPolish ? 'Kwartalnie' : 'Quarterly'}</option>
-                          <option value="never">{isPolish ? 'Nigdy' : 'Never'}</option>
-                        </select>
-                      </div>
+                    {/* N3: Lifecycle strip — clean status pills (status-aware, no raw selects) */}
+                    <div className="mt-3 flex items-center gap-2 flex-wrap">
+                      <select
+                        value={
+                          (activePage.verificationStatus as NotebookVerificationStatus) ??
+                          'unverified'
+                        }
+                        onChange={(e) => {
+                          const v = e.target.value as NotebookVerificationStatus;
+                          scheduleSave({ verificationStatus: v });
+                          setPages((prev) =>
+                            prev.map((p) =>
+                              p.id === activePage.id ? { ...p, verificationStatus: v } : p
+                            )
+                          );
+                        }}
+                        title={isPolish ? 'Weryfikacja' : 'Verification'}
+                        className={`text-[11px] px-2.5 py-1 rounded-md border cursor-pointer transition-colors ${
+                          (activePage.verificationStatus as NotebookVerificationStatus) ===
+                          'verified'
+                            ? 'bg-emerald-500/10 border-emerald-300/40 text-emerald-700 dark:text-emerald-300'
+                            : (activePage.verificationStatus as NotebookVerificationStatus) ===
+                                'disputed'
+                              ? 'bg-amber-500/10 border-amber-300/40 text-amber-700 dark:text-amber-300'
+                              : 'bg-slate-100 dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300'
+                        }`}
+                      >
+                        <option value="unverified">
+                          {isPolish ? '○ Nieweryfikowana' : '○ Unverified'}
+                        </option>
+                        <option value="verified">
+                          {isPolish ? '✓ Zweryfikowana' : '✓ Verified'}
+                        </option>
+                        <option value="disputed">
+                          {isPolish ? '! Zakwestionowana' : '! Disputed'}
+                        </option>
+                      </select>
+                      <select
+                        value={(activePage.reviewCadence as NotebookReviewCadence) ?? 'monthly'}
+                        onChange={(e) => {
+                          const v = e.target.value as NotebookReviewCadence;
+                          scheduleSave({ reviewCadence: v });
+                          setPages((prev) =>
+                            prev.map((p) =>
+                              p.id === activePage.id ? { ...p, reviewCadence: v } : p
+                            )
+                          );
+                        }}
+                        title={isPolish ? 'Cykl recenzji' : 'Review cadence'}
+                        className="text-[11px] px-2.5 py-1 rounded-md border bg-slate-100 dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 cursor-pointer"
+                      >
+                        <option value="weekly">{isPolish ? 'Co tydzień' : 'Weekly'}</option>
+                        <option value="monthly">{isPolish ? 'Co miesiąc' : 'Monthly'}</option>
+                        <option value="quarterly">{isPolish ? 'Co kwartał' : 'Quarterly'}</option>
+                        <option value="never">{isPolish ? 'Nigdy' : 'Never'}</option>
+                      </select>
                       {(activePage.staleAt || activePage.lastReviewedAt) && (
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                        <span className="text-[11px]">
                           {activePage.staleAt ? (
                             <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
-                              <AlertTriangle size={10} />
+                              <AlertTriangle size={11} />
                               {isPolish ? 'Nieaktualna' : 'Stale'}
                             </span>
                           ) : activePage.lastReviewedAt ? (
-                            <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                              <CheckCircle2 size={10} />
+                            <span className="inline-flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                              <CheckCircle2 size={11} className="text-emerald-500" />
                               {isPolish ? 'Sprawdzono' : 'Reviewed'}{' '}
                               {relativeTime(activePage.lastReviewedAt)}
                             </span>
@@ -2987,10 +3165,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                             )
                           );
                         }}
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 text-[11px] font-medium transition-colors"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 text-[11px] font-medium transition-colors"
                       >
                         <RefreshCw size={10} />
-                        {isPolish ? 'Oznacz jako sprawdzone' : 'Mark as reviewed'}
+                        {isPolish ? 'Oznacz sprawdzone' : 'Mark reviewed'}
                       </button>
                     </div>
 
@@ -3077,14 +3255,14 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   {pendingAIProposals.length > 0 && (
                     <div
                       ref={proposalReviewRef}
-                      className="mb-4 rounded-xl border border-primary-200/70 bg-primary-50/80 px-3 py-3 dark:border-primary-500/20 dark:bg-primary-500/10"
+                      className="mb-4 rounded-xl border border-slate-200/70 bg-slate-50/80 px-3 py-3 dark:border-slate-500/20 dark:bg-slate-500/10"
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div>
-                          <div className="text-xs font-semibold text-primary-700 dark:text-primary-300">
+                          <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                             {isPolish ? 'AI propose -> accept' : 'AI propose -> accept'}
                           </div>
-                          <div className="text-[11px] text-primary-600 dark:text-primary-200/80">
+                          <div className="text-[11px] text-slate-600 dark:text-slate-200/80">
                             {isPolish
                               ? `${pendingAIProposals.length} propozycje czekają na review`
                               : `${pendingAIProposals.length} proposals waiting for review`}
@@ -3095,7 +3273,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         {pendingAIProposals.slice(0, 3).map((proposal) => (
                           <div
                             key={proposal.id}
-                            className="rounded-lg border border-primary-200/80 bg-white/80 px-3 py-2 dark:border-primary-400/20 dark:bg-navy-950/40"
+                            className="rounded-lg border border-slate-200/80 bg-white/80 px-3 py-2 dark:border-slate-400/20 dark:bg-navy-950/40"
                           >
                             <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200">
                               {proposal.rationale || (isPolish ? 'Propozycja AI' : 'AI proposal')}
@@ -3109,7 +3287,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                                 onClick={() =>
                                   void resolveNotebookAIProposal(proposal.id, 'accepted')
                                 }
-                                className="rounded-md bg-primary-600 px-2.5 py-1 text-[11px] font-medium text-white transition-colors hover:bg-primary-500"
+                                className="rounded-md bg-slate-600 px-2.5 py-1 text-[11px] font-medium text-white transition-colors hover:bg-slate-500"
                               >
                                 {isPolish ? 'Akceptuj' : 'Accept'}
                               </button>
@@ -3171,7 +3349,17 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   />
 
                   {/* Rich editor */}
+                  {editor && <NotebookBubbleToolbar editor={editor} />}
                   <EditorContent editor={editor} />
+
+                  {/* K1 — incoming backlinks ("Mentioned in") surfaced inline. */}
+                  {activePage && (
+                    <NotebookBacklinksBar
+                      noteId={activePage.id}
+                      isPolish={isPolish}
+                      refreshKey={backlinksRefresh}
+                    />
+                  )}
 
                   {activePage ? (
                     <div ref={attachmentsSectionRef} className="mt-4">
@@ -3243,6 +3431,29 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   />
                 )}
 
+                {/* @mention entity picker (K1) — coords are container-relative
+                    like SlashMenu, so the absolutely-positioned menu lands at the caret. */}
+                {editor &&
+                  mentionState.open &&
+                  (() => {
+                    const rect = editorContainerRef.current?.getBoundingClientRect();
+                    return (
+                      <NotebookMentionMenu
+                        open={mentionState.open}
+                        query={mentionState.query}
+                        position={{
+                          x: mentionState.coords.left - (rect?.left ?? 0),
+                          y: mentionState.coords.top - (rect?.top ?? 0),
+                        }}
+                        onSelect={handleMentionSelect}
+                        onClose={() => setMentionState(INITIAL_MENTION_STATE)}
+                        isPolish={isPolish}
+                        notes={pages}
+                        activeNoteId={activePage?.id ?? null}
+                      />
+                    );
+                  })()}
+
                 {/* Code-block language picker */}
                 {editor && codeLangMenu && (
                   <div
@@ -3260,13 +3471,13 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         }}
                         className={`flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-left text-sm transition-colors ${
                           codeLangMenu.current === lang.id
-                            ? 'bg-primary-500/10 text-primary-700 dark:text-primary-300'
+                            ? 'bg-slate-500/10 text-slate-700 dark:text-slate-300'
                             : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/[0.06]'
                         }`}
                       >
                         {lang.label}
                         {codeLangMenu.current === lang.id ? (
-                          <CheckCircle2 size={13} className="text-primary-500" />
+                          <CheckCircle2 size={13} className="text-slate-500" />
                         ) : null}
                       </button>
                     ))}
@@ -3292,11 +3503,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 <X size={13} />
               </button>
             </div>
-            <NotebookGraphView
-              pageId={activePage.id}
-              pageTitle={title}
-              isPolish={isPolish}
-            />
+            <NotebookGraphView pageId={activePage.id} pageTitle={title} isPolish={isPolish} />
           </div>
         )}
 
@@ -3310,18 +3517,23 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           allPages={pages}
           editor={editor}
           noteTitle={title}
-          noteContent={activePage ? (activePage.contentText || extractText(activePage.contentJson)) : ''}
+          noteContent={
+            activePage ? activePage.contentText || extractText(activePage.contentJson) : ''
+          }
           noteTags={pageTags}
           notePage={
             activePage
               ? {
                   id: activePage.id,
-                  maturity: (activePage.maturity as NotebookMaturity) || computeMaturity(activePage),
+                  maturity:
+                    (activePage.maturity as NotebookMaturity) || computeMaturity(activePage),
                   summary: activePage.summary,
                   updatedAt: activePage.updatedAt,
                   visibility: (activePage.visibility as NotebookVisibility) || 'private',
                   projectId: activePage.projectId,
-                  wordCount: wordCount(activePage.contentText || extractText(activePage.contentJson)),
+                  wordCount: wordCount(
+                    activePage.contentText || extractText(activePage.contentJson)
+                  ),
                 }
               : undefined
           }

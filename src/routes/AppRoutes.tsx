@@ -696,7 +696,6 @@ export const AppRoutes: React.FC = () => {
       'piotr.wisniewski@demo.com',
       'anna.zielinska@ateliertoys-demo.com',
     ]);
-    const FORCE_DEMO_OFF_EMAIL = 'piotr.wisniewski@dbr77.com';
     const isDemoUser = (validUser as any).isDemo === true || DEMO_EMAILS.has(validUser.email);
 
     try {
@@ -712,20 +711,6 @@ export const AppRoutes: React.FC = () => {
       }
     } catch {
       // ignore storage errors
-    }
-
-    // Hard override: this account should never have demo mode enabled.
-    if (validUser.email === FORCE_DEMO_OFF_EMAIL) {
-      try {
-        sessionStorage.removeItem('isDemo');
-        localStorage.removeItem('consultify_demo_session');
-        localStorage.removeItem('demo_events');
-      } catch {
-        // ignore
-      }
-      setDemoMode(false);
-      resetDemoState();
-      (validUser as any).isDemo = false;
     }
 
     const authenticatedUser: User = {
@@ -1988,12 +1973,7 @@ export const AppRoutes: React.FC = () => {
           element={
             <BetaGate moduleId="MODULE_PRESENTATIONS">
               <MainLayout
-                breadcrumbs={
-                  breadcrumbs || [
-                    t('sidebar.outputsLibrary', 'Outputs'),
-                    t('rap.outputs.breadcrumb.library', 'Library'),
-                  ]
-                }
+                breadcrumbs={breadcrumbs || [t('sidebar.materialy', 'Materiały')]}
                 noPadding
               >
                 <ProductionModuleGate

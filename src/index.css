@@ -684,3 +684,38 @@ html.focus-style-animated :focus-visible {
 html.reduce-motion.focus-style-animated :focus-visible {
   animation: none;
 }
+
+/* ============================================================================
+ * Chat streaming frame — ARTIFACT_ANATOMY_STANDARD §16 SPEC-K.
+ * "Ramka akcentu wokół CAŁEGO czatu (nie pola) — puls c.accent 1.5s"
+ * (Piotr: the accent frame must wrap the whole conversation, not the input).
+ * Applied to the message stream container while an AI turn is streaming.
+ * ==========================================================================*/
+.chat-streaming-frame {
+  position: relative;
+}
+.chat-streaming-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: 0.75rem;
+  border: 1.5px solid var(--c-accent, #85182f);
+  box-shadow: 0 0 0 1px var(--c-accent-soft, rgba(133, 24, 47, 0.14));
+  animation: chat-stream-pulse 1.5s ease-in-out infinite;
+  z-index: 5;
+}
+@keyframes chat-stream-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+/* reduce-motion: keep a static accent frame, drop the pulse */
+html.reduce-motion .chat-streaming-frame::after {
+  animation: none;
+  opacity: 0.6;
+}

@@ -220,7 +220,7 @@ export const AppPricingView: React.FC = () => {
   };
 
   return (
-    <div className="min-h-full overflow-y-auto bg-slate-50 dark:bg-navy-950">
+    <div className="min-h-full overflow-y-auto bg-c-surface-raised">
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-b from-primary-50 via-white to-slate-50 px-6 pb-12 pt-10 dark:from-navy-900 dark:via-navy-950 dark:to-navy-950">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary-100/40 via-transparent to-transparent dark:from-primary-900/20" />
@@ -243,19 +243,19 @@ export const AppPricingView: React.FC = () => {
               </span>
             </h1>
 
-            <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-600 dark:text-slate-300">
+            <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-c-text-secondary">
               Zastąp kosztownych konsultantów strategicznym wsparciem AI. 14-dniowy trial. Bez karty
               kredytowej.
             </p>
 
             {/* Billing Toggle */}
-            <div className="mt-8 inline-flex items-center gap-3 rounded-xl bg-white p-1.5 shadow-sm dark:bg-navy-900">
+            <div className="mt-8 inline-flex items-center gap-3 rounded-xl bg-c-surface p-1.5 shadow-sm dark:bg-navy-900">
               <button
                 onClick={() => setBillingPeriod('annual')}
                 className={`rounded-xl p-4 py-2.5 text-sm font-bold transition-all ${
                   billingPeriod === 'annual'
                     ? 'bg-navy-900 text-white shadow-md'
-                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300'
+                    : 'text-c-text-muted hover:text-c-text-secondary dark:hover:text-slate-300'
                 }`}
               >
                 Rocznie
@@ -268,7 +268,7 @@ export const AppPricingView: React.FC = () => {
                 className={`rounded-xl p-4 py-2.5 text-sm font-bold transition-all ${
                   billingPeriod === 'monthly'
                     ? 'bg-navy-900 text-white shadow-md'
-                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300'
+                    : 'text-c-text-muted hover:text-c-text-secondary dark:hover:text-slate-300'
                 }`}
               >
                 Miesięcznie
@@ -296,7 +296,7 @@ export const AppPricingView: React.FC = () => {
                   className={`relative flex flex-col rounded-xl p-6 ${
                     tier.highlight
                       ? 'bg-gradient-to-b from-primary-600 to-primary-700 text-white ring-4 ring-primary-500/50 shadow-2xl shadow-primary-500/20 scale-[1.02] z-10'
-                      : 'bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700'
+                      : 'bg-c-surface border border-c-border-subtle'
                   }`}
                 >
                   {tier.badge && (
@@ -311,7 +311,7 @@ export const AppPricingView: React.FC = () => {
                   <div className="flex items-center gap-3">
                     <div
                       className={`flex h-11 w-11 items-center justify-center rounded-xl ${
-                        tier.highlight ? 'bg-white/20' : 'bg-primary-100 dark:bg-primary-900/30'
+                        tier.highlight ? 'bg-c-surface/20' : 'bg-primary-100 dark:bg-primary-900/30'
                       }`}
                     >
                       <Icon
@@ -332,7 +332,7 @@ export const AppPricingView: React.FC = () => {
 
                   <p
                     className={`mt-3 text-sm ${
-                      tier.highlight ? 'text-primary-100' : 'text-slate-500 dark:text-slate-400'
+                      tier.highlight ? 'text-primary-100' : 'text-c-text-muted'
                     }`}
                   >
                     {tier.description}
@@ -349,7 +349,7 @@ export const AppPricingView: React.FC = () => {
                     </span>
                     <span
                       className={`ml-1 text-sm ${
-                        tier.highlight ? 'text-primary-200' : 'text-slate-500 dark:text-slate-400'
+                        tier.highlight ? 'text-primary-200' : 'text-c-text-muted'
                       }`}
                     >
                       {tier.priceNote}
@@ -359,13 +359,13 @@ export const AppPricingView: React.FC = () => {
                   {/* Key Metrics */}
                   <div
                     className={`mt-5 grid grid-cols-2 gap-2 rounded-xl p-3 ${
-                      tier.highlight ? 'bg-white/10' : 'bg-slate-50 dark:bg-navy-950'
+                      tier.highlight ? 'bg-c-surface/10' : 'bg-c-surface-raised'
                     }`}
                   >
                     <div>
                       <div
                         className={`text-xs ${
-                          tier.highlight ? 'text-primary-200' : 'text-slate-500 dark:text-slate-400'
+                          tier.highlight ? 'text-primary-200' : 'text-c-text-muted'
                         }`}
                       >
                         Stanowiska
@@ -381,7 +381,7 @@ export const AppPricingView: React.FC = () => {
                     <div>
                       <div
                         className={`text-xs ${
-                          tier.highlight ? 'text-primary-200' : 'text-slate-500 dark:text-slate-400'
+                          tier.highlight ? 'text-primary-200' : 'text-c-text-muted'
                         }`}
                       >
                         AI Credits
@@ -413,7 +413,7 @@ export const AppPricingView: React.FC = () => {
                             className={`mt-0.5 flex-shrink-0 ${
                               tier.highlight
                                 ? 'text-primary-300/50'
-                                : 'text-slate-600 dark:text-slate-400'
+                                : 'text-c-text-secondary'
                             }`}
                           />
                         )}
@@ -422,10 +422,10 @@ export const AppPricingView: React.FC = () => {
                             feature.included
                               ? tier.highlight
                                 ? 'text-primary-100'
-                                : 'text-slate-700 dark:text-slate-300'
+                                : 'text-c-text-secondary'
                               : tier.highlight
                                 ? 'text-primary-300/50'
-                                : 'text-slate-600 dark:text-slate-500'
+                                : 'text-c-text-secondary'
                           }`}
                         >
                           {feature.name}
@@ -439,10 +439,10 @@ export const AppPricingView: React.FC = () => {
                     onClick={() => handleCtaClick(tier)}
                     className={`mt-6 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition ${
                       tier.ctaVariant === 'primary'
-                        ? 'bg-white text-primary-700 hover:bg-primary-50 shadow-lg'
+                        ? 'bg-c-surface text-primary-700 hover:bg-primary-50 shadow-lg'
                         : tier.ctaVariant === 'secondary'
                           ? 'bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800'
-                          : 'border-2 border-slate-300 dark:border-white/20 text-navy-950 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5'
+                          : 'border-2 border-c-border dark:border-white/20 text-navy-950 dark:text-white hover:bg-c-bg dark:hover:bg-c-surface/5'
                     }`}
                   >
                     {tier.cta}
@@ -454,7 +454,7 @@ export const AppPricingView: React.FC = () => {
           </div>
 
           {/* Trust indicators */}
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-6 text-sm text-slate-500 dark:text-slate-400">
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-6 text-sm text-c-text-muted">
             <div className="flex items-center gap-2">
               <Shield size={18} className="text-green-500" />
               <span>GDPR Compliant</span>
@@ -472,13 +472,13 @@ export const AppPricingView: React.FC = () => {
       </section>
 
       {/* AI Credits Section */}
-      <section className="bg-white px-6 py-12 dark:bg-navy-900/50">
+      <section className="bg-c-surface px-6 py-12 dark:bg-navy-900/50">
         <div className="mx-auto max-w-5xl">
           <div className="mb-8 text-center">
             <h2 className="text-2xl font-black text-navy-950 dark:text-white">
               AI Credits: dwa sposoby płatności
             </h2>
-            <p className="mx-auto mt-3 max-w-2xl text-sm text-slate-600 dark:text-slate-400">
+            <p className="mx-auto mt-3 max-w-2xl text-sm text-c-text-secondary">
               Wybierz Managed AI dla prostoty lub BYOK dla kontroli. Obie opcje dają pełny dostęp do
               funkcji AI.
             </p>
@@ -490,7 +490,7 @@ export const AppPricingView: React.FC = () => {
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="rounded-xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-900"
+              className="rounded-xl border border-c-border-subtle bg-c-surface p-6 dark:border-navy-700 dark:bg-navy-900"
             >
               <div className="flex items-center gap-3 mb-4">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/30">
@@ -503,7 +503,7 @@ export const AppPricingView: React.FC = () => {
                   </span>
                 </div>
               </div>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+              <p className="text-sm text-c-text-secondary mb-4">
                 My zarządzamy wszystkim. Najnowsze modele, zoptymalizowane prompty, automatyczny
                 failover.
               </p>
@@ -515,9 +515,9 @@ export const AppPricingView: React.FC = () => {
                 ].map((item, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between py-2 border-b border-slate-200 last:border-0 dark:border-navy-700"
+                    className="flex items-center justify-between py-2 border-b border-c-border-subtle last:border-0 dark:border-navy-700"
                   >
-                    <span className="text-sm text-slate-600 dark:text-slate-400">{item.label}</span>
+                    <span className="text-sm text-c-text-secondary">{item.label}</span>
                     <span className="text-sm font-bold text-navy-950 dark:text-white">
                       {item.value}
                     </span>
@@ -531,7 +531,7 @@ export const AppPricingView: React.FC = () => {
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="rounded-xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-900"
+              className="rounded-xl border border-c-border-subtle bg-c-surface p-6 dark:border-navy-700 dark:bg-navy-900"
             >
               <div className="flex items-center gap-3 mb-4">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/30">
@@ -544,7 +544,7 @@ export const AppPricingView: React.FC = () => {
                   </span>
                 </div>
               </div>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+              <p className="text-sm text-c-text-secondary mb-4">
                 Używaj własnych kluczy OpenAI/Anthropic/Azure. Płacisz dostawcom bezpośrednio.
               </p>
               <div className="space-y-2">
@@ -555,9 +555,9 @@ export const AppPricingView: React.FC = () => {
                 ].map((item, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between py-2 border-b border-slate-200 last:border-0 dark:border-navy-700"
+                    className="flex items-center justify-between py-2 border-b border-c-border-subtle last:border-0 dark:border-navy-700"
                   >
-                    <span className="text-sm text-slate-600 dark:text-slate-400">{item.label}</span>
+                    <span className="text-sm text-c-text-secondary">{item.label}</span>
                     <span className="text-sm font-bold text-navy-950 dark:text-white">
                       {item.value}
                     </span>
@@ -568,7 +568,7 @@ export const AppPricingView: React.FC = () => {
           </div>
 
           {/* Credit Usage Examples */}
-          <div className="mt-8 rounded-xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-900">
+          <div className="mt-8 rounded-xl border border-c-border-subtle bg-c-surface p-6 dark:border-navy-700 dark:bg-navy-900">
             <h3 className="flex items-center gap-2 text-base font-bold text-navy-950 dark:text-white mb-4">
               <Server size={18} className="text-primary-500" />
               Co zużywa AI Credits?
@@ -577,9 +577,9 @@ export const AppPricingView: React.FC = () => {
               {AI_CREDIT_USAGE.map((item, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between rounded-xl bg-slate-50 p-3 dark:bg-navy-950"
+                  className="flex items-center justify-between rounded-xl bg-c-bg p-3 dark:bg-navy-950"
                 >
-                  <span className="text-xs text-slate-600 dark:text-slate-400">{item.action}</span>
+                  <span className="text-xs text-c-text-secondary">{item.action}</span>
                   <span className="text-xs font-bold text-primary-600 dark:text-primary-400">
                     {item.credits}
                   </span>
@@ -607,7 +607,7 @@ export const AppPricingView: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.05 }}
-                className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900"
+                className="overflow-hidden rounded-xl border border-c-border-subtle bg-c-surface dark:border-navy-700 dark:bg-navy-900"
               >
                 <button
                   onClick={() => setExpandedFaq(expandedFaq === idx ? null : idx)}
@@ -625,7 +625,7 @@ export const AppPricingView: React.FC = () => {
                   >
                     <ArrowRight
                       size={16}
-                      className="flex-shrink-0 rotate-90 text-slate-600 dark:text-slate-500"
+                      className="flex-shrink-0 rotate-90 text-c-text-secondary"
                     />
                   </motion.div>
                 </button>
@@ -633,9 +633,9 @@ export const AppPricingView: React.FC = () => {
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
-                    className="border-t border-slate-200 px-4 pb-4 pt-3 dark:border-navy-700"
+                    className="border-t border-c-border-subtle px-4 pb-4 pt-3 dark:border-navy-700"
                   >
-                    <p className="pl-7 text-sm text-slate-600 dark:text-slate-400">{faq.answer}</p>
+                    <p className="pl-7 text-sm text-c-text-secondary">{faq.answer}</p>
                   </motion.div>
                 )}
               </motion.div>
@@ -655,14 +655,14 @@ export const AppPricingView: React.FC = () => {
           <div className="mt-6 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <button
               onClick={() => window.open('/trial/start', '_blank')}
-              className="inline-flex items-center gap-2 rounded-full bg-white dark:bg-navy-900 px-6 py-3 text-sm font-bold text-primary-700 shadow-lg transition hover:bg-primary-50"
+              className="inline-flex items-center gap-2 rounded-full bg-c-surface px-6 py-3 text-sm font-bold text-primary-700 shadow-lg transition hover:bg-primary-50"
             >
               Rozpocznij trial
               <ArrowRight size={16} />
             </button>
             <button
               onClick={() => window.open(CALENDAR_URL, '_blank')}
-              className="inline-flex items-center gap-2 rounded-full border-2 border-white/30 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-100 dark:hover:bg-navy-800/40"
+              className="inline-flex items-center gap-2 rounded-full border-2 border-white/30 px-6 py-3 text-sm font-bold text-white transition hover:bg-c-surface-raised/40"
             >
               <Calendar size={16} />
               Umów demo

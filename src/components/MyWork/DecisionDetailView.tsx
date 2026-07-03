@@ -318,6 +318,17 @@ const IMPACT_LEVELS = {
   high: { label: { en: 'High', pl: 'Wysoki' }, color: 'bg-danger-500', emoji: '🔴' },
 };
 
+// English defaults for risk category labels — the actual rendered text is resolved
+// via t(`decisions.detail.riskCategory.${key}`, RISK_CATEGORY_EN_LABELS[key]) so the
+// fallback source stays statically analyzable for the i18n bare-missing gate.
+const RISK_CATEGORY_EN_LABELS: Record<string, string> = {
+  technical: 'Technical',
+  business: 'Business',
+  financial: 'Financial',
+  operational: 'Operational',
+  security: 'Security',
+};
+
 // ── DEMO DATA (populate N/C views for testing) ────────────────────────────────
 const DEMO_ALTERNATIVES: Alternative[] = [
   {
@@ -823,7 +834,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     {
       id: '1',
       type: 'created',
-      description: isPolish ? 'Decyzja utworzona' : 'Decision created',
+      description: t('decisions.detail.activityLog.decisionCreated', 'Decision created'),
       timestamp: new Date().toISOString(),
       userName: 'System',
     },
@@ -915,9 +926,9 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   ];
 
   const escalationModeOptions: Array<{ value: EscalationMode; label: string }> = [
-    { value: 'notify_only', label: isPolish ? 'Powiadomienie tylko' : 'Notify only' },
-    { value: 'manager_review', label: isPolish ? 'Przegląd managera' : 'Manager review' },
-    { value: 'executive_alert', label: isPolish ? 'Alert executive' : 'Executive alert' },
+    { value: 'notify_only', label: t('decisions.detail.escalationMode.notifyOnly', 'Notify only') },
+    { value: 'manager_review', label: t('decisions.detail.escalationMode.managerReview', 'Manager review') },
+    { value: 'executive_alert', label: t('decisions.detail.escalationMode.executiveAlert', 'Executive alert') },
   ];
 
   const fallbackDeliveryFromReminder = (rule: ReminderRule): DeliveryConfig => ({
@@ -942,7 +953,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       const found = integrationChannelCatalog.find((c) => c.key === channel);
       labels.push(found?.label || channel);
     });
-    if (labels.length === 0) labels.push(isPolish ? 'Brak kanałów' : 'No channels');
+    if (labels.length === 0) labels.push(t('decisions.detail.channels.noChannels', 'No channels'));
     return labels;
   };
 
@@ -1002,13 +1013,13 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   };
 
   const stakeholderRoleLabel = (role: StakeholderRole) => {
-    if (role === 'responsible') return isPolish ? 'Odpowiedzialny' : 'Responsible';
-    if (role === 'accountable') return isPolish ? 'Rozliczany' : 'Accountable';
-    if (role === 'consulted') return isPolish ? 'Konsultowany' : 'Consulted';
-    return isPolish ? 'Informowany' : 'Informed';
+    if (role === 'responsible') return t('decisions.detail.raci.responsible', 'Responsible');
+    if (role === 'accountable') return t('decisions.detail.raci.accountable', 'Accountable');
+    if (role === 'consulted') return t('decisions.detail.raci.consulted', 'Consulted');
+    return t('decisions.detail.raci.informed', 'Informed');
   };
   const stakeholderChannelLabels = (settings?: StakeholderNotificationSettings) => {
-    if (!settings?.enabled) return [isPolish ? 'Wyłączone' : 'Disabled'];
+    if (!settings?.enabled) return [t('decisions.detail.channels.disabled', 'Disabled')];
     const labels: string[] = [];
     if (settings.inAppEnabled) labels.push('In-app');
     if (settings.emailEnabled) labels.push('Email');
@@ -1017,7 +1028,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     if (integrations.includes('teams')) labels.push('Teams');
     if (integrations.includes('jira')) labels.push('Jira');
     if (integrations.includes('webhook')) labels.push('Webhook');
-    return labels.length > 0 ? labels : [isPolish ? 'Brak kanałów' : 'No channels'];
+    return labels.length > 0 ? labels : [t('decisions.detail.channels.noChannels', 'No channels')];
   };
 
   useEffect(() => {
@@ -1154,8 +1165,8 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       hour: '2-digit',
       minute: '2-digit',
     });
-    return isPolish ? `Szkic autozapisany ${time}` : `Draft autosaved ${time}`;
-  }, [lastDraftSavedAt, isPolish]);
+    return t('decisions.detail.draftAutosaved', 'Draft autosaved {{time}}', { time });
+  }, [lastDraftSavedAt, t]);
 
   const persistDraft = (source: 'autosave' | 'chat' | 'publish') => {
     const draftKey = `consultify-decision-draft:${decisionId || 'new'}`;
@@ -1334,60 +1345,60 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     if (type === 'approved')
       return {
         icon: <Check size={12} />,
-        label: isPolish ? 'Zatwierdzenie' : 'Approval',
+        label: t('decisions.detail.activityLog.approval', 'Approval'),
         style: 'text-emerald-500 bg-emerald-500/10 border-emerald-400/30',
       };
     if (type === 'rejected')
       return {
         icon: <X size={12} />,
-        label: isPolish ? 'Odrzucenie' : 'Rejection',
+        label: t('decisions.detail.activityLog.rejection', 'Rejection'),
         style: 'text-danger-500 bg-danger-500/10 border-danger-400/30',
       };
     if (type === 'escalated')
       return {
         icon: <ArrowUp size={12} />,
-        label: isPolish ? 'Eskalacja' : 'Escalation',
+        label: t('decisions.detail.activityLog.escalation', 'Escalation'),
         style: 'text-amber-500 bg-amber-500/10 border-amber-400/30',
       };
     if (type === 'deferred')
       return {
         icon: <Clock size={12} />,
-        label: isPolish ? 'Odroczenie' : 'Deferral',
+        label: t('decisions.detail.activityLog.deferral', 'Deferral'),
         style: 'text-slate-500 bg-slate-500/10 border-slate-400/30',
       };
     if (type === 'assignment')
       return {
         icon: <UserCheck size={12} />,
-        label: isPolish ? 'Przypisanie' : 'Assignment',
+        label: t('decisions.detail.activityLog.assignment', 'Assignment'),
         style: 'text-sky-500 bg-sky-500/10 border-sky-400/30',
       };
     if (type === 'comment')
       return {
         icon: <MessageSquare size={12} />,
-        label: isPolish ? 'Komentarz' : 'Comment',
+        label: t('decisions.detail.activityLog.comment', 'Comment'),
         style: 'text-indigo-500 bg-indigo-500/10 border-indigo-400/30',
       };
     if (type === 'deadline')
       return {
         icon: <Calendar size={12} />,
-        label: isPolish ? 'Termin' : 'Deadline',
+        label: t('decisions.detail.activityLog.deadline', 'Deadline'),
         style: 'text-danger-500 bg-danger-500/10 border-danger-400/30',
       };
     if (type === 'priority' || type === 'status_change')
       return {
         icon: <Flag size={12} />,
-        label: isPolish ? 'Zmiana statusu' : 'Status change',
+        label: t('decisions.detail.activityLog.statusChange', 'Status change'),
         style: 'text-primary-500 bg-primary-500/10 border-primary-400/30',
       };
     if (type === 'edit')
       return {
         icon: <Edit3 size={12} />,
-        label: isPolish ? 'Edycja' : 'Edit',
+        label: t('decisions.detail.activityLog.edit', 'Edit'),
         style: 'text-blue-500 bg-blue-500/10 border-blue-400/30',
       };
     return {
       icon: <Plus size={12} />,
-      label: isPolish ? 'Utworzenie' : 'Created',
+      label: t('decisions.detail.activityLog.created', 'Created'),
       style: 'text-slate-500 bg-slate-500/10 border-slate-400/30',
     };
   };
@@ -1397,7 +1408,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
         <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2">
           <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-            {isPolish ? 'Wpisy' : 'Entries'}
+            {t('decisions.detail.activityLog.entriesTab', 'Entries')}
           </p>
           <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
             {activityStats.total}
@@ -1405,7 +1416,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
         </div>
         <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2">
           <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-            {isPolish ? 'Zmiany' : 'Changes'}
+            {t('decisions.detail.activityLog.changesTab', 'Changes')}
           </p>
           <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
             {activityStats.edited}
@@ -1413,7 +1424,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
         </div>
         <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2">
           <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-            {isPolish ? 'Eskalacje' : 'Escalations'}
+            {t('decisions.detail.activityLog.escalationsTab', 'Escalations')}
           </p>
           <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
             {activityStats.escalations}
@@ -1421,7 +1432,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
         </div>
         <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2">
           <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-            {isPolish ? 'Współpraca' : 'Collaboration'}
+            {t('decisions.detail.activityLog.collaborationTab', 'Collaboration')}
           </p>
           <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
             {activityStats.collaboration}
@@ -1431,7 +1442,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
 
       {activityLogSorted.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300/60 dark:border-navy-700/70 bg-white/40 dark:bg-navy-900/40 p-6 text-center text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-          {isPolish ? 'Brak wpisów w logu.' : 'No activity entries yet.'}
+          {t('decisions.detail.activityLog.noEntries', 'No activity entries yet.')}
         </div>
       ) : (
         <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-3">
@@ -1461,9 +1472,9 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
                     </div>
                     {(entry.oldValue || entry.newValue) && (
                       <div className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400">
-                        {entry.oldValue ? `${isPolish ? 'Było' : 'From'}: ${entry.oldValue}` : ''}
+                        {entry.oldValue ? `${t('decisions.detail.activityLog.from', 'From')}: ${entry.oldValue}` : ''}
                         {entry.oldValue && entry.newValue ? '  ->  ' : ''}
-                        {entry.newValue ? `${isPolish ? 'Jest' : 'To'}: ${entry.newValue}` : ''}
+                        {entry.newValue ? `${t('decisions.detail.activityLog.to', 'To')}: ${entry.newValue}` : ''}
                       </div>
                     )}
                   </div>
@@ -1519,7 +1530,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       {
         id: '1',
         type: 'created',
-        description: isPolish ? 'Decyzja utworzona' : 'Decision created',
+        description: t('decisions.detail.activityLog.decisionCreated', 'Decision created'),
         timestamp: new Date().toISOString(),
         userName: 'System',
       },
@@ -1696,7 +1707,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       }
     } catch (error) {
       console.error('Failed to load decision', error);
-      toast.error(isPolish ? 'Nie udało się załadować decyzji' : 'Failed to load decision');
+      toast.error(t('decisions.detail.toast.loadFailed', 'Failed to load decision'));
     } finally {
       setLoading(false);
       setIsLocalHydrated(true);
@@ -1757,7 +1768,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
 
   const handleSave = async (silent = false) => {
     if (!title.trim()) {
-      if (!silent) toast.error(isPolish ? 'Tytuł jest wymagany' : 'Title is required');
+      if (!silent) toast.error(t('decisions.detail.toast.titleRequired', 'Title is required'));
       return;
     }
     if (!isDirty) {
@@ -1770,11 +1781,11 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
 
       if (decisionId) {
         await Api.updateDecision(decisionId, payload);
-        if (!silent) toast.success(isPolish ? 'Decyzja zaktualizowana' : 'Decision updated');
+        if (!silent) toast.success(t('decisions.detail.toast.decisionUpdated', 'Decision updated'));
         emitMyWorkEvent({ type: 'item:updated', entityType: 'decision', entityId: decisionId });
       } else {
         await Api.createDecision(payload);
-        if (!silent) toast.success(isPolish ? 'Decyzja utworzona' : 'Decision created');
+        if (!silent) toast.success(t('decisions.detail.activityLog.decisionCreated', 'Decision created'));
       }
       setLastPublishedSnapshot(draftSnapshot);
       persistDraft(silent ? 'autosave' : 'publish');
@@ -1782,7 +1793,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     } catch (error) {
       console.error('Failed to save decision', error);
       if (!silent)
-        toast.error(isPolish ? 'Nie udało się zapisać decyzji' : 'Failed to save decision');
+        toast.error(t('decisions.detail.toast.saveFailed', 'Failed to save decision'));
     } finally {
       setSaving(false);
     }
@@ -1835,16 +1846,16 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       setDecisionDate(new Date().toISOString());
       addActivityLogEntry(
         'approved',
-        isPolish ? 'Decyzja zatwierdzona' : 'Decision approved',
-        isPolish ? 'Oczekująca' : 'Pending',
-        isPolish ? 'Zatwierdzona' : 'Approved'
+        t('decisions.detail.toast.decisionApproved', 'Decision approved'),
+        t('decisions.detail.toast.pending', 'Pending'),
+        t('decisions.detail.toast.approved', 'Approved')
       );
-      toast.success(isPolish ? 'Decyzja zatwierdzona' : 'Decision approved');
+      toast.success(t('decisions.detail.toast.decisionApproved', 'Decision approved'));
       emitMyWorkEvent({ type: 'item:completed', entityType: 'decision', entityId: decisionId! });
       onSaved?.({ title, status: 'approved' });
       setShowFollowUp(true);
     } catch (error) {
-      toast.error(isPolish ? 'Nie udało się zatwierdzić' : 'Failed to approve');
+      toast.error(t('decisions.detail.toast.approveFailed', 'Failed to approve'));
     }
   };
 
@@ -1863,27 +1874,34 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       setWorkflowStatus(resolvedWorkflow);
       addActivityLogEntry(
         'status_change',
-        isPolish ? 'Zmieniono etap workflow decyzji' : 'Decision workflow stage changed',
-        isPolish
-          ? WORKFLOW_STATUS_CONFIG[previousWorkflow].label.pl
-          : WORKFLOW_STATUS_CONFIG[previousWorkflow].label.en,
-        isPolish
-          ? WORKFLOW_STATUS_CONFIG[resolvedWorkflow].label.pl
-          : WORKFLOW_STATUS_CONFIG[resolvedWorkflow].label.en
+        t('decisions.detail.toast.workflowStageChanged', 'Decision workflow stage changed'),
+        t(
+          `decisions.detail.workflowStage.${previousWorkflow}`,
+          WORKFLOW_STATUS_CONFIG[previousWorkflow].label.en
+        ),
+        t(
+          `decisions.detail.workflowStage.${resolvedWorkflow}`,
+          WORKFLOW_STATUS_CONFIG[resolvedWorkflow].label.en
+        )
       );
 
       const createdCount = Array.isArray(result.createdTaskIds) ? result.createdTaskIds.length : 0;
       if (resolvedWorkflow === 'published' && createdCount > 0) {
         toast.success(
-          isPolish
-            ? `Opublikowano decyzję i utworzono ${createdCount} task${createdCount === 1 ? '' : 'i'}`
-            : `Decision published and ${createdCount} task${createdCount === 1 ? '' : 's'} created`
+          t(
+            'decisions.detail.toast.publishedWithTasks',
+            'Decision published and {{count}} task{{taskSuffix}} created',
+            { count: createdCount, taskSuffix: createdCount === 1 ? '' : 's' }
+          )
         );
       } else {
         toast.success(
-          isPolish
-            ? `Workflow ustawiony na: ${WORKFLOW_STATUS_CONFIG[resolvedWorkflow].label.pl}`
-            : `Workflow set to ${WORKFLOW_STATUS_CONFIG[resolvedWorkflow].label.en}`
+          t('decisions.detail.toast.workflowSetTo', 'Workflow set to {{label}}', {
+            label: t(
+              `decisions.detail.workflowStage.${resolvedWorkflow}`,
+              WORKFLOW_STATUS_CONFIG[resolvedWorkflow].label.en
+            ),
+          })
         );
       }
       emitMyWorkEvent({ type: 'item:updated', entityType: 'decision', entityId: decisionId });
@@ -1897,7 +1915,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     } catch (error) {
       console.error('Failed to transition decision workflow', error);
       toast.error(
-        isPolish ? 'Nie udało się zmienić workflow decyzji' : 'Failed to update decision workflow'
+        t('decisions.detail.toast.workflowUpdateFailed', 'Failed to update decision workflow')
       );
     } finally {
       setWorkflowActionLoading(false);
@@ -1912,16 +1930,16 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       setDecisionDate(new Date().toISOString());
       addActivityLogEntry(
         'rejected',
-        isPolish ? 'Decyzja odrzucona' : 'Decision rejected',
-        isPolish ? 'Oczekująca' : 'Pending',
-        isPolish ? 'Odrzucona' : 'Rejected'
+        t('decisions.detail.toast.decisionRejected', 'Decision rejected'),
+        t('decisions.detail.toast.pending', 'Pending'),
+        t('decisions.detail.toast.rejected', 'Rejected')
       );
-      toast.success(isPolish ? 'Decyzja odrzucona' : 'Decision rejected');
+      toast.success(t('decisions.detail.toast.decisionRejected', 'Decision rejected'));
       emitMyWorkEvent({ type: 'item:completed', entityType: 'decision', entityId: decisionId! });
       onSaved?.({ title, status: 'rejected' });
       setShowFollowUp(true);
     } catch (error) {
-      toast.error(isPolish ? 'Nie udało się odrzucić' : 'Failed to reject');
+      toast.error(t('decisions.detail.toast.rejectFailed', 'Failed to reject'));
     }
   };
 
@@ -1932,14 +1950,14 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       setStatus('deferred');
       addActivityLogEntry(
         'deferred',
-        isPolish ? 'Decyzja odroczona' : 'Decision deferred',
-        isPolish ? 'Oczekująca' : 'Pending',
-        isPolish ? 'Odroczona' : 'Deferred'
+        t('decisions.detail.toast.decisionDeferred', 'Decision deferred'),
+        t('decisions.detail.toast.pending', 'Pending'),
+        t('decisions.detail.toast.deferred', 'Deferred')
       );
-      toast.success(isPolish ? 'Decyzja odroczona' : 'Decision deferred');
+      toast.success(t('decisions.detail.toast.decisionDeferred', 'Decision deferred'));
       onSaved?.({ title, status: 'deferred' });
     } catch (error) {
-      toast.error(isPolish ? 'Nie udało się odroczyć' : 'Failed to defer');
+      toast.error(t('decisions.detail.toast.deferFailed', 'Failed to defer'));
     }
   };
 
@@ -1948,19 +1966,19 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     try {
       await Api.escalateDecision(
         decisionId,
-        isPolish ? 'Eskalacja z widoku decyzji' : 'Escalated from decision detail'
+        t('decisions.detail.toast.escalatedFromDetail', 'Escalated from decision detail')
       );
       setStatus('escalated');
       addActivityLogEntry(
         'escalated',
-        isPolish ? 'Decyzja eskalowana' : 'Decision escalated',
-        isPolish ? 'Oczekująca' : 'Pending',
-        isPolish ? 'Eskalowana' : 'Escalated'
+        t('decisions.detail.toast.decisionEscalated', 'Decision escalated'),
+        t('decisions.detail.toast.pending', 'Pending'),
+        t('decisions.detail.toast.escalated', 'Escalated')
       );
-      toast.success(isPolish ? 'Decyzja eskalowana' : 'Decision escalated');
+      toast.success(t('decisions.detail.toast.decisionEscalated', 'Decision escalated'));
       onSaved?.({ title, status: 'escalated' });
     } catch (error) {
-      toast.error(isPolish ? 'Nie udało się eskalować' : 'Failed to escalate');
+      toast.error(t('decisions.detail.toast.escalateFailed', 'Failed to escalate'));
     }
   };
 
@@ -1968,24 +1986,20 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     if (!decisionId) return;
     try {
       // Add a comment requesting more information
-      const requestComment = isPolish
-        ? 'Proszę o dostarczenie dodatkowych informacji przed podjęciem decyzji.'
-        : 'Please provide additional information before a decision can be made.';
+      const requestComment = t('decisions.detail.toast.requestMoreInfoComment', 'Please provide additional information before a decision can be made.');
 
       await handleAddComment(requestComment, undefined, { force: true });
 
       // Optionally update status to show it needs more info
       // For now, we'll just notify via toast and add the comment
       toast.success(
-        isPolish
-          ? 'Prośba o więcej informacji została wysłana'
-          : 'Request for more information sent'
+        t('decisions.detail.toast.requestSent', 'Request for more information sent')
       );
 
       // Trigger delegation modal for more detailed request
       setShowDelegationModal(true);
     } catch (error) {
-      toast.error(isPolish ? 'Nie udało się wysłać prośby' : 'Failed to send request');
+      toast.error(t('decisions.detail.toast.requestFailed', 'Failed to send request'));
     }
   };
 
@@ -1993,9 +2007,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const addAlternative = () => {
     if (isDecisionStageLocked) {
       toast.error(
-        isPolish
-          ? 'W etapie podejmowania decyzji treść jest zablokowana'
-          : 'Content is locked during decision-making stage'
+        t('decisions.detail.toast.contentLocked', 'Content is locked during decision-making stage')
       );
       return;
     }
@@ -2110,9 +2122,11 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     if (isDecisionStageLocked) return;
     setIsGeneratingAltProsCons((prev) => ({ ...prev, [alt.id]: true }));
     try {
-      const prompt = isPolish
-        ? `Dla opcji decyzyjnej wygeneruj 3 konkretne "za" i 3 konkretne "przeciw". Zwróć wyłącznie JSON: {"pros":["..."],"cons":["..."]}.\n\nTytuł opcji: ${alt.title || '-'}\nOpis: ${alt.description || '-'}\nKontekst decyzji: ${title || '-'}`
-        : `For this decision option, generate 3 concrete pros and 3 concrete cons. Return JSON only: {"pros":["..."],"cons":["..."]}.\n\nOption title: ${alt.title || '-'}\nDescription: ${alt.description || '-'}\nDecision context: ${title || '-'}`;
+      const prompt = t(
+        'decisions.detail.ai.prosConsPrompt',
+        'For this decision option, generate 3 concrete pros and 3 concrete cons. Return JSON only: {"pros":["..."],"cons":["..."]}.\n\nOption title: {{altTitle}}\nDescription: {{altDescription}}\nDecision context: {{decisionTitle}}',
+        { altTitle: alt.title || '-', altDescription: alt.description || '-', decisionTitle: title || '-' }
+      );
 
       let nextPros: string[] = [];
       let nextCons: string[] = [];
@@ -2121,9 +2135,10 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
         const aiRes = await Api.post('/ai/chat', {
           message: prompt,
           history: [],
-          systemInstruction: isPolish
-            ? 'Jesteś asystentem PMO. Zwróć tylko poprawny JSON bez markdown.'
-            : 'You are a PMO assistant. Return valid JSON only, no markdown.',
+          systemInstruction: t(
+            'decisions.detail.ai.pmoJsonSystemInstruction',
+            'You are a PMO assistant. Return valid JSON only, no markdown.'
+          ),
           roleName: 'Decision Option Analyzer',
         });
         const rawText = String(aiRes?.text || aiRes?.content || '').trim();
@@ -2132,12 +2147,16 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
         nextPros = Array.isArray(parsed?.pros) ? parsed.pros.map((p: any) => String(p).trim()) : [];
         nextCons = Array.isArray(parsed?.cons) ? parsed.cons.map((c: any) => String(c).trim()) : [];
       } catch {
-        nextPros = isPolish
-          ? ['Krótszy czas wdrożenia', 'Lepsza skalowalność', 'Wyższa przewidywalność efektu']
-          : ['Shorter implementation time', 'Better scalability', 'Higher outcome predictability'];
-        nextCons = isPolish
-          ? ['Wyższy koszt początkowy', 'Wymaga kompetencji zespołu', 'Ryzyko integracyjne']
-          : ['Higher initial cost', 'Requires team capability', 'Integration risk'];
+        nextPros = [
+          t('decisions.detail.ai.fallbackProsShort', 'Shorter implementation time'),
+          t('decisions.detail.ai.fallbackProsScale', 'Better scalability'),
+          t('decisions.detail.ai.fallbackProsPredictability', 'Higher outcome predictability'),
+        ];
+        nextCons = [
+          t('decisions.detail.ai.fallbackConsCost', 'Higher initial cost'),
+          t('decisions.detail.ai.fallbackConsCapability', 'Requires team capability'),
+          t('decisions.detail.ai.fallbackConsIntegrationRisk', 'Integration risk'),
+        ];
       }
 
       setAlternatives((prev) =>
@@ -2158,7 +2177,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
         )
       );
       toast.success(
-        isPolish ? 'AI dodało propozycje za i przeciw' : 'AI added suggested pros and cons'
+        t('decisions.detail.toast.aiAddedProsCons', 'AI added suggested pros and cons')
       );
     } finally {
       setIsGeneratingAltProsCons((prev) => ({ ...prev, [alt.id]: false }));
@@ -2187,9 +2206,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const addRisk = () => {
     if (isDecisionStageLocked) {
       toast.error(
-        isPolish
-          ? 'W etapie podejmowania decyzji treść jest zablokowana'
-          : 'Content is locked during decision-making stage'
+        t('decisions.detail.toast.contentLocked', 'Content is locked during decision-making stage')
       );
       return;
     }
@@ -2219,14 +2236,12 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const generateAlternativesAI = async () => {
     if (isDecisionStageLocked) {
       toast.error(
-        isPolish
-          ? 'AI generowanie jest dostępne tylko przed etapem decyzji'
-          : 'AI generation is available only before decision stage'
+        t('decisions.detail.toast.aiGenAvailableOnlyBeforeDecision', 'AI generation is available only before decision stage')
       );
       return;
     }
     if (!title && !description) {
-      toast.error(isPolish ? 'Dodaj tytuł lub opis decyzji' : 'Add title or description first');
+      toast.error(t('decisions.detail.toast.addTitleOrDescription', 'Add title or description first'));
       return;
     }
 
@@ -2238,52 +2253,46 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       const generatedAlternatives: Alternative[] = [
         {
           id: Math.random().toString(36).substr(2, 9),
-          title: isPolish ? 'Opcja 1: Podejście konserwatywne' : 'Option 1: Conservative approach',
-          description: isPolish
-            ? 'Minimalne zmiany, niskie ryzyko, stopniowa implementacja'
-            : 'Minimal changes, low risk, gradual implementation',
+          title: t('decisions.detail.altGen.option1Title', 'Option 1: Conservative approach'),
+          description: t('decisions.detail.altGen.option1Desc', 'Minimal changes, low risk, gradual implementation'),
           pros: [
-            isPolish ? 'Niskie ryzyko' : 'Low risk',
-            isPolish ? 'Łatwa implementacja' : 'Easy implementation',
+            t('decisions.detail.altGen.lowRisk', 'Low risk'),
+            t('decisions.detail.altGen.easyImplementation', 'Easy implementation'),
           ],
-          cons: [isPolish ? 'Wolniejsze rezultaty' : 'Slower results'],
+          cons: [t('decisions.detail.altGen.slowerResults', 'Slower results')],
           isRecommended: false,
         },
         {
           id: Math.random().toString(36).substr(2, 9),
-          title: isPolish ? 'Opcja 2: Podejście agresywne' : 'Option 2: Aggressive approach',
-          description: isPolish
-            ? 'Szybka implementacja, wyższe ryzyko, szybsze rezultaty'
-            : 'Fast implementation, higher risk, faster results',
+          title: t('decisions.detail.altGen.option2Title', 'Option 2: Aggressive approach'),
+          description: t('decisions.detail.altGen.option2Desc', 'Fast implementation, higher risk, faster results'),
           pros: [
-            isPolish ? 'Szybkie rezultaty' : 'Fast results',
-            isPolish ? 'Przewaga konkurencyjna' : 'Competitive advantage',
+            t('decisions.detail.altGen.fastResults', 'Fast results'),
+            t('decisions.detail.altGen.competitiveAdvantage', 'Competitive advantage'),
           ],
           cons: [
-            isPolish ? 'Wyższe ryzyko' : 'Higher risk',
-            isPolish ? 'Wyższe koszty' : 'Higher costs',
+            t('decisions.detail.altGen.higherRisk', 'Higher risk'),
+            t('decisions.detail.altGen.higherCosts', 'Higher costs'),
           ],
           isRecommended: false,
         },
         {
           id: Math.random().toString(36).substr(2, 9),
-          title: isPolish ? 'Opcja 3: Podejście hybrydowe' : 'Option 3: Hybrid approach',
-          description: isPolish
-            ? 'Balans między szybkością a bezpieczeństwem'
-            : 'Balance between speed and safety',
+          title: t('decisions.detail.altGen.option3Title', 'Option 3: Hybrid approach'),
+          description: t('decisions.detail.altGen.option3Desc', 'Balance between speed and safety'),
           pros: [
-            isPolish ? 'Zbalansowane ryzyko' : 'Balanced risk',
-            isPolish ? 'Elastyczność' : 'Flexibility',
+            t('decisions.detail.altGen.balancedRisk', 'Balanced risk'),
+            t('decisions.detail.altGen.flexibility', 'Flexibility'),
           ],
-          cons: [isPolish ? 'Wymaga więcej koordynacji' : 'Requires more coordination'],
+          cons: [t('decisions.detail.altGen.moreCoordination', 'Requires more coordination')],
           isRecommended: true,
         },
       ];
 
       setAlternatives(withProsConsFallback([...alternatives, ...generatedAlternatives]));
-      toast.success(isPolish ? 'Wygenerowano alternatywy' : 'Alternatives generated');
+      toast.success(t('decisions.detail.toast.alternativesGenerated', 'Alternatives generated'));
     } catch (error) {
-      toast.error(isPolish ? 'Błąd generowania' : 'Generation failed');
+      toast.error(t('decisions.detail.toast.generationFailed', 'Generation failed'));
     } finally {
       setIsGeneratingAlternatives(false);
     }
@@ -2292,9 +2301,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const generateDescriptionAI = async () => {
     if (isDecisionStageLocked) {
       toast.error(
-        isPolish
-          ? 'AI generowanie jest dostępne tylko przed etapem decyzji'
-          : 'AI generation is available only before decision stage'
+        t('decisions.detail.toast.aiGenAvailableOnlyBeforeDecision', 'AI generation is available only before decision stage')
       );
       return;
     }
@@ -2302,14 +2309,16 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     try {
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      const generatedDescription = isPolish
-        ? `## Kontekst decyzji\n\nDecyzja dotyczy wyboru optymalnego rozwiązania dla ${title || 'bieżącego problemu'}.\n\n### Tło\nW ramach analizy zidentyfikowano następujące kluczowe czynniki:\n- Wymagania biznesowe i techniczne\n- Ograniczenia budżetowe i czasowe\n- Wpływ na obecne procesy\n\n### Zakres\nDecyzja obejmuje:\n1. Wybór dostawcy/technologii\n2. Określenie harmonogramu wdrożenia\n3. Alokację zasobów\n\n### Oczekiwane rezultaty\n- Poprawa efektywności procesów\n- Redukcja kosztów operacyjnych\n- Zwiększenie konkurencyjności`
-        : `## Decision Context\n\nThis decision concerns selecting the optimal solution for ${title || 'the current issue'}.\n\n### Background\nThe analysis has identified the following key factors:\n- Business and technical requirements\n- Budget and timeline constraints\n- Impact on existing processes\n\n### Scope\nThe decision covers:\n1. Vendor/technology selection\n2. Implementation timeline definition\n3. Resource allocation\n\n### Expected Outcomes\n- Process efficiency improvement\n- Operational cost reduction\n- Increased competitiveness`;
+      const generatedDescription = t(
+        'decisions.detail.decisionContextTemplate',
+        '## Decision Context\n\nThis decision concerns selecting the optimal solution for {{title}}.\n\n### Background\nThe analysis has identified the following key factors:\n- Business and technical requirements\n- Budget and timeline constraints\n- Impact on existing processes\n\n### Scope\nThe decision covers:\n1. Vendor/technology selection\n2. Implementation timeline definition\n3. Resource allocation\n\n### Expected Outcomes\n- Process efficiency improvement\n- Operational cost reduction\n- Increased competitiveness',
+        { title: title || t('decisions.detail.theCurrentIssue', 'the current issue') }
+      );
 
       setDescription(generatedDescription);
-      toast.success(isPolish ? 'Opis wygenerowany przez AI' : 'Description generated by AI');
+      toast.success(t('decisions.detail.toast.descriptionGenerated', 'Description generated by AI'));
     } catch {
-      toast.error(isPolish ? 'Błąd generowania opisu' : 'Error generating description');
+      toast.error(t('decisions.detail.toast.descriptionGenerationError', 'Error generating description'));
     } finally {
       setIsGeneratingDescription(false);
     }
@@ -2318,9 +2327,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const generateAIComment = async () => {
     if (isDecisionStageLocked) {
       toast.error(
-        isPolish
-          ? 'AI generowanie jest dostępne tylko przed etapem decyzji'
-          : 'AI generation is available only before decision stage'
+        t('decisions.detail.toast.aiGenAvailableOnlyBeforeDecision', 'AI generation is available only before decision stage')
       );
       return;
     }
@@ -2330,35 +2337,12 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
         .slice(-5)
         .map((c, idx) => `${idx + 1}. ${c.authorName}: ${c.content}`)
         .join('\n');
-      const decisionStatus = status || (isPolish ? 'brak statusu' : 'no status');
-      const decisionPriority = priority || (isPolish ? 'brak priorytetu' : 'no priority');
+      const decisionStatus = status || (t('decisions.detail.ai.commentNoStatus', 'no status'));
+      const decisionPriority = priority || (t('decisions.detail.ai.commentNoPriority', 'no priority'));
 
-      const prompt = isPolish
-        ? `Wygeneruj JEDEN konkretny komentarz do decyzji projektowej.
-Cel: pomóc zespołowi podjąć najlepszy kolejny krok decyzyjny.
-
-Zasady:
-- 2-4 krótkie zdania.
-- Maksymalnie 450 znaków.
-- Bez markdown, bez emoji, bez list numerowanych.
-- Nie powtarzaj treści podobnej do ostatnich komentarzy.
-- Komentarz ma być praktyczny i oparty na podanym kontekście.
-
-Kontekst decyzji:
-- Tytuł: ${title || 'Brak tytułu'}
-- Opis: ${description || 'Brak opisu'}
-- Status: ${decisionStatus}
-- Priorytet: ${decisionPriority}
-- Termin: ${dueDate || 'Brak terminu'}
-- Interesariusze: ${stakeholders.length}
-- Ryzyka: ${risks.length}
-- Alternatywy: ${alternatives.length}
-
-Ostatnie komentarze:
-${recentComments || 'Brak komentarzy'}
-
-Zwróć WYŁĄCZNIE gotowy tekst komentarza.`
-        : `Generate ONE concrete comment for a project decision.
+      const prompt = t(
+        'decisions.detail.ai.commentPrompt',
+        `Generate ONE concrete comment for a project decision.
 Goal: help the team choose the most useful next decision step.
 
 Rules:
@@ -2369,26 +2353,36 @@ Rules:
 - Keep it practical and grounded in the provided context.
 
 Decision context:
-- Title: ${title || 'Untitled'}
-- Description: ${description || 'No description'}
-- Status: ${decisionStatus}
-- Priority: ${decisionPriority}
-- Deadline: ${dueDate || 'No deadline'}
-- Stakeholders: ${stakeholders.length}
-- Risks: ${risks.length}
-- Alternatives: ${alternatives.length}
+- Title: {{title}}
+- Description: {{description}}
+- Status: {{status}}
+- Priority: {{priority}}
+- Deadline: {{dueDate}}
+- Stakeholders: {{stakeholdersCount}}
+- Risks: {{risksCount}}
+- Alternatives: {{alternativesCount}}
 
 Recent comments:
-${recentComments || 'No comments yet'}
+{{recentComments}}
 
-Return ONLY the final comment text.`;
+Return ONLY the final comment text.`,
+        {
+          title: title || t('decisions.detail.untitled', 'Untitled'),
+          description: description || t('decisions.detail.noDescription', 'No description'),
+          status: decisionStatus,
+          priority: decisionPriority,
+          dueDate: dueDate || t('decisions.detail.noDeadline', 'No deadline'),
+          stakeholdersCount: stakeholders.length,
+          risksCount: risks.length,
+          alternativesCount: alternatives.length,
+          recentComments: recentComments || t('decisions.detail.noCommentsYet', 'No comments yet'),
+        }
+      );
 
       const aiRes = await Api.post('/ai/chat', {
         message: prompt,
         history: [],
-        systemInstruction: isPolish
-          ? 'Jesteś praktycznym PMO coachem decyzyjnym. Odpowiadasz konkretnie i bez ogólników.'
-          : 'You are a practical PMO decision coach. Be concrete and avoid generic filler.',
+        systemInstruction: t('decisions.detail.ai.decisionCoachSystemInstruction', 'You are a practical PMO decision coach. Be concrete and avoid generic filler.'),
         roleName: 'Decision Comment Advisor',
       });
 
@@ -2409,7 +2403,7 @@ Return ONLY the final comment text.`;
         .map((c) => c.content.trim().toLowerCase());
 
       const finalComment = recentAIMessages.includes(generatedComment.toLowerCase())
-        ? `${generatedComment} ${isPolish ? 'Skoncentrujmy się na jednym mierzalnym kroku do końca dnia.' : 'Let us focus on one measurable step by end of day.'}`
+        ? `${generatedComment} ${t('decisions.detail.ai.duplicateCommentAppend', 'Let us focus on one measurable step by end of day.')}`
         : generatedComment;
 
       const newComment: Comment = {
@@ -2423,11 +2417,9 @@ Return ONLY the final comment text.`;
       };
 
       setComments([...comments, newComment]);
-      toast.success(isPolish ? 'Komentarz AI wygenerowany' : 'AI comment generated');
+      toast.success(t('decisions.detail.toast.aiCommentGenerated', 'AI comment generated'));
     } catch {
-      const fallback = isPolish
-        ? `Przed finalną decyzją doprecyzujmy jeden krytyczny warunek akceptacji i przypiszmy właściciela następnego kroku. To obniży ryzyko opóźnień i niejasności odpowiedzialności.`
-        : `Before finalizing this decision, clarify one critical acceptance condition and assign an owner for the next step. This will reduce delay risk and responsibility ambiguity.`;
+      const fallback = t('decisions.detail.ai.commentFallback', 'Before finalizing this decision, clarify one critical acceptance condition and assign an owner for the next step. This will reduce delay risk and responsibility ambiguity.');
 
       const newComment: Comment = {
         id: Math.random().toString(36).substr(2, 9),
@@ -2440,7 +2432,7 @@ Return ONLY the final comment text.`;
       };
 
       setComments((prev) => [...prev, newComment]);
-      toast.success(isPolish ? 'Dodano komentarz pomocniczy AI' : 'Added a fallback AI comment');
+      toast.success(t('decisions.detail.toast.aiCommentFallbackAdded', 'Added a fallback AI comment'));
     } finally {
       setIsGeneratingAIComment(false);
     }
@@ -2477,28 +2469,12 @@ Return ONLY the final comment text.`;
         .map((u) => `${u.id} | ${u.firstName} ${u.lastName} | ${u.email || '-'}`)
         .join('\n');
 
-      const prompt = isPolish
-        ? `Na podstawie danych decyzji zaproponuj skład RACI. Zwróć WYŁĄCZNIE JSON:
-{"stakeholders":[{"userId":"...","role":"accountable|responsible|consulted|informed","reason":"..."}]}
-Wymagania:
-- Dokładnie 1 osoba accountable
-- 1-2 osoby responsible
-- 1-3 osoby consulted/informed
-- Użyj TYLKO userId z listy użytkowników
-
-Decyzja:
-- Tytuł: ${title || '-'}
-- Opis: ${description || '-'}
-- Kategoria: ${category}
-- Priorytet: ${priority}
-- Termin: ${dueDate || '-'}
-- Requester: ${requesterName || '-'}
-- Aktualny deciderId: ${deciderId || '-'}
-
-Użytkownicy (preferuj członków projektu):
-${roster}`
-        : `Based on decision data, propose a RACI team. Return JSON ONLY:
-{"stakeholders":[{"userId":"...","role":"accountable|responsible|consulted|informed","reason":"..."}]}
+      const raciSchema =
+        '{"stakeholders":[{"userId":"...","role":"accountable|responsible|consulted|informed","reason":"..."}]}';
+      const prompt = t(
+        'decisions.detail.ai.raciTeamPrompt',
+        `Based on decision data, propose a RACI team. Return JSON ONLY:
+{{schema}}
 Requirements:
 - Exactly 1 accountable
 - 1-2 responsible
@@ -2506,23 +2482,33 @@ Requirements:
 - Use ONLY userId from the provided user list
 
 Decision:
-- Title: ${title || '-'}
-- Description: ${description || '-'}
-- Category: ${category}
-- Priority: ${priority}
-- Due date: ${dueDate || '-'}
-- Requester: ${requesterName || '-'}
-- Current deciderId: ${deciderId || '-'}
+- Title: {{title}}
+- Description: {{description}}
+- Category: {{category}}
+- Priority: {{priority}}
+- Due date: {{dueDate}}
+- Requester: {{requesterName}}
+- Current deciderId: {{deciderId}}
 
 Users (prefer project members):
-${roster}`;
+{{roster}}`,
+        {
+          schema: raciSchema,
+          title: title || '-',
+          description: description || '-',
+          category,
+          priority,
+          dueDate: dueDate || '-',
+          requesterName: requesterName || '-',
+          deciderId: deciderId || '-',
+          roster,
+        }
+      );
 
       const aiRes = await Api.post('/ai/chat', {
         message: prompt,
         history: [],
-        systemInstruction: isPolish
-          ? 'Jesteś asystentem PMO. Zwróć tylko poprawny JSON bez markdown.'
-          : 'You are a PMO assistant. Return valid JSON only, no markdown.',
+        systemInstruction: t('decisions.detail.ai.pmoJsonSystemInstruction', 'You are a PMO assistant. Return valid JSON only, no markdown.'),
         roleName: 'RACI Team Advisor',
       });
 
@@ -2564,16 +2550,16 @@ ${roster}`;
       // Replace list (not append): user asked for proposal that can be adjusted manually.
       setStakeholders(next);
       toast.success(
-        isPolish
-          ? `AI zaproponowało i zastosowało skład RACI (${next.length} osób).`
-          : `AI proposed and applied a RACI team (${next.length} people).`
+        t(
+          'decisions.detail.toast.aiRaciApplied',
+          'AI proposed and applied a RACI team ({{count}} people).',
+          { count: next.length }
+        )
       );
     } catch (e) {
       console.error('Failed to suggest stakeholders via AI', e);
       toast.error(
-        isPolish
-          ? 'Nie udało się wygenerować składu RACI przez AI'
-          : 'Failed to generate AI RACI suggestions'
+        t('decisions.detail.toast.aiRaciSuggestFailed', 'Failed to generate AI RACI suggestions')
       );
     } finally {
       setIsSuggestingStakeholders(false);
@@ -2584,19 +2570,19 @@ ${roster}`;
     if (isDecisionStageLocked) return;
     setIsSuggestingReminders(true);
     try {
-      const prompt = isPolish
-        ? `Zaproponuj przypomnienia dla decyzji. Zwróć WYŁĄCZNIE JSON:
-{"reminders":[{"type":"before_due|after_due","days":2,"recipients":"requester|decider|both|stakeholders","inAppNotification":true,"emailNotification":false,"message":"...","enabled":true}]}
-Uwzględnij priorytet ${priority}, termin ${dueDate || '-'} i status ${status}.`
-        : `Propose decision reminders. Return JSON ONLY:
-{"reminders":[{"type":"before_due|after_due","days":2,"recipients":"requester|decider|both|stakeholders","inAppNotification":true,"emailNotification":false,"message":"...","enabled":true}]}
-Consider priority ${priority}, due date ${dueDate || '-'} and status ${status}.`;
+      const remindersSchema =
+        '{"reminders":[{"type":"before_due|after_due","days":2,"recipients":"requester|decider|both|stakeholders","inAppNotification":true,"emailNotification":false,"message":"...","enabled":true}]}';
+      const prompt = t(
+        'decisions.detail.ai.remindersPrompt',
+        `Propose decision reminders. Return JSON ONLY:
+{{schema}}
+Consider priority {{priority}}, due date {{dueDate}} and status {{status}}.`,
+        { schema: remindersSchema, priority, dueDate: dueDate || '-', status }
+      );
       const aiRes = await Api.post('/ai/chat', {
         message: prompt,
         history: [],
-        systemInstruction: isPolish
-          ? 'Jesteś asystentem PMO. Zwróć tylko poprawny JSON bez markdown.'
-          : 'You are a PMO assistant. Return valid JSON only, no markdown.',
+        systemInstruction: t('decisions.detail.ai.pmoJsonSystemInstruction', 'You are a PMO assistant. Return valid JSON only, no markdown.'),
         roleName: 'Reminder Rules Advisor',
       });
       const raw = String(aiRes?.text || aiRes?.content || '').trim();
@@ -2635,9 +2621,11 @@ Consider priority ${priority}, due date ${dueDate || '-'} and status ${status}.`
       if (next.length === 0) throw new Error('No reminders returned');
       setReminders(next.map((rule: ReminderRuleWithDelivery) => normalizeReminderRule(rule)));
       toast.success(
-        isPolish
-          ? `AI zaproponowało i zastosowało reminders (${next.length}).`
-          : `AI suggested and applied reminders (${next.length}).`
+        t(
+          'decisions.detail.toast.aiRemindersApplied',
+          'AI suggested and applied reminders ({{count}}).',
+          { count: next.length }
+        )
       );
     } catch (e) {
       console.error('Failed to suggest reminders via AI', e);
@@ -2650,7 +2638,7 @@ Consider priority ${priority}, due date ${dueDate || '-'} and status ${status}.`
           inAppNotification: true,
           emailNotification: true,
           delivery: ensureDeliveryConfig({ coreChannels: ['in_app', 'email'] }),
-          message: isPolish ? 'Termin decyzji za 3 dni.' : 'Decision due in 3 days.',
+          message: t('decisions.detail.decisionDueIn3Days', 'Decision due in 3 days.'),
           enabled: true,
         },
         {
@@ -2661,15 +2649,13 @@ Consider priority ${priority}, due date ${dueDate || '-'} and status ${status}.`
           inAppNotification: true,
           emailNotification: false,
           delivery: ensureDeliveryConfig({ coreChannels: ['in_app'] }),
-          message: isPolish
-            ? 'Decyzja po terminie - wymaga reakcji.'
-            : 'Decision overdue - action needed.',
+          message: t('decisions.detail.decisionOverdueActionNeeded', 'Decision overdue - action needed.'),
           enabled: true,
         },
       ];
       setReminders(fallback.map((rule: ReminderRuleWithDelivery) => normalizeReminderRule(rule)));
       toast.success(
-        isPolish ? 'Zastosowano domyślne reminders.' : 'Applied fallback reminder suggestions.'
+        t('decisions.detail.toast.remindersFallbackApplied', 'Applied fallback reminder suggestions.')
       );
     } finally {
       setIsSuggestingReminders(false);
@@ -2684,21 +2670,20 @@ Consider priority ${priority}, due date ${dueDate || '-'} and status ${status}.`
         .slice(0, 80)
         .map((u) => `${u.id}|${u.firstName} ${u.lastName}`)
         .join('\n');
-      const prompt = isPolish
-        ? `Zaproponuj 1-3 reguły eskalacji dla decyzji. Zwróć WYŁĄCZNIE JSON:
-{"rules":[{"afterDays":5,"warningDays":3,"criticalDays":1,"escalateToUserId":"...","message":"...","enabled":true}]}
-Użyj userId wyłącznie z listy użytkowników:
-${userList}`
-        : `Propose 1-3 escalation rules for this decision. Return JSON ONLY:
-{"rules":[{"afterDays":5,"warningDays":3,"criticalDays":1,"escalateToUserId":"...","message":"...","enabled":true}]}
+      const escalationsSchema =
+        '{"rules":[{"afterDays":5,"warningDays":3,"criticalDays":1,"escalateToUserId":"...","message":"...","enabled":true}]}';
+      const prompt = t(
+        'decisions.detail.ai.escalationsPrompt',
+        `Propose 1-3 escalation rules for this decision. Return JSON ONLY:
+{{schema}}
 Use userId only from users list:
-${userList}`;
+{{userList}}`,
+        { schema: escalationsSchema, userList }
+      );
       const aiRes = await Api.post('/ai/chat', {
         message: prompt,
         history: [],
-        systemInstruction: isPolish
-          ? 'Jesteś asystentem PMO. Zwróć tylko poprawny JSON bez markdown.'
-          : 'You are a PMO assistant. Return valid JSON only, no markdown.',
+        systemInstruction: t('decisions.detail.ai.pmoJsonSystemInstruction', 'You are a PMO assistant. Return valid JSON only, no markdown.'),
         roleName: 'Escalation Rules Advisor',
       });
       const raw = String(aiRes?.text || aiRes?.content || '').trim();
@@ -2745,9 +2730,11 @@ ${userList}`;
       if (next.length === 0) throw new Error('No escalation rules returned');
       setEscalationRules(next);
       toast.success(
-        isPolish
-          ? `AI zaproponowało i zastosowało eskalacje (${next.length}).`
-          : `AI suggested and applied escalation rules (${next.length}).`
+        t(
+          'decisions.detail.toast.aiEscalationsApplied',
+          'AI suggested and applied escalation rules ({{count}}).',
+          { count: next.length }
+        )
       );
     } catch (e) {
       console.error('Failed to suggest escalations via AI', e);
@@ -2764,14 +2751,12 @@ ${userList}`;
             criticalDays: 1,
             escalationMode: 'manager_review',
             delivery: ensureDeliveryConfig({ coreChannels: ['in_app', 'email'] }),
-            message: isPolish
-              ? 'Decyzja eskalowana z powodu braku aktywności.'
-              : 'Decision escalated due to inactivity.',
+            message: t('decisions.detail.decisionEscalatedDueToInactivity', 'Decision escalated due to inactivity.'),
           }),
         ]);
       }
       toast.success(
-        isPolish ? 'Zastosowano domyślną regułę eskalacji.' : 'Applied fallback escalation rule.'
+        t('decisions.detail.toast.escalationFallbackApplied', 'Applied fallback escalation rule.')
       );
     } finally {
       setIsSuggestingEscalations(false);
@@ -2782,19 +2767,19 @@ ${userList}`;
     if (isDecisionStageLocked || !stakeholderDraft) return;
     setIsSuggestingStakeholders(true);
     try {
-      const prompt = isPolish
-        ? `Wypełnij konfigurację pojedynczej osoby RACI. Zwróć WYŁĄCZNIE JSON:
-{"role":"accountable|responsible|consulted|informed","notifications":{"enabled":true,"inAppEnabled":true,"emailEnabled":false,"integrationChannels":["slack"],"syncTargets":["slack:#ops"]}}
-Kontekst: priorytet=${priority}, status=${status}, deadline=${dueDate || '-'}`
-        : `Fill configuration for one RACI person. Return JSON ONLY:
-{"role":"accountable|responsible|consulted|informed","notifications":{"enabled":true,"inAppEnabled":true,"emailEnabled":false,"integrationChannels":["slack"],"syncTargets":["slack:#ops"]}}
-Context: priority=${priority}, status=${status}, deadline=${dueDate || '-'}`;
+      const raciPersonSchema =
+        '{"role":"accountable|responsible|consulted|informed","notifications":{"enabled":true,"inAppEnabled":true,"emailEnabled":false,"integrationChannels":["slack"],"syncTargets":["slack:#ops"]}}';
+      const prompt = t(
+        'decisions.detail.ai.raciPersonPrompt',
+        `Fill configuration for one RACI person. Return JSON ONLY:
+{{schema}}
+Context: priority={{priority}}, status={{status}}, deadline={{dueDate}}`,
+        { schema: raciPersonSchema, priority, status, dueDate: dueDate || '-' }
+      );
       const aiRes = await Api.post('/ai/chat', {
         message: prompt,
         history: [],
-        systemInstruction: isPolish
-          ? 'Jesteś asystentem PMO. Zwróć tylko poprawny JSON bez markdown.'
-          : 'You are a PMO assistant. Return valid JSON only, no markdown.',
+        systemInstruction: t('decisions.detail.ai.pmoJsonSystemInstruction', 'You are a PMO assistant. Return valid JSON only, no markdown.'),
         roleName: 'RACI Person Form Assistant',
       });
       const raw = String(aiRes?.text || aiRes?.content || '').trim();
@@ -2839,7 +2824,7 @@ Context: priority=${priority}, status=${status}, deadline=${dueDate || '-'}`;
           : prev
       );
       toast.success(
-        isPolish ? 'AI uzupełniło formularz osoby RACI.' : 'AI filled the RACI person form.'
+        t('decisions.detail.toast.aiRaciPersonFormFilled', 'AI filled the RACI person form.')
       );
     } catch (e) {
       console.error('Failed to suggest stakeholder draft via AI', e);
@@ -2857,9 +2842,7 @@ Context: priority=${priority}, status=${status}, deadline=${dueDate || '-'}`;
           : prev
       );
       toast.success(
-        isPolish
-          ? 'Zastosowano domyślną konfigurację osoby RACI.'
-          : 'Applied fallback RACI person configuration.'
+        t('decisions.detail.toast.raciPersonFallbackApplied', 'Applied fallback RACI person configuration.')
       );
     } finally {
       setIsSuggestingStakeholders(false);
@@ -2870,19 +2853,19 @@ Context: priority=${priority}, status=${status}, deadline=${dueDate || '-'}`;
     if (isDecisionStageLocked || !reminderDraft) return;
     setIsSuggestingReminders(true);
     try {
-      const prompt = isPolish
-        ? `Wypełnij pojedynczą regułę remindera dla decyzji. Zwróć WYŁĄCZNIE JSON:
-{"type":"before_due|after_due","days":2,"recipients":"requester|decider|both|stakeholders","inAppNotification":true,"emailNotification":false,"message":"...","enabled":true}
-Kontekst: priorytet=${priority}, status=${status}, deadline=${dueDate || '-'}`
-        : `Fill a single reminder rule for this decision. Return JSON ONLY:
-{"type":"before_due|after_due","days":2,"recipients":"requester|decider|both|stakeholders","inAppNotification":true,"emailNotification":false,"message":"...","enabled":true}
-Context: priority=${priority}, status=${status}, deadline=${dueDate || '-'}`;
+      const reminderFormSchema =
+        '{"type":"before_due|after_due","days":2,"recipients":"requester|decider|both|stakeholders","inAppNotification":true,"emailNotification":false,"message":"...","enabled":true}';
+      const prompt = t(
+        'decisions.detail.ai.reminderFormPrompt',
+        `Fill a single reminder rule for this decision. Return JSON ONLY:
+{{schema}}
+Context: priority={{priority}}, status={{status}}, deadline={{dueDate}}`,
+        { schema: reminderFormSchema, priority, status, dueDate: dueDate || '-' }
+      );
       const aiRes = await Api.post('/ai/chat', {
         message: prompt,
         history: [],
-        systemInstruction: isPolish
-          ? 'Jesteś asystentem PMO. Zwróć tylko poprawny JSON bez markdown.'
-          : 'You are a PMO assistant. Return valid JSON only, no markdown.',
+        systemInstruction: t('decisions.detail.ai.pmoJsonSystemInstruction', 'You are a PMO assistant. Return valid JSON only, no markdown.'),
         roleName: 'Reminder Form Assistant',
       });
       const raw = String(aiRes?.text || aiRes?.content || '').trim();
@@ -2921,7 +2904,7 @@ Context: priority=${priority}, status=${status}, deadline=${dueDate || '-'}`;
           : prev
       );
       toast.success(
-        isPolish ? 'AI uzupełniło formularz remindera.' : 'AI filled the reminder form.'
+        t('decisions.detail.toast.aiReminderFormFilled', 'AI filled the reminder form.')
       );
     } catch (e) {
       console.error('Failed to suggest reminder draft via AI', e);
@@ -2937,14 +2920,12 @@ Context: priority=${priority}, status=${status}, deadline=${dueDate || '-'}`;
               delivery: ensureDeliveryConfig({ coreChannels: ['in_app', 'email'] }),
               enabled: true,
               message:
-                prev.message || (isPolish ? 'Termin decyzji za 3 dni.' : 'Decision due in 3 days.'),
+                prev.message || (t('decisions.detail.decisionDueIn3Days', 'Decision due in 3 days.')),
             }
           : prev
       );
       toast.success(
-        isPolish
-          ? 'Zastosowano domyślne uzupełnienie remindera.'
-          : 'Applied fallback reminder form values.'
+        t('decisions.detail.toast.reminderFormFallbackApplied', 'Applied fallback reminder form values.')
       );
     } finally {
       setIsSuggestingReminders(false);
@@ -2959,21 +2940,20 @@ Context: priority=${priority}, status=${status}, deadline=${dueDate || '-'}`;
         .slice(0, 80)
         .map((u) => `${u.id}|${u.firstName} ${u.lastName}`)
         .join('\n');
-      const prompt = isPolish
-        ? `Wypełnij pojedynczą regułę eskalacji. Zwróć WYŁĄCZNIE JSON:
-{"afterDays":5,"warningDays":3,"criticalDays":1,"escalateToUserId":"...","message":"...","enabled":true}
-Użyj userId tylko z listy:
-${userList}`
-        : `Fill one escalation rule. Return JSON ONLY:
-{"afterDays":5,"warningDays":3,"criticalDays":1,"escalateToUserId":"...","message":"...","enabled":true}
+      const escalationFormSchema =
+        '{"afterDays":5,"warningDays":3,"criticalDays":1,"escalateToUserId":"...","message":"...","enabled":true}';
+      const prompt = t(
+        'decisions.detail.ai.escalationFormPrompt',
+        `Fill one escalation rule. Return JSON ONLY:
+{{schema}}
 Use userId only from this list:
-${userList}`;
+{{userList}}`,
+        { schema: escalationFormSchema, userList }
+      );
       const aiRes = await Api.post('/ai/chat', {
         message: prompt,
         history: [],
-        systemInstruction: isPolish
-          ? 'Jesteś asystentem PMO. Zwróć tylko poprawny JSON bez markdown.'
-          : 'You are a PMO assistant. Return valid JSON only, no markdown.',
+        systemInstruction: t('decisions.detail.ai.pmoJsonSystemInstruction', 'You are a PMO assistant. Return valid JSON only, no markdown.'),
         roleName: 'Escalation Form Assistant',
       });
       const raw = String(aiRes?.text || aiRes?.content || '').trim();
@@ -3017,7 +2997,7 @@ ${userList}`;
           : prev
       );
       toast.success(
-        isPolish ? 'AI uzupełniło formularz eskalacji.' : 'AI filled the escalation form.'
+        t('decisions.detail.toast.aiEscalationFormFilled', 'AI filled the escalation form.')
       );
     } catch (e) {
       console.error('Failed to suggest escalation draft via AI', e);
@@ -3041,17 +3021,13 @@ ${userList}`;
                 enabled: true,
                 message:
                   prev.message ||
-                  (isPolish
-                    ? 'Decyzja eskalowana z powodu braku aktywności.'
-                    : 'Decision escalated due to inactivity.'),
+                  (t('decisions.detail.decisionEscalatedDueToInactivity', 'Decision escalated due to inactivity.')),
               }
             : prev
         );
       }
       toast.success(
-        isPolish
-          ? 'Zastosowano domyślne uzupełnienie eskalacji.'
-          : 'Applied fallback escalation form values.'
+        t('decisions.detail.toast.escalationFormFallbackApplied', 'Applied fallback escalation form values.')
       );
     } finally {
       setIsSuggestingEscalations(false);
@@ -3061,43 +3037,36 @@ ${userList}`;
   const generateConsequencesOfInactionAI = () => {
     if (isDecisionStageLocked) {
       toast.error(
-        isPolish
-          ? 'AI generowanie jest dostępne tylko przed etapem decyzji'
-          : 'AI generation is available only before decision stage'
+        t('decisions.detail.toast.aiGenAvailableOnlyBeforeDecision', 'AI generation is available only before decision stage')
       );
       return;
     }
-    const generated = isPolish
-      ? `Jeśli decyzja "${title || 'ta decyzja'}" nie zostanie podjęta, najbardziej prawdopodobne konsekwencje to:
-- narastająca niepewność operacyjna i opóźnienie wykonawcze,
-- zwiększone koszty (czas, zasoby, ryzyko reworku),
-- ryzyko eskalacji i utraty momentum biznesowego.
-
-Rekomendacja: wyznaczyć decydenta, termin i minimalny zakres decyzji do zatwierdzenia.`
-      : `If "${title || 'this decision'}" is not made in time, likely consequences are:
+    const generated = t(
+      'decisions.detail.toast.consequencesGenerated',
+      `If "{{title}}" is not made in time, likely consequences are:
 - growing operational uncertainty and delivery delays,
 - increased cost (time, resources, rework risk),
 - escalation risk and loss of business momentum.
 
-Recommendation: assign a decider, deadline, and minimum decision scope to approve.`;
+Recommendation: assign a decider, deadline, and minimum decision scope to approve.`,
+      { title: title || t('decisions.detail.ai.consequencesTitleFallbackDecision', 'this decision') }
+    );
 
     setRationale(generated);
     toast.success(
-      isPolish ? 'Wygenerowano konsekwencje braku decyzji' : 'Consequences of inaction generated'
+      t('decisions.detail.toast.consequencesGenerated', 'Consequences of inaction generated')
     );
   };
 
   const generateRisksAI = async () => {
     if (isDecisionStageLocked) {
       toast.error(
-        isPolish
-          ? 'AI generowanie jest dostępne tylko przed etapem decyzji'
-          : 'AI generation is available only before decision stage'
+        t('decisions.detail.toast.aiGenAvailableOnlyBeforeDecision', 'AI generation is available only before decision stage')
       );
       return;
     }
     if (!title && !description) {
-      toast.error(isPolish ? 'Dodaj tytuł lub opis decyzji' : 'Add title or description first');
+      toast.error(t('decisions.detail.toast.addTitleOrDescription', 'Add title or description first'));
       return;
     }
 
@@ -3109,45 +3078,37 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
       const generatedRisks: RiskItem[] = [
         {
           id: Math.random().toString(36).substr(2, 9),
-          title: isPolish ? 'Ryzyko budżetowe' : 'Budget risk',
+          title: t('decisions.detail.riskGen.budgetRisk', 'Budget risk'),
           probability: 'medium',
           impact: 'high',
           category: 'financial',
-          mitigation: isPolish
-            ? 'Regularne przeglądy budżetu, bufor 15%'
-            : 'Regular budget reviews, 15% buffer',
-          contingency: isPolish
-            ? 'Redukcja zakresu lub przesunięcie terminu'
-            : 'Scope reduction or timeline extension',
+          mitigation: t('decisions.detail.riskGen.budgetMitigation', 'Regular budget reviews, 15% buffer'),
+          contingency: t('decisions.detail.riskGen.budgetContingency', 'Scope reduction or timeline extension'),
         },
         {
           id: Math.random().toString(36).substr(2, 9),
-          title: isPolish ? 'Ryzyko techniczne' : 'Technical risk',
+          title: t('decisions.detail.riskGen.technicalRisk', 'Technical risk'),
           probability: 'low',
           impact: 'high',
           category: 'technical',
-          mitigation: isPolish ? 'POC przed pełną implementacją' : 'POC before full implementation',
-          contingency: isPolish
-            ? 'Alternatywne rozwiązanie techniczne'
-            : 'Alternative technical solution',
+          mitigation: t('decisions.detail.riskGen.technicalMitigation', 'POC before full implementation'),
+          contingency: t('decisions.detail.riskGen.technicalContingency', 'Alternative technical solution'),
         },
         {
           id: Math.random().toString(36).substr(2, 9),
-          title: isPolish ? 'Ryzyko zasobów' : 'Resource risk',
+          title: t('decisions.detail.riskGen.resourceRisk', 'Resource risk'),
           probability: 'medium',
           impact: 'medium',
           category: 'operational',
-          mitigation: isPolish
-            ? 'Cross-training zespołu, dokumentacja'
-            : 'Team cross-training, documentation',
-          contingency: isPolish ? 'Zewnętrzni konsultanci' : 'External consultants',
+          mitigation: t('decisions.detail.riskGen.resourceMitigation', 'Team cross-training, documentation'),
+          contingency: t('decisions.detail.riskGen.resourceContingency', 'External consultants'),
         },
       ];
 
       setRisks([...risks, ...generatedRisks]);
-      toast.success(isPolish ? 'Wygenerowano analizę ryzyka' : 'Risk analysis generated');
+      toast.success(t('decisions.detail.toast.riskAnalysisGenerated', 'Risk analysis generated'));
     } catch (error) {
-      toast.error(isPolish ? 'Błąd generowania' : 'Generation failed');
+      toast.error(t('decisions.detail.toast.generationFailed', 'Generation failed'));
     } finally {
       setIsGeneratingRisks(false);
     }
@@ -3170,7 +3131,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
         return [
           {
             id: 'review',
-            label: isPolish ? 'Wyślij do review' : 'Send to review',
+            label: t('decisions.detail.workflow.sendToReview', 'Send to review'),
             onClick: () => handleWorkflowTransition('review'),
             tone: 'primary' as const,
           },
@@ -3179,13 +3140,13 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
         return [
           {
             id: 'approve',
-            label: isPolish ? 'Zatwierdź etap' : 'Approve stage',
+            label: t('decisions.detail.workflow.approveStage', 'Approve stage'),
             onClick: () => handleWorkflowTransition('approve'),
             tone: 'success' as const,
           },
           {
             id: 'proposed',
-            label: isPolish ? 'Cofnij do draftu' : 'Back to draft',
+            label: t('decisions.detail.workflow.backToDraft', 'Back to draft'),
             onClick: () => handleWorkflowTransition('proposed'),
             tone: 'neutral' as const,
           },
@@ -3194,13 +3155,13 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
         return [
           {
             id: 'published',
-            label: isPolish ? 'Publikuj i utwórz taski' : 'Publish and create tasks',
+            label: t('decisions.detail.workflow.publishAndCreateTasks', 'Publish and create tasks'),
             onClick: () => handleWorkflowTransition('published'),
             tone: 'success' as const,
           },
           {
             id: 'review',
-            label: isPolish ? 'Cofnij do review' : 'Back to review',
+            label: t('decisions.detail.workflow.backToReview', 'Back to review'),
             onClick: () => handleWorkflowTransition('review'),
             tone: 'neutral' as const,
           },
@@ -3227,7 +3188,9 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
   const decisionScopeLabel =
     projectName ||
     initiativeName ||
-    (isPolish ? CATEGORY_CONFIG[category]?.label?.pl : CATEGORY_CONFIG[category]?.label?.en) ||
+    (CATEGORY_CONFIG[category]?.label?.en
+      ? t(`decisions.detail.category.${category}`, CATEGORY_CONFIG[category].label.en)
+      : undefined) ||
     '—';
   const decisionIndexLabel =
     decisionId || `draft-${title.trim().toLowerCase().replace(/\s+/g, '-').slice(0, 20) || 'new'}`;
@@ -3244,72 +3207,52 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
     [contextDetails]
   );
   const quickProArguments = useMemo(
-    () =>
-      isPolish
-        ? ['Niższy koszt', 'Mniejsze ryzyko', 'Szybciej', 'Lepsza jakość', 'Skalowalność']
-        : ['Lower cost', 'Lower risk', 'Faster delivery', 'Better quality', 'Scalability'],
-    [isPolish]
+    () => [
+      t('decisions.detail.quickArgs.proLowerCost', 'Lower cost'),
+      t('decisions.detail.quickArgs.proLowerRisk', 'Lower risk'),
+      t('decisions.detail.quickArgs.proFaster', 'Faster delivery'),
+      t('decisions.detail.quickArgs.proBetterQuality', 'Better quality'),
+      t('decisions.detail.quickArgs.proScalability', 'Scalability'),
+    ],
+    [i18n.language]
   );
   const quickConArguments = useMemo(
-    () =>
-      isPolish
-        ? [
-            'Wyższy koszt',
-            'Większe ryzyko',
-            'Wolniej',
-            'Większa złożoność',
-            'Zależność od dostawcy',
-          ]
-        : [
-            'Higher cost',
-            'Higher risk',
-            'Slower delivery',
-            'Higher complexity',
-            'Vendor dependency',
-          ],
-    [isPolish]
+    () => [
+      t('decisions.detail.quickArgs.conHigherCost', 'Higher cost'),
+      t('decisions.detail.altGen.higherRisk', 'Higher risk'),
+      t('decisions.detail.quickArgs.conSlower', 'Slower delivery'),
+      t('decisions.detail.quickArgs.conComplexity', 'Higher complexity'),
+      t('decisions.detail.quickArgs.conVendorDependency', 'Vendor dependency'),
+    ],
+    [i18n.language]
   );
   const riskLevelOptions = useMemo(() => ['low', 'medium', 'high', 'critical'] as const, []);
   const riskCategoryOptions = useMemo(
     () =>
       ['technical', 'business', 'financial', 'operational', 'security'].map((c) => ({
         value: c,
-        label:
-          c === 'technical'
-            ? isPolish
-              ? 'Techniczne'
-              : 'Technical'
-            : c === 'business'
-              ? isPolish
-                ? 'Biznesowe'
-                : 'Business'
-              : c === 'financial'
-                ? isPolish
-                  ? 'Finansowe'
-                  : 'Financial'
-                : c === 'operational'
-                  ? isPolish
-                    ? 'Operacyjne'
-                    : 'Operational'
-                  : isPolish
-                    ? 'Bezpieczeństwo'
-                    : 'Security',
+        label: t(`decisions.detail.riskCategory.${c}`, RISK_CATEGORY_EN_LABELS[c]),
       })),
-    [isPolish]
+    [i18n.language]
   );
   const quickMitigationArguments = useMemo(
-    () =>
-      isPolish
-        ? ['POC przed wdrożeniem', 'Przegląd tygodniowy', 'Plan kontroli jakości']
-        : ['POC before rollout', 'Weekly review checkpoint', 'Quality control plan'],
-    [isPolish]
+    () => [
+      t('decisions.detail.quickArgs.mitigationPOC', 'POC before rollout'),
+      t('decisions.detail.quickArgs.mitigationWeeklyReview', 'Weekly review checkpoint'),
+      t('decisions.detail.quickArgs.mitigationQAPlan', 'Quality control plan'),
+    ],
+    [i18n.language]
   );
   const quickContingencyArguments = useMemo(
-    () =>
-      isPolish
-        ? ['Tryb ręczny fallback', 'Eskalacja do PMO', 'Przesunięcie terminu + komunikat']
-        : ['Manual fallback mode', 'Escalate to PMO', 'Timeline shift with stakeholder notice'],
-    [isPolish]
+    () => [
+      t('decisions.detail.quickArgs.contingencyManualFallback', 'Manual fallback mode'),
+      t('decisions.detail.quickArgs.contingencyEscalatePMO', 'Escalate to PMO'),
+      t(
+        'decisions.detail.quickArgs.contingencyTimelineShift',
+        'Timeline shift with stakeholder notice'
+      ),
+    ],
+    [i18n.language]
   );
   const riskLevelToScore = (level?: string) => {
     const normalized = String(level || '').toLowerCase();
@@ -3338,16 +3281,10 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
     return 'border-emerald-500/45 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300';
   };
   const getRiskLevelLabel = (level: string) => {
-    if (isPolish) {
-      if (level === 'critical') return 'Krytyczny';
-      if (level === 'high') return 'Wysoki';
-      if (level === 'medium') return 'Średni';
-      return 'Niski';
-    }
-    if (level === 'critical') return 'Critical';
-    if (level === 'high') return 'High';
-    if (level === 'medium') return 'Medium';
-    return 'Low';
+    if (level === 'critical') return t('decisions.detail.riskLevel.critical', 'Critical');
+    if (level === 'high') return t('decisions.detail.riskLevel.high', 'High');
+    if (level === 'medium') return t('decisions.detail.riskLevel.medium', 'Medium');
+    return t('decisions.detail.riskLevel.low', 'Low');
   };
   const sortedRisks = useMemo(
     () =>
@@ -3374,84 +3311,124 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
   const pressureSummary = useMemo(() => {
     const weeklyHours = Math.max(8, blockedItemsCount * 6 + sortedRisks.length * 4);
     return {
-      d7: isPolish
-        ? `${blockedItemsCount || 1} element(y) mogą się zablokować operacyjnie`
-        : `${blockedItemsCount || 1} linked item(s) may become operationally blocked`,
-      d30: isPolish
-        ? `Wzrost pracy manualnej o ok. ${weeklyHours}h/tydzień`
-        : `Manual workload may increase by about ${weeklyHours}h/week`,
-      d90: isPolish
-        ? 'Wysokie ryzyko eskalacji i utraty tempa wykonawczego'
-        : 'High risk of escalation and loss of delivery momentum',
+      d7: t(
+        'decisions.detail.pressure.linkedItemsBlocked',
+        '{{count}} linked item(s) may become operationally blocked',
+        { count: blockedItemsCount || 1 }
+      ),
+      d30: t(
+        'decisions.detail.pressure.manualWorkloadIncrease',
+        'Manual workload may increase by about {{hours}}h/week',
+        { hours: weeklyHours }
+      ),
+      d90: t(
+        'decisions.detail.pressure.escalationRisk',
+        'High risk of escalation and loss of delivery momentum'
+      ),
     };
-  }, [isPolish, blockedItemsCount, sortedRisks.length]);
+  }, [i18n.language, blockedItemsCount, sortedRisks.length]);
 
   const buildConsequencesTemplate = (
     style: 'conservative' | 'executive' | 'action_forcing'
   ): string => {
     const recommendation =
-      recommendedAlternative?.title || (isPolish ? 'wybraną opcję' : 'selected option');
+      recommendedAlternative?.title || t('decisions.detail.consequences.selectedOptionFallback', 'selected option');
     const decider =
-      deciderName || deciderId || (isPolish ? 'właściciel decyzji' : 'decision owner');
-    const due = dueDate || (isPolish ? '[DATA]' : '[DATE]');
+      deciderName || deciderId || t('decisions.detail.consequences.decisionOwnerFallback', 'decision owner');
+    const due = dueDate || t('decisions.detail.consequences.dateFallback', '[DATE]');
     const riskLine = topRiskTitles.length
       ? topRiskTitles.join(', ')
-      : isPolish
-        ? 'ryzyka operacyjne i jakościowe'
-        : 'operational and quality risks';
+      : t('decisions.detail.consequences.riskLineFallback', 'operational and quality risks');
 
     if (style === 'conservative') {
-      return isPolish
-        ? `1) Jeśli decyzja nie zapadnie do ${due}, w ciągu 7 dni:\n- ${pressureSummary.d7}\n\n2) W ciągu 30 dni:\n- ${pressureSummary.d30}\n- Najbardziej narażone obszary: ${riskLine}\n\n3) W ciągu 90 dni:\n- ${pressureSummary.d90}\n\n4) Minimalna decyzja na teraz:\n- Zatwierdzić: ${recommendation}\n- Właściciel: ${decider}`
-        : `1) If the decision is not made by ${due}, within 7 days:\n- ${pressureSummary.d7}\n\n2) Within 30 days:\n- ${pressureSummary.d30}\n- Most exposed areas: ${riskLine}\n\n3) Within 90 days:\n- ${pressureSummary.d90}\n\n4) Minimum action now:\n- Approve: ${recommendation}\n- Owner: ${decider}`;
+      return t(
+        'decisions.detail.consequences.conservativeTemplate',
+        '1) If the decision is not made by {{due}}, within 7 days:\n- {{d7}}\n\n2) Within 30 days:\n- {{d30}}\n- Most exposed areas: {{riskLine}}\n\n3) Within 90 days:\n- {{d90}}\n\n4) Minimum action now:\n- Approve: {{recommendation}}\n- Owner: {{decider}}',
+        {
+          due,
+          d7: pressureSummary.d7,
+          d30: pressureSummary.d30,
+          riskLine,
+          d90: pressureSummary.d90,
+          recommendation,
+          decider,
+        }
+      );
     }
 
     if (style === 'executive') {
-      return isPolish
-        ? `Podsumowanie zarządcze:\nBrak decyzji do ${due} zwiększa koszt bezczynności i ryzyko opóźnień wykonawczych.\n\nWpływ:\n- 7 dni: ${pressureSummary.d7}\n- 30 dni: ${pressureSummary.d30}\n- 90 dni: ${pressureSummary.d90}\n\nRekomendacja:\nZatwierdzić ${recommendation} oraz przypisać odpowiedzialność do: ${decider}.`
-        : `Executive summary:\nNo decision by ${due} increases cost of inaction and delivery delay risk.\n\nImpact:\n- 7 days: ${pressureSummary.d7}\n- 30 days: ${pressureSummary.d30}\n- 90 days: ${pressureSummary.d90}\n\nRecommendation:\nApprove ${recommendation} and assign ownership to: ${decider}.`;
+      return t(
+        'decisions.detail.consequences.executiveTemplate',
+        'Executive summary:\nNo decision by {{due}} increases cost of inaction and delivery delay risk.\n\nImpact:\n- 7 days: {{d7}}\n- 30 days: {{d30}}\n- 90 days: {{d90}}\n\nRecommendation:\nApprove {{recommendation}} and assign ownership to: {{decider}}.',
+        {
+          due,
+          d7: pressureSummary.d7,
+          d30: pressureSummary.d30,
+          d90: pressureSummary.d90,
+          recommendation,
+          decider,
+        }
+      );
     }
 
-    return isPolish
-      ? `ALERT: brak decyzji do ${due} uruchamia negatywny scenariusz.\n\nCo stracimy:\n- Natychmiast: ${pressureSummary.d7}\n- 30 dni: ${pressureSummary.d30}\n- 90 dni: ${pressureSummary.d90}\n\nNajwyższe ryzyka: ${riskLine}.\n\nDecyzja wymagana TERAZ:\n- Zatwierdzić ${recommendation}\n- Potwierdzić właściciela: ${decider}\n- Utrzymać termin: ${due}`
-      : `ALERT: no decision by ${due} triggers a negative scenario.\n\nWhat we lose:\n- Immediate: ${pressureSummary.d7}\n- 30 days: ${pressureSummary.d30}\n- 90 days: ${pressureSummary.d90}\n\nHighest risks: ${riskLine}.\n\nDecision required NOW:\n- Approve ${recommendation}\n- Confirm owner: ${decider}\n- Keep deadline: ${due}`;
+    return t(
+      'decisions.detail.consequences.actionForcingTemplate',
+      'ALERT: no decision by {{due}} triggers a negative scenario.\n\nWhat we lose:\n- Immediate: {{d7}}\n- 30 days: {{d30}}\n- 90 days: {{d90}}\n\nHighest risks: {{riskLine}}.\n\nDecision required NOW:\n- Approve {{recommendation}}\n- Confirm owner: {{decider}}\n- Keep deadline: {{due}}',
+      {
+        due,
+        d7: pressureSummary.d7,
+        d30: pressureSummary.d30,
+        d90: pressureSummary.d90,
+        riskLine,
+        recommendation,
+        decider,
+      }
+    );
   };
 
   const buildFallbackConsequenceScenarios = (): ConsequenceScenarios => ({
     updatedAt: new Date().toISOString(),
     source: 'fallback',
     pessimistic: {
-      d7: isPolish
-        ? `Natychmiastowe ryzyko blokady: ${pressureSummary.d7}.`
-        : `Immediate blockage risk: ${pressureSummary.d7}.`,
-      d30: isPolish
-        ? `Koszt bezczynności rośnie: ${pressureSummary.d30}.`
-        : `Cost of inaction increases: ${pressureSummary.d30}.`,
-      d90: isPolish
-        ? `Scenariusz krytyczny: ${pressureSummary.d90}.`
-        : `Critical scenario: ${pressureSummary.d90}.`,
+      d7: t('decisions.detail.consequences.pessimisticD7', 'Immediate blockage risk: {{d7}}.', {
+        d7: pressureSummary.d7,
+      }),
+      d30: t(
+        'decisions.detail.consequences.pessimisticD30',
+        'Cost of inaction increases: {{d30}}.',
+        { d30: pressureSummary.d30 }
+      ),
+      d90: t('decisions.detail.consequences.pessimisticD90', 'Critical scenario: {{d90}}.', {
+        d90: pressureSummary.d90,
+      }),
     },
     neutral: {
-      d7: isPolish
-        ? `Utrzymuje się niepewność wykonawcza i spada tempo decyzji.`
-        : `Execution uncertainty persists and decision velocity drops.`,
-      d30: isPolish
-        ? `Rosną zależności między zadaniami, możliwe lokalne opóźnienia.`
-        : `Task dependencies grow, causing localized delays.`,
-      d90: isPolish
-        ? `Projekt wymaga korekty planu i dodatkowych zasobów.`
-        : `The project requires plan correction and additional resources.`,
+      d7: t(
+        'decisions.detail.consequences.neutralD7',
+        'Execution uncertainty persists and decision velocity drops.'
+      ),
+      d30: t(
+        'decisions.detail.consequences.neutralD30',
+        'Task dependencies grow, causing localized delays.'
+      ),
+      d90: t(
+        'decisions.detail.consequences.neutralD90',
+        'The project requires plan correction and additional resources.'
+      ),
     },
     optimistic: {
-      d7: isPolish
-        ? `Ryzyko materializacji ograniczone przy monitoringu dziennym.`
-        : `Materialization risk remains limited with daily monitoring.`,
-      d30: isPolish
-        ? `Przy częściowych decyzjach wpływ można utrzymać pod kontrolą.`
-        : `With partial decisions, impact can remain under control.`,
-      d90: isPolish
-        ? `Skutki umiarkowane, jeśli właściciel i termin będą egzekwowane.`
-        : `Impact remains moderate if owner and deadline are enforced.`,
+      d7: t(
+        'decisions.detail.consequences.optimisticD7',
+        'Materialization risk remains limited with daily monitoring.'
+      ),
+      d30: t(
+        'decisions.detail.consequences.optimisticD30',
+        'With partial decisions, impact can remain under control.'
+      ),
+      d90: t(
+        'decisions.detail.consequences.optimisticD90',
+        'Impact remains moderate if owner and deadline are enforced.'
+      ),
     },
   });
 
@@ -3473,24 +3450,14 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
           impact: r.impact,
         })),
       };
-      const systemInstruction = isPolish
-        ? 'Jesteś doradcą PMO. Zwróć wyłącznie poprawny JSON zgodny ze schematem.'
-        : 'You are a PMO advisor. Return valid JSON only according to schema.';
-      const prompt = isPolish
-        ? `Na podstawie kontekstu projektu wygeneruj konsekwencje braku decyzji w 3 scenariuszach: pessimistic, neutral, optimistic. Dla każdego scenariusza podaj d7, d30, d90. Zwróć WYŁĄCZNIE JSON w formacie:
-{
-  "pessimistic":{"d7":"...","d30":"...","d90":"..."},
-  "neutral":{"d7":"...","d30":"...","d90":"..."},
-  "optimistic":{"d7":"...","d30":"...","d90":"..."}
-}
-Kontekst: ${JSON.stringify(projectContext)}`
-        : `Based on project context, generate consequences of inaction in 3 scenarios: pessimistic, neutral, optimistic. For each scenario provide d7, d30, d90. Return JSON ONLY in this format:
-{
-  "pessimistic":{"d7":"...","d30":"...","d90":"..."},
-  "neutral":{"d7":"...","d30":"...","d90":"..."},
-  "optimistic":{"d7":"...","d30":"...","d90":"..."}
-}
-Context: ${JSON.stringify(projectContext)}`;
+      const systemInstruction = t('decisions.detail.ai.pmoAdvisorSystemInstruction', 'You are a PMO advisor. Return valid JSON only according to schema.');
+      const consequenceScenariosSchema =
+        '{\n  "pessimistic":{"d7":"...","d30":"...","d90":"..."},\n  "neutral":{"d7":"...","d30":"...","d90":"..."},\n  "optimistic":{"d7":"...","d30":"...","d90":"..."}\n}';
+      const prompt = t(
+        'decisions.detail.ai.consequenceScenariosPrompt',
+        'Based on project context, generate consequences of inaction in 3 scenarios: pessimistic, neutral, optimistic. For each scenario provide d7, d30, d90. Return JSON ONLY in this format:\n{{schema}}\nContext: {{context}}',
+        { schema: consequenceScenariosSchema, context: JSON.stringify(projectContext) }
+      );
 
       const aiRes = await Api.post('/ai/chat', {
         message: prompt,
@@ -3520,9 +3487,7 @@ Context: ${JSON.stringify(projectContext)}`;
       setConsequenceScenarios(next);
       if (!silent) {
         toast.success(
-          isPolish
-            ? 'Scenariusze konsekwencji zaktualizowane przez AI'
-            : 'Consequence scenarios updated by AI'
+          t('decisions.detail.toast.consequenceScenariosUpdated', 'Consequence scenarios updated by AI')
         );
       }
     } catch {
@@ -3530,9 +3495,7 @@ Context: ${JSON.stringify(projectContext)}`;
       setConsequenceScenarios(fallback);
       if (!silent) {
         toast(
-          isPolish
-            ? 'Użyto scenariuszy awaryjnych. AI chwilowo niedostępne.'
-            : 'Fallback scenarios applied. AI temporarily unavailable.',
+          t('decisions.detail.toast.consequenceScenariosFallback', 'Fallback scenarios applied. AI temporarily unavailable.'),
           { icon: '⚠️' }
         );
       }
@@ -3543,7 +3506,7 @@ Context: ${JSON.stringify(projectContext)}`;
 
   const displayedConsequenceScenarios = useMemo(
     () => consequenceScenarios || buildFallbackConsequenceScenarios(),
-    [consequenceScenarios, pressureSummary, isPolish]
+    [consequenceScenarios, pressureSummary, i18n.language]
   );
 
   const updateConsequenceScenarioCell = (
@@ -3579,28 +3542,22 @@ Context: ${JSON.stringify(projectContext)}`;
       const hasCons = Array.isArray(alt.cons) && alt.cons.length > 0;
       if (hasPros && hasCons) return alt;
 
-      const fallbackPros = isPolish
-        ? [
-            'Szybsze dostarczenie wartości biznesowej',
-            'Lepsza przewidywalność wykonania',
-            'Czytelna odpowiedzialność zespołu',
-          ]
-        : [
-            'Faster delivery of business value',
-            'Better execution predictability',
-            'Clearer team accountability',
-          ];
-      const fallbackCons = isPolish
-        ? [
-            'Ryzyko wzrostu kosztów początkowych',
-            'Wymaga dodatkowej koordynacji',
-            'Potrzebne wsparcie kompetencyjne',
-          ]
-        : [
-            'Risk of higher initial cost',
-            'Requires additional coordination',
-            'Needs additional capability support',
-          ];
+      const fallbackPros = [
+        t(
+          'decisions.detail.altFallback.prosFaster',
+          'Faster delivery of business value'
+        ),
+        t('decisions.detail.altFallback.prosPredictability', 'Better execution predictability'),
+        t('decisions.detail.altFallback.prosAccountability', 'Clearer team accountability'),
+      ];
+      const fallbackCons = [
+        t('decisions.detail.altFallback.consCost', 'Risk of higher initial cost'),
+        t('decisions.detail.altFallback.consCoordination', 'Requires additional coordination'),
+        t(
+          'decisions.detail.altFallback.consCapability',
+          'Needs additional capability support'
+        ),
+      ];
 
       return {
         ...alt,
@@ -3625,16 +3582,19 @@ Context: ${JSON.stringify(projectContext)}`;
     }
 
     if (mode === 'expand') {
-      const appendix = isPolish
-        ? '\n\nUzasadnienie biznesowe: decyzja wpływa na terminowość, ryzyko operacyjne i jakość dostarczanych rezultatów. Rekomendowane jest określenie właściciela wdrożenia oraz punktów kontrolnych.'
-        : '\n\nBusiness rationale: this decision affects delivery timing, operational risk, and outcome quality. It is recommended to define an implementation owner and key control checkpoints.';
+      const appendix = t(
+        'decisions.detail.refine.expandAppendix',
+        '\n\nBusiness rationale: this decision affects delivery timing, operational risk, and outcome quality. It is recommended to define an implementation owner and key control checkpoints.'
+      );
       return `${normalized}${appendix}`;
     }
 
     if (mode === 'formal') {
-      return isPolish
-        ? `Niniejszym wskazuje się, że ${normalized.charAt(0).toLowerCase()}${normalized.slice(1)}`
-        : `It is hereby noted that ${normalized.charAt(0).toLowerCase()}${normalized.slice(1)}`;
+      return t(
+        'decisions.detail.refine.formalPrefix',
+        'It is hereby noted that {{rest}}',
+        { rest: `${normalized.charAt(0).toLowerCase()}${normalized.slice(1)}` }
+      );
     }
 
     // improve
@@ -3653,15 +3613,13 @@ Context: ${JSON.stringify(projectContext)}`;
   ) => {
     if (isDecisionStageLocked) {
       toast.error(
-        isPolish
-          ? 'AI generowanie jest dostępne tylko przed etapem decyzji'
-          : 'AI generation is available only before decision stage'
+        t('decisions.detail.toast.aiGenAvailableOnlyBeforeDecision', 'AI generation is available only before decision stage')
       );
       return;
     }
     if (!currentValue.trim()) {
       toast.error(
-        isPolish ? 'Najpierw wpisz treść do edycji AI' : 'Enter some content first to edit with AI'
+        t('decisions.detail.toast.enterContentFirst', 'Enter some content first to edit with AI')
       );
       return;
     }
@@ -3670,28 +3628,28 @@ Context: ${JSON.stringify(projectContext)}`;
     setAiMenuOpenField(null);
     try {
       const instructionByMode = {
-        improve: isPolish
-          ? 'Popraw tekst tak, aby był klarowny, profesjonalny i konkretny. Zachowaj sens, usuń powtórzenia.'
-          : 'Improve the text to be clear, professional, and concise. Keep the meaning and remove repetition.',
-        shorten: isPolish
-          ? 'Skróć tekst o 30-40%, zachowując kluczowy sens i decyzjotwórcze informacje.'
-          : 'Shorten the text by about 30-40% while keeping key meaning and decision-relevant information.',
-        expand: isPolish
-          ? 'Rozwiń tekst, dodając istotny kontekst, ryzyka i implikacje biznesowe bez lania wody.'
-          : 'Expand the text with useful context, risks, and business implications without filler.',
-        formal: isPolish
-          ? 'Przeredaguj tekst w bardziej formalnym, zarządczym tonie.'
-          : 'Rewrite the text in a more formal executive tone.',
+        improve: t('decisions.detail.ai.refineImprove', 'Improve the text to be clear, professional, and concise. Keep the meaning and remove repetition.'),
+        shorten: t('decisions.detail.ai.refineShorten', 'Shorten the text by about 30-40% while keeping key meaning and decision-relevant information.'),
+        expand: t('decisions.detail.ai.refineExpand', 'Expand the text with useful context, risks, and business implications without filler.'),
+        formal: t('decisions.detail.ai.refineFormal', 'Rewrite the text in a more formal executive tone.'),
       } as const;
-      const prompt = isPolish
-        ? `Sekcja: ${sectionLabel}\nTryb edycji: ${mode}\nTytuł decyzji: ${title || '-'}\nStatus: ${status}\nPriorytet: ${priority}\n\nInstrukcja: ${instructionByMode[mode]}\n\nTekst do edycji:\n${currentValue}`
-        : `Section: ${sectionLabel}\nEdit mode: ${mode}\nDecision title: ${title || '-'}\nStatus: ${status}\nPriority: ${priority}\n\nInstruction: ${instructionByMode[mode]}\n\nText to edit:\n${currentValue}`;
+      const prompt = t(
+        'decisions.detail.ai.refineTextPrompt',
+        'Section: {{sectionLabel}}\nEdit mode: {{mode}}\nDecision title: {{title}}\nStatus: {{status}}\nPriority: {{priority}}\n\nInstruction: {{instruction}}\n\nText to edit:\n{{currentValue}}',
+        {
+          sectionLabel,
+          mode,
+          title: title || '-',
+          status,
+          priority,
+          instruction: instructionByMode[mode],
+          currentValue,
+        }
+      );
 
       let refinedText = '';
       try {
-        const systemInstruction = isPolish
-          ? 'Jesteś redaktorem treści decyzyjnych PMO. Zwróć tylko poprawiony tekst, bez komentarzy.'
-          : 'You are a PMO decision content editor. Return only the revised text, no commentary.';
+        const systemInstruction = t('decisions.detail.ai.contentEditorSystemInstruction', 'You are a PMO decision content editor. Return only the revised text, no commentary.');
 
         // 1) Prefer authenticated API path used across app
         const aiRes = await Api.post('/ai/chat', {
@@ -3726,9 +3684,7 @@ Context: ${JSON.stringify(projectContext)}`;
       if (!refinedText) {
         refinedText = fallbackRefineText(currentValue, mode);
         toast(
-          isPolish
-            ? 'Użyto trybu awaryjnego edycji lokalnej (AI chwilowo niedostępne).'
-            : 'Fallback local edit applied (AI temporarily unavailable).',
+          t('decisions.detail.toast.aiEditFallbackApplied', 'Fallback local edit applied (AI temporarily unavailable).'),
           { icon: '⚠️' }
         );
       }
@@ -3740,13 +3696,11 @@ Context: ${JSON.stringify(projectContext)}`;
       setAiUndoByField((prev) => ({ ...prev, [fieldKey]: currentValue }));
       applyValue(refinedText);
       toast.success(
-        isPolish
-          ? 'Treść zaktualizowana przez AI. Jeśli efekt Ci nie pasuje, kliknij Undo AI.'
-          : 'Content updated by AI. If you do not like it, click Undo AI.'
+        t('decisions.detail.toast.contentUpdatedByAI', 'Content updated by AI. If you do not like it, click Undo AI.')
       );
     } catch (error) {
       toast.error(
-        isPolish ? 'Nie udało się poprawić treści przez AI' : 'Failed to refine content with AI'
+        t('decisions.detail.toast.aiRefineFailed', 'Failed to refine content with AI')
       );
     } finally {
       setAiFieldLoading((prev) => ({ ...prev, [fieldKey]: false }));
@@ -3764,7 +3718,7 @@ Context: ${JSON.stringify(projectContext)}`;
         onClick={() => setAiMenuOpenField((prev) => (prev === fieldKey ? null : fieldKey))}
         disabled={isDecisionStageLocked || !!aiFieldLoading[fieldKey]}
         className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium text-primary-500 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        title={isPolish ? 'Akcje AI dla tego pola' : 'AI actions for this field'}
+        title={t('decisions.detail.refine.aiActionsTitle', 'AI actions for this field')}
       >
         {aiFieldLoading[fieldKey] ? (
           <Loader2 size={11} className="animate-spin" />
@@ -3776,10 +3730,10 @@ Context: ${JSON.stringify(projectContext)}`;
       {aiMenuOpenField === fieldKey && !isDecisionStageLocked && !aiFieldLoading[fieldKey] && (
         <div className="absolute right-0 top-[calc(100%+6px)] z-30 w-44 rounded-lg border border-slate-200 dark:border-navy-700/70 bg-white/95 dark:bg-navy-900/95 backdrop-blur p-1 shadow-xl">
           {[
-            ['improve', isPolish ? 'Improve' : 'Improve'],
-            ['shorten', isPolish ? 'Shorten' : 'Shorten'],
-            ['expand', isPolish ? 'Expand' : 'Expand'],
-            ['formal', isPolish ? 'Formal tone' : 'Formal tone'],
+            ['improve', t('decisions.detail.refine.improve', 'Improve')],
+            ['shorten', t('decisions.detail.refine.shorten', 'Shorten')],
+            ['expand', t('decisions.detail.refine.expand', 'Expand')],
+            ['formal', t('decisions.detail.refine.formalTone', 'Formal tone')],
           ].map(([modeKey, label]) => (
             <button
               key={modeKey}
@@ -3808,7 +3762,7 @@ Context: ${JSON.stringify(projectContext)}`;
                 });
                 setAiMenuOpenField(null);
                 toast.success(
-                  isPolish ? 'Przywrócono poprzednią wersję tekstu' : 'Previous text restored'
+                  t('decisions.detail.toast.previousTextRestored', 'Previous text restored')
                 );
               }}
               className="mt-1 w-full text-left px-2.5 py-1.5 text-xs text-amber-700 dark:text-amber-300 hover:bg-amber-50/70 dark:hover:bg-amber-500/10 rounded-md transition-colors"
@@ -3824,8 +3778,8 @@ Context: ${JSON.stringify(projectContext)}`;
     if (!createdAt) return '—';
     const d = new Date(createdAt);
     if (Number.isNaN(d.getTime())) return String(createdAt).split('T')[0] || String(createdAt);
-    return d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-GB');
-  }, [createdAt, isPolish]);
+    return d.toLocaleDateString(i18n.language === 'pl' ? 'pl-PL' : 'en-GB');
+  }, [createdAt, i18n.language]);
   const statusAlertBorderClass =
     status === 'escalated' || status === 'rejected'
       ? 'border-danger-400/70 dark:border-danger-500/50'
@@ -3859,9 +3813,7 @@ Context: ${JSON.stringify(projectContext)}`;
   const handleUploadAttachments = async (files: FileList) => {
     if (isDecisionStageLocked) {
       toast.error(
-        isPolish
-          ? 'W etapie podejmowania decyzji treść jest zablokowana'
-          : 'Content is locked during decision-making stage'
+        t('decisions.detail.toast.contentLocked', 'Content is locked during decision-making stage')
       );
       return;
     }
@@ -3889,9 +3841,7 @@ Context: ${JSON.stringify(projectContext)}`;
   ) => {
     if (!options?.force && isDecisionStageLocked) {
       toast.error(
-        isPolish
-          ? 'W etapie podejmowania decyzji treść jest zablokowana'
-          : 'Content is locked during decision-making stage'
+        t('decisions.detail.toast.contentLocked', 'Content is locked during decision-making stage')
       );
       return;
     }
@@ -3916,7 +3866,7 @@ Context: ${JSON.stringify(projectContext)}`;
     } else {
       setComments([...comments, newComment]);
     }
-    addActivityLogEntry('comment', isPolish ? 'Dodano komentarz' : 'Comment added');
+    addActivityLogEntry('comment', t('decisions.detail.activityLog.commentAdded', 'Comment added'));
   };
 
   const handleDeleteComment = async (id: string) => {
@@ -3966,23 +3916,19 @@ Context: ${JSON.stringify(projectContext)}`;
   };
 
   const getCommentPriorityLabel = (priority: CommentPriorityLevel) => {
-    if (priority === 'high') return isPolish ? 'Wysoki' : 'High';
-    if (priority === 'low') return isPolish ? 'Niski' : 'Low';
-    return isPolish ? 'Normalny' : 'Normal';
+    if (priority === 'high') return t('decisions.detail.riskLevel.high', 'High');
+    if (priority === 'low') return t('decisions.detail.riskLevel.low', 'Low');
+    return t('decisions.detail.commentPriority.normal', 'Normal');
   };
 
   const getCommentPriorityHint = (priority: CommentPriorityLevel) => {
     if (priority === 'high') {
-      return isPolish
-        ? 'Wymaga szybkiej reakcji i uwagi decydenta.'
-        : 'Needs quick response and decision-maker attention.';
+      return t('decisions.detail.commentPriority.highHint', 'Needs quick response and decision-maker attention.');
     }
     if (priority === 'low') {
-      return isPolish
-        ? 'Informacyjny komentarz, bez pilnej akcji.'
-        : 'Informational note, no urgent action needed.';
+      return t('decisions.detail.commentPriority.lowHint', 'Informational note, no urgent action needed.');
     }
-    return isPolish ? 'Standardowy komentarz roboczy.' : 'Standard working-level comment.';
+    return t('decisions.detail.commentPriority.normalHint', 'Standard working-level comment.');
   };
 
   const getPriorityButtonClass = (priority: CommentPriorityLevel, isActive: boolean) => {
@@ -4002,36 +3948,39 @@ Context: ${JSON.stringify(projectContext)}`;
     if (isDecisionStageLocked) return;
     setIsEnhancingCommentDraft(true);
     try {
-      const prompt = isPolish
-        ? `Przygotuj zwięzły i profesjonalny komentarz do decyzji. Priorytet komentarza: ${commentDraftPriority}. Tytuł decyzji: "${title || '-'}". Opis: "${description || '-'}". Obecny szkic użytkownika: "${commentDraft || '-'}". Zwróć sam tekst komentarza (bez cudzysłowów i bez listy).`
-        : `Draft a concise and professional decision comment. Comment priority: ${commentDraftPriority}. Decision title: "${title || '-'}". Description: "${description || '-'}". Current user draft: "${commentDraft || '-'}". Return comment text only (no quotes, no list).`;
+      const prompt = t(
+        'decisions.detail.ai.commentDraftPrompt',
+        'Draft a concise and professional decision comment. Comment priority: {{priority}}. Decision title: "{{title}}". Description: "{{description}}". Current user draft: "{{draft}}". Return comment text only (no quotes, no list).',
+        {
+          priority: commentDraftPriority,
+          title: title || '-',
+          description: description || '-',
+          draft: commentDraft || '-',
+        }
+      );
       const aiRes = await Api.post('/ai/chat', {
         message: prompt,
         history: [],
-        systemInstruction: isPolish
-          ? 'Jesteś konsultantem PM. Zwracaj krótki komentarz gotowy do publikacji.'
-          : 'You are a PM consultant. Return a short comment ready to publish.',
+        systemInstruction: t('decisions.detail.ai.pmConsultantSystemInstruction', 'You are a PM consultant. Return a short comment ready to publish.'),
         roleName: 'Comment Writing Assistant',
       });
       const next = String(aiRes?.text || aiRes?.content || '').trim();
       if (next) {
         setCommentDraft(next);
-        toast.success(isPolish ? 'AI przygotowało treść komentarza' : 'AI prepared comment text');
+        toast.success(t('decisions.detail.toast.aiCommentPrepared', 'AI prepared comment text'));
       } else {
         throw new Error('Empty AI output');
       }
     } catch {
       if (!commentDraft.trim()) {
-        const fallback = isPolish
-          ? 'Proponuję krótką walidację opcji na danych historycznych oraz doprecyzowanie właściciela wykonania.'
-          : 'I suggest a short validation of this option on historical data and clarifying execution ownership.';
+        const fallback = t('decisions.detail.ai.commentDraftFallback', 'I suggest a short validation of this option on historical data and clarifying execution ownership.');
         setCommentDraft(fallback);
       } else {
         setCommentDraft((prev) =>
-          `${prev.trim()} ${isPolish ? 'Warto też doprecyzować właściciela i termin.' : 'It is also worth clarifying owner and deadline.'}`.trim()
+          `${prev.trim()} ${t('decisions.detail.ai.commentDraftAppend', 'It is also worth clarifying owner and deadline.')}`.trim()
         );
       }
-      toast(isPolish ? 'Użyto lokalnej podpowiedzi AI' : 'Applied local AI fallback hint', {
+      toast(t('decisions.detail.toast.localAiFallbackUsed', 'Applied local AI fallback hint'), {
         icon: '⚠️',
       });
     } finally {
@@ -4164,7 +4113,7 @@ Context: ${JSON.stringify(projectContext)}`;
   const handleAddLinkedItem = async (item: LinkedItem) => {
     if (isDecisionStageLocked) return;
     if (linkedItems.some((existing) => existing.id === item.id && existing.type === item.type)) {
-      toast(isPolish ? 'To powiązanie już istnieje' : 'This link already exists', { icon: 'ℹ️' });
+      toast(t('decisions.detail.toast.linkAlreadyExists', 'This link already exists'), { icon: 'ℹ️' });
       return;
     }
     const { linkedItem, synced } = await hydrateLinkedItem(item);
@@ -4178,9 +4127,7 @@ Context: ${JSON.stringify(projectContext)}`;
     });
     if (item.type !== 'external' && !synced) {
       toast(
-        isPolish
-          ? 'Link dodany, ale nie udało się zsynchronizować danych. To sygnał, że linkowanie może nie działać poprawnie.'
-          : 'Link added, but metadata sync failed. This is a sign that internal linking may be broken.',
+        t('decisions.detail.toast.linkAddedSyncFailed', 'Link added, but metadata sync failed. This is a sign that internal linking may be broken.'),
         { icon: '⚠️' }
       );
     }
@@ -4393,7 +4340,7 @@ Context: ${JSON.stringify(projectContext)}`;
         return [];
       }
     },
-    [isPolish]
+    []
   );
 
   const openLinkedItemTarget = (item: LinkedItem) => {
@@ -4419,7 +4366,7 @@ Context: ${JSON.stringify(projectContext)}`;
                       : null;
     const target = explicitUrl || fallbackPath;
     if (!target) {
-      toast(isPolish ? 'Brak docelowego linku' : 'No target link available', { icon: 'ℹ️' });
+      toast(t('decisions.detail.toast.noTargetLink', 'No target link available'), { icon: 'ℹ️' });
       return;
     }
     window.open(target, '_blank', 'noopener,noreferrer');
@@ -4547,13 +4494,9 @@ Context: ${JSON.stringify(projectContext)}`;
                   {sourceType === 'task' && <Settings size={14} className="text-slate-500" />}
                   <span className="text-slate-600 dark:text-slate-300">
                     {sourceType === 'idea'
-                      ? isPolish
-                        ? 'Utworzone z pomysłu'
-                        : 'Created from Idea'
+                      ? t('decisions.detail.source.createdFromIdea', 'Created from Idea')
                       : sourceType === 'notebook'
-                        ? isPolish
-                          ? 'Utworzone z notatki'
-                          : 'Created from Note'
+                        ? t('decisions.detail.source.createdFromNote', 'Created from Note')
                         : `Created from ${sourceType}`}
                   </span>
                   <button
@@ -4572,12 +4515,8 @@ Context: ${JSON.stringify(projectContext)}`;
                     className="text-amber-600 dark:text-amber-400 hover:underline font-medium"
                   >
                     {sourceType === 'idea'
-                      ? isPolish
-                        ? 'Pokaż źródło w mapie →'
-                        : 'View source in mindmap →'
-                      : isPolish
-                        ? 'Pokaż źródło →'
-                        : 'View source →'}
+                      ? t('decisions.detail.source.viewSourceInMindmap', 'View source in mindmap →')
+                      : t('decisions.detail.source.viewSource', 'View source →')}
                   </button>
                 </div>
               )}
@@ -4587,12 +4526,12 @@ Context: ${JSON.stringify(projectContext)}`;
                 {decisionId && (
                   <div className="mb-3 flex flex-wrap items-center gap-2">
                     <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
-                      {isPolish ? 'Workflow' : 'Workflow'}
+                      {t('decisions.detail.workflow.label', 'Workflow')}
                     </span>
                     <span
                       className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${workflowMeta.badgeClass}`}
                     >
-                      {isPolish ? workflowMeta.label.pl : workflowMeta.label.en}
+                      {t(`decisions.detail.workflowStage.${workflowStatus}`, workflowMeta.label.en)}
                     </span>
                     {workflowActions.map((action) => (
                       <button
@@ -4623,25 +4562,25 @@ Context: ${JSON.stringify(projectContext)}`;
                       onClick={handleApprove}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-emerald-400/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
                     >
-                      <Check size={13} /> {isPolish ? 'Zatwierdź' : 'Approve'}
+                      <Check size={13} /> {t('decisions.detail.actions.approve', 'Approve')}
                     </button>
                     <button
                       onClick={handleReject}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-danger-400/50 text-danger-600 dark:text-danger-400 hover:bg-danger-500/10 transition-colors"
                     >
-                      <X size={13} /> {isPolish ? 'Odrzuć' : 'Reject'}
+                      <X size={13} /> {t('decisions.detail.actions.reject', 'Reject')}
                     </button>
                     <button
                       onClick={handleRequestMoreInfo}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                     >
-                      <HelpCircle size={13} /> {isPolish ? 'Więcej info' : 'Request info'}
+                      <HelpCircle size={13} /> {t('decisions.detail.actions.requestInfo', 'Request info')}
                     </button>
                     <button
                       onClick={() => setShowDelegationModal(true)}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                     >
-                      <Share2 size={13} /> {isPolish ? 'Deleguj' : 'Delegate'}
+                      <Share2 size={13} /> {t('decisions.detail.actions.delegate', 'Delegate')}
                     </button>
                     {activeNotionSection === 'options-tradeoffs' && (
                       <button
@@ -4652,14 +4591,14 @@ Context: ${JSON.stringify(projectContext)}`;
                             ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
                             : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
                         } disabled:opacity-40 disabled:cursor-not-allowed`}
-                        title={isPolish ? 'Generuj opcje przez AI' : 'Generate options with AI'}
+                        title={t('decisions.detail.actions.generateOptionsTitle', 'Generate options with AI')}
                       >
                         {isGeneratingAlternatives ? (
                           <Loader2 size={13} className="animate-spin" />
                         ) : (
                           <Sparkles size={13} />
                         )}
-                        {isPolish ? 'Generuj opcje' : 'Generate options'}
+                        {t('decisions.detail.actions.generateOptions', 'Generate options')}
                       </button>
                     )}
                     {activeNotionSection === 'risk-impact' && (
@@ -4671,14 +4610,14 @@ Context: ${JSON.stringify(projectContext)}`;
                             ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
                             : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
                         } disabled:opacity-40 disabled:cursor-not-allowed`}
-                        title={isPolish ? 'Analizuj ryzyka przez AI' : 'Analyze risks with AI'}
+                        title={t('decisions.detail.actions.analyzeRisksTitle', 'Analyze risks with AI')}
                       >
                         {isGeneratingRisks ? (
                           <Loader2 size={13} className="animate-spin" />
                         ) : (
                           <Sparkles size={13} />
                         )}
-                        {isPolish ? 'Analizuj ryzyka' : 'Analyze risks'}
+                        {t('decisions.detail.actions.analyzeRisks', 'Analyze risks')}
                       </button>
                     )}
                     {activeNotionSection === 'governance-escalation' && (
@@ -4690,14 +4629,14 @@ Context: ${JSON.stringify(projectContext)}`;
                             ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
                             : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
                         } disabled:opacity-40 disabled:cursor-not-allowed`}
-                        title={isPolish ? 'Generuj RACI przez AI' : 'Generate RACI with AI'}
+                        title={t('decisions.detail.actions.generateRaciTitle', 'Generate RACI with AI')}
                       >
                         {isSuggestingStakeholders ? (
                           <Loader2 size={13} className="animate-spin" />
                         ) : (
                           <Sparkles size={13} />
                         )}
-                        {isPolish ? 'Generuj RACI' : 'Generate RACI'}
+                        {t('decisions.detail.actions.generateRaci', 'Generate RACI')}
                       </button>
                     )}
                     {activeNotionSection === 'comments' && (
@@ -4709,14 +4648,14 @@ Context: ${JSON.stringify(projectContext)}`;
                             ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
                             : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
                         } disabled:opacity-40 disabled:cursor-not-allowed`}
-                        title={isPolish ? 'Generuj komentarz przez AI' : 'Generate AI comment'}
+                        title={t('decisions.detail.actions.generateCommentTitle', 'Generate AI comment')}
                       >
                         {isGeneratingAIComment ? (
                           <Loader2 size={13} className="animate-spin" />
                         ) : (
                           <Sparkles size={13} />
                         )}
-                        {isPolish ? 'AI komentarze' : 'AI comments'}
+                        {t('decisions.detail.actions.aiComments', 'AI comments')}
                       </button>
                     )}
                     {activeNotionSection === 'consequences' && (
@@ -4729,9 +4668,7 @@ Context: ${JSON.stringify(projectContext)}`;
                             : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
                         } disabled:opacity-40 disabled:cursor-not-allowed`}
                         title={
-                          isPolish
-                            ? 'Uruchom analizę konsekwencji przez AI'
-                            : 'Run AI consequence analysis'
+                          t('decisions.detail.actions.analyzeConsequencesTitle', 'Run AI consequence analysis')
                         }
                       >
                         {isGeneratingConsequenceScenarios ? (
@@ -4739,7 +4676,7 @@ Context: ${JSON.stringify(projectContext)}`;
                         ) : (
                           <Sparkles size={13} />
                         )}
-                        {isPolish ? 'Analizuj konsekwencje' : 'Analyze consequences'}
+                        {t('decisions.detail.actions.analyzeConsequences', 'Analyze consequences')}
                       </button>
                     )}
                   </div>
@@ -4769,7 +4706,7 @@ Context: ${JSON.stringify(projectContext)}`;
                         <div className="space-y-6">
                           <div className="flex items-center justify-between">
                             <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                              {isPolish ? 'Zakres decyzji' : 'Decision Scope'}
+                              {t('decisions.detail.scope.title', 'Decision Scope')}
                             </h2>
                             <button
                               onClick={generateDescriptionAI}
@@ -4788,11 +4725,11 @@ Context: ${JSON.stringify(projectContext)}`;
                           {/* 1) Related item from linked records */}
                           <div className="space-y-2">
                             <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                              {isPolish ? 'Dotyczy' : 'Related to'}
+                              {t('decisions.detail.scope.relatedTo', 'Related to')}
                             </label>
                             {relatedDecisionItems.length === 0 ? (
                               <div className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border border-amber-400/60 text-amber-600 dark:text-amber-300 bg-amber-500/10">
-                                {isPolish ? 'Brak podpiętego elementu' : 'No linked item'}
+                                {t('decisions.detail.scope.noLinkedItem', 'No linked item')}
                               </div>
                             ) : (
                               <div className="space-y-1">
@@ -4820,7 +4757,7 @@ Context: ${JSON.stringify(projectContext)}`;
                           <div className="space-y-2">
                             <div className="flex items-center justify-between">
                               <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                                {isPolish ? 'Zakres decyzji' : 'Decision scope'}
+                                {t('decisions.detail.scope.decisionScopeLabel', 'Decision scope')}
                               </label>
                               <AIFieldEnhancer
                                 fieldKey="n-description"
@@ -4841,9 +4778,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                 rows={isDescriptionExpanded ? 10 : 6}
                                 className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors"
                                 placeholder={
-                                  isPolish
-                                    ? 'Opisz zakres decyzji (co dokładnie podlega decyzji)...'
-                                    : 'Describe the decision scope (what exactly is being decided)...'
+                                  t('decisions.detail.scope.descriptionPlaceholder', 'Describe the decision scope (what exactly is being decided)...')
                                 }
                               />
                               {!isDescriptionExpanded && canExpandDescription && (
@@ -4858,12 +4793,12 @@ Context: ${JSON.stringify(projectContext)}`;
                                 {isDescriptionExpanded ? (
                                   <>
                                     <ChevronsUpDown size={12} />
-                                    {isPolish ? 'Pokaż mniej' : 'See less'}
+                                    {t('decisions.detail.scope.seeLess', 'See less')}
                                   </>
                                 ) : (
                                   <>
                                     <ChevronsUpDown size={12} />
-                                    {isPolish ? 'Pokaż więcej' : 'See more'}
+                                    {t('decisions.detail.scope.seeMore', 'See more')}
                                   </>
                                 )}
                               </button>
@@ -4874,7 +4809,7 @@ Context: ${JSON.stringify(projectContext)}`;
                           <div className="space-y-2">
                             <div className="flex items-center justify-between">
                               <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                                {isPolish ? 'Kontekst uzupełniający' : 'Additional context'}
+                                {t('decisions.detail.scope.additionalContext', 'Additional context')}
                               </label>
                               <AIFieldEnhancer
                                 fieldKey="n-context"
@@ -4895,9 +4830,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                 rows={isContextExpanded ? 8 : 5}
                                 className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors"
                                 placeholder={
-                                  isPolish
-                                    ? 'Dodatkowe wyjaśnienie, założenia, ograniczenia (opcjonalnie)...'
-                                    : 'Additional explanation, assumptions, constraints (optional)...'
+                                  t('decisions.detail.scope.contextPlaceholder', 'Additional explanation, assumptions, constraints (optional)...')
                                 }
                               />
                               {!isContextExpanded && canExpandContext && (
@@ -4912,12 +4845,12 @@ Context: ${JSON.stringify(projectContext)}`;
                                 {isContextExpanded ? (
                                   <>
                                     <ChevronsUpDown size={12} />
-                                    {isPolish ? 'Pokaż mniej' : 'See less'}
+                                    {t('decisions.detail.scope.seeLess', 'See less')}
                                   </>
                                 ) : (
                                   <>
                                     <ChevronsUpDown size={12} />
-                                    {isPolish ? 'Pokaż więcej' : 'See more'}
+                                    {t('decisions.detail.scope.seeMore', 'See more')}
                                   </>
                                 )}
                               </button>
@@ -4931,7 +4864,7 @@ Context: ${JSON.stringify(projectContext)}`;
                         <div className="space-y-5">
                           <div className="flex items-center justify-between">
                             <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                              {isPolish ? 'Opcje i trade-offy' : 'Options & Trade-offs'}
+                              {t('decisions.detail.options.title', 'Options & Trade-offs')}
                             </h2>
                           </div>
 
@@ -4943,15 +4876,13 @@ Context: ${JSON.stringify(projectContext)}`;
                                 className="mx-auto mb-3 text-slate-700 dark:text-slate-400"
                               />
                               <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-3">
-                                {isPolish
-                                  ? 'Brak zdefiniowanych opcji.'
-                                  : 'No options defined yet.'}
+                                {t('decisions.detail.options.noOptions', 'No options defined yet.')}
                               </p>
                               <button
                                 onClick={addAlternative}
                                 className="text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors"
                               >
-                                + {isPolish ? 'Dodaj opcję' : 'Add option'}
+                                + {t('decisions.detail.options.addOption', 'Add option')}
                               </button>
                             </div>
                           ) : (
@@ -4976,7 +4907,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                           updateAlternative(alt.id, { title: e.target.value })
                                         }
                                         className="w-full text-sm font-medium bg-transparent text-slate-800 dark:text-white focus:outline-none placeholder-slate-400"
-                                        placeholder={isPolish ? 'Nazwa opcji...' : 'Option name...'}
+                                        placeholder={t('decisions.detail.options.namePlaceholder', 'Option name...')}
                                       />
                                     </div>
                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -5004,7 +4935,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     }
                                     rows={2}
                                     className="w-full text-xs bg-transparent text-slate-500 dark:text-slate-400 focus:outline-none placeholder-slate-300 dark:placeholder-slate-600 resize-none leading-relaxed"
-                                    placeholder={isPolish ? 'Opis...' : 'Description...'}
+                                    placeholder={t('decisions.detail.options.descriptionPlaceholder', 'Description...')}
                                   />
                                   <div className="mt-1 flex justify-end gap-2">
                                     <AIFieldEnhancer
@@ -5027,7 +4958,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2 text-[11px]">
                                     <div className="space-y-1.5">
                                       <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-                                        + {alt.pros?.length || 0} {isPolish ? 'za' : 'pros'}
+                                        + {alt.pros?.length || 0} {t('decisions.detail.options.prosLabel', 'pros')}
                                       </span>
                                       {(alt.pros || []).map((pro, idx) => (
                                         <div
@@ -5041,7 +4972,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                             }
                                             className="flex-1 text-[11px] bg-transparent border-b border-emerald-400/20 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-emerald-400"
                                             placeholder={
-                                              isPolish ? 'Argument za...' : 'Pro argument...'
+                                              t('decisions.detail.options.proArgumentPlaceholder', 'Pro argument...')
                                             }
                                           />
                                           <button
@@ -5069,7 +5000,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                           }}
                                           className="flex-1 text-[11px] bg-transparent border-b border-slate-200 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400"
                                           placeholder={
-                                            isPolish ? '+ Dodaj argument za' : '+ Add pro'
+                                            t('decisions.detail.options.addProPlaceholder', '+ Add pro')
                                           }
                                         />
                                       </div>
@@ -5088,7 +5019,7 @@ Context: ${JSON.stringify(projectContext)}`;
 
                                     <div className="space-y-1.5">
                                       <span className="text-danger-500 dark:text-danger-400 font-medium">
-                                        − {alt.cons?.length || 0} {isPolish ? 'przeciw' : 'cons'}
+                                        − {alt.cons?.length || 0} {t('decisions.detail.options.consLabel', 'cons')}
                                       </span>
                                       {(alt.cons || []).map((con, idx) => (
                                         <div
@@ -5102,7 +5033,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                             }
                                             className="flex-1 text-[11px] bg-transparent border-b border-danger-400/20 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-danger-400"
                                             placeholder={
-                                              isPolish ? 'Argument przeciw...' : 'Con argument...'
+                                              t('decisions.detail.options.conArgumentPlaceholder', 'Con argument...')
                                             }
                                           />
                                           <button
@@ -5130,7 +5061,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                           }}
                                           className="flex-1 text-[11px] bg-transparent border-b border-slate-200 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400"
                                           placeholder={
-                                            isPolish ? '+ Dodaj argument przeciw' : '+ Add con'
+                                            t('decisions.detail.options.addConPlaceholder', '+ Add con')
                                           }
                                         />
                                       </div>
@@ -5150,7 +5081,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                       <span
                                         className={`font-medium ${alt.riskLevel === 'high' ? 'text-danger-500' : alt.riskLevel === 'medium' ? 'text-amber-500' : 'text-slate-500 dark:text-slate-400'}`}
                                       >
-                                        {isPolish ? 'ryzyko' : 'risk'}: {alt.riskLevel}
+                                        {t('decisions.detail.options.riskLabel', 'risk')}: {alt.riskLevel}
                                       </span>
                                     )}
                                   </div>
@@ -5163,7 +5094,7 @@ Context: ${JSON.stringify(projectContext)}`;
                             onClick={addAlternative}
                             className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-primary-500 transition-colors"
                           >
-                            + {isPolish ? 'Dodaj opcję' : 'Add option'}
+                            + {t('decisions.detail.options.addOption', 'Add option')}
                           </button>
                         </div>
                       )}
@@ -5189,7 +5120,7 @@ Context: ${JSON.stringify(projectContext)}`;
                         <div className="space-y-6">
                           <div className="flex items-center justify-between">
                             <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                              {isPolish ? 'Konsekwencje braku decyzji' : 'Consequences of Inaction'}
+                              {t('decisions.detail.consequencesSection.title', 'Consequences of Inaction')}
                             </h2>
                             <AIFieldEnhancer
                               fieldKey="n-rationale-scenarios"
@@ -5203,34 +5134,26 @@ Context: ${JSON.stringify(projectContext)}`;
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
                               <span>
-                                {isPolish
-                                  ? 'Scenariusze AI (real-time)'
-                                  : 'AI scenarios (real-time)'}
+                                {t('decisions.detail.consequencesSection.aiScenariosRealtime', 'AI scenarios (real-time)')}
                               </span>
                               <span className="text-[10px]">
                                 {displayedConsequenceScenarios.source === 'ai'
-                                  ? isPolish
-                                    ? 'Źródło: AI'
-                                    : 'Source: AI'
-                                  : isPolish
-                                    ? 'Źródło: fallback'
-                                    : 'Source: fallback'}
+                                  ? t('decisions.detail.consequencesSection.sourceAI', 'Source: AI')
+                                  : t('decisions.detail.consequencesSection.sourceFallback', 'Source: fallback')}
                               </span>
                             </div>
                             <div className="text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
                               {isGeneratingConsequenceScenarios
-                                ? isPolish
-                                  ? 'AI aktualizuje scenariusze...'
-                                  : 'AI is updating scenarios...'
+                                ? t('decisions.detail.consequencesSection.aiUpdating', 'AI is updating scenarios...')
                                 : null}
                             </div>
                           </div>
                           <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
                             {(
                               [
-                                ['optimistic', isPolish ? 'Optymistyczny' : 'Optimistic'],
-                                ['neutral', isPolish ? 'Neutralny' : 'Neutral'],
-                                ['pessimistic', isPolish ? 'Pesymistyczny' : 'Pessimistic'],
+                                ['optimistic', t('decisions.detail.consequencesSection.optimistic', 'Optimistic')],
+                                ['neutral', t('decisions.detail.consequencesSection.neutral', 'Neutral')],
+                                ['pessimistic', t('decisions.detail.consequencesSection.pessimistic', 'Pessimistic')],
                               ] as const
                             ).map(([scenarioKey, label]) => {
                               const scenario = displayedConsequenceScenarios[scenarioKey];
@@ -5291,7 +5214,7 @@ Context: ${JSON.stringify(projectContext)}`;
                           <div className="pl-4 border-l-2 border-amber-400 dark:border-amber-500/60">
                             <div className="mb-2 flex items-center justify-between">
                               <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                                {isPolish ? 'Notatka decyzyjna' : 'Decision note'}
+                                {t('decisions.detail.consequencesSection.decisionNote', 'Decision note')}
                               </label>
                               <AIFieldEnhancer
                                 fieldKey="n-rationale-note"
@@ -5311,9 +5234,7 @@ Context: ${JSON.stringify(projectContext)}`;
                               rows={5}
                               className="w-full min-h-[120px] px-0 py-1 bg-transparent text-sm text-slate-700 dark:text-slate-300 focus:outline-none placeholder-amber-400/50 dark:placeholder-amber-600/40 resize-y leading-relaxed"
                               placeholder={
-                                isPolish
-                                  ? 'Co się stanie, jeśli decyzja nie zostanie podjęta?'
-                                  : 'What happens if the decision is not made?'
+                                t('decisions.detail.consequencesSection.notePlaceholder', 'What happens if the decision is not made?')
                               }
                             />
                           </div>
@@ -5324,16 +5245,14 @@ Context: ${JSON.stringify(projectContext)}`;
                       {activeNotionSection === 'governance-escalation' && (
                         <div className="space-y-8">
                           <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                            {isPolish ? 'RACI i eskalacja' : 'RACI & Escalation'}
+                            {t('decisions.detail.governance.title', 'RACI & Escalation')}
                           </h2>
                           <div className="space-y-4">
                             {/* RACI table */}
                             <div className={governanceTableCardClass}>
                               <div className="flex items-center justify-between">
                                 <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
-                                  {isPolish
-                                    ? 'RACI (macierz odpowiedzialności)'
-                                    : 'RACI (responsibility matrix)'}
+                                  {t('decisions.detail.governance.raciMatrixTitle', 'RACI (responsibility matrix)')}
                                 </h3>
                                 <div className="inline-flex items-center gap-2">
                                   <button
@@ -5361,7 +5280,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     }}
                                     className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                   >
-                                    + {isPolish ? 'Dodaj osobę' : 'Add person'}
+                                    + {t('decisions.detail.governance.addPerson', 'Add person')}
                                   </button>
                                 </div>
                               </div>
@@ -5370,19 +5289,19 @@ Context: ${JSON.stringify(projectContext)}`;
                                   <thead>
                                     <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
                                       <th className="text-left py-2 pr-2">
-                                        {isPolish ? 'Osoba' : 'Person'}
+                                        {t('decisions.detail.governance.colPerson', 'Person')}
                                       </th>
                                       <th className="text-left py-2 pr-2">
-                                        {isPolish ? 'Rola' : 'Role'}
+                                        {t('decisions.detail.governance.colRole', 'Role')}
                                       </th>
                                       <th className="text-left py-2 pr-2">
-                                        {isPolish ? 'Email' : 'Email'}
+                                        {t('decisions.detail.governance.colEmail', 'Email')}
                                       </th>
                                       <th className="text-left py-2 pr-2">
-                                        {isPolish ? 'Notyfikacje' : 'Notifications'}
+                                        {t('decisions.detail.governance.colNotifications', 'Notifications')}
                                       </th>
                                       <th className="text-right py-2">
-                                        {isPolish ? 'Akcje' : 'Actions'}
+                                        {t('decisions.detail.governance.colActions', 'Actions')}
                                       </th>
                                     </tr>
                                   </thead>
@@ -5393,9 +5312,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                           colSpan={5}
                                           className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
                                         >
-                                          {isPolish
-                                            ? 'Brak interesariuszy.'
-                                            : 'No stakeholders yet.'}
+                                          {t('decisions.detail.governance.noStakeholders', 'No stakeholders yet.')}
                                         </td>
                                       </tr>
                                     ) : (
@@ -5433,7 +5350,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                                   setStakeholderDraft({ ...s });
                                                 }}
                                                 className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500 disabled:opacity-40"
-                                                title={isPolish ? 'Edytuj' : 'Edit'}
+                                                title={t('decisions.detail.activityLog.edit', 'Edit')}
                                               >
                                                 <Edit3 size={13} />
                                               </button>
@@ -5445,7 +5362,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                                   )
                                                 }
                                                 className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 disabled:opacity-40"
-                                                title={isPolish ? 'Usuń' : 'Delete'}
+                                                title={t('decisions.detail.governance.delete', 'Delete')}
                                               >
                                                 <Trash2 size={13} />
                                               </button>
@@ -5463,7 +5380,7 @@ Context: ${JSON.stringify(projectContext)}`;
                             <div className={governanceTableCardClass}>
                               <div className="flex items-center justify-between">
                                 <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
-                                  {isPolish ? 'Przypomnienia' : 'Reminders'}
+                                  {t('decisions.detail.governance.remindersTitle', 'Reminders')}
                                 </h3>
                                 <div className="inline-flex items-center gap-2">
                                   <button
@@ -5486,7 +5403,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     }}
                                     className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                   >
-                                    + {isPolish ? 'Dodaj reminder' : 'Add reminder'}
+                                    + {t('decisions.detail.governance.addReminder', 'Add reminder')}
                                   </button>
                                 </div>
                               </div>
@@ -5495,19 +5412,19 @@ Context: ${JSON.stringify(projectContext)}`;
                                   <thead>
                                     <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
                                       <th className="text-left py-2 pr-2">
-                                        {isPolish ? 'Typ' : 'Type'}
+                                        {t('decisions.detail.governance.colType', 'Type')}
                                       </th>
                                       <th className="text-left py-2 pr-2">
-                                        {isPolish ? 'Dni' : 'Days'}
+                                        {t('decisions.detail.governance.colDays', 'Days')}
                                       </th>
                                       <th className="text-left py-2 pr-2">
-                                        {isPolish ? 'Do kogo' : 'Recipients'}
+                                        {t('decisions.detail.governance.colRecipients', 'Recipients')}
                                       </th>
                                       <th className="text-left py-2 pr-2">
-                                        {isPolish ? 'Notyfikacje' : 'Notifications'}
+                                        {t('decisions.detail.governance.colNotifications', 'Notifications')}
                                       </th>
                                       <th className="text-right py-2">
-                                        {isPolish ? 'Akcje' : 'Actions'}
+                                        {t('decisions.detail.governance.colActions', 'Actions')}
                                       </th>
                                     </tr>
                                   </thead>
@@ -5518,7 +5435,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                           colSpan={5}
                                           className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
                                         >
-                                          {isPolish ? 'Brak reminderów.' : 'No reminders yet.'}
+                                          {t('decisions.detail.governance.noReminders', 'No reminders yet.')}
                                         </td>
                                       </tr>
                                     ) : (
@@ -5526,12 +5443,8 @@ Context: ${JSON.stringify(projectContext)}`;
                                         <tr key={r.id}>
                                           <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
                                             {r.type === 'before_due'
-                                              ? isPolish
-                                                ? 'Przed terminem'
-                                                : 'Before due'
-                                              : isPolish
-                                                ? 'Po terminie'
-                                                : 'After due'}
+                                              ? t('decisions.detail.governance.beforeDue', 'Before due')
+                                              : t('decisions.detail.governance.afterDue', 'After due')}
                                           </td>
                                           <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
                                             {r.days}
@@ -5543,7 +5456,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                             <div className="flex flex-wrap gap-1">
                                               {!r.enabled && (
                                                 <span className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400">
-                                                  {isPolish ? 'Wyłączone' : 'Disabled'}
+                                                  {t('decisions.detail.channels.disabled', 'Disabled')}
                                                 </span>
                                               )}
                                               {deliveryBadgeLabels(r.delivery, r).map((label) => (
@@ -5565,7 +5478,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                                   setReminderDraft(normalizeReminderRule({ ...r }));
                                                 }}
                                                 className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500 disabled:opacity-40"
-                                                title={isPolish ? 'Edytuj' : 'Edit'}
+                                                title={t('decisions.detail.activityLog.edit', 'Edit')}
                                               >
                                                 <Edit3 size={13} />
                                               </button>
@@ -5577,7 +5490,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                                   )
                                                 }
                                                 className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 disabled:opacity-40"
-                                                title={isPolish ? 'Usuń' : 'Delete'}
+                                                title={t('decisions.detail.governance.delete', 'Delete')}
                                               >
                                                 <Trash2 size={13} />
                                               </button>
@@ -5595,7 +5508,7 @@ Context: ${JSON.stringify(projectContext)}`;
                             <div className={governanceTableCardClass}>
                               <div className="flex items-center justify-between">
                                 <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
-                                  {isPolish ? 'Eskalacja i zasady' : 'Escalation and rules'}
+                                  {t('decisions.detail.governance.escalationTitle', 'Escalation and rules')}
                                 </h3>
                                 <div className="inline-flex items-center gap-2">
                                   <button
@@ -5623,7 +5536,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     }}
                                     className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                   >
-                                    + {isPolish ? 'Dodaj eskalację' : 'Add escalation'}
+                                    + {t('decisions.detail.governance.addEscalation', 'Add escalation')}
                                   </button>
                                 </div>
                               </div>
@@ -5632,28 +5545,28 @@ Context: ${JSON.stringify(projectContext)}`;
                                   <thead>
                                     <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
                                       <th className="text-left py-2 pr-2">
-                                        {isPolish ? 'Status' : 'Status'}
+                                        {t('decisions.detail.governance.colStatus', 'Status')}
                                       </th>
                                       <th className="text-left py-2 pr-2">
-                                        {isPolish ? 'Progi W/C' : 'W/C thresholds'}
+                                        {t('decisions.detail.governance.colThresholds', 'W/C thresholds')}
                                       </th>
                                       <th className="text-left py-2 pr-2">
-                                        {isPolish ? 'Eskaluj po' : 'Escalate after'}
+                                        {t('decisions.detail.governance.colEscalateAfter', 'Escalate after')}
                                       </th>
                                       <th className="text-left py-2 pr-2">
-                                        {isPolish ? 'Eskaluj do' : 'Escalate to'}
+                                        {t('decisions.detail.governance.colEscalateTo', 'Escalate to')}
                                       </th>
                                       <th className="text-left py-2 pr-2">
-                                        {isPolish ? 'Komunikat' : 'Message'}
+                                        {t('decisions.detail.governance.colMessage', 'Message')}
                                       </th>
                                       <th className="text-left py-2 pr-2">
-                                        {isPolish ? 'Tryb' : 'Mode'}
+                                        {t('decisions.detail.governance.colMode', 'Mode')}
                                       </th>
                                       <th className="text-left py-2 pr-2">
-                                        {isPolish ? 'Kanały' : 'Channels'}
+                                        {t('decisions.detail.governance.colChannels', 'Channels')}
                                       </th>
                                       <th className="text-right py-2">
-                                        {isPolish ? 'Akcje' : 'Actions'}
+                                        {t('decisions.detail.governance.colActions', 'Actions')}
                                       </th>
                                     </tr>
                                   </thead>
@@ -5664,9 +5577,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                           colSpan={8}
                                           className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
                                         >
-                                          {isPolish
-                                            ? 'Brak reguł eskalacji.'
-                                            : 'No escalation rules yet.'}
+                                          {t('decisions.detail.governance.noEscalationRules', 'No escalation rules yet.')}
                                         </td>
                                       </tr>
                                     ) : (
@@ -5674,12 +5585,8 @@ Context: ${JSON.stringify(projectContext)}`;
                                         <tr key={rule.id}>
                                           <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
                                             {rule.enabled
-                                              ? isPolish
-                                                ? 'Aktywna'
-                                                : 'Enabled'
-                                              : isPolish
-                                                ? 'Wyłączona'
-                                                : 'Disabled'}
+                                              ? t('decisions.detail.governance.enabledStatus', 'Enabled')
+                                              : t('decisions.detail.channels.disabled', 'Disabled')}
                                           </td>
                                           <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
                                             {rule.warningDays}/{rule.criticalDays} d
@@ -5695,16 +5602,10 @@ Context: ${JSON.stringify(projectContext)}`;
                                           </td>
                                           <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
                                             {rule.escalationMode === 'notify_only'
-                                              ? isPolish
-                                                ? 'Powiadomienie'
-                                                : 'Notify'
+                                              ? t('decisions.detail.governance.escalationModeNotify', 'Notify')
                                               : rule.escalationMode === 'manager_review'
-                                                ? isPolish
-                                                  ? 'Manager review'
-                                                  : 'Manager review'
-                                                : isPolish
-                                                  ? 'Executive alert'
-                                                  : 'Executive alert'}
+                                                ? t('decisions.detail.escalationMode.managerReview', 'Manager review')
+                                                : t('decisions.detail.escalationMode.executiveAlert', 'Executive alert')}
                                           </td>
                                           <td className="py-2 pr-2 text-xs">
                                             <div className="flex flex-wrap gap-1">
@@ -5727,7 +5628,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                                   setEscalationDraft({ ...rule });
                                                 }}
                                                 className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500 disabled:opacity-40"
-                                                title={isPolish ? 'Edytuj' : 'Edit'}
+                                                title={t('decisions.detail.activityLog.edit', 'Edit')}
                                               >
                                                 <Edit3 size={13} />
                                               </button>
@@ -5741,7 +5642,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                                   )
                                                 }
                                                 className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 disabled:opacity-40"
-                                                title={isPolish ? 'Usuń' : 'Delete'}
+                                                title={t('decisions.detail.governance.delete', 'Delete')}
                                               >
                                                 <Trash2 size={13} />
                                               </button>
@@ -5770,12 +5671,8 @@ Context: ${JSON.stringify(projectContext)}`;
                                 <div className="flex items-center justify-between">
                                   <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                                     {editingStakeholderId === '__new__'
-                                      ? isPolish
-                                        ? 'Dodaj osobę do RACI'
-                                        : 'Add RACI person'
-                                      : isPolish
-                                        ? 'Edytuj osobę RACI'
-                                        : 'Edit RACI person'}
+                                      ? t('decisions.detail.stakeholderModal.addTitle', 'Add RACI person')
+                                      : t('decisions.detail.stakeholderModal.editTitle', 'Edit RACI person')}
                                   </h4>
                                   <div className="inline-flex items-center gap-2">
                                     <button
@@ -5802,13 +5699,11 @@ Context: ${JSON.stringify(projectContext)}`;
                                   </div>
                                 </div>
                                 <div className={governanceModalHintClass}>
-                                  {isPolish
-                                    ? 'Tutaj opisujemy i konfigurujemy odpowiedzialność osoby w RACI oraz kanały komunikacji.'
-                                    : 'Use this window to describe and configure person responsibility in RACI and communication channels.'}
+                                  {t('decisions.detail.stakeholderModal.hint', 'Use this window to describe and configure person responsibility in RACI and communication channels.')}
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                   <label className="text-xs text-slate-500 dark:text-slate-400">
-                                    {isPolish ? 'Osoba' : 'Person'}
+                                    {t('decisions.detail.governance.colPerson', 'Person')}
                                     <select
                                       value={stakeholderDraft.userId}
                                       onChange={(e) => {
@@ -5832,7 +5727,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     </select>
                                   </label>
                                   <label className="text-xs text-slate-500 dark:text-slate-400">
-                                    {isPolish ? 'Rola' : 'Role'}
+                                    {t('decisions.detail.governance.colRole', 'Role')}
                                     <select
                                       value={stakeholderDraft.role}
                                       onChange={(e) =>
@@ -5844,34 +5739,34 @@ Context: ${JSON.stringify(projectContext)}`;
                                       className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
                                     >
                                       <option value="responsible">
-                                        {isPolish ? 'Odpowiedzialny' : 'Responsible'}
+                                        {t('decisions.detail.raci.responsible', 'Responsible')}
                                       </option>
                                       <option value="accountable">
-                                        {isPolish ? 'Rozliczalny' : 'Accountable'}
+                                        {t('decisions.detail.raci.accountable', 'Accountable')}
                                       </option>
                                       <option value="consulted">
-                                        {isPolish ? 'Konsultowany' : 'Consulted'}
+                                        {t('decisions.detail.raci.consulted', 'Consulted')}
                                       </option>
                                       <option value="informed">
-                                        {isPolish ? 'Informowany' : 'Informed'}
+                                        {t('decisions.detail.raci.informed', 'Informed')}
                                       </option>
                                     </select>
                                   </label>
                                 </div>
                                 <div className="space-y-2 flex-1">
                                   <div className="text-xs text-slate-500 dark:text-slate-400">
-                                    {isPolish ? 'Kanały notyfikacji' : 'Notification channels'}
+                                    {t('decisions.detail.stakeholderModal.notificationChannels', 'Notification channels')}
                                   </div>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
                                       <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                        {isPolish ? 'Kanały podstawowe' : 'Core channels'}
+                                        {t('decisions.detail.stakeholderModal.coreChannels', 'Core channels')}
                                       </div>
                                       <div className="flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-300">
                                         {[
                                           {
                                             key: 'enabled',
-                                            label: isPolish ? 'Aktywne' : 'Enabled',
+                                            label: t('decisions.detail.governance.enabledStatus', 'Enabled'),
                                             active: stakeholderDraft.notificationSettings.enabled,
                                             toggle: () =>
                                               setStakeholderDraft({
@@ -5933,7 +5828,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     </div>
                                     <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
                                       <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                        {isPolish ? 'Kanały integracyjne' : 'Integration channels'}
+                                        {t('decisions.detail.stakeholderModal.integrationChannels', 'Integration channels')}
                                       </div>
                                       <div className="flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-300">
                                         {integrationChannelCatalog.map((channel) => {
@@ -5975,7 +5870,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     </div>
                                   </div>
                                   <label className="text-xs text-slate-500 dark:text-slate-400 block">
-                                    {isPolish ? 'Cele synchronizacji' : 'Sync targets'}
+                                    {t('decisions.detail.stakeholderModal.syncTargets', 'Sync targets')}
                                     <input
                                       value={(
                                         stakeholderDraft.notificationSettings.syncTargets || []
@@ -6005,7 +5900,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     }}
                                     className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
                                   >
-                                    {isPolish ? 'Anuluj' : 'Cancel'}
+                                    {t('decisions.detail.stakeholderModal.cancel', 'Cancel')}
                                   </button>
                                   <button
                                     onClick={() => {
@@ -6032,7 +5927,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     }}
                                     className="px-3 py-1.5 rounded-md text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
                                   >
-                                    {isPolish ? 'Zapisz' : 'Save'}
+                                    {t('decisions.detail.stakeholderModal.save', 'Save')}
                                   </button>
                                 </div>
                               </div>
@@ -6053,12 +5948,8 @@ Context: ${JSON.stringify(projectContext)}`;
                                 <div className="flex items-center justify-between">
                                   <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                                     {editingReminderId === '__new__'
-                                      ? isPolish
-                                        ? 'Dodaj reminder'
-                                        : 'Add reminder'
-                                      : isPolish
-                                        ? 'Edytuj reminder'
-                                        : 'Edit reminder'}
+                                      ? t('decisions.detail.governance.addReminder', 'Add reminder')
+                                      : t('decisions.detail.reminderModal.editTitle', 'Edit reminder')}
                                   </h4>
                                   <div className="inline-flex items-center gap-2">
                                     <button
@@ -6085,13 +5976,11 @@ Context: ${JSON.stringify(projectContext)}`;
                                   </div>
                                 </div>
                                 <div className={governanceModalHintClass}>
-                                  {isPolish
-                                    ? 'Tutaj opisujemy cel remindera: kiedy ma się uruchamiać, do kogo trafić i jaką wiadomość wysłać.'
-                                    : 'Use this window to describe reminder intent: when it should trigger, recipients, and the message.'}
+                                  {t('decisions.detail.reminderModal.hint', 'Use this window to describe reminder intent: when it should trigger, recipients, and the message.')}
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                   <label className="text-xs text-slate-500 dark:text-slate-400">
-                                    {isPolish ? 'Typ' : 'Type'}
+                                    {t('decisions.detail.governance.colType', 'Type')}
                                     <select
                                       value={reminderDraft.type}
                                       onChange={(e) =>
@@ -6103,15 +5992,15 @@ Context: ${JSON.stringify(projectContext)}`;
                                       className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
                                     >
                                       <option value="before_due">
-                                        {isPolish ? 'Przed terminem' : 'Before due'}
+                                        {t('decisions.detail.governance.beforeDue', 'Before due')}
                                       </option>
                                       <option value="after_due">
-                                        {isPolish ? 'Po terminie' : 'After due'}
+                                        {t('decisions.detail.governance.afterDue', 'After due')}
                                       </option>
                                     </select>
                                   </label>
                                   <label className="text-xs text-slate-500 dark:text-slate-400">
-                                    {isPolish ? 'Dni' : 'Days'}
+                                    {t('decisions.detail.governance.colDays', 'Days')}
                                     <input
                                       type="number"
                                       min={0}
@@ -6127,7 +6016,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                   </label>
                                 </div>
                                 <label className="text-xs text-slate-500 dark:text-slate-400 block">
-                                  {isPolish ? 'Odbiorcy' : 'Recipients'}
+                                  {t('decisions.detail.governance.colRecipients', 'Recipients')}
                                   <select
                                     value={reminderDraft.recipients}
                                     onChange={(e) =>
@@ -6144,9 +6033,9 @@ Context: ${JSON.stringify(projectContext)}`;
                                   >
                                     <option value="requester">Requester</option>
                                     <option value="decider">Decider</option>
-                                    <option value="both">{isPolish ? 'Obaj' : 'Both'}</option>
+                                    <option value="both">{t('decisions.detail.reminderModal.both', 'Both')}</option>
                                     <option value="stakeholders">
-                                      {isPolish ? 'Interesariusze' : 'Stakeholders'}
+                                      {t('decisions.detail.reminderModal.stakeholders', 'Stakeholders')}
                                     </option>
                                   </select>
                                 </label>
@@ -6162,12 +6051,12 @@ Context: ${JSON.stringify(projectContext)}`;
                                         })
                                       }
                                     />
-                                    {isPolish ? 'Reguła aktywna' : 'Rule enabled'}
+                                    {t('decisions.detail.reminderModal.ruleEnabled', 'Rule enabled')}
                                   </label>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
                                       <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                        {isPolish ? 'Kanały podstawowe' : 'Core channels'}
+                                        {t('decisions.detail.stakeholderModal.coreChannels', 'Core channels')}
                                       </div>
                                       <div className="flex flex-wrap gap-2">
                                         {(
@@ -6222,7 +6111,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     </div>
                                     <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
                                       <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                        {isPolish ? 'Kanały integracyjne' : 'Integration channels'}
+                                        {t('decisions.detail.stakeholderModal.integrationChannels', 'Integration channels')}
                                       </div>
                                       <div className="flex flex-wrap gap-2">
                                         {integrationChannelCatalog.map((channel) => {
@@ -6265,7 +6154,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     </div>
                                   </div>
                                   <label className="text-xs text-slate-500 dark:text-slate-400 block">
-                                    {isPolish ? 'Cele synchronizacji' : 'Sync targets'}
+                                    {t('decisions.detail.stakeholderModal.syncTargets', 'Sync targets')}
                                     <input
                                       value={ensureDeliveryConfig(
                                         reminderDraft.delivery,
@@ -6292,7 +6181,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                   </label>
                                 </div>
                                 <label className="text-xs text-slate-500 dark:text-slate-400 block">
-                                  {isPolish ? 'Wiadomość' : 'Message'}
+                                  {t('decisions.detail.governance.colMessage', 'Message')}
                                   <textarea
                                     value={reminderDraft.message || ''}
                                     onChange={(e) =>
@@ -6313,7 +6202,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     }}
                                     className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
                                   >
-                                    {isPolish ? 'Anuluj' : 'Cancel'}
+                                    {t('decisions.detail.stakeholderModal.cancel', 'Cancel')}
                                   </button>
                                   <button
                                     onClick={() => {
@@ -6341,7 +6230,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     }}
                                     className="px-3 py-1.5 rounded-md text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
                                   >
-                                    {isPolish ? 'Zapisz' : 'Save'}
+                                    {t('decisions.detail.stakeholderModal.save', 'Save')}
                                   </button>
                                 </div>
                               </div>
@@ -6362,12 +6251,8 @@ Context: ${JSON.stringify(projectContext)}`;
                                 <div className="flex items-center justify-between">
                                   <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                                     {editingEscalationId === '__new__'
-                                      ? isPolish
-                                        ? 'Dodaj regułę eskalacji'
-                                        : 'Add escalation rule'
-                                      : isPolish
-                                        ? 'Edytuj regułę eskalacji'
-                                        : 'Edit escalation rule'}
+                                      ? t('decisions.detail.escalationModal.addTitle', 'Add escalation rule')
+                                      : t('decisions.detail.escalationModal.editTitle', 'Edit escalation rule')}
                                   </h4>
                                   <div className="inline-flex items-center gap-2">
                                     <button
@@ -6394,15 +6279,11 @@ Context: ${JSON.stringify(projectContext)}`;
                                   </div>
                                 </div>
                                 <div className={governanceModalHintClass}>
-                                  {isPolish
-                                    ? 'Tutaj opisujemy regułę eskalacji: progi, czas eskalacji, osobę docelową i komunikat.'
-                                    : 'Use this window to describe escalation rule settings: thresholds, timing, assignee, and message.'}
+                                  {t('decisions.detail.escalationModal.hint', 'Use this window to describe escalation rule settings: thresholds, timing, assignee, and message.')}
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                   <label className="text-xs text-slate-500 dark:text-slate-400">
-                                    {isPolish
-                                      ? 'Próg ostrzeżenia (dni)'
-                                      : 'Warning threshold (days)'}
+                                    {t('decisions.detail.escalationModal.warningThreshold', 'Warning threshold (days)')}
                                     <input
                                       type="number"
                                       min={0}
@@ -6417,9 +6298,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     />
                                   </label>
                                   <label className="text-xs text-slate-500 dark:text-slate-400">
-                                    {isPolish
-                                      ? 'Próg krytyczny (dni)'
-                                      : 'Critical threshold (days)'}
+                                    {t('decisions.detail.escalationModal.criticalThreshold', 'Critical threshold (days)')}
                                     <input
                                       type="number"
                                       min={0}
@@ -6434,7 +6313,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     />
                                   </label>
                                   <label className="text-xs text-slate-500 dark:text-slate-400">
-                                    {isPolish ? 'Eskaluj po (dni)' : 'Escalate after (days)'}
+                                    {t('decisions.detail.escalationModal.escalateAfterDays', 'Escalate after (days)')}
                                     <input
                                       type="number"
                                       min={1}
@@ -6449,7 +6328,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     />
                                   </label>
                                   <label className="text-xs text-slate-500 dark:text-slate-400">
-                                    {isPolish ? 'Eskaluj do' : 'Escalate to'}
+                                    {t('decisions.detail.governance.colEscalateTo', 'Escalate to')}
                                     <select
                                       value={escalationDraft.escalateTo}
                                       onChange={(e) => {
@@ -6464,7 +6343,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                       }}
                                       className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
                                     >
-                                      <option value="">{isPolish ? 'Wybierz' : 'Select'}</option>
+                                      <option value="">{t('decisions.detail.escalationModal.select', 'Select')}</option>
                                       {users.map((u) => (
                                         <option key={u.id} value={u.id}>
                                           {u.firstName} {u.lastName}
@@ -6474,7 +6353,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                   </label>
                                 </div>
                                 <label className="text-xs text-slate-500 dark:text-slate-400 block">
-                                  {isPolish ? 'Tryb eskalacji' : 'Escalation mode'}
+                                  {t('decisions.detail.escalationModal.escalationMode', 'Escalation mode')}
                                   <select
                                     value={escalationDraft.escalationMode}
                                     onChange={(e) =>
@@ -6503,12 +6382,12 @@ Context: ${JSON.stringify(projectContext)}`;
                                       })
                                     }
                                   />
-                                  {isPolish ? 'Reguła aktywna' : 'Rule enabled'}
+                                  {t('decisions.detail.reminderModal.ruleEnabled', 'Rule enabled')}
                                 </label>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                   <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
                                     <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                      {isPolish ? 'Kanały podstawowe' : 'Core channels'}
+                                      {t('decisions.detail.stakeholderModal.coreChannels', 'Core channels')}
                                     </div>
                                     <div className="flex flex-wrap gap-2">
                                       {(
@@ -6552,7 +6431,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                   </div>
                                   <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
                                     <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                      {isPolish ? 'Kanały integracyjne' : 'Integration channels'}
+                                      {t('decisions.detail.stakeholderModal.integrationChannels', 'Integration channels')}
                                     </div>
                                     <div className="flex flex-wrap gap-2">
                                       {integrationChannelCatalog.map((channel) => {
@@ -6594,7 +6473,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                   </div>
                                 </div>
                                 <label className="text-xs text-slate-500 dark:text-slate-400 block">
-                                  {isPolish ? 'Cele synchronizacji' : 'Sync targets'}
+                                  {t('decisions.detail.stakeholderModal.syncTargets', 'Sync targets')}
                                   <input
                                     value={ensureDeliveryConfig(
                                       escalationDraft.delivery
@@ -6616,7 +6495,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                   />
                                 </label>
                                 <label className="text-xs text-slate-500 dark:text-slate-400 block">
-                                  {isPolish ? 'Komunikat eskalacji' : 'Escalation message'}
+                                  {t('decisions.detail.escalationModal.escalationMessage', 'Escalation message')}
                                   <textarea
                                     value={escalationDraft.message || ''}
                                     onChange={(e) =>
@@ -6637,7 +6516,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     }}
                                     className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
                                   >
-                                    {isPolish ? 'Anuluj' : 'Cancel'}
+                                    {t('decisions.detail.stakeholderModal.cancel', 'Cancel')}
                                   </button>
                                   <button
                                     onClick={() => {
@@ -6665,7 +6544,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     }}
                                     className="px-3 py-1.5 rounded-md text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
                                   >
-                                    {isPolish ? 'Zapisz' : 'Save'}
+                                    {t('decisions.detail.stakeholderModal.save', 'Save')}
                                   </button>
                                 </div>
                               </div>
@@ -6772,13 +6651,13 @@ Context: ${JSON.stringify(projectContext)}`;
               <div className="flex flex-wrap items-center gap-2 p-2 rounded-xl bg-white/60 dark:bg-navy-900/60 border border-slate-200 dark:border-navy-700/60">
                 {(
                   [
-                    ['overview', isPolish ? 'Overview' : 'Overview'],
-                    ['resources', isPolish ? 'Załączniki + Linki' : 'Attachments + Links'],
-                    ['risk', isPolish ? 'Ryzyko' : 'Risk'],
-                    ['options', isPolish ? 'Opcje' : 'Options'],
-                    ['governance', isPolish ? 'RACI + Eskalacja' : 'RACI + Escalation'],
-                    ['comments', isPolish ? 'Komentarze' : 'Comments'],
-                    ['logs', isPolish ? 'Logi' : 'Logs'],
+                    ['overview', t('decisions.detail.clickupTabs.overview', 'Overview')],
+                    ['resources', t('decisions.detail.clickupTabs.resources', 'Attachments + Links')],
+                    ['risk', t('decisions.detail.clickupTabs.risk', 'Risk')],
+                    ['options', t('decisions.detail.clickupTabs.options', 'Options')],
+                    ['governance', t('decisions.detail.clickupTabs.governance', 'RACI + Escalation')],
+                    ['comments', t('decisions.detail.clickupTabs.comments', 'Comments')],
+                    ['logs', t('decisions.detail.clickupTabs.logs', 'Logs')],
                   ] as const
                 ).map(([key, label]) => (
                   <button
@@ -6801,7 +6680,7 @@ Context: ${JSON.stringify(projectContext)}`;
                     <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                          {isPolish ? 'Przegląd decyzji' : 'Decision Overview'}
+                          {t('decisions.detail.clickupOverview.title', 'Decision Overview')}
                         </h3>
                         <AIFieldEnhancer
                           fieldKey="c-description"
@@ -6821,7 +6700,7 @@ Context: ${JSON.stringify(projectContext)}`;
                       />
                       <div className="flex items-center justify-between">
                         <label className="block text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
-                          {isPolish ? 'Konsekwencje braku decyzji' : 'Consequences of Inaction'}
+                          {t('decisions.detail.consequencesSection.title', 'Consequences of Inaction')}
                         </label>
                         <AIFieldEnhancer
                           fieldKey="c-rationale"
@@ -6839,7 +6718,7 @@ Context: ${JSON.stringify(projectContext)}`;
                         rows={4}
                         className="w-full px-3 py-2 rounded-xl bg-amber-50/80 dark:bg-amber-500/10 border border-amber-200/60 dark:border-amber-500/30 text-sm"
                         placeholder={
-                          isPolish ? 'Konsekwencje braku decyzji...' : 'Consequences of inaction...'
+                          t('decisions.detail.consequencesSection.placeholderClickup', 'Consequences of inaction...')
                         }
                       />
                     </div>
@@ -6881,7 +6760,7 @@ Context: ${JSON.stringify(projectContext)}`;
                       <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
                         <div className="flex items-center justify-between">
                           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            {isPolish ? 'RACI' : 'RACI'}
+                            {t('decisions.detail.governance.raciTitleShort', 'RACI')}
                           </h3>
                           <button
                             disabled={isDecisionStageLocked}
@@ -6908,7 +6787,7 @@ Context: ${JSON.stringify(projectContext)}`;
                             }}
                             className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                           >
-                            + {isPolish ? 'Dodaj' : 'Add'}
+                            + {t('decisions.detail.governance.add', 'Add')}
                           </button>
                         </div>
                         <div className="overflow-x-auto">
@@ -6916,19 +6795,19 @@ Context: ${JSON.stringify(projectContext)}`;
                             <thead>
                               <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
                                 <th className="text-left py-2 pr-2">
-                                  {isPolish ? 'Rola' : 'Role'}
+                                  {t('decisions.detail.governance.colRole', 'Role')}
                                 </th>
                                 <th className="text-left py-2 pr-2">
-                                  {isPolish ? 'Osoba' : 'Person'}
+                                  {t('decisions.detail.governance.colPerson', 'Person')}
                                 </th>
                                 <th className="text-left py-2 pr-2">
-                                  {isPolish ? 'Email' : 'Email'}
+                                  {t('decisions.detail.governance.colEmail', 'Email')}
                                 </th>
                                 <th className="text-left py-2 pr-2">
-                                  {isPolish ? 'Powiadomienia' : 'Notifications'}
+                                  {t('decisions.detail.governance.colNotifications', 'Notifications')}
                                 </th>
                                 <th className="text-right py-2">
-                                  {isPolish ? 'Akcje' : 'Actions'}
+                                  {t('decisions.detail.governance.colActions', 'Actions')}
                                 </th>
                               </tr>
                             </thead>
@@ -6939,7 +6818,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     colSpan={5}
                                     className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
                                   >
-                                    {isPolish ? 'Brak interesariuszy.' : 'No stakeholders yet.'}
+                                    {t('decisions.detail.governance.noStakeholders', 'No stakeholders yet.')}
                                   </td>
                                 </tr>
                               ) : (
@@ -6964,16 +6843,16 @@ Context: ${JSON.stringify(projectContext)}`;
                                         className="w-full px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
                                       >
                                         <option value="responsible">
-                                          {isPolish ? 'Odpowiedzialny' : 'Responsible'}
+                                          {t('decisions.detail.raci.responsible', 'Responsible')}
                                         </option>
                                         <option value="accountable">
-                                          {isPolish ? 'Rozliczalny' : 'Accountable'}
+                                          {t('decisions.detail.raci.accountable', 'Accountable')}
                                         </option>
                                         <option value="consulted">
-                                          {isPolish ? 'Konsultowany' : 'Consulted'}
+                                          {t('decisions.detail.raci.consulted', 'Consulted')}
                                         </option>
                                         <option value="informed">
-                                          {isPolish ? 'Informowany' : 'Informed'}
+                                          {t('decisions.detail.raci.informed', 'Informed')}
                                         </option>
                                       </select>
                                     </td>
@@ -7022,7 +6901,7 @@ Context: ${JSON.stringify(projectContext)}`;
                       <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
                         <div className="flex items-center justify-between">
                           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            {isPolish ? 'Reminders' : 'Reminders'}
+                            {t('decisions.detail.governance.remindersTitle', 'Reminders')}
                           </h3>
                           <button
                             disabled={isDecisionStageLocked}
@@ -7043,7 +6922,7 @@ Context: ${JSON.stringify(projectContext)}`;
                             }
                             className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                           >
-                            + {isPolish ? 'Dodaj' : 'Add'}
+                            + {t('decisions.detail.governance.add', 'Add')}
                           </button>
                         </div>
                         <div className="overflow-x-auto">
@@ -7051,23 +6930,23 @@ Context: ${JSON.stringify(projectContext)}`;
                             <thead>
                               <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
                                 <th className="text-left py-2 pr-2">
-                                  {isPolish ? 'Aktywne' : 'Active'}
+                                  {t('decisions.detail.governance.active', 'Active')}
                                 </th>
                                 <th className="text-left py-2 pr-2">
-                                  {isPolish ? 'Kiedy' : 'When'}
+                                  {t('decisions.detail.governance.when', 'When')}
                                 </th>
-                                <th className="text-left py-2 pr-2">{isPolish ? 'Dni' : 'Days'}</th>
+                                <th className="text-left py-2 pr-2">{t('decisions.detail.governance.colDays', 'Days')}</th>
                                 <th className="text-left py-2 pr-2">
-                                  {isPolish ? 'Do kogo' : 'To whom'}
-                                </th>
-                                <th className="text-left py-2 pr-2">
-                                  {isPolish ? 'Kanały' : 'Channels'}
+                                  {t('decisions.detail.governance.colRecipientsAlt', 'To whom')}
                                 </th>
                                 <th className="text-left py-2 pr-2">
-                                  {isPolish ? 'Wiadomość' : 'Message'}
+                                  {t('decisions.detail.governance.colChannels', 'Channels')}
+                                </th>
+                                <th className="text-left py-2 pr-2">
+                                  {t('decisions.detail.governance.colMessage', 'Message')}
                                 </th>
                                 <th className="text-right py-2">
-                                  {isPolish ? 'Akcje' : 'Actions'}
+                                  {t('decisions.detail.governance.colActions', 'Actions')}
                                 </th>
                               </tr>
                             </thead>
@@ -7078,7 +6957,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     colSpan={7}
                                     className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
                                   >
-                                    {isPolish ? 'Brak reminderów.' : 'No reminders yet.'}
+                                    {t('decisions.detail.governance.noReminders', 'No reminders yet.')}
                                   </td>
                                 </tr>
                               ) : (
@@ -7121,10 +7000,10 @@ Context: ${JSON.stringify(projectContext)}`;
                                         className="w-full px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
                                       >
                                         <option value="before_due">
-                                          {isPolish ? 'Przed terminem' : 'Before due'}
+                                          {t('decisions.detail.governance.beforeDue', 'Before due')}
                                         </option>
                                         <option value="after_due">
-                                          {isPolish ? 'Po terminie' : 'After due'}
+                                          {t('decisions.detail.governance.afterDue', 'After due')}
                                         </option>
                                       </select>
                                     </td>
@@ -7169,14 +7048,14 @@ Context: ${JSON.stringify(projectContext)}`;
                                         className="w-full px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
                                       >
                                         <option value="requester">
-                                          {isPolish ? 'Requester' : 'Requester'}
+                                          {t('decisions.detail.infoPane.requester', 'Requester')}
                                         </option>
                                         <option value="decider">
-                                          {isPolish ? 'Decider' : 'Decider'}
+                                          {t('decisions.detail.infoPane.decider', 'Decider')}
                                         </option>
-                                        <option value="both">{isPolish ? 'Obaj' : 'Both'}</option>
+                                        <option value="both">{t('decisions.detail.reminderModal.both', 'Both')}</option>
                                         <option value="stakeholders">
-                                          {isPolish ? 'Interesariusze' : 'Stakeholders'}
+                                          {t('decisions.detail.reminderModal.stakeholders', 'Stakeholders')}
                                         </option>
                                       </select>
                                     </td>
@@ -7231,7 +7110,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                         }
                                         className="w-full px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
                                         placeholder={
-                                          isPolish ? 'Treść remindera...' : 'Reminder text...'
+                                          t('decisions.detail.governance.reminderTextPlaceholder', 'Reminder text...')
                                         }
                                       />
                                     </td>
@@ -7258,7 +7137,7 @@ Context: ${JSON.stringify(projectContext)}`;
                       <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
                         <div className="flex items-center justify-between">
                           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            {isPolish ? 'Escalation' : 'Escalation'}
+                            {t('decisions.detail.activityLog.escalation', 'Escalation')}
                           </h3>
                           {!escalation && (
                             <button
@@ -7277,7 +7156,7 @@ Context: ${JSON.stringify(projectContext)}`;
                               }
                               className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             >
-                              + {isPolish ? 'Dodaj' : 'Add'}
+                              + {t('decisions.detail.governance.add', 'Add')}
                             </button>
                           )}
                         </div>
@@ -7286,16 +7165,16 @@ Context: ${JSON.stringify(projectContext)}`;
                             <thead>
                               <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
                                 <th className="text-left py-2 pr-2">
-                                  {isPolish ? 'Aktywne' : 'Enabled'}
+                                  {t('decisions.detail.governance.enabledStatus', 'Enabled')}
                                 </th>
                                 <th className="text-left py-2 pr-2">
-                                  {isPolish ? 'Po ilu dniach' : 'After days'}
+                                  {t('decisions.detail.governance.colEscalateAfterDays', 'After days')}
                                 </th>
                                 <th className="text-left py-2 pr-2">
-                                  {isPolish ? 'Eskaluj do' : 'Escalate to'}
+                                  {t('decisions.detail.governance.colEscalateTo', 'Escalate to')}
                                 </th>
                                 <th className="text-left py-2 pr-2">
-                                  {isPolish ? 'Wiadomość' : 'Message'}
+                                  {t('decisions.detail.governance.colMessage', 'Message')}
                                 </th>
                               </tr>
                             </thead>
@@ -7306,7 +7185,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     colSpan={4}
                                     className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
                                   >
-                                    {isPolish ? 'Brak reguły eskalacji.' : 'No escalation rule.'}
+                                    {t('decisions.detail.governance.noEscalationRule', 'No escalation rule.')}
                                   </td>
                                 </tr>
                               ) : (
@@ -7352,7 +7231,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                       }}
                                       className="w-full px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
                                     >
-                                      <option value="">{isPolish ? 'Wybierz' : 'Select'}</option>
+                                      <option value="">{t('decisions.detail.escalationModal.select', 'Select')}</option>
                                       {users.map((u) => (
                                         <option key={u.id} value={u.id}>
                                           {u.firstName} {u.lastName}
@@ -7369,7 +7248,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                       }
                                       className="w-full px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
                                       placeholder={
-                                        isPolish ? 'Treść eskalacji...' : 'Escalation message...'
+                                        t('decisions.detail.governance.escalationTextPlaceholder', 'Escalation message...')
                                       }
                                     />
                                   </td>
@@ -7404,7 +7283,7 @@ Context: ${JSON.stringify(projectContext)}`;
                       <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
                         <div className="flex items-center justify-between">
                           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            {isPolish ? 'Załączniki' : 'Attachments'}
+                            {t('decisions.detail.attachments.title', 'Attachments')}
                           </h3>
                           <label
                             className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
@@ -7413,7 +7292,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                 : 'border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 cursor-pointer'
                             }`}
                           >
-                            + {isPolish ? 'Dodaj' : 'Add'}
+                            + {t('decisions.detail.governance.add', 'Add')}
                             <input
                               type="file"
                               multiple
@@ -7431,18 +7310,18 @@ Context: ${JSON.stringify(projectContext)}`;
                             <thead>
                               <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
                                 <th className="text-left py-2 pr-2">
-                                  {isPolish ? 'Nazwa' : 'Name'}
+                                  {t('decisions.detail.attachments.colName', 'Name')}
                                 </th>
-                                <th className="text-left py-2 pr-2">{isPolish ? 'Typ' : 'Type'}</th>
+                                <th className="text-left py-2 pr-2">{t('decisions.detail.governance.colType', 'Type')}</th>
                                 <th className="text-left py-2 pr-2">
-                                  {isPolish ? 'Rozmiar' : 'Size'}
+                                  {t('decisions.detail.attachments.colSize', 'Size')}
                                 </th>
                                 <th className="text-left py-2 pr-2">
-                                  {isPolish ? 'Dodano' : 'Uploaded'}
+                                  {t('decisions.detail.attachments.colUploaded', 'Uploaded')}
                                 </th>
-                                <th className="text-left py-2 pr-2">{isPolish ? 'Przez' : 'By'}</th>
+                                <th className="text-left py-2 pr-2">{t('decisions.detail.attachments.colBy', 'By')}</th>
                                 <th className="text-right py-2">
-                                  {isPolish ? 'Akcje' : 'Actions'}
+                                  {t('decisions.detail.governance.colActions', 'Actions')}
                                 </th>
                               </tr>
                             </thead>
@@ -7453,7 +7332,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     colSpan={6}
                                     className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
                                   >
-                                    {isPolish ? 'Brak załączników.' : 'No attachments.'}
+                                    {t('decisions.detail.attachments.none', 'No attachments.')}
                                   </td>
                                 </tr>
                               ) : (
@@ -7497,7 +7376,7 @@ Context: ${JSON.stringify(projectContext)}`;
                       <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
                         <div className="flex items-center justify-between">
                           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            {isPolish ? 'Powiązane elementy' : 'Linked Items'}
+                            {t('decisions.detail.linkedItems.title', 'Linked Items')}
                           </h3>
                           <button
                             disabled={isDecisionStageLocked}
@@ -7505,12 +7384,12 @@ Context: ${JSON.stringify(projectContext)}`;
                               handleAddLinkedItem({
                                 id: Math.random().toString(36).substr(2, 9),
                                 type: 'task',
-                                title: isPolish ? 'Nowe powiązanie' : 'New linked item',
+                                title: t('decisions.detail.linkedItems.newLinkedItem', 'New linked item'),
                               })
                             }
                             className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                           >
-                            + {isPolish ? 'Dodaj' : 'Add'}
+                            + {t('decisions.detail.governance.add', 'Add')}
                           </button>
                         </div>
 
@@ -7518,18 +7397,18 @@ Context: ${JSON.stringify(projectContext)}`;
                           <table className="w-full text-sm">
                             <thead>
                               <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
-                                <th className="text-left py-2 pr-2">{isPolish ? 'Typ' : 'Type'}</th>
+                                <th className="text-left py-2 pr-2">{t('decisions.detail.governance.colType', 'Type')}</th>
                                 <th className="text-left py-2 pr-2">
-                                  {isPolish ? 'Tytuł' : 'Title'}
+                                  {t('decisions.detail.linkedItems.colTitle', 'Title')}
                                 </th>
                                 <th className="text-left py-2 pr-2">
-                                  {isPolish ? 'Status' : 'Status'}
+                                  {t('decisions.detail.governance.colStatus', 'Status')}
                                 </th>
                                 <th className="text-left py-2 pr-2">
-                                  {isPolish ? 'Priorytet' : 'Priority'}
+                                  {t('decisions.detail.linkedItems.colPriority', 'Priority')}
                                 </th>
                                 <th className="text-right py-2">
-                                  {isPolish ? 'Akcje' : 'Actions'}
+                                  {t('decisions.detail.governance.colActions', 'Actions')}
                                 </th>
                               </tr>
                             </thead>
@@ -7540,7 +7419,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     colSpan={5}
                                     className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
                                   >
-                                    {isPolish ? 'Brak powiązanych elementów.' : 'No linked items.'}
+                                    {t('decisions.detail.linkedItems.none', 'No linked items.')}
                                   </td>
                                 </tr>
                               ) : (
@@ -7580,7 +7459,7 @@ Context: ${JSON.stringify(projectContext)}`;
                   {clickupTab === 'logs' && (
                     <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
                       <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
-                        {isPolish ? 'Logi aktywności' : 'Activity Log'}
+                        {t('decisions.detail.activityLog.title', 'Activity Log')}
                       </h3>
                       {renderActivityLogPanel()}
                     </div>
@@ -7594,63 +7473,62 @@ Context: ${JSON.stringify(projectContext)}`;
                         onClick={handleApprove}
                         className="px-3 py-2 rounded-xl border border-emerald-400/50 text-emerald-500 hover:bg-emerald-500/10 text-sm font-medium"
                       >
-                        {isPolish ? 'Zatwierdź' : 'Approve'}
+                        {t('decisions.detail.actions.approve', 'Approve')}
                       </button>
                       <button
                         onClick={handleReject}
                         className="px-3 py-2 rounded-xl border border-danger-400/50 text-danger-500 hover:bg-danger-500/10 text-sm font-medium"
                       >
-                        {isPolish ? 'Odrzuć' : 'Reject'}
+                        {t('decisions.detail.actions.reject', 'Reject')}
                       </button>
                       <button
                         onClick={handleRequestMoreInfo}
                         className="px-3 py-2 rounded-xl border border-slate-300 dark:border-navy-600 text-slate-500 text-sm"
                       >
-                        {isPolish ? 'Więcej info' : 'Request info'}
+                        {t('decisions.detail.actions.requestInfo', 'Request info')}
                       </button>
                       <button
                         onClick={() => setShowDelegationModal(true)}
                         className="px-3 py-2 rounded-xl border border-slate-300 dark:border-navy-600 text-slate-500 text-sm"
                       >
-                        {isPolish ? 'Deleguj' : 'Delegate'}
+                        {t('decisions.detail.actions.delegate', 'Delegate')}
                       </button>
                     </div>
                   )}
 
                   <div className="bg-white/80 dark:bg-navy-900/80 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
                     <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                      {isPolish ? 'Panel informacji' : 'Information pane'}
+                      {t('decisions.detail.infoPane.title', 'Information pane')}
                     </h3>
                     <div className="space-y-2.5 text-sm">
                       <div className="flex items-center justify-between gap-3">
                         <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
-                          {isPolish ? 'Status' : 'Status'}
+                          {t('decisions.detail.governance.colStatus', 'Status')}
                         </span>
                         <span className="text-slate-700 dark:text-slate-200 font-medium">
-                          {isPolish
-                            ? STATUS_CONFIG[status].label.pl
-                            : STATUS_CONFIG[status].label.en}
+                          {t(`decisions.detail.statusValue.${status}`, STATUS_CONFIG[status].label.en)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between gap-3">
                         <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
-                          {isPolish ? 'Priorytet' : 'Priority'}
+                          {t('decisions.detail.linkedItems.colPriority', 'Priority')}
                         </span>
                         <span className="text-slate-700 dark:text-slate-200 font-medium">
-                          {isPolish
-                            ? PRIORITY_CONFIG[priority].label.pl
-                            : PRIORITY_CONFIG[priority].label.en}
+                          {t(
+                            `decisions.detail.priorityValue.${priority}`,
+                            PRIORITY_CONFIG[priority].label.en
+                          )}
                         </span>
                       </div>
                       <div className="flex items-center justify-between gap-3">
                         <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
-                          {isPolish ? 'Termin' : 'Deadline'}
+                          {t('decisions.detail.activityLog.deadline', 'Deadline')}
                         </span>
                         <span className="text-slate-700 dark:text-slate-200">{dueDate || '—'}</span>
                       </div>
                       <div className="flex items-center justify-between gap-3">
                         <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
-                          {isPolish ? 'Wnioskodawca' : 'Requester'}
+                          {t('decisions.detail.infoPane.requester', 'Requester')}
                         </span>
                         <span className="text-slate-700 dark:text-slate-200 text-right truncate">
                           {requesterName || '—'}
@@ -7658,7 +7536,7 @@ Context: ${JSON.stringify(projectContext)}`;
                       </div>
                       <div className="flex items-center justify-between gap-3">
                         <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
-                          {isPolish ? 'Decydent' : 'Decider'}
+                          {t('decisions.detail.infoPane.decider', 'Decider')}
                         </span>
                         <span className="text-slate-700 dark:text-slate-200 text-right truncate">
                           {(() => {
@@ -7669,7 +7547,7 @@ Context: ${JSON.stringify(projectContext)}`;
                       </div>
                       <div className="flex items-start justify-between gap-3">
                         <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
-                          {isPolish ? 'Dotyczy' : 'Related to'}
+                          {t('decisions.detail.scope.relatedTo', 'Related to')}
                         </span>
                         <span className="text-slate-700 dark:text-slate-200 text-right max-w-[65%] break-words">
                           {decisionScopeLabel}
@@ -7677,7 +7555,7 @@ Context: ${JSON.stringify(projectContext)}`;
                       </div>
                       <div className="flex items-start justify-between gap-3">
                         <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
-                          {isPolish ? 'Indeks decyzji' : 'Decision index'}
+                          {t('decisions.detail.infoPane.decisionIndex', 'Decision index')}
                         </span>
                         <span className="text-slate-700 dark:text-slate-200 text-right max-w-[65%] break-all text-xs font-mono">
                           {decisionIndexLabel}
@@ -7770,14 +7648,12 @@ Context: ${JSON.stringify(projectContext)}`;
               await loadDecision(decisionId);
               addActivityLogEntry(
                 'assignment',
-                isPolish ? 'Decyzja delegowana' : 'Decision delegated'
+                t('decisions.detail.activityLog.decisionDelegated', 'Decision delegated')
               );
             } catch (error) {
               console.error('[DecisionDetailView] Failed to reload after delegation:', error);
               toast.error(
-                isPolish
-                  ? 'Delegacja zapisana, ale nie udało się odświeżyć danych'
-                  : 'Delegation saved, but failed to refresh data'
+                t('decisions.detail.toast.delegationSavedRefreshFailed', 'Delegation saved, but failed to refresh data')
               );
             }
           }}
@@ -7789,7 +7665,7 @@ Context: ${JSON.stringify(projectContext)}`;
           decision={{ id: decisionId, title, status, description, category }}
           onClose={() => setShowFollowUp(false)}
           onTasksCreated={(count) => {
-            toast.success(isPolish ? `Utworzono ${count} zadań` : `Created ${count} tasks`);
+            toast.success(t('decisions.detail.toast.tasksCreated', 'Created {{count}} tasks', { count }));
             setShowFollowUp(false);
           }}
         />

@@ -27,6 +27,7 @@ import {
 
 import {
   applyDynamicSwotPendingAction,
+  buildDynamicSwotConversationProtocol,
   buildDynamicSwotCorrelationsPrompt,
   buildDynamicSwotFullSessionPrompt,
   buildDynamicSwotRethinkPrompt,
@@ -60,6 +61,42 @@ import {
   buildRiskSynthesisPrompt,
 } from './toolAi/riskUncertainty';
 import { getToolSystemPrompt } from './toolAi/systemPrompts';
+import {
+  applyAmbitionDecomposerPendingAction,
+  buildAmbitionDecomposerFullSessionPrompt,
+  buildAmbitionDecomposerPrioritiesPrompt,
+  buildAmbitionDecomposerRethinkPrompt,
+} from './toolAi/ambitionDecomposer';
+import {
+  applyFocusTradeoffPendingAction,
+  buildFocusTradeoffFullSessionPrompt,
+  buildFocusTradeoffRethinkPrompt,
+  buildFocusTradeoffTradeoffsPrompt,
+} from './toolAi/focusTradeoff';
+import {
+  applyNarrativeEnginePendingAction,
+  buildNarrativeEngineFullSessionPrompt,
+  buildNarrativeEngineRethinkPrompt,
+  buildNarrativeEngineThreadsPrompt,
+} from './toolAi/narrativeEngine';
+import {
+  applyOperationalPendingAction,
+  buildOperationalFullSessionPrompt,
+  type OperationalSectionMeta,
+} from './toolAi/operationalTool';
+import {
+  applyCapabilityMapperPendingAction,
+  buildCapabilityMapperFullSessionPrompt,
+  buildCapabilityMapperGapsPrompt,
+  buildCapabilityMapperRethinkPrompt,
+} from './toolAi/capabilityMapper';
+import {
+  applyValueChainPendingAction,
+  buildValueChainConversationProtocol,
+  buildValueChainFullSessionPrompt,
+  buildValueChainLeversPrompt,
+  buildValueChainRethinkPrompt,
+} from './toolAi/valueChain';
 import { useOrganizationContext } from './useOrganizationContext';
 
 // ==================== TYPES ====================
@@ -99,6 +136,32 @@ interface UseToolAIReturn {
 }
 
 // ==================== HOOK ====================
+
+// Operational/digital tools that share OperationalToolData and are deepened with
+// a single generic AI handler (sections + summary).
+const OPERATIONAL_AI_TOOLS: ReadonlySet<ToolType> = new Set<ToolType>([
+  'sop-builder',
+  'a3-problem-solving',
+  'smed-planner',
+  'dms-builder',
+  'inventory-autopilot',
+  'ai-discovery',
+  'pain-explorer',
+  'rpa-scanner',
+  'process-automation',
+]);
+
+const OPERATIONAL_AI_TOOL_NAMES: Partial<Record<ToolType, string>> = {
+  'sop-builder': 'SOP Builder',
+  'a3-problem-solving': 'A3 Problem Solving',
+  'smed-planner': 'SMED Planner',
+  'dms-builder': 'Daily Management System',
+  'inventory-autopilot': 'Inventory Autopilot',
+  'ai-discovery': 'AI Discovery',
+  'pain-explorer': 'Pain Explorer',
+  'rpa-scanner': 'RPA Scanner',
+  'process-automation': 'Process Automation',
+};
 
 export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
   const { formatForPrompt } = useOrganizationContext();
@@ -169,6 +232,14 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
         const stepContext = currentStepDef
           ? `\n\nCURRENT STEP: ${currentStepDef.name}\nSTEP DESCRIPTION: ${currentStepDef.description}`
           : '';
+        // Dynamic SWOT: the chat mentor interviews with the laddered question bank
+        // (same source of truth as the wizard) during the SWOT step.
+        const interviewProtocol =
+          toolType === 'dynamic-swot'
+            ? buildDynamicSwotConversationProtocol(currentStepDef?.id)
+            : toolType === 'value-chain'
+              ? buildValueChainConversationProtocol(currentStepDef?.id)
+              : '';
 
         await startStream(
           message,
@@ -176,7 +247,7 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
             role: m.role,
             content: m.content,
           })) || [],
-          systemPrompt + stepContext
+          systemPrompt + stepContext + interviewProtocol
         );
       } catch (e) {
         setError('Failed to send message');
@@ -184,7 +255,7 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
         console.error('[useToolAI] Error sending message:', e);
       }
     },
-    [currentSession, currentStepDef, getSystemPrompt, startStream]
+    [currentSession, currentStepDef, getSystemPrompt, startStream, toolType]
   );
 
   // Request AI suggestions for current step
@@ -266,6 +337,71 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
       return;
     }
 
+    if (toolType === 'value-chain') {
+      setError(null);
+      const prompt = buildValueChainLeversPrompt(currentSession.inputData as any);
+      if (!prompt) {
+        setError('Need scored value-chain activities to generate levers');
+        return;
+      }
+      setPendingAction('correlations');
+      setActiveAiActionId('synthesize-insights');
+      await sendMessage(prompt);
+      return;
+    }
+
+    if (toolType === 'capability-mapper') {
+      setError(null);
+      const prompt = buildCapabilityMapperGapsPrompt(currentSession.inputData as any);
+      if (!prompt) {
+        setError('Need scored capabilities to generate gaps');
+        return;
+      }
+      setPendingAction('correlations');
+      setActiveAiActionId('synthesize-insights');
+      await sendMessage(prompt);
+      return;
+    }
+
+    if (toolType === 'ambition-decomposer') {
+      setError(null);
+      const prompt = buildAmbitionDecomposerPrioritiesPrompt(currentSession.inputData as any);
+      if (!prompt) {
+        setError('Need strategic themes to generate priorities');
+        return;
+      }
+      setPendingAction('correlations');
+      setActiveAiActionId('synthesize-insights');
+      await sendMessage(prompt);
+      return;
+    }
+
+    if (toolType === 'focus-tradeoff') {
+      setError(null);
+      const prompt = buildFocusTradeoffTradeoffsPrompt(currentSession.inputData as any);
+      if (!prompt) {
+        setError('Need scored priorities to generate trade-offs');
+        return;
+      }
+      setPendingAction('correlations');
+      setActiveAiActionId('synthesize-insights');
+      await sendMessage(prompt);
+      return;
+    }
+
+    if (toolType === 'narrative-engine') {
+      setError(null);
+      const prompt = buildNarrativeEngineThreadsPrompt(currentSession.inputData as any);
+      if (!prompt) {
+        setError('Need narrative pillars to generate the storyline');
+        return;
+      }
+      setPendingAction('correlations');
+      setActiveAiActionId('synthesize-insights');
+      await sendMessage(prompt);
+      return;
+    }
+
     if (toolType !== 'dynamic-swot') return;
 
     setError(null);
@@ -301,6 +437,37 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
 
     setError(null);
     setSessionGenerationStatus('generating');
+
+    if (OPERATIONAL_AI_TOOLS.has(toolType)) {
+      const opData = currentSession.inputData as any;
+      const sectionIds = Object.keys(opData?.sections || {});
+      if (!sectionIds.length) {
+        setSessionGenerationStatus('idle');
+        return;
+      }
+      const stepsById = new Map(
+        ((currentSession.steps || []) as any[]).map((s) => [s.id, s])
+      );
+      const sectionMeta: OperationalSectionMeta[] = sectionIds.map((id) => {
+        const step = stepsById.get(id) as any;
+        return {
+          id,
+          name: step?.name || step?.title || id.replace(/[-_]/g, ' '),
+          description: step?.description,
+        };
+      });
+      const opPrompt = buildOperationalFullSessionPrompt(
+        opData,
+        sectionMeta,
+        OPERATIONAL_AI_TOOL_NAMES[toolType] || toolType,
+        formatForPrompt()
+      );
+      setPendingAction('full-session');
+      setActiveAiActionId('draft-session');
+      await sendMessage(opPrompt);
+      return;
+    }
+
     const prompt =
       toolType === 'risk-uncertainty'
         ? buildRiskFullSessionPrompt(
@@ -322,12 +489,37 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
                   currentSession.inputData as any,
                   formatForPrompt()
                 )
-              : toolType === 'dynamic-swot'
-                ? buildDynamicSwotFullSessionPrompt(
-                    currentSession.inputData as SWOTData | undefined,
+              : toolType === 'value-chain'
+                ? buildValueChainFullSessionPrompt(
+                    currentSession.inputData as any,
                     formatForPrompt()
                   )
-                : '';
+                : toolType === 'capability-mapper'
+                  ? buildCapabilityMapperFullSessionPrompt(
+                      currentSession.inputData as any,
+                      formatForPrompt()
+                    )
+                  : toolType === 'ambition-decomposer'
+                    ? buildAmbitionDecomposerFullSessionPrompt(
+                        currentSession.inputData as any,
+                        formatForPrompt()
+                      )
+                    : toolType === 'focus-tradeoff'
+                      ? buildFocusTradeoffFullSessionPrompt(
+                          currentSession.inputData as any,
+                          formatForPrompt()
+                        )
+                      : toolType === 'narrative-engine'
+                        ? buildNarrativeEngineFullSessionPrompt(
+                            currentSession.inputData as any,
+                            formatForPrompt()
+                          )
+                        : toolType === 'dynamic-swot'
+                  ? buildDynamicSwotFullSessionPrompt(
+                      currentSession.inputData as SWOTData | undefined,
+                      formatForPrompt()
+                    )
+                  : '';
 
     if (!prompt) {
       setSessionGenerationStatus('idle');
@@ -389,6 +581,11 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
         !currentSession ||
         (toolType !== 'dynamic-swot' &&
           toolType !== 'market-forces' &&
+          toolType !== 'value-chain' &&
+          toolType !== 'capability-mapper' &&
+          toolType !== 'ambition-decomposer' &&
+          toolType !== 'focus-tradeoff' &&
+          toolType !== 'narrative-engine' &&
           toolType !== 'growth-paths' &&
           toolType !== 'portfolio-priority' &&
           toolType !== 'risk-uncertainty')
@@ -427,7 +624,42 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
                     cardId,
                     userComment
                   )
-                : buildDynamicSwotRethinkPrompt(
+                : toolType === 'value-chain'
+                  ? buildValueChainRethinkPrompt(
+                      currentSession.inputData as any,
+                      cardType,
+                      cardId,
+                      userComment
+                    )
+                  : toolType === 'capability-mapper'
+                    ? buildCapabilityMapperRethinkPrompt(
+                        currentSession.inputData as any,
+                        cardType,
+                        cardId,
+                        userComment
+                      )
+                    : toolType === 'ambition-decomposer'
+                      ? buildAmbitionDecomposerRethinkPrompt(
+                          currentSession.inputData as any,
+                          cardType,
+                          cardId,
+                          userComment
+                        )
+                      : toolType === 'focus-tradeoff'
+                        ? buildFocusTradeoffRethinkPrompt(
+                            currentSession.inputData as any,
+                            cardType,
+                            cardId,
+                            userComment
+                          )
+                        : toolType === 'narrative-engine'
+                          ? buildNarrativeEngineRethinkPrompt(
+                              currentSession.inputData as any,
+                              cardType,
+                              cardId,
+                              userComment
+                            )
+                          : buildDynamicSwotRethinkPrompt(
                     currentSession.inputData as SWOTData,
                     cardType,
                     cardId,
@@ -447,9 +679,15 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
       !streamedContent ||
       (toolType !== 'dynamic-swot' &&
         toolType !== 'market-forces' &&
+        toolType !== 'value-chain' &&
+        toolType !== 'capability-mapper' &&
+        toolType !== 'ambition-decomposer' &&
+        toolType !== 'focus-tradeoff' &&
+        toolType !== 'narrative-engine' &&
         toolType !== 'growth-paths' &&
         toolType !== 'portfolio-priority' &&
-        toolType !== 'risk-uncertainty')
+        toolType !== 'risk-uncertainty' &&
+        !OPERATIONAL_AI_TOOLS.has(toolType))
     )
       return;
 
@@ -555,7 +793,133 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
                     updateCardAfterRethink,
                   },
                 })
-              : applyDynamicSwotPendingAction({
+              : toolType === 'value-chain'
+                ? applyValueChainPendingAction({
+                    pendingAction,
+                    parsed,
+                    currentStepId: currentStepDef?.id,
+                    valueChainData: (currentSession?.inputData as any) || {
+                      context: { industry: '', valueChainScope: '', position: 'undefined' },
+                      signals: [],
+                      activities: {},
+                      levers: [],
+                      recommendedMoves: [],
+                      outputCandidates: [],
+                    },
+                    rethinkTarget,
+                    toolType,
+                    actions: {
+                      updateInputData,
+                      setInitiatives,
+                      setSessionGenerationStatus,
+                      updateCardAfterRethink,
+                    },
+                  })
+                : toolType === 'capability-mapper'
+                  ? applyCapabilityMapperPendingAction({
+                      pendingAction,
+                      parsed,
+                      currentStepId: currentStepDef?.id,
+                      capabilityData: (currentSession?.inputData as any) || {
+                        context: { industry: '', capabilityDomains: '' },
+                        signals: [],
+                        capabilities: [],
+                        gaps: [],
+                        recommendedMoves: [],
+                        outputCandidates: [],
+                      },
+                      rethinkTarget,
+                      toolType,
+                      actions: {
+                        updateInputData,
+                        setInitiatives,
+                        setSessionGenerationStatus,
+                        updateCardAfterRethink,
+                      },
+                    })
+                  : toolType === 'ambition-decomposer'
+                    ? applyAmbitionDecomposerPendingAction({
+                        pendingAction,
+                        parsed,
+                        currentStepId: currentStepDef?.id,
+                        ambitionData: (currentSession?.inputData as any) || {
+                          context: { ambitionStatement: '', scope: '' },
+                          signals: [],
+                          themes: [],
+                          priorities: [],
+                          recommendedMoves: [],
+                          outputCandidates: [],
+                        },
+                        rethinkTarget,
+                        toolType,
+                        actions: {
+                          updateInputData,
+                          setInitiatives,
+                          setSessionGenerationStatus,
+                          updateCardAfterRethink,
+                        },
+                      })
+                    : toolType === 'focus-tradeoff'
+                      ? applyFocusTradeoffPendingAction({
+                          pendingAction,
+                          parsed,
+                          currentStepId: currentStepDef?.id,
+                          focusData: (currentSession?.inputData as any) || {
+                            context: { competingPriorities: '', decisionCriteria: '' },
+                            signals: [],
+                            priorities: [],
+                            tradeoffs: [],
+                            recommendedMoves: [],
+                            outputCandidates: [],
+                          },
+                          rethinkTarget,
+                          toolType,
+                          actions: {
+                            updateInputData,
+                            setInitiatives,
+                            setSessionGenerationStatus,
+                            updateCardAfterRethink,
+                          },
+                        })
+                      : toolType === 'narrative-engine'
+                        ? applyNarrativeEnginePendingAction({
+                            pendingAction,
+                            parsed,
+                            currentStepId: currentStepDef?.id,
+                            narrativeData: (currentSession?.inputData as any) || {
+                              context: { audience: '', coreMessage: '' },
+                              signals: [],
+                              pillars: [],
+                              threads: [],
+                              recommendedMoves: [],
+                              outputCandidates: [],
+                            },
+                            rethinkTarget,
+                            toolType,
+                            actions: {
+                              updateInputData,
+                              setInitiatives,
+                              setSessionGenerationStatus,
+                              updateCardAfterRethink,
+                            },
+                          })
+                        : OPERATIONAL_AI_TOOLS.has(toolType)
+                          ? applyOperationalPendingAction({
+                              pendingAction,
+                              parsed,
+                              currentStepId: currentStepDef?.id,
+                              operationalData: (currentSession?.inputData as any) || {
+                                context: {},
+                                sections: {},
+                              },
+                              toolType,
+                              actions: {
+                                updateInputData,
+                                setInitiatives,
+                                setSessionGenerationStatus,
+                              },
+                            })
+                          : applyDynamicSwotPendingAction({
                   pendingAction,
                   parsed,
                   currentStepId: currentStepDef?.id,

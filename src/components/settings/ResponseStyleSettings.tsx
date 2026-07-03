@@ -43,15 +43,15 @@ export const ResponseStyleSettings: React.FC<ResponseStyleSettingsProps> = ({ cl
               onClick={() => setResponseLength(length)}
               className={`p-3 rounded-lg border-2 transition-all ${
                 responseLength === length
-                  ? 'border-[var(--c-info)] bg-slate-100 dark:bg-white/[0.08]'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
+                  ? 'border-brand bg-brand/5 dark:bg-brand/10'
+                  : 'border-slate-200 dark:border-navy-700 hover:border-brand/50'
               }`}
             >
               <div className="flex items-center justify-between mb-1">
                 <span className="font-medium text-slate-900 dark:text-white capitalize">
                   {t(`settings.ai.length.${length}`, length)}
                 </span>
-                {responseLength === length && <Check size={16} className="text-[var(--c-info)]" />}
+                {responseLength === length && <Check size={16} className="text-brand" />}
               </div>
             </button>
           ))}
@@ -61,7 +61,7 @@ export const ResponseStyleSettings: React.FC<ResponseStyleSettingsProps> = ({ cl
       {/* Tone */}
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
-          {t('settings.ai.toneLabel', 'Tone')}
+          {t('settings.ai.tone', 'Tone')}
         </label>
         <div className="grid grid-cols-3 gap-3">
           {TONES.map((t_) => (
@@ -70,15 +70,15 @@ export const ResponseStyleSettings: React.FC<ResponseStyleSettingsProps> = ({ cl
               onClick={() => setTone(t_)}
               className={`p-3 rounded-lg border-2 transition-all ${
                 tone === t_
-                  ? 'border-[var(--c-info)] bg-slate-100 dark:bg-white/[0.08]'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
+                  ? 'border-brand bg-brand/5 dark:bg-brand/10'
+                  : 'border-slate-200 dark:border-navy-700 hover:border-brand/50'
               }`}
             >
               <div className="flex items-center justify-between mb-1">
                 <span className="font-medium text-slate-900 dark:text-white capitalize">
                   {t(`settings.ai.tone.${t_}`, t_)}
                 </span>
-                {tone === t_ && <Check size={16} className="text-[var(--c-info)]" />}
+                {tone === t_ && <Check size={16} className="text-brand" />}
               </div>
             </button>
           ))}

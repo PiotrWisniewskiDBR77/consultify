@@ -70,13 +70,13 @@ const KanbanCard: React.FC<{
     <div
       onClick={onClick}
       className={`
-        bg-white dark:bg-navy-900 rounded-xl border border-slate-200/60 dark:border-white/5
+        bg-c-surface rounded-xl border border-c-border
         p-3 cursor-pointer group transition-all
-        hover:bg-slate-50/70 dark:hover:bg-white/[0.03]
+        hover:bg-c-surface-raised
         ${isDragging ? 'shadow-hig-xl dark:shadow-hig-dark-xl scale-[1.02] rotate-1' : ''}
       `}
     >
-      <h4 className="font-medium text-sm text-slate-900 dark:text-slate-100 line-clamp-2 mb-2 leading-snug">
+      <h4 className="font-medium text-sm text-c-text line-clamp-2 mb-2 leading-snug">
         {initiative.name}
       </h4>
 
@@ -89,40 +89,40 @@ const KanbanCard: React.FC<{
         </span>
         <div className="flex items-center gap-1">
           <span className={`w-2 h-2 rounded-full ${health.dotClass}`} />
-          <span className="text-[10px] text-slate-600 dark:text-slate-500">{health.label}</span>
+          <span className="text-[10px] text-c-text-muted">{health.label}</span>
         </div>
       </div>
 
       {owner ? (
         <div className="flex items-center gap-1.5 mb-2">
-          <div className="w-4 h-4 rounded-full bg-slate-100 dark:bg-white/[0.06] flex items-center justify-center text-[8px] font-medium text-slate-600 dark:text-slate-300 overflow-hidden flex-shrink-0">
+          <div className="w-4 h-4 rounded-full bg-c-surface-raised flex items-center justify-center text-[8px] font-medium text-c-text-secondary overflow-hidden flex-shrink-0">
             {owner.avatarUrl ? (
               <img src={owner.avatarUrl} alt="" className="w-full h-full object-cover" />
             ) : (
               `${owner.firstName?.[0] || '?'}${owner.lastName?.[0] || ''}`
             )}
           </div>
-          <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+          <span className="text-[11px] text-c-text-secondary truncate">
             {owner.firstName} {owner.lastName}
           </span>
         </div>
       ) : (
-        <div className="flex items-center gap-1.5 mb-2 text-[11px] text-slate-600">
+        <div className="flex items-center gap-1.5 mb-2 text-[11px] text-c-text-muted">
           <User size={12} />
           <span>{t('initiatives.kanban.noOwner', 'Unassigned')}</span>
         </div>
       )}
 
       {nextStep && (
-        <div className="pt-2 border-t border-slate-200/70 dark:border-white/[0.03]">
-          <div className="text-[10px] text-slate-600 dark:text-slate-500 mb-1 uppercase tracking-wider font-medium">
+        <div className="pt-2 border-t border-c-border-subtle">
+          <div className="text-[10px] text-c-text-muted mb-1 uppercase tracking-wider font-medium">
             {t('initiatives.kanban.nextGate', 'Next gate')}
           </div>
-          <div className="text-xs text-slate-600 dark:text-slate-300 font-medium truncate">
+          <div className="text-xs text-c-text-secondary font-medium truncate">
             {nextStep.label}
           </div>
           {nextStep.role && (
-            <div className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
+            <div className="text-[10px] text-c-text-muted mt-0.5">
               {nextStep.role}
             </div>
           )}
@@ -175,20 +175,20 @@ const KanbanColumn: React.FC<{
       ref={setNodeRef}
       className={`
         flex flex-col ${columnWidth} rounded-xl overflow-hidden
-        bg-slate-50/50 dark:bg-navy-950/30
-        border border-slate-200/40 dark:border-white/[0.03]
-        ${isOver ? 'ring-2 ring-primary-500/40' : ''}
+        bg-c-bg
+        border border-c-border-subtle
+        ${isOver ? 'ring-2 ring-c-focus' : ''}
         transition-all
       `}
     >
-      <div className="flex items-center justify-between px-3 py-2.5 bg-white/60 dark:bg-navy-900/40">
+      <div className="flex items-center justify-between px-3 py-2.5 bg-c-surface">
         <div className="flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusStyle.dot}`} />
-          <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
+          <span className="text-xs font-semibold text-c-text-secondary uppercase tracking-wider">
             {label}
           </span>
         </div>
-        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 dark:bg-white/[0.05] text-slate-500 dark:text-slate-400 rounded-full min-w-[20px] text-center">
+        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-c-surface-raised text-c-text-muted rounded-full min-w-[20px] text-center">
           {initiatives.length}
         </span>
       </div>
@@ -207,7 +207,7 @@ const KanbanColumn: React.FC<{
           ))}
         </SortableContext>
         {initiatives.length === 0 && (
-          <div className="p-3 text-center text-slate-600 dark:text-slate-500 text-xs">
+          <div className="p-3 text-center text-c-text-muted text-xs">
             Drop initiatives here
           </div>
         )}

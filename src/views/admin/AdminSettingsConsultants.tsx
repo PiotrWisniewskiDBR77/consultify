@@ -364,10 +364,10 @@ export const AdminSettingsConsultants: React.FC = () => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-xl font-semibold text-navy-900 dark:text-white flex items-center gap-2">
-            <Shield className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+            <Shield className="w-5 h-5 text-c-text-muted" />
             External Consultants
           </h2>
-          <p className="text-slate-600 dark:text-slate-500 text-sm mt-1">
+          <p className="text-c-text-secondary text-sm mt-1">
             Manage external advisors with project-level access. Consultants don't consume your paid
             seat pool.
           </p>
@@ -377,7 +377,7 @@ export const AdminSettingsConsultants: React.FC = () => {
             resetInviteForm();
             setShowInviteModal(true);
           }}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-navy-800/40 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-navy-900 dark:text-white rounded-lg font-medium transition-colors border border-slate-200 dark:border-navy-700"
+          className="flex items-center gap-2 px-4 py-2 bg-c-surface-raised/40 hover:bg-slate-200 dark:bg-c-surface/5 dark:hover:bg-c-surface/10 text-navy-900 dark:text-white rounded-lg font-medium transition-colors border border-c-border-subtle"
         >
           <UserPlus size={18} />
           Invite Consultant
@@ -400,7 +400,7 @@ export const AdminSettingsConsultants: React.FC = () => {
       {/* Consultants Table */}
       <div className="admin-card rounded-xl overflow-hidden">
         <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full text-left text-sm">
-          <thead className="bg-slate-50 dark:bg-white/[0.02] text-slate-500 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-navy-700">
+          <thead className="bg-c-bg dark:bg-c-surface/[0.02] text-c-text-muted font-medium border-b border-c-border-subtle">
             <tr>
               <th className="px-6 py-4 w-8"></th>
               <th className="px-6 py-4">Consultant</th>
@@ -412,16 +412,16 @@ export const AdminSettingsConsultants: React.FC = () => {
           <tbody className="divide-y divide-white/5">
             {loading ? (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-slate-500 dark:text-slate-400">
+                <td colSpan={5} className="p-8 text-center text-c-text-muted">
                   <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2" />
                   Loading consultants...
                 </td>
               </tr>
             ) : consultants.length === 0 ? (
               <tr>
-                <td colSpan={5} className="p-12 text-center text-slate-500 dark:text-slate-400">
+                <td colSpan={5} className="p-12 text-center text-c-text-muted">
                   <div className="flex flex-col items-center gap-3">
-                    <Users className="w-12 h-12 text-slate-600 dark:text-slate-400" />
+                    <Users className="w-12 h-12 text-c-text-secondary" />
                     <p>No consultants linked to this organization yet.</p>
                     <button
                       onClick={() => {
@@ -438,11 +438,11 @@ export const AdminSettingsConsultants: React.FC = () => {
             ) : (
               consultants.map((consultant) => (
                 <React.Fragment key={consultant.consultant_id}>
-                  <tr className="hover:bg-white/[0.02] transition-colors">
+                  <tr className="hover:bg-c-surface/[0.02] transition-colors">
                     <td className="px-6 py-4">
                       <button
                         onClick={() => toggleExpand(consultant.consultant_id)}
-                        className="text-slate-500 dark:text-slate-400 hover:text-white transition-colors"
+                        className="text-c-text-muted hover:text-white transition-colors"
                       >
                         {expandedConsultants.has(consultant.consultant_id) ? (
                           <ChevronDown size={18} />
@@ -453,7 +453,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center font-medium text-xs">
+                        <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 text-c-text-secondary flex items-center justify-center font-medium text-xs">
                           {consultant.firstName?.[0] || consultant.email[0].toUpperCase()}
                         </div>
                         <div>
@@ -462,14 +462,14 @@ export const AdminSettingsConsultants: React.FC = () => {
                               ? `${consultant.firstName} ${consultant.lastName}`
                               : consultant.email}
                           </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                          <p className="text-xs text-c-text-muted">
                             {consultant.email}
                           </p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-slate-400 dark:text-slate-500">
+                      <span className="text-c-text-muted">
                         {consultant.projects.length} project
                         {consultant.projects.length !== 1 ? 's' : ''}
                       </span>
@@ -492,14 +492,14 @@ export const AdminSettingsConsultants: React.FC = () => {
                             setSelectedConsultant(consultant);
                             setShowAddProjectModal(true);
                           }}
-                          className="text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg"
+                          className="text-c-text-muted hover:text-navy-900 dark:hover:text-white transition-colors p-2 hover:bg-c-surface-raised dark:hover:bg-c-surface/5 rounded-lg"
                           title="Add to project"
                         >
                           <FolderPlus size={16} />
                         </button>
                         <button
                           onClick={() => handleRemoveConsultant(consultant.consultant_id)}
-                          className="text-slate-500 dark:text-slate-400 hover:text-danger-400 transition-colors p-2 hover:bg-danger-500/10 rounded-lg"
+                          className="text-c-text-muted hover:text-danger-400 transition-colors p-2 hover:bg-danger-500/10 rounded-lg"
                           title="Remove consultant"
                         >
                           <Trash2 size={16} />
@@ -511,23 +511,23 @@ export const AdminSettingsConsultants: React.FC = () => {
                   {/* Expanded project details */}
                   {expandedConsultants.has(consultant.consultant_id) && (
                     <tr>
-                      <td colSpan={5} className="bg-slate-50/50 dark:bg-white/[0.01] px-6 py-4">
+                      <td colSpan={5} className="bg-c-bg/50 dark:bg-c-surface/[0.01] px-6 py-4">
                         <div className="ml-8 space-y-3">
-                          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wider mb-2">
                             Project Access
                           </p>
                           {consultant.projects.map((project) => (
                             <div
                               key={project.access_id}
-                              className="flex items-center justify-between bg-slate-100 dark:bg-navy-800/40 dark:bg-white/[0.02] border border-slate-200 dark:border-navy-700 rounded-lg p-3"
+                              className="flex items-center justify-between bg-c-surface-raised/40 dark:bg-c-surface/[0.02] border border-c-border-subtle rounded-lg p-3"
                             >
                               <div className="flex items-center gap-3">
-                                <Briefcase className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                                <Briefcase className="w-4 h-4 text-c-text-muted" />
                                 <div>
                                   <p className="font-medium text-navy-900 dark:text-white">
                                     {project.projectName}
                                   </p>
-                                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                                  <p className="text-xs text-c-text-muted">
                                     {countActivePermissions(project.permissions)} permissions active
                                     {project.access_code && (
                                       <span className="ml-2 text-blue-400">
@@ -544,14 +544,14 @@ export const AdminSettingsConsultants: React.FC = () => {
                                     setSelectedProjectAccess(project);
                                     setShowPermissionsModal(true);
                                   }}
-                                  className="text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors p-1.5 hover:bg-slate-200 dark:hover:bg-white/5 rounded"
+                                  className="text-c-text-muted hover:text-navy-900 dark:hover:text-white transition-colors p-1.5 hover:bg-slate-200 dark:hover:bg-c-surface/5 rounded"
                                   title="Edit permissions"
                                 >
                                   <Settings size={14} />
                                 </button>
                                 <button
                                   onClick={() => handleRevokeAccess(project.access_id)}
-                                  className="text-slate-500 dark:text-slate-400 hover:text-danger-400 transition-colors p-1.5 hover:bg-danger-500/10 rounded"
+                                  className="text-c-text-muted hover:text-danger-400 transition-colors p-1.5 hover:bg-danger-500/10 rounded"
                                   title="Revoke access"
                                 >
                                   <X size={14} />
@@ -573,19 +573,19 @@ export const AdminSettingsConsultants: React.FC = () => {
       {/* Invite Modal */}
       {showInviteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="p-6 border-b border-slate-200 dark:border-navy-700 flex justify-between items-center flex-shrink-0">
+          <div className="bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-c-border-subtle flex justify-between items-center flex-shrink-0">
               <div>
                 <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
                   Invite Consultant
                 </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-500 mt-1">
+                <p className="text-sm text-c-text-secondary mt-1">
                   Assign to a project with specific permissions
                 </p>
               </div>
               <button
                 onClick={() => setShowInviteModal(false)}
-                className="text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors"
+                className="text-c-text-muted hover:text-navy-900 dark:hover:text-white transition-colors"
               >
                 <X size={20} />
               </button>
@@ -600,7 +600,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                   </label>
                   <div className="relative">
                     <Mail
-                      className="absolute left-3 top-2.5 text-slate-500 dark:text-slate-400"
+                      className="absolute left-3 top-2.5 text-c-text-muted"
                       size={18}
                     />
                     <input
@@ -609,7 +609,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                       value={inviteEmail}
                       onChange={(e) => setInviteEmail(e.target.value)}
                       placeholder="consultant@firm.com"
-                      className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-navy-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600"
+                      className="w-full pl-10 pr-4 py-2 bg-c-bg dark:bg-c-surface/5 border border-c-border-subtle rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-navy-900 dark:text-white placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary"
                     />
                   </div>
                 </div>
@@ -623,16 +623,16 @@ export const AdminSettingsConsultants: React.FC = () => {
                     required
                     value={inviteProjectId}
                     onChange={(e) => setInviteProjectId(e.target.value)}
-                    className="w-full px-4 py-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-navy-900 dark:text-white"
+                    className="w-full px-4 py-2 bg-c-bg dark:bg-c-surface/5 border border-c-border-subtle rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-navy-900 dark:text-white"
                   >
-                    <option value="" className="bg-white dark:bg-navy-900">
+                    <option value="" className="bg-c-surface">
                       Select a project...
                     </option>
                     {projects.map((project) => (
                       <option
                         key={project.id}
                         value={project.id}
-                        className="bg-white dark:bg-navy-900"
+                        className="bg-c-surface"
                       >
                         {project.name}
                       </option>
@@ -649,7 +649,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                         Free Seat Access Code
                       </span>
                     </div>
-                    <label className="flex items-center gap-2 text-sm text-slate-400 dark:text-slate-500">
+                    <label className="flex items-center gap-2 text-sm text-c-text-muted">
                       <input
                         type="checkbox"
                         checked={inviteGenerateCode}
@@ -657,7 +657,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                           setInviteGenerateCode(e.target.checked);
                           if (e.target.checked) setInviteAccessCode('');
                         }}
-                        className="rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500"
+                        className="rounded border-white/20 bg-c-surface/5 text-blue-500 focus:ring-blue-500"
                       />
                       Auto-generate code
                     </label>
@@ -669,7 +669,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                       value={inviteAccessCode}
                       onChange={(e) => setInviteAccessCode(e.target.value.toUpperCase())}
                       placeholder="Enter existing code (e.g., CONS-A1B2C3D4)"
-                      className="w-full px-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white font-mono placeholder:text-slate-600 dark:text-slate-400"
+                      className="w-full px-4 py-2 bg-c-bg/30 dark:bg-navy-950/20 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white font-mono placeholder:text-c-text-secondary"
                     />
                   )}
 
@@ -685,24 +685,24 @@ export const AdminSettingsConsultants: React.FC = () => {
                     <label className="block text-sm font-medium text-slate-300">
                       Initial Permissions
                     </label>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                    <span className="text-xs text-c-text-muted">
                       {countActivePermissions(invitePermissions)}/
                       {Object.keys(defaultPermissions).length} enabled
                     </span>
                   </div>
 
-                  <div className="bg-white/[0.02] border border-white/10 rounded-lg p-4 max-h-64 overflow-y-auto">
+                  <div className="bg-c-surface/[0.02] border border-white/10 rounded-lg p-4 max-h-64 overflow-y-auto">
                     <div className="space-y-4">
                       {Object.entries(groupedPermissions).map(([category, perms]) => (
                         <div key={category}>
-                          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wider mb-2">
                             {category}
                           </p>
                           <div className="grid grid-cols-2 gap-2">
                             {perms.map((perm) => (
                               <label
                                 key={perm.key}
-                                className="flex items-center gap-2 p-2 rounded hover:bg-slate-50 dark:hover:bg-navy-800/20 cursor-pointer"
+                                className="flex items-center gap-2 p-2 rounded hover:bg-c-surface-raised/20 cursor-pointer"
                               >
                                 <input
                                   type="checkbox"
@@ -713,11 +713,11 @@ export const AdminSettingsConsultants: React.FC = () => {
                                       [perm.key]: e.target.checked,
                                     })
                                   }
-                                  className="rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500"
+                                  className="rounded border-white/20 bg-c-surface/5 text-blue-500 focus:ring-blue-500"
                                 />
                                 <div>
                                   <span className="text-sm text-white">{perm.label}</span>
-                                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                                  <p className="text-xs text-c-text-muted">
                                     {perm.description}
                                   </p>
                                 </div>
@@ -729,7 +729,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                     </div>
                   </div>
 
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                  <p className="text-xs text-c-text-muted mt-2">
                     <AlertCircle className="inline w-3 h-3 mr-1" />
                     Consultants start with no permissions by default. Enable only what's needed.
                   </p>
@@ -741,7 +741,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowInviteModal(false)}
-                  className="flex-1 px-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors font-medium"
+                  className="flex-1 px-4 py-2 bg-c-bg/30 dark:bg-navy-950/20 text-slate-300 rounded-lg hover:bg-c-surface-raised/40 transition-colors font-medium"
                 >
                   Cancel
                 </button>
@@ -775,25 +775,25 @@ export const AdminSettingsConsultants: React.FC = () => {
             <div className="p-6 border-b border-white/10 flex justify-between items-center">
               <div>
                 <h3 className="text-lg font-semibold text-white">Add to Project</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-sm text-c-text-muted mt-1">
                   {selectedConsultant.email}
                 </p>
               </div>
               <button
                 onClick={() => setShowAddProjectModal(false)}
-                className="text-slate-500 dark:text-slate-400 hover:text-white transition-colors"
+                className="text-c-text-muted hover:text-white transition-colors"
               >
                 <X size={20} />
               </button>
             </div>
 
             <div className="p-6">
-              <p className="text-sm text-slate-400 dark:text-slate-500 mb-4">
+              <p className="text-sm text-c-text-muted mb-4">
                 Select a project to add this consultant to:
               </p>
 
               {getUnassignedProjects(selectedConsultant).length === 0 ? (
-                <p className="text-slate-500 dark:text-slate-400 text-center py-4">
+                <p className="text-c-text-muted text-center py-4">
                   This consultant already has access to all projects.
                 </p>
               ) : (
@@ -802,9 +802,9 @@ export const AdminSettingsConsultants: React.FC = () => {
                     <button
                       key={project.id}
                       onClick={() => handleAddProject(project.id)}
-                      className="w-full flex items-center gap-3 p-3 bg-white/[0.02] hover:bg-slate-50 dark:hover:bg-navy-800/20 border border-white/10 rounded-lg transition-colors text-left"
+                      className="w-full flex items-center gap-3 p-3 bg-c-surface/[0.02] hover:bg-c-surface-raised/20 border border-white/10 rounded-lg transition-colors text-left"
                     >
-                      <Briefcase className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                      <Briefcase className="w-4 h-4 text-c-text-muted" />
                       <div>
                         <p className="font-medium text-white">{project.name}</p>
                         <EntityStatusChip status={project.status} />
@@ -818,7 +818,7 @@ export const AdminSettingsConsultants: React.FC = () => {
             <div className="p-6 border-t border-white/10">
               <button
                 onClick={() => setShowAddProjectModal(false)}
-                className="w-full px-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors font-medium"
+                className="w-full px-4 py-2 bg-c-bg/30 dark:bg-navy-950/20 text-slate-300 rounded-lg hover:bg-c-surface-raised/40 transition-colors font-medium"
               >
                 Close
               </button>
@@ -890,13 +890,13 @@ const PermissionsModal: React.FC<{
         <div className="p-6 border-b border-white/10 flex justify-between items-center flex-shrink-0">
           <div>
             <h3 className="text-lg font-semibold text-white">Edit Permissions</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-sm text-c-text-muted mt-1">
               {projectAccess.projectName}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-500 dark:text-slate-400 hover:text-white transition-colors"
+            className="text-c-text-muted hover:text-white transition-colors"
           >
             <X size={20} />
           </button>
@@ -905,7 +905,7 @@ const PermissionsModal: React.FC<{
         <div className="p-6 flex-1 overflow-y-auto">
           {/* Quick actions */}
           <div className="flex items-center gap-2 mb-4">
-            <span className="text-sm text-slate-500 dark:text-slate-400 mr-2">Quick:</span>
+            <span className="text-sm text-c-text-muted mr-2">Quick:</span>
             <button
               onClick={enableViewOnly}
               className="px-3 py-1 text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded hover:bg-blue-500/20 transition-colors"
@@ -927,7 +927,7 @@ const PermissionsModal: React.FC<{
               <EyeOff className="inline w-3 h-3 mr-1" />
               Disable All
             </button>
-            <span className="ml-auto text-xs text-slate-500 dark:text-slate-400">
+            <span className="ml-auto text-xs text-c-text-muted">
               {countActive}/{total} enabled
             </span>
           </div>
@@ -936,7 +936,7 @@ const PermissionsModal: React.FC<{
           <div className="space-y-6">
             {Object.entries(groupedPermissions).map(([category, perms]) => (
               <div key={category}>
-                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
+                <p className="text-xs font-medium text-c-text-muted uppercase tracking-wider mb-3">
                   {category}
                 </p>
                 <div className="grid grid-cols-2 gap-2">
@@ -946,7 +946,7 @@ const PermissionsModal: React.FC<{
                       className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
                         permissions[perm.key]
                           ? 'bg-blue-500/10 border border-blue-500/20'
-                          : 'bg-white/[0.02] border border-white/5 hover:bg-slate-50 dark:hover:bg-navy-800/20'
+                          : 'bg-c-surface/[0.02] border border-white/5 hover:bg-c-surface-raised/20'
                       }`}
                     >
                       <input
@@ -958,7 +958,7 @@ const PermissionsModal: React.FC<{
                             [perm.key]: e.target.checked,
                           })
                         }
-                        className="rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500"
+                        className="rounded border-white/20 bg-c-surface/5 text-blue-500 focus:ring-blue-500"
                       />
                       <div>
                         <span
@@ -966,7 +966,7 @@ const PermissionsModal: React.FC<{
                         >
                           {perm.label}
                         </span>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                        <p className="text-xs text-c-text-muted">
                           {perm.description}
                         </p>
                       </div>
@@ -981,7 +981,7 @@ const PermissionsModal: React.FC<{
         <div className="p-6 border-t border-white/10 flex gap-3 flex-shrink-0">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors font-medium"
+            className="flex-1 px-4 py-2 bg-c-bg/30 dark:bg-navy-950/20 text-slate-300 rounded-lg hover:bg-c-surface-raised/40 transition-colors font-medium"
           >
             Cancel
           </button>

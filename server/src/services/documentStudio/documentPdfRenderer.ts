@@ -80,9 +80,102 @@ interface BlockTableContent {
   rows?: unknown[][];
 }
 
+/** Premium content-gen keyed table row: `{ cells: { col: { value, style } } }`. */
+interface KeyedTableRow {
+  cells?: Record<string, { value?: unknown; style?: { bgColor?: string } } | unknown>;
+}
+
+/** Premium content-gen KPI shape: `{ items: [{ label, value, delta }] }`. */
+interface KpiStripContent {
+  items?: Array<{ label?: unknown; value?: unknown; delta?: unknown }>;
+}
+
 interface BlockCalloutContent {
+  /** Legacy schema field. */
   variant?: string;
+  /** Premium content-gen field (info | warning | danger | success). */
+  tone?: string;
   text?: string;
+}
+
+/** Tone → accent hex for callout labels. */
+const PDF_CALLOUT_TONE_COLOR: Record<string, string> = {
+  info: '#2563EB',
+  warning: '#D97706',
+  danger: '#DC2626',
+  success: '#16A34A',
+};
+
+/** Normalize a CSS hex to `#RRGGBB`, or null when not a valid 6-digit hex. */
+function normalizeHexColor(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const clean = raw.trim().replace(/^#/, '');
+  return /^[0-9a-fA-F]{6}$/.test(clean) ? `#${clean.toUpperCase()}` : null;
+}
+
+function isDarkHex(hex: string): boolean {
+  const c = hex.replace('#', '');
+  const r = Number.parseInt(c.slice(0, 2), 16);
+  const g = Number.parseInt(c.slice(2, 4), 16);
+  const b = Number.parseInt(c.slice(4, 6), 16);
+  return 0.299 * r + 0.587 * g + 0.114 * b < 140;
+}
+
+interface PdfNormalizedCell {
+  text: string;
+  fill: string | null;
+}
+function normalizePdfTableContent(content: unknown): {
+  headers: string[];
+  rows: PdfNormalizedCell[][];
+} {
+  const value = (content ?? {}) as BlockTableContent & { rows?: unknown };
+  const rawRows = Array.isArray(value.rows) ? (value.rows as unknown[]) : [];
+  const isKeyed = rawRows.some((r) => r != null && typeof r === 'object' && !Array.isArray(r));
+  if (isKeyed) {
+    const columnKeys: string[] = [];
+    const seen = new Set<string>();
+    for (const row of rawRows) {
+      const keyed = row as KeyedTableRow;
+      const cells = (keyed?.cells && typeof keyed.cells === 'object' ? keyed.cells : row) as Record<
+        string,
+        unknown
+      >;
+      for (const k of Object.keys(cells ?? {})) {
+        if (!seen.has(k)) {
+          seen.add(k);
+          columnKeys.push(k);
+        }
+      }
+    }
+    const rows: PdfNormalizedCell[][] = rawRows.map((row) => {
+      const keyed = row as KeyedTableRow;
+      const cells = (keyed?.cells && typeof keyed.cells === 'object' ? keyed.cells : row) as Record<
+        string,
+        unknown
+      >;
+      return columnKeys.map((key) => {
+        const cell = cells?.[key];
+        if (cell != null && typeof cell === 'object' && 'value' in (cell as object)) {
+          const c = cell as { value?: unknown; style?: { bgColor?: string } };
+          return { text: asString(c.value ?? ''), fill: normalizeHexColor(c.style?.bgColor) };
+        }
+        return { text: asString(cell ?? ''), fill: null };
+      });
+    });
+    const headers = columnKeys.map((k) =>
+      k
+        .replace(/[_-]+/g, ' ')
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .replace(/^\w/, (m) => m.toUpperCase())
+    );
+    return { headers, rows };
+  }
+  const headers = Array.isArray(value.headers) ? value.headers.map((h) => asString(h)) : [];
+  const rows: PdfNormalizedCell[][] = rawRows.map((row) =>
+    (Array.isArray(row) ? row : []).map((cell) => ({ text: asString(cell), fill: null }))
+  );
+  return { headers, rows };
 }
 
 /**
@@ -210,9 +303,14 @@ async function buildChartPngByBlockId(schema: DocumentSchema): Promise<Map<strin
   for (const section of schema.sections) {
     for (const block of section.blocks) {
       if (block.type !== 'chart') continue;
-      const png = await renderChartBlockToPng(block);
-      if (png && png.length > 0) {
-        out.set(block.blockId, png);
+      // Fail-soft per-blok: błąd rasteryzacji NIE kładzie całego renderu PDF.
+      try {
+        const png = await renderChartBlockToPng(block);
+        if (png && png.length > 0) {
+          out.set(block.blockId, png);
+        }
+      } catch {
+        /* pomiń wykres — placeholder */
       }
     }
   }
@@ -492,10 +590,12 @@ function drawCallout(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRend
   const value = (block.content ?? {}) as BlockCalloutContent;
   const text = asString(value.text ?? '');
   if (!text) return;
-  const label = value.variant ? `[${String(value.variant).toUpperCase()}] ` : '[Key message] ';
+  const marker = value.tone ?? value.variant;
+  const label = marker ? `[${String(marker).toUpperCase()}] ` : '[Key message] ';
+  const accent = (marker && PDF_CALLOUT_TONE_COLOR[String(marker).toLowerCase()]) || '#4338CA';
   doc
     .fontSize(ctx.sizing.body)
-    .fillColor('#4338CA')
+    .fillColor(accent)
     .font('Helvetica-Bold')
     .text(label, { continued: true })
     .font('Helvetica-Oblique')
@@ -520,10 +620,56 @@ function drawQuote(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRender
   doc.moveDown(0.4);
 }
 
+/** Draw one grid row of cells (with optional per-cell fills) at the current y. */
+function drawGridRow(
+  doc: PDFKit.PDFDocument,
+  cells: PdfNormalizedCell[],
+  colX: number[],
+  colW: number[],
+  fontSize: number,
+  opts: { headerRow?: boolean } = {}
+): void {
+  const pad = 4;
+  const lineHeight = fontSize * 1.25;
+  // Pre-measure the tallest cell so all cells in the row share a height.
+  doc.fontSize(fontSize).font(opts.headerRow ? 'Helvetica-Bold' : 'Helvetica');
+  let maxLines = 1;
+  cells.forEach((cell, i) => {
+    const h = doc.heightOfString(cell.text || ' ', { width: colW[i] - 2 * pad });
+    maxLines = Math.max(maxLines, Math.ceil(h / lineHeight));
+  });
+  const rowH = maxLines * lineHeight + 2 * pad;
+  const y = doc.y;
+  // Page-break guard: if the row would overflow, start a fresh page.
+  if (y + rowH > doc.page.height - doc.page.margins.bottom) {
+    doc.addPage();
+  }
+  const top = doc.y;
+  cells.forEach((cell, i) => {
+    const x = colX[i];
+    const w = colW[i];
+    const fill = cell.fill ?? (opts.headerRow ? '#E2E8F0' : null);
+    if (fill) {
+      doc.save().rect(x, top, w, rowH).fill(fill).restore();
+    }
+    const textColor =
+      cell.fill && isDarkHex(cell.fill) ? '#FFFFFF' : opts.headerRow ? '#0F172A' : '#0F172A';
+    doc
+      .fontSize(fontSize)
+      .font(opts.headerRow ? 'Helvetica-Bold' : 'Helvetica')
+      .fillColor(textColor)
+      .text(cell.text, x + pad, top + pad, { width: w - 2 * pad });
+    // Cell border.
+    doc.save().rect(x, top, w, rowH).lineWidth(0.5).strokeColor('#CBD5E1').stroke().restore();
+  });
+  doc.y = top + rowH;
+  doc.x = doc.page.margins.left;
+  doc.fillColor('#0F172A').font('Helvetica');
+}
+
 function drawTable(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRenderContext): void {
-  const value = (block.content ?? {}) as BlockTableContent & { caption?: string };
-  const headers = Array.isArray(value.headers) ? value.headers : [];
-  const rows = Array.isArray(value.rows) ? value.rows : [];
+  const value = (block.content ?? {}) as { caption?: string };
+  const { headers, rows } = normalizePdfTableContent(block.content);
   if (headers.length === 0 && rows.length === 0) {
     doc
       .fontSize(ctx.sizing.caption)
@@ -534,15 +680,35 @@ function drawTable(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRender
     doc.moveDown(0.4);
     return;
   }
-  doc.fontSize(ctx.sizing.caption).fillColor('#0F172A').font('Helvetica');
+
+  // Real bordered grid (PDFKit has no native table primitive). Equal column
+  // widths across the usable content width.
+  const colCount = Math.max(headers.length, ...rows.map((r) => r.length), 1);
+  const usableWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+  const colW = Array.from({ length: colCount }, () => usableWidth / colCount);
+  const colX = colW.map((_, i) => doc.page.margins.left + i * colW[0]);
+  doc.x = doc.page.margins.left;
+
+  const pad = (arr: PdfNormalizedCell[]): PdfNormalizedCell[] => {
+    const out = arr.slice(0, colCount);
+    while (out.length < colCount) out.push({ text: '', fill: null });
+    return out;
+  };
+
   if (headers.length > 0) {
-    doc.font('Helvetica-Bold').text(headers.map((h) => asString(h)).join(' | '));
-    doc.font('Helvetica');
+    drawGridRow(
+      doc,
+      pad(headers.map((h) => ({ text: h, fill: null }))),
+      colX,
+      colW,
+      ctx.sizing.caption,
+      { headerRow: true }
+    );
   }
   for (const row of rows) {
-    const cells = Array.isArray(row) ? row.map((c) => asString(c)) : [];
-    doc.text(cells.join(' | '));
+    drawGridRow(doc, pad(row), colX, colW, ctx.sizing.caption);
   }
+  doc.moveDown(0.3);
 
   // Auto-numbered caption — mirrors the DOCX renderer so two tables
   // across formats agree on "Table 1" / "Table 2".
@@ -678,6 +844,72 @@ function drawChart(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRender
   doc.moveDown(0.4);
 }
 
+/**
+ * KPI strip → a row of shaded metric cards (label / value / delta).
+ * Consumes the premium content-gen shape `{ items: [{label, value, delta}] }`.
+ * Falls back to a table render for legacy schema shapes, or a placeholder line.
+ */
+function drawKpiStrip(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRenderContext): void {
+  const value = (block.content ?? {}) as KpiStripContent;
+  const items = Array.isArray(value.items) ? value.items : [];
+  if (items.length === 0) {
+    const legacy = (block.content ?? {}) as BlockTableContent;
+    if ((legacy.headers?.length ?? 0) > 0 || (legacy.rows?.length ?? 0) > 0) {
+      drawTable(doc, block, ctx);
+      return;
+    }
+    doc
+      .fontSize(ctx.sizing.caption)
+      .fillColor('#64748B')
+      .font('Helvetica-Oblique')
+      .text('[KPI strip placeholder — no metrics provided.]');
+    doc.font('Helvetica').fillColor('#0F172A');
+    doc.moveDown(0.4);
+    return;
+  }
+  const count = items.length;
+  const gap = 8;
+  const usableWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+  const cardW = (usableWidth - gap * (count - 1)) / count;
+  const cardH = 56;
+  const top = doc.y;
+  if (top + cardH > doc.page.height - doc.page.margins.bottom) {
+    doc.addPage();
+  }
+  const cardTop = doc.y;
+  items.forEach((item, i) => {
+    const x = doc.page.margins.left + i * (cardW + gap);
+    doc.save().roundedRect(x, cardTop, cardW, cardH, 4).fill('#F1F5F9').restore();
+    const label = asString(item?.label ?? '');
+    const metricValue = asString(item?.value ?? '');
+    const delta = asString(item?.delta ?? '').trim();
+    doc
+      .fontSize(ctx.sizing.footnote)
+      .fillColor('#64748B')
+      .font('Helvetica')
+      .text(label, x + 6, cardTop + 6, { width: cardW - 12, height: 14, ellipsis: true });
+    doc
+      .fontSize(ctx.sizing.heading2)
+      .fillColor('#0F172A')
+      .font('Helvetica-Bold')
+      .text(metricValue, x + 6, cardTop + 20, { width: cardW - 12 });
+    if (delta && delta !== '0') {
+      let deltaColor = '#64748B';
+      if (/[▲]|^\+|up/i.test(delta)) deltaColor = '#16A34A';
+      else if (/[▼]|^−|^-/.test(delta)) deltaColor = '#DC2626';
+      doc
+        .fontSize(ctx.sizing.footnote)
+        .fillColor(deltaColor)
+        .font('Helvetica')
+        .text(delta, x + 6, cardTop + 40, { width: cardW - 12, ellipsis: true });
+    }
+  });
+  doc.y = cardTop + cardH;
+  doc.x = doc.page.margins.left;
+  doc.fillColor('#0F172A').font('Helvetica');
+  doc.moveDown(0.5);
+}
+
 function drawInlineFootnote(
   doc: PDFKit.PDFDocument,
   block: DocumentBlock,
@@ -714,8 +946,10 @@ function drawBlock(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRender
       return;
     case 'table':
     case 'risk_table':
-    case 'kpi_strip':
       drawTable(doc, block, ctx);
+      return;
+    case 'kpi_strip':
+      drawKpiStrip(doc, block, ctx);
       return;
     case 'image':
       drawImage(doc, block, ctx);

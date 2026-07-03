@@ -358,6 +358,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const [edges, setEdges] = useState<TableEdge[]>([]);
   const [extensions, setExtensions] = useState<Record<string, unknown>>({});
   const nodesUndo = useUndoRedo<TableNode[]>([]);
+  // Bridge for the canvas rail undo (CanvasLeftToolbar emits tbl_undo before handlePlatformUndo is defined).
+  const platformUndoRef = useRef<() => void | Promise<void>>(() => nodesUndo.undo());
   const [formatRules, setFormatRules] = useState<FormatRule[]>([]);
   const [matrixAxisXKey, setMatrixAxisXKey] = useState<string | null>(null);
   const [matrixAxisYKey, setMatrixAxisYKey] = useState<string | null>(null);
@@ -878,6 +880,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       setShowVoiceInput,
       setShowCrossRelations,
       setShowHeatmap,
+      onUndo: () => platformUndoRef.current(),
+      onRedo: () => nodesUndo.redo(),
     },
   });
 
@@ -1167,6 +1171,23 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     }
   }, [usePlatform, ideaId, isPl, nodesUndo, platformIntegration]);
 
+  // Keep the rail-undo bridge pointed at the live platform-aware undo handler.
+  platformUndoRef.current = handlePlatformUndo;
+
+  // Feed the canvas rail's Undo/Redo enabled state (CanvasLeftToolbar reads it via
+  // IdeaMapWorkspace). Platform mode has no client stack, so Undo stays enabled there.
+  useEffect(() => {
+    if (!open) return;
+    window.dispatchEvent(
+      new CustomEvent('tbl-undo-state', {
+        detail: {
+          canUndo: usePlatform || nodesUndo.canUndo,
+          canRedo: nodesUndo.canRedo,
+        },
+      })
+    );
+  }, [open, usePlatform, nodesUndo.canUndo, nodesUndo.canRedo]);
+
   // ── Keyboard ───────────────────────────────────────────────────────────────
   useTableKeyboard({
     rowCount: processedRowsWithRollups.length,
@@ -1233,7 +1254,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               (usePlatform ? platformIntegration.toggleRowSelection : toggleRowSelection)(row.id)
             }
             onClick={(e) => e.stopPropagation()}
-            className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500/30"
+            className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-slate-600 focus:ring-slate-400/30"
           />
         </td>
         <td className="w-10 px-1 py-1.5 text-[10px] text-slate-600 dark:text-slate-500 text-right select-none tabular-nums">
@@ -1453,7 +1474,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                             setRenamingViewId(null);
                           }
                         }}
-                        className="px-2 py-1 rounded-lg text-[10px] font-bold bg-white dark:bg-navy-800 border border-primary-400 outline-none w-20"
+                        className="px-2 py-1 rounded-lg text-[10px] font-bold bg-white dark:bg-navy-800 border border-slate-400 dark:border-navy-500 outline-none w-20"
                       />
                     ) : (
                       <button
@@ -1480,7 +1501,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       setSaveViewName('');
                       setShowSaveViewDialog(true);
                     }}
-                    className="p-1 rounded-lg text-slate-600 hover:text-primary-500 hover:bg-primary-500/10 transition-colors"
+                    className="p-1 rounded-lg text-slate-600 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                     title={isPl ? 'Zapisz widok' : 'Save view'}
                   >
                     <Plus size={12} />
@@ -1527,7 +1548,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           saveCurrentView(saveViewName.trim(), columns);
                           setShowSaveViewDialog(false);
                         }}
-                        className="px-3 py-1.5 text-xs rounded-lg bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-40"
+                        className="px-3 py-1.5 text-xs rounded-lg bg-slate-900 dark:bg-white text-white dark:text-navy-900 hover:bg-slate-800 dark:hover:bg-slate-100 disabled:opacity-40"
                       >
                         {isPl ? 'Zapisz' : 'Save'}
                       </button>
@@ -1712,7 +1733,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               {/* AI Assistant */}
               <button
                 onClick={() => setShowAIAssistant(true)}
-                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
+                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                 title={isPl ? 'Asystent AI (/)' : 'AI Assistant (/)'}
               >
                 <Sparkles size={12} />
@@ -2077,7 +2098,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
                         >
-                          <Layout size={14} className="text-primary-500" />
+                          <Layout size={14} className="text-slate-500" />
                           {isPl ? 'Interfejsy' : 'Interfaces'}
                         </button>
                         <button
@@ -2210,7 +2231,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {!locked && (
                   <button
                     onClick={() => setShowConnectorWizard(true)}
-                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10 hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors"
+                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-slate-700 dark:text-slate-200 bg-slate-200/70 dark:bg-navy-800 hover:bg-slate-300/70 dark:hover:bg-navy-700 transition-colors"
                     title={isPl ? 'Importuj dane' : 'Import data'}
                   >
                     <Network size={12} />
@@ -2297,7 +2318,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                         className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                       >
                         {col.visible ? (
-                          <Eye size={12} className="text-primary-500" />
+                          <Eye size={12} className="text-slate-500" />
                         ) : (
                           <EyeOff size={12} className="text-slate-600" />
                         )}
@@ -2311,7 +2332,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           setShowColumnConfig(false);
                           setShowAddColumn(true);
                         }}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
+                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                       >
                         <Plus size={12} />
                         {isPl ? 'Nowa kolumna' : 'New column'}
@@ -2346,7 +2367,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               {/* Bulk actions */}
               {_selIds.size > 0 && (
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-bold text-primary-600 dark:text-primary-400 bg-primary-500/10 px-2 py-0.5 rounded-lg">
+                  <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200 bg-slate-900/[0.06] dark:bg-white/[0.10] px-2 py-0.5 rounded-lg">
                     {_selIds.size} {isPl ? 'zaznaczonych' : 'selected'}
                   </span>
                   {!locked && (
@@ -2790,7 +2811,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                                 });
                               }
                             }}
-                            className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500/30"
+                            className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-slate-600 focus:ring-slate-400/30"
                           />
                         </th>
                         <th className="w-10 px-1 py-2 text-[10px] font-normal text-slate-600 dark:text-slate-500 text-right select-none">
@@ -2810,7 +2831,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                               <input
                                 autoFocus
                                 defaultValue={col.header}
-                                className="w-full bg-white dark:bg-navy-800 border border-primary-500/40 rounded px-1 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 outline-none"
+                                className="w-full bg-white dark:bg-navy-800 border border-slate-400/40 dark:border-navy-500/40 rounded px-1 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 outline-none"
                                 onBlur={(e) => {
                                   renameColumn(col.key, e.target.value);
                                   setEditingHeaderKey(null);
@@ -2860,7 +2881,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                             )}
                             {/* Resize handle */}
                             <div
-                              className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary-500/30 transition-colors"
+                              className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-slate-400/30 transition-colors"
                               onMouseDown={(e) => handleResizeStart(col.key, e)}
                             />
                           </th>
@@ -2901,7 +2922,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                                 <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
                                   <button
                                     onClick={_addRow}
-                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-slate-900/[0.06] dark:bg-white/[0.10] text-slate-700 dark:text-slate-200 hover:bg-slate-900/[0.10] dark:hover:bg-white/[0.14] transition-colors"
                                   >
                                     <Plus size={14} />
                                     {isPl ? 'Dodaj pusty wiersz' : 'Add blank row'}

@@ -194,6 +194,7 @@ interface ArtifactRow {
   source_initiative_id: string | null;
   ai_governance_preset_ref: string | null;
   origin_summary_json: string | null;
+  is_draft: number | null;
   created_by: string;
   created_at: string;
   last_transition_at: string;
@@ -367,6 +368,7 @@ function mapArtifactRow(row: ArtifactRow): ArtifactRecord {
     sourceInitiativeId: row.source_initiative_id,
     aiGovernancePresetRef: row.ai_governance_preset_ref,
     originSummary: safeJsonParse<Record<string, unknown> | null>(row.origin_summary_json, null),
+    isDraft: Number(row.is_draft ?? 0) === 1,
     createdBy: row.created_by,
     createdAt: row.created_at,
     lastTransitionAt: row.last_transition_at,
@@ -1645,10 +1647,89 @@ async function backfillPresentationTemplatesForOrg(organizationId: string): Prom
   return inserted;
 }
 
+/**
+ * S6.3 — M17 junk filter. A title matches the draft heuristic when it carries a
+ * marker of test/throwaway scaffolding. Used by both the SQL backfill (migration)
+ * and the runtime guard below so the two stay in lockstep. Pure, side-effect free.
+ */
+const DRAFT_TITLE_MARKERS = [
+  'e2e',
+  'throwaway',
+  'probe',
+  'smoke',
+  'toreport-',
+] as const;
+
+export function isDraftHeuristicTitle(title: string | null | undefined): boolean {
+  if (!title) return false;
+  const lower = String(title).toLowerCase();
+  if (DRAFT_TITLE_MARKERS.some((marker) => lower.includes(marker))) return true;
+  // Whole-word "test" (avoid false positives like "attestation" / "latest").
+  return /\btest\b/.test(lower);
+}
+
+// Guards the one-time (per-process) DDL ensure so we don't hammer ALTER TABLE.
+let draftColumnEnsured = false;
+
+/**
+ * Defensive runtime guard: ensure the `is_draft` column exists and (re)apply the
+ * heuristic backfill for this org. This makes the M17 junk filter work even on a
+ * DB where migration 20260702_v81_artifact_draft_flag.sql has not been applied
+ * yet (e.g. live demo/staging between deploys). All statements are idempotent and
+ * NEVER delete data — they only flip the presentational is_draft flag.
+ */
+async function ensureDraftFlagForOrg(organizationId: string): Promise<void> {
+  if (!draftColumnEnsured) {
+    try {
+      await dbRun(
+        `ALTER TABLE v8_output_artifacts ADD COLUMN IF NOT EXISTS is_draft INTEGER NOT NULL DEFAULT 0`,
+        []
+      );
+      draftColumnEnsured = true;
+    } catch (err: any) {
+      // "duplicate column" on engines without IF NOT EXISTS support → treat as present.
+      const msg = String(err?.message || '').toLowerCase();
+      if (msg.includes('duplicate column') || msg.includes('already exists')) {
+        draftColumnEnsured = true;
+      } else {
+        logger.warn(`${LOG_PREFIX} ensureDraftFlag ADD COLUMN failed: ${err?.message}`);
+        return; // column may be missing; skip backfill this pass, retry next TTL window
+      }
+    }
+  }
+
+  // Heuristic backfill for THIS org. Joins report/deck titles so junk whose
+  // artifact title_snapshot is generic (e.g. "Executive presentation draft")
+  // but whose origin title is a test name still gets flagged.
+  try {
+    await dbRun(
+      `UPDATE v8_output_artifacts
+          SET is_draft = 1
+        WHERE organization_id = ?
+          AND is_draft = 0
+          AND (
+               title_snapshot LIKE '%E2E%'
+            OR title_snapshot LIKE '%THROWAWAY%'
+            OR title_snapshot LIKE '%PROBE%'
+            OR LOWER(title_snapshot) LIKE '%smoke%'
+            OR LOWER(title_snapshot) LIKE '%toreport-%'
+            OR LOWER(COALESCE(title_snapshot, '')) LIKE '% test %'
+            OR LOWER(COALESCE(title_snapshot, '')) LIKE 'test %'
+            OR LOWER(COALESCE(title_snapshot, '')) LIKE '% test'
+          )`,
+      [organizationId]
+    );
+  } catch (err: any) {
+    logger.warn(`${LOG_PREFIX} ensureDraftFlag backfill failed: ${err?.message}`);
+  }
+}
+
 export async function ensureBackfilledOutputsForOrg(organizationId: string): Promise<void> {
   const last = backfillWatermark.get(organizationId) || 0;
   const now = Date.now();
   if (now - last < BACKFILL_TTL_MS) return;
+
+  await ensureDraftFlagForOrg(organizationId);
 
   const [
     reportsInserted,
@@ -1756,11 +1837,17 @@ function rowToListItem(row: ArtifactListRow): ArtifactListItem {
             : null
           : null;
 
+  const resolvedTitle = originTitle || base.titleSnapshot || 'Untitled artifact';
+
   return {
     ...base,
+    // Belt-and-suspenders: honor the persisted flag, but also flag on the fly if
+    // the resolved (origin) title looks like test scaffolding and the DB flag has
+    // not been backfilled yet. Never un-flags a persisted draft.
+    isDraft: base.isDraft || isDraftHeuristicTitle(resolvedTitle),
     originRuntime: row.origin_runtime,
     originRecordId: row.origin_record_id,
-    resolvedTitle: originTitle || base.titleSnapshot || 'Untitled artifact',
+    resolvedTitle,
     originTitle,
     originStatus,
     reportType: row.report_type,
@@ -1772,6 +1859,8 @@ function rowToListItem(row: ArtifactListRow): ArtifactListItem {
     publishReviewers: safeJsonParse(row.publish_reviewers, [] as string[]),
     reviewGateCount: Number(row.review_gate_count || 0),
     ownerName: row.owner_name || null,
+    duplicateCount: 1,
+    duplicateArtifactIds: [],
   };
 }
 
@@ -1792,7 +1881,7 @@ function matchesSearch(item: ArtifactListItem, search?: string): boolean {
     .some((value) => String(value).toLowerCase().includes(q));
 }
 
-function matchesViewFilters(
+export function matchesViewFilters(
   item: ArtifactListItem,
   filters: ArtifactListFilters,
   currentUserId: string
@@ -1817,7 +1906,40 @@ function matchesViewFilters(
     const isReviewer = item.publishReviewers.includes(filters.reviewSharedForUserId);
     if (!isReviewer && item.visibilityScope !== 'review_shared') return false;
   }
+  // M17 junk filter (S6.3): default listing hides drafts; 'only' shows the
+  // Robocze view; 'include' shows everything.
+  const draftMode = filters.drafts ?? 'exclude';
+  if (draftMode === 'exclude' && item.isDraft) return false;
+  if (draftMode === 'only' && !item.isDraft) return false;
   return matchesSearch(item, filters.search);
+}
+
+/**
+ * Presentational dedup (S6.3): collapse artifacts that share the same resolved
+ * name + output type + origin runtime into a single newest row, recording how
+ * many older versions it stands in for. Input MUST already be sorted newest→oldest
+ * (the list query orders by last_transition_at/created_at DESC). NO data is mutated.
+ */
+export function dedupeArtifacts(items: ArtifactListItem[]): ArtifactListItem[] {
+  const seen = new Map<string, ArtifactListItem>();
+  const order: string[] = [];
+  for (const item of items) {
+    const key = [
+      (item.resolvedTitle || '').trim().toLowerCase(),
+      item.outputType,
+      item.originRuntime || 'none',
+    ].join('::');
+    const existing = seen.get(key);
+    if (!existing) {
+      // First (newest) wins. Clone so we can safely accumulate version metadata.
+      seen.set(key, { ...item, duplicateCount: 1, duplicateArtifactIds: [] });
+      order.push(key);
+    } else {
+      existing.duplicateCount += 1;
+      existing.duplicateArtifactIds.push(item.artifactId);
+    }
+  }
+  return order.map((key) => seen.get(key)!);
 }
 
 function hasArtifactAccess(
@@ -1958,7 +2080,7 @@ export async function listArtifactsForUser(params: {
   );
   const projectMemberships = await getProjectMembershipSet(organizationId, userId);
 
-  return items
+  const filtered = items
     .filter((item) =>
       hasArtifactAccess(
         item,
@@ -1969,8 +2091,13 @@ export async function listArtifactsForUser(params: {
         allowDemo
       )
     )
-    .filter((item) => matchesViewFilters(item, filters, userId))
-    .slice(0, Math.max(1, Math.min(filters.limit || 100, 200)));
+    .filter((item) => matchesViewFilters(item, filters, userId));
+
+  // Presentational dedup runs before the limit slice so the cap counts distinct
+  // artifacts, not duplicate versions. Defaults on; opt out with dedupe:false.
+  const deduped = filters.dedupe === false ? filtered : dedupeArtifacts(filtered);
+
+  return deduped.slice(0, Math.max(1, Math.min(filters.limit || 100, 200)));
 }
 
 export async function listArtifactsForUserByExecutionRunId(params: {
@@ -2171,6 +2298,32 @@ export async function listMyWorkArtifacts(params: {
   return { mine, review, recent };
 }
 
+/**
+ * Derive a clean, human title from a free-text goal. A raw brief dumped as the
+ * artifact title ("Rejestr 8 inicjatyw… Dodaj przykładowe dane") or a generic
+ * "Executive presentation draft" both read badly — and ugly things don't get
+ * read. Take the first clause, strip the leading format label and trailing
+ * instruction tail, cap length, capitalize.
+ */
+export function deriveArtifactTitle(goalRaw: string, fallback: string): string {
+  let t = String(goalRaw || '').trim();
+  if (!t) return fallback;
+  t = t.split(/[\n.!?]/)[0]; // first sentence/clause
+  t = t.replace(
+    /^(tabela|raport|prezentacja|deck|report|table|presentation|dokument|document)\s*[:\-–—]\s*/i,
+    ''
+  );
+  // strip trailing instruction phrases ("…, dodaj przykładowe dane", "…include sample data")
+  t = t.replace(
+    /[,;]?\s*(dodaj|add|uwzgl[ęe]dnij|include|wygeneruj|generate|przygotuj|prepare|zbuduj|build)\b.*$/i,
+    ''
+  );
+  t = t.trim().replace(/\s+/g, ' ');
+  if (t.length > 70) t = `${t.slice(0, 67).trimEnd()}…`;
+  if (t) t = t.charAt(0).toUpperCase() + t.slice(1);
+  return t || fallback;
+}
+
 function inferArtifactPlan(
   request: ArtifactPlanningRequest
 ): ArtifactPlanningResult['artifactPlan'] {
@@ -2205,7 +2358,7 @@ function inferArtifactPlan(
     return {
       artifactFamily: 'sheet',
       outputType: 'sheet',
-      titleHint: request.goal.trim() || 'Structured sheet draft',
+      titleHint: deriveArtifactTitle(request.goal, 'Tabela operacyjna'),
       governancePath: 'execution_spine',
       visibilityScope: 'organization',
     };
@@ -2215,7 +2368,7 @@ function inferArtifactPlan(
     return {
       artifactFamily: 'presentation',
       outputType: 'presentation',
-      titleHint: 'Executive presentation draft',
+      titleHint: deriveArtifactTitle(request.goal, 'Prezentacja'),
       governancePath: 'execution_spine',
       visibilityScope: 'private',
     };
@@ -2224,7 +2377,7 @@ function inferArtifactPlan(
   return {
     artifactFamily: explicitFamily || 'document',
     outputType: request.requestedOutputType || 'report',
-    titleHint: goal.includes('brief') ? 'Working brief draft' : 'Output draft',
+    titleHint: deriveArtifactTitle(request.goal, goal.includes('brief') ? 'Working brief' : 'Raport'),
     governancePath: 'execution_spine',
     visibilityScope: 'private',
   };

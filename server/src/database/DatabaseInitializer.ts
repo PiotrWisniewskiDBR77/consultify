@@ -3392,6 +3392,18 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
       try {
         await runTablePlatformMigrations(db);
 
+        // Migrations may have added columns (e.g. my_ideas.folder_id from the M2
+        // 20260602 migration). getTableColumns() caches its result for the process
+        // lifetime, so any snapshot taken before this point would omit the new
+        // columns — making guarded writes (folder assignment) silently no-op.
+        // Invalidate the cache so the first request sees the post-migration schema.
+        try {
+          const { clearSchemaCache } = await import('../utils/dbSchema.js');
+          clearSchemaCache();
+        } catch {
+          /* non-fatal */
+        }
+
         // Seed default templates after migrations succeed
         try {
           const { default: templateService } =

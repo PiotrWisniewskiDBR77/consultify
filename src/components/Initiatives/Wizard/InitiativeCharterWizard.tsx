@@ -23,7 +23,12 @@ import { Select } from '@/components/shared/forms';
 import { WizardModal } from '@/components/shared/WizardModal';
 import type { WizardStep } from '@/components/shared/WizardModal/types';
 import { Api } from '@/services/api';
+import { type CardValidationIssue, validateCard } from '@/services/api/cardValidators';
+import { checkSimilarInitiatives, type SimilarInitiative } from '@/services/api/initiativeSimilar';
 import { createInitiativeWriteTruth } from '@/services/initiativeWriteTruth';
+
+import { ProposedCardsPanel } from './ProposedCardsPanel';
+import { useProposeCards } from './useProposeCards';
 
 // ──────────────────────────────────────────────────────────────────────────
 // Types
@@ -227,6 +232,55 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
   const [thesis, setThesis] = useState('');
   const [lever, setLever] = useState<Lever>('cost');
 
+  // M13 Depth · C1 — portfolio-aware dedup: debounced check against existing
+  // org initiatives as the user names the new one (advisory, never blocks).
+  const [similarInitiatives, setSimilarInitiatives] = useState<SimilarInitiative[]>([]);
+  useEffect(() => {
+    const q = title.trim();
+    if (q.length < 4) {
+      setSimilarInitiatives([]);
+      return;
+    }
+    const h = setTimeout(() => {
+      void checkSimilarInitiatives(q, thesis).then(setSimilarInitiatives);
+    }, 500);
+    return () => clearTimeout(h);
+  }, [title, thesis]);
+
+  // AI-proposed cards (R6) — surface the deterministic card proposal for the
+  // chosen lever/type and let the user opt extra cards in. Selection is held in
+  // wizard state (rendered below); persisting it further is out of scope here.
+  const { core: proposedCore, proposed: proposedExtra, loading: proposalLoading, fetchProposal } =
+    useProposeCards();
+  const [selectedCards, setSelectedCards] = useState<string[]>([]);
+  const toggleSelectedCard = useCallback((key: string) => {
+    setSelectedCards((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    );
+  }, []);
+  // Re-propose whenever the lever (the closest "type" signal) changes.
+  useEffect(() => {
+    if (!isOpen) return;
+    void fetchProposal({ type: lever, sourceType: source?.sourceType, brief: thesis });
+    // brief/title intentionally excluded from deps — the proposal keys off type;
+    // refetching on every keystroke would be noisy.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, lever, source?.sourceType, fetchProposal]);
+
+  // M13 Depth · K1 — debounced §B3 quality hints on the thesis/hypothesis field.
+  const [cardIssues, setCardIssues] = useState<CardValidationIssue[]>([]);
+  useEffect(() => {
+    const q = thesis.trim();
+    if (q.length < 8) {
+      setCardIssues([]);
+      return;
+    }
+    const h = setTimeout(() => {
+      void validateCard(q, ['lang_pl', 'no_filler', 'hypothesis_format']).then(setCardIssues);
+    }, 600);
+    return () => clearTimeout(h);
+  }, [thesis]);
+
   // Case
   const [users, setUsers] = useState<UserOption[]>([]);
   const [ownerId, setOwnerId] = useState('');
@@ -256,6 +310,7 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
     setTitle(source?.title ?? '');
     setThesis(source?.thesis ?? '');
     setLever('cost');
+    setSelectedCards([]);
     setOwnerId('');
     setSponsorId('');
     setImpact('high');
@@ -437,6 +492,31 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
           )}
           className={inputCls}
         />
+        {similarInitiatives.length > 0 && (
+          <div className="mt-2 rounded-lg border border-amber-300/60 dark:border-amber-500/30 bg-amber-50/70 dark:bg-amber-500/10 px-3 py-2">
+            <div className="text-[11px] font-semibold text-amber-700 dark:text-amber-300 mb-1">
+              {tr(
+                'Podobne inicjatywy już istnieją — sprawdź, czy nie duplikujesz:',
+                'Similar initiatives already exist — check you are not duplicating:'
+              )}
+            </div>
+            <ul className="space-y-0.5">
+              {similarInitiatives.map((s) => (
+                <li
+                  key={s.id}
+                  className="text-xs text-slate-700 dark:text-slate-200 flex items-center gap-2"
+                >
+                  <span className="truncate">{s.name}</span>
+                  {s.status && (
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0">
+                      {s.status}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
       <div>
         <label className={labelCls}>{tr('Teza / hipoteza', 'Thesis / hypothesis')}</label>
@@ -450,6 +530,19 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
           )}
           className={`${inputCls} resize-none`}
         />
+        {cardIssues.length > 0 && (
+          <ul className="mt-1.5 space-y-0.5">
+            {cardIssues.map((iss) => (
+              <li
+                key={iss.rule}
+                className="flex items-start gap-1.5 text-[11px] text-amber-700 dark:text-amber-300"
+              >
+                <span className="mt-[3px] h-1 w-1 shrink-0 rounded-full bg-amber-500" />
+                <span>{iss.message}</span>
+              </li>
+            ))}
+          </ul>
+        )}
         <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
           {tr(
             'Falsyfikowalna teza — co zrobimy, jaki efekt i dlaczego.',
@@ -471,6 +564,20 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
           ]}
         />
       </div>
+      {(proposedCore.length > 0 || proposedExtra.length > 0) && (
+        <div>
+          <label className={labelCls}>
+            {tr('Karty inicjatywy (propozycja AI)', 'Initiative cards (AI proposal)')}
+          </label>
+          <ProposedCardsPanel
+            core={proposedCore}
+            proposed={proposedExtra}
+            selected={selectedCards}
+            onToggle={toggleSelectedCard}
+            loading={proposalLoading}
+          />
+        </div>
+      )}
     </div>
   );
 

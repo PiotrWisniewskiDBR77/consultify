@@ -171,7 +171,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
   const getUsageStatusColor = (percentage: number) => {
     if (percentage >= 90) return 'text-danger-400';
     if (percentage >= 75) return 'text-amber-400';
-    return 'text-slate-400 dark:text-slate-500';
+    return 'text-c-text-muted';
   };
 
   const getProgressBarColor = (percentage: number) => {
@@ -207,7 +207,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-6 h-6 text-slate-500 dark:text-slate-400 animate-spin" />
+        <RefreshCw className="w-6 h-6 text-c-text-muted animate-spin" />
       </div>
     );
   }
@@ -218,10 +218,10 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-medium text-white flex items-center gap-2">
-            <Activity size={18} className="text-slate-500 dark:text-slate-400" />
+            <Activity size={18} className="text-c-text-muted" />
             {t('admin.billing.usageDashboard', 'Usage Dashboard')}
           </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="text-sm text-c-text-muted mt-0.5">
             {usage?.currentPeriod && (
               <>
                 {new Date(usage.currentPeriod.start).toLocaleDateString()} -{' '}
@@ -234,7 +234,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
         </div>
         <div className="flex items-center gap-3">
           {/* Time Range Selector */}
-          <div className="flex bg-white/[0.03] border border-white/[0.08] rounded-lg p-0.5">
+          <div className="flex bg-c-surface/[0.03] border border-white/[0.08] rounded-lg p-0.5">
             {(['7', '30', '90'] as const).map((range) => (
               <button
                 key={range}
@@ -242,8 +242,8 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                 disabled={!!loadError}
                 className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                   timeRange === range
-                    ? 'bg-white/[0.08] text-white'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-300'
+                    ? 'bg-c-surface/[0.08] text-white'
+                    : 'text-c-text-muted hover:text-slate-300'
                 }`}
               >
                 {range}d
@@ -291,8 +291,8 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
             <div className="admin-card p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <Cpu size={14} className="text-slate-500 dark:text-slate-400" />
-                  <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <Cpu size={14} className="text-c-text-muted" />
+                  <span className="text-xs text-c-text-muted uppercase tracking-wider">
                     AI Tokens
                   </span>
                 </div>
@@ -313,11 +313,11 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                 <span className="text-2xl font-semibold text-white">
                   {formatNumber(usage?.tokens.used || 0)}
                 </span>
-                <span className="text-slate-500 dark:text-slate-400 text-sm ml-1">
+                <span className="text-c-text-muted text-sm ml-1">
                   / {formatNumber(usage?.tokens.limit || 0)}
                 </span>
               </div>
-              <div className="w-full bg-white/[0.05] rounded-full h-1.5 mb-2">
+              <div className="w-full bg-c-surface/[0.05] rounded-full h-1.5 mb-2">
                 <div
                   className={`${getProgressBarColor(usage?.tokens.percentage || 0)} rounded-full h-1.5 transition-all`}
                   style={{ width: `${Math.min(usage?.tokens.percentage || 0, 100)}%` }}
@@ -332,8 +332,8 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
             <div className="admin-card p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <HardDrive size={14} className="text-slate-500 dark:text-slate-400" />
-                  <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <HardDrive size={14} className="text-c-text-muted" />
+                  <span className="text-xs text-c-text-muted uppercase tracking-wider">
                     Storage
                   </span>
                 </div>
@@ -342,11 +342,11 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                 <span className="text-2xl font-semibold text-white">
                   {usage?.storage.usedFormatted || '0 B'}
                 </span>
-                <span className="text-slate-500 dark:text-slate-400 text-sm ml-1">
+                <span className="text-c-text-muted text-sm ml-1">
                   / {usage?.storage.limitFormatted || '5 GB'}
                 </span>
               </div>
-              <div className="w-full bg-white/[0.05] rounded-full h-1.5 mb-2">
+              <div className="w-full bg-c-surface/[0.05] rounded-full h-1.5 mb-2">
                 <div
                   className={`${getProgressBarColor(usage?.storage.percentage || 0)} rounded-full h-1.5 transition-all`}
                   style={{ width: `${Math.min(usage?.storage.percentage || 0, 100)}%` }}
@@ -361,19 +361,19 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
             <div className="admin-card p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <Users size={14} className="text-slate-500 dark:text-slate-400" />
-                  <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <Users size={14} className="text-c-text-muted" />
+                  <span className="text-xs text-c-text-muted uppercase tracking-wider">
                     Seats
                   </span>
                 </div>
               </div>
               <div className="mb-2">
                 <span className="text-2xl font-semibold text-white">{usage?.seats.used || 0}</span>
-                <span className="text-slate-500 dark:text-slate-400 text-sm ml-1">
+                <span className="text-c-text-muted text-sm ml-1">
                   / {usage?.seats.limit || 0}
                 </span>
               </div>
-              <div className="w-full bg-white/[0.05] rounded-full h-1.5 mb-2">
+              <div className="w-full bg-c-surface/[0.05] rounded-full h-1.5 mb-2">
                 <div
                   className={`${getProgressBarColor(usage?.seats.percentage || 0)} rounded-full h-1.5 transition-all`}
                   style={{ width: `${Math.min(usage?.seats.percentage || 0, 100)}%` }}
@@ -388,12 +388,12 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
             <div className="admin-card p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <DollarSign size={14} className="text-slate-500 dark:text-slate-400" />
-                  <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <DollarSign size={14} className="text-c-text-muted" />
+                  <span className="text-xs text-c-text-muted uppercase tracking-wider">
                     Est. Cost
                   </span>
                 </div>
-                <span className="text-xs text-slate-500 dark:text-slate-400">this period</span>
+                <span className="text-xs text-c-text-muted">this period</span>
               </div>
               <div className="mb-2">
                 <span className="text-2xl font-semibold text-white">
@@ -401,10 +401,10 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                 </span>
               </div>
               <div className="flex items-center gap-2 text-xs">
-                <span className="text-slate-500 dark:text-slate-400">Projected:</span>
+                <span className="text-c-text-muted">Projected:</span>
                 <span className="text-amber-400">${(usage?.cost.projected || 0).toFixed(2)}</span>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-xs text-c-text-muted mt-1">
                 Base plan: ${usage?.cost.planBase || 0}/mo
               </p>
             </div>
@@ -429,11 +429,11 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                       ? 'text-danger-400'
                       : organizationContextQuota.tone === 'warning'
                         ? 'text-amber-400'
-                        : 'text-slate-400'
+                        : 'text-c-text-muted'
                   }
                 />
                 <div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <p className="text-xs text-c-text-muted uppercase tracking-wider">
                     Organization Context Storage
                   </p>
                   <h3
@@ -447,10 +447,10 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                   >
                     {organizationContextQuota.title}
                   </h3>
-                  <p className="text-sm text-slate-400 dark:text-slate-500 mt-1 max-w-3xl">
+                  <p className="text-sm text-c-text-muted mt-1 max-w-3xl">
                     {organizationContextQuota.description}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                  <p className="text-xs text-c-text-muted mt-2">
                     Counts backend-uploaded context files and derived knowledge artifacts used by
                     document library, Interview Insight Creator, chat, reports, and future AI
                     workflows.
@@ -462,11 +462,11 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                   <span className="text-lg font-semibold text-white">
                     {usage?.storage.usedFormatted || '0 B'}
                   </span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                  <span className="text-xs text-c-text-muted">
                     / {usage?.storage.limitFormatted || '5 GB'}
                   </span>
                 </div>
-                <div className="w-full bg-white/[0.05] rounded-full h-1.5 mb-2">
+                <div className="w-full bg-c-surface/[0.05] rounded-full h-1.5 mb-2">
                   <div
                     className={`${getProgressBarColor(usage?.storage.percentage || 0)} rounded-full h-1.5 transition-all`}
                     style={{ width: `${Math.min(usage?.storage.percentage || 0, 100)}%` }}
@@ -484,7 +484,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
             {/* Usage Trend Chart */}
             <div className="lg:col-span-2 admin-card p-4">
               <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
-                <TrendingUp size={14} className="text-slate-500 dark:text-slate-400" />
+                <TrendingUp size={14} className="text-c-text-muted" />
                 Usage Trend
               </h3>
               <div className="h-64">
@@ -542,14 +542,14 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
             <div className="admin-card p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-medium text-white flex items-center gap-2">
-                  <PieChart size={14} className="text-slate-500 dark:text-slate-400" />
+                  <PieChart size={14} className="text-c-text-muted" />
                   Breakdown
                 </h3>
                 <select
                   value={breakdownView}
                   onChange={(e) => setBreakdownView(e.target.value as any)}
                   disabled={!!loadError || !usage}
-                  className="text-xs bg-white/[0.03] border border-white/[0.08] rounded-lg px-2 py-1 text-slate-300"
+                  className="text-xs bg-c-surface/[0.03] border border-white/[0.08] rounded-lg px-2 py-1 text-slate-300"
                 >
                   <option value="user">By User</option>
                   <option value="project">By Project</option>
@@ -594,7 +594,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
           <div className="admin-card p-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
-                <BarChart3 size={14} className="text-slate-500 dark:text-slate-400" />
+                <BarChart3 size={14} className="text-c-text-muted" />
                 Detailed Usage by{' '}
                 {breakdownView === 'user'
                   ? 'User'
@@ -602,7 +602,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                     ? 'Project'
                     : 'Feature'}
               </h3>
-              <div className="flex bg-white/[0.03] border border-white/[0.08] rounded-lg p-0.5">
+              <div className="flex bg-c-surface/[0.03] border border-white/[0.08] rounded-lg p-0.5">
                 {(['user', 'project', 'feature'] as const).map((view) => (
                   <button
                     key={view}
@@ -610,8 +610,8 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                     disabled={!!loadError || !usage}
                     className={`px-3 py-1 text-xs font-medium rounded-md transition-all capitalize ${
                       breakdownView === view
-                        ? 'bg-white/[0.08] text-white'
-                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-300'
+                        ? 'bg-c-surface/[0.08] text-white'
+                        : 'text-c-text-muted hover:text-slate-300'
                     }`}
                   >
                     {view}
@@ -624,23 +624,23 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
               <table /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */  className="w-full">
                 <thead>
                   <tr className="border-b border-white/[0.05]">
-                    <th className="text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4">
+                    <th className="text-left text-xs font-medium text-c-text-muted uppercase tracking-wider py-3 px-4">
                       {breakdownView === 'user'
                         ? 'User'
                         : breakdownView === 'project'
                           ? 'Project'
                           : 'Feature'}
                     </th>
-                    <th className="text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4">
+                    <th className="text-right text-xs font-medium text-c-text-muted uppercase tracking-wider py-3 px-4">
                       Tokens
                     </th>
-                    <th className="text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4">
+                    <th className="text-right text-xs font-medium text-c-text-muted uppercase tracking-wider py-3 px-4">
                       Requests
                     </th>
-                    <th className="text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4">
+                    <th className="text-right text-xs font-medium text-c-text-muted uppercase tracking-wider py-3 px-4">
                       Cost
                     </th>
-                    <th className="text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4 w-32">
+                    <th className="text-left text-xs font-medium text-c-text-muted uppercase tracking-wider py-3 px-4 w-32">
                       Usage
                     </th>
                   </tr>
@@ -650,7 +650,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                     <tr>
                       <td
                         colSpan={5}
-                        className="text-center py-8 text-slate-500 dark:text-slate-400 text-sm"
+                        className="text-center py-8 text-c-text-muted text-sm"
                       >
                         No usage data available
                       </td>
@@ -663,7 +663,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                       return (
                         <tr
                           key={item.id || item.feature || index}
-                          className="border-b border-white/[0.03] hover:bg-white/[0.02]"
+                          className="border-b border-white/[0.03] hover:bg-c-surface/[0.02]"
                         >
                           <td className="py-3 px-4">
                             <div>
@@ -671,7 +671,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                                 {item.name || item.feature || 'Unknown'}
                               </p>
                               {item.email && (
-                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                <p className="text-xs text-c-text-muted">
                                   {item.email}
                                 </p>
                               )}
@@ -683,19 +683,19 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                             </span>
                           </td>
                           <td className="py-3 px-4 text-right">
-                            <span className="text-sm text-slate-400 dark:text-slate-500">
+                            <span className="text-sm text-c-text-muted">
                               {formatNumber(item.requests)}
                             </span>
                           </td>
                           <td className="py-3 px-4 text-right">
-                            <span className="text-sm text-slate-400 dark:text-slate-500">
+                            <span className="text-sm text-c-text-muted">
                               ${item.cost?.toFixed(2) || '0.00'}
                             </span>
                           </td>
                           <td className="py-3 px-4">
-                            <div className="w-full bg-white/[0.05] rounded-full h-1.5">
+                            <div className="w-full bg-c-surface/[0.05] rounded-full h-1.5">
                               <div
-                                className="bg-slate-50 dark:bg-navy-800/300 rounded-full h-1.5 transition-all"
+                                className="bg-c-surface-raised/300 rounded-full h-1.5 transition-all"
                                 style={{ width: `${percentage}%` }}
                               />
                             </div>
@@ -729,7 +729,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                   >
                     {usage.tokens.percentage >= 90 ? 'Usage Critical' : 'High Usage Warning'}
                   </h4>
-                  <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+                  <p className="text-sm text-c-text-muted mt-1">
                     You've used {usage.tokens.percentage}% of your monthly token quota.
                     {usage.projectedUsage > usage.tokens.limit && (
                       <>

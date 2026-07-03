@@ -26,6 +26,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { __resetDocumentCommentsForTests } from '../../services/documentStudio/documentCommentsService.js';
 import { __resetShareLinkRegistryForTests } from '../../services/documentStudio/documentShareLinkService.js';
 
+const mockDbAll = vi.fn();
+const mockDbRun = vi.fn();
+const mockDbGet = vi.fn();
+
+vi.mock('../../utils/DbPromise.js', () => ({
+  all: (...args: unknown[]) => mockDbAll(...args),
+  run: (...args: unknown[]) => mockDbRun(...args),
+  get: (...args: unknown[]) => mockDbGet(...args),
+}));
+
 let mockUser: { id: string; organizationId: string; role: string } | null = null;
 
 vi.mock('../../middleware/auth.middleware.js', () => ({
@@ -61,6 +71,9 @@ const ARTIFACT = 'art-share-test-1';
 beforeEach(async () => {
   vi.clearAllMocks();
   mockUser = { id: UID, organizationId: ORG, role: 'CONSULTANT' };
+  mockDbAll.mockResolvedValue([]);
+  mockDbRun.mockResolvedValue({ rowCount: 0, success: true });
+  mockDbGet.mockResolvedValue(null);
   await __resetShareLinkRegistryForTests();
   __resetDocumentCommentsForTests();
 });

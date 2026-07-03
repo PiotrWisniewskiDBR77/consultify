@@ -262,7 +262,7 @@ export const AdminLLMView: React.FC = () => {
       case 'unhealthy':
         return <XCircle size={16} className="text-danger-400" />;
       default:
-        return <Activity size={16} className="text-slate-600 dark:text-slate-500" />;
+        return <Activity size={16} className="text-c-text-secondary" />;
     }
   };
 
@@ -276,7 +276,7 @@ export const AdminLLMView: React.FC = () => {
       case 'unhealthy':
         return 'text-danger-400 bg-danger-500/10 border-danger-500/20';
       default:
-        return 'text-slate-600 dark:text-slate-500 bg-slate-50 dark:bg-navy-800/300/10 border-slate-500/20';
+        return 'text-c-text-secondary bg-c-surface-raised/300/10 border-slate-500/20';
     }
   };
 
@@ -366,13 +366,13 @@ export const AdminLLMView: React.FC = () => {
       <div className="flex gap-4 border-b border-white/5 pb-1">
         <button
           onClick={() => setActiveTab('providers')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'providers' ? 'border-white/80 text-white' : 'border-transparent text-slate-600 dark:text-slate-500 hover:text-white'}`}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'providers' ? 'border-white/80 text-white' : 'border-transparent text-c-text-secondary hover:text-white'}`}
         >
           LLM Providers
         </button>
         <button
           onClick={() => setActiveTab('health')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'health' ? 'border-white/80 text-white' : 'border-transparent text-slate-600 dark:text-slate-500 hover:text-white'}`}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'health' ? 'border-white/80 text-white' : 'border-transparent text-c-text-secondary hover:text-white'}`}
         >
           <Activity size={14} />
           Health Dashboard
@@ -390,7 +390,7 @@ export const AdminLLMView: React.FC = () => {
         </button>
         <button
           onClick={() => setActiveTab('prompts')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'prompts' ? 'border-white/80 text-white' : 'border-transparent text-slate-600 dark:text-slate-500 hover:text-white'}`}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'prompts' ? 'border-white/80 text-white' : 'border-transparent text-c-text-secondary hover:text-white'}`}
         >
           System Personas (Prompts)
         </button>
@@ -409,7 +409,7 @@ export const AdminLLMView: React.FC = () => {
                 description="Provider management actions are not shown until the persistence and audit workflow is fully connected."
               />
               <div className="rounded-xl border border-white/10 bg-navy-900/50 p-4">
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-c-text-secondary">
                   Loaded providers:{' '}
                   <span className="font-semibold text-white">{providers.length}</span>
                 </p>
@@ -430,7 +430,7 @@ export const AdminLLMView: React.FC = () => {
                 description="Prompt editing is hidden until user attribution, persistence, and audit metadata are wired."
               />
               <div className="rounded-xl border border-white/10 bg-navy-900/50 p-4">
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-c-text-secondary">
                   Loaded prompts: <span className="font-semibold text-white">{prompts.length}</span>
                 </p>
               </div>
@@ -453,14 +453,14 @@ export const AdminLLMView: React.FC = () => {
                     <div className="p-2 bg-blue-500/20 rounded-lg">
                       <Activity size={20} className="text-blue-400" />
                     </div>
-                    <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
+                    <span className="text-xs font-mono text-c-text-muted">
                       LAST 7 DAYS
                     </span>
                   </div>
                   <div className="text-2xl font-bold text-white mb-1">
                     {analytics?.total_requests?.toLocaleString() || 0}
                   </div>
-                  <div className="text-xs text-slate-600 dark:text-slate-500">Total Requests</div>
+                  <div className="text-xs text-c-text-secondary">Total Requests</div>
                 </div>
 
                 <div className="p-4 bg-navy-900/50 border border-white/10 rounded-xl">
@@ -468,14 +468,14 @@ export const AdminLLMView: React.FC = () => {
                     <div className="p-2 bg-emerald-500/20 rounded-lg">
                       <Zap size={20} className="text-emerald-400" />
                     </div>
-                    <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
+                    <span className="text-xs font-mono text-c-text-muted">
                       AVG LATENCY
                     </span>
                   </div>
                   <div className="text-2xl font-bold text-white mb-1">
                     {analytics?.avg_latency || 0}ms
                   </div>
-                  <div className="text-xs text-slate-600 dark:text-slate-500">Response Time</div>
+                  <div className="text-xs text-c-text-secondary">Response Time</div>
                 </div>
 
                 <div className="p-4 bg-navy-900/50 border border-white/10 rounded-xl">
@@ -483,14 +483,14 @@ export const AdminLLMView: React.FC = () => {
                     <div className="p-2 bg-amber-500/20 rounded-lg">
                       <Coins size={20} className="text-amber-400" />
                     </div>
-                    <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
+                    <span className="text-xs font-mono text-c-text-muted">
                       EST. COST
                     </span>
                   </div>
                   <div className="text-2xl font-bold text-white mb-1">
                     ${(analytics?.total_cost || 0).toFixed(4)}
                   </div>
-                  <div className="text-xs text-slate-600 dark:text-slate-500">Total Spend</div>
+                  <div className="text-xs text-c-text-secondary">Total Spend</div>
                 </div>
 
                 <div className="p-4 bg-navy-900/50 border border-white/10 rounded-xl">
@@ -505,14 +505,14 @@ export const AdminLLMView: React.FC = () => {
                         }
                       />
                     </div>
-                    <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
+                    <span className="text-xs font-mono text-c-text-muted">
                       ERROR RATE
                     </span>
                   </div>
                   <div className="text-2xl font-bold text-white mb-1">
                     {(analytics?.error_rate * 100).toFixed(1)}%
                   </div>
-                  <div className="text-xs text-slate-600 dark:text-slate-500">
+                  <div className="text-xs text-c-text-secondary">
                     {analytics?.error_count} Failed Requests
                   </div>
                 </div>
@@ -522,7 +522,7 @@ export const AdminLLMView: React.FC = () => {
               <div className="bg-navy-900/50 border border-white/10 rounded-xl overflow-hidden">
                 <div className="p-4 border-b border-white/10 flex justify-between items-center">
                   <h3 className="font-semibold text-white flex items-center gap-2">
-                    <Terminal size={18} className="text-slate-600 dark:text-slate-500" />
+                    <Terminal size={18} className="text-c-text-secondary" />
                     Recent Interactions
                   </h3>
                   <button className="text-xs text-blue-400 hover:text-blue-300 font-medium">
@@ -532,7 +532,7 @@ export const AdminLLMView: React.FC = () => {
                 <div className="overflow-x-auto">
                   <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-black/20 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      <tr className="bg-black/20 text-xs uppercase tracking-wider text-c-text-muted">
                         <th className="px-4 py-3">Status</th>
                         <th className="px-4 py-3">Time</th>
                         <th className="px-4 py-3">Provider / Model</th>
@@ -543,25 +543,25 @@ export const AdminLLMView: React.FC = () => {
                     </thead>
                     <tbody className="divide-y divide-white/5">
                       {logs.map((log: any) => (
-                        <tr key={log.id} className="hover:bg-white/5 transition-colors text-sm">
+                        <tr key={log.id} className="hover:bg-c-surface/5 transition-colors text-sm">
                           <td className="px-4 py-3">
                             <EntityStatusChip status={log.status} />
                           </td>
-                          <td className="px-4 py-3 text-slate-600 dark:text-slate-500 font-mono text-xs">
+                          <td className="px-4 py-3 text-c-text-secondary font-mono text-xs">
                             {new Date(log.timestamp).toLocaleTimeString()}
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex flex-col">
                               <span className="text-white font-medium">{log.provider}</span>
-                              <span className="text-xs text-slate-500 dark:text-slate-400">
+                              <span className="text-xs text-c-text-muted">
                                 {log.model}
                               </span>
                             </div>
                           </td>
-                          <td className="px-4 py-3 text-slate-600 font-mono text-xs">
+                          <td className="px-4 py-3 text-c-text-secondary font-mono text-xs">
                             {log.latency_ms}ms
                           </td>
-                          <td className="px-4 py-3 text-slate-600 font-mono text-xs">
+                          <td className="px-4 py-3 text-c-text-secondary font-mono text-xs">
                             ${(log.cost || 0).toFixed(6)}
                           </td>
                           <td className="px-4 py-3">
@@ -573,7 +573,7 @@ export const AdminLLMView: React.FC = () => {
                                 {log.error_message}
                               </span>
                             ) : (
-                              <span className="text-slate-600 dark:text-slate-400 text-xs italic">
+                              <span className="text-c-text-secondary text-xs italic">
                                 Success
                               </span>
                             )}
@@ -584,7 +584,7 @@ export const AdminLLMView: React.FC = () => {
                         <tr>
                           <td
                             colSpan={6}
-                            className="px-4 py-8 text-center text-slate-500 dark:text-slate-400 italic"
+                            className="px-4 py-8 text-center text-c-text-muted italic"
                           >
                             No logs found in the last 7 days.
                           </td>
@@ -628,14 +628,14 @@ export const AdminLLMView: React.FC = () => {
               </div>
               <div className="bg-gradient-to-br from-slate-800/50 to-navy-900 border border-white/10 rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <Server size={18} className="text-slate-600 dark:text-slate-500" />
-                  <span className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">
+                  <Server size={18} className="text-c-text-secondary" />
+                  <span className="text-xs uppercase tracking-wider text-c-text-secondary">
                     Total
                   </span>
                 </div>
                 <p className="text-3xl font-bold text-white">
                   {llmStatus?.summary.configured || 0}
-                  <span className="text-sm text-slate-500 dark:text-slate-400">
+                  <span className="text-sm text-c-text-muted">
                     /{llmStatus?.summary.total || 0}
                   </span>
                 </p>
@@ -647,15 +647,15 @@ export const AdminLLMView: React.FC = () => {
               <div className="flex items-center gap-4">
                 {llmStatus?.defaultProvider && (
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="text-slate-600 dark:text-slate-500">Default:</span>
+                    <span className="text-c-text-secondary">Default:</span>
                     <span className="text-white font-medium">{llmStatus.defaultProvider.name}</span>
-                    <span className="text-slate-500 dark:text-slate-400">
+                    <span className="text-c-text-muted">
                       ({llmStatus.defaultProvider.model})
                     </span>
                   </div>
                 )}
                 {llmStatus?.startupValidation && (
-                  <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500">
+                  <div className="flex items-center gap-2 text-xs text-c-text-secondary">
                     <Clock size={12} />
                     Last check:{' '}
                     {new Date(llmStatus.startupValidation.timestamp).toLocaleTimeString()}(
@@ -701,7 +701,7 @@ export const AdminLLMView: React.FC = () => {
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <h4 className="font-semibold text-white">{p.name || p.provider}</h4>
-                      <p className="text-xs text-slate-600 dark:text-slate-500 font-mono">
+                      <p className="text-xs text-c-text-secondary font-mono">
                         {p.model}
                       </p>
                     </div>
@@ -713,7 +713,7 @@ export const AdminLLMView: React.FC = () => {
 
                   <div className="flex flex-wrap gap-1 mb-3">
                     <span
-                      className={`px-2 py-0.5 rounded text-xs ${p.isDefault ? 'bg-primary-500/20 text-primary-300' : 'bg-slate-700/50 text-slate-600 dark:text-slate-500'}`}
+                      className={`px-2 py-0.5 rounded text-xs ${p.isDefault ? 'bg-primary-500/20 text-primary-300' : 'bg-slate-700/50 text-c-text-secondary'}`}
                     >
                       {p.isDefault ? '★ Default' : p.tier}
                     </span>
@@ -735,13 +735,13 @@ export const AdminLLMView: React.FC = () => {
                   </div>
 
                   <div className="flex justify-between items-center">
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                    <span className="text-xs text-c-text-muted">
                       Priority: {p.priority} | ${p.costPer1k}/1k
                     </span>
                     <button
                       onClick={() => testSingleProvider(p.provider)}
                       disabled={testingProvider === p.provider || !p.isConfigured}
-                      className="text-xs px-2 py-1 bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 disabled:opacity-50 rounded flex items-center gap-1 transition-colors"
+                      className="text-xs px-2 py-1 bg-c-bg/30 dark:bg-navy-950/20 hover:bg-c-surface-raised/40 disabled:opacity-50 rounded flex items-center gap-1 transition-colors"
                     >
                       {testingProvider === p.provider ? (
                         <RefreshCw size={12} className="animate-spin" />
@@ -766,7 +766,7 @@ export const AdminLLMView: React.FC = () => {
                                 : 'text-yellow-400'
                           }
                         />
-                        <span className="text-slate-600 dark:text-slate-500">
+                        <span className="text-c-text-secondary">
                           Circuit: {llmStatus.circuitBreakers[p.provider].state}
                         </span>
                         {llmStatus.circuitBreakers[p.provider].failures > 0 && (
@@ -800,7 +800,7 @@ export const AdminLLMView: React.FC = () => {
                             {idx > 0 && (
                               <ArrowRight
                                 size={12}
-                                className="text-slate-600 dark:text-slate-400"
+                                className="text-c-text-secondary"
                               />
                             )}
                             <span
@@ -808,7 +808,7 @@ export const AdminLLMView: React.FC = () => {
                                 llmStatus.providers.find((p) => p.provider === provider)
                                   ?.healthStatus === 'healthy'
                                   ? 'bg-green-500/20 text-green-300'
-                                  : 'bg-slate-700/50 text-slate-600 dark:text-slate-500'
+                                  : 'bg-slate-700/50 text-c-text-secondary'
                               }`}
                             >
                               {provider}

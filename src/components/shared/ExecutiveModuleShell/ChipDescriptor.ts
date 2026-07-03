@@ -20,6 +20,16 @@ import type { LucideIcon } from 'lucide-react';
 
 export type TopBarChipKind = 'standard' | 'toggle' | 'primary';
 
+/**
+ * Command-row hierarchy tier (editor-shell-canon § 2 STREFA GÓRNA):
+ * `primary` (1-4 always-visible prominent actions) · `secondary`
+ * (grouped ghost buttons) · `overflow` (rare/advanced actions folded
+ * behind the `⋯` menu). Chips WITHOUT an explicit group fall back to a
+ * `kind`-derived tier (`kind: 'primary'` → primary, else → secondary)
+ * so existing callers keep working while flat rows migrate.
+ */
+export type TopBarChipGroup = 'primary' | 'secondary' | 'overflow';
+
 export type TopBarChipDotTone = 'neutral' | 'success' | 'warning' | 'danger' | 'info' | null;
 
 export interface TopBarChipDescriptor {
@@ -31,6 +41,11 @@ export interface TopBarChipDescriptor {
   icon?: LucideIcon;
   /** What kind of chip — drives default styling. */
   kind?: TopBarChipKind;
+  /**
+   * Command-row hierarchy tier (editor-shell-canon § 2 STREFA GÓRNA).
+   * Omit to fall back to a `kind`-derived tier (see {@link TopBarChipGroup}).
+   */
+  group?: TopBarChipGroup;
   /** True when the chip is currently active (toggle / Agent on, etc.). */
   active?: boolean;
   /** Disabled chips are still visible but non-interactive. */
@@ -64,6 +79,16 @@ export const MELS_CHIP_ORDER = [
 ] as const;
 
 export type MelsChipId = (typeof MELS_CHIP_ORDER)[number];
+
+/**
+ * Resolve the effective command-row tier for a chip. Explicit `group`
+ * wins; otherwise `kind: 'primary'` maps to `primary` and everything
+ * else defaults to `secondary` (never silently hidden in overflow).
+ */
+export function resolveChipGroup(chip: TopBarChipDescriptor): TopBarChipGroup {
+  if (chip.group) return chip.group;
+  return chip.kind === 'primary' ? 'primary' : 'secondary';
+}
 
 export function sortChipsByMelsOrder(chips: TopBarChipDescriptor[]): TopBarChipDescriptor[] {
   const orderIndex = new Map<string, number>();

@@ -40,6 +40,7 @@ import {
   Gauge,
   Grid3X3,
   Inbox,
+  Info,
   LayoutGrid,
   LayoutList,
   Lightbulb,
@@ -48,7 +49,6 @@ import {
   MessageSquare,
   Minus,
   MoreVertical,
-  RefreshCw,
   Rocket,
   RotateCcw,
   Send,
@@ -87,8 +87,9 @@ import {
   MENU_3_ROW_CLASS,
 } from '@/components/shared/ModuleMenu3';
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
+import { EmptyState, LoadingState } from '@/components/shared/states';
 import { TeresaMark } from '@/components/shared/TeresaMark';
-import { Badge, type BadgeVariant, LoadingState } from '@/components/ui/primitives';
+import { Badge, type BadgeVariant } from '@/components/ui/primitives';
 import { AssigneeCell, ProgressCell } from '@/components/ui/primitives/cells';
 import {
   categoryTone,
@@ -756,18 +757,18 @@ function normalizeInterviewSessionRecord(session: InterviewSession): InterviewSe
 type OpenDocument = SharedOpenDocument;
 
 const INTERVIEW_TABLE_SELECTED_ROW_CLASS =
-  'bg-slate-100 dark:bg-white/10 shadow-[inset_2px_0_0_var(--c-info)]';
-const INTERVIEW_TABLE_HOVER_ROW_CLASS = 'hover:bg-slate-50/70 dark:hover:bg-white/[0.03]';
+  'bg-c-accent-soft shadow-[inset_2px_0_0_var(--c-info)]';
+const INTERVIEW_TABLE_HOVER_ROW_CLASS = 'hover:bg-c-surface-raised';
 const INTERVIEW_TABLE_ICON_SURFACE_CLASS =
-  'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-slate-300/80 bg-slate-100 text-slate-500 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-300';
+  'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-c-border bg-c-surface-raised text-c-text-muted';
 const INTERVIEW_META_CHIP_CLASS =
-  'inline-flex items-center rounded-full border border-slate-300/80 bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-800 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200';
+  'inline-flex items-center rounded-full border border-c-border bg-c-surface-raised px-2 py-0.5 text-[11px] font-medium text-c-text-secondary';
 const INTERVIEW_STATUS_CHIP_BASE_CLASS =
   'inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs font-medium';
 const INTERVIEW_DUE_CHIP_BASE_CLASS =
   'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium';
 const INTERVIEW_PROGRESS_TRACK_CLASS =
-  'h-1.5 max-w-[100px] flex-1 overflow-hidden rounded-full bg-slate-200 dark:bg-navy-700';
+  'h-1.5 max-w-[100px] flex-1 overflow-hidden rounded-full bg-c-border-subtle';
 const INTERVIEW_PROGRESS_FILL_CLASS = 'h-full rounded-full bg-c-success transition';
 
 // V-A S5 — canonical template-status chip. The real status enum is
@@ -3811,7 +3812,7 @@ export const InterviewHub: React.FC = () => {
           <div className={MENU_3_ROW_CLASS}>
             <div className={MENU_3_INNER_CLASS}>
               <div className={MENU_3_LEFT_CLASS}>
-                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                <span className="text-xs font-semibold text-c-text-secondary">
                   {selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
                 </span>
                 {/* Fixed/universal buttons — same look as the rest (MENU_3_ACTION_NEUTRAL) */}
@@ -3956,7 +3957,7 @@ export const InterviewHub: React.FC = () => {
           <div className={MENU_3_ROW_CLASS}>
             <div className={MENU_3_INNER_CLASS}>
               <div className={MENU_3_LEFT_CLASS}>
-                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                <span className="text-xs font-semibold text-c-text-secondary">
                   {selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
                 </span>
                 <button
@@ -4172,7 +4173,7 @@ export const InterviewHub: React.FC = () => {
           <div className={MENU_3_ROW_CLASS}>
             <div className={MENU_3_INNER_CLASS}>
               <div className={MENU_3_LEFT_CLASS}>
-                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                <span className="text-xs font-semibold text-c-text-secondary">
                   {selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
                 </span>
                 <button
@@ -4416,7 +4417,7 @@ export const InterviewHub: React.FC = () => {
           <div className={MENU_3_ROW_CLASS}>
             <div className={MENU_3_INNER_CLASS}>
               <div className={MENU_3_LEFT_CLASS}>
-                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                <span className="text-xs font-semibold text-c-text-secondary">
                   {selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
                 </span>
                 <button
@@ -4564,7 +4565,7 @@ export const InterviewHub: React.FC = () => {
           <div className={MENU_3_ROW_CLASS}>
             <div className={MENU_3_INNER_CLASS}>
               <div className={MENU_3_LEFT_CLASS}>
-                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                <span className="text-xs font-semibold text-c-text-secondary">
                   {selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
                 </span>
                 <button
@@ -4748,7 +4749,7 @@ export const InterviewHub: React.FC = () => {
           <div className={MENU_3_ROW_CLASS}>
             <div className={MENU_3_INNER_CLASS}>
               <div className={MENU_3_LEFT_CLASS}>
-                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                <span className="text-xs font-semibold text-c-text-secondary">
                   {selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
                 </span>
                 <button
@@ -5121,8 +5122,8 @@ export const InterviewHub: React.FC = () => {
     return (
       <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] rounded-xl backdrop-blur">
         {activeSessionFilterChips.length > 0 ? (
-          <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-200/70 px-3 py-2 dark:border-white/[0.06]">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <div className="flex flex-wrap items-center gap-1.5 border-b border-c-border-subtle px-3 py-2">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-c-text-muted">
               {isPolish ? 'Filtry' : 'Filters'}
             </span>
             {activeSessionFilterChips.map((chip) => (
@@ -5137,7 +5138,7 @@ export const InterviewHub: React.FC = () => {
                     ),
                   }))
                 }
-                className="inline-flex items-center gap-1 rounded-full border border-primary-500/30 bg-primary-500/10 px-2 py-0.5 text-[11px] font-medium text-primary-600 transition-colors hover:bg-primary-500/20 dark:text-primary-300"
+                className="inline-flex items-center gap-1 rounded-full border border-transparent bg-c-accent-soft px-2 py-0.5 text-[11px] font-medium text-c-accent transition-colors hover:bg-c-accent-soft"
               >
                 <span className="max-w-[200px] truncate">{chip.label}</span>
                 <X size={11} />
@@ -5146,7 +5147,7 @@ export const InterviewHub: React.FC = () => {
             <button
               type="button"
               onClick={() => setSessionsTableFilters({})}
-              className="ml-1 text-[11px] font-medium text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline dark:text-slate-400 dark:hover:text-slate-200"
+              className="ml-1 text-[11px] font-medium text-c-text-muted underline-offset-2 hover:text-c-text-secondary hover:underline"
             >
               {isPolish ? 'Wyczyść wszystkie' : 'Clear all'}
             </button>
@@ -5157,8 +5158,8 @@ export const InterviewHub: React.FC = () => {
             menus, progress bars) are tightly coupled to local state and cannot be
             lifted into FilterableTable without a full re-architecture of this tab. */}
         <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
-          <thead className="sticky top-0 z-20 bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.06]">
-            <tr className="border-b border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-navy-900/40">
+          <thead className="sticky top-0 z-20 bg-c-surface border-b border-c-border-subtle">
+            <tr className="border-b border-c-border-subtle bg-c-surface-raised">
               <th className="px-3 py-2 text-left" style={{ width: sessionsColumnWidths.select }}>
                 <button
                   type="button"
@@ -5168,10 +5169,10 @@ export const InterviewHub: React.FC = () => {
                   }}
                   className={[
                     'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                    'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
+                    'border-c-border bg-c-surface text-white hover:border-c-info',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
                     allVisibleSelected || someVisibleSelected
-                      ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
+                      ? 'border-c-info bg-c-info opacity-100'
                       : 'opacity-70',
                   ].join(' ')}
                   aria-label={isPolish ? 'Zaznacz widoczne sesje' : 'Select visible sessions'}
@@ -5182,14 +5183,14 @@ export const InterviewHub: React.FC = () => {
                 </button>
               </th>
               <th
-                className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
                 style={{ width: sessionsColumnWidths.name }}
               >
                 {/* #10 — template filter lives on the Name header; assignee now
                     has its own dedicated column (below). */}
                 <div className="flex items-center gap-1">
                   <span
-                    className="cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                    className="cursor-pointer select-none transition-colors hover:text-c-text-secondary"
                     onClick={() => toggleSessionSort('name')}
                   >
                     {isPolish ? 'Nazwa' : 'Name'}
@@ -5217,7 +5218,7 @@ export const InterviewHub: React.FC = () => {
               </th>
               {!hiddenSet.has('assignee') && (
                 <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
                   style={{ width: sessionsColumnWidths.assignee }}
                 >
                   {/* #9 — Assignee promoted from row sub-text to a first-class,
@@ -5226,7 +5227,7 @@ export const InterviewHub: React.FC = () => {
                     <span
                       className={
                         (sessionsTableFilters.assignee as string[] | undefined)?.length
-                          ? 'text-primary-500'
+                          ? 'text-c-accent'
                           : ''
                       }
                     >
@@ -5250,15 +5251,15 @@ export const InterviewHub: React.FC = () => {
               )}
               {!hiddenSet.has('status') && (
                 <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
                   style={{ width: sessionsColumnWidths.status }}
                 >
                   <div className="flex items-center justify-start gap-1">
                     <span
                       className={[
-                        'cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200',
+                        'cursor-pointer select-none transition-colors hover:text-c-text-secondary',
                         (sessionsTableFilters.status as string[] | undefined)?.length
-                          ? 'text-primary-500'
+                          ? 'text-c-accent'
                           : '',
                       ].join(' ')}
                       onClick={() => toggleSessionSort('status')}
@@ -5289,7 +5290,7 @@ export const InterviewHub: React.FC = () => {
               )}
               {!hiddenSet.has('progress') && (
                 <th
-                  className="relative px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  className="relative px-3 py-2 text-right text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
                   style={{ width: sessionsColumnWidths.progress }}
                 >
                   {isPolish ? 'Postęp' : 'Progress'}
@@ -5298,7 +5299,7 @@ export const InterviewHub: React.FC = () => {
               )}
               {!hiddenSet.has('due') && (
                 <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider cursor-pointer select-none hover:text-c-text-secondary transition-colors"
                   style={{ width: sessionsColumnWidths.due }}
                   onClick={() => toggleSessionSort('due')}
                 >
@@ -5314,7 +5315,7 @@ export const InterviewHub: React.FC = () => {
               )}
               {!hiddenSet.has('submitted') && (
                 <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider cursor-pointer select-none hover:text-c-text-secondary transition-colors"
                   style={{ width: sessionsColumnWidths.submitted }}
                   onClick={() => toggleSessionSort('submitted')}
                 >
@@ -5330,7 +5331,7 @@ export const InterviewHub: React.FC = () => {
               )}
               {/* Overdue column merged into Due (DueChip) per canon §4.4 */}
               <th
-                className="relative px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                className="relative px-3 py-2 text-right text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
                 style={{ width: sessionsColumnWidths.actions }}
               >
                 <div ref={sessionsViewSettingsRef} className="flex items-center justify-end">
@@ -5351,7 +5352,7 @@ export const InterviewHub: React.FC = () => {
                       });
                       setIsSessionsViewSettingsOpen((open) => !open);
                     }}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35 focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
                     aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
                     aria-expanded={isSessionsViewSettingsOpen}
                     title={isPolish ? 'Ustawienia widoku' : 'View settings'}
@@ -5371,7 +5372,7 @@ export const InterviewHub: React.FC = () => {
                           className="z-[100] w-72 overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
                           onClick={(event) => event.stopPropagation()}
                         >
-                          <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                          <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
                             {isPolish ? 'Widoczne kolumny' : 'Visible columns'}
                           </div>
                           {(
@@ -5405,7 +5406,7 @@ export const InterviewHub: React.FC = () => {
                                       return next;
                                     });
                                   }}
-                                  className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-white/[0.18] dark:bg-white/[0.04]"
+                                  className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
                                 />
                                 <span>{col.label}</span>
                               </label>
@@ -5423,7 +5424,7 @@ export const InterviewHub: React.FC = () => {
                                   event.target.checked
                                 );
                               }}
-                              className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-white/[0.18] dark:bg-white/[0.04]"
+                              className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
                             />
                             <span>
                               {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
@@ -5469,7 +5470,7 @@ export const InterviewHub: React.FC = () => {
                       : handleViewSession(session)
                   }
                   className={[
-                    'group cursor-pointer transition-colors border-b border-slate-200/50 dark:border-navy-700/50 last:border-0',
+                    'group cursor-pointer transition-colors border-b border-c-border-subtle last:border-0',
                     isSelected || isSessionSelected
                       ? INTERVIEW_TABLE_SELECTED_ROW_CLASS
                       : INTERVIEW_TABLE_HOVER_ROW_CLASS,
@@ -5485,12 +5486,11 @@ export const InterviewHub: React.FC = () => {
                       }}
                       className={[
                         'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                        'border-slate-300 bg-white/80 text-white hover:border-primary-400 group-hover:opacity-100 group-hover:bg-white/90',
-                        'dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]',
-                        'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
-                        'group-focus-within:opacity-100 group-focus-within:border-primary-400',
+                        'border-c-border bg-c-surface text-white hover:border-c-info group-hover:opacity-100',
+                        'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
+                        'group-focus-within:opacity-100 group-focus-within:border-c-info',
                         isSessionSelected
-                          ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
+                          ? 'border-c-info bg-c-info opacity-100'
                           : 'opacity-0',
                       ].join(' ')}
                       aria-label={isPolish ? 'Zaznacz sesję' : 'Select session'}
@@ -5505,11 +5505,11 @@ export const InterviewHub: React.FC = () => {
                         <Brain size={15} />
                       </div>
                       <div className="min-w-0">
-                        <span className="text-sm text-slate-900 dark:text-white font-medium block truncate">
+                        <span className="text-sm font-semibold text-c-text block truncate">
                           {session.name || 'Discovery Interview'}
                         </span>
                         {showSessionRowDescription ? (
-                          <span className="mt-0.5 block truncate text-[11px] font-normal leading-4 text-slate-950/65 dark:text-slate-100/55">
+                          <span className="mt-0.5 block truncate text-[11px] font-normal leading-4 text-c-text-muted">
                             {isPolish ? 'Szablon' : 'Template'}: {secondaryMeta}
                           </span>
                         ) : null}
@@ -5595,11 +5595,11 @@ export const InterviewHub: React.FC = () => {
                       style={{ width: sessionsColumnWidths.submitted }}
                     >
                       {session.submittedAt ? (
-                        <span className="text-xs text-slate-600 dark:text-slate-400">
+                        <span className="text-xs text-c-text-secondary">
                           {new Date(session.submittedAt).toLocaleDateString()}
                         </span>
                       ) : (
-                        <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+                        <span className="text-xs text-c-text-muted">—</span>
                       )}
                     </td>
                   )}
@@ -5803,15 +5803,15 @@ export const InterviewHub: React.FC = () => {
             {rows.length === 0 && (
               <tr>
                 <td colSpan={visibleColumns.length} className="px-4 py-12">
-                  <div className="mx-auto max-w-md rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-8 text-center">
-                    <div className="mb-3 flex items-center justify-center gap-2 text-crimson-700 dark:text-crimson-300">
+                  <div className="mx-auto max-w-md rounded-2xl border border-c-border bg-c-surface p-8 text-center">
+                    <div className="mb-3 flex items-center justify-center gap-2 text-c-accent">
                       <TeresaMark size={18} />
                       <span className="text-xs font-semibold uppercase tracking-wide">Teresa</span>
                     </div>
-                    <p className="text-base font-semibold text-slate-900 dark:text-white">
+                    <p className="text-base font-semibold text-c-text">
                       {isPolish ? 'Przeprowadź pierwszy wywiad' : 'Run your first interview'}
                     </p>
-                    <p className="mx-auto mt-2 max-w-sm text-sm text-slate-500 dark:text-slate-400">
+                    <p className="mx-auto mt-2 max-w-sm text-sm text-c-text-muted">
                       {isPolish
                         ? 'Rozpocznij pierwszy wywiad z interesariuszem. Wybierz szablon lub zbuduj go od podstaw.'
                         : 'Start your first stakeholder interview. Pick a template or build one from scratch.'}
@@ -5832,7 +5832,7 @@ export const InterviewHub: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setShowAssignModal(true)}
-                          className="inline-flex h-9 items-center gap-1.5 rounded-full border border-slate-300/70 bg-white/70 px-4 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.06]"
+                          className="inline-flex h-9 items-center gap-1.5 rounded-full border border-c-border bg-c-surface px-4 text-xs font-semibold text-c-text-secondary transition hover:bg-c-surface-raised"
                         >
                           <UserPlus size={14} />
                           {isPolish ? 'Nowa sesja' : 'New session'}
@@ -6033,7 +6033,7 @@ export const InterviewHub: React.FC = () => {
           <div
             key={session.id}
             onClick={() => (onCardClick ? onCardClick(session.id) : handleViewSession(session))}
-            className="group relative bg-white dark:bg-navy-900 rounded-xl border border-slate-200/60 dark:border-white/[0.08] overflow-hidden cursor-pointer hover:shadow-lg hover:shadow-primary-500/10 hover:border-primary-500/30 transition duration-200"
+            className="group relative bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden cursor-pointer hover:shadow-lg hover:border-c-border-strong transition duration-200"
           >
             {/* Header */}
             <div className="p-4 pb-2">
@@ -6050,7 +6050,7 @@ export const InterviewHub: React.FC = () => {
                             ? 'text-amber-600 dark:text-amber-400'
                             : workflowStatus === 'sent_back'
                               ? 'text-c-danger'
-                              : 'text-slate-500 dark:text-slate-400'
+                              : 'text-c-text-muted'
                     }
                   />
                   <span className="font-mono text-xs font-bold text-slate-600 dark:text-slate-300">
@@ -6074,7 +6074,7 @@ export const InterviewHub: React.FC = () => {
 
             {/* Title */}
             <div className="px-4 pb-3">
-              <h4 className="text-sm font-medium text-slate-900 dark:text-white line-clamp-2 min-h-[40px]">
+              <h4 className="text-sm font-medium text-c-text line-clamp-2 min-h-[40px]">
                 {session.name || 'Discovery Interview'}
               </h4>
               <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
@@ -6567,8 +6567,8 @@ export const InterviewHub: React.FC = () => {
             chips, status pills, action menus) are tightly coupled to local state and
             cannot be lifted into FilterableTable without a full re-architecture. */}
         <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
-          <thead className="sticky top-0 z-20 bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.06]">
-            <tr className="border-b border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-navy-900/40">
+          <thead className="sticky top-0 z-20 bg-c-surface border-b border-c-border-subtle">
+            <tr className="border-b border-c-border-subtle bg-c-surface-raised">
               <th className="px-3 py-2 text-left" style={{ width: insightColumnWidths.select }}>
                 <button
                   type="button"
@@ -6578,10 +6578,10 @@ export const InterviewHub: React.FC = () => {
                   }}
                   className={[
                     'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                    'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
+                    'border-c-border bg-c-surface text-white hover:border-c-info',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
                     allVisibleSelected || someVisibleSelected
-                      ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
+                      ? 'border-c-info bg-c-info opacity-100'
                       : 'opacity-70',
                   ].join(' ')}
                   aria-label={isPolish ? 'Zaznacz widoczne wnioski' : 'Select visible insights'}
@@ -6592,7 +6592,7 @@ export const InterviewHub: React.FC = () => {
                 </button>
               </th>
               <th
-                className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider cursor-pointer select-none hover:text-c-text-secondary transition-colors"
                 style={{ width: insightColumnWidths.title }}
                 onClick={() => toggleInsightSort('title')}
               >
@@ -6607,7 +6607,7 @@ export const InterviewHub: React.FC = () => {
               </th>
               {!hiddenSet.has('crossRole') && (
                 <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
                   style={{ width: insightColumnWidths.crossRole }}
                 >
                   {isPolish ? 'Cross-role / rozjazdy' : 'Cross-role'}
@@ -6616,15 +6616,15 @@ export const InterviewHub: React.FC = () => {
               )}
               {!hiddenSet.has('type') && (
                 <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
                   style={{ width: typeCol.width, minWidth: typeCol.minWidth }}
                 >
                   <div className="flex items-center justify-start gap-1">
                     <span
                       className={[
-                        'cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200',
+                        'cursor-pointer select-none transition-colors hover:text-c-text-secondary',
                         (insightTableFilters.type as string[] | undefined)?.length
-                          ? 'text-primary-500'
+                          ? 'text-c-accent'
                           : '',
                       ].join(' ')}
                       onClick={() => toggleInsightSort('type')}
@@ -6655,15 +6655,15 @@ export const InterviewHub: React.FC = () => {
               )}
               {!hiddenSet.has('status') && (
                 <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
                   style={{ width: statusCol.width, minWidth: statusCol.minWidth }}
                 >
                   <div className="flex items-center justify-start gap-1">
                     <span
                       className={[
-                        'cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200',
+                        'cursor-pointer select-none transition-colors hover:text-c-text-secondary',
                         (insightTableFilters.status as string[] | undefined)?.length
-                          ? 'text-primary-500'
+                          ? 'text-c-accent'
                           : '',
                       ].join(' ')}
                       onClick={() => toggleInsightSort('status')}
@@ -6694,14 +6694,14 @@ export const InterviewHub: React.FC = () => {
               )}
               {!hiddenSet.has('source') && (
                 <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
                   style={{ width: insightColumnWidths.source }}
                 >
                   <div className="flex items-center justify-start gap-1">
                     <span
                       className={
                         (insightTableFilters.source as string[] | undefined)?.length
-                          ? 'text-primary-500'
+                          ? 'text-c-accent'
                           : ''
                       }
                     >
@@ -6725,14 +6725,14 @@ export const InterviewHub: React.FC = () => {
               )}
               {!hiddenSet.has('exports') && (
                 <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
                   style={{ width: insightColumnWidths.exports }}
                 >
                   <div className="flex items-center justify-start gap-1">
                     <span
                       className={
                         (insightTableFilters.exports as string[] | undefined)?.length
-                          ? 'text-primary-500'
+                          ? 'text-c-accent'
                           : ''
                       }
                     >
@@ -6756,7 +6756,7 @@ export const InterviewHub: React.FC = () => {
               )}
               {!hiddenSet.has('date') && (
                 <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider cursor-pointer select-none hover:text-c-text-secondary transition-colors"
                   style={{ width: insightColumnWidths.date }}
                   onClick={() => toggleInsightSort('date')}
                 >
@@ -6771,7 +6771,7 @@ export const InterviewHub: React.FC = () => {
                 </th>
               )}
               <th
-                className="relative px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                className="relative px-3 py-2 text-right text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
                 style={{ width: insightColumnWidths.actions }}
               >
                 <div ref={insightsViewSettingsRef} className="flex items-center justify-end">
@@ -6792,7 +6792,7 @@ export const InterviewHub: React.FC = () => {
                       });
                       setIsInsightsViewSettingsOpen((open) => !open);
                     }}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35 focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
                     aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
                     aria-expanded={isInsightsViewSettingsOpen}
                     title={isPolish ? 'Ustawienia widoku' : 'View settings'}
@@ -6813,7 +6813,7 @@ export const InterviewHub: React.FC = () => {
                           role="menu"
                           onClick={(event) => event.stopPropagation()}
                         >
-                          <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                          <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
                             {isPolish ? 'Widoczne kolumny' : 'Visible columns'}
                           </div>
                           {(
@@ -6851,7 +6851,7 @@ export const InterviewHub: React.FC = () => {
                                       return next;
                                     });
                                   }}
-                                  className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-white/[0.18] dark:bg-white/[0.04]"
+                                  className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
                                 />
                                 <span>{column.label}</span>
                               </label>
@@ -6869,7 +6869,7 @@ export const InterviewHub: React.FC = () => {
                                   event.target.checked
                                 );
                               }}
-                              className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-white/[0.18] dark:bg-white/[0.04]"
+                              className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
                             />
                             <span>
                               {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
@@ -6949,11 +6949,11 @@ export const InterviewHub: React.FC = () => {
               // rows are clean — status now lives in the StatusPill, not a left bar.
               const rowAccentClass =
                 isSelected || isInsightSelected
-                  ? 'shadow-[inset_4px_0_0_theme(colors.primary.500)]'
+                  ? 'shadow-[inset_4px_0_0_var(--c-info)]'
                   : '';
               const rowToneClass =
                 isSelected || isInsightSelected
-                  ? 'bg-primary-50 dark:bg-primary-500/[0.14]'
+                  ? 'bg-slate-100 dark:bg-white/[0.08]'
                   : 'hover:bg-slate-50 dark:hover:bg-white/[0.045]';
               const rowDescription = String(
                 insight.description || insight.content || insight.sourceQuote || ''
@@ -6985,12 +6985,11 @@ export const InterviewHub: React.FC = () => {
                       }}
                       className={[
                         'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                        'border-slate-300 bg-white/80 text-white hover:border-primary-400 group-hover:opacity-100 group-hover:bg-white/90',
-                        'dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]',
-                        'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
-                        'group-focus-within:opacity-100 group-focus-within:border-primary-400',
+                        'border-c-border bg-c-surface text-white hover:border-c-info group-hover:opacity-100',
+                        'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
+                        'group-focus-within:opacity-100 group-focus-within:border-c-info',
                         isInsightSelected
-                          ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
+                          ? 'border-c-info bg-c-info opacity-100'
                           : 'opacity-0',
                       ].join(' ')}
                       aria-label={isPolish ? 'Zaznacz wniosek' : 'Select insight'}
@@ -7003,7 +7002,7 @@ export const InterviewHub: React.FC = () => {
                     <div className="flex items-center min-w-0">
                       <div className="min-w-0">
                         <span
-                          className="text-sm text-slate-900 dark:text-white font-medium block truncate"
+                          className="text-sm text-c-text font-medium block truncate"
                           title={insight.title}
                         >
                           {insight.title}
@@ -7040,7 +7039,7 @@ export const InterviewHub: React.FC = () => {
                           )}
                         </div>
                       ) : (
-                        <span className="text-xs text-slate-500 dark:text-slate-400">—</span>
+                        <span className="text-xs text-c-text-muted">—</span>
                       )}
                     </td>
                   )}
@@ -7085,7 +7084,7 @@ export const InterviewHub: React.FC = () => {
                             : 0;
                         if (sessionCount === 0) {
                           return (
-                            <span className="text-xs text-slate-500 dark:text-slate-400">—</span>
+                            <span className="text-xs text-c-text-muted">—</span>
                           );
                         }
                         return (
@@ -7125,13 +7124,13 @@ export const InterviewHub: React.FC = () => {
                           )}
                         </div>
                       ) : (
-                        <span className="text-xs text-slate-500 dark:text-slate-400">—</span>
+                        <span className="text-xs text-c-text-muted">—</span>
                       )}
                     </td>
                   )}
                   {!hiddenSet.has('date') && (
                     <td
-                      className="px-3 py-3 text-left align-middle text-xs text-slate-500 dark:text-slate-400"
+                      className="px-3 py-3 text-left align-middle text-xs text-c-text-muted"
                       style={{ width: insightColumnWidths.date }}
                     >
                       {insight.createdAt ? new Date(insight.createdAt).toLocaleDateString() : '-'}
@@ -7276,11 +7275,11 @@ export const InterviewHub: React.FC = () => {
               <tr>
                 <td colSpan={visibleColumns.length} className="px-4 py-12 text-center">
                   <div className="flex flex-col items-center">
-                    <Lightbulb className="w-12 h-12 text-slate-600 mb-3" />
-                    <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
+                    <Lightbulb className="w-6 h-6 text-c-text-muted mb-3" />
+                    <p className="text-c-text text-sm font-semibold mb-1">
                       {isPolish ? 'Brak wniosków' : 'No insights yet'}
                     </p>
-                    <p className="text-xs text-slate-500 mb-4 max-w-md">
+                    <p className="text-xs text-c-text-muted mb-4 max-w-md">
                       {isPolish
                         ? 'Wnioski są generowane automatycznie przez AI na podstawie zakończonych wywiadów. Kliknij "Nowy Insight" aby wygenerować wnioski z wybranych sesji.'
                         : 'Insights are generated automatically by AI based on completed interviews. Click "New Insight" to generate insights from selected sessions.'}
@@ -7646,8 +7645,8 @@ export const InterviewHub: React.FC = () => {
             are tightly coupled to local state; FilterableTable migration requires
             full re-architecture of this tab. */}
         <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
-          <thead className="sticky top-0 z-20 bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.06]">
-            <tr className="border-b border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-navy-900/40 sticky top-0 z-10">
+          <thead className="sticky top-0 z-20 bg-c-surface border-b border-c-border-subtle">
+            <tr className="border-b border-c-border-subtle bg-c-surface-raised sticky top-0 z-10">
               <th className="px-3 py-2 text-left" style={{ width: templatesColumnWidths.select }}>
                 <button
                   type="button"
@@ -7657,10 +7656,10 @@ export const InterviewHub: React.FC = () => {
                   }}
                   className={[
                     'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                    'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
+                    'border-c-border bg-c-surface text-white hover:border-c-info',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
                     allVisibleSelected || someVisibleSelected
-                      ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
+                      ? 'border-c-info bg-c-info opacity-100'
                       : 'opacity-70',
                   ].join(' ')}
                   aria-label={isPolish ? 'Zaznacz widoczne szablony' : 'Select visible templates'}
@@ -7671,12 +7670,12 @@ export const InterviewHub: React.FC = () => {
                 </button>
               </th>
               <th
-                className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header w-full"
+                className="px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header w-full"
                 style={{ width: templatesColumnWidths.name }}
               >
                 <div className="flex items-center gap-1">
                   <span
-                    className="cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                    className="cursor-pointer select-none transition-colors hover:text-c-text-secondary"
                     onClick={() => toggleTemplateSort('name')}
                   >
                     {isPolish ? 'Nazwa' : 'Name'}
@@ -7693,15 +7692,15 @@ export const InterviewHub: React.FC = () => {
 
               {!hiddenSet.has('category') && (
                 <th
-                  className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  className="px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header"
                   style={{ width: templatesColumnWidths.category }}
                 >
                   <div className="flex items-center justify-start gap-1">
                     <span
                       className={[
-                        'cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200',
+                        'cursor-pointer select-none transition-colors hover:text-c-text-secondary',
                         (templatesTableFilters.category as string[] | undefined)?.length
-                          ? 'text-primary-500'
+                          ? 'text-c-accent'
                           : '',
                       ].join(' ')}
                       onClick={() => toggleTemplateSort('category')}
@@ -7733,12 +7732,12 @@ export const InterviewHub: React.FC = () => {
 
               {!hiddenSet.has('questions') && (
                 <th
-                  className="px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  className="px-3 py-2 text-right text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header"
                   style={{ width: templatesColumnWidths.questions }}
                 >
                   <div className="flex items-center justify-end gap-1">
                     <span
-                      className="cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                      className="cursor-pointer select-none transition-colors hover:text-c-text-secondary"
                       onClick={() => toggleTemplateSort('questions')}
                     >
                       {isPolish ? 'Pytania' : 'Questions'}
@@ -7757,12 +7756,12 @@ export const InterviewHub: React.FC = () => {
               {/* #16 — Usage count */}
               {!hiddenSet.has('usage') && (
                 <th
-                  className="px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  className="px-3 py-2 text-right text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header"
                   style={{ width: templatesColumnWidths.usage }}
                 >
                   <div className="flex items-center justify-end gap-1">
                     <span
-                      className="cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                      className="cursor-pointer select-none transition-colors hover:text-c-text-secondary"
                       onClick={() => toggleTemplateSort('usage')}
                     >
                       {isPolish ? 'Użycia' : 'Usage'}
@@ -7781,7 +7780,7 @@ export const InterviewHub: React.FC = () => {
               {/* #16 — AI quality score (number → text-right) */}
               {!hiddenSet.has('quality') && (
                 <th
-                  className="px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  className="px-3 py-2 text-right text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header"
                   style={{ width: templatesColumnWidths.quality }}
                 >
                   <div className="flex items-center justify-end gap-1">
@@ -7794,12 +7793,12 @@ export const InterviewHub: React.FC = () => {
               {/* #16 — Last used (date → text-left) */}
               {!hiddenSet.has('lastUsed') && (
                 <th
-                  className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  className="px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header"
                   style={{ width: templatesColumnWidths.lastUsed }}
                 >
                   <div className="flex items-center justify-start gap-1">
                     <span
-                      className="cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                      className="cursor-pointer select-none transition-colors hover:text-c-text-secondary"
                       onClick={() => toggleTemplateSort('lastUsed')}
                     >
                       {isPolish ? 'Ostatnio użyty' : 'Last used'}
@@ -7817,15 +7816,15 @@ export const InterviewHub: React.FC = () => {
 
               {!hiddenSet.has('status') && (
                 <th
-                  className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  className="px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header"
                   style={{ width: templatesColumnWidths.status }}
                 >
                   <div className="flex items-center justify-start gap-1">
                     <span
                       className={[
-                        'cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200',
+                        'cursor-pointer select-none transition-colors hover:text-c-text-secondary',
                         (templatesTableFilters.status as string[] | undefined)?.length
-                          ? 'text-primary-500'
+                          ? 'text-c-accent'
                           : '',
                       ].join(' ')}
                       onClick={() => toggleTemplateSort('status')}
@@ -7856,7 +7855,7 @@ export const InterviewHub: React.FC = () => {
               )}
 
               <th
-                className="relative px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                className="relative px-3 py-2 text-right text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
                 style={{ width: templatesColumnWidths.actions }}
               >
                 <div ref={templatesViewSettingsRef} className="flex items-center justify-end">
@@ -7877,7 +7876,7 @@ export const InterviewHub: React.FC = () => {
                       });
                       setIsTemplatesViewSettingsOpen((open) => !open);
                     }}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35 focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
                     aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
                     aria-expanded={isTemplatesViewSettingsOpen}
                     title={isPolish ? 'Ustawienia widoku' : 'View settings'}
@@ -7898,7 +7897,7 @@ export const InterviewHub: React.FC = () => {
                           role="menu"
                           onClick={(event) => event.stopPropagation()}
                         >
-                          <div className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                          <div className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
                             {isPolish ? 'Kolumny' : 'Columns'}
                           </div>
                           <div className="space-y-1">
@@ -7955,9 +7954,9 @@ export const InterviewHub: React.FC = () => {
                                         return next;
                                       });
                                     }}
-                                    className="h-3.5 w-3.5 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
+                                    className="h-3.5 w-3.5 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-c-focus"
                                   />
-                                  <span className="flex-1 text-slate-700 dark:text-slate-200">
+                                  <span className="flex-1 text-c-text-secondary">
                                     {col.label}
                                   </span>
                                   {alwaysVisible ? (
@@ -7981,9 +7980,9 @@ export const InterviewHub: React.FC = () => {
                                   event.target.checked
                                 );
                               }}
-                              className="h-3.5 w-3.5 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
+                              className="h-3.5 w-3.5 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-c-focus"
                             />
-                            <span className="text-slate-700 dark:text-slate-200">
+                            <span className="text-c-text-secondary">
                               {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
                             </span>
                           </label>
@@ -8025,7 +8024,7 @@ export const InterviewHub: React.FC = () => {
                   onDoubleClick={openFull}
                   className={`group cursor-pointer transition-colors border-b border-slate-200/50 dark:border-navy-700/50 last:border-0 ${
                     isSelected || isTemplateSelected
-                      ? 'bg-primary-50 dark:bg-primary-500/[0.14] shadow-[inset_4px_0_0_theme(colors.primary.500)] ring-1 ring-primary-500/25 ring-inset'
+                      ? 'bg-slate-100 dark:bg-white/[0.08] shadow-[inset_4px_0_0_var(--c-info)] ring-1 ring-slate-300/60 ring-inset dark:ring-white/[0.10]'
                       : 'hover:bg-slate-50 dark:hover:bg-navy-800/50'
                   }`}
                   role="button"
@@ -8062,10 +8061,10 @@ export const InterviewHub: React.FC = () => {
                       }}
                       className={[
                         'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                        'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
+                        'border-c-border bg-c-surface text-white hover:border-c-info',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
                         isTemplateSelected
-                          ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
+                          ? 'border-c-info bg-c-info opacity-100'
                           : isSelected
                             ? 'opacity-100'
                             : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
@@ -8085,7 +8084,7 @@ export const InterviewHub: React.FC = () => {
                         </div>
                         <div className="min-w-0 flex-1">
                           <span
-                            className="text-sm text-slate-900 dark:text-white font-medium block truncate"
+                            className="text-sm text-c-text font-medium block truncate"
                             title={template.name}
                           >
                             {template.name}
@@ -8129,7 +8128,7 @@ export const InterviewHub: React.FC = () => {
 
                   {!hiddenSet.has('questions') && (
                     <td
-                      className="px-3 py-3 text-right text-sm text-slate-500 dark:text-slate-400 tabular-nums"
+                      className="px-3 py-3 text-right text-sm text-c-text-muted tabular-nums"
                       style={{ width: templatesColumnWidths.questions }}
                     >
                       {template.questionCount}
@@ -8139,7 +8138,7 @@ export const InterviewHub: React.FC = () => {
                   {/* #16 — Usage count (real, derived from assignment data). */}
                   {!hiddenSet.has('usage') && (
                     <td
-                      className="px-3 py-3 text-right text-sm text-slate-500 dark:text-slate-400 tabular-nums"
+                      className="px-3 py-3 text-right text-sm text-c-text-muted tabular-nums"
                       style={{ width: templatesColumnWidths.usage }}
                     >
                       {(() => {
@@ -8221,14 +8220,19 @@ export const InterviewHub: React.FC = () => {
               <tr>
                 <td colSpan={colSpan} className="px-4 py-12 text-center">
                   <div className="flex flex-col items-center">
-                    <FileText className="w-12 h-12 text-slate-600 mb-3" />
-                    <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
+                    <FileText className="w-6 h-6 text-c-text-muted mb-3" />
+                    <p className="text-c-text text-sm font-semibold mb-1">
                       {isPolish ? 'Brak szablonów' : 'No templates yet'}
+                    </p>
+                    <p className="text-xs text-c-text-muted mb-4 max-w-md">
+                      {isPolish
+                        ? 'Utwórz szablon, aby przyspieszyć kolejne wywiady.'
+                        : 'Create a template to speed up your next interviews.'}
                     </p>
                     {canAssign && (
                       <button
                         onClick={handleNewTemplate}
-                        className="inline-flex h-9 items-center gap-2 rounded-lg bg-navy-900 px-4 text-sm font-medium text-white transition-colors hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+                        className="inline-flex h-9 items-center gap-2 rounded-lg bg-navy-900 px-4 text-sm font-medium text-white transition-colors hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
                       >
                         <FilePlus size={16} />
                         {isPolish ? 'Nowy szablon' : 'New template'}
@@ -8252,7 +8256,7 @@ export const InterviewHub: React.FC = () => {
       return (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <FileText size={40} className="text-slate-600 dark:text-navy-600 mb-3" />
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-c-text-muted">
             {isPolish ? 'Brak szablonów' : 'No templates found'}
           </p>
           {canAssign && (
@@ -8323,10 +8327,10 @@ export const InterviewHub: React.FC = () => {
                   opts?.onOpenFull?.(template.id);
                 }
               }}
-              className={`group relative flex flex-col text-left rounded-2xl border transition hover:shadow-lg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 ${
+              className={`group relative flex flex-col text-left rounded-2xl border transition hover:shadow-lg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                 selectedTemplateId === template.id
-                  ? 'border-primary-500/40 bg-primary-500/5 dark:bg-primary-500/10 shadow-md'
-                  : 'border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900 hover:border-slate-300 dark:hover:border-navy-600'
+                  ? 'border-slate-300 bg-slate-50 shadow-md dark:border-white/[0.18] dark:bg-white/[0.06]'
+                  : 'border-slate-200/60 dark:border-navy-700/60 bg-c-surface hover:border-slate-300 dark:hover:border-navy-600'
               }`}
             >
               <div className="p-4 flex-1 space-y-3">
@@ -8357,12 +8361,12 @@ export const InterviewHub: React.FC = () => {
                   </div>
                 </div>
 
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white line-clamp-2 leading-snug">
+                <h3 className="text-sm font-semibold text-c-text line-clamp-2 leading-snug">
                   {template.name}
                 </h3>
 
                 {template.description && (
-                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-c-text-muted line-clamp-2 leading-relaxed">
                     {template.description}
                   </p>
                 )}
@@ -8372,7 +8376,7 @@ export const InterviewHub: React.FC = () => {
                     {areaTags.slice(0, 4).map((tag) => (
                       <span
                         key={tag}
-                        className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400"
+                        className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 dark:bg-navy-800 text-c-text-muted"
                       >
                         {getTemplateAreaTagLabel(tag, isPolish)}
                       </span>
@@ -9629,7 +9633,7 @@ Return ONLY the answer text (no markdown fences).`;
       <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.08] rounded-xl backdrop-blur">
         {activeAssignmentFilterChips.length > 0 ? (
           <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-200/70 px-3 py-2 dark:border-white/[0.08]">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-c-text-muted">
               {isPolish ? 'Filtry' : 'Filters'}
             </span>
             {activeAssignmentFilterChips.map((chip) => (
@@ -9664,8 +9668,8 @@ Return ONLY the answer text (no markdown fences).`;
             flows, action menus, expand/collapse) are tightly coupled to local state;
             FilterableTable migration requires full re-architecture of this tab. */}
         <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
-          <thead className="sticky top-0 z-20 bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.06]">
-            <tr className="border-b border-slate-200/70 dark:border-white/[0.08] bg-slate-50/70 dark:bg-navy-900/40">
+          <thead className="sticky top-0 z-20 bg-c-surface border-b border-c-border-subtle">
+            <tr className="border-b border-c-border-subtle bg-c-surface-raised">
               <th className="px-3 py-2 text-left" style={{ width: columnWidths.select }}>
                 <button
                   type="button"
@@ -9675,10 +9679,10 @@ Return ONLY the answer text (no markdown fences).`;
                   }}
                   className={[
                     'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                    'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
+                    'border-c-border bg-c-surface text-white hover:border-c-info',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
                     allVisibleSelected || someVisibleSelected
-                      ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
+                      ? 'border-c-info bg-c-info opacity-100'
                       : 'opacity-70',
                   ].join(' ')}
                   aria-label={isPolish ? 'Zaznacz widoczne wiersze' : 'Select visible rows'}
@@ -9689,14 +9693,14 @@ Return ONLY the answer text (no markdown fences).`;
                 </button>
               </th>
               <th
-                className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
                 style={{ width: columnWidths.template }}
               >
                 <div className="flex items-center gap-1">
                   <span
                     className={
                       (tableFilters.template as string[] | undefined)?.length
-                        ? 'text-primary-500'
+                        ? 'text-c-accent'
                         : ''
                     }
                   >
@@ -9719,14 +9723,14 @@ Return ONLY the answer text (no markdown fences).`;
               </th>
               {hasAssigneeColumn && (
                 <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
                   style={{ width: columnWidths.assignee }}
                 >
                   <div className="flex items-center justify-start gap-1">
                     <span
                       className={
                         (tableFilters.assignee as string[] | undefined)?.length
-                          ? 'text-primary-500'
+                          ? 'text-c-accent'
                           : ''
                       }
                     >
@@ -9750,15 +9754,15 @@ Return ONLY the answer text (no markdown fences).`;
               )}
               {!hiddenSet.has('status') && (
                 <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
                   style={{ width: columnWidths.status }}
                 >
                   <div className="flex items-center justify-start gap-1">
                     <span
                       className={[
-                        'cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200',
+                        'cursor-pointer select-none transition-colors hover:text-c-text-secondary',
                         (tableFilters.status as string[] | undefined)?.length
-                          ? 'text-primary-500'
+                          ? 'text-c-accent'
                           : '',
                       ].join(' ')}
                       onClick={() => toggleAssignmentSort('status')}
@@ -9789,7 +9793,7 @@ Return ONLY the answer text (no markdown fences).`;
               )}
               {!hiddenSet.has('progress') && (
                 <th
-                  className="relative px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                  className="relative px-3 py-2 text-right text-[11px] font-semibold text-c-text-muted uppercase tracking-wider cursor-pointer select-none hover:text-c-text-secondary transition-colors"
                   style={{ width: columnWidths.progress }}
                   onClick={() => toggleAssignmentSort('progress')}
                 >
@@ -9805,7 +9809,7 @@ Return ONLY the answer text (no markdown fences).`;
               )}
               {!hiddenSet.has('due') && (
                 <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider cursor-pointer select-none hover:text-c-text-secondary transition-colors"
                   style={{ width: columnWidths.due }}
                   onClick={() => toggleAssignmentSort('dueAt')}
                 >
@@ -9821,7 +9825,7 @@ Return ONLY the answer text (no markdown fences).`;
               )}
               {showSubmittedColumn && (
                 <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
                   style={{ width: columnWidths.submitted }}
                 >
                   {isPolish ? 'Przesłano' : 'Submitted'}
@@ -9830,7 +9834,7 @@ Return ONLY the answer text (no markdown fences).`;
               )}
               {showAiScoreColumn && (
                 <th
-                  className="relative px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  className="relative px-3 py-2 text-right text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
                   style={{ width: columnWidths.aiScore }}
                 >
                   {isPolish ? 'Ocena AI' : 'AI Score'}
@@ -9839,7 +9843,7 @@ Return ONLY the answer text (no markdown fences).`;
               )}
               {showEscalationColumn && (
                 <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
                   style={{ width: columnWidths.escalation }}
                 >
                   {isPolish ? 'Eskalacja' : 'Escalation'}
@@ -9847,7 +9851,7 @@ Return ONLY the answer text (no markdown fences).`;
                 </th>
               )}
               <th
-                className="px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                className="px-3 py-2 text-right text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
                 style={{ width: columnWidths.actions }}
               >
                 <div
@@ -9876,7 +9880,7 @@ Return ONLY the answer text (no markdown fences).`;
                       setAssignmentsViewSettingsShowAssignee(showAssignee);
                       setIsAssignmentsViewSettingsOpen((open) => !open);
                     }}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35 focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
                     aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
                     aria-expanded={isAssignmentsViewSettingsOpen}
                     title={isPolish ? 'Ustawienia widoku' : 'View settings'}
@@ -9896,7 +9900,7 @@ Return ONLY the answer text (no markdown fences).`;
                           className="z-[100] w-72 overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
                           onClick={(event) => event.stopPropagation()}
                         >
-                          <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                          <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
                             {isPolish ? 'Widoczne kolumny' : 'Visible columns'}
                           </div>
                           {(
@@ -9953,7 +9957,7 @@ Return ONLY the answer text (no markdown fences).`;
                                 className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.04] ${
                                   alwaysVisible || col.disabled
                                     ? 'cursor-default text-slate-600 dark:text-slate-500'
-                                    : 'cursor-pointer text-slate-700 dark:text-slate-200'
+                                    : 'cursor-pointer text-c-text-secondary'
                                 }`}
                               >
                                 <input
@@ -9982,7 +9986,7 @@ Return ONLY the answer text (no markdown fences).`;
                                       return next;
                                     });
                                   }}
-                                  className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-white/[0.18] dark:bg-white/[0.04]"
+                                  className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
                                 />
                                 <span className="flex-1">{col.label}</span>
                                 {alwaysVisible ? (
@@ -10001,7 +10005,7 @@ Return ONLY the answer text (no markdown fences).`;
                               onChange={(event) =>
                                 updateAssignmentsViewShowRowDescription(event.target.checked)
                               }
-                              className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-white/[0.18] dark:bg-white/[0.04]"
+                              className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
                             />
                             <span>
                               {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
@@ -10037,9 +10041,9 @@ Return ONLY the answer text (no markdown fences).`;
                     void openInterviewAssignmentFull(assignment, showAssignee);
                   }}
                   className={[
-                    'group transition-colors border-b border-slate-200/50 dark:border-navy-700/50 last:border-0 cursor-pointer',
+                    'group transition-colors border-b border-c-border-subtle last:border-0 cursor-pointer',
                     INTERVIEW_TABLE_HOVER_ROW_CLASS,
-                    'active:bg-slate-100 dark:active:bg-navy-700/50',
+                    'active:bg-c-surface-raised',
                     previewAssignmentId === assignment.id || isAssignmentSelected
                       ? INTERVIEW_TABLE_SELECTED_ROW_CLASS
                       : '',
@@ -10071,12 +10075,11 @@ Return ONLY the answer text (no markdown fences).`;
                       }}
                       className={[
                         'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                        'border-slate-300 bg-white/80 text-white hover:border-primary-400 group-hover:opacity-100 group-hover:bg-white/90',
-                        'dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]',
-                        'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
-                        'group-focus-within:opacity-100 group-focus-within:border-primary-400',
+                        'border-c-border bg-c-surface text-white hover:border-c-info group-hover:opacity-100',
+                        'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
+                        'group-focus-within:opacity-100 group-focus-within:border-c-info',
                         isAssignmentSelected
-                          ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
+                          ? 'border-c-info bg-c-info opacity-100'
                           : 'opacity-0',
                       ].join(' ')}
                       aria-label={isPolish ? 'Zaznacz wiersz' : 'Select row'}
@@ -10093,14 +10096,14 @@ Return ONLY the answer text (no markdown fences).`;
                       <div className="min-w-0 flex flex-col">
                         <div className="flex items-center gap-2 min-w-0">
                           <span
-                            className="text-sm text-slate-900 dark:text-white font-medium truncate min-w-0"
+                            className="text-sm font-semibold text-c-text truncate min-w-0"
                             title={assignment.template?.name || 'Interview'}
                           >
                             {assignment.template?.name || 'Interview'}
                           </span>
                           {assignment.template?.category ? (
                             <span
-                              className="shrink-0 max-w-[160px] truncate inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300"
+                              className="shrink-0 max-w-[160px] truncate inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[11px] font-medium border border-c-border bg-c-surface-raised text-c-text-secondary"
                               title={assignment.template.category}
                             >
                               {categoryTone(assignment.template.category) ? (
@@ -10118,7 +10121,7 @@ Return ONLY the answer text (no markdown fences).`;
                         </div>
                         {showRowDescription && rowDescription ? (
                           <span
-                            className="mt-0.5 max-w-[620px] truncate text-[11px] font-normal leading-4 text-slate-950/65 dark:text-slate-100/55"
+                            className="mt-0.5 max-w-[620px] truncate text-[11px] font-normal leading-4 text-c-text-muted"
                             title={rowDescription}
                           >
                             {rowDescription}
@@ -10196,14 +10199,14 @@ Return ONLY the answer text (no markdown fences).`;
                     >
                       {assignment.submittedAt ? (
                         <span
-                          className="inline-flex items-center gap-1 text-xs text-slate-700 dark:text-slate-200"
+                          className="inline-flex items-center gap-1 text-xs text-c-text-secondary"
                           title={new Date(assignment.submittedAt).toLocaleString()}
                         >
-                          <Send size={11} className="text-slate-400" />
+                          <Send size={11} className="text-c-text-muted" />
                           {new Date(assignment.submittedAt).toLocaleDateString()}
                         </span>
                       ) : (
-                        <span className="text-xs text-slate-400">—</span>
+                        <span className="text-xs text-c-text-muted">—</span>
                       )}
                     </td>
                   )}
@@ -10215,14 +10218,14 @@ Return ONLY the answer text (no markdown fences).`;
                       {(() => {
                         const score = assignment.aiReview?.overallScore;
                         if (typeof score !== 'number') {
-                          return <span className="text-xs text-slate-400">—</span>;
+                          return <span className="text-xs text-c-text-muted">—</span>;
                         }
                         const pct = Math.round(score <= 1 ? score * 100 : score);
                         const tone =
                           pct >= 75
-                            ? 'text-emerald-600 dark:text-emerald-300'
+                            ? 'text-c-success'
                             : pct >= 50
-                              ? 'text-amber-600 dark:text-amber-300'
+                              ? 'text-c-warning'
                               : 'text-c-danger';
                         return (
                           <span
@@ -10256,7 +10259,7 @@ Return ONLY the answer text (no markdown fences).`;
                             (isPolish ? 'Eskalowano' : 'Escalated')}
                         </span>
                       ) : (
-                        <span className="text-xs text-slate-400">—</span>
+                        <span className="text-xs text-c-text-muted">—</span>
                       )}
                     </td>
                   )}
@@ -10292,8 +10295,8 @@ Return ONLY the answer text (no markdown fences).`;
                   className="px-4 py-12 text-center"
                 >
                   <div className="flex flex-col items-center">
-                    <Inbox className="w-12 h-12 text-slate-600 mb-3" />
-                    <p className="text-slate-500 dark:text-slate-400 text-sm">
+                    <Inbox className="w-12 h-12 text-c-text-muted mb-3" />
+                    <p className="text-c-text-muted text-sm">
                       {isPolish ? 'Brak przydziałów' : 'No assignments'}
                     </p>
                   </div>
@@ -10343,11 +10346,11 @@ Return ONLY the answer text (no markdown fences).`;
               }
             }}
             className={[
-              'group relative bg-white dark:bg-navy-900 rounded-xl border overflow-hidden cursor-pointer transition duration-200',
-              'hover:shadow-lg hover:shadow-primary-500/10 hover:border-primary-500/30',
+              'group relative bg-c-surface rounded-xl border overflow-hidden cursor-pointer transition duration-200',
+              'hover:shadow-lg hover:border-c-border-strong',
               previewAssignmentId === assignment.id
-                ? 'border-primary-500/40'
-                : 'border-slate-200/60 dark:border-white/[0.08]',
+                ? 'border-c-accent bg-c-accent-soft'
+                : 'border-c-border-subtle',
             ].join(' ')}
           >
             {/* Header */}
@@ -10365,7 +10368,7 @@ Return ONLY the answer text (no markdown fences).`;
 
             {/* Title */}
             <div className="px-4 pb-3">
-              <h4 className="text-sm font-medium text-slate-900 dark:text-white line-clamp-2 min-h-[40px]">
+              <h4 className="text-sm font-medium text-c-text line-clamp-2 min-h-[40px]">
                 {getAssignmentTitle(assignment)}
               </h4>
               <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
@@ -10419,31 +10422,27 @@ Return ONLY the answer text (no markdown fences).`;
   // Render list content based on active tab
   const renderListContent = () => {
     if (isLoading || assignmentsLoading) {
-      return <LoadingState variant="spinner" className="h-64 py-0" />;
+      return (
+        <div className="p-6">
+          <LoadingState template="list" rows={6} />
+        </div>
+      );
     }
 
     if (loadError) {
       return (
-        <div className="flex items-center justify-center h-full p-6">
-          <div className="w-full max-w-3xl rounded-2xl border-l-4 border-l-amber-500 border border-amber-300/50 dark:border-amber-400/20 bg-amber-100 dark:bg-amber-500/10 p-6">
-            <div className="text-lg font-semibold text-slate-900 dark:text-white">
-              {isPolish ? 'Nie udało się załadować wywiadów' : 'Could not load your interviews'}
-            </div>
-            <div className="mt-2 text-sm text-slate-700 dark:text-slate-200">
-              {isPolish
-                ? 'Coś poszło nie tak podczas ładowania wywiadów. Odśwież stronę lub skontaktuj się z pomocą techniczną, jeśli problem się powtarza.'
-                : 'Something went wrong loading your interviews. Please refresh or contact support if the issue persists.'}
-            </div>
-            <button
-              type="button"
-              onClick={() => window.location.reload()}
-              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-navy-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-            >
-              <RefreshCw size={14} />
-              {isPolish ? 'Odśwież' : 'Refresh'}
-            </button>
-          </div>
-        </div>
+        <EmptyState
+          variant="error"
+          title={
+            isPolish ? 'Nie udało się załadować wywiadów' : 'Could not load your interviews'
+          }
+          description={
+            isPolish
+              ? 'Coś poszło nie tak podczas ładowania wywiadów. Odśwież stronę lub skontaktuj się z pomocą techniczną, jeśli problem się powtarza.'
+              : 'Something went wrong loading your interviews. Please refresh or contact support if the issue persists.'
+          }
+          onRetry={() => window.location.reload()}
+        />
       );
     }
 
@@ -10808,7 +10807,7 @@ Return ONLY the answer text (no markdown fences).`;
                   <div key={groupName}>
                     <div className="flex items-center gap-2 mb-2 px-1">
                       <FileText size={14} className="text-slate-600" />
-                      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      <span className="text-xs font-semibold text-c-text-muted uppercase tracking-wider">
                         {groupName}
                       </span>
                       <span className="text-xs text-slate-500">({groupInsights.length})</span>
@@ -10935,11 +10934,11 @@ Return ONLY the answer text (no markdown fences).`;
               </span>
             </div>
             <div>
-              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
                 {isPolish ? 'Szczegóły' : 'Details'}
               </div>
               {desc ? (
-                <div className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+                <div className="whitespace-pre-wrap text-sm leading-relaxed text-c-text-secondary">
                   {desc}
                 </div>
               ) : (
@@ -11103,8 +11102,8 @@ Return ONLY the answer text (no markdown fences).`;
         return (
           <div className="flex-1 rounded-lg border border-slate-200/70 bg-white/60 p-3 dark:border-white/[0.06] dark:bg-navy-900/50">
             <div className="mb-2 flex items-center gap-2">
-              <Icon size={14} className="text-slate-500 dark:text-slate-400" />
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <Icon size={14} className="text-c-text-muted" />
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
                 {heading}
               </span>
               <span className="ml-auto inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-slate-100 px-1.5 text-[11px] font-semibold text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
@@ -11112,7 +11111,7 @@ Return ONLY the answer text (no markdown fences).`;
               </span>
             </div>
             {items.length === 0 ? (
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              <p className="text-[11px] text-c-text-muted">
                 {isDecisions
                   ? isPolish
                     ? 'Brak decyzji przekazanych z wniosków wywiadu.'
@@ -11158,7 +11157,7 @@ Return ONLY the answer text (no markdown fences).`;
             <div className="mx-4 mb-3 mt-4 shrink-0 rounded-xl border border-slate-200/70 bg-white/50 p-3 backdrop-blur dark:border-white/[0.06] dark:bg-navy-900/50">
               <div className="mb-2 flex items-center gap-2">
                 <Send size={13} className="text-crimson-500" />
-                <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-200">
+                <span className="text-[12px] font-semibold text-c-text-secondary">
                   {isPolish ? 'Przekazane z wywiadu' : 'Handed off from interviews'}
                 </span>
                 <span className="text-[11px] text-slate-400 dark:text-slate-500">
@@ -11173,6 +11172,18 @@ Return ONLY the answer text (no markdown fences).`;
               </div>
             </div>
           ) : null}
+          {/* M13 flow redesign — staging is a SOURCE view, not the working surface. */}
+          <div
+            data-testid="interview-initiatives-source-note"
+            className="mx-4 mb-2 mt-3 flex shrink-0 items-center gap-2 rounded-lg border border-slate-200/70 bg-slate-50/70 px-3 py-2 dark:border-white/[0.06] dark:bg-white/[0.03]"
+          >
+            <Info size={13} className="shrink-0 text-slate-400 dark:text-slate-500" />
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              {isPolish
+                ? 'To jest widok źródłowy inicjatyw z wywiadów. Pracuj nad inicjatywą w jej dokumencie — otwórz podwójnym kliknięciem lub przyciskiem „Otwórz”.'
+                : 'This is the source view of interview-born initiatives. Work on an initiative in its document — open it with a double-click or the “Open” button.'}
+            </p>
+          </div>
           <div className="min-h-0 flex-1">
             <TableWithPreviewLayout<InterviewInitiativeDraft & { title: string }>
               selectedId={selectedInterviewInitiativeId}
@@ -11200,7 +11211,7 @@ Return ONLY the answer text (no markdown fences).`;
                 if (item.priority)
                   relations.push({
                     label: `${isPolish ? 'Priorytet' : 'Priority'}: ${String(item.priority).toLowerCase()}`,
-                    tone: 'text-slate-700 dark:text-slate-200',
+                    tone: 'text-c-text-secondary',
                   });
                 if (item.updatedAt || item.createdAt)
                   relations.push({
@@ -11246,7 +11257,7 @@ Return ONLY the answer text (no markdown fences).`;
                   rows.length === 0 ? (
                     <div className="flex flex-col items-center gap-3 py-16">
                       <Rocket className="h-10 w-10 text-slate-300 dark:text-slate-600" />
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                      <p className="text-sm text-c-text-muted">
                         {isPolish ? 'Brak inicjatyw' : 'No initiatives yet'}
                       </p>
                     </div>
@@ -11278,8 +11289,8 @@ Return ONLY the answer text (no markdown fences).`;
                             className={[
                               'group relative flex flex-col gap-2.5 rounded-xl border p-4 cursor-pointer transition duration-150',
                               isSelected
-                                ? 'border-primary-400/60 bg-primary-500/5 dark:bg-primary-500/10 shadow-sm'
-                                : 'border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-navy-900 hover:shadow-md hover:-translate-y-px',
+                                ? 'border-slate-300 bg-slate-50 shadow-sm dark:border-white/[0.18] dark:bg-white/[0.06]'
+                                : 'border-slate-200/60 dark:border-white/[0.06] bg-c-surface hover:shadow-md hover:-translate-y-px',
                             ].join(' ')}
                             onClick={() =>
                               setSelectedInterviewInitiativeId(isSelected ? null : initiative.id)
@@ -11300,14 +11311,14 @@ Return ONLY the answer text (no markdown fences).`;
                             </div>
                             {/* 2 TITLE */}
                             <p
-                              className="line-clamp-2 text-sm font-semibold text-slate-900 dark:text-slate-100"
+                              className="line-clamp-2 text-sm font-semibold text-c-text"
                               title={cardTitle}
                             >
                               {cardTitle}
                             </p>
                             {/* 3 DESCRIPTION */}
                             {desc ? (
-                              <p className="line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
+                              <p className="line-clamp-2 text-xs text-c-text-muted">
                                 {desc}
                               </p>
                             ) : null}
@@ -11473,7 +11484,7 @@ Return ONLY the answer text (no markdown fences).`;
                       className="w-full table-fixed rounded-xl"
                       style={{ minWidth: tableMinWidth }}
                     >
-                      <thead className="sticky top-0 z-20 bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.06]">
+                      <thead className="sticky top-0 z-20 bg-c-surface border-b border-c-border-subtle">
                         <tr className="sticky top-0 z-10 border-b border-slate-200/70 bg-white/60 dark:border-white/[0.06] dark:bg-navy-900/60">
                           <th
                             className="px-3 py-2 text-left"
@@ -11487,10 +11498,10 @@ Return ONLY the answer text (no markdown fences).`;
                               }}
                               className={[
                                 'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                                'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
-                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
+                                'border-c-border bg-c-surface text-white hover:border-c-info',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
                                 allVisibleSelected || someVisibleSelected
-                                  ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
+                                  ? 'border-c-info bg-c-info opacity-100'
                                   : 'opacity-70',
                               ].join(' ')}
                               aria-label={
@@ -11505,7 +11516,7 @@ Return ONLY the answer text (no markdown fences).`;
                             </button>
                           </th>
                           <th
-                            className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                            className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-c-text-muted"
                             style={{ width: initiativesColumnWidths.title }}
                           >
                             {isPolish ? 'Inicjatywa' : 'Initiative'}
@@ -11513,14 +11524,14 @@ Return ONLY the answer text (no markdown fences).`;
                           </th>
                           {!hiddenSet.has('status') ? (
                             <th
-                              className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                              className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-c-text-muted"
                               style={{ width: initiativesColumnWidths.status }}
                             >
                               <div className="flex items-center justify-start gap-1">
                                 <span
                                   className={
                                     (initiativeTableFilters.status as string[] | undefined)?.length
-                                      ? 'text-primary-500'
+                                      ? 'text-c-accent'
                                       : ''
                                   }
                                 >
@@ -11549,7 +11560,7 @@ Return ONLY the answer text (no markdown fences).`;
                           ) : null}
                           {!hiddenSet.has('priority') ? (
                             <th
-                              className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                              className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-c-text-muted"
                               style={{ width: initiativesColumnWidths.priority }}
                             >
                               <div className="flex items-center justify-start gap-1">
@@ -11557,7 +11568,7 @@ Return ONLY the answer text (no markdown fences).`;
                                   className={
                                     (initiativeTableFilters.priority as string[] | undefined)
                                       ?.length
-                                      ? 'text-primary-500'
+                                      ? 'text-c-accent'
                                       : ''
                                   }
                                 >
@@ -11586,14 +11597,14 @@ Return ONLY the answer text (no markdown fences).`;
                           ) : null}
                           {!hiddenSet.has('source') ? (
                             <th
-                              className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                              className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-c-text-muted"
                               style={{ width: initiativesColumnWidths.source }}
                             >
                               <div className="flex items-center justify-start gap-1">
                                 <span
                                   className={
                                     (initiativeTableFilters.source as string[] | undefined)?.length
-                                      ? 'text-primary-500'
+                                      ? 'text-c-accent'
                                       : ''
                                   }
                                 >
@@ -11622,7 +11633,7 @@ Return ONLY the answer text (no markdown fences).`;
                           ) : null}
                           {!hiddenSet.has('date') ? (
                             <th
-                              className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                              className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-c-text-muted"
                               style={{ width: initiativesColumnWidths.date }}
                             >
                               {isPolish ? 'Data' : 'Date'}
@@ -11630,7 +11641,7 @@ Return ONLY the answer text (no markdown fences).`;
                             </th>
                           ) : null}
                           <th
-                            className="relative px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                            className="relative px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider text-c-text-muted"
                             style={{ width: initiativesColumnWidths.actions }}
                           >
                             <div
@@ -11657,7 +11668,7 @@ Return ONLY the answer text (no markdown fences).`;
                                   });
                                   setIsInitiativesViewSettingsOpen((open) => !open);
                                 }}
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35 focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
                                 aria-label={
                                   isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'
                                 }
@@ -11681,10 +11692,10 @@ Return ONLY the answer text (no markdown fences).`;
                                       onClick={(event) => event.stopPropagation()}
                                     >
                                       <div className="px-2 pb-2 pt-1">
-                                        <div className="text-[12px] font-semibold text-slate-900 dark:text-slate-100">
+                                        <div className="text-[12px] font-semibold text-c-text">
                                           {isPolish ? 'Ustawienia widoku' : 'View settings'}
                                         </div>
-                                        <div className="mt-0.5 text-[11px] font-medium leading-4 text-slate-500 dark:text-slate-400">
+                                        <div className="mt-0.5 text-[11px] font-medium leading-4 text-c-text-muted">
                                           {isPolish
                                             ? 'Wybierz widoczne kolumny.'
                                             : 'Choose visible columns.'}
@@ -11735,9 +11746,9 @@ Return ONLY the answer text (no markdown fences).`;
                                                     return next;
                                                   });
                                                 }}
-                                                className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
+                                                className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-navy-700"
                                               />
-                                              <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
+                                              <span className="flex-1 text-[12px] font-medium text-c-text-secondary">
                                                 {column.label}
                                               </span>
                                               {alwaysVisible ? (
@@ -11761,9 +11772,9 @@ Return ONLY the answer text (no markdown fences).`;
                                                 event.target.checked
                                               );
                                             }}
-                                            className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
+                                            className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-navy-700"
                                           />
-                                          <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
+                                          <span className="flex-1 text-[12px] font-medium text-c-text-secondary">
                                             {isPolish
                                               ? 'Pokaż opis / uzasadnienie'
                                               : 'Show row description'}
@@ -11801,7 +11812,7 @@ Return ONLY the answer text (no markdown fences).`;
                               key={initiative.id}
                               className={`group cursor-pointer border-b border-slate-200/70 transition-colors last:border-0 dark:border-white/[0.06] ${
                                 isSelected || isInitiativeSelected
-                                  ? `${INTERVIEW_TABLE_SELECTED_ROW_CLASS} shadow-[inset_4px_0_0_theme(colors.primary.500)]`
+                                  ? INTERVIEW_TABLE_SELECTED_ROW_CLASS
                                   : INTERVIEW_TABLE_HOVER_ROW_CLASS
                               }`}
                               onClick={() => setSelectedInterviewInitiativeId(initiative.id)}
@@ -11825,12 +11836,11 @@ Return ONLY the answer text (no markdown fences).`;
                                   }}
                                   className={[
                                     'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                                    'border-slate-300 bg-white/80 text-white hover:border-primary-400 group-hover:opacity-100 group-hover:bg-white/90',
-                                    'dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]',
-                                    'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
-                                    'group-focus-within:opacity-100 group-focus-within:border-primary-400',
+                                    'border-c-border bg-c-surface text-white hover:border-c-info group-hover:opacity-100',
+                        'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
+                        'group-focus-within:opacity-100 group-focus-within:border-c-info',
                                     isInitiativeSelected
-                                      ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
+                                      ? 'border-c-info bg-c-info opacity-100'
                                       : 'opacity-0',
                                   ].join(' ')}
                                   aria-label={isPolish ? 'Zaznacz inicjatywę' : 'Select initiative'}
@@ -12052,7 +12062,7 @@ Return ONLY the answer text (no markdown fences).`;
                             <td colSpan={visibleColumns.length} className="px-4 py-12 text-center">
                               <div className="mx-auto flex max-w-md flex-col items-center">
                                 <Rocket className="mb-3 h-10 w-10 text-slate-500" />
-                                <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                                <p className="text-sm font-medium text-c-text-secondary">
                                   {interviewInitiatives.length === 0
                                     ? isPolish
                                       ? 'Brak inicjatyw stworzonych z wywiadu'
@@ -12063,7 +12073,7 @@ Return ONLY the answer text (no markdown fences).`;
                                 </p>
                                 {interviewInitiatives.length === 0 ? (
                                   <>
-                                    <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                                    <p className="mt-2 text-xs text-c-text-muted">
                                       {isPolish
                                         ? 'Brak inicjatyw — przekaż wnioski z zakładki Wnioski lub uruchom kreator inicjatyw.'
                                         : 'No initiatives yet — promote insights from the Insights tab or run the initiative wizard.'}
@@ -12346,7 +12356,7 @@ Return ONLY the answer text (no markdown fences).`;
                 if (a.template?.category)
                   relations.push({
                     label: `${isPolish ? 'Kategoria' : 'Category'}: ${a.template.category}`,
-                    tone: 'text-slate-700 dark:text-slate-200',
+                    tone: 'text-c-text-secondary',
                   });
                 if (a.sessionId || a.session?.id)
                   relations.push({
@@ -12426,7 +12436,7 @@ Return ONLY the answer text (no markdown fences).`;
               {assignmentsViewMode === 'cards' ? (
                 <div className="pl-4 pr-1.5 pt-3 pb-4">
                   {rows.length === 0 ? (
-                    <div className="py-12 text-center text-sm text-slate-500 dark:text-slate-400">
+                    <div className="py-12 text-center text-sm text-c-text-muted">
                       {isPolish ? 'Brak przydziałów' : 'No assignments'}
                     </div>
                   ) : (
@@ -12517,7 +12527,7 @@ Return ONLY the answer text (no markdown fences).`;
                 if (a.template?.category)
                   relations.push({
                     label: `${isPolish ? 'Kategoria' : 'Category'}: ${a.template.category}`,
-                    tone: 'text-slate-700 dark:text-slate-200',
+                    tone: 'text-c-text-secondary',
                   });
                 if (a.sessionId || a.session?.id)
                   relations.push({
@@ -12584,7 +12594,7 @@ Return ONLY the answer text (no markdown fences).`;
               {assignmentsViewMode === 'cards' ? (
                 <div className="pl-4 pr-1.5 pt-3 pb-4">
                   {rows.length === 0 ? (
-                    <div className="py-12 text-center text-sm text-slate-500 dark:text-slate-400">
+                    <div className="py-12 text-center text-sm text-c-text-muted">
                       {isPolish ? 'Brak przydziałów' : 'No assignments'}
                     </div>
                   ) : (
@@ -12608,10 +12618,10 @@ Return ONLY the answer text (no markdown fences).`;
           <div className="flex flex-col items-center justify-center py-20 text-center">
             {renderDegradedBanner()}
             <AlertTriangle size={40} className="text-slate-600 dark:text-navy-600 mb-3" />
-            <p className="text-lg font-medium text-slate-900 dark:text-white">
+            <p className="text-lg font-medium text-c-text">
               {isPolish ? 'Brak wniosków do przeglądu' : 'No insights pending review'}
             </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-sm text-c-text-muted mt-1">
               {isPolish
                 ? 'Wszystkie wnioski zostały przejrzane.'
                 : 'All insights have been reviewed.'}
@@ -12647,11 +12657,11 @@ Return ONLY the answer text (no markdown fences).`;
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <Lightbulb size={14} className="text-amber-500 shrink-0" />
-                      <span className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                      <span className="text-sm font-medium text-c-text truncate">
                         {insight.title}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center gap-3 text-xs text-c-text-muted">
                       {insight.createdAt && (
                         <span className="flex items-center gap-1">
                           <Clock size={12} />
@@ -12732,7 +12742,7 @@ Return ONLY the answer text (no markdown fences).`;
     const viewSegmentClass =
       'inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5';
     const viewButtonClass = (active: boolean) =>
-      `inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+      `inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
         active
           ? 'border border-slate-200/70 bg-white/80 text-slate-900 dark:border-white/[0.06] dark:bg-navy-800 dark:text-slate-100'
           : 'text-slate-600 hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]'
@@ -12744,10 +12754,10 @@ Return ONLY the answer text (no markdown fences).`;
           <button
             type="button"
             onClick={() => setIsTemplateAreaFilterOpen((prev) => !prev)}
-            className="inline-flex items-center gap-2 pr-3 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98]"
+            className="inline-flex items-center gap-2 pr-3 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-c-text-secondary hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98]"
             title={isPolish ? 'Obszar pytań' : 'Question area'}
           >
-            <span className={templateAreaTagFilter.length > 0 ? 'text-primary-500' : ''}>
+            <span className={templateAreaTagFilter.length > 0 ? 'text-c-accent' : ''}>
               {templateAreaTagFilter.length > 0
                 ? `${isPolish ? 'Obszar' : 'Area'}: ${templateAreaTagFilter.length}`
                 : isPolish
@@ -12762,11 +12772,11 @@ Return ONLY the answer text (no markdown fences).`;
                 className="fixed inset-0 z-40"
                 onClick={() => setIsTemplateAreaFilterOpen(false)}
               />
-              <div className="absolute right-0 top-full mt-2 z-50 w-64 max-h-80 overflow-auto rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg p-2">
+              <div className="absolute right-0 top-full mt-2 z-50 w-64 max-h-80 overflow-auto rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-c-surface shadow-lg p-2">
                 <button
                   type="button"
                   onClick={() => setTemplateAreaTagFilter([])}
-                  className="w-full text-left px-3 py-2 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] rounded-lg"
+                  className="w-full text-left px-3 py-2 text-xs font-medium text-c-text-muted hover:bg-slate-50 dark:hover:bg-white/[0.04] rounded-lg"
                 >
                   {isPolish ? 'Wyczyść filtr' : 'Clear filter'}
                 </button>
@@ -12775,7 +12785,7 @@ Return ONLY the answer text (no markdown fences).`;
                   return (
                     <label
                       key={tag}
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/[0.04] cursor-pointer text-sm text-slate-700 dark:text-slate-200"
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/[0.04] cursor-pointer text-sm text-c-text-secondary"
                     >
                       <input
                         type="checkbox"
@@ -12785,7 +12795,7 @@ Return ONLY the answer text (no markdown fences).`;
                             checked ? prev.filter((item) => item !== tag) : [...prev, tag]
                           )
                         }
-                        className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                        className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-c-focus"
                       />
                       <span>{getTemplateAreaTagLabel(tag, isPolish)}</span>
                     </label>
@@ -12799,7 +12809,7 @@ Return ONLY the answer text (no markdown fences).`;
           <select
             value={templateSourceFilter}
             onChange={(e) => setTemplateSourceFilter(e.target.value as TemplateSourceFilter)}
-            className="appearance-none pr-9 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+            className="appearance-none pr-9 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-c-text-secondary hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
             title={isPolish ? 'Źródło szablonu' : 'Template source'}
           >
             <option value="all">{isPolish ? 'Źródło: wszystkie' : 'Source: all'}</option>
@@ -12809,7 +12819,7 @@ Return ONLY the answer text (no markdown fences).`;
           </select>
           <ChevronDown
             size={14}
-            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-c-text-muted"
           />
         </div>,
         <div
@@ -13209,9 +13219,9 @@ Return ONLY the answer text (no markdown fences).`;
       {/* Reminder Modal */}
       {showReminderModal && selectedAssignment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-md mx-4">
-            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+          <div className="bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl w-full max-w-md mx-4">
+            <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
+              <h2 className="text-lg font-semibold text-c-text">
                 {isPolish ? 'Wyślij przypomnienie' : 'Send Reminder'}
               </h2>
               <button
@@ -13219,19 +13229,19 @@ Return ONLY the answer text (no markdown fences).`;
                   setShowReminderModal(false);
                   setSelectedAssignment(null);
                 }}
-                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-c-text-muted hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 <X size={20} />
               </button>
             </div>
             <div className="p-4">
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+              <p className="text-sm text-c-text-muted mb-4">
                 {isPolish
                   ? `Czy na pewno chcesz wysłać przypomnienie do ${selectedAssignment.assignee?.name || 'użytkownika'}?`
                   : `Are you sure you want to send a reminder to ${selectedAssignment.assignee?.name || 'the user'}?`}
               </p>
               <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3 mb-4">
-                <div className="text-sm text-slate-900 dark:text-white font-medium">
+                <div className="text-sm text-c-text font-medium">
                   {selectedAssignment.template?.name}
                 </div>
                 <div className="text-xs text-slate-500 mt-1">
@@ -13285,9 +13295,9 @@ Return ONLY the answer text (no markdown fences).`;
           from the Trash view; the backend rejects deletes on non-trashed sessions. */}
       {sessionDeleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-md mx-4">
-            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+          <div className="bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl w-full max-w-md mx-4">
+            <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
+              <h2 className="text-lg font-semibold text-c-text">
                 {isPolish ? 'Usuń sesję na stałe' : 'Delete session forever'}
               </h2>
               <button
@@ -13295,19 +13305,19 @@ Return ONLY the answer text (no markdown fences).`;
                   setSessionDeleteTarget(null);
                   setSessionDeleteConfirmText('');
                 }}
-                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-c-text-muted hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 <X size={20} />
               </button>
             </div>
             <div className="p-4">
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+              <p className="text-sm text-c-text-muted mb-4">
                 {isPolish
                   ? 'Tej operacji nie można cofnąć. Sesja oraz jej pytania, notatki i dowody zostaną trwale usunięte.'
                   : 'This cannot be undone. The session and its questions, notes and evidence will be permanently removed.'}
               </p>
               <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3 mb-4">
-                <div className="text-sm text-slate-900 dark:text-white font-medium truncate">
+                <div className="text-sm text-c-text font-medium truncate">
                   {sessionDeleteTarget.name || 'Discovery Interview'}
                 </div>
               </div>
@@ -13332,7 +13342,7 @@ Return ONLY the answer text (no markdown fences).`;
                 onChange={(e) => setSessionDeleteConfirmText(e.target.value)}
                 autoFocus
                 placeholder="DELETE"
-                className="w-full px-3 py-2 mb-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-c-danger/40"
+                className="w-full px-3 py-2 mb-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-danger/40"
               />
               <div className="flex gap-3">
                 <button
@@ -13364,9 +13374,9 @@ Return ONLY the answer text (no markdown fences).`;
       {/* Send Back Modal */}
       {showSendBackModal && selectedAssignment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-md mx-4">
-            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+          <div className="bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl w-full max-w-md mx-4">
+            <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
+              <h2 className="text-lg font-semibold text-c-text">
                 {isPolish ? 'Zwróć do poprawy' : 'Send Back for Revision'}
               </h2>
               <button
@@ -13374,7 +13384,7 @@ Return ONLY the answer text (no markdown fences).`;
                   setShowSendBackModal(false);
                   setSelectedAssignment(null);
                 }}
-                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-c-text-muted hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 <X size={20} />
               </button>
@@ -13388,7 +13398,7 @@ Return ONLY the answer text (no markdown fences).`;
               }}
               className="p-4"
             >
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+              <p className="text-sm text-c-text-muted mb-4">
                 {isPolish
                   ? 'Podaj powód zwrotu wywiadu do poprawy:'
                   : 'Provide a reason for sending the interview back:'}
@@ -13400,7 +13410,7 @@ Return ONLY the answer text (no markdown fences).`;
                 placeholder={
                   isPolish ? 'Opisz co wymaga poprawy...' : 'Describe what needs to be improved...'
                 }
-                className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition resize-none"
+                className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-c-text placeholder-slate-500 focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus transition resize-none"
               />
               <div className="flex gap-3 mt-4">
                 <button
@@ -13431,9 +13441,9 @@ Return ONLY the answer text (no markdown fences).`;
           Degrades gracefully when no AI assessment exists. */}
       {showApproveModal && selectedAssignment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[88vh] overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <div className="bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[88vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
+              <h2 className="text-lg font-semibold text-c-text flex items-center gap-2">
                 <Check size={18} className="text-emerald-500" />
                 {isPolish ? 'Zatwierdź wywiad' : 'Approve interview'}
               </h2>
@@ -13442,14 +13452,14 @@ Return ONLY the answer text (no markdown fences).`;
                   setShowApproveModal(false);
                   setSelectedAssignment(null);
                 }}
-                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-c-text-muted hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 <X size={20} />
               </button>
             </div>
             <div className="p-4 overflow-auto">
               <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3 mb-4">
-                <div className="text-sm text-slate-900 dark:text-white font-medium">
+                <div className="text-sm text-c-text font-medium">
                   {selectedAssignment.template?.name || 'Interview'}
                 </div>
                 <div className="text-xs text-slate-500 mt-1">
@@ -13464,7 +13474,7 @@ Return ONLY the answer text (no markdown fences).`;
                 const ai = selectedAssignment.aiReview;
                 if (!ai || (typeof ai.overallScore !== 'number' && !ai.weakAnswerMap?.length)) {
                   return (
-                    <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800/60 p-3 mb-4 text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                    <div className="rounded-lg border border-c-border-subtle bg-white dark:bg-navy-800/60 p-3 mb-4 text-sm text-c-text-muted flex items-center gap-2">
                       <Sparkles size={14} className="text-slate-400" />
                       {isPolish
                         ? 'Ocena AI niedostępna dla tego wywiadu.'
@@ -13509,13 +13519,13 @@ Return ONLY the answer text (no markdown fences).`;
                           {weak.slice(0, 8).map((w) => (
                             <li
                               key={w.key}
-                              className="text-xs text-slate-700 dark:text-slate-200 flex items-start gap-1.5"
+                              className="text-xs text-c-text-secondary flex items-start gap-1.5"
                             >
                               <AlertTriangle size={11} className="mt-0.5 shrink-0 text-amber-500" />
                               <span className="min-w-0">
                                 <span className="font-medium">{w.label}</span>
                                 {w.feedback ? (
-                                  <span className="text-slate-500 dark:text-slate-400">
+                                  <span className="text-c-text-muted">
                                     {' '}
                                     — {w.feedback}
                                   </span>
@@ -13571,9 +13581,9 @@ Return ONLY the answer text (no markdown fences).`;
       {/* #7b — Change due date modal (wired to manageAssignment, mode 'update'). */}
       {showDueDateModal && selectedAssignment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-md mx-4">
-            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <div className="bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl w-full max-w-md mx-4">
+            <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
+              <h2 className="text-lg font-semibold text-c-text flex items-center gap-2">
                 <CalendarClock size={18} className="text-primary-500" />
                 {isPolish ? 'Zmień termin' : 'Change due date'}
               </h2>
@@ -13582,14 +13592,14 @@ Return ONLY the answer text (no markdown fences).`;
                   setShowDueDateModal(false);
                   setSelectedAssignment(null);
                 }}
-                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-c-text-muted hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 <X size={20} />
               </button>
             </div>
             <div className="p-4">
               <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3 mb-4">
-                <div className="text-sm text-slate-900 dark:text-white font-medium">
+                <div className="text-sm text-c-text font-medium">
                   {selectedAssignment.template?.name || 'Interview'}
                 </div>
                 <div className="text-xs text-slate-500 mt-1">
@@ -13605,7 +13615,7 @@ Return ONLY the answer text (no markdown fences).`;
                 type="date"
                 value={dueDateDraft}
                 onChange={(e) => setDueDateDraft(e.target.value)}
-                className="w-full px-3 py-2 mb-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+                className="w-full px-3 py-2 mb-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
               />
               <div className="flex gap-3">
                 <button
@@ -13640,15 +13650,15 @@ Return ONLY the answer text (no markdown fences).`;
       {/* Analytics Modal (Placeholder) */}
       {showAnalytics && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
+          <div className="bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
               <h2 className="text-lg font-semibold text-white flex items-center gap-2">
                 <BarChart3 size={20} className="text-primary-400" />
                 {isPolish ? 'Analityka wywiadów' : 'Interview Analytics'}
               </h2>
               <button
                 onClick={() => setShowAnalytics(false)}
-                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-c-text-muted hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 <X size={20} />
               </button>
@@ -13656,13 +13666,13 @@ Return ONLY the answer text (no markdown fences).`;
             <div className="p-6 overflow-auto max-h-[calc(90vh-80px)]">
               {/* Summary Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+                <div className="bg-slate-50 dark:bg-navy-800 border border-c-border-subtle rounded-xl p-4">
                   <div className="text-2xl font-bold text-white">{sessions.length}</div>
-                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                  <div className="text-sm text-c-text-muted">
                     {isPolish ? 'Wszystkie sesje' : 'Total Sessions'}
                   </div>
                 </div>
-                <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+                <div className="bg-slate-50 dark:bg-navy-800 border border-c-border-subtle rounded-xl p-4">
                   <div className="text-2xl font-bold text-emerald-400">
                     {
                       sessions.filter((s) =>
@@ -13670,29 +13680,29 @@ Return ONLY the answer text (no markdown fences).`;
                       ).length
                     }
                   </div>
-                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                  <div className="text-sm text-c-text-muted">
                     {isPolish ? 'Zatwierdzone' : 'Approved'}
                   </div>
                 </div>
-                <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+                <div className="bg-slate-50 dark:bg-navy-800 border border-c-border-subtle rounded-xl p-4">
                   <div className="text-2xl font-bold text-blue-400">
                     {sessions.filter((s) => getSessionWorkflowStatus(s) === 'in_progress').length}
                   </div>
-                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                  <div className="text-sm text-c-text-muted">
                     {isPolish ? 'W trakcie' : 'In Progress'}
                   </div>
                 </div>
-                <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+                <div className="bg-slate-50 dark:bg-navy-800 border border-c-border-subtle rounded-xl p-4">
                   <div className="text-2xl font-bold text-amber-400">{insights.length}</div>
-                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                  <div className="text-sm text-c-text-muted">
                     {isPolish ? 'Wnioski AI' : 'AI Insights'}
                   </div>
                 </div>
               </div>
 
               {/* Assignment Stats */}
-              <div className="bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4 mb-6">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
+              <div className="bg-navy-800 border border-c-border-subtle rounded-xl p-4 mb-6">
+                <h3 className="text-sm font-semibold text-c-text mb-4">
                   {isPolish ? 'Statystyki przydziałów' : 'Assignment Statistics'}
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -13732,8 +13742,8 @@ Return ONLY the answer text (no markdown fences).`;
               </div>
 
               {/* Template Usage */}
-              <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
+              <div className="bg-slate-50 dark:bg-navy-800 border border-c-border-subtle rounded-xl p-4">
+                <h3 className="text-sm font-semibold text-c-text mb-4">
                   {isPolish ? 'Użycie szablonów' : 'Template Usage'}
                 </h3>
                 <div className="space-y-3">

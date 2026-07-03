@@ -84,7 +84,7 @@ const SheetOverlay = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLD
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={`fixed inset-0 z-50 bg-black/60 animate-in fade-in-0 ${className || ''}`}
+      className={`fixed inset-0 z-overlay bg-black/60 animate-in fade-in-0 ${className || ''}`}
       {...props}
     />
   )
@@ -118,7 +118,7 @@ const SheetContent = React.forwardRef<HTMLDivElement, SheetContentProps>(
           ref={ref}
           role="dialog"
           aria-modal="true"
-          className={`fixed z-50 gap-4 overflow-y-auto border border-slate-200 bg-white p-0 shadow-lg duration-200 animate-in dark:border-navy-700 dark:bg-navy-900 ${sideClass} ${className || ''}`}
+          className={`fixed z-modal gap-4 overflow-y-auto border border-slate-200 bg-white p-0 shadow-lg duration-200 animate-in dark:border-navy-700 dark:bg-navy-900 ${sideClass} ${className || ''}`}
           {...props}
         >
           {children}

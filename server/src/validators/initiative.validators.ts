@@ -51,7 +51,7 @@ const DateOnlyOrDateTimeString = z
 // ==========================================
 
 export const SourceTypeEnum = z
-  .enum(['manual', 'tool', 'assessment', 'assessment_report', 'financial_analysis'])
+  .enum(['manual', 'tool', 'assessment', 'assessment_report', 'financial_analysis', 'audit'])
   .or(z.string().max(50));
 
 const InitiativePayloadBaseSchema = z.object({
@@ -163,6 +163,11 @@ export const UpdateInitiativeSchema = InitiativePayloadBaseSchema.omit({
 export const UpdateInitiativeStatusSchema = z.object({
   status: InitiativeStatusEnum,
   reason: z.string().max(500).optional(),
+  // M13 Depth AI-gate soft-block override. The controller reads
+  // `req.body.overrideReason`, but validateBody replaces req.body with the
+  // parsed (stripped) object — without this field the override silently never
+  // arrives and a below-threshold initiative can NEVER leave the gate (422 loop).
+  overrideReason: z.string().max(1000).optional(),
 });
 
 export const TransferToRoadmapSchema = z.object({

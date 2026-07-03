@@ -304,21 +304,21 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
         </div>
 
         {/* ── AI Activity Timeline ─────────────────────────────────── */}
-        <div className="rounded-xl border border-primary-200/40 dark:border-primary-800/30 bg-primary-50/20 dark:bg-primary-900/10 p-2.5">
+        <div className="rounded-xl border border-slate-200/40 dark:border-navy-700/30 bg-slate-50/20 dark:bg-navy-900/10 p-2.5">
           <button
             type="button"
             onClick={() => toggleSection('timeline')}
             className="flex items-center gap-1.5 w-full text-left"
           >
-            <Activity size={12} className="text-primary-500" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-primary-600 dark:text-primary-400 flex-1">
+            <Activity size={12} className="text-slate-500" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 flex-1">
               {isPl ? 'Oś czasu AI' : 'AI Activity Timeline'}
             </span>
             <span className="text-[9px] text-slate-600 mr-1">{sortedLog.length}</span>
             {expandedSections.has('timeline') ? (
-              <ChevronUp size={12} className="text-primary-400" />
+              <ChevronUp size={12} className="text-slate-400" />
             ) : (
-              <ChevronDown size={12} className="text-primary-400" />
+              <ChevronDown size={12} className="text-slate-400" />
             )}
           </button>
 
@@ -340,14 +340,14 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                   return (
                     <div
                       key={entry.id}
-                      className="rounded-lg border border-primary-200/30 dark:border-primary-800/20 bg-white/50 dark:bg-white/[0.02] overflow-hidden"
+                      className="rounded-lg border border-slate-200/30 dark:border-navy-700/20 bg-white/50 dark:bg-white/[0.02] overflow-hidden"
                     >
                       <button
                         type="button"
                         onClick={() => setExpandedEntryId(isExpanded ? null : entry.id)}
-                        className="w-full flex items-center gap-2 px-2.5 py-2 text-left hover:bg-primary-50/30 dark:hover:bg-primary-900/10 transition-colors"
+                        className="w-full flex items-center gap-2 px-2.5 py-2 text-left hover:bg-slate-50/60 dark:hover:bg-navy-800/40 transition-colors"
                       >
-                        <TeresaMark size={12} className="text-primary-500 shrink-0" />
+                        <TeresaMark size={12} className="text-slate-500 shrink-0" />
                         <div className="flex-1 min-w-0">
                           <div className="text-[11px] font-medium text-slate-700 dark:text-slate-300 truncate">
                             {isPl ? genLabel.pl : genLabel.en}
@@ -357,7 +357,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                               <Clock size={8} className="inline mr-0.5 -mt-px" />
                               {formatTimestamp(entry.acceptedAt, !!isPl)}
                             </span>
-                            <span className="text-[9px] text-primary-500/70">
+                            <span className="text-[9px] text-slate-500/70">
                               {proposalCount} {isPl ? 'propozycji' : 'proposals'}
                             </span>
                           </div>
@@ -373,7 +373,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                       </button>
 
                       {isExpanded && (
-                        <div className="px-2.5 pb-2.5 space-y-1.5 border-t border-primary-200/20 dark:border-primary-800/15">
+                        <div className="px-2.5 pb-2.5 space-y-1.5 border-t border-slate-200/20 dark:border-navy-700/15">
                           <div className="pt-2">
                             <div className="text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-1">
                               {isPl ? 'Narzędzie' : 'Tool'}
@@ -574,7 +574,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                     <div className="h-2 rounded-full bg-slate-200 dark:bg-navy-800 overflow-hidden">
                       {stats.totalNodes > 0 && (
                         <div
-                          className="h-full rounded-full bg-gradient-to-r from-primary-500 to-primary-500"
+                          className="h-full rounded-full bg-gradient-to-r from-slate-500 to-slate-600"
                           style={{
                             width: `${Math.round((stats.nodesFromAI / stats.totalNodes) * 100)}%`,
                           }}
@@ -583,7 +583,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                     </div>
                   </div>
                   <div className="text-[10px] text-slate-500 dark:text-slate-400 shrink-0">
-                    <span className="font-semibold text-primary-600 dark:text-primary-400">
+                    <span className="font-semibold text-slate-700 dark:text-slate-200">
                       {stats.nodesFromAI}
                     </span>
                     {' / '}
@@ -591,7 +591,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                   </div>
                 </div>
                 <div className="flex items-center gap-3 mt-1">
-                  <span className="text-[9px] text-primary-500 flex items-center gap-1">
+                  <span className="text-[9px] text-slate-500 flex items-center gap-1">
                     <TeresaMark size={8} />
                     {isPl ? 'AI' : 'AI'}: {stats.nodesFromAI}
                   </span>
@@ -678,7 +678,7 @@ export const AIGovernanceBadge: React.FC<AIGovernanceBadgeProps> = ({ mapExtensi
           : `AI Governance: ${statusCfg.labelEn}${unreviewed ? ' — unreviewed changes' : ''}`
       }
     >
-      <Shield size={11} className={unreviewed ? 'text-amber-500' : 'text-primary-500'} />
+      <Shield size={11} className={unreviewed ? 'text-amber-500' : 'text-slate-500'} />
       {unreviewed && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />}
       <span>{aiCount}</span>
     </button>

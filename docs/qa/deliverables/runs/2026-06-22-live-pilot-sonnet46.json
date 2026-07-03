@@ -1,0 +1,309 @@
+{
+  "ranAt": "2026-06-23T02:03:15.462Z",
+  "model": "anthropic/claude-sonnet-4-6 (PREMIUM, zgodny z D1) — plain-node runner",
+  "note": "FT-6 live. Klucz z Railway staging. Scoring = ten sam co mock-harness. NIE vitest (SDK structured pada pod vitest).",
+  "total": 9,
+  "passed": 2,
+  "avgScorePct": 87,
+  "byModule": [
+    {
+      "module": "deck",
+      "passed": 0,
+      "of": 3,
+      "avgScorePct": 82
+    },
+    {
+      "module": "doc",
+      "passed": 2,
+      "of": 3,
+      "avgScorePct": 92
+    },
+    {
+      "module": "table",
+      "passed": 0,
+      "of": 3,
+      "avgScorePct": 87
+    }
+  ],
+  "rows": [
+    {
+      "id": "M19.S01",
+      "module": "deck",
+      "tier": "Sml",
+      "intent": "Slajd otwierający dla prezentacji o cyfryzacji w MŚP",
+      "tierUsed": "PREMIUM",
+      "fallbackUsed": false,
+      "scorePct": 78,
+      "passed": false,
+      "failures": [
+        "slide count[exp count in [1, 1], got 5]",
+        "cover title contains any keyword[exp contains any of [cyfryzacja, MŚP], got matched 0/2 in \"Slide 0 is the opening slide, so 'cover' is the natural and only appropriate lay\"]"
+      ],
+      "sample": {
+        "distinctLayouts": 5,
+        "palettes": [
+          "indigo"
+        ],
+        "layouts": [
+          "cover",
+          "executive_summary",
+          "key_messages",
+          "assessment",
+          "performance_overview"
+        ],
+        "withBrief": 5,
+        "sampleBrief": "Abstract digital network of interconnected nodes representing SME digitalization, modern and corporate feel"
+      }
+    },
+    {
+      "id": "M19.S06",
+      "module": "deck",
+      "tier": "Med",
+      "intent": "Diagnoza procesu rekrutacji ACME: cover + status + 3 problemy + 1 rekomendacja + next_steps",
+      "tierUsed": "PREMIUM",
+      "fallbackUsed": false,
+      "scorePct": 75,
+      "passed": false,
+      "failures": [
+        "sequence[last][exp next_steps, got key_messages]",
+        "requireLayout recommendation_single[exp ≥1, got 0]",
+        "requireLayout single_insight[exp ≥1, got 0]"
+      ],
+      "sample": {
+        "distinctLayouts": 8,
+        "palettes": [
+          "slate"
+        ],
+        "layouts": [
+          "cover",
+          "executive_summary",
+          "section_intro",
+          "assessment",
+          "performance_overview",
+          "recommendation_portfolio",
+          "roadmap",
+          "key_messages"
+        ],
+        "withBrief": 8,
+        "sampleBrief": "Modern corporate office environment with polished conference room, subtle blue-grey tones, professional atmosphere"
+      }
+    },
+    {
+      "id": "M19.S16",
+      "module": "deck",
+      "tier": "Lrg",
+      "intent": "Pełna diagnoza Apator Powogaz: exec summary, 3 obszary, 5 rekomendacji, roadmapa, ryzyko, next steps",
+      "tierUsed": "PREMIUM",
+      "fallbackUsed": false,
+      "scorePct": 93,
+      "passed": false,
+      "failures": [
+        "requireLayout root_cause[exp ≥1, got 0]"
+      ],
+      "sample": {
+        "distinctLayouts": 10,
+        "palettes": [
+          "midnight"
+        ],
+        "layouts": [
+          "cover",
+          "executive_summary",
+          "section_intro",
+          "assessment",
+          "performance_overview",
+          "recommendation_portfolio",
+          "roadmap",
+          "key_messages",
+          "risk_management",
+          "next_steps"
+        ],
+        "withBrief": 10,
+        "sampleBrief": "Aerial view of a modern industrial water meter manufacturing facility at dusk, conveying precision engineering and scale"
+      }
+    },
+    {
+      "id": "M18.S01",
+      "module": "doc",
+      "tier": "Sml",
+      "intent": "Krótki memo do zarządu: stan prac nad wdrożeniem CRM (5 paragrafów)",
+      "scorePct": 75,
+      "passed": false,
+      "failures": [
+        "total blocks count[exp count in [5, 7], got 11]"
+      ],
+      "sample": {
+        "sections": 1,
+        "blockTypes": [
+          "heading",
+          "text",
+          "kpi",
+          "table",
+          "callout"
+        ],
+        "totalBlocks": 11
+      }
+    },
+    {
+      "id": "M18.S06",
+      "module": "doc",
+      "tier": "Med",
+      "intent": "Diagnoza rekrutacji ACME: wprowadzenie, stan (KPI), 3 problemy (callouts), rekomendacja (lista)",
+      "scorePct": 100,
+      "passed": true,
+      "failures": [],
+      "sample": {
+        "sections": 4,
+        "blockTypes": [
+          "heading",
+          "text",
+          "kpi",
+          "callout",
+          "numberedList",
+          "table",
+          "chart",
+          "bulletList",
+          "quote"
+        ],
+        "totalBlocks": 30
+      }
+    },
+    {
+      "id": "M18.S16",
+      "module": "doc",
+      "tier": "Lrg",
+      "intent": "Pełny raport diagnostyczny Apator: exec summary, kontekst, metodyka, 3 obszary, rekomendacje, roadmapa, ryzyko, appendix",
+      "scorePct": 100,
+      "passed": true,
+      "failures": [],
+      "sample": {
+        "sections": 8,
+        "blockTypes": [
+          "heading",
+          "text",
+          "kpi",
+          "callout",
+          "bulletList",
+          "table",
+          "chart",
+          "numberedList",
+          "image"
+        ],
+        "totalBlocks": 68
+      }
+    },
+    {
+      "id": "M20.S01",
+      "module": "table",
+      "tier": "Sml",
+      "intent": "Tabela zadań: nazwa, owner, deadline, status",
+      "tierUsed": "PREMIUM",
+      "fallbackUsed": false,
+      "scorePct": 78,
+      "passed": false,
+      "failures": [
+        "field count[exp count in [3, 5], got 6]",
+        "select status required labels[exp [todo, in progress, done], got missing [todo, in progress, done]]"
+      ],
+      "sample": {
+        "fields": [
+          "Nazwa zadania:singleLineText",
+          "Owner:singleLineText",
+          "Deadline:date",
+          "Priorytet:singleSelect",
+          "Status:singleSelect",
+          "Notatki:longText"
+        ],
+        "seedRows": 5,
+        "fieldTypes": [
+          "singleLineText",
+          "date",
+          "singleSelect",
+          "longText"
+        ]
+      }
+    },
+    {
+      "id": "M20.S06",
+      "module": "table",
+      "tier": "Med",
+      "intent": "Tabela CRM: company, contact, email, phone, account_type, MRR, churn_risk, last_contact, notes, owner",
+      "tierUsed": "PREMIUM",
+      "fallbackUsed": false,
+      "scorePct": 90,
+      "passed": false,
+      "failures": [
+        "seed row count[exp 6+, got 5]"
+      ],
+      "sample": {
+        "fields": [
+          "Company:singleLineText",
+          "Contact Name:singleLineText",
+          "Email:email",
+          "Phone:phone",
+          "Account Type:singleSelect",
+          "MRR:currency",
+          "Churn Risk:singleSelect",
+          "Last Contact:date",
+          "Days Since Contact:number",
+          "Notes:longText",
+          "Account Owner:singleLineText"
+        ],
+        "seedRows": 5,
+        "fieldTypes": [
+          "singleLineText",
+          "email",
+          "phone",
+          "singleSelect",
+          "currency",
+          "date",
+          "number",
+          "longText"
+        ]
+      }
+    },
+    {
+      "id": "M20.S16",
+      "module": "table",
+      "tier": "Lrg",
+      "intent": "Portfolio 12 projektów z CF: progress jako dataBar, variance jako colorScale",
+      "tierUsed": "PREMIUM",
+      "fallbackUsed": false,
+      "scorePct": 92,
+      "passed": false,
+      "failures": [
+        "field count[exp count in [10, 12], got 17]"
+      ],
+      "sample": {
+        "fields": [
+          "Project Name:singleLineText",
+          "Category:singleSelect",
+          "Status:singleSelect",
+          "Owner:singleLineText",
+          "Start Date:date",
+          "Deadline:date",
+          "Budget (PLN):currency",
+          "Spent (PLN):currency",
+          "Variance (PLN):currency",
+          "Planned Progress (%):percent",
+          "Actual Progress (%):percent",
+          "Progress Variance (%):percent",
+          "Priority:singleSelect",
+          "Team Size:number",
+          "Risk Level:singleSelect",
+          "ROI (%):percent",
+          "Notes:longText"
+        ],
+        "seedRows": 12,
+        "fieldTypes": [
+          "singleLineText",
+          "singleSelect",
+          "date",
+          "currency",
+          "percent",
+          "number",
+          "longText"
+        ]
+      }
+    }
+  ]
+}

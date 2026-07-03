@@ -50,6 +50,10 @@ vi.mock('../../contextPackBuilder.js', () => ({
   buildContextPack: (...args: unknown[]) => buildContextPackMock(...args),
 }));
 
+vi.mock('../../tableSchemaGeneratorService.js', () => ({
+  generateTableSchema: vi.fn().mockResolvedValue({ tierUsed: 'STANDARD', fallbackUsed: true, fields: [], seedRows: [], conditionalFormatting: [], hasFormulas: false, sheets: [] }),
+}));
+
 const searchInsightsMock = vi.fn();
 vi.mock('../../ai/tools/searchInsights.js', () => ({
   searchInsights: (...args: unknown[]) => searchInsightsMock(...args),
@@ -347,6 +351,8 @@ describe('planSheet + startSheet (L3)', () => {
 
     await startSheet({ generationId: 'draft-1', setup: {}, organizationId: ORG, userId: USER });
     await flushBackgroundWork();
+    await flushBackgroundWork();
+    await flushBackgroundWork();
 
     expect(updateDraftMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -364,6 +370,8 @@ describe('planSheet + startSheet (L3)', () => {
     generateChatResponseMock.mockResolvedValue({ content: 'Przepraszam, nie mogę.' });
 
     await startSheet({ generationId: 'draft-1', setup: {}, organizationId: ORG, userId: USER });
+    await flushBackgroundWork();
+    await flushBackgroundWork();
     await flushBackgroundWork();
 
     // P2-3: bez zapisu treści; tytuł oznaczony jako nieudana generacja.

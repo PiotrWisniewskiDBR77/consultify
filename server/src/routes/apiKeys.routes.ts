@@ -15,8 +15,33 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import orgContextMiddleware from '../middleware/orgContext.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess, requireOrgRole } from '../middleware/rbac.middleware.js';
+import adminAuditService from '../services/adminAuditService.js';
 import { API_KEY_PERMISSIONS, ApiKeyService } from '../services/apiKeyService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+
+/**
+ * Emit an admin audit entry for API-key lifecycle events. Fail-safe: audit
+ * persistence errors are swallowed inside adminAuditService and must never
+ * block the key operation.
+ */
+async function auditApiKey(
+  actorId: string,
+  orgId: string,
+  actionType: string,
+  details: Record<string, unknown>
+): Promise<void> {
+  try {
+    await adminAuditService.logAction({
+      adminId: actorId,
+      organizationId: orgId,
+      actionType,
+      resourceType: 'api_key',
+      details: { orgId, isSensitive: true, ...details },
+    });
+  } catch {
+    /* best-effort */
+  }
+}
 
 // Apply rate limiting
 const router = Router();
@@ -87,6 +112,12 @@ router.post(
       createdBy: req.user!.id,
     });
 
+    await auditApiKey(req.user!.id, orgId, 'generate_api_key', {
+      keyId: key.id,
+      keyName: key.name,
+      keyPrefix: key.keyPrefix,
+    });
+
     // Return key info with full key ONCE
     return res.status(201).json({
       message: 'API key created successfully',
@@ -122,6 +153,12 @@ router.post(
       userId: req.user!.id,
     });
 
+    await auditApiKey(req.user!.id, req.params.orgId || (req as any).org?.id, 'rotate_api_key', {
+      keyId,
+      newKeyId: newKey.id,
+      gracePeriodHours: gracePeriodHours || 24,
+    });
+
     return res.json({
       message: 'API key rotated successfully',
       warning: 'Store the new key securely. Old key will expire after grace period.',
@@ -150,6 +187,10 @@ router.delete(
     const { keyId } = req.params;
 
     await ApiKeyService.revokeKey(keyId, req.user!.id);
+
+    await auditApiKey(req.user!.id, req.params.orgId || (req as any).org?.id, 'revoke_api_key', {
+      keyId,
+    });
 
     return res.json({
       message: 'API key revoked successfully',

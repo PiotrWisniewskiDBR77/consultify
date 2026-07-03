@@ -100,7 +100,7 @@ describe('TabeleMelsView', () => {
     expect(screen.getAllByText(/Sample table|Operational/i).length).toBeGreaterThan(0);
   });
 
-  it('top bar contains the canonical MELS chip ids', () => {
+  it('top bar tiers the canonical MELS chips (secondary visible, rare in overflow, run primary)', () => {
     render(
       <TabeleMelsView
         preview={samplePreview}
@@ -115,21 +115,24 @@ describe('TabeleMelsView', () => {
       />
     );
     const chipsRow = screen.getByTestId('mels-topbar-chips');
-    const ids = within(chipsRow)
+
+    // Command-row hierarchy (editor-shell-canon § 2 STREFA GÓRNA): rare
+    // chips (history/governance/analytics/audit) fold into the `⋯` overflow
+    // menu; the row shows secondary chips then the primary Run action.
+    const visibleIds = within(chipsRow)
+      .getAllByRole('button')
+      .map((b) => b.getAttribute('data-mels-chip'))
+      .filter((id): id is string => Boolean(id));
+    expect(visibleIds).toEqual(['internal', 'theme', 'qa', 'share', 'agent', 'run']);
+
+    // Overflow chips exist but are collapsed until the `⋯` menu is opened.
+    const overflowToggle = screen.getByTestId('mels-topbar-overflow');
+    fireEvent.click(overflowToggle);
+    const overflowMenu = screen.getByTestId('mels-topbar-overflow-menu');
+    const overflowIds = within(overflowMenu)
       .getAllByRole('button')
       .map((b) => b.getAttribute('data-mels-chip'));
-    expect(ids).toEqual([
-      'internal',
-      'theme',
-      'history',
-      'qa',
-      'governance',
-      'analytics',
-      'audit',
-      'share',
-      'agent',
-      'run',
-    ]);
+    expect(overflowIds).toEqual(['history', 'governance', 'analytics', 'audit']);
   });
 
   it('left rail derives section badges from the preview', () => {

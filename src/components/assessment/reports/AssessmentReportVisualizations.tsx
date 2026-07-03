@@ -96,10 +96,10 @@ export const ScoreCard: React.FC<ScoreCardProps> = ({
       icon: 'text-emerald-400',
     },
     purple: {
-      bg: 'bg-primary-500/10',
-      border: 'border-primary-500/30',
-      text: 'text-primary-400',
-      icon: 'text-primary-400',
+      bg: 'bg-teal-500/10',
+      border: 'border-teal-500/30',
+      text: 'text-teal-400',
+      icon: 'text-teal-400',
     },
     amber: {
       bg: 'bg-amber-500/10',
@@ -258,7 +258,7 @@ export const AssessmentRadarChart: React.FC<AssessmentRadarChartProps> = ({
             <Radar
               name="Target"
               dataKey="target"
-              stroke="#10b981"
+              stroke="#1D9E75"
               fill="transparent"
               strokeWidth={2}
               strokeDasharray="5 5"
@@ -440,7 +440,7 @@ export const DimensionBars: React.FC<DimensionBarsProps> = ({ data, height = 300
             )}
           />
           <Bar dataKey="current" name="Current" fill="#3b82f6" radius={[0, 4, 4, 0]} />
-          <Bar dataKey="target" name="Target" fill="#10b981" radius={[0, 4, 4, 0]} />
+          <Bar dataKey="target" name="Target" fill="#1D9E75" radius={[0, 4, 4, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

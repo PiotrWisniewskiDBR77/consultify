@@ -595,8 +595,22 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
               {t('initiatives.analysis.resources.totalInitiatives', 'Initiatives')}
             </div>
           </div>
-          <div className="rounded-xl border border-danger-200 dark:border-danger-900/50 bg-danger-500/5 dark:bg-danger-500/10 p-3">
-            <div className="text-xl font-semibold text-danger-600 dark:text-danger-400">
+          {/* Danger styling only when there is an actual overload — a zero count
+              stays neutral (kanon: no danger-fill on benign/zero metrics). */}
+          <div
+            className={`rounded-xl border p-3 ${
+              overallocatedCount > 0
+                ? 'border-danger-200 dark:border-danger-900/50 bg-danger-500/5 dark:bg-danger-500/10'
+                : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
+            }`}
+          >
+            <div
+              className={`text-xl font-semibold ${
+                overallocatedCount > 0
+                  ? 'text-danger-600 dark:text-danger-400'
+                  : 'text-slate-900 dark:text-white'
+              }`}
+            >
               {overallocatedCount}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">

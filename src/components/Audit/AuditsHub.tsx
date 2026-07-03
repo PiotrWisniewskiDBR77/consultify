@@ -37,7 +37,7 @@ import {
 import type { ModuleTab, ViewMode } from '@/components/shared/ModuleHub/types';
 import type { RowAction } from '@/components/shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
-import { EntityStatusChip } from '@/components/ui/primitives/chips';
+import { EntityStatusChip, MetaChip } from '@/components/ui/primitives/chips';
 
 import {
   type AuditProgram,
@@ -259,7 +259,7 @@ export const AuditsHub: React.FC = () => {
         label: t('audit.program'),
         render: (row: AuditRow) => (
           <div className="flex items-center gap-2">
-            <span className="truncate font-medium text-slate-900 dark:text-white">{row.name}</span>
+            <span className="truncate text-sm font-semibold text-c-text">{row.name}</span>
             <EntityStatusChip
               status={STATUS_PILL_ALIAS[row.status]}
               label={statusLabel(row.status)}
@@ -272,7 +272,7 @@ export const AuditsHub: React.FC = () => {
         id: 'objective',
         label: t('audit.objective'),
         render: (row: AuditRow) => (
-          <span className="line-clamp-1 text-sm text-slate-500">{row.objective || '—'}</span>
+          <span className="line-clamp-1 text-sm text-c-text-muted">{row.objective || '—'}</span>
         ),
       },
       {
@@ -280,22 +280,14 @@ export const AuditsHub: React.FC = () => {
         label: t('audit.templates'),
         align: 'right',
         render: (row: AuditRow) => (
-          <span className="inline-flex items-center gap-1 text-sm text-slate-600 dark:text-slate-300">
-            <ClipboardList className="h-3.5 w-3.5" />
-            {row.templateCount}
-          </span>
+          <MetaChip icon={ClipboardList} label={String(row.templateCount)} />
         ),
       },
       {
         id: 'assignees',
         label: t('audit.assignees'),
         align: 'right',
-        render: (row: AuditRow) => (
-          <span className="inline-flex items-center gap-1 text-sm text-slate-600 dark:text-slate-300">
-            <Users className="h-3.5 w-3.5" />
-            {row.assigneeCount}
-          </span>
-        ),
+        render: (row: AuditRow) => <MetaChip icon={Users} label={String(row.assigneeCount)} />,
       },
       {
         id: 'surveys',
@@ -303,12 +295,12 @@ export const AuditsHub: React.FC = () => {
         align: 'right',
         render: (row: AuditRow) =>
           row.surveysGenerated ? (
-            <span className="inline-flex items-center gap-1 text-sm text-emerald-600 dark:text-emerald-400">
+            <span className="inline-flex items-center gap-1 text-sm text-c-success">
               <Send className="h-3.5 w-3.5" />
               {row.generatedCount}
             </span>
           ) : (
-            <span className="text-sm text-slate-300 dark:text-white/30">—</span>
+            <span className="text-sm text-c-text-muted/60">—</span>
           ),
       },
     ],
@@ -365,7 +357,7 @@ export const AuditsHub: React.FC = () => {
       STATUS_FILTERS.map((s) => ({
         id: s,
         label: statusLabel(s),
-        color: 'bg-slate-400',
+        color: 'bg-c-text-muted',
       })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [isPolish]
@@ -400,7 +392,7 @@ export const AuditsHub: React.FC = () => {
           <button
             type="button"
             onClick={() => openWizard('iso27001')}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 dark:border-white/[0.08] dark:text-slate-200 dark:hover:bg-white/[0.06]"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-c-border px-3 py-2 text-sm text-c-text-secondary hover:bg-c-surface-raised"
           >
             <ShieldCheck className="h-4 w-4" />
             {t('audit.iso27001')}
@@ -416,7 +408,7 @@ export const AuditsHub: React.FC = () => {
               </div>
               <button
                 onClick={load}
-                className="flex items-center gap-1.5 rounded-lg border border-danger-200 bg-white px-3 py-1.5 text-xs font-medium text-danger-700 transition-colors hover:bg-danger-50 dark:border-danger-500/30 dark:bg-transparent dark:text-danger-300 dark:hover:bg-danger-500/10"
+                className="flex items-center gap-1.5 rounded-lg border border-danger-200 bg-c-surface px-3 py-1.5 text-xs font-medium text-danger-700 transition-colors hover:bg-danger-50 dark:border-danger-500/30 dark:bg-transparent dark:text-danger-300 dark:hover:bg-danger-500/10"
               >
                 <RefreshCw className="h-3 w-3" />
                 {t('common.retry', 'Retry')}
@@ -425,7 +417,7 @@ export const AuditsHub: React.FC = () => {
           )}
 
           {loading ? (
-            <div className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-12 text-sm text-slate-400 dark:border-white/[0.08] dark:bg-navy-900">
+            <div className="flex items-center justify-center gap-2 rounded-xl border border-c-border bg-c-surface py-12 text-sm text-c-text-muted">
               <Loader2 className="h-4 w-4 animate-spin" />
               {t('audit.loading')}
             </div>
@@ -434,7 +426,7 @@ export const AuditsHub: React.FC = () => {
               {/* §27 — canonical FilterableTable + preview. Single click selects a
                   row and opens the per-program dashboard in the preview pane. Row
                   actions (⋮) carry Generate surveys / Delete. */}
-              <div className="rounded-xl border border-slate-200 bg-white dark:border-white/[0.08] dark:bg-navy-900">
+              <div className="rounded-xl border border-c-border bg-c-surface">
                 <TableWithPreviewLayout<AuditRow>
                   selectedId={selectedId}
                   selectedItem={rows.find((r) => r.id === selectedId) ?? null}
@@ -474,12 +466,12 @@ export const AuditsHub: React.FC = () => {
                     type="button"
                     onClick={() => void loadMore()}
                     disabled={loadingMore}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 disabled:opacity-60 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-white/[0.06]"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-c-border px-4 py-2 text-sm text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-60"
                   >
                     {loadingMore && <Loader2 className="h-4 w-4 animate-spin" />}
                     {t('audit.loadMore')}
                   </button>
-                  <span className="text-[11px] text-slate-400">
+                  <span className="text-[11px] text-c-text-muted">
                     {t('audit.showingOfTotal', {
                       shown: programs.length,
                       total,
@@ -548,11 +540,11 @@ const ProgramDashboard: React.FC<{
   }, [program.id, surveysGenerated]);
 
   return (
-    <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-white/[0.08] dark:bg-navy-900">
+    <div className="space-y-4 rounded-xl border border-c-border bg-c-surface p-5">
       <div>
-        <h3 className="font-semibold text-slate-900 dark:text-white">{program.name}</h3>
+        <h3 className="font-semibold text-c-text">{program.name}</h3>
         {preset && (
-          <p className="text-xs text-primary-600 dark:text-primary-300">
+          <p className="text-xs text-c-text-muted">
             {isPolish ? preset.label.pl : preset.label.en}
           </p>
         )}
@@ -565,33 +557,33 @@ const ProgramDashboard: React.FC<{
 
       {/* Completion (#19e): real rollup over the program's generated interview
           assignments (submitted/approved/completed vs total). */}
-      <div className="rounded-xl bg-slate-50 p-3 dark:bg-white/[0.04]">
+      <div className="rounded-xl bg-c-surface-raised p-3">
         <div className="mb-1 flex items-center justify-between">
-          <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+          <span className="text-xs font-medium text-c-text-secondary">
             {t('audit.completion')}
           </span>
           {surveysGenerated && completion && (
-            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+            <span className="text-xs font-semibold text-c-text">
               {completion.percent}%
             </span>
           )}
         </div>
         {!surveysGenerated ? (
-          <p className="text-xs text-slate-500">{t('audit.notGeneratedUseGenerateSurveys')}</p>
+          <p className="text-xs text-c-text-muted">{t('audit.notGeneratedUseGenerateSurveys')}</p>
         ) : completionLoading ? (
-          <div className="flex items-center gap-2 text-xs text-slate-400">
+          <div className="flex items-center gap-2 text-xs text-c-text-muted">
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
             {t('audit.loading')}
           </div>
         ) : completion ? (
           <div className="space-y-1.5">
-            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-white/[0.08]">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-c-border-subtle">
               <div
-                className="h-full rounded-full bg-emerald-500 transition-all"
+                className="h-full rounded-full bg-c-success transition-all"
                 style={{ width: `${completion.percent}%` }}
               />
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-c-text-muted">
               {t('audit.surveysCompletedOfTotal', {
                 done: completion.done,
                 total: completion.total,
@@ -599,22 +591,22 @@ const ProgramDashboard: React.FC<{
             </p>
           </div>
         ) : (
-          <p className="text-xs text-slate-500">{t('audit.completionUnavailable')}</p>
+          <p className="text-xs text-c-text-muted">{t('audit.completionUnavailable')}</p>
         )}
       </div>
 
       {plan.length > 0 && (
         <div>
-          <div className="mb-1 text-xs font-medium text-slate-600 dark:text-slate-300">
+          <div className="mb-1 text-xs font-medium text-c-text-secondary">
             {t('audit.suggestedPlan')}
           </div>
           <ul className="space-y-1">
             {plan.map((row, i) => (
               <li key={(row?.areaKey as string) ?? i} className="flex justify-between text-xs">
-                <span className="text-slate-600 dark:text-slate-300">
+                <span className="text-c-text-secondary">
                   {String(row?.area ?? '') || '—'}
                 </span>
-                <span className="text-slate-400">{String(row?.suggestedRole ?? '') || '—'}</span>
+                <span className="text-c-text-muted">{String(row?.suggestedRole ?? '') || '—'}</span>
               </li>
             ))}
           </ul>
@@ -625,9 +617,9 @@ const ProgramDashboard: React.FC<{
 };
 
 const Stat: React.FC<{ label: string; value: number }> = ({ label, value }) => (
-  <div className="rounded-xl bg-slate-50 p-3 dark:bg-white/[0.04]">
-    <div className="text-2xl font-semibold text-slate-900 dark:text-white">{value}</div>
-    <div className="text-xs text-slate-500">{label}</div>
+  <div className="rounded-xl bg-c-surface-raised p-3">
+    <div className="text-2xl font-semibold text-c-text">{value}</div>
+    <div className="text-xs text-c-text-muted">{label}</div>
   </div>
 );
 

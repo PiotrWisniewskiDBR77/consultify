@@ -88,7 +88,7 @@ export const IconPickerButton: React.FC<IconPickerButtonProps> = ({
                   setOpen(false);
                 }}
                 className={`flex h-8 w-8 items-center justify-center rounded-lg text-xl transition-colors hover:bg-slate-100 dark:hover:bg-white/[0.06] ${
-                  value === emoji ? 'bg-primary-500/10' : ''
+                  value === emoji ? 'bg-slate-500/10' : ''
                 }`}
               >
                 {emoji}
@@ -212,7 +212,7 @@ export const CoverUrlModal: React.FC<{
           <button
             type="button"
             onClick={submit}
-            className="rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-700"
+            className="rounded-lg bg-slate-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-slate-700"
           >
             {isPolish ? 'Ustaw' : 'Set'}
           </button>

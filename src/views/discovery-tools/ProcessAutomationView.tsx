@@ -133,13 +133,13 @@ export const ProcessAutomationView: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-full bg-slate-50 dark:bg-navy-950">
+    <div className="min-h-full bg-c-bg">
       {/* Header */}
-      <div className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
+      <div className="bg-c-surface border-b border-c-border-subtle">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <button
             onClick={handleBack}
-            className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-primary-600 mb-4"
+            className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
             {t('common.back', 'Back to Discovery Tools')}
@@ -151,7 +151,7 @@ export const ProcessAutomationView: React.FC = () => {
                 <Zap className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+                <h1 className="text-2xl font-bold text-c-text">
                   {t('discoveryTools.processAutomation.title', 'Process Automation by AI')}
                 </h1>
                 <p className="text-slate-600 dark:text-slate-400">
@@ -164,11 +164,11 @@ export const ProcessAutomationView: React.FC = () => {
             </div>
 
             <div className="flex gap-2">
-              <button className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 flex items-center gap-2">
+              <button className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-navy-800 border border-c-border-subtle rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 flex items-center gap-2">
                 <Save className="w-4 h-4" />
                 {t('common.save', 'Save')}
               </button>
-              <button className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 flex items-center gap-2">
+              <button className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-navy-800 border border-c-border-subtle rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 flex items-center gap-2">
                 <Download className="w-4 h-4" />
                 {t('common.export', 'Export')}
               </button>
@@ -186,7 +186,7 @@ export const ProcessAutomationView: React.FC = () => {
                   ? 'Nazwa procesu (np. Order-to-Cash)'
                   : 'Process name (e.g., Order-to-Cash)'
               }
-              className="w-full max-w-md px-4 py-2 border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400"
+              className="w-full max-w-md px-4 py-2 border border-c-border-subtle rounded-lg bg-white dark:bg-navy-800 text-c-text placeholder-slate-400"
             />
           </div>
 
@@ -221,11 +221,11 @@ export const ProcessAutomationView: React.FC = () => {
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Summary Cards */}
         <div className="grid grid-cols-4 gap-4 mb-6">
-          <div className="p-4 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700">
-            <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">
+          <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle">
+            <div className="text-sm text-c-text-muted mb-1">
               {isPolish ? 'Czas oryginalny' : 'Original Time'}
             </div>
-            <div className="text-2xl font-bold text-slate-900 dark:text-white">
+            <div className="text-2xl font-bold text-c-text">
               {totalTimeOriginal} <span className="text-sm font-normal">min</span>
             </div>
             <div className="text-xs text-slate-600">{fteOriginal.toFixed(1)} FTE</div>
@@ -266,21 +266,21 @@ export const ProcessAutomationView: React.FC = () => {
         </div>
 
         {/* Process Table */}
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
           <div className="overflow-x-auto">
             <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full">
               <thead className="bg-slate-50 dark:bg-navy-800">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted uppercase">
                     LP
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted uppercase">
                     {isPolish ? 'Krok procesu' : 'Process Step'}
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted uppercase">
                     {isPolish ? 'Typ' : 'Type'}
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted uppercase">
                     {isPolish ? 'Czas (min)' : 'Time (min)'}
                   </th>
                   {(currentPhase === 'lean' ||
@@ -305,13 +305,13 @@ export const ProcessAutomationView: React.FC = () => {
                       </th>
                     </>
                   )}
-                  <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"></th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-c-text-muted uppercase"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-navy-700">
                 {steps.map((step) => (
                   <tr key={step.id} className="hover:bg-slate-50 dark:hover:bg-navy-800">
-                    <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
+                    <td className="px-4 py-3 text-sm text-c-text-muted">
                       {step.lp}
                     </td>
                     <td className="px-4 py-3">
@@ -320,7 +320,7 @@ export const ProcessAutomationView: React.FC = () => {
                         value={step.name}
                         onChange={(e) => updateStep(step.id, { name: e.target.value })}
                         placeholder={isPolish ? 'Nazwa kroku...' : 'Step name...'}
-                        className="w-full px-2 py-1 text-sm border border-transparent hover:border-slate-200 dark:hover:border-navy-600 rounded bg-transparent text-slate-900 dark:text-white focus:border-primary-500 focus:outline-none"
+                        className="w-full px-2 py-1 text-sm border border-transparent hover:border-slate-200 dark:hover:border-navy-600 rounded bg-transparent text-c-text focus:border-c-focus-solid focus:outline-none"
                       />
                     </td>
                     <td className="px-4 py-3">
@@ -329,7 +329,7 @@ export const ProcessAutomationView: React.FC = () => {
                         onChange={(e) =>
                           updateStep(step.id, { type: e.target.value as 'task' | 'decision' })
                         }
-                        className="px-2 py-1 text-sm border border-slate-200 dark:border-navy-600 rounded bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                        className="px-2 py-1 text-sm border border-slate-200 dark:border-navy-600 rounded bg-white dark:bg-navy-800 text-c-text"
                       >
                         <option value="task">{isPolish ? 'Zadanie' : 'Task'}</option>
                         <option value="decision">{isPolish ? 'Decyzja' : 'Decision'}</option>
@@ -342,7 +342,7 @@ export const ProcessAutomationView: React.FC = () => {
                         onChange={(e) =>
                           updateStep(step.id, { timeMinutes: Number(e.target.value) })
                         }
-                        className="w-20 px-2 py-1 text-sm border border-slate-200 dark:border-navy-600 rounded bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                        className="w-20 px-2 py-1 text-sm border border-slate-200 dark:border-navy-600 rounded bg-white dark:bg-navy-800 text-c-text"
                       />
                     </td>
                     {(currentPhase === 'lean' ||
@@ -359,7 +359,7 @@ export const ProcessAutomationView: React.FC = () => {
                             placeholder={
                               isPolish ? 'Pomysł optymalizacji...' : 'Optimization idea...'
                             }
-                            className="w-full px-2 py-1 text-sm border border-emerald-200 dark:border-emerald-800 rounded bg-emerald-50 dark:bg-emerald-900/20 text-slate-900 dark:text-white"
+                            className="w-full px-2 py-1 text-sm border border-emerald-200 dark:border-emerald-800 rounded bg-emerald-50 dark:bg-emerald-900/20 text-c-text"
                           />
                         </td>
                         <td className="px-4 py-3">
@@ -385,7 +385,7 @@ export const ProcessAutomationView: React.FC = () => {
                                   automationType: e.target.value as ProcessStep['automationType'],
                                 })
                               }
-                              className="px-2 py-1 text-sm border border-blue-200 dark:border-blue-800 rounded bg-blue-50 dark:bg-blue-900/20 text-slate-900 dark:text-white"
+                              className="px-2 py-1 text-sm border border-blue-200 dark:border-blue-800 rounded bg-blue-50 dark:bg-blue-900/20 text-c-text"
                             >
                               <option value="none">-</option>
                               <option value="workflow">Workflow</option>
@@ -422,7 +422,7 @@ export const ProcessAutomationView: React.FC = () => {
           </div>
 
           {/* Add Step Button */}
-          <div className="px-4 py-3 border-t border-slate-200 dark:border-navy-700">
+          <div className="px-4 py-3 border-t border-c-border-subtle">
             <button
               onClick={addStep}
               className="flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
@@ -435,8 +435,8 @@ export const ProcessAutomationView: React.FC = () => {
 
         {/* Economic Parameters (only in economics phase) */}
         {currentPhase === 'economics' && (
-          <div className="mt-6 p-6 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+          <div className="mt-6 p-6 bg-c-surface rounded-xl border border-c-border-subtle">
+            <h3 className="text-lg font-semibold text-c-text mb-4">
               {isPolish ? 'Parametry ekonomiczne' : 'Economic Parameters'}
             </h3>
             <div className="grid grid-cols-2 gap-4">
@@ -448,7 +448,7 @@ export const ProcessAutomationView: React.FC = () => {
                   type="number"
                   value={volumePerDay}
                   onChange={(e) => setVolumePerDay(Number(e.target.value))}
-                  className="w-full px-4 py-2 border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                  className="w-full px-4 py-2 border border-c-border-subtle rounded-lg bg-white dark:bg-navy-800 text-c-text"
                 />
               </div>
               <div>
@@ -459,7 +459,7 @@ export const ProcessAutomationView: React.FC = () => {
                   type="number"
                   value={fteCost}
                   onChange={(e) => setFteCost(Number(e.target.value))}
-                  className="w-full px-4 py-2 border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                  className="w-full px-4 py-2 border border-c-border-subtle rounded-lg bg-white dark:bg-navy-800 text-c-text"
                 />
               </div>
             </div>

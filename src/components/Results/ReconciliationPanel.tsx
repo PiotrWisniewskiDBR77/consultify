@@ -71,6 +71,35 @@ function formatCurrency(value: number | null): string {
   }).format(value);
 }
 
+/**
+ * A KPI unit is monetary when its value is comparable to a currency amount.
+ * Percentage / ratio / count units render as plain numbers with their unit
+ * suffix rather than being (mis)formatted as EUR (H2.5 OEE fix).
+ */
+const NON_MONETARY_UNIT_RE =
+  /^\s*(%|percent|percentage|pct|pp|ppt|pts?|points?|ratio|score|index|nps|csat|days?|day|hrs?|hours?|months?|weeks?|szt\.?|pcs?|count|qty|units?|x)\s*$/i;
+
+function isMonetaryUnit(unit: string | null | undefined): boolean {
+  const u = (unit ?? '').trim();
+  if (!u) return true;
+  return !NON_MONETARY_UNIT_RE.test(u);
+}
+
+/**
+ * Formats a reconciliation value respecting the KPI unit. Monetary units render
+ * as EUR; a bare '%' renders as `85%`; any other unit renders as `<number> <unit>`.
+ */
+function formatValueForUnit(value: number | null, unit: string | null): string {
+  if (value == null) return '—';
+  if (isMonetaryUnit(unit)) return formatCurrency(value);
+  const u = (unit ?? '').trim();
+  const num = new Intl.NumberFormat(undefined, {
+    maximumFractionDigits: 2,
+  }).format(value);
+  if (u === '%' || /^(percent|percentage|pct)$/i.test(u)) return `${num}%`;
+  return u ? `${num} ${u}` : num;
+}
+
 function formatPercent(value: number | null): string {
   if (value == null) return '—';
   const sign = value >= 0 ? '+' : '';
@@ -159,7 +188,7 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
           {row.hasMismatch && (
             <AlertTriangle size={13} className="shrink-0 text-danger-400" />
           )}
-          <span className="text-slate-200">{row.kpiName}</span>
+          <span className="text-slate-700 dark:text-c-text-secondary">{row.kpiName}</span>
         </div>
       ),
     },
@@ -187,7 +216,9 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
       width: '15%',
       align: 'right',
       render: (row: TableRow) => (
-        <span className="tabular-nums text-slate-300">{formatCurrency(row.projectedValue)}</span>
+        <span className="tabular-nums text-slate-700 dark:text-c-text-secondary">
+          {formatValueForUnit(row.projectedValue as number | null, row.unit as string | null)}
+        </span>
       ),
     },
     {
@@ -196,7 +227,9 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
       width: '15%',
       align: 'right',
       render: (row: TableRow) => (
-        <span className="tabular-nums text-slate-300">{formatCurrency(row.realizedValue)}</span>
+        <span className="tabular-nums text-slate-700 dark:text-c-text-secondary">
+          {formatValueForUnit(row.realizedValue as number | null, row.unit as string | null)}
+        </span>
       ),
     },
     {
@@ -230,6 +263,7 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
   const reconciliationRows: TableRow[] = items.map((item) => ({
     id: item.reconciliationId,
     kpiName: item.kpiName || t('results.reconciliation.unnamedKpi', 'KPI {{id}}', { id: item.kpiId.slice(0, 8) }),
+    unit: item.unit ?? null,
     hasMismatch: item.hasMismatch,
     reconciliationStatus: item.reconciliationStatus,
     projectedValue: item.projectedValue,
@@ -239,16 +273,16 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
   }));
 
   return (
-    <div className="bg-navy-900 border border-navy-700 rounded-xl overflow-hidden">
+    <div className="bg-white dark:bg-c-surface border border-slate-200/70 dark:border-c-border rounded-xl overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 border-b border-navy-700 px-4 py-3">
+      <div className="flex items-center justify-between gap-3 border-b border-slate-200/70 dark:border-c-border px-4 py-3">
         <div className="flex items-center gap-2">
-          <Scale size={16} className="text-slate-400" />
-          <h3 className="text-sm font-semibold text-white">
+          <Scale size={16} className="text-slate-500 dark:text-c-text-muted" />
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-c-text">
             {t('results.reconciliation.title', 'Finance reconciliation')}
           </h3>
           {summary && summary.total > 0 && (
-            <span className="rounded-full bg-navy-700 px-2 py-0.5 text-xs text-slate-300">
+            <span className="rounded-full bg-slate-100 dark:bg-c-surface-raised px-2 py-0.5 text-xs text-slate-600 dark:text-c-text-secondary">
               {summary.total}
             </span>
           )}
@@ -265,7 +299,7 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
           <button
             type="button"
             onClick={fetchData}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-navy-700 px-2 py-1 text-xs text-slate-400 hover:bg-navy-700 hover:text-slate-200"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/70 dark:border-c-border px-2 py-1 text-xs text-slate-500 dark:text-c-text-muted hover:bg-slate-100 dark:hover:bg-c-surface-raised hover:text-slate-700 dark:hover:text-c-text-secondary"
             title={t('common.refresh', 'Refresh')}
           >
             <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
@@ -275,19 +309,19 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
 
       {/* Body */}
       {loading ? (
-        <div className="flex items-center justify-center gap-2 py-10 text-slate-500">
+        <div className="flex items-center justify-center gap-2 py-10 text-slate-500 dark:text-c-text-muted">
           <RefreshCw size={16} className="animate-spin" />
           <span className="text-sm">{t('common.loading', 'Loading...')}</span>
         </div>
       ) : unavailable ? (
-        <div className="px-4 py-8 text-center text-sm text-slate-500">
+        <div className="px-4 py-8 text-center text-sm text-slate-500 dark:text-c-text-muted">
           {t(
             'results.reconciliation.unavailable',
             'Finance reconciliation is not available for this workspace yet.'
           )}
         </div>
       ) : items.length === 0 ? (
-        <div className="px-4 py-8 text-center text-sm text-slate-500">
+        <div className="px-4 py-8 text-center text-sm text-slate-500 dark:text-c-text-muted">
           {t(
             'results.reconciliation.empty',
             'No KPI–Finance reconciliations yet. Finance creates these when reconciling realized ROI against projections.'

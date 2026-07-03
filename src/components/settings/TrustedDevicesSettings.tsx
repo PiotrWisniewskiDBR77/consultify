@@ -249,7 +249,7 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
             <button
               onClick={handleRevokeAll}
               disabled={revokingAll}
-              className="px-4 py-2 text-sm font-medium text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg transition-colors disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors disabled:opacity-50"
             >
               {revokingAll ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -400,7 +400,7 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
                   <button
                     onClick={() => handleRevokeDevice(device.id)}
                     disabled={revoking === device.id}
-                    className="p-2 text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg transition-colors disabled:opacity-50"
+                    className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors disabled:opacity-50"
                     title={t('security.devices.revoke', 'Remove trusted device')}
                   >
                     {revoking === device.id ? (

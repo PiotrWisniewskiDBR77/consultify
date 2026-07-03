@@ -208,15 +208,17 @@ router.get(
   '/',
   verifyAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    await ensureTableExists();
-
     const orgId = req.user?.organizationId;
     if (!orgId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    // Get all consultant access records grouped by consultant
-    const accessRecords = await dbAll<{
+    // Fail-soft: lazy DDL must not surface as a bare 500 on a read.
+    try {
+      await ensureTableExists();
+
+      // Get all consultant access records grouped by consultant
+      const accessRecords = await dbAll<{
       id: string;
       consultant_email: string;
       consultant_id: string | null;
@@ -277,7 +279,14 @@ router.get(
       });
     }
 
-    return res.json(Array.from(consultantsMap.values()));
+      return res.json(Array.from(consultantsMap.values()));
+    } catch (err) {
+      console.error(
+        '[consultant-project-access] GET / failed (fail-soft, returning empty):',
+        err
+      );
+      return res.json([]);
+    }
   })
 );
 

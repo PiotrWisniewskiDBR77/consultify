@@ -75,7 +75,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
             <Sparkles className="text-primary-500" size={28} />
             Executive Strategic Summary
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-c-text-muted mt-1">
             AI-synthesized strategic analysis based on your inputs
           </p>
         </div>
@@ -88,11 +88,11 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
             <FileDown size={16} />
             {isExporting ? 'Exporting...' : 'Export PDF'}
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 border border-c-border-subtle text-c-text-secondary rounded-lg hover:bg-c-bg dark:hover:bg-c-surface/5 transition-colors">
             <Printer size={16} />
             Print
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 border border-c-border-subtle text-c-text-secondary rounded-lg hover:bg-c-bg dark:hover:bg-c-surface/5 transition-colors">
             <Share2 size={16} />
             Share
           </button>
@@ -100,10 +100,10 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
       </div>
 
       {/* Company Overview Card */}
-      <div className="bg-white dark:bg-navy-800 rounded-xl shadow-lg border border-slate-200 dark:border-navy-700 overflow-hidden">
+      <div className="bg-c-surface rounded-xl shadow-lg border border-c-border-subtle overflow-hidden">
         <div className="bg-gradient-to-r from-navy-900 to-navy-800 dark:from-primary-900 dark:to-primary-800 p-6">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-white/10 rounded-xl flex items-center justify-center">
+            <div className="w-16 h-16 bg-c-surface/10 rounded-xl flex items-center justify-center">
               <Building2 className="text-white" size={32} />
             </div>
             <div>
@@ -119,7 +119,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
         </div>
         <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-6">
           <div>
-            <div className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-1">
+            <div className="text-xs font-bold text-c-text-secondary uppercase tracking-wider mb-1">
               Current Maturity
             </div>
             <div className="text-2xl font-bold text-navy-900 dark:text-white">
@@ -127,7 +127,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
             </div>
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-1">
+            <div className="text-xs font-bold text-c-text-secondary uppercase tracking-wider mb-1">
               Target Maturity
             </div>
             <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
@@ -135,7 +135,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
             </div>
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-1">
+            <div className="text-xs font-bold text-c-text-secondary uppercase tracking-wider mb-1">
               Active Constraints
             </div>
             <div className="text-2xl font-bold text-navy-900 dark:text-white">
@@ -143,7 +143,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
             </div>
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-1">
+            <div className="text-xs font-bold text-c-text-secondary uppercase tracking-wider mb-1">
               Strategic Goals
             </div>
             <div className="text-2xl font-bold text-navy-900 dark:text-white">
@@ -156,7 +156,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
       {/* Key Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Risks Summary */}
-        <div className="bg-white dark:bg-navy-800 rounded-xl shadow-md border border-slate-200 dark:border-navy-700 p-6">
+        <div className="bg-c-surface rounded-xl shadow-md border border-c-border-subtle p-6">
           <div className="flex items-center justify-between mb-4">
             <h4 className="font-bold text-navy-900 dark:text-white flex items-center gap-2">
               <AlertTriangle className="text-danger-500" size={18} />
@@ -170,15 +170,15 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
           </div>
           <div className="text-3xl font-bold text-navy-900 dark:text-white mb-2">
             {risks.length}{' '}
-            <span className="text-lg font-normal text-slate-600 dark:text-slate-500">
+            <span className="text-lg font-normal text-c-text-secondary">
               identified
             </span>
           </div>
-          <div className="text-sm text-slate-500 dark:text-slate-400">
+          <div className="text-sm text-c-text-muted">
             {criticalRisks.length} critical/high priority requiring immediate attention
           </div>
-          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700">
-            <div className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-2">
+          <div className="mt-4 pt-4 border-t border-c-border-subtle">
+            <div className="text-xs font-bold text-c-text-secondary uppercase tracking-wider mb-2">
               Top Risks
             </div>
             <ul className="space-y-1">
@@ -192,7 +192,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
         </div>
 
         {/* Strengths Summary */}
-        <div className="bg-white dark:bg-navy-800 rounded-xl shadow-md border border-slate-200 dark:border-navy-700 p-6">
+        <div className="bg-c-surface rounded-xl shadow-md border border-c-border-subtle p-6">
           <div className="flex items-center justify-between mb-4">
             <h4 className="font-bold text-navy-900 dark:text-white flex items-center gap-2">
               <TrendingUp className="text-green-500" size={18} />
@@ -204,15 +204,15 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
           </div>
           <div className="text-3xl font-bold text-navy-900 dark:text-white mb-2">
             {strengths.length}{' '}
-            <span className="text-lg font-normal text-slate-600 dark:text-slate-500">
+            <span className="text-lg font-normal text-c-text-secondary">
               identified
             </span>
           </div>
-          <div className="text-sm text-slate-500 dark:text-slate-400">
+          <div className="text-sm text-c-text-muted">
             Key enablers for transformation success
           </div>
-          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700">
-            <div className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-2">
+          <div className="mt-4 pt-4 border-t border-c-border-subtle">
+            <div className="text-xs font-bold text-c-text-secondary uppercase tracking-wider mb-2">
               Top Strengths
             </div>
             <ul className="space-y-1">
@@ -226,7 +226,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
         </div>
 
         {/* Challenges Summary */}
-        <div className="bg-white dark:bg-navy-800 rounded-xl shadow-md border border-slate-200 dark:border-navy-700 p-6">
+        <div className="bg-c-surface rounded-xl shadow-md border border-c-border-subtle p-6">
           <div className="flex items-center justify-between mb-4">
             <h4 className="font-bold text-navy-900 dark:text-white flex items-center gap-2">
               <Target className="text-blue-500" size={18} />
@@ -238,13 +238,13 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
           </div>
           <div className="text-3xl font-bold text-navy-900 dark:text-white mb-2">
             {challenges.declaredChallenges.length}{' '}
-            <span className="text-lg font-normal text-slate-600 dark:text-slate-500">declared</span>
+            <span className="text-lg font-normal text-c-text-secondary">declared</span>
           </div>
-          <div className="text-sm text-slate-500 dark:text-slate-400">
+          <div className="text-sm text-c-text-muted">
             Operational pain points to address
           </div>
-          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700">
-            <div className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-2">
+          <div className="mt-4 pt-4 border-t border-c-border-subtle">
+            <div className="text-xs font-bold text-c-text-secondary uppercase tracking-wider mb-2">
               Top Challenges
             </div>
             <ul className="space-y-1">
@@ -274,10 +274,10 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
                   {selectedScenario.id}
                 </span>
               </div>
-              <p className="text-slate-600 dark:text-slate-300">{selectedScenario.approach}</p>
+              <p className="text-c-text-secondary">{selectedScenario.approach}</p>
               <div className="mt-4 grid grid-cols-3 gap-4">
                 <div>
-                  <div className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-1">
+                  <div className="text-xs font-bold text-c-text-secondary uppercase tracking-wider mb-1">
                     Timeline
                   </div>
                   <div className="font-bold text-navy-900 dark:text-white">
@@ -285,7 +285,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-1">
+                  <div className="text-xs font-bold text-c-text-secondary uppercase tracking-wider mb-1">
                     Investment
                   </div>
                   <div className="font-bold text-navy-900 dark:text-white">
@@ -293,7 +293,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-1">
+                  <div className="text-xs font-bold text-c-text-secondary uppercase tracking-wider mb-1">
                     Risk Level
                   </div>
                   <div className="font-bold text-navy-900 dark:text-white">
@@ -307,30 +307,30 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
       )}
 
       {!selectedScenario && (
-        <div className="bg-slate-50 dark:bg-navy-900/50 rounded-xl border-2 border-dashed border-slate-200 dark:border-navy-700 p-8 text-center">
-          <GitMerge className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+        <div className="bg-c-surface-raised/50 rounded-xl border-2 border-dashed border-c-border-subtle p-8 text-center">
+          <GitMerge className="w-12 h-12 text-c-text-secondary mx-auto mb-4" />
           <h4 className="text-lg font-medium text-navy-900 dark:text-white mb-2">
             No Scenario Selected
           </h4>
-          <p className="text-slate-500 dark:text-slate-400">
+          <p className="text-c-text-muted">
             Go to "Transformation Scenarios" tab to select a strategic approach
           </p>
         </div>
       )}
 
       {/* Goals Progress */}
-      <div className="bg-white dark:bg-navy-800 rounded-xl shadow-md border border-slate-200 dark:border-navy-700 p-6">
+      <div className="bg-c-surface rounded-xl shadow-md border border-c-border-subtle p-6">
         <h4 className="font-bold text-navy-900 dark:text-white text-lg mb-4 flex items-center gap-2">
           <CheckCircle className="text-primary-500" size={20} />
           Strategic Goals & Success Metrics
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <div className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-3">
+            <div className="text-xs font-bold text-c-text-secondary uppercase tracking-wider mb-3">
               Strategic Goals
             </div>
             {goals.strategicGoals.length === 0 ? (
-              <p className="text-slate-500 dark:text-slate-400 italic">
+              <p className="text-c-text-muted italic">
                 No strategic goals defined yet
               </p>
             ) : (
@@ -353,11 +353,11 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
             )}
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-3">
+            <div className="text-xs font-bold text-c-text-secondary uppercase tracking-wider mb-3">
               Success Metrics (KPIs)
             </div>
             {goals.successMetrics.length === 0 ? (
-              <p className="text-slate-500 dark:text-slate-400 italic">
+              <p className="text-c-text-muted italic">
                 No success metrics defined yet
               </p>
             ) : (
@@ -381,7 +381,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
           AI Strategic Recommendations
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white/10 rounded-lg p-4">
+          <div className="bg-c-surface/10 rounded-lg p-4">
             <h5 className="font-bold mb-2">Immediate Priority</h5>
             <p className="text-sm text-white/80">
               {criticalRisks.length > 0
@@ -389,7 +389,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
                 : 'Risk profile is manageable. Focus on quick wins to build momentum.'}
             </p>
           </div>
-          <div className="bg-white/10 rounded-lg p-4">
+          <div className="bg-c-surface/10 rounded-lg p-4">
             <h5 className="font-bold mb-2">Strategic Leverage</h5>
             <p className="text-sm text-white/80">
               {strengths.length > 0
@@ -397,7 +397,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
                 : 'Identify internal champions to drive the transformation forward.'}
             </p>
           </div>
-          <div className="bg-white/10 rounded-lg p-4">
+          <div className="bg-c-surface/10 rounded-lg p-4">
             <h5 className="font-bold mb-2">Next Step</h5>
             <p className="text-sm text-white/80">
               {selectedScenario

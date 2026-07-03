@@ -16,6 +16,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import type {
   DocumentBlock,
+  DocumentBlockType,
   DocumentIntake,
   DocumentOutline,
   DocumentSchema,
@@ -23,6 +24,11 @@ import type {
   DocumentSourceRef,
 } from './documentStudioTypes.js';
 import { DEFAULT_CONSULTING_FORMATTING_SCHEMA } from './documentStudioTypes.js';
+import { resolveDeliverableTier } from '../deliverableGenerationTier.js';
+import type {
+  ContentBlock,
+  ContentBlockType,
+} from './documentBlockContentGenerator.js';
 
 interface BuildSchemaInput {
   artifactId: string;
@@ -182,6 +188,17 @@ function shortenForExecutiveSummary(description: string): string {
   return `${trimmed.slice(0, 357)}...`;
 }
 
+// B3 ready — wire into buildDocumentSchema when premium doc generation activates:
+// planDocumentStructure() (documentStructureGenerator.ts) can replace the
+// deterministic buildSectionBlocks() below by choosing block TYPES per section
+// (table/kpi_strip/callout/…) via premium LLM, with this proza-only path as the
+// STANDARD fallback.
+//
+// WIRED (W4): the LIVE entry-point is now {@link buildDocumentSchemaPremium}
+// below — it is flag-gated via resolveDeliverableTier and FAILS OPEN to this
+// exact deterministic function. `buildDocumentSchema` itself is UNCHANGED and
+// byte-identical: it remains the synchronous STANDARD path and the fail-open
+// target, so every existing caller / test keeps its current behaviour.
 export function buildDocumentSchema(input: BuildSchemaInput): DocumentSchema {
   const { artifactId, intake, outline, sourceRefs } = input;
   const now = new Date().toISOString();
@@ -215,4 +232,186 @@ export function buildDocumentSchema(input: BuildSchemaInput): DocumentSchema {
     createdAt: now,
     updatedAt: now,
   };
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// W4 — PREMIUM doc generation wire-point.
+//
+// `buildDocumentSchemaPremium` is the flag-gated entry the live pipeline calls
+// when premium doc generation is requested. It composes the two premium
+// services (B3 structure architect + content-gen) and maps their output back
+// into the canonical DocumentSchema the renderers/editor/QA already consume.
+//
+// SAFETY (non-negotiable — this touches live client generation):
+//   1. Flag-gated: tier resolved via resolveDeliverableTier({orgId,preferPremium}).
+//      PREMIUM only when ENABLE_DELIVERABLES_PREMIUM is true (default FALSE).
+//   2. tier !== PREMIUM  ⇒  returns buildDocumentSchema(input) VERBATIM, i.e.
+//      byte-identical to today's deterministic path. No premium call is made.
+//   3. FAIL-OPEN: ANY error in the premium branch falls back to
+//      buildDocumentSchema(input). The premium branch NEVER throws into the
+//      live generation path.
+// ──────────────────────────────────────────────────────────────────────────
+
+export interface PremiumDocumentSchemaOptions {
+  /** Organization the generation runs for (telemetry + future per-org policy). */
+  orgId: string;
+  userId?: string;
+  /** Per-call override forwarded to resolveDeliverableTier. */
+  preferPremium?: boolean;
+  /**
+   * Test/DI seam: inject the flag value so the OFF branch is verifiable without
+   * touching global config. Production callers omit this. Mirrors
+   * resolveDeliverableTier's `premiumEnabled`.
+   */
+  premiumEnabled?: boolean;
+}
+
+/**
+ * Maps a content-gen `ContentBlockType` (kpi/text/bulletList/…) onto the
+ * canonical `DocumentBlockType` the renderers/QA consume (kpi_strip/paragraph/
+ * bullet_list/…). `divider` has no DocumentBlock equivalent → callers drop it.
+ */
+const CONTENT_TO_DOCUMENT_BLOCK_TYPE: Record<
+  ContentBlockType,
+  DocumentBlockType | null
+> = {
+  heading: 'heading',
+  text: 'paragraph',
+  bulletList: 'bullet_list',
+  numberedList: 'numbered_list',
+  quote: 'quote',
+  callout: 'callout',
+  chart: 'chart',
+  table: 'table',
+  kpi: 'kpi_strip',
+  image: 'image',
+  divider: null,
+};
+
+/**
+ * Map ONE content-gen block into a DocumentBlock. The content-gen normalizers
+ * already emit exactly the content shapes the renderers were upgraded to read
+ * (callout `{text,tone}`, kpi_strip `{items:[{label,value,delta}]}`, table
+ * `{rows:[{cells:{col:{value,style:{bgColor}}}}]}`, chart `{kind,series,…}`,
+ * lists `{items}`, quote `{text,author}`, heading/text `{text}`), so the
+ * content passes through verbatim — we only translate the type tag and stamp a
+ * fresh blockId. Returns `null` for block types with no DocumentBlock analogue
+ * (divider) so the caller can drop them.
+ */
+function contentBlockToDocumentBlock(block: ContentBlock): DocumentBlock | null {
+  const docType = CONTENT_TO_DOCUMENT_BLOCK_TYPE[block.type] ?? 'paragraph';
+  if (docType === null) return null;
+  return {
+    blockId: uuidv4(),
+    type: docType,
+    content: block.content,
+  };
+}
+
+/**
+ * PREMIUM-or-deterministic document schema builder (W4 live wire-point).
+ *
+ * When tier resolves to PREMIUM: plan structure (B3) + fill content (content-gen),
+ * then map into DocumentSchema. When STANDARD or on ANY failure: returns
+ * {@link buildDocumentSchema}(input) unchanged. Never throws.
+ */
+export async function buildDocumentSchemaPremium(
+  input: BuildSchemaInput,
+  opts: PremiumDocumentSchemaOptions
+): Promise<DocumentSchema> {
+  // The deterministic schema is BOTH the STANDARD result and the fail-open
+  // target. Build it eagerly so every early-return path is byte-identical to
+  // the current behaviour.
+  const deterministic = buildDocumentSchema(input);
+
+  let tier: 'PREMIUM' | 'STANDARD';
+  try {
+    tier = resolveDeliverableTier({
+      orgId: opts?.orgId,
+      preferPremium: opts?.preferPremium,
+      premiumEnabled: opts?.premiumEnabled,
+    });
+  } catch {
+    tier = 'STANDARD';
+  }
+
+  // Flag OFF (or explicit opt-out) → today's exact deterministic path. No
+  // premium service is invoked; clients stay on STANDARD until quality is proven.
+  if (tier !== 'PREMIUM') {
+    return deterministic;
+  }
+
+  try {
+    const { planDocumentStructure } = await import('./documentStructureGenerator.js');
+    const { generateDocumentContent } = await import('./documentBlockContentGenerator.js');
+
+    const intent =
+      (input.intake.title?.trim() || input.outline.title?.trim() || '') +
+      (input.intake.description ? ` — ${input.intake.description.trim()}` : '');
+    const outlineSeed = input.outline.sections.map((s) => ({
+      title: s.title,
+      purpose: s.purpose,
+    }));
+
+    const plan = await planDocumentStructure(intent || input.outline.title, outlineSeed, {
+      orgId: opts.orgId,
+      userId: opts.userId,
+      preferPremium: opts.preferPremium,
+    });
+
+    const content = await generateDocumentContent(intent || input.outline.title, plan, {
+      orgId: opts.orgId,
+      userId: opts.userId,
+      preferPremium: opts.preferPremium,
+      citationCount: input.sourceRefs.length,
+    });
+
+    const contentSections = Array.isArray(content?.sections) ? content.sections : [];
+    if (contentSections.length === 0) {
+      // Premium produced nothing usable → deterministic, never empty output.
+      return deterministic;
+    }
+
+    const hasSources = input.sourceRefs.length > 0;
+
+    // Map content-gen sections onto DocumentSection. We walk the ORIGINAL
+    // outline so section level / purpose / ordering / source-ref attachment
+    // stay identical to the deterministic schema; content-gen sections are
+    // positional (it preserves outline order), so we zip by index and fall
+    // back to the deterministic section's blocks if a content section is
+    // missing or empty.
+    const sections: DocumentSection[] = input.outline.sections.map((outlineSection, index) => {
+      const contentSection = contentSections[index];
+      const mapped = Array.isArray(contentSection?.blocks)
+        ? contentSection.blocks
+            .map(contentBlockToDocumentBlock)
+            .filter((b): b is DocumentBlock => b !== null)
+        : [];
+      const blocks =
+        mapped.length > 0
+          ? mapped
+          : buildSectionBlocks(outlineSection.title, input.intake.description ?? '', hasSources);
+      return {
+        sectionId: uuidv4(),
+        orderIndex: index,
+        level: outlineSection.level,
+        title: outlineSection.title,
+        purpose: outlineSection.purpose,
+        blocks,
+        sourceRefs: input.sourceRefs.slice(0, 1),
+      };
+    });
+
+    // Reuse the deterministic envelope (document metadata is identical); only
+    // the section blocks differ.
+    return {
+      ...deterministic,
+      sections,
+    };
+  } catch {
+    // FAIL-OPEN: any premium failure (LLM, mapping, import) degrades silently
+    // to the deterministic path. The live generation must never break because
+    // premium hiccuped.
+    return deterministic;
+  }
 }

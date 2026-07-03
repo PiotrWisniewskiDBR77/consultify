@@ -26,6 +26,7 @@ import { Virtuoso } from 'react-virtuoso';
 import { Api } from '../../services/api';
 import { PMOTaskLabel, usePMOStore } from '../../store/usePMOStore';
 import { Task } from '../../types';
+import { ErrorState } from '../ui/primitives/ErrorState';
 import { CardViewStyle, CardViewSwitcher } from '../shared/CardViewSwitcher';
 import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import type { GenericListItem, ListColumn, ListSection } from '../shared/ViewLayouts';
@@ -50,6 +51,7 @@ type QuickFilter = 'all' | 'overdue' | 'urgent' | 'today';
 export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [quickFilter, setQuickFilter] = useState<QuickFilter>('all');
   const [openFilter, setOpenFilter] = useState<'quick' | 'view' | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'pmo'>('pmo'); // Default to PMO view
@@ -102,12 +104,13 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
   const fetchTasks = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const data = await Api.getTasks();
       // Sort by priority/date? For now just date desc if available or created at
       setTasks(data || []);
     } catch (error) {
       console.error('Failed to fetch tasks', error);
-      // toast.error('Failed to load tasks');
+      setLoadError('Failed to load tasks');
     } finally {
       setLoading(false);
     }
@@ -696,7 +699,11 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
           </div>
         )}
 
-        {!loading && filteredTasks.length === 0 && (
+        {!loading && loadError && (
+          <ErrorState message={loadError} retry={fetchTasks} className="h-full" />
+        )}
+
+        {!loading && !loadError && filteredTasks.length === 0 && (
           <div className="h-full flex flex-col items-center justify-center text-center p-8 text-slate-600 dark:text-slate-500 opacity-50">
             <CheckCircle2 size={32} className="mb-3" />
             <p className="text-sm">No tasks found</p>

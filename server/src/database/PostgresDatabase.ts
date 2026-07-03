@@ -135,7 +135,12 @@ function enforceReadOnly(sql: string): void {
  */
 // IMPORTANT: Only include tables whose `is_active` column is actually BOOLEAN in Postgres.
 // Otherwise we can create `integer = boolean` errors by rewriting `is_active = 1` → `TRUE`.
-const BOOLEAN_IS_ACTIVE_TABLES = new Set<string>(['initiative_section_types', 'llm_providers']);
+// NOTE: `initiative_section_types.is_active` is INTEGER (migration 529 declares INTEGER and
+// even converts boolean→integer). Including it here rewrote `is_active = 1` → `= TRUE`, which
+// threw `operator does not exist: integer = boolean` on getSectionTypeByKey → the generator
+// could never fetch a section template → no AI fill. Removed (2026-06-28). Keep only genuinely
+// BOOLEAN-columned tables.
+const BOOLEAN_IS_ACTIVE_TABLES = new Set<string>(['llm_providers']);
 
 // IMPORTANT: Only include tables whose `is_default` column is actually BOOLEAN in Postgres.
 const BOOLEAN_IS_DEFAULT_TABLES = new Set<string>(['llm_providers', 'report_builder_templates']);

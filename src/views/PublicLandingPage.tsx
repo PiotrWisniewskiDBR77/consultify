@@ -41,10 +41,10 @@ export const PublicLandingPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-navy-950 text-white selection:bg-brand-500/30 overflow-x-hidden relative">
+    <div className="min-h-screen bg-c-bg text-c-text selection:bg-c-accent/30 overflow-x-hidden relative">
       {/* Background Atmosphere */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand-600/10 rounded-full blur-[120px]" />
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-c-accent/10 rounded-full blur-[120px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px]" />
       </div>
 
@@ -93,7 +93,7 @@ export const PublicLandingPage: React.FC = () => {
             {/* Card 1: Explore Demo */}
             <div
               onClick={handleDemoClick}
-              className="glass-card p-8 rounded-xl group hover:bg-brand-600/5 transition duration-300 border-white/5 cursor-pointer relative overflow-hidden"
+              className="glass-card p-8 rounded-xl group hover:bg-c-accent/5 transition duration-300 border-white/5 cursor-pointer relative overflow-hidden"
             >
               <div className="absolute top-4 left-4 text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">
                 {t('pages.public.cards.demo.meta', 'Instant Access')}
@@ -114,9 +114,9 @@ export const PublicLandingPage: React.FC = () => {
             {/* Card 2: Start Free Trial - PRIMARY PATH (Highlighted) */}
             <div
               onClick={() => navigate('/trial')}
-              className="glass-card p-8 rounded-xl group hover:bg-brand-600/10 transition duration-300 border-2 border-brand-500/30 cursor-pointer relative overflow-hidden row-span-2"
+              className="glass-card p-8 rounded-xl group hover:bg-c-accent/10 transition duration-300 border-2 border-c-accent/30 cursor-pointer relative overflow-hidden row-span-2"
             >
-              <div className="absolute top-4 left-4 text-[10px] font-bold text-brand-400 uppercase tracking-[0.2em]">
+              <div className="absolute top-4 left-4 text-[10px] font-bold text-c-accent uppercase tracking-[0.2em]">
                 {t('pages.public.cards.trial.meta', 'Primary Path')}
               </div>
               <div className="mt-8 flex flex-col h-full justify-center">
@@ -130,7 +130,7 @@ export const PublicLandingPage: React.FC = () => {
                   )}
                 </p>
                 <ArrowRight
-                  className="text-brand-400 group-hover:translate-x-2 transition-transform duration-300"
+                  className="text-c-accent group-hover:translate-x-2 transition-transform duration-300"
                   size={32}
                 />
               </div>
@@ -145,7 +145,7 @@ export const PublicLandingPage: React.FC = () => {
                 {t('pages.public.cards.tour.meta', 'Product Tour')}
               </div>
               <div className="mt-8 flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-brand-600/20 transition-colors">
+                <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-c-accent/20 transition-colors">
                   <div className="w-0 h-0 border-l-[12px] border-l-white border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent ml-1" />
                 </div>
                 <div>
@@ -197,14 +197,14 @@ export const PublicLandingPage: React.FC = () => {
             {/* Card 5: Become Partner - Replacing Log In */}
             <div
               onClick={handlePartnerClick}
-              className="glass-card p-8 rounded-xl group hover:bg-primary-600/5 transition duration-300 border-white/5 cursor-pointer relative overflow-hidden"
+              className="glass-card p-8 rounded-xl group hover:bg-c-accent/5 transition duration-300 border-white/5 cursor-pointer relative overflow-hidden"
             >
               <div className="absolute top-4 left-4 text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">
                 {t('pages.public.cards.partner.meta', 'Returning Users')}
               </div>
               <div className="mt-8 flex items-center gap-4">
-                <div className="w-16 h-16 rounded-xl bg-brand-600/20 flex items-center justify-center border border-brand-500/30 group-hover:bg-brand-600/30 transition-colors">
-                  <Handshake size={32} className="text-brand-400" />
+                <div className="w-16 h-16 rounded-xl bg-c-accent-soft flex items-center justify-center border border-c-accent/30 group-hover:bg-c-accent/30 transition-colors">
+                  <Handshake size={32} className="text-c-accent" />
                 </div>
                 <div>
                   <h3 className="text-2xl font-bold mb-1">
@@ -218,20 +218,20 @@ export const PublicLandingPage: React.FC = () => {
             </div>
 
             {/* Card 7: AI Consulting Pitch */}
-            <div className="glass-card p-8 rounded-xl group hover:bg-gradient-to-br hover:from-brand-600/10 hover:to-primary-600/10 transition duration-300 border-white/5 relative overflow-hidden">
+            <div className="glass-card p-8 rounded-xl group hover:bg-c-accent/10 transition duration-300 border-white/5 relative overflow-hidden">
               <div className="flex flex-col h-full justify-center items-center text-center">
                 <h3 className="text-3xl font-bold mb-2">
                   {t('pages.public.tagline.line1', 'AI consulting.')}
                 </h3>
                 <h3 className="text-3xl font-bold mb-2">
-                  <span className="bg-gradient-to-r from-brand-400 to-primary-400 bg-clip-text text-transparent">
+                  <span className="text-c-accent">
                     {t('pages.public.tagline.line2', 'No slides.')}
                   </span>
                 </h3>
                 <h3 className="text-3xl font-bold">
                   {t('pages.public.tagline.line3', 'Just decisions.')}
                 </h3>
-                <div className="w-12 h-1 bg-brand-500 mt-4 rounded-full" />
+                <div className="w-12 h-1 bg-c-accent mt-4 rounded-full" />
               </div>
             </div>
           </div>
@@ -248,9 +248,9 @@ export const PublicLandingPage: React.FC = () => {
           style={{ animationDelay: '0.2s' }}
         >
           <div className="inline-block glass-panel p-2 rounded-xl mb-12">
-            <div className="px-6 py-3 rounded-xl bg-white/5 dark:bg-navy-900/50 flex items-center gap-4 text-sm font-medium text-white/60">
+            <div className="px-6 py-3 rounded-xl bg-c-surface-raised flex items-center gap-4 text-sm font-medium text-c-text-secondary">
               <span>{t('pages.public.cta.noPressure', 'No rush. No sales pressure.')}</span>
-              <div className="w-1 h-1 rounded-full bg-brand-500" />
+              <div className="w-1 h-1 rounded-full bg-c-accent" />
               <span>{t('pages.public.cta.justSubstance', 'Just substance.')}</span>
             </div>
           </div>
@@ -266,7 +266,7 @@ export const PublicLandingPage: React.FC = () => {
             onClick={handleDemoClick}
             className="
                             group relative inline-flex items-center gap-4
-                            bg-brand-600 hover:bg-brand-500
+                            bg-c-accent hover:opacity-90
                             text-white font-semibold text-xl
                             px-10 p-4 rounded-xl
                             shadow-[0_0_50px_-12px_rgba(165,28,48,0.5)]
@@ -290,26 +290,26 @@ export const PublicLandingPage: React.FC = () => {
       </main>
 
       {/* FOOTER */}
-      <footer className="relative z-10 py-12 px-6 border-t border-white/5 bg-navy-950/50 backdrop-blur-sm">
+      <footer className="relative z-10 py-12 px-6 border-t border-c-border-subtle bg-c-bg/50 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="flex items-center gap-3 opacity-30 grayscale hover:opacity-100 hover:grayscale-0 transition duration-300">
-            <div className="h-6 px-2 rounded bg-brand-600 flex items-center justify-center">
+            <div className="h-6 px-2 rounded bg-c-accent flex items-center justify-center">
               <span className="text-white font-bold text-[10px] tracking-tight">C</span>
             </div>
             <span className="text-sm font-bold tracking-[0.2em] text-white">CONSULTIFY</span>
           </div>
 
           <div className="flex items-center gap-8 text-xs font-semibold text-white/30 tracking-widest uppercase">
-            <a href="/docs" className="hover:text-brand-400 transition-colors">
+            <a href="/docs" className="hover:text-c-accent transition-colors">
               {t('pages.public.footer.docs', 'Documentation')}
             </a>
-            <a href="/legal/privacy" className="hover:text-brand-400 transition-colors">
+            <a href="/legal/privacy" className="hover:text-c-accent transition-colors">
               {t('pages.public.footer.privacy', 'Privacy')}
             </a>
-            <a href="/legal/terms" className="hover:text-brand-400 transition-colors">
+            <a href="/legal/terms" className="hover:text-c-accent transition-colors">
               {t('pages.public.footer.terms', 'Terms')}
             </a>
-            <a href="/docs/security" className="hover:text-brand-400 transition-colors">
+            <a href="/docs/security" className="hover:text-c-accent transition-colors">
               {t('pages.public.footer.security', 'Security')}
             </a>
           </div>

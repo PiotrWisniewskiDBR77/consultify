@@ -1,0 +1,293 @@
+{
+  "ranAt": "2026-06-22T16:08:23.974Z",
+  "model": "openai/gpt-4o (PREMIUM fallback — NIE Opus/Sonnet z D1)",
+  "note": "Pomiar PODŁOGI jakości. Brak klucza Anthropic. Scoring = ten sam co mock-harness.",
+  "total": 9,
+  "passed": 0,
+  "avgScorePct": 33,
+  "byModule": [
+    {
+      "module": "deck",
+      "passed": 0,
+      "of": 3,
+      "avgScorePct": 58
+    },
+    {
+      "module": "doc",
+      "passed": 0,
+      "of": 3,
+      "avgScorePct": 32
+    },
+    {
+      "module": "table",
+      "passed": 0,
+      "of": 3,
+      "avgScorePct": 10
+    }
+  ],
+  "rows": [
+    {
+      "id": "M19.S01",
+      "module": "deck",
+      "tier": "Sml",
+      "intent": "Slajd otwierający dla prezentacji o cyfryzacji w MŚP",
+      "scorePct": 56,
+      "passed": false,
+      "failures": [
+        "slide count[exp count in [1, 1], got 5]",
+        "cover title contains any keyword[exp contains any of [cyfryzacja, MŚP], got matched 0/2 in \"Deterministic heuristic (slide 1/5) \"]",
+        "all slides from LLM[exp 5 llm, got 0 llm]",
+        "imageBriefs[exp ≥1 slajdów z brief, got 0]"
+      ],
+      "sample": {
+        "distinctLayouts": 4,
+        "palettes": [
+          "harvard"
+        ],
+        "layouts": [
+          "cover",
+          "key_messages",
+          "single_insight",
+          "key_messages",
+          "next_steps"
+        ],
+        "withBrief": 0,
+        "firstReasoning": "Deterministic heuristic (slide 1/5)"
+      },
+      "tierUsed": "PREMIUM",
+      "fallbackUsed": true
+    },
+    {
+      "id": "M19.S06",
+      "module": "deck",
+      "tier": "Med",
+      "intent": "Diagnoza procesu rekrutacji ACME: cover + status + 3 problemy + 1 rekomendacja + next_steps",
+      "scorePct": 67,
+      "passed": false,
+      "failures": [
+        "requireLayout executive_summary[exp ≥1, got 0]",
+        "requireLayout recommendation_single[exp ≥1, got 0]",
+        "cover title contains any keyword[exp contains any of [ACME], got matched 0/1 in \"Deterministic heuristic (slide 1/8) \"]",
+        "imageBriefs[exp ≥3 slajdów z brief, got 0]"
+      ],
+      "sample": {
+        "distinctLayouts": 4,
+        "palettes": [
+          "harvard"
+        ],
+        "layouts": [
+          "cover",
+          "key_messages",
+          "single_insight",
+          "key_messages",
+          "single_insight",
+          "key_messages",
+          "key_messages",
+          "next_steps"
+        ],
+        "withBrief": 0,
+        "firstReasoning": "Deterministic heuristic (slide 1/8)"
+      },
+      "tierUsed": "PREMIUM",
+      "fallbackUsed": true
+    },
+    {
+      "id": "M19.S16",
+      "module": "deck",
+      "tier": "Lrg",
+      "intent": "Pełna diagnoza Apator Powogaz: exec summary, 3 obszary, 5 rekomendacji, roadmapa, ryzyko, next steps",
+      "scorePct": 50,
+      "passed": false,
+      "failures": [
+        "requireLayout executive_summary[exp ≥1, got 0]",
+        "requireLayout root_cause[exp ≥1, got 0]",
+        "requireLayout recommendation_portfolio[exp ≥1, got 0]",
+        "requireLayout roadmap[exp ≥1, got 0]",
+        "requireLayout risk_management[exp ≥1, got 0]",
+        "distinct layouts[exp ≥8, got 4]",
+        "imageBriefs[exp ≥6 slajdów z brief, got 0]"
+      ],
+      "sample": {
+        "distinctLayouts": 4,
+        "palettes": [
+          "harvard"
+        ],
+        "layouts": [
+          "cover",
+          "key_messages",
+          "single_insight",
+          "key_messages",
+          "single_insight",
+          "key_messages",
+          "single_insight",
+          "key_messages",
+          "key_messages",
+          "next_steps"
+        ],
+        "withBrief": 0,
+        "firstReasoning": "Deterministic heuristic (slide 1/10)"
+      },
+      "tierUsed": "PREMIUM",
+      "fallbackUsed": true
+    },
+    {
+      "id": "M18.S01",
+      "module": "doc",
+      "tier": "Sml",
+      "intent": "Krótki memo do zarządu: stan prac nad wdrożeniem CRM (5 paragrafów)",
+      "scorePct": 50,
+      "passed": false,
+      "failures": [
+        "section count[exp count in [1, 1], got 6]",
+        "total blocks count[exp count in [5, 7], got 12]"
+      ],
+      "sample": {
+        "sections": 6,
+        "blockTypes": [
+          "heading",
+          "text"
+        ],
+        "totalBlocks": 12,
+        "firstHeading": "Krótki memo do zarządu: stan prac nad wdrożeniem CRM (5 paragrafów)"
+      }
+    },
+    {
+      "id": "M18.S06",
+      "module": "doc",
+      "tier": "Med",
+      "intent": "Diagnoza rekrutacji ACME: wprowadzenie, stan (KPI), 3 problemy (callouts), rekomendacja (lista)",
+      "scorePct": 33,
+      "passed": false,
+      "failures": [
+        "section count[exp count in [3, 5], got 6]",
+        "requireBlockType kpi[exp ≥1, got 0]",
+        "requireBlockType callout[exp ≥2, got 0]",
+        "requireBlockType bulletList[exp ≥1, got 0]"
+      ],
+      "sample": {
+        "sections": 6,
+        "blockTypes": [
+          "heading",
+          "text"
+        ],
+        "totalBlocks": 12,
+        "firstHeading": "Diagnoza rekrutacji ACME: wprowadzenie, stan (KPI), 3 problemy (callouts), rekomendacja (lista)"
+      }
+    },
+    {
+      "id": "M18.S16",
+      "module": "doc",
+      "tier": "Lrg",
+      "intent": "Pełny raport diagnostyczny Apator: exec summary, kontekst, metodyka, 3 obszary, rekomendacje, roadmapa, ryzyko, appendix",
+      "scorePct": 14,
+      "passed": false,
+      "failures": [
+        "section count[exp count in [7, 9], got 6]",
+        "requireBlockType kpi[exp ≥3, got 0]",
+        "requireBlockType callout[exp ≥3, got 0]",
+        "requireBlockType bulletList[exp ≥1, got 0]",
+        "requireBlockType table[exp ≥1, got 0]",
+        "distinct block types[exp ≥5, got 2]"
+      ],
+      "sample": {
+        "sections": 6,
+        "blockTypes": [
+          "heading",
+          "text"
+        ],
+        "totalBlocks": 12,
+        "firstHeading": "Pełny raport diagnostyczny Apator: exec summary, kontekst, metodyka, 3 obszary, rekomendacje, roadmapa, ryzyko, appendix"
+      }
+    },
+    {
+      "id": "M20.S01",
+      "module": "table",
+      "tier": "Sml",
+      "intent": "Tabela zadań: nazwa, owner, deadline, status",
+      "scorePct": 29,
+      "passed": false,
+      "failures": [
+        "seed row count[exp 3-6, got 0]",
+        "requireFieldType date[exp ≥1, got 0]",
+        "requireFieldType singleSelect[exp ≥1, got 0]",
+        "select status required labels[exp [todo, in progress, done], got missing [todo, in progress, done]]",
+        "typed fields[exp ≥2, got 0]"
+      ],
+      "sample": {
+        "fields": [
+          "Nazwa:singleLineText",
+          "Opis:singleLineText",
+          "Status:singleLineText"
+        ],
+        "seedRows": 0,
+        "fieldTypes": [
+          "singleLineText"
+        ]
+      },
+      "tierUsed": "STANDARD",
+      "fallbackUsed": true
+    },
+    {
+      "id": "M20.S06",
+      "module": "table",
+      "tier": "Med",
+      "intent": "Tabela CRM: company, contact, email, phone, account_type, MRR, churn_risk, last_contact, notes, owner",
+      "scorePct": 0,
+      "passed": false,
+      "failures": [
+        "field count[exp count in [9, 11], got 3]",
+        "seed row count[exp 6+, got 0]",
+        "requireFieldType email[exp ≥1, got 0]",
+        "requireFieldType phone[exp ≥1, got 0]",
+        "requireFieldType currency[exp ≥1, got 0]",
+        "requireFieldType date[exp ≥1, got 0]",
+        "requireFieldType singleSelect[exp ≥2, got 0]",
+        "typed fields[exp ≥5, got 0]"
+      ],
+      "sample": {
+        "fields": [
+          "Nazwa:singleLineText",
+          "Opis:singleLineText",
+          "Status:singleLineText"
+        ],
+        "seedRows": 0,
+        "fieldTypes": [
+          "singleLineText"
+        ]
+      },
+      "tierUsed": "STANDARD",
+      "fallbackUsed": true
+    },
+    {
+      "id": "M20.S16",
+      "module": "table",
+      "tier": "Lrg",
+      "intent": "Portfolio 12 projektów z CF: progress jako dataBar, variance jako colorScale",
+      "scorePct": 0,
+      "passed": false,
+      "failures": [
+        "field count[exp count in [10, 12], got 3]",
+        "seed row count[exp 12+, got 0]",
+        "requireFieldType currency[exp ≥2, got 0]",
+        "requireFieldType percent[exp ≥1, got 0]",
+        "requireFieldType singleSelect[exp ≥2, got 0]",
+        "requireFieldType date[exp ≥2, got 0]",
+        "CF rule dataBar[exp ≥1, got 0]",
+        "CF rule colorScale[exp ≥1, got 0]"
+      ],
+      "sample": {
+        "fields": [
+          "Nazwa:singleLineText",
+          "Opis:singleLineText",
+          "Status:singleLineText"
+        ],
+        "seedRows": 0,
+        "fieldTypes": [
+          "singleLineText"
+        ]
+      },
+      "tierUsed": "STANDARD",
+      "fallbackUsed": true
+    }
+  ]
+}

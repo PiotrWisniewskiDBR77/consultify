@@ -283,12 +283,16 @@ async function resolveUserOrgAccess(userId: string, orgId: string): Promise<OrgA
     return { allowed: false };
   }
 
-  // Check direct membership first
+  // Check direct membership first.
+  // NOTE: membership status casing varies in real data ('active' vs 'ACTIVE').
+  // The auth layer (auth.middleware.ts / auth.routes.ts) matches status
+  // case-insensitively — this predicate must stay consistent or valid members
+  // get a false 403 "You do not have access to this organization" (bug H2.13).
   const membership = await dbGet<MembershipRow>(
     `SELECT om.id, om.role, om.status, om.permission_scope
          FROM organization_members om
          JOIN organizations o ON o.id = om.organization_id
-         WHERE om.user_id = ? AND om.organization_id = ? AND om.status = 'ACTIVE' AND o.is_active = 1`,
+         WHERE om.user_id = ? AND om.organization_id = ? AND UPPER(om.status) = 'ACTIVE' AND o.is_active = 1`,
     [userId, orgId]
   );
 
@@ -312,7 +316,7 @@ async function resolveUserOrgAccess(userId: string, orgId: string): Promise<OrgA
     `SELECT col.id, col.permission_scope, col.status
          FROM consultant_org_links col
          JOIN organizations o ON o.id = col.organization_id
-         WHERE col.consultant_id = ? AND col.organization_id = ? AND col.status = 'ACTIVE' AND o.is_active = 1`,
+         WHERE col.consultant_id = ? AND col.organization_id = ? AND UPPER(col.status) = 'ACTIVE' AND o.is_active = 1`,
     [userId, orgId]
   );
 
@@ -349,7 +353,7 @@ async function getUserOrganizations(
     `SELECT o.id, o.name, om.role, 'MEMBER' as access_type
          FROM organizations o
          JOIN organization_members om ON o.id = om.organization_id
-         WHERE om.user_id = ? AND om.status = 'ACTIVE' AND o.is_active = 1`,
+         WHERE om.user_id = ? AND UPPER(om.status) = 'ACTIVE' AND o.is_active = 1`,
     [userId]
   );
   orgs.push(...memberOrgs);
@@ -364,7 +368,7 @@ async function getUserOrganizations(
     `SELECT o.id, o.name, 'CONSULTANT' as role, 'CONSULTANT' as access_type
          FROM organizations o
          JOIN consultant_org_links col ON o.id = col.organization_id
-         WHERE col.consultant_id = ? AND col.status = 'ACTIVE' AND o.is_active = 1`,
+         WHERE col.consultant_id = ? AND UPPER(col.status) = 'ACTIVE' AND o.is_active = 1`,
     [userId]
   );
   orgs.push(...consultantOrgs);

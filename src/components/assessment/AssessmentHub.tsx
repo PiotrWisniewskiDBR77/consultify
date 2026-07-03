@@ -32,6 +32,14 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { ErrorState } from '@/components/ui/primitives';
+import { LoadingState as SharedLoadingState } from '@/components/shared/states';
+import {
+  MetaChip,
+  PriorityChip,
+  type PriorityLevel,
+  StatusChip,
+  type StatusTone,
+} from '@/components/ui/primitives/chips';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
@@ -576,18 +584,16 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
       filterOptions: Object.entries(FRAMEWORK_META).map(([key, meta]) => ({
         value: key,
         label: meta.shortName,
-        color: 'bg-slate-500',
+        color: 'bg-c-text-muted',
       })),
       render: (row) => {
         const meta = FRAMEWORK_META[row.framework as AssessmentFramework];
         if (!meta)
-          return (
-            <span className="text-xs text-slate-500 dark:text-slate-400">{row.framework}</span>
-          );
+          return <span className="text-xs text-c-text-muted">{row.framework}</span>;
         return (
           <div className="flex items-center gap-2">
-            <span className="text-slate-500 dark:text-slate-400">{meta.icon}</span>
-            <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
+            <span className="text-c-text-muted">{meta.icon}</span>
+            <span className="font-mono text-xs font-bold text-c-text-secondary">
               {meta.shortName}
             </span>
           </div>
@@ -599,13 +605,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
       label: 'Name',
       render: (row) => (
         <div className="flex items-center gap-2">
-          <span className="text-sm text-slate-900 dark:text-white font-medium">{row.name}</span>
-          {row._isImported && (
-            <span className="inline-flex items-center gap-1 rounded border border-slate-300/80 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:border-white/[0.10] dark:bg-white/[0.06] dark:text-slate-300">
-              <Upload size={10} />
-              PDF import
-            </span>
-          )}
+          <span className="text-sm font-semibold text-c-text">{row.name}</span>
+          {row._isImported && <MetaChip icon={Upload} label="PDF import" />}
         </div>
       ),
     };
@@ -633,48 +634,18 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           })),
           render: (row) => {
             if (row._isImported) {
-              const importStatusConfig: Record<string, { label: string; color: string }> = {
-                pending: {
-                  label: 'Uploaded',
-                  color: 'bg-slate-500/15 text-slate-600 border-slate-500/20',
-                },
-                detecting: {
-                  label: 'Detecting...',
-                  color: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
-                },
-                extracting: {
-                  label: 'Extracting...',
-                  color: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
-                },
-                ready_for_review: {
-                  label: 'Ready for review',
-                  color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
-                },
-                assessment_created: {
-                  label: 'Assessment created',
-                  color: 'bg-blue-500/15 text-blue-400 border-blue-500/20',
-                },
-                initiatives_created: {
-                  label: 'Initiatives created',
-                  color: 'bg-blue-500/15 text-blue-400 border-blue-500/20',
-                },
-                completed: {
-                  label: 'Completed',
-                  color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
-                },
-                failed: {
-                  label: 'Failed',
-                  color: 'bg-danger-500/15 text-danger-400 border-danger-500/20',
-                },
+              const importStatusConfig: Record<string, { label: string; tone: StatusTone }> = {
+                pending: { label: 'Uploaded', tone: 'neutral' },
+                detecting: { label: 'Detecting...', tone: 'warning' },
+                extracting: { label: 'Extracting...', tone: 'warning' },
+                ready_for_review: { label: 'Ready for review', tone: 'success' },
+                assessment_created: { label: 'Assessment created', tone: 'info' },
+                initiatives_created: { label: 'Initiatives created', tone: 'info' },
+                completed: { label: 'Completed', tone: 'success' },
+                failed: { label: 'Failed', tone: 'danger' },
               };
               const cfg = importStatusConfig[row._importStatus] || importStatusConfig.pending;
-              return (
-                <span
-                  className={`inline-flex px-2 py-0.5 rounded text-[11px] font-medium border ${cfg.color}`}
-                >
-                  {cfg.label}
-                </span>
-              );
+              return <StatusChip label={cfg.label} tone={cfg.tone} />;
             }
             return undefined;
           },
@@ -694,7 +665,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           width: '200px',
           render: (row) => (
             <span
-              className="text-xs text-slate-500 dark:text-slate-400 truncate block max-w-[180px]"
+              className="text-xs text-c-text-muted truncate block max-w-[180px]"
               title={row.sourceReport || ''}
             >
               {row.sourceReport || '—'}
@@ -707,7 +678,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           width: '140px',
           filterable: true,
           filterOptions: [
-            { value: 'DRAFT', label: 'Draft', color: 'bg-slate-500' },
+            { value: 'DRAFT', label: 'Draft', color: 'bg-c-text-muted' },
             { value: 'REVIEW', label: 'In Review', color: 'bg-amber-500' },
             { value: 'PLANNING', label: 'Planning', color: 'bg-blue-500' },
             { value: 'APPROVED', label: 'Approved', color: 'bg-emerald-500' },
@@ -724,22 +695,17 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
             { value: 'critical', label: 'Critical', color: 'bg-danger-500' },
             { value: 'high', label: 'High', color: 'bg-amber-500' },
             { value: 'medium', label: 'Medium', color: 'bg-blue-500' },
-            { value: 'low', label: 'Low', color: 'bg-slate-500' },
+            { value: 'low', label: 'Low', color: 'bg-c-text-muted' },
           ],
           render: (row) => {
-            const dots: Record<string, string> = {
-              critical: 'bg-danger-500',
-              high: 'bg-amber-500',
-              medium: 'bg-blue-500',
-              low: 'bg-slate-400',
+            const levels: Record<string, PriorityLevel> = {
+              critical: 'urgent',
+              high: 'high',
+              medium: 'medium',
+              low: 'low',
             };
-            const dot = dots[row.priority] || dots.medium;
-            return (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-300/80 bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:border-white/[0.10] dark:bg-white/[0.06] dark:text-slate-200">
-                <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
-                {row.priority || 'medium'}
-              </span>
-            );
+            const level = levels[row.priority] || 'medium';
+            return <PriorityChip level={level} label={row.priority || 'medium'} />;
           },
         },
         updatedCol,
@@ -1409,7 +1375,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                   onClick={handleShowList}
                   className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
                 >
-                  <FileText className="w-5 h-5 text-slate-500" />
+                  <FileText className="w-5 h-5 text-slate-500 dark:text-slate-400" />
                 </button>
                 <div>
                   <h2 className="text-lg font-semibold text-navy-900 dark:text-white">
@@ -1442,8 +1408,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
               <div className="max-w-4xl mx-auto">
                 <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-8">
                   <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-xl flex items-center justify-center mx-auto mb-4">
-                      <Activity className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+                    <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center mx-auto mb-4">
+                      <Activity className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
                     </div>
                     <h3 className="text-xl font-semibold text-navy-900 dark:text-white mb-2">
                       {doc.name}
@@ -1691,11 +1657,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   // Loading state
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto mb-4"></div>
-          <p className="text-slate-500 dark:text-slate-400">Loading assessments...</p>
-        </div>
+      <div className="p-6">
+        <SharedLoadingState template="list" rows={6} />
       </div>
     );
   }
@@ -1813,8 +1776,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/80">
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-primary-500/20 flex items-center justify-center">
-                  <FileText size={14} className="text-primary-400" />
+                <div className="w-7 h-7 rounded-lg bg-indigo-500/20 flex items-center justify-center">
+                  <FileText size={14} className="text-indigo-400" />
                 </div>
                 <h3 className="text-slate-900 dark:text-white font-semibold text-sm">
                   Report Summary
@@ -1846,7 +1809,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                   }}
                 />
               ) : (
-                <div className="flex items-center justify-center h-32 text-slate-500 text-sm">
+                <div className="flex items-center justify-center h-32 text-slate-500 dark:text-slate-400 text-sm">
                   No report selected
                 </div>
               )}
@@ -1860,7 +1823,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                     const targetId = slideOverBuilderReportId || slideOverReportId;
                     if (targetId) navigate(`/reports/builder/${targetId}`);
                   }}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-primary-500/20 text-primary-300 hover:bg-primary-500/30 border border-primary-500/30 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30 transition-colors"
                 >
                   Open Full Editor
                   <ArrowRight size={14} />
@@ -2062,14 +2025,14 @@ const ReportSlideOverContent: React.FC<{
   if (loading) {
     return (
       <div className="flex items-center justify-center h-32">
-        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500" />
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-500" />
       </div>
     );
   }
 
   if (!report) {
     return (
-      <div className="text-center text-slate-500 py-8">
+      <div className="text-center text-slate-500 dark:text-slate-400 py-8">
         <p className="text-sm">Report not found or could not be loaded.</p>
       </div>
     );
@@ -2112,7 +2075,7 @@ const ReportSlideOverContent: React.FC<{
         )}
         <div>
           <span className={`text-sm font-semibold ${statusCfg.color}`}>{statusCfg.label}</span>
-          <p className="text-[11px] text-slate-500 mt-0.5">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
             {statusKey === 'DRAFT' && 'Report is being prepared'}
             {statusKey === 'GENERATING' && 'AI is generating report content'}
             {statusKey === 'FINAL' && 'Report content is finalized'}
@@ -2128,7 +2091,7 @@ const ReportSlideOverContent: React.FC<{
       <div className="bg-slate-50/50 dark:bg-navy-800/50 rounded-xl border border-slate-200/60 dark:border-navy-700/60 divide-y divide-slate-200/40 dark:divide-navy-700/40">
         {templateId && (
           <div className="flex items-center justify-between px-3.5 py-2.5">
-            <span className="text-xs text-slate-500">Template</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Template</span>
             <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">
               {templateId}
             </span>
@@ -2136,7 +2099,7 @@ const ReportSlideOverContent: React.FC<{
         )}
         {report.assessmentName && (
           <div className="flex items-center justify-between px-3.5 py-2.5">
-            <span className="text-xs text-slate-500">Source Assessment</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Source Assessment</span>
             <span className="text-xs text-slate-700 dark:text-slate-300 font-medium truncate max-w-[180px]">
               {report.assessmentName}
             </span>
@@ -2144,14 +2107,14 @@ const ReportSlideOverContent: React.FC<{
         )}
         {sectionCount > 0 && (
           <div className="flex items-center justify-between px-3.5 py-2.5">
-            <span className="text-xs text-slate-500">Sections</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Sections</span>
             <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">
               {sectionCount}
             </span>
           </div>
         )}
         <div className="flex items-center justify-between px-3.5 py-2.5">
-          <span className="text-xs text-slate-500 flex items-center gap-1">
+          <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
             <Calendar size={11} /> Created
           </span>
           <span className="text-xs text-slate-700 dark:text-slate-300">
@@ -2159,7 +2122,7 @@ const ReportSlideOverContent: React.FC<{
           </span>
         </div>
         <div className="flex items-center justify-between px-3.5 py-2.5">
-          <span className="text-xs text-slate-500 flex items-center gap-1">
+          <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
             <Clock size={11} /> Last updated
           </span>
           <span className="text-xs text-slate-700 dark:text-slate-300">
@@ -2171,7 +2134,7 @@ const ReportSlideOverContent: React.FC<{
       {/* Generated Reports / Exports */}
       <div className="bg-slate-50/50 dark:bg-navy-800/50 rounded-xl border border-slate-200/60 dark:border-navy-700/60 overflow-hidden">
         <div className="px-3.5 py-2.5 border-b border-slate-200/40 dark:border-navy-700/40">
-          <h5 className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider flex items-center gap-1.5">
+          <h5 className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider flex items-center gap-1.5">
             <Download size={11} />
             Generated Reports
           </h5>
@@ -2179,7 +2142,7 @@ const ReportSlideOverContent: React.FC<{
 
         {exportsLoading ? (
           <div className="flex items-center justify-center py-6">
-            <Loader2 size={16} className="animate-spin text-slate-500" />
+            <Loader2 size={16} className="animate-spin text-slate-500 dark:text-slate-400" />
           </div>
         ) : exports.length > 0 ? (
           <div className="divide-y divide-slate-200/30 dark:divide-navy-700/30">
@@ -2203,7 +2166,7 @@ const ReportSlideOverContent: React.FC<{
                     <div className="text-xs font-medium text-slate-700 dark:text-slate-300">
                       {cfg.label}
                     </div>
-                    <div className="text-[10px] text-slate-500">
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400">
                       {exportDate
                         ? new Date(exportDate).toLocaleDateString('pl-PL', {
                             day: '2-digit',
@@ -2218,7 +2181,7 @@ const ReportSlideOverContent: React.FC<{
                   </div>
                   <div className="shrink-0">
                     {downloadingId === fmt ? (
-                      <Loader2 size={14} className="animate-spin text-slate-500" />
+                      <Loader2 size={14} className="animate-spin text-slate-500 dark:text-slate-400" />
                     ) : (
                       <Download
                         size={14}
@@ -2233,7 +2196,7 @@ const ReportSlideOverContent: React.FC<{
         ) : (
           /* Quick-generate buttons when no exports exist */
           <div className="p-3.5">
-            <p className="text-[11px] text-slate-500 mb-3">No exports yet. Generate now:</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-3">No exports yet. Generate now:</p>
             <div className="grid grid-cols-3 gap-2">
               {(['pdf', 'pptx', 'docx'] as const).map((fmt) => {
                 const cfg = EXPORT_FORMAT_CONFIG[fmt];
@@ -2276,7 +2239,7 @@ const ReportSlideOverContent: React.FC<{
               <div className="text-xs font-medium text-slate-700 dark:text-slate-300">
                 Web Preview
               </div>
-              <div className="text-[10px] text-slate-500">Open in editor</div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400">Open in editor</div>
             </div>
             <ArrowRight
               size={14}
@@ -2289,7 +2252,7 @@ const ReportSlideOverContent: React.FC<{
       {/* Executive Summary — truncated */}
       {report.executiveSummary && (
         <div className="bg-slate-50/50 dark:bg-navy-800/50 rounded-xl p-3.5 border border-slate-200/60 dark:border-navy-700/60">
-          <h5 className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-1.5">
+          <h5 className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mb-1.5">
             Executive Summary
           </h5>
           <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed line-clamp-4">
@@ -2301,7 +2264,7 @@ const ReportSlideOverContent: React.FC<{
       {/* Sections overview — compact list */}
       {sectionCount > 0 && (
         <div className="bg-slate-50/50 dark:bg-navy-800/50 rounded-xl p-3.5 border border-slate-200/60 dark:border-navy-700/60">
-          <h5 className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-2">
+          <h5 className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mb-2">
             Report Scope
           </h5>
           <div className="space-y-1">
@@ -2312,7 +2275,7 @@ const ReportSlideOverContent: React.FC<{
                   : section?.title || section?.name || `Section ${idx + 1}`;
               return (
                 <div key={idx} className="flex items-center gap-2 py-1">
-                  <span className="w-4 h-4 rounded bg-primary-500/15 text-primary-400 text-[10px] font-bold flex items-center justify-center shrink-0">
+                  <span className="w-4 h-4 rounded bg-indigo-500/15 text-indigo-400 text-[10px] font-bold flex items-center justify-center shrink-0">
                     {idx + 1}
                   </span>
                   <span className="text-xs text-slate-500 dark:text-slate-400 truncate">
@@ -2322,7 +2285,7 @@ const ReportSlideOverContent: React.FC<{
               );
             })}
             {sectionCount > 6 && (
-              <span className="text-[11px] text-slate-500 pl-6">
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 pl-6">
                 +{sectionCount - 6} more sections
               </span>
             )}

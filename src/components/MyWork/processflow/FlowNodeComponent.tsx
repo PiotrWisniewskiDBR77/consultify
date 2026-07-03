@@ -109,6 +109,17 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
     if (editing) inputRef.current?.focus();
   }, [editing]);
 
+  // Context-menu "Edit label" → parent bumps data.editSignal to start inline edit
+  // from outside the node (double-click is the only other trigger). Fixes the U8 no-op.
+  const editSignalRef = React.useRef(data?.editSignal);
+  React.useEffect(() => {
+    if (data?.editSignal !== undefined && data.editSignal !== editSignalRef.current) {
+      editSignalRef.current = data.editSignal;
+      setEditValue(String(data?.label || ''));
+      setEditing(true);
+    }
+  }, [data?.editSignal, data?.label]);
+
   const commitEdit = () => {
     setEditing(false);
     if (data?.onLabelChange && editValue !== data?.label) {
@@ -242,7 +253,7 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
             if (e.key === 'Enter') commitEdit();
             if (e.key === 'Escape') setEditing(false);
           }}
-          className={`bg-transparent text-xs font-medium text-slate-800 dark:text-slate-200 text-center outline-none border-b border-primary-400 w-full ${innerRotate}`}
+          className={`bg-transparent text-xs font-medium text-slate-800 dark:text-slate-200 text-center outline-none border-b border-slate-400 w-full ${innerRotate}`}
         />
       ) : (
         <div

@@ -212,7 +212,7 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
                     </div>
                     {comp.differentiator && (
                       <div className="mt-2 pt-2 border-t border-slate-200/20 dark:border-navy-700/20">
-                        <span className="text-[8px] font-bold text-primary-600 uppercase tracking-wider">
+                        <span className="text-[8px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
                           {isPl ? 'Nasz wyróżnik' : 'Our edge'}:{' '}
                         </span>
                         <span className="text-[9px] text-slate-600 dark:text-slate-400">

@@ -94,7 +94,7 @@ export const NotebookExportMenu: React.FC<NotebookExportMenuProps> = ({
         <div
           role="menu"
           aria-label={t.ariaMenu}
-          className="absolute right-0 z-50 mt-1 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg dark:border-white/10 dark:bg-[#1a1a1d]"
+          className="absolute right-0 z-50 mt-1 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg dark:border-white/10 dark:bg-navy-900"
         >
           <button
             type="button"

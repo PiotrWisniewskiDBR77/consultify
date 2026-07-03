@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import {
   ExecutiveModuleShell,
@@ -61,8 +62,8 @@ import {
   recordDocumentStudioApprovalDecision,
   requestDocumentStudioApproval,
 } from './api';
-import { DocumentStudioEditorPanel } from './DocumentStudioEditorPanel';
 import { DocumentStudioQaPanel } from './DocumentStudioQaPanel';
+import { DocumentTipTapEditor } from './editor';
 import type {
   DocumentAccessHistoryEntry,
   DocumentApprovalDecisionKind,
@@ -87,86 +88,6 @@ interface DocumentStudioDocumentPanelProps {
   schema: DocumentSchema;
   onStartOver: () => void;
   onSchemaUpdated: (nextSchema: DocumentSchema) => void;
-}
-
-function renderSectionPreview(section: DocumentSection, idx: number): React.ReactNode {
-  return (
-    <section
-      key={section.sectionId}
-      id={section.sectionId}
-      className="rounded-lg border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900"
-    >
-      <header className="mb-2 flex items-baseline justify-between gap-2">
-        <h3 className="text-base font-semibold text-navy-900 dark:text-white">
-          {idx + 1}. {section.title}
-        </h3>
-        {section.purpose ? <span className="text-xs text-slate-600">{section.purpose}</span> : null}
-      </header>
-      <div className="flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-300">
-        {section.blocks.map((block) => {
-          const isAssumption = Boolean(block.isAssumption);
-          const blockClass = isAssumption
-            ? 'rounded border border-amber-400/30 bg-amber-50 px-2 py-1 dark:border-amber-400/30 dark:bg-amber-500/10'
-            : '';
-          const content = (() => {
-            if (block.type === 'heading') {
-              const value = block.content as { text?: string };
-              return (
-                <div className="font-semibold text-navy-900 dark:text-white">{value.text}</div>
-              );
-            }
-            if (block.type === 'paragraph') {
-              const value = block.content as { text?: string };
-              return <p>{value.text}</p>;
-            }
-            if (block.type === 'list') {
-              const value = block.content as { style?: string; items?: string[] };
-              const items = Array.isArray(value.items) ? value.items : [];
-              if (value.style === 'numbered') {
-                return (
-                  <ol className="list-decimal pl-5">
-                    {items.map((item, i) => (
-                      <li key={i}>{item}</li>
-                    ))}
-                  </ol>
-                );
-              }
-              return (
-                <ul className="list-disc pl-5">
-                  {items.map((item, i) => (
-                    <li key={i}>{item}</li>
-                  ))}
-                </ul>
-              );
-            }
-            if (block.type === 'callout') {
-              const value = block.content as { variant?: string; text?: string };
-              return (
-                <div className="rounded-md border border-primary-500/30 bg-primary-500/5 px-3 py-2 italic">
-                  {value.text}
-                </div>
-              );
-            }
-            return (
-              <pre className="whitespace-pre-wrap text-xs text-slate-500">
-                {JSON.stringify(block.content, null, 2)}
-              </pre>
-            );
-          })();
-          return (
-            <div key={block.blockId} className={blockClass}>
-              {content}
-              {isAssumption ? (
-                <div className="mt-1 text-xs font-medium uppercase tracking-wide text-amber-600">
-                  Assumption — needs source
-                </div>
-              ) : null}
-            </div>
-          );
-        })}
-      </div>
-    </section>
-  );
 }
 
 function metadataLabel(value: string | string[] | undefined): string {
@@ -399,6 +320,7 @@ function OutlinePanel({
   sourceCount: number;
   assumptionCount: number;
 }): React.ReactElement {
+  const { t } = useTranslation();
   return (
     <div className="flex h-full flex-col overflow-y-auto p-3">
       <div className="mb-3 rounded-lg border border-slate-200 bg-white p-3 text-xs dark:border-navy-700 dark:bg-navy-900">
@@ -409,7 +331,7 @@ function OutlinePanel({
           {sourceCount} sources · {assumptionCount} assumptions
         </div>
       </div>
-      <nav aria-label="Document outline">
+      <nav aria-label={t('documentStudio.documentPanel.outlineAria', 'Document outline')}>
         <ol className="space-y-1.5">
           {sections.map((section, index) => (
             <li key={section.sectionId}>
@@ -499,6 +421,7 @@ function ActivityPanel({ artifactId }: { artifactId: string }): React.ReactEleme
 }
 
 function CommentsPanel({ artifactId }: { artifactId: string }): React.ReactElement {
+  const { t } = useTranslation();
   const [threads, setThreads] = useState<DocumentCommentThread[]>([]);
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(false);
@@ -533,7 +456,7 @@ function CommentsPanel({ artifactId }: { artifactId: string }): React.ReactEleme
         })
       );
       setDraft('');
-      toast.success('Comment added');
+      toast.success(t('documentStudio.documentPanel.commentAdded', 'Comment added'));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add comment');
     } finally {
@@ -607,6 +530,7 @@ function CommentsPanel({ artifactId }: { artifactId: string }): React.ReactEleme
 }
 
 function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactElement {
+  const { t } = useTranslation();
   const [links, setLinks] = useState<DocumentShareLink[]>([]);
   const [scope, setScope] = useState<DocumentShareLinkAccessScope>('read');
   const [label, setLabel] = useState('');
@@ -642,7 +566,7 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
       });
       setCreatedToken(link.token);
       setLinks(await listDocumentStudioShareLinks(artifactId));
-      toast.success('Share link created');
+      toast.success(t('documentStudio.documentPanel.shareLinkCreated', 'Share link created'));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create share link');
     } finally {
@@ -665,7 +589,7 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
             value={label}
             onChange={(event) => setLabel(event.target.value)}
             className="mt-1 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-950"
-            placeholder="Client review"
+            placeholder={t('documentStudio.documentPanel.reviewNamePlaceholder', 'Client review')}
           />
         </label>
         <label className="mb-3 block text-xs text-slate-600 dark:text-slate-300">
@@ -677,8 +601,10 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
           >
             <option value="read">Read</option>
             <option value="comment">Comment</option>
-            <option value="download">Download</option>
-            <option value="edit">Edit</option>
+            <option value="download">
+              {t('documentStudio.documentPanel.actionDownload', 'Download')}
+            </option>
+            <option value="edit">{t('documentStudio.documentPanel.actionEdit', 'Edit')}</option>
           </select>
         </label>
         <Button type="button" size="sm" onClick={createLink} disabled={submitting}>
@@ -1016,6 +942,7 @@ function ManifestGatePanel(): React.ReactElement {
 }
 
 function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElement {
+  const { t } = useTranslation();
   const [approvals, setApprovals] = useState<DocumentApprovalRequest[]>([]);
   const [participantInput, setParticipantInput] = useState('');
   const [reason, setReason] = useState('');
@@ -1065,7 +992,7 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
       ]);
       setParticipantInput('');
       setReason('');
-      toast.success('Approval requested');
+      toast.success(t('documentStudio.documentPanel.approvalRequested', 'Approval requested'));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to request approval');
     } finally {
@@ -1088,7 +1015,9 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
         current.map((item) => (item.approvalId === approval.approvalId ? approval : item))
       );
       setDecisionComment('');
-      toast.success('Approval decision recorded');
+      toast.success(
+        t('documentStudio.documentPanel.approvalDecisionRecorded', 'Approval decision recorded')
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to record decision');
     } finally {
@@ -1108,7 +1037,7 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
       setApprovals((current) =>
         current.map((item) => (item.approvalId === approval.approvalId ? approval : item))
       );
-      toast.success('Approval cancelled');
+      toast.success(t('documentStudio.documentPanel.approvalCancelled', 'Approval cancelled'));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to cancel approval');
     } finally {
@@ -1171,7 +1100,10 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
           value={decisionComment}
           onChange={(event) => setDecisionComment(event.target.value)}
           className="mt-1 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-950"
-          placeholder="Optional reviewer comment"
+          placeholder={t(
+            'documentStudio.documentPanel.reviewerCommentPlaceholder',
+            'Optional reviewer comment'
+          )}
         />
       </label>
       {error ? (
@@ -1442,11 +1374,9 @@ function TeresaDrawerPanel({
           all changes still require review and approval before execution.
         </p>
       </div>
-      <DocumentStudioEditorPanel
-        artifactId={artifactId}
-        schema={schema}
-        onSchemaUpdated={onSchemaUpdated}
-      />
+      <p className="text-xs text-slate-500 dark:text-slate-400">
+        Zaznacz tekst w dokumencie, aby poprawić go z pomocą Teresy.
+      </p>
     </div>
   );
 }
@@ -1819,11 +1749,9 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     if (activeToolId === 'editor') {
       return (
         <div className="h-full overflow-y-auto p-3">
-          <DocumentStudioEditorPanel
-            artifactId={artifactId}
-            schema={schema}
-            onSchemaUpdated={onSchemaUpdated}
-          />
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Zaznacz tekst w dokumencie, aby poprawić go z pomocą Teresy.
+          </p>
         </div>
       );
     }
@@ -1998,7 +1926,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
             </Button>
           </div>
         </div>
-        {schema.sections.map((section, idx) => renderSectionPreview(section, idx))}
+        <DocumentTipTapEditor schema={schema} onSchemaUpdated={onSchemaUpdated} editable artifactId={artifactId} />
       </div>
     </div>
   );

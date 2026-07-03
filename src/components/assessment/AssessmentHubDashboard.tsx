@@ -17,6 +17,11 @@ import {
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import {
+  EmptyState as SharedEmptyState,
+  LoadingState as SharedLoadingState,
+} from '@/components/shared/states';
+
 import { AppView } from '../../types';
 import { SplitLayout } from '../layout/SplitLayout';
 import { RapidLeanWorkspace } from './RapidLeanWorkspace';
@@ -76,8 +81,12 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
         title={t('licensedTools.hubTitle', 'Licensed Tools Hub')}
         currentView={AppView.ASSESSMENT_OVERVIEW}
       >
-        <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500 dark:text-gray-400">Loading assessment overview...</div>
+        <div className="p-6">
+          <SharedLoadingState
+            template="card"
+            count={4}
+            label={t('assessment.overview.loading', 'Loading assessment overview…')}
+          />
         </div>
       </SplitLayout>
     );
@@ -91,7 +100,7 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
           <div className="mb-4">
             <button
               onClick={() => setShowRapidLeanWorkspace(false)}
-              className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+              className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
             >
               <ArrowLeft className="w-4 h-4" />
               {t('licensedTools.backToHub', 'Back to Licensed Tools Hub')}
@@ -110,7 +119,15 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
         currentView={AppView.ASSESSMENT_OVERVIEW}
       >
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500 dark:text-gray-400">No assessment data available</div>
+          <SharedEmptyState
+            variant="error"
+            title={t('assessment.overview.emptyTitle', 'No assessment data yet')}
+            description={t(
+              'assessment.overview.emptyDesc',
+              'We could not load the assessment overview. Refresh to try again.'
+            )}
+            onRetry={() => void fetchOverview()}
+          />
         </div>
       </SplitLayout>
     );
@@ -131,13 +148,13 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
             <Award className="w-10 h-10 text-yellow-500" />
             {t('licensedTools.hubTitle', 'Licensed Tools Hub')}
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-slate-600 dark:text-slate-400">
             Unified view of all organizational assessments
           </p>
         </div>
 
         {/* Overall Readiness Score */}
-        <div className="bg-gradient-to-br from-blue-500 to-primary-600 text-white rounded-xl shadow-2xl p-8 mb-8">
+        <div className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-xl shadow-2xl p-8 mb-8">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold mb-2">Overall Digital Readiness</h2>
@@ -234,7 +251,7 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
         {/* Strongest/Weakest Areas */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Strongest Areas */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+          <div className="bg-white dark:bg-navy-800 rounded-lg shadow-lg p-6">
             <h3 className="text-xl font-bold flex items-center gap-2 mb-4 text-green-600">
               <Target className="w-6 h-6" />
               Strengths
@@ -244,7 +261,7 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
                 {consolidated.strongestAreas.map((area, index) => (
                   <li
                     key={index}
-                    className="flex items-center gap-2 text-gray-700 dark:text-gray-300"
+                    className="flex items-center gap-2 text-slate-700 dark:text-slate-300"
                   >
                     <div className="w-2 h-2 bg-green-500 rounded-full" />
                     {area}
@@ -252,7 +269,7 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
                 ))}
               </ul>
             ) : (
-              <p className="text-gray-500 dark:text-gray-400 italic">
+              <p className="text-slate-500 dark:text-slate-400 italic">
                 Complete assessments to see strengths
               </p>
             )}
@@ -260,7 +277,7 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
 
           {/* Weakest Areas */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h3 className="text-xl font-bold flex items-center gap-2 mb-4 text-danger-600">
+            <h3 className="text-xl font-bold flex items-center gap-2 mb-4 text-rose-600">
               <AlertCircle className="w-6 h-6" />
               Priority Gaps
             </h3>
@@ -269,15 +286,15 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
                 {consolidated.weakestAreas.map((area, index) => (
                   <li
                     key={index}
-                    className="flex items-center gap-2 text-gray-700 dark:text-gray-300"
+                    className="flex items-center gap-2 text-slate-700 dark:text-slate-300"
                   >
-                    <div className="w-2 h-2 bg-danger-500 rounded-full" />
+                    <div className="w-2 h-2 bg-rose-500 rounded-full" />
                     {area}
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-gray-500 dark:text-gray-400 italic">
+              <p className="text-slate-500 dark:text-slate-400 italic">
                 Complete assessments to identify gaps
               </p>
             )}
@@ -285,7 +302,7 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
         </div>
 
         {/* Quick Actions */}
-        <div className="mt-8 bg-gray-50 dark:bg-gray-900 rounded-lg p-6">
+        <div className="mt-8 bg-slate-50 dark:bg-navy-900 rounded-lg p-6">
           <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
           <div className="flex flex-wrap gap-3">
             <button
@@ -295,7 +312,7 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
               <PlusCircle className="w-4 h-4" />
               Start RapidLean Assessment
             </button>
-            <button className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 flex items-center gap-2">
+            <button className="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 flex items-center gap-2">
               <FileText className="w-4 h-4" />
               Upload External Assessment
             </button>
@@ -335,12 +352,12 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
   const colorClasses = {
     blue: 'from-blue-500 to-blue-600',
     green: 'from-green-500 to-green-600',
-    purple: 'from-primary-500 to-primary-600',
+    purple: 'from-indigo-500 to-indigo-600',
     orange: 'from-amber-500 to-amber-600',
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+    <div className="bg-white dark:bg-navy-800 rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
       <div className={`bg-gradient-to-br ${colorClasses[color]} text-white p-4`}>
         <div className="flex items-center justify-between mb-2">
           {icon}
@@ -355,14 +372,14 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
 
       <div className="p-4">
         {score !== null && (
-          <div className="text-3xl font-bold text-gray-800 dark:text-white mb-2">
+          <div className="text-3xl font-bold text-slate-800 dark:text-white mb-2">
             {score.toFixed(1)}
           </div>
         )}
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{details}</p>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">{details}</p>
         <button
           onClick={onAction}
-          className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium"
+          className="w-full px-4 py-2 bg-slate-100 dark:bg-navy-700 rounded-lg hover:bg-slate-200 dark:hover:bg-navy-600 transition-colors text-sm font-medium"
         >
           {actionLabel}
         </button>

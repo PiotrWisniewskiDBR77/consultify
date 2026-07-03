@@ -485,9 +485,38 @@ async function upsertExternalConclusion(params: {
   );
 }
 
+export interface CreateConclusionParams {
+  organizationId: string;
+  projectId?: string | null;
+  title: string;
+  statement: string;
+  sourceModule: string;
+  sourceRefs: ArtifactRef[];
+  confidenceLevel: string;
+  limits: string;
+  evidenceRefs: EvidenceRef[];
+  recommendedNextAction?: string | null;
+  status?: ConclusionStatus;
+  createdBy: string;
+  contextSummary: string;
+}
+
 export class ConclusionService {
   async ensureReady(): Promise<void> {
     await ensureTables();
+  }
+
+  /**
+   * Push-based CONCLUSION_LAYER entry point: persist (upsert) a conclusion
+   * produced by a live generation flow (tool W2 finishing block, DRD/SIRI/ADMA
+   * report conclusion models, ...). Idempotent per
+   * (organizationId, sourceModule, sourceRefs) — regenerating a conclusion for
+   * the same source updates the existing row instead of duplicating it, and a
+   * 'converted' conclusion is never demoted.
+   */
+  async createConclusion(params: CreateConclusionParams): Promise<void> {
+    await ensureTables();
+    await upsertExternalConclusion(params);
   }
 
   async syncInterviewFindings(organizationId: string, actorUserId: string): Promise<number> {
@@ -616,6 +645,21 @@ export class ConclusionService {
       .catch(() => []);
 
     for (const row of rows) {
+      // Skip sessions whose live W2 conclusion was already pushed by the tool
+      // conclusion bridge (sourceModule='tool') — the push-based conclusion is
+      // grounded in the session's accepted elements and must not be shadowed by
+      // this coarse session-level sync.
+      const pushed = await queryHelpers
+        .queryOne<{ id: string }>(
+          `SELECT id FROM conclusions
+           WHERE organization_id = ? AND source_module = 'tool'
+             AND source_artifact_refs_json LIKE ?
+           LIMIT 1`,
+          [organizationId, `%"id":"${String(row.id)}"%`]
+        )
+        .catch(() => null);
+      if (pushed?.id) continue;
+
       const output =
         safeJsonArray<any>(row.output_json)[0] || row.output_json || row.context_snapshot;
       const statement =

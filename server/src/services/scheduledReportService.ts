@@ -9,6 +9,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import logger from '../utils/Logger.js';
+import { governRecipients } from './deliverables/recipientGovernance.js';
 
 // ============================================
 // TYPES
@@ -24,7 +25,7 @@ export type ScheduleFrequency =
 export type ScheduleStatus = 'active' | 'paused' | 'completed' | 'failed';
 export type DeliveryMethod = 'email' | 'dashboard' | 'webhook' | 'storage';
 export type ScheduleType = 'time_based' | 'event_triggered' | 'hybrid';
-export type DeliverableType = 'report' | 'presentation' | 'both';
+export type DeliverableType = 'report' | 'presentation' | 'both' | 'bundle';
 export type ScopeType = 'organization' | 'portfolio' | 'project' | 'initiative';
 
 export interface ReportSchedule {
@@ -70,6 +71,8 @@ export interface DeliveryConfig {
     subject?: string;
     includeAttachment?: boolean;
     attachmentFormat?: 'pdf' | 'pptx' | 'xlsx';
+    /** W6.4 — adresy, które zrezygnowały z dostawy (opt-out). */
+    optOut?: string[];
   };
   webhook?: {
     url: string;
@@ -503,8 +506,24 @@ class ScheduledReportService {
 
       // Generate report
       let reportId: string | null = null;
+      let bundleZip: Buffer | null = null;
+      let bundleBaseName: string | null = null;
 
-      if (this.reportBuilderService) {
+      // W6.1 — bridge do generatora M17 gdy deliverableType === 'bundle'.
+      if (scheduleData.deliverableType === 'bundle') {
+        const brief = scheduleData.description?.trim() || scheduleData.name;
+        if (brief && brief.length >= 20) {
+          const { generateBundle } = await import('./deliverables/bundleGenerationRuntime.js');
+          const { exportBundleFiles, bundleFilesToZip, safeBundleBaseName } = await import('./deliverables/bundleExportRuntime.js');
+          const bundle = await generateBundle(brief, { orgId: scheduleData.organizationId, preferPremium: true });
+          if (bundle) {
+            const files = await exportBundleFiles(bundle);
+            bundleBaseName = safeBundleBaseName(bundle.spine.meta.company);
+            bundleZip = await bundleFilesToZip(files, bundleBaseName);
+            reportId = `bundle-${uuidv4()}`;
+          }
+        }
+      } else if (this.reportBuilderService) {
         // Step 1: Create report structure from template
         const report = await this.reportBuilderService.generateFromTemplate(
           scheduleData.templateId,
@@ -541,9 +560,12 @@ class ScheduledReportService {
 
       execution.generatedReportId = reportId || undefined;
 
-      // Deliver report
+      // Deliver report (or bundle ZIP)
       if (reportId) {
-        execution.deliveryResults = await this.deliverReport(scheduleData, reportId);
+        const zipAttachment = bundleZip
+          ? { filename: `${bundleBaseName ?? 'material'}-komplet.zip`, contentBase64: bundleZip.toString('base64') }
+          : undefined;
+        execution.deliveryResults = await this.deliverReport(scheduleData, reportId, zipAttachment);
       }
 
       // Update schedule
@@ -580,11 +602,13 @@ class ScheduledReportService {
   }
 
   /**
-   * Deliver report via configured methods
+   * Deliver report via configured methods.
+   * `bundleAttachment` (W6.1): opjonalny ZIP wiązki M17 — dołączany do emaila.
    */
   private async deliverReport(
     schedule: ReportSchedule,
-    reportId: string
+    reportId: string,
+    bundleAttachment?: { filename: string; contentBase64: string },
   ): Promise<DeliveryResult[]> {
     const results: DeliveryResult[] = [];
 
@@ -592,7 +616,7 @@ class ScheduledReportService {
       try {
         switch (method) {
           case 'email':
-            await this.deliverViaEmail(schedule, reportId);
+            await this.deliverViaEmail(schedule, reportId, bundleAttachment);
             results.push({
               method: 'email',
               status: 'success',
@@ -642,15 +666,66 @@ class ScheduledReportService {
   }
 
   /**
-   * Deliver report via email
+   * Deliver report via email.
+   * W6.1: `bundleAttachment` — ZIP wiązki M17 (base64) dołączany jako plik.
    */
-  private async deliverViaEmail(schedule: ReportSchedule, reportId: string): Promise<void> {
+  private async deliverViaEmail(
+    schedule: ReportSchedule,
+    reportId: string,
+    bundleAttachment?: { filename: string; contentBase64: string },
+  ): Promise<void> {
     const emailConfig = schedule.deliveryConfig.email;
-    if (!emailConfig || !this.emailService) return;
+    if (!emailConfig || !emailConfig.recipients?.length) return;
 
-    // Get report data for attachment
-    // This would integrate with the actual email service
-    logger.info(`[ScheduledReportService] Sending email to ${emailConfig.recipients.join(', ')}`);
+    // W6.3/W6.4 — governance odbiorców: walidacja + dedupe + opt-out + limit PRZED wysyłką.
+    const { allowed: governedRecipients, rejected } = governRecipients(emailConfig.recipients, {
+      optOut: emailConfig.optOut ?? [],
+    });
+    if (rejected.length > 0) {
+      logger.info(
+        `[ScheduledReportService] ${rejected.length} odbiorców odrzuconych (governance): ` +
+        rejected.map((r) => `${r.email}:${r.reason}`).join(', '),
+      );
+    }
+    if (governedRecipients.length === 0) {
+      logger.warn(`[ScheduledReportService] brak ważnych odbiorców po governance (report ${reportId})`);
+      return;
+    }
+
+    // W6.2 — un-stub: realnie WYŚLIJ przez emailService. Wcześniej tylko logowało
+    // (a `this.emailService` bywa nieustawiony w cron-path → 0 wysyłek). Importujemy
+    // realny `send` z modułu; fallback na wstrzyknięty serwis gdy obecny.
+    const subject = emailConfig.subject || `Raport „${schedule.name}" gotowy`;
+    const html =
+      `<p>Zaplanowany raport <strong>${schedule.name}</strong> został wygenerowany.</p>` +
+      `<p>Identyfikator raportu: <code>${reportId}</code></p>` +
+      (bundleAttachment
+        ? `<p>W załączniku znajdziesz komplet plików (DOCX+XLSX+PPTX).</p>`
+        : `<p>Materiał jest dostępny w bibliotece „Materiały".</p>`);
+
+    // W6.1 — dołącz ZIP wiązki gdy dostępny.
+    const attachments = bundleAttachment
+      ? [{ filename: bundleAttachment.filename, content: bundleAttachment.contentBase64, contentType: 'application/zip' }]
+      : undefined;
+
+    let sendFn: ((opts: { to: string; subject: string; html: string; attachments?: unknown[] }) => Promise<unknown>) | null = null;
+    if (this.emailService?.send) {
+      sendFn = (opts) => this.emailService.send(opts);
+    } else {
+      const mod = await import('./emailService.js');
+      sendFn = (opts) => mod.send(opts as never);
+    }
+
+    for (const to of governedRecipients) {
+      try {
+        await sendFn({ to, subject, html, ...(attachments ? { attachments } : {}) });
+        logger.info(`[ScheduledReportService] email sent to ${to} (report ${reportId})`);
+      } catch (err) {
+        logger.warn(
+          `[ScheduledReportService] email to ${to} failed: ${err instanceof Error ? err.message : String(err)}`
+        );
+      }
+    }
   }
 
   /**

@@ -1,0 +1,175 @@
+/**
+ * DecisionsPanelContent — Vegas re-skin anatomy tests.
+ *
+ * Guards the S1-U1 / row-anatomy parity brought to the Decisions LIST surface:
+ *  1. Row anatomy: title = L2 (text-sm font-semibold text-c-text), neutral status
+ *     shell via EntityStatusChip, priority via PriorityChip (color only in dot).
+ *  2. Selection / preview highlight uses the neutral+blue canon
+ *     (PREVIEW_SELECTED_ROW_CLASS / --c-info accent bar) — NEVER crimson/primary.
+ *  3. Clicking a decision row opens its preview AND applies the preview highlight
+ *     to that row (the isPreviewed → PREVIEW_SELECTED_ROW_CLASS wiring).
+ */
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import {
+  PREVIEW_SELECTED_ROW_CLASS,
+  SELECTED_ROW_CLASS,
+} from '@/components/shared/selectionTokens';
+
+// ── i18n (English so we can assert visible labels) ──────────────────────────
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    // Mirror i18next: t(key, fallbackString) OR t(key, { defaultValue }).
+    t: (key: string, opt?: unknown) => {
+      if (typeof opt === 'string') return opt;
+      if (opt && typeof opt === 'object' && 'defaultValue' in (opt as Record<string, unknown>)) {
+        return String((opt as { defaultValue: unknown }).defaultValue);
+      }
+      return key;
+    },
+    i18n: { language: 'en', changeLanguage: vi.fn() },
+  }),
+}));
+
+// ── App store: identify the current user so "my decisions" filter matches ───
+vi.mock('@/store/useAppStore', () => ({
+  useAppStore: () => ({
+    currentUser: { id: 'user-1', firstName: 'Test', displayName: 'Test User' },
+  }),
+}));
+
+// ── Toasts are noise here ───────────────────────────────────────────────────
+vi.mock('react-hot-toast', () => ({
+  default: { success: vi.fn(), error: vi.fn(), loading: vi.fn() },
+}));
+
+// ── API layer ───────────────────────────────────────────────────────────────
+const mockDecisions = [
+  {
+    id: 'decision-1',
+    title: 'Approve Q1 Budget Increase',
+    description: 'Review and approve the Q1 budget increase request',
+    status: 'PENDING',
+    decisionType: 'Financial',
+    decisionOwnerId: 'user-1', // mine to decide
+    priority: 'CRITICAL',
+    createdAt: '2026-06-01T00:00:00Z',
+    dueDate: '2026-07-15T00:00:00Z',
+    projectName: 'Project Alpha',
+  },
+  {
+    id: 'decision-2',
+    title: 'Pick Frontend Framework',
+    description: 'Decision on the shared component stack',
+    status: 'PENDING',
+    decisionType: 'Technical',
+    decisionOwnerId: 'user-1', // mine to decide
+    priority: 'MEDIUM',
+    createdAt: '2026-06-02T00:00:00Z',
+    dueDate: '2026-07-20T00:00:00Z',
+    projectName: 'Project Beta',
+  },
+];
+
+vi.mock('@/services/api', () => ({
+  Api: {
+    getDecisions: vi.fn(async () => mockDecisions),
+    getUsers: vi.fn(async () => []),
+    getDecision: vi.fn(async (id: string) => mockDecisions.find((d) => d.id === id) ?? null),
+    get: vi.fn(async () => ({})),
+    post: vi.fn(async () => ({})),
+    delete: vi.fn(async () => ({})),
+    decideDecision: vi.fn(async () => ({})),
+    remindDecision: vi.fn(async () => ({})),
+    escalateDecision: vi.fn(async () => ({})),
+    snoozeDecision: vi.fn(async () => ({})),
+  },
+}));
+
+import { DecisionsPanelContent } from '@/components/MyWork/DecisionsPanelContent';
+
+function renderPanel(props: Partial<React.ComponentProps<typeof DecisionsPanelContent>> = {}) {
+  return render(
+    <MemoryRouter>
+      <DecisionsPanelContent
+        viewMode="my"
+        searchQuery=""
+        onCountsChange={vi.fn()}
+        onDecisionClick={vi.fn()}
+        {...props}
+      />
+    </MemoryRouter>
+  );
+}
+
+/** Walk up from a cell to its owning table row. */
+function rowFor(el: HTMLElement): HTMLElement {
+  const tr = el.closest('tr');
+  if (!tr) throw new Error('no owning <tr>');
+  return tr as HTMLElement;
+}
+
+describe('DecisionsPanelContent — Vegas re-skin anatomy', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('renders decision rows with the L2 title token (text-sm font-semibold text-c-text)', async () => {
+    renderPanel();
+    const title = await screen.findByText('Approve Q1 Budget Increase');
+    expect(title.className).toContain('text-sm');
+    expect(title.className).toContain('font-semibold');
+    expect(title.className).toContain('text-c-text');
+  });
+
+  it('never paints selection/preview state with crimson or primary (neutral+blue canon)', async () => {
+    await screen.findByText; // ensure module loaded
+    // The canonical tokens are the ONLY selection surfaces used by the rows.
+    expect(SELECTED_ROW_CLASS).not.toMatch(/crimson|primary/);
+    expect(PREVIEW_SELECTED_ROW_CLASS).not.toMatch(/crimson|primary/);
+    // Blue signal accent bar = --c-info.
+    expect(PREVIEW_SELECTED_ROW_CLASS).toContain('var(--c-info)');
+  });
+
+  it('applies the preview highlight to the row when it is clicked (isPreviewed wiring)', async () => {
+    renderPanel();
+    const title = await screen.findByText('Approve Q1 Budget Increase');
+    const row = rowFor(title);
+
+    // Before click: no selection/preview surface.
+    expect(row.className).not.toContain('shadow-[inset_4px_0_0_var(--c-info)]');
+
+    fireEvent.click(row);
+
+    await waitFor(() => {
+      // Preview highlight carries the neutral slate surface + --c-info accent bar.
+      expect(row.className).toContain('shadow-[inset_4px_0_0_var(--c-info)]');
+    });
+  });
+
+  it('only the clicked row gets the preview highlight (others stay neutral)', async () => {
+    renderPanel();
+    const first = rowFor(await screen.findByText('Approve Q1 Budget Increase'));
+    const second = rowFor(await screen.findByText('Pick Frontend Framework'));
+
+    fireEvent.click(first);
+
+    await waitFor(() => {
+      expect(first.className).toContain('var(--c-info)');
+    });
+    expect(second.className).not.toContain('shadow-[inset_4px_0_0_var(--c-info)]');
+  });
+
+  it('renders a neutral-shell status chip (dot carries the only color)', async () => {
+    renderPanel();
+    const title = await screen.findByText('Approve Q1 Budget Increase');
+    const row = rowFor(title);
+    // EntityStatusChip humanizes PENDING → "Pending" in a neutral shell.
+    const statusChip = within(row).getByText(/pending/i);
+    // Shell must not be a solid crimson/primary fill.
+    expect(statusChip.closest('span,div')?.className || '').not.toMatch(/bg-primary|bg-crimson/);
+  });
+});

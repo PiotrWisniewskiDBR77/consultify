@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import type { FieldType, LinkedRecordFieldOptions } from '@/types/tablePlatform';
 
 import { CellEditor } from './CellEditor';
+import { getConditionalStyle, type FormatRule } from './ConditionalFormatting';
 import { LinkedRecordDisplay } from './LinkedRecordDisplay';
 import { PlatformCellRenderer } from './PlatformCellRenderer';
 import { RowGutterIndicator } from './provenance/RowGutterIndicator';
@@ -183,6 +184,8 @@ interface DataGridProps {
   onOpenLinkedRecord: (recordId: string, tableId: string) => void;
   viewConfig?: { missing_fields?: string[]; missing_field_names?: Record<string, string> };
   onRemoveMissingField?: (fieldId: string) => void;
+  /** R5: conditional-formatting rules applied per-cell. */
+  formatRules?: FormatRule[];
 }
 
 const DataGrid: React.FC<DataGridProps> = ({
@@ -202,6 +205,7 @@ const DataGrid: React.FC<DataGridProps> = ({
   onOpenLinkedRecord,
   viewConfig,
   onRemoveMissingField,
+  formatRules,
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const footerScrollRef = useRef<HTMLDivElement>(null);
@@ -470,7 +474,10 @@ const DataGrid: React.FC<DataGridProps> = ({
   const stickyPrimaryLeft = CHECK_COL_PX;
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white/90 dark:bg-navy-950/40">
+    <div
+      data-testid="table-grid"
+      className="flex h-full min-h-0 flex-1 flex-col rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white/90 dark:bg-navy-950/40"
+    >
       <div
         ref={scrollRef}
         className="min-h-[320px] flex-1 overflow-y-auto overflow-x-auto"
@@ -502,6 +509,7 @@ const DataGrid: React.FC<DataGridProps> = ({
                   return (
                     <th
                       key={col.key}
+                      data-testid={`table-col-header-${col.key}`}
                       style={{
                         width: w,
                         minWidth: w,
@@ -539,6 +547,7 @@ const DataGrid: React.FC<DataGridProps> = ({
                 return (
                   <th
                     key={col.key}
+                    data-testid={`table-col-header-${col.key}`}
                     style={{
                       width: w,
                       minWidth: w,
@@ -602,6 +611,7 @@ const DataGrid: React.FC<DataGridProps> = ({
               return (
                 <tr
                   key={row.id}
+                  data-testid={`table-row-${row.id}`}
                   className={`${selected ? 'bg-slate-100/70 dark:bg-white/[0.05]' : ''} hover:bg-slate-50 dark:hover:bg-navy-800/30`}
                   onClick={() => onOpenDetail(row.id)}
                 >
@@ -633,6 +643,13 @@ const DataGrid: React.FC<DataGridProps> = ({
                     const w = widthByKey[col.key] ?? col.width ?? DEFAULT_COLUMN_WIDTH;
                     const isPrimary = colIdx === 0;
                     const missing = isMissingField(col.key, viewConfig);
+                    // R5: conditional formatting — only on real (non-missing) cells.
+                    // CF inline style is spread LAST so a rule's backgroundColor
+                    // intentionally overrides the sticky-primary className bg.
+                    const cfStyle =
+                      missing || !formatRules?.length
+                        ? undefined
+                        : getConditionalStyle(formatRules, col.key, row.data?.[col.key]);
                     return (
                       <td
                         key={col.key}
@@ -641,6 +658,7 @@ const DataGrid: React.FC<DataGridProps> = ({
                           minWidth: w,
                           maxWidth: w,
                           ...(isPrimary ? { left: stickyPrimaryLeft } : {}),
+                          ...(cfStyle ?? {}),
                         }}
                         className={[
                           missing
@@ -759,6 +777,7 @@ const GridViewConnected: React.FC = () => {
     uiDispatch,
     activeViewConfig,
     removeMissingFieldFromView,
+    formatRules,
   } = useTableData();
 
   const platformFieldById = useMemo(() => {
@@ -813,6 +832,7 @@ const GridViewConnected: React.FC = () => {
       onOpenLinkedRecord={onOpenLinkedRecord}
       viewConfig={activeViewConfig}
       onRemoveMissingField={removeMissingFieldFromView}
+      formatRules={formatRules}
     />
   );
 };

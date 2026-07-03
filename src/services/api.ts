@@ -4286,7 +4286,11 @@ export const Api = {
 
   getPersonalTask: async (id: string): Promise<any> => {
     const res = await fetch(`${API_URL}/my-work/personal-tasks/${id}`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch personal task');
+    if (!res.ok) {
+      const err = new Error('Failed to fetch personal task') as Error & { status?: number };
+      err.status = res.status;
+      throw err;
+    }
     return res.json();
   },
 
@@ -6653,6 +6657,32 @@ export const Api = {
     return handleResponse(res, 'Failed to update tool session');
   },
 
+  /**
+   * CONCLUSION_LAYER push ingest: persist a client-side generated conclusion
+   * (SIRI/ADMA report W1 models, ...) as a Conclusion candidate. Idempotent
+   * per (sourceModule, sourceRefs) on the server.
+   */
+  createConclusion: async (payload: {
+    title: string;
+    statement: string;
+    sourceModule: string;
+    sourceRefs: Array<{ type: string; id: string; title?: string | null; url?: string | null }>;
+    confidenceLevel?: string;
+    limits?: string;
+    evidenceRefs?: Array<{ type: string; ref: string; excerpt?: string | null }>;
+    recommendedNextAction?: string | null;
+    status?: string;
+    projectId?: string | null;
+    contextSummary?: string;
+  }): Promise<{ ok: boolean }> => {
+    const res = await fetch(`${API_URL}/conclusions`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to create conclusion');
+  },
+
   requestToolReview: async (
     toolId: string,
     payload?: { decisionOwnerId?: string; dueDate?: string; priority?: string }
@@ -8518,6 +8548,37 @@ export const Api = {
     return handleResponse(res, 'Failed to save collaboration controls');
   },
 
+  // ── Health Panel (internal "dowody działania" proof-of-life probes) ──
+  getHealthPanelProbes: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/health-panel/probes`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load health probes');
+  },
+
+  runHealthPanelProbes: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/health-panel/run`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to run health probes');
+  },
+
+  runHealthPanelProbe: async (probeId: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/health-panel/run/${encodeURIComponent(probeId)}`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to run health probe');
+  },
+
+  getHealthPanelSummary: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/health-panel/summary`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load health summary');
+  },
+
   getTenantAdminAuditLogs: async (filters?: any): Promise<any> => {
     const params = new URLSearchParams();
     if (filters?.actionType) params.set('actionType', String(filters.actionType));
@@ -8958,6 +9019,21 @@ export const Api = {
       headers: getHeaders(),
     });
     return handleResponse(res, 'Failed to load report');
+  },
+
+  /**
+   * Generate the publishing-grade DRD client report HTML on the server (with the
+   * live LLM narrator). Returns the standalone HTML string ready to open + print.
+   */
+  getDrdReportHtml: async (
+    reportId: string,
+    opts?: { lang?: 'pl' | 'en' }
+  ): Promise<{ html: string; narrative: 'llm' | 'deterministic' }> => {
+    const qs = new URLSearchParams({ format: 'json', ...(opts?.lang ? { lang: opts.lang } : {}) });
+    const res = await fetch(`${API_URL}/assessment-reports/${reportId}/drd-report?${qs.toString()}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to generate DRD report');
   },
 
   /**

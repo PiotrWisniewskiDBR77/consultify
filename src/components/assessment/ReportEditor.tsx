@@ -29,6 +29,8 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { LoadingState } from '@/components/ui/primitives';
+import { buildDRDVisualizationDataFromAxes } from '../../services/drdVizAdapter';
+import { DRDReportTemplate } from './reports/templates/DRDReportTemplate';
 
 interface ReportContent {
   executiveSummary: string;
@@ -95,6 +97,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
 
   // Editable content
   const [name, setName] = useState('');
@@ -310,6 +313,9 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
 
   const gapSummary = getGapSummary();
   const isReadOnly = report.status === 'FINAL';
+  // DRD reports store axisData keyed by the 7 DRD axis keys (== AXIS_LABELS keys);
+  // only then can we render the graphical DRD preview.
+  const isDRD = Object.keys(report.axisData || {}).some((k) => k in AXIS_LABELS);
 
   return (
     <div className="h-full flex flex-col bg-white dark:bg-navy-900">
@@ -349,6 +355,32 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
           </div>
 
           <div className="flex items-center gap-3">
+            {isDRD && (
+              <div className="flex items-center rounded-lg border border-slate-200 dark:border-navy-700 p-0.5">
+                <button
+                  onClick={() => setViewMode('edit')}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    viewMode === 'edit'
+                      ? 'bg-slate-100 dark:bg-navy-800 text-navy-900 dark:text-white'
+                      : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                  }`}
+                >
+                  {FileText && <FileText size={14} className="inline mr-1 -mt-0.5" />}
+                  Edycja
+                </button>
+                <button
+                  onClick={() => setViewMode('preview')}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    viewMode === 'preview'
+                      ? 'bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300'
+                      : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                  }`}
+                >
+                  <Sparkles size={14} className="inline mr-1 -mt-0.5" />
+                  Podgląd raportu
+                </button>
+              </div>
+            )}
             {hasChanges && (
               <span className="text-xs text-amber-500 flex items-center gap-1">
                 <AlertCircle size={12} />
@@ -397,6 +429,17 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       </div>
 
       {/* Content */}
+      {viewMode === 'preview' && isDRD ? (
+        <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-navy-950/50">
+          <div className="max-w-5xl mx-auto">
+            <DRDReportTemplate
+              visualizationData={buildDRDVisualizationDataFromAxes(report.axisData)}
+              companyName={report.assessmentName}
+              readOnly
+            />
+          </div>
+        </div>
+      ) : (
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-5xl mx-auto p-6 space-y-8">
           {/* Gap Analysis Summary (Read-only) */}
@@ -561,6 +604,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 };

@@ -632,6 +632,78 @@ export const Scheduler = {
     });
     this.jobs.push(job32);
 
+    // 33. Initiative due-date breach scan (M13/R4-E3) — daily 6AM.
+    // Behavioural change → behind a flag (default OFF, safe for live clients).
+    const job33 = cron.schedule('0 6 * * *', async () => {
+      if (process.env.INITIATIVE_DUE_BREACH_CRON_ENABLED !== 'true') return;
+      try {
+        const { runDueBreachScan } = await import('./InitiativeDueBreachCron.js');
+        const result = await runDueBreachScan();
+        if (result.notified > 0 || result.errors > 0) {
+          logger.info(
+            `[Scheduler] Initiative due-breach: scanned=${result.scanned} notified=${result.notified} skipped=${result.skipped} errors=${result.errors}`
+          );
+        }
+      } catch (err: any) {
+        logger.error('[Scheduler] Initiative due-breach scan failed:', err?.message || err);
+      }
+    });
+    this.jobs.push(job33);
+
+    // 34. M14/F6 execution report cadence scan (detect due reports) — daily 6:15AM.
+    // Behavioural → behind a flag (default OFF, safe for live clients).
+    const job34 = cron.schedule('15 6 * * *', async () => {
+      if (process.env.EXECUTION_REPORT_CADENCE_CRON_ENABLED !== 'true') return;
+      try {
+        const { runReportCadenceScan } = await import('./ExecutionReportCron.js');
+        const r = await runReportCadenceScan();
+        if (r.due > 0 || r.errors > 0) {
+          logger.info(
+            `[Scheduler] Execution report cadence: orgs=${r.orgs} due=${r.due} errors=${r.errors}`
+          );
+        }
+      } catch (err: any) {
+        logger.error('[Scheduler] Execution report cadence scan failed:', err?.message || err);
+      }
+    });
+    this.jobs.push(job34);
+
+    // 35. M14/F6 execution report distribution (send queued) — every 30min.
+    // Behavioural → behind a flag (default OFF, safe for live clients).
+    const job35 = cron.schedule('*/30 * * * *', async () => {
+      if (process.env.EXECUTION_REPORT_DISTRIBUTION_CRON_ENABLED !== 'true') return;
+      try {
+        const { runReportDistributionScan } = await import('./ExecutionReportCron.js');
+        const r = await runReportDistributionScan();
+        if (r.sent > 0 || r.failed > 0 || r.errors > 0) {
+          logger.info(
+            `[Scheduler] Execution report distribution: orgs=${r.orgs} sent=${r.sent} failed=${r.failed} errors=${r.errors}`
+          );
+        }
+      } catch (err: any) {
+        logger.error('[Scheduler] Execution report distribution scan failed:', err?.message || err);
+      }
+    });
+    this.jobs.push(job35);
+
+    // 36. Initiative candidate auto-scan (R5) — proactive inbox, every 30min.
+    // Behavioural + spends LLM tokens → behind a flag (default OFF, safe for live).
+    const job36 = cron.schedule('*/30 * * * *', async () => {
+      if (process.env.INITIATIVE_CANDIDATE_SCAN_CRON_ENABLED !== 'true') return;
+      try {
+        const { runCandidateScan } = await import('./InitiativeCandidateScanCron.js');
+        const r = await runCandidateScan();
+        if (r.created > 0 || r.errors > 0) {
+          logger.info(
+            `[Scheduler] Initiative candidate scan: orgs=${r.orgs} created=${r.created} errors=${r.errors}`
+          );
+        }
+      } catch (err: any) {
+        logger.error('[Scheduler] Initiative candidate scan failed:', err?.message || err);
+      }
+    });
+    this.jobs.push(job36);
+
     logger.info(
       '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM), Interview Reminders (Hourly)'
     );

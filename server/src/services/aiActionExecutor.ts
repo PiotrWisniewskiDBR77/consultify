@@ -17,6 +17,7 @@ import {
 } from '../types/chatExecutionIntegration.js';
 import logger from '../utils/Logger.js';
 import AIPolicyEngine from './aiPolicyEngine.js';
+import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
 import {
   ensureRunForAction,
   getAIRunByAction,
@@ -1139,14 +1140,33 @@ const AIActionExecutor = {
   },
 
   _executeCreateInitiative: async (draftContent: any, action: any) => {
-    const initiativeId = uuidv4();
     const { name, description, ownerId, priority } = draftContent;
+    const orgId = action.organization_id;
 
-    await dbRun(
-      `INSERT INTO initiatives (id, project_id, name, description, owner_business_id, priority, status)
-                VALUES (?, ?, ?, ?, ?, ?, 'DRAFT')`,
-      [initiativeId, action.project_id, name, description, ownerId, priority || 'MEDIUM']
-    );
+    // Uspójnienie F1.10 — przez kanoniczny lejek; org_id WYMUSZONY (naprawia bug sierot).
+    let initiativeId: string;
+    if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+      const __r = await funnelCreateInitiative(
+        orgId,
+        {
+          title: name,
+          description,
+          projectId: action.project_id ?? null,
+          ownerBusinessId: ownerId ?? null,
+          priority: priority || 'MEDIUM',
+        },
+        { validate: false, actor: { id: action.user_id } }
+      );
+      initiativeId = __r.id;
+    } else {
+      initiativeId = uuidv4();
+      // Bug-fix F1.10: dodane organization_id także w starej ścieżce.
+      await dbRun(
+        `INSERT INTO initiatives (id, organization_id, project_id, name, description, owner_business_id, priority, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'DRAFT')`,
+        [initiativeId, orgId, action.project_id, name, description, ownerId, priority || 'MEDIUM']
+      );
+    }
 
     // Post-creation notification (best-effort)
     try {

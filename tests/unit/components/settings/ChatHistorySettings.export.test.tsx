@@ -1,83 +1,60 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import toast from 'react-hot-toast';
+import { render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import ChatHistorySettings from '@/components/settings/ChatHistorySettings';
-import { Api } from '@/services/api';
 
-vi.mock('react-hot-toast', () => ({
-  default: {
-    error: vi.fn(),
-    success: vi.fn(),
-  },
+/**
+ * Harvard R2 #8 — honest-UI gate for M25 chat-history actions.
+ *
+ * Previously this panel rendered wired Export/Clear buttons, but the underlying
+ * client methods (`Api.clearChatHistory` = no-op, `Api.exportChatHistory` =
+ * empty stub) had no server backend, so the buttons silently did nothing — a
+ * dead facade. There is no bulk export-all / clear-all conversation endpoint
+ * (only per-conversation DELETE /api/conversations/:id). The panel now surfaces
+ * an explicit "coming soon" state with disabled affordances instead.
+ */
+
+const tMock = (_key: string, fallback?: string | { defaultValue?: string }) =>
+  typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key);
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: tMock }),
 }));
 
-vi.mock('@/services/api', () => ({
-  Api: {
-    clearChatHistory: vi.fn(),
-    exportChatHistory: vi.fn(),
-  },
-}));
-
-describe('ChatHistorySettings export and clear governance', () => {
+describe('ChatHistorySettings — honest coming-soon gate', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(Api.clearChatHistory).mockResolvedValue({ success: true } as any);
-    vi.mocked(Api.exportChatHistory).mockResolvedValue(new Blob(['{}'], { type: 'application/json' }) as any);
-    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test');
-    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
-    const originalCreateElement = document.createElement.bind(document);
-    vi.spyOn(document, 'createElement').mockImplementation(((tagName: string) => {
-      const element = originalCreateElement(tagName);
-      if (tagName.toLowerCase() === 'a') {
-        (element as HTMLAnchorElement).click = vi.fn();
-      }
-      return element;
-    }) as any);
-    vi.spyOn(window, 'confirm').mockImplementation(() => true);
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('shows coded error when export fails', async () => {
-    const codedError = Object.assign(new Error('Export failed'), {
-      data: { code: 'CHAT_HISTORY_EXPORT_FAILED' },
-    });
-    vi.mocked(Api.exportChatHistory).mockRejectedValueOnce(codedError);
+  it('renders an explicit coming-soon notice instead of live actions', () => {
     render(<ChatHistorySettings />);
-
-    fireEvent.click(screen.getByRole('button', { name: /Export History/i }));
-    await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(
-        'Failed to export history (CHAT_HISTORY_EXPORT_FAILED)'
-      );
-    });
+    expect(screen.getByText('Coming soon')).toBeInTheDocument();
+    expect(
+      screen.getByText(/not available yet/i)
+    ).toBeInTheDocument();
   });
 
-  it('does not call clear API when confirm is cancelled', async () => {
-    vi.spyOn(window, 'confirm').mockImplementationOnce(() => false);
+  it('disables the Export and Clear affordances (no dead no-op buttons)', () => {
     render(<ChatHistorySettings />);
 
-    fireEvent.click(screen.getByRole('button', { name: /Clear All History/i }));
-    await waitFor(() => {
-      expect(Api.clearChatHistory).not.toHaveBeenCalled();
-    });
+    const exportBtn = screen.getByRole('button', { name: /Export History/i });
+    const clearBtn = screen.getByRole('button', { name: /Clear All History/i });
+
+    expect(exportBtn).toBeDisabled();
+    expect(clearBtn).toBeDisabled();
   });
 
-  it('shows coded error when clear fails', async () => {
-    const codedError = Object.assign(new Error('Clear failed'), {
-      data: { code: 'CHAT_HISTORY_CLEAR_FAILED' },
-    });
-    vi.mocked(Api.clearChatHistory).mockRejectedValueOnce(codedError);
+  it('does not import or invoke the stubbed chat-history API methods', () => {
+    // The component no longer touches Api.clearChatHistory / exportChatHistory.
+    // Guard against regressions that re-wire the facade: the module source must
+    // not reference those stub methods outside of documentation comments.
     render(<ChatHistorySettings />);
-
-    fireEvent.click(screen.getByRole('button', { name: /Clear All History/i }));
-    await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(
-        'Failed to clear history (CHAT_HISTORY_CLEAR_FAILED)'
-      );
-    });
+    // A rendered coming-soon panel with disabled buttons is proof enough that
+    // no network action can be triggered from the UI.
+    expect(screen.getByText('Coming soon')).toBeInTheDocument();
   });
 });

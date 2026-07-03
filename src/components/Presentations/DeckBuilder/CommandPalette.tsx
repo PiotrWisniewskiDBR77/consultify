@@ -40,6 +40,8 @@ interface CommandPaletteProps {
   onToggleAgent: () => void;
   onOpenTheme: () => void;
   onAddCard: () => void;
+  /** R4 — Share & collaboration. Was wrongly wired to onPresent. */
+  onShare?: () => void;
 }
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({
@@ -51,6 +53,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   onToggleAgent,
   onOpenTheme,
   onAddCard,
+  onShare,
 }) => {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
@@ -173,7 +176,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         description: 'Share & collaboration settings',
         category: 'export',
         icon: <Share2 size={14} />,
-        action: onPresent,
+        action: onShare ?? onPresent,
       },
 
       // AI
@@ -187,7 +190,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         action: onToggleAgent,
       },
     ],
-    [onInsertBlock, onPresent, onExport, onToggleAgent, onOpenTheme, onAddCard]
+    [onInsertBlock, onPresent, onExport, onToggleAgent, onOpenTheme, onAddCard, onShare]
   );
 
   const filtered = useMemo(() => {

@@ -313,7 +313,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
       case 'suspicious':
         return <AlertTriangle size={16} className="text-amber-500" />;
       default:
-        return <CheckCircle size={16} className="text-slate-600" />;
+        return <CheckCircle size={16} className="text-slate-600 dark:text-slate-400" />;
     }
   };
 
@@ -336,7 +336,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
     emerald: {
       icon: 'bg-emerald-500/10 text-emerald-400',
       statusOk: 'text-emerald-400',
-      statusBad: 'text-slate-600',
+      statusBad: 'text-slate-600 dark:text-slate-400',
     },
     amber: {
       icon: 'bg-amber-500/10 text-amber-400',
@@ -421,7 +421,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
                 {scoreLabel}
               </h4>
             </div>
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
               {scorePercentage >= 80
                 ? t(
                     'settings.securityOverview.scoreExcellentDesc',
@@ -442,7 +442,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
 
         {/* Status Cards Grid */}
         <div>
-          <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 mb-4">
+          <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4">
             <Shield size={14} className="text-primary-400" />
             {t('settings.securityOverview.protectionStatus', 'Protection Status')}
           </h4>
@@ -475,10 +475,10 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
                     </div>
                     <ArrowRight
                       size={16}
-                      className="text-slate-600 group-hover:text-primary-400 transition-colors mt-1"
+                      className="text-slate-600 dark:text-slate-400 group-hover:text-primary-400 transition-colors mt-1"
                     />
                   </div>
-                  <p className="text-xs text-slate-500 leading-relaxed">{card.description}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{card.description}</p>
                 </button>
               );
             })}
@@ -490,7 +490,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
           <>
             <SettingsDivider />
             <div>
-              <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 mb-4">
+              <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4">
                 <AlertTriangle size={14} className="text-amber-400" />
                 {t('settings.securityOverview.recommendations', 'Recommendations')}
               </h4>
@@ -517,10 +517,10 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
                             ? 'text-danger-400'
                             : rec.priority === 'medium'
                               ? 'text-amber-400'
-                              : 'text-slate-500'
+                              : 'text-slate-500 dark:text-slate-400'
                         )}
                       />
-                      <p className="text-xs text-slate-600 leading-relaxed">{rec.text}</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{rec.text}</p>
                     </div>
                   );
                 })}
@@ -533,7 +533,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
         <SettingsDivider />
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2">
+            <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
               <History size={14} className="text-primary-400" />
               {t('settings.securityOverview.recentActivity', 'Recent Activity')}
             </h4>
@@ -557,12 +557,12 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
                     {getStatusIcon(event.status)}
                     <div>
                       <p className="text-sm text-white">{event.device || 'Unknown Device'}</p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
                         {event.location || 'Unknown'} · {event.ip || ''}
                       </p>
                     </div>
                   </div>
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
                     {event.timestamp ? formatTimestamp(event.timestamp) : ''}
                   </span>
                 </div>
@@ -571,12 +571,12 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <div className="p-3 bg-white/5 rounded-full mb-3">
-                <History size={20} className="text-slate-500" />
+                <History size={20} className="text-slate-500 dark:text-slate-400" />
               </div>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 {t('settings.securityOverview.noEvents', 'No recent security events')}
               </p>
-              <p className="text-xs text-slate-600 mt-1">
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                 {t(
                   'settings.securityOverview.noEventsDesc',
                   'Login attempts and security events will appear here'

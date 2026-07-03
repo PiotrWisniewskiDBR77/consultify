@@ -778,6 +778,30 @@ export async function getActiveShareLinkCount(
   organizationId: string
 ): Promise<number> {
   if (!artifactId || !organizationId) return 0;
+  // Count directly from the in-process Map (the synchronous SSOT). Every
+  // createShareLink / revokeShareLink / rotateShareLinkToken mutation writes
+  // to registryStore immediately, so the Map is always up-to-date for any
+  // links created in this process. We skip ensureHydrated here because the
+  // hydration path re-reads from the DAO, which in some environments (mock
+  // DB, race conditions) can surface stale state and overwrite mutations that
+  // were applied in-process. The DAO-based count is used only as a fallback
+  // for a true cold start where the org has never written any links in this
+  // process (registryStore is empty for the org).
+  const prefix = `${organizationId}::`;
+  const now = new Date();
+  let inMemoryCount = 0;
+  let hasAnyForOrg = false;
+  for (const [k, link] of registryStore.entries()) {
+    if (!k.startsWith(prefix)) continue;
+    hasAnyForOrg = true;
+    if (link.artifactId !== artifactId) continue;
+    const runtime = getShareLinkRuntimeStatus(link, now);
+    if (runtime.effectiveStatus === 'active') inMemoryCount++;
+  }
+  // If there are in-process entries for this org, the Map is the answer.
+  // If the org has no entries in process at all, fall back to the DAO
+  // (which may hold cross-process persisted data).
+  if (hasAnyForOrg) return inMemoryCount;
   await ensureHydrated(organizationId);
   return countActiveShareLinksForArtifact(artifactId, organizationId, 'active');
 }

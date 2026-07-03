@@ -126,11 +126,11 @@ export const NotebookTopicChips: React.FC<NotebookTopicChipsProps> = ({
           <button
             type="button"
             onClick={() => onOpenTopic?.(t.id)}
-            className="inline-flex items-center gap-1 hover:text-primary-600 dark:hover:text-primary-300"
+            className="inline-flex items-center gap-1 hover:text-slate-600 dark:hover:text-slate-300"
             title={isPl ? 'Otwórz temat' : 'Open topic'}
           >
             {t.source === 'ai' ? (
-              <Sparkles size={11} className="text-primary-500" />
+              <Sparkles size={11} className="text-slate-500" />
             ) : (
               <Hash size={11} className="text-slate-400" />
             )}
@@ -165,13 +165,13 @@ export const NotebookTopicChips: React.FC<NotebookTopicChipsProps> = ({
               }}
               disabled={busy}
               placeholder={isPl ? 'Nowy temat…' : 'New topic…'}
-              className="w-32 rounded-full border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-0.5 text-[11px] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500/50"
+              className="w-32 rounded-full border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-0.5 text-[11px] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-[var(--c-focus)] focus:border-[var(--c-focus-solid)]"
             />
             <button
               type="button"
               onClick={handleAdd}
               disabled={busy || !newName.trim()}
-              className="rounded-full p-1 text-primary-600 hover:bg-primary-500/10 disabled:opacity-40"
+              className="rounded-full p-1 text-slate-600 hover:bg-slate-500/10 disabled:opacity-40"
               aria-label={isPl ? 'Dodaj' : 'Add'}
             >
               {busy ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
@@ -181,7 +181,7 @@ export const NotebookTopicChips: React.FC<NotebookTopicChipsProps> = ({
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-300 dark:border-navy-700 px-2 py-0.5 text-[11px] text-slate-500 hover:text-primary-600 hover:border-primary-400 transition-colors"
+            className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-300 dark:border-navy-700 px-2 py-0.5 text-[11px] text-slate-500 hover:text-slate-600 hover:border-slate-400 transition-colors"
           >
             <Plus size={11} />
             {isPl ? 'Temat' : 'Topic'}

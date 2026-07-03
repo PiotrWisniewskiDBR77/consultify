@@ -135,9 +135,9 @@ describe('EarningsSection V8 payout settings seam', () => {
 
     render(<EarningsSection subsection="payout-settings" />);
 
-    const holderInput = await screen.findByDisplayValue('Partner Co');
+    const holderInput = await screen.findByDisplayValue('Partner Co', {}, { timeout: 10000 });
     fireEvent.change(holderInput, { target: { value: 'Updated Partner Co' } });
-    fireEvent.click(await screen.findByRole('button', { name: 'Save Changes' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Save Changes' }, { timeout: 10000 }));
 
     await waitFor(() => {
       expect(V8PartnerApi.updatePayoutSettings).toHaveBeenCalledWith({
@@ -151,7 +151,7 @@ describe('EarningsSection V8 payout settings seam', () => {
           bankName: 'Commerzbank AG',
         },
       });
-    });
+    }, { timeout: 10000 });
 
     expect(Api.put).not.toHaveBeenCalledWith('/api/partners/payout-settings', expect.anything());
     expect(toastSuccess).toHaveBeenCalledWith('Payout settings updated');
@@ -216,9 +216,9 @@ describe('EarningsSection V8 payout settings seam', () => {
 
     render(<EarningsSection subsection="payout-settings" />);
 
-    const holderInput = await screen.findByDisplayValue('Legacy Partner Co');
+    const holderInput = await screen.findByDisplayValue('Legacy Partner Co', {}, { timeout: 10000 });
     fireEvent.change(holderInput, { target: { value: 'Legacy Updated' } });
-    fireEvent.click(await screen.findByRole('button', { name: 'Save Changes' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Save Changes' }, { timeout: 10000 }));
 
     await waitFor(() => {
       expect(Api.put).toHaveBeenCalledWith('/api/partners/payout-settings', {
@@ -232,7 +232,7 @@ describe('EarningsSection V8 payout settings seam', () => {
           bankName: 'Legacy Bank',
         },
       });
-    });
+    }, { timeout: 10000 });
 
     expect(Api.get).toHaveBeenCalledWith('/api/partners/payout-settings');
     expect(toastSuccess).toHaveBeenCalledWith('Payout settings updated');

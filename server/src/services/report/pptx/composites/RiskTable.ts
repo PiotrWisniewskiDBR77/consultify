@@ -132,6 +132,16 @@ export function RiskTable(props: RiskTableProps, tokens: DesignTokens): Rendered
     ? [p.w * 0.25, p.w * 0.12, p.w * 0.12, p.w * 0.35, p.w * 0.16]
     : [p.w * 0.28, p.w * 0.14, p.w * 0.14, p.w * 0.44];
 
+  // ── Anti-sparseness (W7): grow rows so the table fills the usable region ──
+  // Header counts as one row. Stretch each row toward p.h, but cap so a 2-risk
+  // table doesn't become absurdly tall.
+  const totalRows = dataRows.length + 1; // +1 header
+  const naturalRowH = 0.4;
+  const fittedRowH = Math.min(
+    1.0,
+    Math.max(naturalRowH, p.h / totalRows)
+  );
+
   elements.push({
     kind: 'table',
     apply(slide) {
@@ -142,7 +152,8 @@ export function RiskTable(props: RiskTableProps, tokens: DesignTokens): Rendered
         colW: colWidths,
         border: { pt: 0.5, color: tokens.colors.border },
         fontFace: tokens.fonts.body,
-        rowH: 0.4,
+        rowH: fittedRowH,
+        valign: 'middle',
         autoPage: false,
       });
     },

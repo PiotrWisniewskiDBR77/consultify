@@ -164,10 +164,10 @@ export const PricingLandingPage: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="inline-flex items-center gap-2 rounded-full border border-primary-500/30 bg-primary-600/10 px-3 py-1.5"
+          className="inline-flex items-center gap-2 rounded-full border border-c-accent/30 bg-c-accent-soft px-3 py-1.5"
         >
-          <Sparkles size={12} className="text-primary-300" />
-          <span className="text-xs font-bold uppercase tracking-wider text-primary-300">
+          <Sparkles size={12} className="text-c-accent" />
+          <span className="text-xs font-bold uppercase tracking-wider text-c-accent">
             {t('pricing.badge', 'Pricing')}
           </span>
         </motion.div>
@@ -208,22 +208,22 @@ export const PricingLandingPage: React.FC = () => {
               key={pack.key}
               className={`flex h-full flex-col rounded-3xl border p-7 ${
                 (pack as { featured?: boolean }).featured
-                  ? 'border-primary-500/35 bg-primary-50 dark:bg-primary-500/10 shadow-[0_0_60px_-24px_rgba(165,28,48,0.45)]'
-                  : 'border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-sm dark:shadow-none'
+                  ? 'border-c-accent/35 bg-c-accent-soft shadow-[0_0_60px_-24px_rgba(165,28,48,0.45)]'
+                  : 'border-c-border bg-c-surface shadow-sm'
               }`}
             >
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-sm font-black uppercase tracking-[0.18em] text-primary-600 dark:text-primary-300">
+                  <p className="text-sm font-black uppercase tracking-[0.18em] text-c-accent">
                     {pack.name}
                   </p>
-                  <p className="mt-3 text-4xl font-black text-slate-900 dark:text-white">
+                  <p className="mt-3 text-4xl font-black text-c-text">
                     {pack.price}
                   </p>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-white/45">{pack.subtitle}</p>
+                  <p className="mt-1 text-sm text-c-text-muted">{pack.subtitle}</p>
                 </div>
                 {(pack as { featured?: boolean }).featured ? (
-                  <span className="rounded-full bg-navy-900 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-white">
+                  <span className="rounded-full bg-c-accent px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-white">
                     {t('pricing.mostPopular', 'Most popular')}
                   </span>
                 ) : pack.key === 'trial' ? (
@@ -233,7 +233,7 @@ export const PricingLandingPage: React.FC = () => {
                 ) : null}
               </div>
 
-              <p className="mt-6 min-h-[72px] text-sm leading-6 text-slate-600 dark:text-white/65">
+              <p className="mt-6 min-h-[72px] text-sm leading-6 text-c-text-secondary">
                 {pack.description}
               </p>
 
@@ -242,9 +242,9 @@ export const PricingLandingPage: React.FC = () => {
                   <div key={bullet} className="flex items-start gap-3">
                     <CheckCircle2
                       size={16}
-                      className="mt-0.5 shrink-0 text-primary-500 dark:text-primary-300"
+                      className="mt-0.5 shrink-0 text-c-accent"
                     />
-                    <span className="text-sm text-slate-600 dark:text-white/68">{bullet}</span>
+                    <span className="text-sm text-c-text-secondary">{bullet}</span>
                   </div>
                 ))}
               </div>
@@ -256,8 +256,8 @@ export const PricingLandingPage: React.FC = () => {
                   }
                   className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-black transition ${
                     (pack as { featured?: boolean }).featured
-                      ? 'bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]'
-                      : 'border border-slate-300 dark:border-white/15 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5'
+                      ? 'bg-c-accent text-white hover:opacity-90'
+                      : 'border border-c-border text-c-text hover:bg-c-surface-raised'
                   }`}
                 >
                   {pack.cta}
@@ -271,16 +271,16 @@ export const PricingLandingPage: React.FC = () => {
 
       <section className="px-6 py-10">
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-navy-700 dark:bg-navy-900">
+          <div className="rounded-3xl border border-c-border bg-c-surface p-8 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-c-accent-soft text-c-accent">
                 <Coins size={22} />
               </div>
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-primary-500">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-c-accent">
                   {t('pricing.budget.badge', 'Shared AI budget')}
                 </p>
-                <h2 className="mt-1 text-2xl font-black text-slate-900 dark:text-white">
+                <h2 className="mt-1 text-2xl font-black text-c-text">
                   {t('pricing.budget.heading', 'Usage is pooled for the whole organization')}
                 </h2>
               </div>
@@ -290,12 +290,12 @@ export const PricingLandingPage: React.FC = () => {
               {BUDGET_LAYER_KEYS.map((layer) => (
                 <div
                   key={layer.titleKey}
-                  className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-navy-700 dark:bg-navy-950/50"
+                  className="rounded-2xl border border-c-border bg-c-surface-raised p-5"
                 >
-                  <p className="text-sm font-black text-slate-900 dark:text-white">
+                  <p className="text-sm font-black text-c-text">
                     {t(layer.titleKey, layer.titleFallback)}
                   </p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
+                  <p className="mt-2 text-sm leading-6 text-c-text-secondary">
                     {t(layer.bodyKey, layer.bodyFallback)}
                   </p>
                 </div>
@@ -303,7 +303,7 @@ export const PricingLandingPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-navy-700 dark:bg-navy-900">
+          <div className="rounded-3xl border border-c-border bg-c-surface p-8 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-300">
                 <ShieldCheck size={22} />
@@ -312,7 +312,7 @@ export const PricingLandingPage: React.FC = () => {
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-500">
                   {t('pricing.overLimit.badge', 'Over-limit behavior')}
                 </p>
-                <h2 className="mt-1 text-2xl font-black text-slate-900 dark:text-white">
+                <h2 className="mt-1 text-2xl font-black text-c-text">
                   {t('pricing.overLimit.heading', 'The workspace keeps running even when AI stops')}
                 </h2>
               </div>
@@ -335,10 +335,10 @@ export const PricingLandingPage: React.FC = () => {
               ].map((item, idx) => (
                 <div
                   key={idx}
-                  className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-navy-700 dark:bg-navy-950/50"
+                  className="flex items-start gap-3 rounded-2xl border border-c-border bg-c-surface-raised p-4"
                 >
                   <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-amber-500" />
-                  <span className="text-sm leading-6 text-slate-600 dark:text-slate-400">
+                  <span className="text-sm leading-6 text-c-text-secondary">
                     {item}
                   </span>
                 </div>
@@ -350,7 +350,7 @@ export const PricingLandingPage: React.FC = () => {
 
       <section className="px-6 py-10">
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-2">
-          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-navy-700 dark:bg-navy-900">
+          <div className="rounded-3xl border border-c-border bg-c-surface p-8 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300">
                 <Layers3 size={22} />
@@ -359,7 +359,7 @@ export const PricingLandingPage: React.FC = () => {
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-500">
                   {t('pricing.licensedTools.badge', 'Licensed tools and frameworks')}
                 </p>
-                <h2 className="mt-1 text-2xl font-black text-slate-900 dark:text-white">
+                <h2 className="mt-1 text-2xl font-black text-c-text">
                   {t(
                     'pricing.licensedTools.heading',
                     'Specialized modules stay outside the base seat price'
@@ -372,7 +372,7 @@ export const PricingLandingPage: React.FC = () => {
               {LICENSED_TOOL_KEYS.map((item) => (
                 <div key={item.key} className="flex items-start gap-3">
                   <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-blue-500" />
-                  <span className="text-sm leading-6 text-slate-600 dark:text-slate-400">
+                  <span className="text-sm leading-6 text-c-text-secondary">
                     {t(item.key, item.fallback)}
                   </span>
                 </div>
@@ -380,7 +380,7 @@ export const PricingLandingPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-primary-500/20 bg-gradient-to-br from-primary-600 to-primary-700 dark:from-primary-500/10 dark:to-blue-500/10 p-8 shadow-[0_0_80px_-32px_rgba(165,28,48,0.35)]">
+          <div className="rounded-3xl border border-c-accent/20 bg-c-accent p-8 shadow-[0_0_80px_-32px_rgba(165,28,48,0.35)]">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 text-white">
                 <Building2 size={22} />
@@ -408,7 +408,7 @@ export const PricingLandingPage: React.FC = () => {
             <div className="mt-8 flex flex-wrap gap-3">
               <button
                 onClick={() => navigate(ROUTES.LEGAL.CONTACT)}
-                className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-black text-primary-700 transition hover:bg-primary-50"
+                className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-black text-c-accent transition hover:bg-white/90"
               >
                 {t('pricing.enterpriseNote.ctaEnterprise', 'Talk enterprise setup')}
                 <ArrowRight size={16} />
@@ -425,19 +425,19 @@ export const PricingLandingPage: React.FC = () => {
       </section>
 
       <section className="px-6 py-4">
-        <div className="mx-auto max-w-6xl rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-900">
+        <div className="mx-auto max-w-6xl rounded-3xl border border-c-border bg-c-surface p-6 shadow-sm">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-primary-500">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-c-accent">
                 {t('pricing.legalDocs.badge', 'Commercial documentation')}
               </p>
-              <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-white">
+              <h2 className="mt-2 text-2xl font-black text-c-text">
                 {t(
                   'pricing.legalDocs.heading',
                   'Review the legal and procurement materials behind the price'
                 )}
               </h2>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-400">
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-c-text-secondary">
                 {t(
                   'pricing.legalDocs.body',
                   'Use the same document set across procurement, security review, and subscription decisions: pricing terms, DPA, SLA, security overview, and the full legal center.'
@@ -491,17 +491,17 @@ export const PricingLandingPage: React.FC = () => {
                   key={item.href}
                   type="button"
                   onClick={() => navigate(item.href)}
-                  className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-primary-300 hover:bg-primary-50 dark:border-navy-700 dark:bg-navy-950/50 dark:hover:border-primary-500/40 dark:hover:bg-primary-500/10"
+                  className="rounded-2xl border border-c-border bg-c-surface-raised p-4 text-left transition hover:border-c-accent/40 hover:bg-c-accent-soft"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-primary-600 shadow-sm dark:bg-white/5 dark:text-primary-300">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-c-surface text-c-accent shadow-sm">
                       <Icon size={18} />
                     </div>
                     <div>
-                      <p className="text-sm font-black text-slate-900 dark:text-white">
+                      <p className="text-sm font-black text-c-text">
                         {item.title}
                       </p>
-                      <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">
+                      <p className="mt-1 text-sm leading-6 text-c-text-secondary">
                         {item.body}
                       </p>
                     </div>
@@ -514,12 +514,12 @@ export const PricingLandingPage: React.FC = () => {
       </section>
 
       <section className="px-6 pb-24 pt-6">
-        <div className="mx-auto max-w-6xl rounded-3xl border border-slate-200 bg-slate-50 p-6 text-center dark:border-navy-700 dark:bg-navy-900">
-          <div className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-white/60">
+        <div className="mx-auto max-w-6xl rounded-3xl border border-c-border bg-c-surface-raised p-6 text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-c-border bg-c-surface px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-c-text-secondary">
             <MessageSquare size={13} />
             {t('pricing.salesNote.badge', 'Sales note')}
           </div>
-          <p className="mx-auto mt-4 max-w-4xl text-sm leading-7 text-slate-600 dark:text-slate-400">
+          <p className="mx-auto mt-4 max-w-4xl text-sm leading-7 text-c-text-secondary">
             {t(
               'pricing.salesNote.body',
               'AI budget is sold as budget, not as a public token-rate promise, because different actions consume different model resources. Anna and Teresa can help explain which package and budget shape fit the workload before purchase.'

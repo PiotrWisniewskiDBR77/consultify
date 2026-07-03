@@ -43,12 +43,31 @@ const extractKeyValueScores = (text: string): Record<string, number> => {
 const PDFParserService = {
   async extractTextFromBuffer(buffer: Buffer): Promise<string> {
     try {
-      const mod = await import('pdf-parse');
-      const pdfParse = (mod.default ?? mod) as (
-        dataBuffer: Buffer
-      ) => Promise<{ text?: string | null }>;
-      const pdfData = await pdfParse(buffer);
-      const raw = String(pdfData?.text || '');
+      const mod = (await import('pdf-parse')) as any;
+      let raw = '';
+      // pdf-parse v2.x: klasa PDFParse z metodą getText({data}).
+      // (Wcześniejszy kod wołał default-export jako funkcję — w v2 to obiekt
+      // namespace, więc PDF upload rzucał "pdfParse is not a function" → 422.)
+      const PDFParse = mod.PDFParse ?? mod.default?.PDFParse;
+      if (typeof PDFParse === 'function') {
+        const parser = new PDFParse({ data: buffer });
+        try {
+          const result = await parser.getText();
+          raw = String(result?.text || '');
+        } finally {
+          // zwolnij zasoby pdfjs (jeśli API udostępnia destroy)
+          if (typeof parser.destroy === 'function') {
+            await parser.destroy().catch(() => undefined);
+          }
+        }
+      } else {
+        // Fallback dla starszego pdf-parse v1.x (funkcja default).
+        const pdfParse = (mod.default ?? mod) as (
+          dataBuffer: Buffer
+        ) => Promise<{ text?: string | null }>;
+        const pdfData = await pdfParse(buffer);
+        raw = String(pdfData?.text || '');
+      }
       // Postgres TEXT columns reject null bytes (0x00) — strip them
       return raw.replace(/\0/g, '');
     } catch (err: unknown) {

@@ -1,4 +1,4 @@
-import { BarChart3, FileText, Image, LayoutGrid, Search, Share2, Type, Video } from 'lucide-react';
+import { BarChart3, Image, LayoutGrid, Search, Share2, Type } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -9,8 +9,6 @@ type ToolbarPanel =
   | 'layouts'
   | 'diagrams'
   | 'charts'
-  | 'media'
-  | 'artifacts'
   | null;
 
 interface BlockToolbarProps {
@@ -25,8 +23,6 @@ const TOOLBAR_ITEMS: { id: ToolbarPanel; icon: React.FC<{ size?: number }>; labe
   { id: 'layouts', icon: LayoutGrid, labelKey: 'presentations.builder.toolbar.smartLayouts' },
   { id: 'diagrams', icon: Share2, labelKey: 'presentations.builder.toolbar.diagrams' },
   { id: 'charts', icon: BarChart3, labelKey: 'presentations.builder.toolbar.chartsData' },
-  { id: 'media', icon: Video, labelKey: 'presentations.builder.toolbar.media' },
-  { id: 'artifacts', icon: FileText, labelKey: 'presentations.builder.toolbar.artifacts' },
 ];
 
 export const BlockToolbar: React.FC<BlockToolbarProps> = ({
@@ -78,8 +74,6 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
             {activePanel === 'diagrams' && <DiagramsPanel onInsertBlock={onInsertBlock} />}
             {activePanel === 'charts' && <ChartsPanel onInsertBlock={onInsertBlock} />}
             {activePanel === 'search' && <SearchPanel />}
-            {activePanel === 'media' && <MediaPanel />}
-            {activePanel === 'artifacts' && <ArtifactsPanel />}
           </div>
         </div>
       )}
@@ -234,33 +228,3 @@ const SearchPanel: React.FC = () => (
   </div>
 );
 
-const MediaPanel: React.FC = () => (
-  <div className="space-y-0.5">
-    <PanelButton
-      label="Video embed"
-      description="Paste YouTube/Loom URL"
-      disabled
-      onClick={() => {}}
-    />
-    <PanelButton label="Animation" description="Add animated element" disabled onClick={() => {}} />
-  </div>
-);
-
-const ArtifactsPanel: React.FC = () => (
-  <div className="space-y-0.5">
-    <PanelButton
-      label="Initiative card"
-      description="Mini-view with status"
-      disabled
-      onClick={() => {}}
-    />
-    <PanelButton
-      label="Task list"
-      description="From selected initiative"
-      disabled
-      onClick={() => {}}
-    />
-    <PanelButton label="Financial snapshot" description="Key metrics" disabled onClick={() => {}} />
-    <PanelButton label="Insight card" description="Single insight" disabled onClick={() => {}} />
-  </div>
-);

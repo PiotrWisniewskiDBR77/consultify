@@ -206,7 +206,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
         createPortal(
           <>
             <div
-              className="fixed inset-0 z-[9998]"
+              className="fixed inset-0 z-context-menu"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -215,7 +215,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
             />
             <div
               ref={panelRef}
-              className="fixed z-[9999] min-w-[160px] rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 shadow-lg py-1 animate-in fade-in-0 zoom-in-95"
+              className="fixed z-context-menu min-w-[160px] rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 shadow-lg py-1 animate-in fade-in-0 zoom-in-95"
               role="menu"
               style={
                 panelPos

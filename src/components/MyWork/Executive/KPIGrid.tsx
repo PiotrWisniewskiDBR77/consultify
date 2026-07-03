@@ -16,6 +16,8 @@ import {
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { interpretCapacity } from './executiveData';
+
 interface KPIData {
   tasks: {
     completed: number;
@@ -35,6 +37,7 @@ interface KPIData {
     overloaded: number;
     available: number;
     trend: 'up' | 'down' | 'stable';
+    memberCount?: number;
   } | null;
   risk: {
     level: 'low' | 'medium' | 'high' | 'critical';
@@ -121,20 +124,28 @@ const KPICard: React.FC<{
       {/* Details */}
       {details && details.length > 0 && (
         <div className="space-y-1 pt-2.5 border-t border-slate-200/50 dark:border-white/[0.04]">
-          {details.map((detail, idx) => (
-            <div key={idx} className="flex items-center justify-between text-xs">
-              <span className="text-slate-500 dark:text-slate-400">{detail.label}</span>
-              <span
-                className={`font-semibold tabular-nums ${
-                  detail.highlight
-                    ? 'text-amber-600 dark:text-amber-400'
-                    : 'text-slate-700 dark:text-slate-200'
-                }`}
-              >
+          {details.map((detail, idx) =>
+            // A hint-only row (no label) wraps full-width as guidance copy —
+            // used by degraded/empty states to say *why* there is no number.
+            detail.label ? (
+              <div key={idx} className="flex items-center justify-between text-xs">
+                <span className="text-slate-500 dark:text-slate-400">{detail.label}</span>
+                <span
+                  className={`font-semibold tabular-nums ${
+                    detail.highlight
+                      ? 'text-amber-600 dark:text-amber-400'
+                      : 'text-slate-700 dark:text-slate-200'
+                  }`}
+                >
+                  {detail.value}
+                </span>
+              </div>
+            ) : (
+              <p key={idx} className="text-[11px] leading-snug text-slate-500 dark:text-slate-400">
                 {detail.value}
-              </span>
-            </div>
-          ))}
+              </p>
+            )
+          )}
         </div>
       )}
     </motion.div>
@@ -227,6 +238,20 @@ export const KPIGrid: React.FC<KPIGridProps> = ({ data, loading = false, onNavig
   const hasDecisionData = data?.decisions != null;
   const hasTeamData = data?.team != null;
   const hasRiskData = data?.risk != null;
+
+  // A3: guard the Team Capacity headline. Backend divides a lifetime task
+  // backlog by a weekly budget, so absurd values (e.g. 512%) must degrade to
+  // an honest "needs configuration" state rather than a fake red number.
+  const capacity = interpretCapacity(hasTeamData ? kpiData.team : null);
+  const capacityHint =
+    capacity.hint === 'no-members'
+      ? t('executive.kpi.capacityNoMembers', 'Assign team members to a project to track capacity')
+      : capacity.hint === 'unbounded-estimates'
+        ? t(
+            'executive.kpi.capacityNeedsConfig',
+            'Task estimates exceed a weekly budget — set up capacity planning to see real utilization'
+          )
+        : null;
 
   if (loading) {
     return (
@@ -327,38 +352,46 @@ export const KPIGrid: React.FC<KPIGridProps> = ({ data, loading = false, onNavig
         delay={1}
       />
 
-      {/* Team Capacity KPI – A1.1: data source: /my-work/team-workload */}
+      {/* Team Capacity KPI – A1.1: data source: /my-work/team-workload
+          A3: value passes through interpretCapacity() so an uncredible reading
+          (>130% from lifetime-backlog ÷ weekly budget, or zero members) shows a
+          degraded "needs configuration" state instead of a fake "512% utilized". */}
       <KPICard
         title={t('executive.kpi.teamCapacity', 'Team Capacity')}
         icon={<Users size={16} className="text-blue-500" />}
         iconBg="bg-blue-500/10"
-        value={hasTeamData ? `${kpiData.team.avgCapacity}%` : '—'}
+        value={capacity.displayValue}
         subValue={
-          hasTeamData
+          capacity.state === 'ok'
             ? t('executive.kpi.utilized', 'utilized')
-            : t('executive.kpi.noData', 'No data')
+            : capacity.state === 'needs-config'
+              ? t('executive.kpi.needsSetup', 'Needs setup')
+              : t('executive.kpi.noData', 'No data')
         }
-        trend={hasTeamData ? kpiData.team.trend : undefined}
+        // No trend on a degraded reading — a trend arrow implies the number is real.
+        trend={capacity.state === 'ok' ? kpiData.team.trend : undefined}
         status={
-          !hasTeamData
+          capacity.state !== 'ok'
             ? 'neutral'
-            : kpiData.team.overloaded > 2
+            : capacity.overloaded > 2
               ? 'danger'
-              : kpiData.team.avgCapacity > 90
+              : (capacity.rawPercent ?? 0) > 90
                 ? 'warning'
                 : 'success'
         }
         details={
-          hasTeamData
+          capacity.state === 'ok'
             ? [
                 {
                   label: t('executive.kpi.overloaded', 'Overloaded'),
-                  value: kpiData.team.overloaded,
-                  highlight: kpiData.team.overloaded > 0,
+                  value: capacity.overloaded,
+                  highlight: capacity.overloaded > 0,
                 },
-                { label: t('executive.kpi.available', 'Available'), value: kpiData.team.available },
+                { label: t('executive.kpi.available', 'Available'), value: capacity.available },
               ]
-            : []
+            : capacityHint
+              ? [{ label: '', value: capacityHint }]
+              : []
         }
         onClick={() => onNavigate?.('team')}
         delay={2}

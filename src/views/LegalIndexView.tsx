@@ -149,8 +149,8 @@ const LEGAL_DOCUMENTS: LegalDocumentCard[] = [
 const DocumentCard: React.FC<{ doc: LegalDocumentCard }> = ({ doc }) => (
   <Link
     to={`/legal/${doc.slug}`}
-    className="group relative overflow-hidden p-4 bg-white dark:bg-navy-900 rounded-xl border border-slate-200/80 dark:border-navy-700
-                   hover:border-slate-300 dark:border-navy-700 dark:hover:border-white/20 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-black/20
+    className="group relative overflow-hidden p-4 bg-c-surface rounded-xl border border-c-border
+                   hover:border-c-border-strong hover:shadow-xl hover:shadow-black/5 dark:hover:shadow-black/20
                    transition-all duration-300 hover:-translate-y-1"
   >
     {/* Gradient background on hover */}
@@ -160,26 +160,26 @@ const DocumentCard: React.FC<{ doc: LegalDocumentCard }> = ({ doc }) => (
 
     <div className="relative flex items-start gap-4">
       <div
-        className={`p-2.5 rounded-xl bg-gradient-to-br ${doc.iconBg} text-white shadow-lg shadow-slate-200/50 dark:shadow-black/20`}
+        className={`p-2.5 rounded-xl bg-gradient-to-br ${doc.iconBg} text-white shadow-lg shadow-black/5 dark:shadow-black/20`}
       >
         {doc.icon}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1.5">
-          <h3 className="font-semibold text-slate-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+          <h3 className="font-semibold text-c-text group-hover:text-c-accent transition-colors">
             {doc.title}
           </h3>
           {doc.required && (
-            <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase bg-primary-100 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 rounded-md">
+            <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase bg-c-accent-soft text-c-accent rounded-md">
               Required
             </span>
           )}
         </div>
-        <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
+        <p className="text-sm text-c-text-secondary line-clamp-2 leading-relaxed">
           {doc.description}
         </p>
       </div>
-      <ArrowRight className="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-primary-500 dark:group-hover:text-primary-400 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
+      <ArrowRight className="w-5 h-5 text-c-text-muted group-hover:text-c-accent group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
     </div>
   </Link>
 );
@@ -195,8 +195,8 @@ const SectionHeader: React.FC<{
       {icon}
     </div>
     <div>
-      <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">{title}</h2>
-      <p className="text-slate-600 dark:text-slate-400">{description}</p>
+      <h2 className="text-xl font-bold text-c-text mb-1">{title}</h2>
+      <p className="text-c-text-secondary">{description}</p>
     </div>
   </div>
 );
@@ -207,7 +207,7 @@ export const LegalIndexView: React.FC = () => {
   const referenceDocuments = LEGAL_DOCUMENTS.filter((d) => d.category === 'reference');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
+    <div className="min-h-screen bg-c-bg">
       {/* Navigation Bar */}
       <nav className="bg-gradient-to-r from-slate-900 via-primary-900 to-slate-900 border-b border-white/10 sticky top-0 z-50 backdrop-blur-xl">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -250,7 +250,7 @@ export const LegalIndexView: React.FC = () => {
               <p className="text-primary-200 text-lg mt-1">Consultify by DBR77 Robotics</p>
             </div>
           </div>
-          <p className="text-lg sm:text-xl text-slate-600 max-w-2xl leading-relaxed">
+          <p className="text-lg sm:text-xl text-white/80 max-w-2xl leading-relaxed">
             Transparency is fundamental to our relationship with you. Here you'll find all the legal
             documents that govern the use of Consultify, how we handle your data, and which
             commercial terms support procurement, pricing, and enterprise review.
@@ -308,7 +308,7 @@ export const LegalIndexView: React.FC = () => {
             <a
               key={item.anchor}
               href={item.anchor}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-primary-300 hover:text-primary-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:border-primary-500/50 dark:hover:text-primary-400"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-c-border bg-c-surface px-4 py-2 text-sm font-medium text-c-text-secondary transition hover:border-c-accent hover:text-c-accent"
             >
               <ChevronRight className="w-3.5 h-3.5" />
               {item.label}
@@ -364,15 +364,15 @@ export const LegalIndexView: React.FC = () => {
         {/* Contact Section */}
         <section
           id="contact"
-          className="scroll-mt-24 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-8 sm:p-10 shadow-sm"
+          className="scroll-mt-24 bg-c-surface rounded-xl border border-c-border p-8 sm:p-10 shadow-sm"
         >
           <div className="flex items-start gap-4 mb-8">
             <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
               <Mail className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Questions?</h2>
-              <p className="text-slate-600 dark:text-slate-400">
+              <h2 className="text-xl font-bold text-c-text mb-1">Questions?</h2>
+              <p className="text-c-text-secondary">
                 If you have any questions about these documents or need clarification, please
                 contact us.
               </p>
@@ -403,43 +403,43 @@ export const LegalIndexView: React.FC = () => {
         </section>
 
         {/* Company Details */}
-        <section className="mt-10 p-8 bg-slate-100 dark:bg-white/5 rounded-xl border border-slate-200/50 dark:border-navy-700">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+        <section className="mt-10 p-8 bg-c-surface-raised rounded-xl border border-c-border">
+          <h3 className="text-sm font-bold text-c-text mb-4 flex items-center gap-2">
             <Building2 className="w-4 h-4" />
             Company Information
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
             <div className="space-y-1">
-              <p className="font-semibold text-slate-800 dark:text-slate-200">
+              <p className="font-semibold text-c-text">
                 DBR77 Robotics Sp. z o.o.
               </p>
-              <p className="text-slate-600 dark:text-slate-400">ul. Żółkiewskiego 31</p>
-              <p className="text-slate-600 dark:text-slate-400">87-100 Toruń, Poland</p>
+              <p className="text-c-text-secondary">ul. Żółkiewskiego 31</p>
+              <p className="text-c-text-secondary">87-100 Toruń, Poland</p>
             </div>
             <div className="space-y-1">
-              <p className="text-slate-600 dark:text-slate-400">
-                <span className="font-medium text-slate-700 dark:text-slate-300">NIP:</span>{' '}
+              <p className="text-c-text-secondary">
+                <span className="font-medium text-c-text">NIP:</span>{' '}
                 8792725331
               </p>
-              <p className="text-slate-600 dark:text-slate-400">
-                <span className="font-medium text-slate-700 dark:text-slate-300">KRS:</span>{' '}
+              <p className="text-c-text-secondary">
+                <span className="font-medium text-c-text">KRS:</span>{' '}
                 0000860440
               </p>
-              <p className="text-slate-600 dark:text-slate-400">
-                <span className="font-medium text-slate-700 dark:text-slate-300">REGON:</span>{' '}
+              <p className="text-c-text-secondary">
+                <span className="font-medium text-c-text">REGON:</span>{' '}
                 387073039
               </p>
             </div>
             <div className="space-y-1">
-              <p className="text-slate-600 dark:text-slate-400">
-                <span className="font-medium text-slate-700 dark:text-slate-300">Type:</span> Polish
+              <p className="text-c-text-secondary">
+                <span className="font-medium text-c-text">Type:</span> Polish
                 LLC (Sp. z o.o.)
               </p>
               <a
                 href="https://dbr77.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-primary-600 dark:text-primary-400 hover:underline"
+                className="inline-flex items-center gap-1 text-c-accent hover:underline"
               >
                 dbr77.com
                 <ExternalLink className="w-3 h-3" />
@@ -449,8 +449,8 @@ export const LegalIndexView: React.FC = () => {
         </section>
 
         {/* Last Updated */}
-        <footer className="mt-12 text-center text-sm text-slate-500 dark:text-slate-400">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-white/5 rounded-full">
+        <footer className="mt-12 text-center text-sm text-c-text-muted">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-c-surface-raised rounded-full">
             <Sparkles className="w-4 h-4" />
             <span>Last updated: April 2026 · Version 2.0</span>
           </div>
@@ -467,13 +467,13 @@ const ContactCard: React.FC<{ label: string; email: string; gradient: string }> 
 }) => (
   <a
     href={`mailto:${email}`}
-    className="group block p-4 bg-slate-50 dark:bg-white/5 rounded-xl hover:bg-white dark:hover:bg-white/10 border border-transparent hover:border-slate-200 dark:border-navy-700 dark:hover:border-white/10 transition-all duration-300 hover:shadow-lg hover:shadow-slate-200/50 dark:hover:shadow-black/20"
+    className="group block p-4 bg-c-surface-raised rounded-xl hover:bg-c-surface border border-transparent hover:border-c-border transition-all duration-300 hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-black/20"
   >
     <div className="flex items-center gap-3 mb-2">
       <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${gradient}`} />
-      <p className="text-sm font-semibold text-slate-900 dark:text-white">{label}</p>
+      <p className="text-sm font-semibold text-c-text">{label}</p>
     </div>
-    <p className="text-sm text-primary-600 dark:text-primary-400 group-hover:text-primary-700 dark:group-hover:text-primary-300 transition-colors">
+    <p className="text-sm text-c-accent group-hover:text-c-accent/80 transition-colors">
       {email}
     </p>
   </a>

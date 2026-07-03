@@ -251,6 +251,12 @@ export const FeedbackSidePanel: React.FC = () => {
     }
     if (!isOpen && wasOpenRef.current) {
       setScreenshotPreview(null);
+      // Feedback #4f9a1697 — "attach screenshot" must NOT survive a close.
+      // Left checked, it silently re-triggers the DOM capture effect below
+      // on next open (before the user clicks anything), which on a heavy
+      // dashboard freezes the page for several seconds with no visible cause.
+      setAttachScreenshot(false);
+      setUploadedScreenshot(null);
     }
     wasOpenRef.current = isOpen;
   }, [isOpen, t]);
@@ -1338,10 +1344,14 @@ export const FeedbackSidePanel: React.FC = () => {
       <div
         className="fixed inset-0 bg-black/20 dark:bg-black/40 z-40 transition-opacity"
         onClick={closeSidePanel}
+        data-feedback-capture-exclude="1"
       />
 
       {/* Panel */}
-      <div className="fixed right-0 top-0 h-full w-[380px] max-w-[90vw] bg-white dark:bg-navy-950 shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-200 border-l border-slate-200 dark:border-navy-700">
+      <div
+        className="fixed right-0 top-0 h-full w-[380px] max-w-[90vw] bg-white dark:bg-navy-950 shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-200 border-l border-slate-200 dark:border-navy-700"
+        data-feedback-capture-exclude="1"
+      >
         {/* Header */}
         <div className="h-14 flex items-center justify-between px-4 border-b border-slate-200 dark:border-navy-700 shrink-0 bg-slate-50 dark:bg-navy-900">
           <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">

@@ -410,7 +410,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
                 {webhook.lastStatus && (
                   <span
                     className={`text-xs flex items-center gap-1 ${
-                      webhook.lastStatus === 'success' ? 'text-green-500' : 'text-danger-500'
+                      webhook.lastStatus === 'success' ? 'text-green-500' : 'text-rose-500'
                     }`}
                   >
                     {webhook.lastStatus === 'success' ? (
@@ -451,7 +451,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
             <button
               onClick={() => deleteWebhook(webhook)}
               disabled
-              className="p-2 text-slate-400 dark:text-slate-500 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors"
+              className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
               title={WEBHOOK_MUTATION_UNAVAILABLE}
             >
               <Trash2 size={16} />
@@ -497,7 +497,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
               <button
                 disabled
                 title={APP_CONNECT_UNAVAILABLE}
-                className="px-3 py-1.5 text-sm text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors"
+                className="px-3 py-1.5 text-sm text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
               >
                 {t('admin.integrations.disconnect', 'Disconnect')}
               </button>

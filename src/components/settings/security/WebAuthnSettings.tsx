@@ -274,7 +274,7 @@ const WebAuthnSettings: React.FC = () => {
         <button
           onClick={handleRegister}
           disabled={registering}
-          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg transition-colors"
         >
           {registering ? <RefreshCw className="animate-spin" size={18} /> : <Plus size={18} />}
           {registering ? 'Registering...' : 'Add Passkey'}
@@ -283,12 +283,12 @@ const WebAuthnSettings: React.FC = () => {
 
       {/* Error */}
       {error && (
-        <div className="bg-danger-500/10 border border-danger-500/30 rounded-lg p-4 flex items-center gap-3">
-          <AlertTriangle className="text-danger-400 flex-shrink-0" size={20} />
-          <p className="text-danger-300 text-sm">{error}</p>
+        <div className="bg-rose-500/10 border border-rose-500/30 rounded-lg p-4 flex items-center gap-3">
+          <AlertTriangle className="text-rose-400 flex-shrink-0" size={20} />
+          <p className="text-rose-300 text-sm">{error}</p>
           <button
             onClick={() => setError(null)}
-            className="ml-auto text-danger-400 hover:text-danger-300"
+            className="ml-auto text-rose-400 hover:text-rose-300"
           >
             <X size={18} />
           </button>
@@ -393,7 +393,7 @@ const WebAuthnSettings: React.FC = () => {
                       </button>
                       <button
                         onClick={() => handleRevoke(credential.id)}
-                        className="p-2 text-danger-400 hover:text-danger-300 hover:bg-danger-500/10 rounded-lg transition-colors"
+                        className="p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors"
                       >
                         <Trash2 size={16} />
                       </button>

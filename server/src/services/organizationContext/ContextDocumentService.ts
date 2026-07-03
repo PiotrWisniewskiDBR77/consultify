@@ -4,6 +4,7 @@ import path from 'node:path';
 import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import PDFParserService from '../pdfParserService.js';
 import logger from '../../utils/Logger.js';
 import organizationContextService from './OrganizationContextService.js';
 
@@ -1586,35 +1587,13 @@ export async function extractPdfWithPageLocators(
   buffer: Buffer,
   originalName: string
 ): Promise<ExtractedDocumentContent> {
-  const pdfParseMod = (await import('pdf-parse')) as any;
-  const pdfParse = pdfParseMod.default || pdfParseMod;
+  let aggregateText: string;
+  try {
+    aggregateText = (await PDFParserService.extractTextFromBuffer(buffer)).trim();
+  } catch {
+    aggregateText = '';
+  }
 
-  const pages: string[] = [];
-  const out = await pdfParse(buffer, {
-    pagerender: (pageData: any) => {
-      const renderOptions = { normalizeWhitespace: false, disableCombineTextItems: false };
-      return pageData.getTextContent(renderOptions).then((textContent: any) => {
-        const items = textContent?.items || [];
-        let lastY: number | null = null;
-        let pageText = '';
-        for (const item of items) {
-          const itemText = String(item?.str || '');
-          const itemY = item?.transform ? Number(item.transform[5]) : null;
-          if (lastY !== null && itemY !== null && Math.abs(itemY - lastY) > 5) {
-            pageText += '\n';
-          }
-          pageText += itemText;
-          if (item?.hasEOL) pageText += '\n';
-          lastY = itemY;
-        }
-        pages.push(pageText.trim());
-        return pageText;
-      });
-    },
-  });
-
-  const aggregateText = String(out?.text || '').trim();
-  const totalPages = Number(out?.numpages || pages.length || 0);
   if (!aggregateText) {
     return {
       status: 'ocr_required',
@@ -1624,47 +1603,11 @@ export async function extractPdfWithPageLocators(
     };
   }
 
-  const sourceBlocks: ExtractedSourceBlock[] = [];
-  let cursor = 0;
-  let combinedText = '';
-  for (let i = 0; i < pages.length; i += 1) {
-    const pageText = pages[i].trim();
-    if (!pageText) continue;
-    const segment = i === 0 ? pageText : `\n\n${pageText}`;
-    const blockStart = cursor + (i === 0 ? 0 : 2);
-    const blockEnd = blockStart + pageText.length;
-    sourceBlocks.push({
-      id: `page-${i + 1}`,
-      title: `Page ${i + 1}`,
-      modality: 'document',
-      startChar: blockStart,
-      endChar: blockEnd,
-      locator: {
-        type: 'page_range',
-        startPage: i + 1,
-        endPage: i + 1,
-        startChar: blockStart,
-        endChar: blockEnd,
-      },
-    });
-    combinedText += segment;
-    cursor += segment.length;
-  }
-
-  if (sourceBlocks.length === 0) {
-    return {
-      status: 'ready',
-      text: aggregateText,
-      error: null,
-      sourceBlocks: createWholeDocumentBlock({ title: originalName, text: aggregateText }),
-    };
-  }
-
   return {
     status: 'ready',
-    text: combinedText.trim(),
+    text: aggregateText,
     error: null,
-    sourceBlocks,
+    sourceBlocks: createWholeDocumentBlock({ title: originalName, text: aggregateText }),
   };
 }
 

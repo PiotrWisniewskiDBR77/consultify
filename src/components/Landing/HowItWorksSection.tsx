@@ -49,10 +49,10 @@ export const HowItWorksSection: React.FC = () => {
             initial={{ opacity: 0, y: 8 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 mb-5"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-c-info/30 bg-c-info/10 mb-5"
           >
-            <Play size={11} className="text-blue-600 dark:text-blue-400" fill="currentColor" />
-            <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+            <Play size={11} className="text-c-info" fill="currentColor" />
+            <span className="text-xs font-bold text-c-info uppercase tracking-wider">
               {t('landing.howItWorks.badge', 'How it works')}
             </span>
           </motion.div>
@@ -62,7 +62,7 @@ export const HowItWorksSection: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08 }}
             viewport={{ once: true }}
-            className="text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight mb-4"
+            className="text-4xl lg:text-5xl font-black text-c-text tracking-tight mb-4"
           >
             {t('landing.howItWorks.heading', 'From idea to measurable results')}
             <span
@@ -83,7 +83,7 @@ export const HowItWorksSection: React.FC = () => {
             whileInView={{ opacity: 1 }}
             transition={{ delay: 0.16 }}
             viewport={{ once: true }}
-            className="text-base text-slate-500 dark:text-white/50 max-w-xl mx-auto"
+            className="text-base text-c-text-muted max-w-xl mx-auto"
           >
             {t(
               'landing.howItWorks.sub',
@@ -110,7 +110,7 @@ export const HowItWorksSection: React.FC = () => {
                 className={`text-left p-5 rounded-2xl transition-all duration-300 ${
                   isActive
                     ? ''
-                    : 'bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.07]'
+                    : 'bg-c-surface border border-c-border'
                 }`}
                 style={{
                   background: isActive
@@ -140,10 +140,10 @@ export const HowItWorksSection: React.FC = () => {
                   </div>
                 </div>
 
-                <h3 className="text-sm font-black text-slate-900 dark:text-white leading-snug mb-2">
+                <h3 className="text-sm font-black text-c-text leading-snug mb-2">
                   {t(`${prefix}.title`)}
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-white/45 leading-relaxed">
+                <p className="text-xs text-c-text-muted leading-relaxed">
                   {t(`${prefix}.description`)}
                 </p>
               </motion.button>
@@ -157,7 +157,7 @@ export const HowItWorksSection: React.FC = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="relative rounded-2xl p-8 md:p-10 overflow-hidden bg-slate-50 dark:bg-white/[0.03] border border-primary-300/25 dark:border-primary-600/25"
+          className="relative rounded-2xl p-8 md:p-10 overflow-hidden bg-c-surface-raised border border-c-accent/25"
         >
           {/* Glow */}
           <div
@@ -173,18 +173,18 @@ export const HowItWorksSection: React.FC = () => {
           <div className="relative grid md:grid-cols-2 gap-8 items-center">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <Cpu size={18} className="text-primary-600 dark:text-primary-400" />
-                <span className="text-xs font-black text-primary-600 dark:text-primary-400 uppercase tracking-widest">
+                <Cpu size={18} className="text-c-accent" />
+                <span className="text-xs font-black text-c-accent uppercase tracking-widest">
                   {t('landing.howItWorks.techBadge', 'The technology behind the magic')}
                 </span>
               </div>
-              <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-4 leading-tight">
+              <h3 className="text-2xl font-black text-c-text mb-4 leading-tight">
                 {t(
                   'landing.howItWorks.techTitle',
                   'Powered by DBR77 Vector, our proprietary AI model.'
                 )}
               </h3>
-              <p className="text-sm text-slate-500 dark:text-white/55 leading-relaxed">
+              <p className="text-sm text-c-text-secondary leading-relaxed">
                 {t(
                   'landing.howItWorks.techDesc',
                   'Built on 1,000+ real transformation engagements and delivered through secure deployment paths. DBR77 Vector is our model, not a wrapper, with MCP integration for end-to-end automation.'
@@ -194,7 +194,7 @@ export const HowItWorksSection: React.FC = () => {
                 href="https://vector.dbr77.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-blue-600 dark:text-blue-300 transition-colors hover:text-blue-500 dark:hover:text-blue-200"
+                className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-c-info transition-colors hover:opacity-80"
               >
                 {t('landing.howItWorks.techExplore', 'Explore DBR77 Vector')}
                 <ArrowRight size={14} />
@@ -232,10 +232,10 @@ export const HowItWorksSection: React.FC = () => {
                     border: `1px solid ${item.color}25`,
                   }}
                 >
-                  <div className="text-sm font-black text-slate-900 dark:text-white mb-0.5">
+                  <div className="text-sm font-black text-c-text mb-0.5">
                     {t(item.labelKey)}
                   </div>
-                  <div className="text-[11px] text-slate-400 dark:text-white/40 leading-snug">
+                  <div className="text-[11px] text-c-text-muted leading-snug">
                     {t(item.descKey)}
                   </div>
                 </div>

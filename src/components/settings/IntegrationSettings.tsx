@@ -230,7 +230,7 @@ function getIntegrationReadinessMeta(
       isReady: false,
       isPending: false,
       badgeLabel: t('settings.integrations.readiness.error', 'Error'),
-      badgeClassName: 'bg-danger-50 text-danger-700 dark:bg-danger-900/20 dark:text-danger-300',
+      badgeClassName: 'bg-rose-50 text-rose-700 dark:bg-rose-900/20 dark:text-rose-300',
       guidance: t(
         'settings.integrations.readiness.errorGuidance',
         'The last governed sync run failed. Review the latest error before resuming sync.'
@@ -1093,7 +1093,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                             </span>
                           </div>
                           {connected.last_error ? (
-                            <div className="text-danger-600 dark:text-danger-400 mt-1">
+                            <div className="text-rose-600 dark:text-rose-400 mt-1">
                               Last error: {String(connected.last_error).slice(0, 120)}
                             </div>
                           ) : null}
@@ -1141,7 +1141,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                         </button>
                         <button
                           onClick={() => handleOpenLogs(connected.id, p.displayName)}
-                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-navy-900 dark:bg-[#F4F7FB] dark:text-slate-200 dark:hover:bg-navy-800 dark:hover:bg-[#DDE5EF] flex items-center justify-center gap-2"
+                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800 flex items-center justify-center gap-2"
                         >
                           <Eye size={16} />
                           View logs
@@ -1155,7 +1155,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                         </button>
                         <button
                           onClick={() => handleDelete(connected.id)}
-                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-danger-50 hover:text-danger-600 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-danger-900/20 dark:hover:text-danger-400"
+                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-600 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-rose-900/20 dark:hover:text-rose-400"
                         >
                           Disconnect
                         </button>
@@ -1197,7 +1197,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                           connected.status === 'error') && (
                           <button
                             onClick={() => handleOpenLogs(connected.id, p.displayName)}
-                            className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-navy-900 dark:bg-[#F4F7FB] dark:text-slate-200 dark:hover:bg-navy-800 dark:hover:bg-[#DDE5EF] flex items-center justify-center gap-2"
+                            className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800 flex items-center justify-center gap-2"
                           >
                             <Eye size={16} />
                             View governed status
@@ -1205,7 +1205,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                         )}
                         <button
                           onClick={() => handleDelete(connected.id)}
-                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-danger-50 hover:text-danger-600 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-danger-900/20 dark:hover:text-danger-400"
+                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-600 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-rose-900/20 dark:hover:text-rose-400"
                         >
                           Disconnect
                         </button>
@@ -1325,7 +1325,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                               projectChannelMappings: next,
                             });
                           }}
-                          className="px-3 py-2 rounded-lg text-sm bg-white border border-slate-200 text-slate-600 hover:text-danger-600 hover:bg-danger-50 dark:bg-navy-950 dark:border-navy-700 dark:text-slate-300"
+                          className="px-3 py-2 rounded-lg text-sm bg-white border border-slate-200 text-slate-600 hover:text-rose-600 hover:bg-rose-50 dark:bg-navy-950 dark:border-navy-700 dark:text-slate-300"
                         >
                           Remove
                         </button>
@@ -1417,7 +1417,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
               </div>
             ) : (
               <div className="overflow-auto border border-slate-200 dark:border-navy-700 rounded-xl">
-                <table /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */  className="w-full text-sm">
+                <table className="w-full text-sm">
                   <thead className="bg-slate-50 dark:bg-navy-900">
                     <tr>
                       <th className="text-left p-3 text-slate-600 dark:text-slate-300 font-medium">
@@ -1452,7 +1452,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                               l.status === 'success'
                                 ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
                                 : l.status === 'failed'
-                                  ? 'bg-danger-100 text-danger-700 dark:bg-danger-900/20 dark:text-danger-400'
+                                  ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/20 dark:text-rose-400'
                                   : 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300'
                             }`}
                           >
@@ -1505,7 +1505,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
           <div className="flex justify-end">
             <button
               onClick={() => setIsWebhookModalOpen(true)}
-              className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium flex items-center gap-2"
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium flex items-center gap-2"
             >
               <Plus size={18} />
               Add Webhook
@@ -1563,7 +1563,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                       </button>
                       <button
                         onClick={() => handleDeleteWebhook(webhook.id)}
-                        className="p-2 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg text-slate-500 dark:text-slate-400 hover:text-danger-600 transition-colors"
+                        className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg text-slate-500 dark:text-slate-400 hover:text-rose-600 transition-colors"
                         title="Delete webhook"
                       >
                         <Trash2 size={18} />
@@ -1704,7 +1704,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                     !webhookForm.targetUrl ||
                     webhookForm.eventTypes.length === 0
                   }
-                  className="px-4 py-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg hover:bg-navy-800 disabled:opacity-50 font-medium flex items-center gap-2"
+                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 font-medium flex items-center gap-2"
                 >
                   {connecting && <Loader2 size={16} className="animate-spin" />}
                   {connecting ? 'Creating...' : 'Create Webhook'}
@@ -1801,7 +1801,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                         </span>
                       </div>
                       {p.last_error ? (
-                        <div className="text-sm text-danger-600 dark:text-danger-400 mt-2">
+                        <div className="text-sm text-rose-600 dark:text-rose-400 mt-2">
                           {t('common.error', 'Error')}: {String(p.last_error).slice(0, 160)}
                         </div>
                       ) : null}
@@ -1822,7 +1822,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                       <button
                         onClick={() => openMcpTools(p.id, p.name)}
                         disabled={!isAdmin}
-                        className="px-3 py-2 rounded-lg bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-navy-900 dark:bg-[#F4F7FB] dark:text-slate-200 dark:hover:bg-navy-800 dark:hover:bg-[#DDE5EF] flex items-center gap-2 disabled:opacity-60"
+                        className="px-3 py-2 rounded-lg bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800 flex items-center gap-2 disabled:opacity-60"
                       >
                         <Eye size={16} />
                         {t('settings.mcp.viewTools', 'View tools')}
@@ -1859,7 +1859,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                           }
                         }}
                         disabled={!isAdmin}
-                        className="px-3 py-2 rounded-lg text-danger-600 hover:bg-danger-50 dark:text-danger-400 dark:hover:bg-danger-500/10 flex items-center gap-2 disabled:opacity-60"
+                        className="px-3 py-2 rounded-lg text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10 flex items-center gap-2 disabled:opacity-60"
                       >
                         <Trash2 size={16} />
                         {t('common.delete', 'Delete')}

@@ -214,7 +214,84 @@ const XLSX_COLUMN_WIDTHS: Record<string, number> = {
   attachment: 20,
 };
 
+// X2 WIRED (W4): when the premium deliverables tier is active AND the table has
+// styled fields (singleSelect colors, CF-eligible numeric columns), use the
+// ExcelJS WorkbookBuilder for full-fidelity output (colored chips, conditional
+// formatting, type-aware number formats). FAIL-OPEN: any WorkbookBuilder failure
+// falls back to the existing SheetJS path byte-for-byte.
 async function buildXlsxBuffer(options: CsvExportOptions): Promise<Buffer> {
+  const { tableId, viewId, fieldIds } = options;
+  const fields = await loadFields(tableId, fieldIds);
+
+  // ── X2: Premium ExcelJS path (flag-gated, fail-open) ──────────────────────
+  try {
+    const { resolveDeliverableTier } = await import('../deliverableGenerationTier.js');
+    if (resolveDeliverableTier({}) === 'PREMIUM') {
+      const hasStyledFields = fields.some(
+        (f) =>
+          f.type === 'singleSelect' ||
+          f.type === 'single_select' ||
+          f.type === 'multiSelect' ||
+          f.type === 'multi_select' ||
+          f.type === 'currency' ||
+          f.type === 'percent' ||
+          f.type === 'rating'
+      );
+      if (hasStyledFields) {
+        const { buildWorkbookBuffer, tableSchemaToWorkbook } = await import(
+          '../workbook/WorkbookBuilder.js'
+        );
+
+        // Collect all rows (same pagination loop as the SheetJS path below).
+        const allRows: Record<string, unknown>[] = [];
+        let cursor: string | undefined;
+        let hasMore = true;
+
+        while (hasMore) {
+          const batch = await viewQueryEngine.executeQuery({
+            tableId,
+            viewId,
+            pageSize: EXPORT_BATCH_SIZE,
+            cursor,
+          });
+          for (const record of batch.records) {
+            const data = (record as any).data ?? record;
+            const row: Record<string, unknown> = {};
+            for (const f of fields) {
+              row[f.id] = data[f.id] ?? data[f.name] ?? null;
+            }
+            allRows.push(row);
+          }
+          cursor = batch.cursor;
+          hasMore = batch.hasMore;
+        }
+
+        // Map ExportField[] → TableField[] (WorkbookBuilder interface).
+        const tableFields = fields.map((f) => ({
+          key: f.id,
+          header: f.name,
+          type: f.type,
+          options: Array.isArray((f.options as any)?.choices)
+            ? (f.options as any).choices.map((c: any) => ({
+                label: String(c.name ?? c.label ?? ''),
+                color: c.color ? String(c.color) : undefined,
+              }))
+            : undefined,
+        }));
+
+        const tableName = await getTableName(tableId);
+        const workbookSchema = tableSchemaToWorkbook(
+          { fields: tableFields, seedRows: allRows },
+          { title: tableName, author: 'Consultify' }
+        );
+        return await buildWorkbookBuffer(workbookSchema);
+      }
+    }
+  } catch {
+    // FAIL-OPEN: WorkbookBuilder failed → fall through to SheetJS path.
+  }
+
+  // ── STANDARD: SheetJS path ─────────────────────────────────────────────────
   let XLSX: any;
   try {
     XLSX = await import('xlsx');
@@ -222,8 +299,7 @@ async function buildXlsxBuffer(options: CsvExportOptions): Promise<Buffer> {
     throw new Error('xlsx package is not available');
   }
 
-  const { tableId, viewId, fieldIds } = options;
-  const fields = await loadFields(tableId, fieldIds);
+  // fields already loaded above.
 
   const rows: unknown[][] = [];
   // Neutralize formula-injection in XLSX cells too (aoa_to_sheet writes values

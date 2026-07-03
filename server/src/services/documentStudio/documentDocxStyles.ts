@@ -33,6 +33,85 @@ import type {
   FormattingSchema,
 } from './documentStudioTypes.js';
 
+// ---------------------------------------------------------------------------
+// Brand palette (Vegas Fala 6 — parity with DeckStyler + WorkbookStyler)
+// ---------------------------------------------------------------------------
+//
+// The DOCX generator was the WEAKEST of the three deliverable stylers: it
+// delegated everything to Word's named styles and carried no visual constants
+// of its own, so every heading/table/callout drifted toward flat slate greys.
+// DeckStyler (navy #0C447C + teal #1D9E75) and WorkbookStyler (navy header
+// fills + teal color-scales) already share a consistent chord — this palette
+// brings DOCX to the same standard so the three exports read as one brand.
+//
+// Doctrine (identical to DeckStyler / WorkbookStyler):
+//   • Navy (#0C447C) is the dominant chrome color — headings, table headers,
+//     cover rule, footer accents.
+//   • Teal (#1D9E75) is the accent — callout spines, positive deltas, KPI rule.
+//   • Crimson is NEVER chrome. It appears only as a status/danger color, never
+//     as a heading/fill/border. There is ZERO crimson in the data path here.
+//   • Neutral ink + muted greys carry body text (slate family, unchanged so
+//     the existing named-style contract + tests stay stable).
+//
+// Values are BARE 6-digit hex (no leading '#', no alpha) — the shape the `docx`
+// package's `color:` / `shading.fill` fields want. This mirrors DeckStyler's
+// `hex()` output (pptxgenjs) and is the DOCX analogue of WorkbookStyler's
+// `HEADER_NAVY_HEX` / `ZEBRA_HEX`.
+export const DOCX_PALETTE = Object.freeze({
+  /** Dominant brand navy — H1, table header fill, cover rule, footer accent. */
+  navy: '0C447C',
+  /** Softer navy — H2 (one step down the heading hierarchy). */
+  navySoft: '1B5FA8',
+  /** Deepest navy/ink — Title where max weight is wanted. */
+  navyInk: '0A2F57',
+  /** Teal accent — callout spine, positive delta, KPI/section rule. */
+  teal: '1D9E75',
+  /** Deep teal — accent text that must stay readable on a light tint. */
+  tealInk: '146A50',
+  /** Body ink (unchanged slate — keeps the named-style visual contract). */
+  ink: '1F2933',
+  /** Heading-3 / tertiary ink. */
+  ink3: '334155',
+  /** Muted caption / footer / label grey (matches WorkbookStyler muted). */
+  muted: '64748B',
+  /** Softer muted (subtitle / block-quote / secondary caption). */
+  muted2: '475569',
+  /** Lightest footer/page-number grey. */
+  faint: '94A3B8',
+  /** Assumption highlight (amber ink — status, not chrome). */
+  amberInk: '92400E',
+  /** Zebra / soft row fill (subtle navy-tinted). */
+  zebraFill: 'F3F7FB',
+  /** Callout background tint (very light navy). */
+  calloutFill: 'F5F8FC',
+  /** KPI card fill. */
+  kpiFill: 'F1F5F9',
+  /** Hairline / border grey. */
+  gridline: 'E3E7EE',
+  white: 'FFFFFF',
+} as const);
+
+/**
+ * Tone → accent hex for callout labels + KPI deltas. Consistent with the
+ * DeckStyler / WorkbookStyler doctrine: teal for success/positive, navy for
+ * info, amber for warning, crimson ONLY for danger (status, never chrome).
+ * Shared with the renderer so both files reference a single source of truth.
+ */
+export const DOCX_TONE_COLOR: Record<string, string> = Object.freeze({
+  info: DOCX_PALETTE.navy,
+  success: DOCX_PALETTE.teal,
+  warning: 'D97706',
+  danger: 'C0392B',
+});
+
+/** Soft background tint per callout tone (paired with {@link DOCX_TONE_COLOR}). */
+export const DOCX_TONE_FILL: Record<string, string> = Object.freeze({
+  info: 'EEF3FA',
+  success: 'EAF6F1',
+  warning: 'FDF6EC',
+  danger: 'FBECEC',
+});
+
 /**
  * Visual presentation tier resolved from the schema. Drives Word style
  * sizes / colors / spacing without changing which style ids are emitted
@@ -310,7 +389,7 @@ export function buildDocxStyleConfig(
           font: fonts.heading,
           size: h1Size,
           bold: h1Bold,
-          color: '0F172A',
+          color: DOCX_PALETTE.navy,
         },
         paragraph: { spacing: { before: h1Before, after: h1After } },
       },
@@ -319,7 +398,7 @@ export function buildDocxStyleConfig(
           font: fonts.heading,
           size: h2Size,
           bold: h2Bold,
-          color: '1E293B',
+          color: DOCX_PALETTE.navySoft,
         },
         paragraph: { spacing: { before: h2Before, after: h2After } },
       },
@@ -328,7 +407,7 @@ export function buildDocxStyleConfig(
           font: fonts.heading,
           size: h3Size,
           bold: h3Bold,
-          color: '334155',
+          color: DOCX_PALETTE.ink3,
         },
         paragraph: { spacing: { before: h3Before, after: h3After } },
       },
@@ -347,7 +426,7 @@ export function buildDocxStyleConfig(
           font: fonts.heading,
           size: sizing.title,
           bold: true,
-          color: '0F172A',
+          color: DOCX_PALETTE.navyInk,
         },
         paragraph: { spacing: { before: 600, after: 200 }, alignment: 'center' },
       },
@@ -361,7 +440,7 @@ export function buildDocxStyleConfig(
           font: fonts.body,
           size: sizing.subtitle,
           italics: true,
-          color: '475569',
+          color: DOCX_PALETTE.muted2,
         },
         paragraph: { spacing: { after: 80 }, alignment: 'center' },
       },
@@ -371,9 +450,14 @@ export function buildDocxStyleConfig(
         basedOn: 'Normal',
         next: 'BodyText',
         quickFormat: true,
-        run: { font: fonts.heading, size: sizing.heading1, bold: true, color: '0F172A' },
+        run: { font: fonts.heading, size: sizing.heading1, bold: true, color: DOCX_PALETTE.navy },
         paragraph: {
           spacing: { before: sizing.spacing.h1Before, after: sizing.spacing.h1After },
+          // Teal hairline UNDER every H1 — the DOCX analogue of DeckStyler's
+          // accent rule beneath a section title. Gives the document rhythm.
+          border: {
+            bottom: { color: DOCX_PALETTE.teal, space: 6, style: 'single', size: 8 },
+          },
         },
       },
       {
@@ -382,7 +466,12 @@ export function buildDocxStyleConfig(
         basedOn: 'Normal',
         next: 'BodyText',
         quickFormat: true,
-        run: { font: fonts.heading, size: sizing.heading2, bold: true, color: '1E293B' },
+        run: {
+          font: fonts.heading,
+          size: sizing.heading2,
+          bold: true,
+          color: DOCX_PALETTE.navySoft,
+        },
         paragraph: {
           spacing: { before: sizing.spacing.h2Before, after: sizing.spacing.h2After },
         },
@@ -393,7 +482,7 @@ export function buildDocxStyleConfig(
         basedOn: 'Normal',
         next: 'BodyText',
         quickFormat: true,
-        run: { font: fonts.heading, size: sizing.heading3, bold: true, color: '334155' },
+        run: { font: fonts.heading, size: sizing.heading3, bold: true, color: DOCX_PALETTE.ink3 },
         paragraph: {
           spacing: { before: sizing.spacing.h3Before, after: sizing.spacing.h3After },
         },
@@ -404,7 +493,7 @@ export function buildDocxStyleConfig(
         basedOn: 'Normal',
         next: 'BodyText',
         quickFormat: true,
-        run: { font: fonts.body, size: sizing.body, color: '0F172A' },
+        run: { font: fonts.body, size: sizing.body, color: DOCX_PALETTE.ink },
         paragraph: { spacing: { after: sizing.spacing.bodyAfter } },
       },
       {
@@ -412,15 +501,23 @@ export function buildDocxStyleConfig(
         name: 'Block Quote',
         basedOn: 'BodyText',
         next: 'BodyText',
-        run: { font: fonts.body, size: sizing.body, italics: true, color: '475569' },
-        paragraph: { indent: { left: 360 }, spacing: { before: 80, after: 120 } },
+        run: { font: fonts.body, size: sizing.body, italics: true, color: DOCX_PALETTE.muted2 },
+        paragraph: {
+          indent: { left: 360 },
+          spacing: { before: 80, after: 120 },
+          // Navy left rule — a pull-quote reads as a deliberate device, not
+          // just italic body text.
+          border: {
+            left: { color: DOCX_PALETTE.navy, space: 12, style: 'single', size: 18 },
+          },
+        },
       },
       {
         id: DOCX_STYLE_IDS.CAPTION,
         name: 'Caption',
         basedOn: 'Normal',
         next: 'BodyText',
-        run: { font: fonts.body, size: sizing.caption, italics: true, color: '64748B' },
+        run: { font: fonts.body, size: sizing.caption, italics: true, color: DOCX_PALETTE.muted },
         paragraph: { spacing: { before: 60, after: 120 } },
       },
       {
@@ -432,7 +529,7 @@ export function buildDocxStyleConfig(
         name: 'Doc Studio Footnote',
         basedOn: 'Normal',
         next: 'BodyText',
-        run: { font: fonts.body, size: sizing.footnote, color: '475569' },
+        run: { font: fonts.body, size: sizing.footnote, color: DOCX_PALETTE.muted2 },
         paragraph: { spacing: { after: 40 } },
       },
       {
@@ -440,7 +537,7 @@ export function buildDocxStyleConfig(
         name: 'Assumption Body',
         basedOn: 'BodyText',
         next: 'BodyText',
-        run: { font: fonts.body, size: sizing.body, italics: true, color: '92400E' },
+        run: { font: fonts.body, size: sizing.body, italics: true, color: DOCX_PALETTE.amberInk },
         paragraph: { spacing: { after: sizing.spacing.bodyAfter } },
       },
       {
@@ -448,15 +545,25 @@ export function buildDocxStyleConfig(
         name: 'Callout',
         basedOn: 'BodyText',
         next: 'BodyText',
-        run: { font: fonts.body, size: sizing.body, color: '0F172A' },
-        paragraph: { spacing: { before: 80, after: 120 }, indent: { left: 240 } },
+        run: { font: fonts.body, size: sizing.body, color: DOCX_PALETTE.ink },
+        paragraph: {
+          spacing: { before: 80, after: 120 },
+          indent: { left: 240 },
+          // Teal accent spine + soft navy tint — a callout is a boxed device,
+          // mirroring DeckStyler's accent-header panels. The renderer overrides
+          // the spine color per tone (danger→crimson) at emit time.
+          shading: { type: 'clear', fill: DOCX_PALETTE.calloutFill },
+          border: {
+            left: { color: DOCX_PALETTE.teal, space: 12, style: 'single', size: 24 },
+          },
+        },
       },
       {
         id: DOCX_STYLE_IDS.SOURCE_LIST,
         name: 'Source List',
         basedOn: 'BodyText',
         next: 'SourceList',
-        run: { font: fonts.body, size: sizing.body, color: '0F172A' },
+        run: { font: fonts.body, size: sizing.body, color: DOCX_PALETTE.ink },
         paragraph: { spacing: { after: 60 } },
       },
       {
@@ -465,13 +572,86 @@ export function buildDocxStyleConfig(
         basedOn: 'Heading1',
         next: 'BodyText',
         quickFormat: true,
-        run: { font: fonts.heading, size: sizing.heading1, bold: true, color: '0F172A' },
+        run: { font: fonts.heading, size: sizing.heading1, bold: true, color: DOCX_PALETTE.navy },
         paragraph: {
           spacing: { before: sizing.spacing.h1Before, after: sizing.spacing.h1After },
         },
       },
     ],
   };
+}
+
+// ---------------------------------------------------------------------------
+// Overflow guards (parity with DeckStyler `fitProse` / WorkbookStyler width clamp)
+// ---------------------------------------------------------------------------
+//
+// A Word doc reflows, so it cannot "overflow a frame" the way a slide can — but
+// it CAN produce ugly runaway output: a 400-char "title" that wraps across five
+// lines, or a 30-column table squeezed into A4 so every cell is one letter wide.
+// These deterministic guards are the DOCX analogue of DeckStyler's `fitProse`
+// (shrink-then-truncate) and WorkbookStyler's `computeColumnWidth` clamp.
+
+/**
+ * Hard ceiling on a rendered title / heading length. A "title" longer than this
+ * is almost always a mis-classified paragraph; we truncate at a word boundary
+ * and append an ellipsis so the cover / heading stays one clean line-cluster.
+ */
+export const DOCX_TITLE_MAX_CHARS = 140;
+
+/** Hard ceiling on a heading (H1–H3) length before word-boundary truncation. */
+export const DOCX_HEADING_MAX_CHARS = 120;
+
+/**
+ * Truncate `text` to at most `maxChars` characters at a word boundary, adding
+ * an ellipsis when cut. Never returns an empty string for non-empty input, and
+ * never cuts mid-word when a nearby space exists. Deterministic — no LLM.
+ */
+export function clampHeadingText(text: string, maxChars = DOCX_HEADING_MAX_CHARS): string {
+  const clean = String(text ?? '').replace(/\s+/g, ' ').trim();
+  if (clean.length <= maxChars) return clean;
+  let cut = clean.slice(0, maxChars);
+  const lastSpace = cut.lastIndexOf(' ');
+  if (lastSpace > maxChars * 0.6) cut = cut.slice(0, lastSpace);
+  return cut.trimEnd() + '…';
+}
+
+/**
+ * Maximum number of columns a table can carry before A4 legibility collapses.
+ * Beyond this the renderer keeps the first `DOCX_TABLE_MAX_COLS - 1` columns and
+ * folds the remainder into a single trailing "+N more" column so the table
+ * stays readable instead of shrinking every cell to a sliver. Mirrors the
+ * WorkbookStyler philosophy of a width clamp — here it is a column-count clamp
+ * because Word has no horizontal scroll.
+ */
+export const DOCX_TABLE_MAX_COLS = 8;
+
+export interface TableColumnClamp {
+  /** 0-based indices of the columns to KEEP (in order). */
+  keep: number[];
+  /** Column indices folded away (empty when nothing overflowed). */
+  folded: number[];
+  /** True when a "+N more" summary column should be appended. */
+  overflowed: boolean;
+}
+
+/**
+ * Decide which columns of a `columnCount`-wide table survive on an A4 page.
+ * Keeps the first `DOCX_TABLE_MAX_COLS - 1` and marks the rest as folded (the
+ * renderer appends one "+N more columns" cell). Returns every column when the
+ * table already fits. Deterministic, index-based — the renderer owns the actual
+ * cell rewrite so this stays a pure decision.
+ */
+export function clampTableColumns(
+  columnCount: number,
+  maxCols = DOCX_TABLE_MAX_COLS
+): TableColumnClamp {
+  if (columnCount <= maxCols) {
+    return { keep: Array.from({ length: columnCount }, (_, i) => i), folded: [], overflowed: false };
+  }
+  const keepCount = Math.max(1, maxCols - 1);
+  const keep = Array.from({ length: keepCount }, (_, i) => i);
+  const folded = Array.from({ length: columnCount - keepCount }, (_, i) => keepCount + i);
+  return { keep, folded, overflowed: true };
 }
 
 /**

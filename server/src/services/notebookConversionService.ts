@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getTableColumns } from '../utils/dbSchema.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
+import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
 import { generateOutline } from './presentationGeneratorService.js';
 import { createReport } from './reportBuilderService.js';
 
@@ -282,34 +283,60 @@ export async function convertNotebookPage(params: {
       summary: entityDesc,
     });
 
-    const insertCols: string[] = ['id'];
-    const insertVals: string[] = ['?'];
-    const insertParams: any[] = [newId];
-    const add = (col: string, val: any) => {
-      if (!cols.has(col)) return;
-      insertCols.push(col);
-      insertVals.push('?');
-      insertParams.push(val);
-    };
+    // Uspójnienie F1.9 — przez kanoniczny lejek (DRAFT + name/title + lineage).
+    let initiativeId = newId;
+    if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+      const __r = await funnelCreateInitiative(
+        orgId,
+        {
+          title: entityTitle.slice(0, 255),
+          summary: entityDesc.slice(0, 5000),
+          description: entityDesc.slice(0, 5000),
+          ownerExecutionId: userId,
+          ownerBusinessId: userId,
+          sourceType: 'tool',
+          sourceId: toolSessionId,
+        },
+        { validate: false, actor: { id: userId } }
+      );
+      initiativeId = __r.id;
+      // Funnel nie zna sponsor_id — dośpiewujemy, jeśli kolumna istnieje.
+      if (cols.has('sponsor_id')) {
+        await queryHelpers.queryRun(
+          `UPDATE initiatives SET sponsor_id = ? WHERE id = ? AND organization_id = ?`,
+          [userId, initiativeId, orgId]
+        );
+      }
+    } else {
+      const insertCols: string[] = ['id'];
+      const insertVals: string[] = ['?'];
+      const insertParams: any[] = [newId];
+      const add = (col: string, val: any) => {
+        if (!cols.has(col)) return;
+        insertCols.push(col);
+        insertVals.push('?');
+        insertParams.push(val);
+      };
 
-    add('organization_id', orgId);
-    add('name', entityTitle.slice(0, 255));
-    add('title', entityTitle.slice(0, 255));
-    add('summary', entityDesc.slice(0, 5000));
-    add('description', entityDesc.slice(0, 5000));
-    add('status', 'DRAFT');
-    add('owner_execution_id', userId);
-    add('owner_business_id', userId);
-    add('sponsor_id', userId);
-    add('source_type', 'tool');
-    add('source_id', toolSessionId);
+      add('organization_id', orgId);
+      add('name', entityTitle.slice(0, 255));
+      add('title', entityTitle.slice(0, 255));
+      add('summary', entityDesc.slice(0, 5000));
+      add('description', entityDesc.slice(0, 5000));
+      add('status', 'DRAFT');
+      add('owner_execution_id', userId);
+      add('owner_business_id', userId);
+      add('sponsor_id', userId);
+      add('source_type', 'tool');
+      add('source_id', toolSessionId);
 
-    await queryHelpers.queryRun(
-      `INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-      insertParams
-    );
+      await queryHelpers.queryRun(
+        `INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+        insertParams
+      );
+    }
     createdEntity = {
-      id: newId,
+      id: initiativeId,
       type: 'initiative',
       title: entityTitle,
       sourceSessionId: toolSessionId,
@@ -319,7 +346,7 @@ export async function convertNotebookPage(params: {
       orgId,
       userId,
       sourceType: 'initiative',
-      sourceId: newId,
+      sourceId: initiativeId,
       targetType: 'notebook',
       targetId: pageId,
       relation: 'ref',
@@ -330,7 +357,7 @@ export async function convertNotebookPage(params: {
       orgId,
       userId,
       sourceType: 'initiative',
-      sourceId: newId,
+      sourceId: initiativeId,
       targetType: 'tool_session',
       targetId: toolSessionId,
       relation: 'ref',

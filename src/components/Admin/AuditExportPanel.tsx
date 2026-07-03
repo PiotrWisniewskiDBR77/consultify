@@ -123,7 +123,7 @@ export const AuditExportPanel: React.FC = () => {
               onClick={() => setExportFormat(format)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 exportFormat === format
-                  ? 'bg-navy-900 text-white'
+                  ? 'bg-primary-500 text-white'
                   : 'bg-white dark:bg-navy-900 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >

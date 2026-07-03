@@ -1,0 +1,32 @@
+{
+  "provider": "openrouter",
+  "model": "deepseek/deepseek-v3.2",
+  "ranAt": "2026-06-23T20:14:07.308Z",
+  "avgScorePct": 92,
+  "rows": [
+    {
+      "module": "deck",
+      "id": "M19.S06",
+      "scorePct": 75,
+      "fallbackUsed": false,
+      "tierUsed": "PREMIUM",
+      "sec": "19.9s"
+    },
+    {
+      "module": "doc",
+      "id": "M18.S06",
+      "scorePct": 100,
+      "structureFallback": false,
+      "types": 7,
+      "sec": "79.0s"
+    },
+    {
+      "module": "table",
+      "id": "M20.S06",
+      "scorePct": 100,
+      "fallbackUsed": false,
+      "tierUsed": "PREMIUM",
+      "sec": "29.3s"
+    }
+  ]
+}

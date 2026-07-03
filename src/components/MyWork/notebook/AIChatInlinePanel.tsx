@@ -382,7 +382,7 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
       icon: Lightbulb,
       labelPl: 'Idea',
       labelEn: 'Idea',
-      iconColor: 'text-primary-500 dark:text-primary-400',
+      iconColor: 'text-slate-500 dark:text-slate-400',
     },
     {
       id: 'assessment',
@@ -555,7 +555,7 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
                     onClick={onAskAI}
                     className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-[10px] font-bold bg-slate-50/80 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.07] border border-slate-200/30 dark:border-white/[0.06] hover:border-slate-300/40 dark:hover:border-white/[0.1] transition-all"
                   >
-                    <Sparkles size={11} className="text-primary-500 dark:text-primary-400" />
+                    <Sparkles size={11} className="text-slate-500 dark:text-slate-400" />
                     {isPl ? 'Zapytaj AI' : 'Ask AI'}
                   </button>
                 )}

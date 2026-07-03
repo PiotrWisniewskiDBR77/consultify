@@ -267,7 +267,7 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
             onClick={onBack}
             className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
           >
-            <ArrowLeft className="w-5 h-5 text-slate-500" />
+            <ArrowLeft className="w-5 h-5 text-slate-500 dark:text-slate-400" />
           </button>
           <div>
             <div className="flex items-center gap-2">
@@ -304,7 +304,7 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
             className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
             title="Refresh"
           >
-            <RefreshCw size={16} className="text-slate-600" />
+            <RefreshCw size={16} className="text-slate-600 dark:text-slate-400" />
           </button>
 
           {/* Download PDF */}
@@ -345,7 +345,7 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Framework</p>
               <span className="text-lg font-bold text-primary-400">{data.detectedFramework}</span>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Confidence: {Math.round(data.detectionConfidence || 0)}%
               </p>
             </div>
@@ -355,7 +355,7 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Fields Recognized</p>
               <div className="flex items-end gap-2">
                 <span className="text-lg font-bold text-emerald-400">{fieldsFound.length}</span>
-                <span className="text-sm text-slate-500">
+                <span className="text-sm text-slate-500 dark:text-slate-400">
                   / {fieldsFound.length + fieldsMissing.length}
                 </span>
               </div>
@@ -431,7 +431,7 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
                   {data.initiativesCreated} Initiatives Created
                 </span>
               ) : initiatives.length === 0 && data.status !== 'pending' ? (
-                <span className="inline-flex items-center gap-2 px-4 py-2.5 text-sm text-slate-500">
+                <span className="inline-flex items-center gap-2 px-4 py-2.5 text-sm text-slate-500 dark:text-slate-400">
                   No initiatives found in report
                 </span>
               ) : null}
@@ -451,7 +451,7 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
                 Report Summary
               </h3>
-              <div className="prose prose-sm prose-invert max-w-none text-slate-600">
+              <div className="prose prose-sm prose-invert max-w-none text-slate-600 dark:text-slate-400">
                 {data.autoSummary.split('\n').map((line, i) => {
                   if (line.startsWith('## ')) {
                     return (
@@ -476,7 +476,7 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
                   }
                   if (line.startsWith('- ')) {
                     return (
-                      <li key={i} className="text-sm text-slate-600 ml-4">
+                      <li key={i} className="text-sm text-slate-600 dark:text-slate-400 ml-4">
                         {line.replace('- ', '')}
                       </li>
                     );
@@ -484,15 +484,15 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
                   if (line.startsWith('**')) {
                     const parts = line.split('**');
                     return (
-                      <p key={i} className="text-sm text-slate-600">
-                        <span className="font-medium text-slate-600">{parts[1]}</span>
+                      <p key={i} className="text-sm text-slate-600 dark:text-slate-400">
+                        <span className="font-medium text-slate-600 dark:text-slate-400">{parts[1]}</span>
                         {parts[2]}
                       </p>
                     );
                   }
                   if (line.trim() === '') return <br key={i} />;
                   return (
-                    <p key={i} className="text-sm text-slate-600">
+                    <p key={i} className="text-sm text-slate-600 dark:text-slate-400">
                       {line}
                     </p>
                   );

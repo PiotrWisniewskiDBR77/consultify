@@ -13,6 +13,8 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState as SharedLoadingState } from '@/components/shared/states';
+
 import Api from '../../services/api';
 import { shouldFallbackToLegacyFinance, V8FinanceApi } from '../../services/api/v8/finance';
 import {
@@ -693,8 +695,8 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
 
   if (loading && !detail) {
     return (
-      <div className="p-6 text-sm text-slate-500 dark:text-slate-400">
-        {t('common.loading', 'Loading…')}
+      <div className="p-6">
+        <SharedLoadingState template="panel" />
       </div>
     );
   }
