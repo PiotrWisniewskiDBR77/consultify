@@ -307,7 +307,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
                                     className={`w-full flex items-center gap-2 py-1.5 pl-8 pr-3 text-left text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${variantStyles[sub.variant || 'default']}`}
                                     role="menuitem"
                                   >
-                                    {SubIcon && <SubIcon size={13} className="shrink-0" />}
+                                    {SubIcon && <SubIcon size={14} className="shrink-0" />}
                                     <span className="min-w-0 flex-1 truncate">{sub.label}</span>
                                   </button>
                                 );
