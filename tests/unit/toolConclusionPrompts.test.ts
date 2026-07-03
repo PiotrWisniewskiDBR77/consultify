@@ -12,11 +12,13 @@ import { describe, expect, it } from 'vitest';
 
 import { buildPorterConclusionPrompt } from '../../src/config/porter/conclusionPrompts';
 import { buildPortfolioConclusionPrompt } from '../../src/config/portfolio/conclusionPrompts';
+import { buildSwotConclusionPrompt } from '../../src/config/swot/conclusionPrompts';
 import { buildValueChainConclusionPrompt } from '../../src/config/valuechain/conclusionPrompts';
 import type {
   ForceData,
   PortfolioItem,
   PortfolioPriorityData,
+  SWOTItem,
   ValueActivity,
   ValueActivityId,
   ValueChainData,
@@ -188,5 +190,84 @@ describe('Portfolio conclusion layer (variant W2)', () => {
       initiatives: [item('a', { proposalStatus: 'rejected' })],
     } as unknown as PortfolioPriorityData;
     expect(buildPortfolioConclusionPrompt(rejected, false)).toBeNull();
+  });
+});
+
+// ============================ Dynamic SWOT ===================================
+const swotItem = (
+  id: string,
+  quadrant: SWOTItem['quadrant'],
+  overrides: Partial<SWOTItem> = {}
+): SWOTItem => ({
+  id,
+  text: `${quadrant} item ${id}`,
+  impact: 'medium',
+  quadrant,
+  proposalStatus: 'accepted',
+  ...overrides,
+});
+
+describe('Dynamic SWOT conclusion layer (variant W2)', () => {
+  it('produces a grounded W2 verdict seeded from engine-derived tensions', () => {
+    // One accepted item per quadrant -> all four SO/WO/ST/WT tensions formable.
+    const data = {
+      items: [
+        swotItem('s1', 'strengths', { impact: 'high', evidenceStatus: 'confirmed' }),
+        swotItem('w1', 'weaknesses', { impact: 'high' }),
+        swotItem('o1', 'opportunities', { impact: 'medium' }),
+        swotItem('t1', 'threats', { impact: 'low', evidenceStatus: 'declared' }),
+      ],
+      tensions: [],
+    };
+    const prompt = buildSwotConclusionPrompt(data, false);
+    // W2 contract fields present.
+    expect(prompt).toBeTruthy();
+    const p = prompt as string;
+    expect(p).toContain('"verdict"');
+    expect(p).toContain('"tradeoffs"');
+    expect(p).toContain('"moves"');
+    expect(p).toContain('"expectedEffect"');
+    expect(p).toContain('selfCheck');
+    // SWOT engine-grounded blocks and W2 per-move contract (engine naming).
+    expect(p).toContain('SWOT TENSIONS');
+    expect(p).toContain('TENSION COVERAGE');
+    expect(p).toContain('tradeoff'); // per-move mandatory trade-off (chosen/deferred/cost)
+    expect(p).toContain('rejectedAlternative'); // per-move mandatory rejected variant
+    expect(p).toContain('firstStep');
+    // Real accepted item text is seeded (numbers/facts from engine, not invented).
+    expect(p).toContain('strengths item s1');
+    // The four tension types are derivable and appear as pairings.
+    expect(p).toContain('[SO');
+    expect(p).toContain('[WT');
+  });
+
+  it('returns null when nothing is accepted (no fabricated conclusion)', () => {
+    expect(buildSwotConclusionPrompt(undefined, false)).toBeNull();
+    expect(buildSwotConclusionPrompt({ items: [] }, false)).toBeNull();
+    // Items exist but none accepted (all rejected) -> nothing to conclude on.
+    const rejected = {
+      items: [swotItem('s1', 'strengths', { proposalStatus: 'rejected' })],
+    };
+    expect(buildSwotConclusionPrompt(rejected, false)).toBeNull();
+    // Accepted items exist but never pair (only one quadrant populated) -> no tension.
+    const oneQuadrant = {
+      items: [
+        swotItem('s1', 'strengths'),
+        swotItem('s2', 'strengths'),
+      ],
+    };
+    expect(buildSwotConclusionPrompt(oneQuadrant, false)).toBeNull();
+  });
+
+  it('respects the session language (Polish -> Polish prompt)', () => {
+    const data = {
+      items: [
+        swotItem('s1', 'strengths', { impact: 'high' }),
+        swotItem('o1', 'opportunities', { impact: 'high' }),
+      ],
+    };
+    const prompt = buildSwotConclusionPrompt(data, true) as string;
+    expect(prompt).toContain('Działaj jako partner');
+    expect(prompt).toContain('siła × szansa');
   });
 });
