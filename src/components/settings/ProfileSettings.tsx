@@ -530,7 +530,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
   const inputClass =
     'w-full px-3 py-2 bg-[var(--c-surface-raised)] border border-[var(--c-border)] rounded-md text-[var(--c-text)] focus:ring-2 focus:ring-[var(--c-focus)] focus:border-[var(--c-focus-solid)] outline-none transition-all';
   const firstNameInputClass = firstNameValidationError
-    ? 'w-full px-3 py-2 bg-[var(--c-danger)]/8 border border-[var(--c-danger)] rounded-md text-[var(--c-text)] focus:ring-2 focus:ring-[var(--c-danger)]/40 outline-none transition-all'
+    ? 'w-full px-3 py-2 bg-[color-mix(in_srgb,var(--c-danger)_8%,transparent)] border border-[var(--c-danger)] rounded-md text-[var(--c-text)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--c-danger)_40%,transparent)] outline-none transition-all'
     : inputClass;
   const inputWithIconClass =
     'w-full pl-9 pr-3 py-2 bg-[var(--c-surface-raised)] border border-[var(--c-border)] rounded-md text-[var(--c-text)] focus:ring-2 focus:ring-[var(--c-focus)] focus:border-[var(--c-focus-solid)] outline-none transition-all';
@@ -1096,7 +1096,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                       key={fmt.value}
                       className={`flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 transition-all ${
                         formState.timeFormat === fmt.value
-                          ? 'border-2 border-[var(--c-info)] bg-[var(--c-info)]/12 text-[var(--c-info)]'
+                          ? 'border-2 border-[var(--c-info)] bg-[color-mix(in_srgb,var(--c-info)_12%,transparent)] text-[var(--c-info)]'
                           : 'border border-[var(--c-border)] bg-[var(--c-surface-raised)] text-[var(--c-text-secondary)] hover:border-[var(--c-border-strong)]'
                       }`}
                     >

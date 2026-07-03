@@ -523,10 +523,10 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
     if (!item.badge) return null;
 
     const badgeStyles = {
-      count: 'bg-[var(--c-info)]/12 text-[var(--c-info)]',
-      new: 'bg-[var(--c-success)]/12 text-[var(--c-success)]',
-      beta: 'bg-[var(--c-warning)]/12 text-[var(--c-warning)]',
-      warning: 'bg-[var(--c-danger)]/12 text-[var(--c-danger)]',
+      count: 'bg-[color-mix(in_srgb,var(--c-info)_12%,transparent)] text-[var(--c-info)]',
+      new: 'bg-[color-mix(in_srgb,var(--c-success)_12%,transparent)] text-[var(--c-success)]',
+      beta: 'bg-[color-mix(in_srgb,var(--c-warning)_12%,transparent)] text-[var(--c-warning)]',
+      warning: 'bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-[var(--c-danger)]',
     };
 
     return (
