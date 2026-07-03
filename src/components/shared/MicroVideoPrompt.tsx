@@ -227,7 +227,7 @@ export const MicroVideoPrompt: React.FC<MicroVideoPromptProps> = ({
                         </p>
                         {rec.duration && (
                           <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
-                            <Clock size={10} />
+                            <Clock size={12} />
                             {rec.duration}
                           </div>
                         )}
