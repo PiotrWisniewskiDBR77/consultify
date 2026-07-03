@@ -495,12 +495,14 @@ const materializedTargetIcons: Record<string, React.ComponentType<{ size?: numbe
   task: CheckSquare,
 };
 
-function materializedTargetLabel(target: string): string {
-  if (target === 'idea') return 'Pomysł';
-  if (target === 'note') return 'Notatka';
-  if (target === 'initiative') return 'Inicjatywa';
-  if (target === 'decision') return 'Decyzja';
-  if (target === 'task') return 'Zadanie';
+type CanvasPanelTFn = (key: string, defaultValue?: string) => string;
+
+function materializedTargetLabel(target: string, t: CanvasPanelTFn): string {
+  if (target === 'idea') return t('canvas.panel.materialized.idea', 'Idea');
+  if (target === 'note') return t('canvas.panel.materialized.note', 'Note');
+  if (target === 'initiative') return t('canvas.panel.materialized.initiative', 'Initiative');
+  if (target === 'decision') return t('canvas.panel.materialized.decision', 'Decision');
+  if (target === 'task') return t('canvas.panel.materialized.task', 'Task');
   return target;
 }
 
@@ -558,29 +560,32 @@ function createDocumentState(
   };
 }
 
-function lifecycleLabel(lifecycleState: CanvasLifecycleState): string {
-  if (lifecycleState === 'in_review') return 'In review';
-  if (lifecycleState === 'approved') return 'Approved';
-  return 'Draft';
+function lifecycleLabel(lifecycleState: CanvasLifecycleState, t: CanvasPanelTFn): string {
+  if (lifecycleState === 'in_review') return t('canvas.panel.lifecycle.inReview', 'In review');
+  if (lifecycleState === 'approved') return t('canvas.panel.lifecycle.approved', 'Approved');
+  return t('canvas.panel.lifecycle.draft', 'Draft');
 }
 
-function projectionLabel(status: CanvasProjectionStatus): string {
-  if (status === 'stale') return 'Projection stale';
-  if (status === 'failed') return 'Projection failed';
-  if (status === 'missing') return 'Projection missing';
-  return 'Projection synced';
+function projectionLabel(status: CanvasProjectionStatus, t: CanvasPanelTFn): string {
+  if (status === 'stale') return t('canvas.panel.projection.stale', 'Projection stale');
+  if (status === 'failed') return t('canvas.panel.projection.failed', 'Projection failed');
+  if (status === 'missing') return t('canvas.panel.projection.missing', 'Projection missing');
+  return t('canvas.panel.projection.synced', 'Projection synced');
 }
 
-function saveStateLabel(saveState: CanvasDocumentState['saveState']): string {
-  if (saveState === 'saving') return 'Saving';
-  if (saveState === 'failed') return 'Save failed';
-  if (saveState === 'unsaved') return 'Unsaved changes';
-  return 'Saved';
+function saveStateLabel(saveState: CanvasDocumentState['saveState'], t: CanvasPanelTFn): string {
+  if (saveState === 'saving') return t('canvas.panel.saveState.saving', 'Saving');
+  if (saveState === 'failed') return t('canvas.panel.saveState.failed', 'Save failed');
+  if (saveState === 'unsaved') return t('canvas.panel.saveState.unsaved', 'Unsaved changes');
+  return t('canvas.panel.saveState.saved', 'Saved');
 }
 
-function capabilityLabel(status: CanvasCapabilityStatus): string {
-  if (status === 'out_of_scope') return 'Out of scope';
-  return status.charAt(0).toUpperCase() + status.slice(1);
+function capabilityLabel(status: CanvasCapabilityStatus, t: CanvasPanelTFn): string {
+  if (status === 'out_of_scope') return t('canvas.panel.capability.outOfScope', 'Out of scope');
+  return t(
+    `canvas.panel.capability.${status}`,
+    status.charAt(0).toUpperCase() + status.slice(1)
+  );
 }
 
 function capabilityBadgeClass(status: CanvasCapabilityStatus): string {
@@ -599,7 +604,14 @@ function capabilityBadgeClass(status: CanvasCapabilityStatus): string {
   return 'bg-slate-500/10 text-slate-600 dark:text-slate-300';
 }
 
-function renderCapabilityBadge(status: CanvasCapabilityStatus, testId?: string) {
+function CapabilityBadge({
+  status,
+  testId,
+}: {
+  status: CanvasCapabilityStatus;
+  testId?: string;
+}): React.ReactElement {
+  const { t } = useTranslation();
   return (
     <span
       data-testid={testId}
@@ -607,9 +619,13 @@ function renderCapabilityBadge(status: CanvasCapabilityStatus, testId?: string) 
         status
       )}`}
     >
-      {capabilityLabel(status)}
+      {capabilityLabel(status, t)}
     </span>
   );
+}
+
+function renderCapabilityBadge(status: CanvasCapabilityStatus, testId?: string) {
+  return <CapabilityBadge status={status} testId={testId} />;
 }
 
 function buildLineDiff(before: string, after: string): CanvasDiffSummary {
@@ -3409,7 +3425,7 @@ function WorkCanvasMarkdownDocumentPanel({
                             {entry.title}
                           </span>
                           <span className="shrink-0 text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                            {materializedTargetLabel(entry.target)}
+                            {materializedTargetLabel(entry.target, t)}
                           </span>
                           <a
                             href={entry.url}
@@ -3634,21 +3650,21 @@ function WorkCanvasMarkdownDocumentPanel({
                           className="font-semibold"
                           data-testid="canvas-diagnostics-save-state"
                         >
-                          {saveStateLabel(documentState.saveState)}
+                          {saveStateLabel(documentState.saveState, t)}
                         </strong>
                       </div>
                       <div className="flex items-center justify-between gap-3">
                         <span>Projection</span>
                         <strong className="font-semibold" data-testid="canvas-projection-status">
                           {isProjectionRefreshing
-                            ? 'Projection refreshing'
-                            : projectionLabel(documentState.markdownProjectionStatus)}
+                            ? t('canvas.panel.projection.refreshing', 'Projection refreshing')
+                            : projectionLabel(documentState.markdownProjectionStatus, t)}
                         </strong>
                       </div>
                       <div className="flex items-center justify-between gap-3">
                         <span>Lifecycle</span>
                         <strong className="font-semibold">
-                          {lifecycleLabel(documentState.lifecycleState)}
+                          {lifecycleLabel(documentState.lifecycleState, t)}
                         </strong>
                       </div>
                       <div className="flex items-center justify-between gap-3">
