@@ -1939,6 +1939,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             <div key={tag} className="rounded-xl border border-c-border-subtle overflow-hidden">
               <button
                 onClick={() => toggleTagCollapse(tag)}
+                aria-expanded={!isCollapsed}
                 className="w-full flex items-center gap-2.5 px-4 py-3 bg-c-surface-raised hover:bg-black/[0.04] dark:hover:bg-white/[0.04] transition-colors text-left"
               >
                 {isCollapsed ? (
