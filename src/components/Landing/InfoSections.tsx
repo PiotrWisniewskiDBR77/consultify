@@ -39,8 +39,8 @@ const AppFeatureSlide: React.FC<{
       <div className="h-full flex flex-col">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary-500/20 flex items-center justify-center">
-              <Bell size={20} className="text-primary-400" />
+            <div className="w-10 h-10 rounded-xl bg-c-accent-soft flex items-center justify-center">
+              <Bell size={20} className="text-c-accent" />
             </div>
             <span className="text-white font-bold text-lg">
               {t('landing.carousel.labels.notifications', 'Notifications')}
@@ -171,7 +171,7 @@ const AppFeatureSlide: React.FC<{
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <div
-                    className={`w-2 h-2 rounded-full ${task.status === 'in_progress' ? 'bg-blue-400' : 'bg-slate-50 dark:bg-navy-800/300'}`}
+                    className={`w-2 h-2 rounded-full ${task.status === 'in_progress' ? 'bg-blue-400' : 'bg-white/20'}`}
                   />
                   <span className="text-white font-semibold text-sm">{task.title}</span>
                 </div>
@@ -186,7 +186,7 @@ const AppFeatureSlide: React.FC<{
                   initial={{ width: 0 }}
                   animate={{ width: `${task.progress}%` }}
                   transition={{ delay: 0.3 + i * 0.1, duration: 0.5 }}
-                  className="h-full bg-gradient-to-r from-blue-500 to-primary-500 rounded-full"
+                  className="h-full bg-gradient-to-r from-blue-500 to-c-accent rounded-full"
                 />
               </div>
             </motion.div>
@@ -461,17 +461,17 @@ const FAQItem: React.FC<{
   isOpen: boolean;
   onClick: () => void;
 }> = ({ question, answer, isOpen, onClick }) => (
-  <div className="border-b border-slate-200 dark:border-navy-700 last:border-0">
+  <div className="border-b border-c-border last:border-0">
     <button
       onClick={onClick}
       className="w-full p-4 flex items-center justify-between text-left group"
     >
-      <span className="font-bold text-navy-950 dark:text-white pr-8 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+      <span className="font-bold text-c-text pr-8 group-hover:text-c-accent transition-colors">
         {question}
       </span>
       <ChevronDown
         size={20}
-        className={`text-slate-400 dark:text-slate-500 transition-transform duration-300 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
+        className={`text-c-text-muted transition-transform duration-300 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
       />
     </button>
     <AnimatePresence>
@@ -483,7 +483,7 @@ const FAQItem: React.FC<{
           transition={{ duration: 0.3 }}
           className="overflow-hidden"
         >
-          <p className="pb-5 text-slate-600 dark:text-slate-400 leading-relaxed">{answer}</p>
+          <p className="pb-5 text-c-text-secondary leading-relaxed">{answer}</p>
         </motion.div>
       )}
     </AnimatePresence>
@@ -568,11 +568,11 @@ export const InfoSections: React.FC = () => {
             <motion.h2
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
-              className="text-xs font-black text-primary-600 uppercase tracking-[0.3em] mb-6"
+              className="text-xs font-black text-c-accent uppercase tracking-[0.3em] mb-6"
             >
               {t('landing.methodology.badge')}
             </motion.h2>
-            <h3 className="text-4xl lg:text-5xl font-black text-navy-950 dark:text-white tracking-tight">
+            <h3 className="text-4xl lg:text-5xl font-black text-c-text tracking-tight">
               {t('landing.methodology.heading')}
             </h3>
           </div>
@@ -591,14 +591,14 @@ export const InfoSections: React.FC = () => {
                   transition={{ delay: idx * 0.1, duration: 0.5 }}
                   className="space-y-6 group"
                 >
-                  <div className="w-20 h-20 bg-white dark:bg-navy-900 rounded-xl flex items-center justify-center border border-slate-200 dark:border-navy-700 shadow-premium group-hover:shadow-glow transition-all duration-500 text-navy-950 dark:text-white">
+                  <div className="w-20 h-20 bg-c-surface rounded-xl flex items-center justify-center border border-c-border shadow-premium group-hover:shadow-glow transition-all duration-500 text-c-text">
                     <Icon size={36} strokeWidth={1.5} />
                   </div>
                   <div className="space-y-3">
-                    <h4 className="text-2xl font-black text-navy-950 dark:text-white tracking-tight">
+                    <h4 className="text-2xl font-black text-c-text tracking-tight">
                       {step.title}
                     </h4>
-                    <p className="text-slate-500 dark:text-slate-400 text-base leading-relaxed font-medium">
+                    <p className="text-c-text-muted text-base leading-relaxed font-medium">
                       {step.desc}
                     </p>
                   </div>
@@ -645,8 +645,8 @@ export const InfoSections: React.FC = () => {
                     key={i}
                     className="flex items-center gap-4 text-base font-bold text-slate-200"
                   >
-                    <div className="w-6 h-6 rounded-full bg-primary-600/20 flex items-center justify-center">
-                      <CheckCircle size={16} className="text-primary-400" />
+                    <div className="w-6 h-6 rounded-full bg-c-accent-soft flex items-center justify-center">
+                      <CheckCircle size={16} className="text-c-accent" />
                     </div>
                     {item}
                   </li>
@@ -679,12 +679,12 @@ export const InfoSections: React.FC = () => {
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-primary-100 dark:bg-primary-900/30 rounded-full text-primary-600 dark:text-primary-400 text-xs font-black uppercase tracking-widest mb-6"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-c-accent-soft rounded-full text-c-accent text-xs font-black uppercase tracking-widest mb-6"
             >
               <HelpCircle size={14} />
               {t('landing.faq.badge', 'FAQ')}
             </motion.div>
-            <h3 className="text-4xl lg:text-5xl font-black text-navy-950 dark:text-white tracking-tight">
+            <h3 className="text-4xl lg:text-5xl font-black text-c-text tracking-tight">
               {t('landing.faq.heading', 'Questions? Answers.')}
             </h3>
           </div>
@@ -693,7 +693,7 @@ export const InfoSections: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="bg-white dark:bg-navy-900 rounded-xl p-8 border border-slate-200 dark:border-navy-700 shadow-xl"
+            className="bg-c-surface rounded-xl p-8 border border-c-border shadow-xl"
           >
             {faqs.map((faq, idx) => (
               <FAQItem
@@ -707,11 +707,11 @@ export const InfoSections: React.FC = () => {
           </motion.div>
 
           <div className="text-center mt-8 space-y-6">
-            <p className="text-slate-500 dark:text-slate-400">
+            <p className="text-c-text-muted">
               {t('landing.faq.more', 'Have more questions?')}{' '}
               <a
                 href="/contact"
-                className="text-primary-600 dark:text-primary-400 font-semibold hover:underline"
+                className="text-c-accent font-semibold hover:underline"
               >
                 {t('landing.faq.contact', 'Contact us')}
               </a>
@@ -720,13 +720,13 @@ export const InfoSections: React.FC = () => {
             <div className="pt-6 flex flex-col sm:flex-row justify-center gap-3">
               <button
                 onClick={() => navigate('/register')}
-                className="px-6 py-3 rounded-xl bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-semibold shadow-lg shadow-primary-500/20 transition-colors"
+                className="px-6 py-3 rounded-xl bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-semibold shadow-lg shadow-c-accent/20 transition-colors"
               >
                 {t('landing.faq.ctaPrimary', 'Launch Free Trial')}
               </button>
               <button
                 onClick={() => navigate('/resources')}
-                className="px-6 py-3 rounded-xl border border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-800 dark:text-slate-200 font-semibold transition-colors"
+                className="px-6 py-3 rounded-xl border border-c-border hover:bg-c-surface-raised text-c-text-secondary font-semibold transition-colors"
               >
                 {t('landing.faq.ctaSecondary', 'Browse resources')}
               </button>
