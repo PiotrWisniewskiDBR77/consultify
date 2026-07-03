@@ -206,7 +206,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
               className="bg-c-surface/50 backdrop-blur-sm border border-c-border-subtle rounded-xl p-6 hover:bg-c-surface-raised transition-all group relative border-l-4 border-l-primary-500 cursor-pointer shadow-sm dark:shadow-none"
             >
               <div className="flex justify-between items-start mb-4">
-                <div className="p-3 rounded-xl bg-c-text text-c-bg/10 text-primary-400 group-hover:bg-c-text-secondary group-hover:text-white transition-all">
+                <div className="p-3 rounded-xl bg-c-accent/10 text-c-accent group-hover:bg-c-accent/20 transition-all">
                   <Layers size={22} />
                 </div>
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

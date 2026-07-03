@@ -893,7 +893,7 @@ export const PartnerProgramConfig: React.FC = () => {
                 className={cn(
                   'flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors',
                   payoutSettings.paymentMethods.includes(method.id)
-                    ? 'bg-c-text text-c-bg/20 border-primary-500'
+                    ? 'bg-c-accent/10 border-c-accent'
                     : 'bg-c-surface border-white/10 text-slate-600 dark:text-slate-500 hover:text-white'
                 )}
               >

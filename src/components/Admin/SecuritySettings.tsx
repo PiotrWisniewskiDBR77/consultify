@@ -544,7 +544,7 @@ export const SecuritySettings: React.FC = () => {
             <button
               onClick={handleSaveSettings}
               disabled={saving}
-              className="flex items-center gap-2 px-6 py-3 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-c-text text-c-bg/50 rounded-lg font-medium transition-colors"
+              className="flex items-center gap-2 px-6 py-3 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 rounded-lg font-medium transition-colors"
             >
               {saving ? <RefreshCw size={16} className="animate-spin" /> : <Check size={16} />}
               Save Settings

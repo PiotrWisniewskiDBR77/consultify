@@ -674,7 +674,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                         allSelected
                           ? 'bg-c-text text-c-bg border-c-border'
                           : someSelected
-                            ? 'bg-c-text text-c-bg/50 border-primary-500'
+                            ? 'bg-c-accent/10 border-c-accent'
                             : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-500 dark:hover:text-slate-400'
                       }`}
                     >
