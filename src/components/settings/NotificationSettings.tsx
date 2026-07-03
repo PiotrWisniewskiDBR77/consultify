@@ -279,7 +279,7 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
         {!loadError && (
           <>
             {/* Channel Headers */}
-            <div className="grid grid-cols-12 gap-4 pb-4 border-b border-white/10">
+            <div className="grid grid-cols-12 gap-4 pb-4 border-b border-c-border-subtle">
               <div className="col-span-5 text-sm font-medium text-c-text-secondary">
                 {t('settings.notifications.activity', 'Activity')}
               </div>
@@ -419,15 +419,15 @@ const NotificationRow: React.FC<NotificationRowProps> = ({
   <div
     className={cn(
       'grid grid-cols-12 gap-4 items-center py-4',
-      !isLast && 'border-b border-white/5'
+      !isLast && 'border-b border-c-border-subtle'
     )}
   >
     <div className="col-span-5 flex items-start gap-3">
-      <div className="p-2 bg-navy-700/50 rounded-lg flex-shrink-0">
+      <div className="p-2 bg-c-surface-raised rounded-lg flex-shrink-0">
         <Icon size={16} className="text-c-text-secondary" />
       </div>
       <div>
-        <h4 className="text-sm font-medium text-white">{title}</h4>
+        <h4 className="text-sm font-medium text-c-text">{title}</h4>
         <p className="text-xs text-c-text-muted mt-0.5">{description}</p>
       </div>
     </div>

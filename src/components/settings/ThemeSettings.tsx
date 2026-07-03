@@ -331,8 +331,8 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
               })}
 
               <label
-                className="relative w-12 h-12 rounded-xl bg-navy-700 border border-dashed border-white/20
-                           cursor-pointer hover:border-white/40 transition-all duration-200
+                className="relative w-12 h-12 rounded-xl bg-c-surface-raised border border-dashed border-c-border
+                           cursor-pointer hover:border-c-border-strong transition-all duration-200
                            flex items-center justify-center"
                 title={t('settings.appearance.customColor', 'Custom color')}
               >
@@ -346,10 +346,10 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
               </label>
             </div>
 
-            <div className="flex items-center gap-3 mt-4 p-3 bg-navy-700/50 rounded-lg">
+            <div className="flex items-center gap-3 mt-4 p-3 bg-c-surface-raised rounded-lg">
               <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: accentColor }} />
               <div>
-                <span className="text-sm text-white font-mono">{accentColor.toUpperCase()}</span>
+                <span className="text-sm text-c-text font-mono">{accentColor.toUpperCase()}</span>
                 <p className="text-xs text-c-text-muted">
                   {t('settings.appearance.currentAccent', 'Current accent color')}
                 </p>
@@ -447,7 +447,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
           </SettingsFormRow>
 
           {/* Preview Note */}
-          <div className="p-4 bg-navy-700/30 rounded-lg text-center">
+          <div className="p-4 bg-c-surface-raised rounded-lg text-center">
             <p className="text-sm text-c-text-muted">
               <Sparkles size={14} className="inline mr-2 text-c-accent" />
               {t(
