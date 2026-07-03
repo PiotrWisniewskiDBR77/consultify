@@ -813,7 +813,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
           'results.drawer.calculationHint',
           'The runtime reads the latest governed measurement as the primary period value.'
         ),
-        icon: <Sigma size={14} className="text-primary-400" />,
+        icon: <Sigma size={14} className="text-c-info" />,
       },
       {
         label: t('results.drawer.periodOnPeriod', 'Period on period'),
@@ -837,7 +837,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
             : achievement >= 100
               ? 'text-emerald-400'
               : 'text-amber-400',
-        icon: <Target size={14} className="text-primary-400" />,
+        icon: <Target size={14} className="text-c-info" />,
       },
       {
         label: t('results.drawer.projection', 'Projection'),
@@ -946,7 +946,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
           actionAgeing != null && actionAgeing > 7
             ? 'text-danger-400'
             : 'text-slate-900 dark:text-white',
-        icon: <Calendar size={14} className="text-primary-400" />,
+        icon: <Calendar size={14} className="text-c-info" />,
       },
     ] satisfies MetricStat[];
   }, [kpi, openCase, t]);
@@ -1565,10 +1565,10 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                     <div className="relative h-32 flex items-end gap-1">
                       {kpi?.targetValue != null && (
                         <div
-                          className="absolute left-0 right-0 border-t border-dashed border-primary-500/40"
+                          className="absolute left-0 right-0 border-t border-dashed border-c-info/50"
                           style={{ bottom: `${(kpi.targetValue / maxVal) * 100}%` }}
                         >
-                          <span className="absolute -top-3 right-0 text-[10px] text-primary-400">
+                          <span className="absolute -top-3 right-0 text-[10px] text-c-info">
                             {t('results.columns.target', 'Target')}
                           </span>
                         </div>
