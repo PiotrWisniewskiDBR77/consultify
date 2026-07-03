@@ -9771,7 +9771,8 @@
       },
       "mentions": {
         "empty": "Brak prezentacji."
-      }
+      },
+      "removeAttachment": "Usuń załącznik"
     },
     "voice": {
       "startVoice": "Rozmawiaj głosem",

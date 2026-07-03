@@ -9145,7 +9145,8 @@
       },
       "mentions": {
         "empty": "No presentations yet."
-      }
+      },
+      "removeAttachment": "Remove attachment"
     },
     "voice": {
       "startVoice": "Start by voice",
