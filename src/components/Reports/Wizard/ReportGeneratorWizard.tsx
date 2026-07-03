@@ -590,7 +590,7 @@ export const ReportGeneratorWizard: React.FC = () => {
                   onClick={() => toggleSection(section)}
                   className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-all ${
                     active
-                      ? 'border-primary-500 bg-primary-600 text-white'
+                      ? 'border-c-text bg-c-text text-c-bg'
                       : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50 dark:border-white/[0.12] dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-white/[0.04]'
                   }`}
                 >

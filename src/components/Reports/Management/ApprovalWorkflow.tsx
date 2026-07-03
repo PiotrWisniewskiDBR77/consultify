@@ -284,7 +284,7 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
             <button
               onClick={handleSubmit}
               disabled={submitting}
-              className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white rounded-lg font-medium transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-c-text hover:bg-c-text-secondary disabled:bg-c-border-strong text-c-bg rounded-lg font-medium transition-colors"
             >
               <Send size={16} />
               {submitting ? 'Submitting...' : 'Submit for Approval'}

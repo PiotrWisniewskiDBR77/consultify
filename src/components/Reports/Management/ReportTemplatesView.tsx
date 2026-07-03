@@ -306,7 +306,7 @@ export const ReportTemplatesView: React.FC = () => {
             <div className="mt-6">
               <button
                 onClick={handleCreateTemplate}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-c-text hover:bg-c-text-secondary text-c-bg text-sm font-medium"
               >
                 <Plus size={16} />
                 Create template
