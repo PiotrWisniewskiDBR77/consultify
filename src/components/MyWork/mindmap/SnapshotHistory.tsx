@@ -442,7 +442,7 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
                       className={`absolute -left-5 top-3 w-3 h-3 rounded-full border-2 border-c-border dark:border-c-border ${dotColor(snap.timestamp)} ${hov ? 'ring-2 ring-c-warning' : ''}`}
                     />
                     <div
-                      className={`p-3 rounded-xl border transition-all ${hov ? 'bg-c-warning dark:bg-c-warning border-c-warning dark:border-c-warning' : 'bg-c-surface-raised dark:bg-c-surface border-c-border-subtle dark:border-c-border'}`}
+                      className={`p-3 rounded-xl border transition-all ${hov ? 'bg-c-surface-raised dark:bg-c-surface border-c-warning dark:border-c-warning' : 'bg-c-surface-raised dark:bg-c-surface border-c-border-subtle dark:border-c-border'}`}
                     >
                       <div className="flex items-center gap-1.5 min-w-0">
                         {editing ? (

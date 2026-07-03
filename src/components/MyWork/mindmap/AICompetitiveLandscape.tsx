@@ -157,7 +157,7 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
                 return (
                   <div
                     key={comp.id}
-                    className={`p-3 rounded-xl border transition-all ${isAdded ? 'border-c-success bg-c-success' : 'border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface'}`}
+                    className={`p-3 rounded-xl border transition-all ${isAdded ? 'border-c-success bg-c-surface-raised' : 'border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface'}`}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">

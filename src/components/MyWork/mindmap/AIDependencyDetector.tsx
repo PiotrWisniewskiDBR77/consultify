@@ -209,7 +209,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
                 return (
                   <div
                     key={dep.id}
-                    className={`p-3 rounded-xl border transition-all ${isApplied ? 'border-c-success bg-c-success' : 'border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface'}`}
+                    className={`p-3 rounded-xl border transition-all ${isApplied ? 'border-c-success bg-c-surface-raised' : 'border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface'}`}
                   >
                     <div className="flex items-center gap-2 mb-1.5">
                       <span

@@ -120,7 +120,7 @@ class CanvasToolErrorBoundary extends React.Component<
       const isPl = typeof window !== 'undefined' && (navigator.language || '').startsWith('pl');
       return (
         <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-c-surface-raised dark:bg-c-surface p-8">
-          <div className="p-3 rounded-2xl bg-c-danger">
+          <div className="p-3 rounded-2xl bg-c-surface border border-c-danger">
             <AlertTriangle size={32} className="text-c-danger" />
           </div>
           <div className="text-center">

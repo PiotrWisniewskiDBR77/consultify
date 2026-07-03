@@ -32,9 +32,9 @@ const STATUS_ICONS: Record<string, React.ComponentType<any>> = {
 
 const STATUS_COLORS: Record<string, string> = {
   idea: 'bg-c-surface-raised border-c-border',
-  exploring: 'bg-c-info border-c-info',
-  validated: 'bg-c-success border-c-success',
-  ready_to_convert: 'bg-c-warning border-c-warning',
+  exploring: 'bg-c-surface-raised border-c-info',
+  validated: 'bg-c-surface-raised border-c-success',
+  ready_to_convert: 'bg-c-surface-raised border-c-warning',
   converted: 'bg-c-accent border-c-accent',
 };
 

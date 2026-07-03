@@ -309,7 +309,7 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
 
           {preview && (
             <>
-              <div className="mb-3 p-2 rounded-xl bg-c-info border border-c-info">
+              <div className="mb-3 p-2 rounded-xl bg-c-surface-raised border border-c-info">
                 <div className="text-[10px] font-bold text-c-info dark:text-c-info">
                   {fileName}
                 </div>

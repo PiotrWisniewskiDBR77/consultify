@@ -271,7 +271,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
       <div className="px-3 py-3 flex-1 overflow-auto space-y-3">
         {/* Unreviewed changes alert */}
         {unreviewed && (
-          <div className="rounded-xl border border-c-warning dark:border-c-warning bg-c-warning dark:bg-c-warning p-2.5 flex items-start gap-2">
+          <div className="rounded-xl border border-c-warning dark:border-c-warning bg-c-surface-raised dark:bg-c-surface p-2.5 flex items-start gap-2">
             <div className="mt-0.5">
               <AlertCircle size={14} className="text-c-warning" />
             </div>
@@ -438,7 +438,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
         </div>
 
         {/* ── Review Controls ──────────────────────────────────────── */}
-        <div className="rounded-xl border border-c-success dark:border-c-success bg-c-success dark:bg-c-success p-2.5">
+        <div className="rounded-xl border border-c-success dark:border-c-success bg-c-surface-raised dark:bg-c-surface p-2.5">
           <button
             type="button"
             onClick={() => toggleSection('review')}
@@ -525,7 +525,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
         </div>
 
         {/* ── AI Statistics ─────────────────────────────────────────── */}
-        <div className="rounded-xl border border-c-info dark:border-c-info bg-c-info dark:bg-c-info p-2.5">
+        <div className="rounded-xl border border-c-info dark:border-c-info bg-c-surface-raised dark:bg-c-surface p-2.5">
           <button
             type="button"
             onClick={() => toggleSection('stats')}
