@@ -274,11 +274,11 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <h2 className="text-xl font-semibold text-c-text flex items-center gap-2">
             <Bell size={24} />
             {t('admin.billing.alerts', 'Spending Alerts')}
           </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-muted mt-1">
             {t('admin.billing.alertsDesc', 'Get notified when spending reaches thresholds')}
           </p>
         </div>
@@ -326,18 +326,18 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
             return (
               <div
                 key={type.id}
-                className="p-4 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700"
+                className="p-4 bg-c-surface rounded-xl border border-c-border-subtle"
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <Icon size={16} className="text-slate-500 dark:text-slate-400" />
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <Icon size={16} className="text-c-text-muted" />
+                    <span className="text-sm font-medium text-c-text-secondary">
                       {type.label}
                     </span>
                   </div>
                   {hasAlert && <Bell size={14} className="text-primary-500" />}
                 </div>
-                <div className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                <div className="text-2xl font-bold text-c-text mb-2">
                   {usageData ? `${usagePercent}%` : '--'}
                 </div>
                 <div className="w-full bg-slate-200 dark:bg-navy-700 rounded-full h-2">
@@ -362,16 +362,16 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
 
       {/* Alerts List */}
       {alertsLoadError ? (
-        <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+        <div className="p-6 bg-c-surface rounded-xl border border-c-border-subtle">
           <DegradedState title="Spending alerts unavailable" description={alertsLoadError} />
         </div>
       ) : alerts.length === 0 ? (
-        <div className="p-12 text-center bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+        <div className="p-12 text-center bg-c-surface rounded-xl border border-c-border-subtle">
           <Bell className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-slate-900 dark:text-white">
+          <h3 className="text-lg font-medium text-c-text">
             No Alerts Configured
           </h3>
-          <p className="text-slate-500 dark:text-slate-400 mt-1 mb-4">
+          <p className="text-c-text-muted mt-1 mb-4">
             Create alerts to get notified about spending
           </p>
           <button
@@ -391,10 +391,10 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
             return (
               <div
                 key={alert.id}
-                className={`p-4 bg-white dark:bg-navy-800 rounded-xl border ${
+                className={`p-4 bg-c-surface rounded-xl border ${
                   alert.isActive
-                    ? 'border-slate-200 dark:border-navy-700'
-                    : 'border-slate-200 dark:border-navy-700 opacity-60'
+                    ? 'border-c-border-subtle'
+                    : 'border-c-border-subtle opacity-60'
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -403,28 +403,28 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                       className={`p-3 rounded-lg ${
                         alert.isActive
                           ? 'bg-primary-100 dark:bg-primary-900/30'
-                          : 'bg-slate-100 dark:bg-navy-700'
+                          : 'bg-c-surface-raised'
                       }`}
                     >
                       <Icon
                         className={
-                          alert.isActive ? 'text-primary-600' : 'text-slate-400 dark:text-slate-500'
+                          alert.isActive ? 'text-primary-600' : 'text-c-text-muted'
                         }
                         size={20}
                       />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="font-medium text-slate-900 dark:text-white">
+                        <h3 className="font-medium text-c-text">
                           {typeInfo.label} Alert
                         </h3>
                         {!alert.isActive && (
-                          <span className="px-2 py-0.5 bg-slate-100 dark:bg-navy-700 text-slate-500 dark:text-slate-400 text-xs rounded-full">
+                          <span className="px-2 py-0.5 bg-c-surface-raised text-c-text-muted text-xs rounded-full">
                             Paused
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                      <p className="text-sm text-c-text-muted mt-0.5">
                         Alert at {alert.threshold}
                         {alert.thresholdType === 'PERCENTAGE' ? '%' : ' USD'} •
                         {alert.action === 'NOTIFY' && ' Notify only'}
@@ -432,8 +432,8 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                         {alert.action === 'HARD_LIMIT' && ' Hard limit'}
                       </p>
                       <div className="flex items-center gap-1 mt-1">
-                        <Mail size={12} className="text-slate-400 dark:text-slate-500" />
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                        <Mail size={12} className="text-c-text-muted" />
+                        <span className="text-xs text-c-text-muted">
                           {alert.notifyEmails.join(', ')}
                         </span>
                       </div>
@@ -442,20 +442,20 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleToggleActive(alert.id)}
-                      className="p-2 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg text-slate-500 dark:text-slate-400"
+                      className="p-2 hover:bg-c-surface-raised rounded-lg text-c-text-muted"
                       title={alert.isActive ? 'Pause' : 'Activate'}
                     >
                       {alert.isActive ? <Pause size={16} /> : <Play size={16} />}
                     </button>
                     <button
                       onClick={() => openEditModal(alert)}
-                      className="p-2 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg text-slate-500 dark:text-slate-400"
+                      className="p-2 hover:bg-c-surface-raised rounded-lg text-c-text-muted"
                     >
                       <Edit size={16} />
                     </button>
                     <button
                       onClick={() => handleDeleteAlert(alert.id)}
-                      className="p-2 hover:bg-danger-100 dark:hover:bg-danger-900/30 rounded-lg text-slate-500 dark:text-slate-400 hover:text-danger-600"
+                      className="p-2 hover:bg-danger-100 dark:hover:bg-danger-900/30 rounded-lg text-c-text-muted hover:text-danger-600"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -480,22 +480,22 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white dark:bg-navy-800 rounded-xl shadow-2xl max-w-md w-full mx-4 max-h-[90vh] overflow-hidden"
+              className="bg-c-surface rounded-xl shadow-2xl max-w-md w-full mx-4 max-h-[90vh] overflow-hidden"
             >
-              <div className="p-6 border-b border-slate-200 dark:border-navy-700">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+              <div className="p-6 border-b border-c-border-subtle">
+                <h3 className="text-lg font-semibold text-c-text">
                   {editingAlert ? 'Edit Alert' : 'Create Spending Alert'}
                 </h3>
               </div>
               <div className="p-6 space-y-4 overflow-y-auto max-h-[60vh]">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-1">
                     Alert Type
                   </label>
                   <select
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg"
+                    className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg"
                   >
                     {ALERT_TYPES.map((type) => (
                       <option key={type.id} value={type.id}>
@@ -507,7 +507,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-sm font-medium text-c-text-secondary mb-1">
                       Threshold
                     </label>
                     <input
@@ -516,11 +516,11 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                       onChange={(e) =>
                         setFormData({ ...formData, threshold: parseInt(e.target.value) || 0 })
                       }
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg"
+                      className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-sm font-medium text-c-text-secondary mb-1">
                       Type
                     </label>
                     <select
@@ -528,7 +528,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                       onChange={(e) =>
                         setFormData({ ...formData, thresholdType: e.target.value as any })
                       }
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg"
+                      className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg"
                     >
                       <option value="PERCENTAGE">Percentage (%)</option>
                       <option value="ABSOLUTE">Absolute (USD)</option>
@@ -537,13 +537,13 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-1">
                     Action
                   </label>
                   <select
                     value={formData.action}
                     onChange={(e) => setFormData({ ...formData, action: e.target.value as any })}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg"
+                    className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg"
                   >
                     <option value="NOTIFY">Notify Only</option>
                     <option value="NOTIFY_AND_PAUSE">Notify & Pause Usage</option>
@@ -558,7 +558,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-1">
                     Notify Emails
                   </label>
                   {formData.notifyEmails.map((email, idx) => (
@@ -568,7 +568,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                         value={email}
                         onChange={(e) => updateEmail(idx, e.target.value)}
                         placeholder="email@company.com"
-                        className="flex-1 px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg"
+                        className="flex-1 px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg"
                       />
                       {formData.notifyEmails.length > 1 && (
                         <button
@@ -590,10 +590,10 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                   </button>
                 </div>
               </div>
-              <div className="p-6 border-t border-slate-200 dark:border-navy-700 flex justify-end gap-3">
+              <div className="p-6 border-t border-c-border-subtle flex justify-end gap-3">
                 <button
                   onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 text-slate-600 dark:text-slate-400"
+                  className="px-4 py-2 text-c-text-secondary"
                 >
                   Cancel
                 </button>
