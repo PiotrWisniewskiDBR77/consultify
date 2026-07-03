@@ -226,17 +226,17 @@ export function InterfacesIndex({
   if (editingInterface) {
     return (
       <div className="flex h-full flex-col">
-        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-2 dark:border-navy-700">
+        <div className="flex items-center justify-between border-b border-c-border-subtle px-4 py-2 border-c-border">
           <button
             onClick={() => {
               setEditingInterface(null);
               loadInterfaces();
             }}
-            className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-navy-800"
+            className="rounded-lg px-3 py-1.5 text-sm font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised text-c-text-muted hover:bg-c-surface-raised"
           >
             &larr; {t('interfacesIndex.backToList', 'Back to interfaces')}
           </button>
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <span className="text-sm font-medium text-c-text-muted">
             {editingInterface.name}
           </span>
         </div>
@@ -303,12 +303,12 @@ export function InterfacesIndex({
     return (
       <div className="p-6">
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-lg font-semibold text-c-text">
             {t('interfacesIndex.chooseTemplate', 'Choose a template')}
           </h2>
           <button
             onClick={() => setShowTemplates(false)}
-            className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-gray-100 dark:hover:bg-navy-800"
+            className="rounded-lg p-1.5 text-c-text-secondary transition-colors hover:bg-c-surface-raised"
           >
             <X className="h-4 w-4" />
           </button>
@@ -319,15 +319,15 @@ export function InterfacesIndex({
             <button
               key={tpl.key}
               onClick={() => handleCreateFromTemplate(tpl)}
-              className="group flex flex-col items-center rounded-2xl border border-gray-200 bg-white p-6 text-center transition-all hover:border-primary-300 hover:shadow-md dark:border-navy-700 dark:bg-navy-800 dark:hover:border-primary-600"
+              className="group flex flex-col items-center rounded-2xl border border-c-border-subtle bg-c-surface p-6 text-center transition-all hover:border-c-accent hover:shadow-md border-c-border bg-c-surface-raised hover:border-c-accent"
             >
-              <div className="mb-3 rounded-xl bg-primary-50 p-3 text-primary-600 transition-colors group-hover:bg-primary-100 dark:bg-primary-900/20 dark:text-primary-400">
+              <div className="mb-3 rounded-xl bg-c-accent p-3 text-c-accent transition-colors group-hover:bg-c-accent-soft text-c-accent">
                 {tpl.icon}
               </div>
-              <h4 className="mb-1 text-sm font-semibold text-gray-900 dark:text-white">
+              <h4 className="mb-1 text-sm font-semibold text-c-text">
                 {tpl.label}
               </h4>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{tpl.description}</p>
+              <p className="text-xs text-c-text-muted">{tpl.description}</p>
             </button>
           ))}
         </div>
@@ -340,13 +340,13 @@ export function InterfacesIndex({
   return (
     <div className="p-6">
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <h2 className="text-lg font-semibold text-c-text">
           {t('interfacesIndex.title', 'Interfaces')}
         </h2>
         {!locked && (
           <button
             onClick={() => setShowTemplates(true)}
-            className="flex items-center gap-1.5 rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
+            className="flex items-center gap-1.5 rounded-xl bg-c-accent px-4 py-2 text-sm font-medium text-c-text transition-colors hover:bg-c-accent"
           >
             <Plus className="h-4 w-4" />
             {t('interfacesIndex.createInterface', 'Create Interface')}
@@ -358,26 +358,26 @@ export function InterfacesIndex({
         {interfaces.map((iface) => (
           <div
             key={iface.id}
-            className="group relative rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-md dark:border-navy-700 dark:bg-navy-800"
+            className="group relative rounded-2xl border border-c-border-subtle bg-c-surface p-5 transition-shadow hover:shadow-md border-c-border bg-c-surface-raised"
           >
             {/* Placeholder thumbnail */}
-            <div className="mb-3 flex h-24 items-center justify-center rounded-xl bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/10 dark:to-primary-800/10">
-              <Layout className="h-8 w-8 text-primary-400" />
+            <div className="mb-3 flex h-24 items-center justify-center rounded-xl bg-c-accent-soft">
+              <Layout className="h-8 w-8 text-c-accent" />
               {iface.config?.blocks && iface.config.blocks.length > 0 && (
-                <span className="ml-2 text-xs text-primary-500">
+                <span className="ml-2 text-xs text-c-accent">
                   {iface.config.blocks.length} {t('interfacesIndex.blocks', 'blocks')}
                 </span>
               )}
             </div>
 
             {/* Name */}
-            <h3 className="mb-1 text-sm font-semibold text-gray-900 dark:text-white">
+            <h3 className="mb-1 text-sm font-semibold text-c-text">
               {iface.name}
             </h3>
 
             {/* Last modified */}
             {iface.updatedAt && (
-              <p className="mb-4 text-xs text-gray-600 dark:text-gray-500">
+              <p className="mb-4 text-xs text-c-text-muted">
                 {t('interfacesIndex.lastModified', 'Last modified')}{' '}
                 {new Date(iface.updatedAt).toLocaleDateString()}
               </p>
@@ -388,10 +388,10 @@ export function InterfacesIndex({
               {/* Share */}
               <button
                 onClick={() => handleCopyShareLink(iface.id)}
-                className="flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-200 dark:bg-navy-700 dark:text-gray-300 dark:hover:bg-navy-600"
+                className="flex items-center gap-1 rounded-lg bg-c-surface-raised px-2.5 py-1.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised text-c-text-muted hover:bg-c-surface-raised"
               >
                 {copiedId === iface.id ? (
-                  <Check className="h-3 w-3 text-green-600" />
+                  <Check className="h-3 w-3 text-c-success" />
                 ) : (
                   <ClipboardCopy className="h-3 w-3" />
                 )}
@@ -405,7 +405,7 @@ export function InterfacesIndex({
               {/* Edit */}
               <button
                 onClick={() => setEditingInterface(iface)}
-                className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-c-info transition-colors hover:bg-c-info text-c-info hover:bg-c-info"
               >
                 {t('interfacesIndex.edit', 'Edit')}
               </button>
@@ -417,13 +417,13 @@ export function InterfacesIndex({
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleDelete(iface.id)}
-                        className="rounded-lg px-2 py-1 text-xs font-medium text-danger-600 transition-colors hover:bg-danger-50 dark:hover:bg-danger-900/20"
+                        className="rounded-lg px-2 py-1 text-xs font-medium text-c-danger transition-colors hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] dark:hover:bg-[color-mix(in_srgb,var(--c-danger)_18%,transparent)]"
                       >
                         {t('interfacesIndex.confirmDelete', 'Confirm')}
                       </button>
                       <button
                         onClick={() => setDeleteConfirm(null)}
-                        className="rounded-lg px-2 py-1 text-xs text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-navy-700"
+                        className="rounded-lg px-2 py-1 text-xs text-c-text-muted transition-colors hover:bg-c-surface-raised"
                       >
                         {t('interfacesIndex.cancel', 'Cancel')}
                       </button>
@@ -431,7 +431,7 @@ export function InterfacesIndex({
                   ) : (
                     <button
                       onClick={() => setDeleteConfirm(iface.id)}
-                      className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-danger-50 hover:text-danger-600 dark:hover:bg-danger-900/20"
+                      className="rounded-lg p-1.5 text-c-text-secondary transition-colors hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] hover:text-c-danger dark:hover:bg-[color-mix(in_srgb,var(--c-danger)_18%,transparent)]"
                       title={t('interfacesIndex.delete', 'Delete')}
                     >
                       <Trash2 className="h-3.5 w-3.5" />

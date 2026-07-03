@@ -28,8 +28,8 @@ interface PublicFormFieldInputProps {
 }
 
 export function PublicFormFieldInput({ field, value, onChange, error }: PublicFormFieldInputProps) {
-  const base = `w-full rounded-lg border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 ${
-    error ? 'border-danger-300 bg-danger-50' : 'border-gray-200 bg-white'
+  const base = `w-full rounded-lg border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-info ${
+    error ? 'border-c-danger bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)]' : 'border-c-border-subtle bg-c-surface'
   }`;
 
   switch (field.fieldType) {
@@ -115,16 +115,16 @@ export function PublicFormFieldInput({ field, value, onChange, error }: PublicFo
           <div
             onClick={() => onChange(!value)}
             className={`relative h-5 w-9 rounded-full transition-colors ${
-              value ? 'bg-blue-600' : 'bg-gray-300'
+              value ? 'bg-c-info' : 'bg-c-surface-raised'
             }`}
           >
             <div
-              className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
+              className={`absolute top-0.5 h-4 w-4 rounded-full bg-c-surface shadow transition-transform ${
                 value ? 'translate-x-4' : 'translate-x-0.5'
               }`}
             />
           </div>
-          <span className="text-sm text-gray-600">{value ? 'Yes' : 'No'}</span>
+          <span className="text-sm text-c-text-secondary">{value ? 'Yes' : 'No'}</span>
         </label>
       );
 
@@ -163,13 +163,13 @@ export function PublicFormFieldInput({ field, value, onChange, error }: PublicFo
                       checked ? selected.filter((s) => s !== opt.name) : [...selected, opt.name]
                     );
                   }}
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="h-4 w-4 rounded border-c-border text-c-info focus:ring-c-focus"
                 />
-                <span className="text-sm text-gray-700">{opt.name}</span>
+                <span className="text-sm text-c-text-secondary">{opt.name}</span>
               </label>
             );
           })}
-          {options.length === 0 && <p className="text-xs text-gray-600">No options configured</p>}
+          {options.length === 0 && <p className="text-xs text-c-text-secondary">No options configured</p>}
         </div>
       );
     }
@@ -188,7 +188,7 @@ export function PublicFormFieldInput({ field, value, onChange, error }: PublicFo
             >
               <Star
                 className={`h-6 w-6 ${
-                  i < current ? 'fill-yellow-400 text-yellow-400' : 'text-gray-600'
+                  i < current ? 'fill-yellow-400 text-c-warning' : 'text-c-text-secondary'
                 }`}
               />
             </button>
@@ -200,7 +200,7 @@ export function PublicFormFieldInput({ field, value, onChange, error }: PublicFo
     case 'attachment':
       return (
         <div
-          className={`rounded-lg border-2 border-dashed p-4 text-center ${error ? 'border-danger-300' : 'border-gray-200'}`}
+          className={`rounded-lg border-2 border-dashed p-4 text-center ${error ? 'border-c-danger' : 'border-c-border-subtle'}`}
         >
           <input
             type="file"
@@ -208,9 +208,9 @@ export function PublicFormFieldInput({ field, value, onChange, error }: PublicFo
               const file = e.target.files?.[0];
               if (file) onChange(file.name);
             }}
-            className="text-sm text-gray-500"
+            className="text-sm text-c-text-muted"
           />
-          <p className="mt-1 text-xs text-gray-600">Upload a file</p>
+          <p className="mt-1 text-xs text-c-text-secondary">Upload a file</p>
         </div>
       );
 

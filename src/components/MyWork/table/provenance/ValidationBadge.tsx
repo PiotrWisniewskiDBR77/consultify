@@ -43,25 +43,25 @@ const STYLES: Record<
   }
 > = {
   unverified: {
-    bg: '#f1f5f9',
-    fg: '#475569',
-    border: '#cbd5e1',
+    bg: 'var(--c-surface-raised)',
+    fg: 'var(--c-text-secondary)',
+    border: 'var(--c-border)',
     icon: <Circle size={11} />,
     labelEn: 'Unverified',
     labelPl: 'Niezweryfikowany',
   },
   verified: {
-    bg: '#dcfce7',
-    fg: '#166534',
-    border: '#86efac',
+    bg: 'color-mix(in srgb, var(--c-success) 15%, transparent)',
+    fg: 'var(--c-success)',
+    border: 'color-mix(in srgb, var(--c-success) 40%, transparent)',
     icon: <CheckCircle2 size={11} />,
     labelEn: 'Verified',
     labelPl: 'Zweryfikowany',
   },
   flagged: {
-    bg: '#fef3c7',
-    fg: '#92400e',
-    border: '#fcd34d',
+    bg: 'color-mix(in srgb, var(--c-warning) 15%, transparent)',
+    fg: 'var(--c-warning)',
+    border: 'color-mix(in srgb, var(--c-warning) 40%, transparent)',
     icon: <Flag size={11} />,
     labelEn: 'Flagged',
     labelPl: 'Oznaczony',
@@ -121,7 +121,7 @@ export const ValidationBadge: React.FC<ValidationBadgeProps> = ({
         type="button"
         disabled={!interactive || !showCaret}
         onClick={() => showCaret && setOpen((v) => !v)}
-        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold border transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary-400 disabled:cursor-default"
+        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold border transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-c-focus disabled:cursor-default"
         style={{
           backgroundColor: palette.bg,
           color: palette.fg,
@@ -145,7 +145,7 @@ export const ValidationBadge: React.FC<ValidationBadgeProps> = ({
       {open && (
         <div
           role="menu"
-          className="absolute left-0 top-full mt-1 z-50 min-w-[160px] rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg p-1"
+          className="absolute left-0 top-full mt-1 z-50 min-w-[160px] rounded-lg border border-c-border bg-c-surface shadow-lg p-1"
           data-testid={`${testId}-menu`}
         >
           {visibleAllowed.map((next) => (
@@ -156,7 +156,7 @@ export const ValidationBadge: React.FC<ValidationBadgeProps> = ({
               onClick={() => {
                 void handlePick(next);
               }}
-              className="flex w-full items-center gap-2 px-2 py-1.5 rounded text-[12px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800"
+              className="flex w-full items-center gap-2 px-2 py-1.5 rounded text-[12px] font-medium text-c-text hover:bg-c-surface-raised"
               data-testid={`${testId}-menu-${next}`}
             >
               <span aria-hidden style={{ color: STYLES[next].fg }}>
@@ -165,7 +165,7 @@ export const ValidationBadge: React.FC<ValidationBadgeProps> = ({
               <span>{labelFor(next, isPl ?? false)}</span>
               {next === 'unverified' && (
                 <span
-                  className="ml-auto text-[9px] uppercase tracking-wider text-slate-600"
+                  className="ml-auto text-[9px] uppercase tracking-wider text-c-text-secondary"
                   aria-hidden
                 >
                   {isPl ? 'admin' : 'admin'}
