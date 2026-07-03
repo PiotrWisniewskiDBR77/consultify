@@ -10,21 +10,21 @@ export const TrustStrip: React.FC = () => {
     {
       icon: ShieldCheck,
       label: t('landing.compliance.badges.gdpr', 'GDPR compliant'),
-      color: 'text-emerald-600 dark:text-emerald-400',
+      color: 'text-c-success',
       glowColor: 'rgba(16,185,129,0.22)',
       borderColor: 'rgba(16,185,129,0.22)',
     },
     {
       icon: Lock,
       label: t('landing.compliance.badges.encryption', 'AES-256 encryption'),
-      color: 'text-blue-600 dark:text-blue-400',
+      color: 'text-c-info',
       glowColor: 'rgba(34,211,238,0.20)',
       borderColor: 'rgba(34,211,238,0.20)',
     },
     {
       icon: Globe,
       label: t('landing.compliance.badges.euData', 'Your region, your data'),
-      color: 'text-blue-600 dark:text-blue-400',
+      color: 'text-c-info',
       glowColor: 'rgba(96,165,250,0.20)',
       borderColor: 'rgba(96,165,250,0.20)',
     },
@@ -34,21 +34,21 @@ export const TrustStrip: React.FC = () => {
     {
       icon: Cloud,
       label: t('landing.compliance.badges.sharedCloud', 'Shared cloud'),
-      color: 'text-sky-600 dark:text-sky-400',
+      color: 'text-c-info',
       glowColor: 'rgba(56,189,248,0.16)',
       borderColor: 'rgba(56,189,248,0.16)',
     },
     {
       icon: Server,
       label: t('landing.compliance.badges.dedicated', 'Dedicated API'),
-      color: 'text-primary-600 dark:text-primary-400',
+      color: 'text-c-accent',
       glowColor: 'rgba(165,28,48,0.18)',
       borderColor: 'rgba(165,28,48,0.18)',
     },
     {
       icon: Building2,
       label: t('landing.compliance.badges.onPrem', 'On-premise'),
-      color: 'text-amber-600 dark:text-amber-400',
+      color: 'text-c-warning',
       glowColor: 'rgba(251,191,36,0.16)',
       borderColor: 'rgba(251,191,36,0.16)',
     },
@@ -69,7 +69,7 @@ export const TrustStrip: React.FC = () => {
         <div className="grid md:grid-cols-2 gap-10 md:gap-16">
           {/* Security & Compliance */}
           <div className="text-center md:text-left">
-            <span className="text-[10px] font-bold uppercase tracking-[0.35em] text-slate-400 dark:text-white/25">
+            <span className="text-[10px] font-bold uppercase tracking-[0.35em] text-c-text-muted">
               {t('landing.compliance.securityLabel', 'Security & Compliance')}
             </span>
             <div className="mt-5 flex flex-wrap items-center justify-center md:justify-start gap-3">
@@ -82,14 +82,14 @@ export const TrustStrip: React.FC = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: idx * 0.08 }}
                     viewport={{ once: true }}
-                    className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl transition-all duration-300 hover:scale-105 cursor-default bg-slate-50 dark:bg-white/[0.03]"
+                    className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl transition-all duration-300 hover:scale-105 cursor-default bg-c-surface-raised"
                     style={{
                       border: `1px solid ${badge.borderColor}`,
                       boxShadow: `0 0 20px -8px ${badge.glowColor}`,
                     }}
                   >
                     <Icon size={16} className={badge.color} strokeWidth={2} />
-                    <span className="text-sm font-bold text-slate-600 dark:text-white/70">
+                    <span className="text-sm font-bold text-c-text-secondary">
                       {badge.label}
                     </span>
                   </motion.div>
@@ -100,7 +100,7 @@ export const TrustStrip: React.FC = () => {
 
           {/* Deployment Options */}
           <div className="text-center md:text-left">
-            <span className="text-[10px] font-bold uppercase tracking-[0.35em] text-slate-400 dark:text-white/25">
+            <span className="text-[10px] font-bold uppercase tracking-[0.35em] text-c-text-muted">
               {t('landing.compliance.deployLabel', 'Deployment Options')}
             </span>
             <div className="mt-5 flex flex-wrap items-center justify-center md:justify-start gap-3">
@@ -113,14 +113,14 @@ export const TrustStrip: React.FC = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: 0.24 + idx * 0.08 }}
                     viewport={{ once: true }}
-                    className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl transition-all duration-300 hover:scale-105 cursor-default bg-slate-50 dark:bg-white/[0.03]"
+                    className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl transition-all duration-300 hover:scale-105 cursor-default bg-c-surface-raised"
                     style={{
                       border: `1px solid ${badge.borderColor}`,
                       boxShadow: `0 0 20px -8px ${badge.glowColor}`,
                     }}
                   >
                     <Icon size={16} className={badge.color} strokeWidth={2} />
-                    <span className="text-sm font-bold text-slate-600 dark:text-white/70">
+                    <span className="text-sm font-bold text-c-text-secondary">
                       {badge.label}
                     </span>
                   </motion.div>
@@ -138,13 +138,13 @@ export const TrustStrip: React.FC = () => {
           viewport={{ once: true }}
           className="mt-8 flex flex-col items-center gap-2"
         >
-          <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full text-xs bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10">
+          <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full text-xs bg-c-surface-raised border border-c-border">
             <span className="flex items-center gap-1.5">
               <span className="text-sm">🇪🇺</span>
               <span className="text-sm">🇺🇸</span>
               <span className="text-sm">🇸🇬</span>
             </span>
-            <span className="font-bold text-slate-600 dark:text-white/60">
+            <span className="font-bold text-c-text-secondary">
               {t(
                 'landing.compliance.euNote',
                 'Your data stays in the region you choose — EU, US, or APAC. You pick, we enforce.'

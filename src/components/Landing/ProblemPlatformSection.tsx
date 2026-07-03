@@ -41,9 +41,9 @@ export const ProblemPlatformSection: React.FC = () => {
             initial={{ opacity: 0, y: 8 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.04] text-xs font-bold uppercase tracking-[0.2em] text-slate-600 dark:text-white/70"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-c-border bg-c-surface-raised text-xs font-bold uppercase tracking-[0.2em] text-c-text-secondary"
           >
-            <Sparkles size={12} className="text-primary-600 dark:text-primary-300" />
+            <Sparkles size={12} className="text-c-accent" />
             {t('landing.problemPlatform.badge', 'Why this category matters')}
           </motion.div>
           <motion.h2
@@ -51,18 +51,11 @@ export const ProblemPlatformSection: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08 }}
             viewport={{ once: true }}
-            className="mt-5 font-black text-slate-900 dark:text-white tracking-tight leading-[1.05]"
+            className="mt-5 font-black text-c-text tracking-tight leading-[1.05]"
             style={{ fontSize: 'clamp(32px, 5vw, 56px)' }}
           >
             {t('landing.problemPlatform.heading', 'What Spotify did for music,')}{' '}
-            <span
-              style={{
-                background: 'linear-gradient(90deg, #E45868, #D42B3D, #EF8A94)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
+            <span className="text-c-accent">
               {t('landing.problemPlatform.headingAccent', 'we do for consulting.')}
             </span>
           </motion.h2>
@@ -71,7 +64,7 @@ export const ProblemPlatformSection: React.FC = () => {
             whileInView={{ opacity: 1 }}
             transition={{ delay: 0.16 }}
             viewport={{ once: true }}
-            className="mt-5 text-lg text-slate-500 dark:text-white/50 max-w-2xl mx-auto leading-relaxed"
+            className="mt-5 text-lg text-c-text-muted max-w-2xl mx-auto leading-relaxed"
           >
             {t(
               'landing.problemPlatform.sub',
@@ -86,7 +79,7 @@ export const ProblemPlatformSection: React.FC = () => {
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="flex flex-col rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] p-8 backdrop-blur-xl"
+            className="flex flex-col rounded-2xl border border-c-border bg-c-surface p-8 backdrop-blur-xl"
           >
             <div className="flex items-start gap-4 mb-6">
               <div
@@ -99,7 +92,7 @@ export const ProblemPlatformSection: React.FC = () => {
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400 mb-1">
                   {t('landing.problemPlatform.problem.badge', 'The market problem')}
                 </p>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-snug">
+                <h3 className="text-lg font-bold text-c-text leading-snug">
                   {t(
                     'landing.problemPlatform.problem.title',
                     'Business intelligence is still inaccessible, generic, and unsafe.'
@@ -108,7 +101,7 @@ export const ProblemPlatformSection: React.FC = () => {
               </div>
             </div>
 
-            <p className="text-sm text-slate-500 dark:text-white/45 leading-relaxed mb-6">
+            <p className="text-sm text-c-text-muted leading-relaxed mb-6">
               {t(
                 'landing.problemPlatform.problem.body',
                 'The market still has not turned AI and digital tools into a scalable layer for tactical and strategic business execution.'
@@ -119,13 +112,13 @@ export const ProblemPlatformSection: React.FC = () => {
               {problemPoints.map((point) => (
                 <div
                   key={point}
-                  className="flex h-full items-start gap-3 rounded-xl border border-slate-200 dark:border-white/[0.05] bg-slate-100 dark:bg-white/[0.02] px-4 py-3"
+                  className="flex h-full items-start gap-3 rounded-xl border border-c-border bg-c-surface-raised px-4 py-3"
                 >
                   <Lightbulb
                     size={14}
                     className="text-amber-500 dark:text-amber-400 mt-0.5 shrink-0"
                   />
-                  <span className="text-sm text-slate-600 dark:text-white/60 leading-relaxed">
+                  <span className="text-sm text-c-text-secondary leading-relaxed">
                     {point}
                   </span>
                 </div>
@@ -147,7 +140,7 @@ export const ProblemPlatformSection: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08 }}
             viewport={{ once: true }}
-            className="flex flex-col rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] p-8 backdrop-blur-xl"
+            className="flex flex-col rounded-2xl border border-c-border bg-c-surface p-8 backdrop-blur-xl"
           >
             <div className="flex items-start gap-4 mb-6">
               <div
@@ -160,7 +153,7 @@ export const ProblemPlatformSection: React.FC = () => {
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400 mb-1">
                   {t('landing.problemPlatform.pattern.badge', 'The category shift')}
                 </p>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-snug">
+                <h3 className="text-lg font-bold text-c-text leading-snug">
                   {t(
                     'landing.problemPlatform.pattern.title',
                     'What Spotify did for music: access, quality, and trust at scale.'
@@ -169,7 +162,7 @@ export const ProblemPlatformSection: React.FC = () => {
               </div>
             </div>
 
-            <p className="text-sm text-slate-500 dark:text-white/45 leading-relaxed mb-6">
+            <p className="text-sm text-c-text-muted leading-relaxed mb-6">
               {t(
                 'landing.problemPlatform.pattern.body',
                 'Spotify did not create more music. It made great music instantly accessible, reliable, and easy to use. Consultify applies the same shift to business intelligence.'
@@ -180,14 +173,14 @@ export const ProblemPlatformSection: React.FC = () => {
               {patternExamples.map((item) => (
                 <div
                   key={item}
-                  className="flex h-full items-start rounded-xl border border-slate-200 dark:border-white/[0.05] bg-slate-100 dark:bg-white/[0.02] px-4 py-3 text-sm text-slate-600 dark:text-white/60 leading-relaxed"
+                  className="flex h-full items-start rounded-xl border border-c-border bg-c-surface-raised px-4 py-3 text-sm text-c-text-secondary leading-relaxed"
                 >
                   {item}
                 </div>
               ))}
 
-              <div className="rounded-xl border border-primary-500/25 dark:border-primary-500/20 bg-primary-50 dark:bg-primary-500/[0.06] px-4 py-3">
-                <p className="text-sm font-semibold text-primary-700 dark:text-primary-300">
+              <div className="rounded-xl border border-c-accent bg-c-accent-soft px-4 py-3">
+                <p className="text-sm font-semibold text-c-accent">
                   {t(
                     'landing.problemPlatform.pattern.summary',
                     'Access. Quality. Trust. That is the shift.'

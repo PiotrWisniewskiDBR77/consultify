@@ -79,11 +79,11 @@ const PreviewCard: React.FC<PreviewCardProps> = ({ article, onArticleClick }) =>
 
   return (
     <div
-      className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl transition-all group hover:shadow-2xl dark:border-slate-700 dark:bg-slate-900 cursor-pointer"
+      className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-c-border-subtle bg-c-surface shadow-xl transition-all group hover:shadow-2xl cursor-pointer"
       onClick={() => onArticleClick(article)}
     >
       {/* Video Teaser / Thumbnail */}
-      <div className="relative aspect-video bg-gradient-to-br from-primary-900 to-crimson-900 overflow-hidden">
+      <div className="relative aspect-video bg-gradient-to-br from-c-accent to-c-accent/70 overflow-hidden">
         {article.thumbnail_url ? (
           <img
             src={
@@ -108,14 +108,14 @@ const PreviewCard: React.FC<PreviewCardProps> = ({ article, onArticleClick }) =>
         {article.video_teaser_url && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">
             <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-              <Play size={24} className="text-primary-600 ml-1" />
+              <Play size={24} className="text-c-accent ml-1" />
             </div>
           </div>
         )}
 
         {/* Category Badge */}
         <div className="absolute top-3 left-3">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm text-primary-600 dark:text-primary-400 text-xs font-semibold rounded-full">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-c-surface/90 backdrop-blur-sm text-c-accent text-xs font-semibold rounded-full">
             <DynamicIcon name={article.category_icon} size={12} />
             {article.category_name}
           </span>
@@ -132,13 +132,13 @@ const PreviewCard: React.FC<PreviewCardProps> = ({ article, onArticleClick }) =>
 
       {/* Content */}
       <div className="flex flex-1 flex-col p-5">
-        <h3 className="mb-2 min-h-[3.5rem] text-lg font-bold text-slate-900 transition-colors line-clamp-2 group-hover:text-primary-600 dark:text-white dark:group-hover:text-primary-400">
+        <h3 className="mb-2 min-h-[3.5rem] text-lg font-bold text-c-text transition-colors line-clamp-2 group-hover:text-c-accent">
           {article.title}
         </h3>
-        <p className="mb-4 flex-1 text-sm text-slate-600 line-clamp-3 dark:text-slate-400">
+        <p className="mb-4 flex-1 text-sm text-c-text-secondary line-clamp-3">
           {article.summary}
         </p>
-        <span className="mt-auto flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-primary-600 to-crimson-600 px-4 py-2.5 text-sm font-semibold text-white transition-all group-hover:from-primary-700 group-hover:to-crimson-700">
+        <span className="mt-auto flex w-full items-center justify-center gap-2 rounded-lg bg-c-accent px-4 py-2.5 text-sm font-semibold text-white transition-all group-hover:opacity-90">
           {t('landing.knowledge.readMore', 'Read Full Article')}
           <ArrowRight size={14} />
         </span>
@@ -190,11 +190,11 @@ export const KnowledgePreviewSection: React.FC<KnowledgePreviewSectionProps> = (
   if (isLoading) {
     return (
       <section
-        className={`py-20 bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900 ${className}`}
+        className={`py-20 bg-c-bg ${className}`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500" />
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-c-accent" />
           </div>
         </div>
       </section>
@@ -204,20 +204,18 @@ export const KnowledgePreviewSection: React.FC<KnowledgePreviewSectionProps> = (
   if (articles.length === 0) return null;
 
   return (
-    <section
-      className={`py-20 bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900 ${className}`}
-    >
+    <section className={`py-20 bg-c-bg ${className}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full text-sm font-semibold mb-4">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-c-accent-soft text-c-accent rounded-full text-sm font-semibold mb-4">
             <BookOpen size={16} />
             {t('landing.knowledge.badge', 'Knowledge Base')}
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-c-text mb-4">
             {t('landing.knowledge.title', 'Discover Our Expertise')}
           </h2>
-          <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+          <p className="text-lg text-c-text-secondary max-w-2xl mx-auto">
             {t(
               'landing.knowledge.subtitle',
               'Proven methodologies and best practices trusted by industry leaders across Europe.'
@@ -236,12 +234,12 @@ export const KnowledgePreviewSection: React.FC<KnowledgePreviewSectionProps> = (
         <div className="text-center">
           <button
             onClick={handleExploreAll}
-            className="inline-flex items-center gap-2 px-8 py-4 bg-white dark:bg-slate-800 border-2 border-primary-600 text-primary-600 dark:text-primary-400 font-semibold rounded-xl hover:bg-primary-50 dark:hover:bg-slate-700 transition-all shadow-lg"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-c-surface border-2 border-c-accent text-c-accent font-semibold rounded-xl hover:bg-c-accent-soft transition-all shadow-lg"
           >
             {t('landing.knowledge.exploreAll', 'Access Full Knowledge Base')}
             <ArrowRight size={18} />
           </button>
-          <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-4 text-sm text-c-text-muted">
             {t(
               'landing.knowledge.ctaSubtext',
               'Start a free trial to unlock all articles, videos, and resources.'

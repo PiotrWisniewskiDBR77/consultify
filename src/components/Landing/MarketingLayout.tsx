@@ -53,7 +53,7 @@ export const MarketingLayout: React.FC<MarketingLayoutProps> = ({
   };
 
   return (
-    <div className="absolute inset-0 overflow-y-auto overflow-x-hidden transition-colors duration-300 bg-white dark:bg-[#0A0F1E] text-slate-900 dark:text-white">
+    <div className="absolute inset-0 overflow-y-auto overflow-x-hidden transition-colors duration-300 bg-c-bg text-c-text">
       <EntryTopBar
         onTrialClick={handleTrialClick}
         onDemoClick={handleDemoClick}
