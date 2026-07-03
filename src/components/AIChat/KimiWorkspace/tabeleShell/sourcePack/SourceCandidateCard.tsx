@@ -7,8 +7,10 @@
  * Block C · EPIC-T12 · Sprint C-S6.
  */
 
+import type { TFunction } from 'i18next';
 import { Check, Plus, ShieldCheck } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { SourcePackCandidate } from '@/services/api/tablePlatform.api';
 
@@ -17,6 +19,13 @@ const STATUS_LABEL: Record<string, string> = {
   in_review: 'in review',
   unverified: 'unverified',
   rejected: 'rejected',
+};
+
+const STATUS_LABEL_KEY: Record<string, string> = {
+  verified: 'kimi.tabeleShell.sourcePack.status.verified',
+  in_review: 'kimi.tabeleShell.sourcePack.status.inReview',
+  unverified: 'kimi.tabeleShell.sourcePack.status.unverified',
+  rejected: 'kimi.tabeleShell.sourcePack.status.rejected',
 };
 
 export interface SourceCandidateCardProps {
@@ -31,16 +40,33 @@ function formatScore(n: number): string {
   return Math.round(n * 100).toString();
 }
 
-function formatRelative(iso: string): string {
-  const t = Date.parse(iso);
-  if (!Number.isFinite(t)) return '';
-  const days = (Date.now() - t) / (1000 * 60 * 60 * 24);
-  if (days < 1) return 'today';
-  if (days < 2) return 'yesterday';
-  if (days < 7) return `${Math.floor(days)}d ago`;
-  if (days < 30) return `${Math.floor(days / 7)}w ago`;
-  if (days < 365) return `${Math.floor(days / 30)}mo ago`;
-  return `${Math.floor(days / 365)}y ago`;
+function useFormatRelative(t: TFunction) {
+  return (iso: string): string => {
+    const parsed = Date.parse(iso);
+    if (!Number.isFinite(parsed)) return '';
+    const days = (Date.now() - parsed) / (1000 * 60 * 60 * 24);
+    if (days < 1) return t('kimi.tabeleShell.sourcePack.relative.today', 'today');
+    if (days < 2) return t('kimi.tabeleShell.sourcePack.relative.yesterday', 'yesterday');
+    if (days < 7)
+      return t('kimi.tabeleShell.sourcePack.relative.daysAgo', {
+        defaultValue: '{{count}}d ago',
+        count: Math.floor(days),
+      });
+    if (days < 30)
+      return t('kimi.tabeleShell.sourcePack.relative.weeksAgo', {
+        defaultValue: '{{count}}w ago',
+        count: Math.floor(days / 7),
+      });
+    if (days < 365)
+      return t('kimi.tabeleShell.sourcePack.relative.monthsAgo', {
+        defaultValue: '{{count}}mo ago',
+        count: Math.floor(days / 30),
+      });
+    return t('kimi.tabeleShell.sourcePack.relative.yearsAgo', {
+      defaultValue: '{{count}}y ago',
+      count: Math.floor(days / 365),
+    });
+  };
 }
 
 export const SourceCandidateCard: React.FC<SourceCandidateCardProps> = ({
@@ -49,6 +75,8 @@ export const SourceCandidateCard: React.FC<SourceCandidateCardProps> = ({
   onToggle,
   disableAdd,
 }) => {
+  const { t } = useTranslation();
+  const formatRelative = useFormatRelative(t);
   const status = candidate.validationStatus.toLowerCase();
   return (
     <li
@@ -65,16 +93,19 @@ export const SourceCandidateCard: React.FC<SourceCandidateCardProps> = ({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              score {formatScore(candidate.rankScore)}
+              {t('kimi.tabeleShell.sourcePack.score', {
+                defaultValue: 'score {{score}}',
+                score: formatScore(candidate.rankScore),
+              })}
             </span>
             {candidate.hasVerifiedSource && (
               <span
                 className="inline-flex items-center gap-0.5 text-[11px] text-emerald-600 dark:text-emerald-400"
-                aria-label="has verified source"
+                aria-label={t('kimi.tabeleShell.sourcePack.hasVerifiedSource', 'has verified source')}
                 data-testid="candidate-verified-flag"
               >
                 <ShieldCheck className="h-3 w-3" />
-                verified
+                {t('kimi.tabeleShell.sourcePack.status.verified', 'verified')}
               </span>
             )}
             <span
@@ -87,7 +118,7 @@ export const SourceCandidateCard: React.FC<SourceCandidateCardProps> = ({
                     : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
               ].join(' ')}
             >
-              {STATUS_LABEL[status] ?? status}
+              {STATUS_LABEL_KEY[status] ? t(STATUS_LABEL_KEY[status], STATUS_LABEL[status] ?? status) : status}
             </span>
             <span className="text-[11px] text-slate-600 dark:text-slate-500">
               {formatRelative(candidate.updatedAt)}
@@ -120,10 +151,14 @@ export const SourceCandidateCard: React.FC<SourceCandidateCardProps> = ({
           ].join(' ')}
           data-testid="candidate-toggle"
           aria-pressed={selected}
-          aria-label={selected ? 'Remove from pack' : 'Add to pack'}
+          aria-label={
+            selected
+              ? t('kimi.tabeleShell.sourcePack.removeFromPack', 'Remove from pack')
+              : t('kimi.tabeleShell.sourcePack.addToPack', 'Add to pack')
+          }
         >
           {selected ? <Check className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
-          {selected ? 'Added' : 'Add'}
+          {selected ? t('kimi.tabeleShell.sourcePack.added', 'Added') : t('kimi.tabeleShell.sourcePack.add', 'Add')}
         </button>
       </div>
     </li>

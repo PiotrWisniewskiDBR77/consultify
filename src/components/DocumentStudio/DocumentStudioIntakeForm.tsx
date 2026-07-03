@@ -21,22 +21,56 @@ import type {
   DocumentTypeKey,
 } from './types';
 
-const DOCUMENT_TYPE_OPTIONS: { value: DocumentTypeKey | ''; label: string }[] = [
-  { value: '', label: 'Auto-detect from description' },
-  { value: 'executive_memo', label: 'Executive Memo' },
-  { value: 'project_status_report', label: 'Project Status Report' },
-  { value: 'steering_committee_report', label: 'Steering Committee Report' },
-  { value: 'ai_audit_report', label: 'AI Audit Report' },
-  { value: 'interview_summary_report', label: 'Interview Summary Report' },
-  { value: 'workshop_summary', label: 'Workshop Summary' },
-  { value: 'business_case', label: 'Business Case' },
-  { value: 'risk_register_report', label: 'Risk Register Report' },
-  { value: 'sop_document', label: 'SOP Document' },
-  { value: 'implementation_plan', label: 'Implementation Plan' },
-  { value: 'board_report', label: 'Board Report' },
-  { value: 'sales_proposal', label: 'Sales Proposal' },
-  { value: 'client_final_report', label: 'Client Final Report' },
-  { value: 'generic_document', label: 'Generic document' },
+// Option labels stay in English here as defaults; they are translated at render
+// time via t(labelKey, label). Keys are shared with the Template Architect view.
+const DOCUMENT_TYPE_OPTIONS: { value: DocumentTypeKey | ''; labelKey: string; label: string }[] = [
+  { value: '', labelKey: 'documentStudio.docType.autoDetect', label: 'Auto-detect from description' },
+  { value: 'executive_memo', labelKey: 'documentStudio.docType.executiveMemo', label: 'Executive Memo' },
+  {
+    value: 'project_status_report',
+    labelKey: 'documentStudio.docType.projectStatusReport',
+    label: 'Project Status Report',
+  },
+  {
+    value: 'steering_committee_report',
+    labelKey: 'documentStudio.docType.steeringCommitteeReport',
+    label: 'Steering Committee Report',
+  },
+  { value: 'ai_audit_report', labelKey: 'documentStudio.docType.aiAuditReport', label: 'AI Audit Report' },
+  {
+    value: 'interview_summary_report',
+    labelKey: 'documentStudio.docType.interviewSummaryReport',
+    label: 'Interview Summary Report',
+  },
+  {
+    value: 'workshop_summary',
+    labelKey: 'documentStudio.docType.workshopSummary',
+    label: 'Workshop Summary',
+  },
+  { value: 'business_case', labelKey: 'documentStudio.docType.businessCase', label: 'Business Case' },
+  {
+    value: 'risk_register_report',
+    labelKey: 'documentStudio.docType.riskRegisterReport',
+    label: 'Risk Register Report',
+  },
+  { value: 'sop_document', labelKey: 'documentStudio.docType.sopDocument', label: 'SOP Document' },
+  {
+    value: 'implementation_plan',
+    labelKey: 'documentStudio.docType.implementationPlan',
+    label: 'Implementation Plan',
+  },
+  { value: 'board_report', labelKey: 'documentStudio.docType.boardReport', label: 'Board Report' },
+  { value: 'sales_proposal', labelKey: 'documentStudio.docType.salesProposal', label: 'Sales Proposal' },
+  {
+    value: 'client_final_report',
+    labelKey: 'documentStudio.docType.clientFinalReport',
+    label: 'Client Final Report',
+  },
+  {
+    value: 'generic_document',
+    labelKey: 'documentStudio.docType.genericDocument',
+    label: 'Generic document',
+  },
 ];
 
 const DENSITY_OPTIONS: { value: DocumentDensity; label: string }[] = [
@@ -140,12 +174,20 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
     >
       <div>
         <h2 className="text-lg font-semibold text-navy-900 dark:text-white">
-          {inTemplateMode ? 'Generate from approved template' : 'Generate without template'}
+          {inTemplateMode
+            ? t('documentStudio.intake.titleTemplateMode', 'Generate from approved template')
+            : t('documentStudio.intake.titleFreeMode', 'Generate without template')}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           {inTemplateMode
-            ? 'Outline and formatting are hydrated from the selected template. The brief below provides the document body.'
-            : 'Describe the document you need. Document Studio will plan an outline and a deterministic first draft. No hallucinated facts: missing inputs are flagged as assumptions.'}
+            ? t(
+                'documentStudio.intake.subtitleTemplateMode',
+                'Outline and formatting are hydrated from the selected template. The brief below provides the document body.'
+              )
+            : t(
+                'documentStudio.intake.subtitleFreeMode',
+                'Describe the document you need. Document Studio will plan an outline and a deterministic first draft. No hallucinated facts: missing inputs are flagged as assumptions.'
+              )}
         </p>
       </div>
 
@@ -161,14 +203,16 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
       {hasTemplates ? (
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium text-slate-700 dark:text-slate-200">
-            Use approved template (optional)
+            {t('documentStudio.intake.useTemplateLabel', 'Use approved template (optional)')}
           </span>
           <select
             value={selectedTemplateId}
             onChange={(e) => setSelectedTemplateId(e.target.value)}
             className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-white"
           >
-            <option value="">No template — Mode 1 (free generation)</option>
+            <option value="">
+              {t('documentStudio.intake.noTemplateOption', 'No template — Mode 1 (free generation)')}
+            </option>
             {approvedTemplates?.map((t) => (
               <option key={t.templateId} value={t.templateId}>
                 {t.name} · v{t.version} · {t.documentType.replace(/_/g, ' ')}
@@ -177,8 +221,11 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           </select>
           {selectedTemplate ? (
             <span className="text-xs text-slate-500 dark:text-slate-400">
-              Mode 3 active. {selectedTemplate.sectionBlueprint.length} sections,{' '}
-              {selectedTemplate.confidentiality.replace(/_/g, ' ')} confidentiality.
+              {t('documentStudio.intake.templateModeSummary', {
+                defaultValue: 'Mode 3 active. {{sections}} sections, {{confidentiality}} confidentiality.',
+                sections: selectedTemplate.sectionBlueprint.length,
+                confidentiality: selectedTemplate.confidentiality.replace(/_/g, ' '),
+              })}
             </span>
           ) : null}
         </label>
@@ -187,11 +234,16 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
       {selectedTemplate && selectedTemplate.requiredInputs.length > 0 ? (
         <div className="rounded-lg border border-sky-300/50 bg-sky-50 px-3 py-2 text-sm dark:border-sky-400/30 dark:bg-sky-500/5">
           <div className="font-medium text-sky-900 dark:text-sky-200">
-            This template requires the following sources before it can generate
+            {t(
+              'documentStudio.intake.requiredSourcesTitle',
+              'This template requires the following sources before it can generate'
+            )}
           </div>
           <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
-            Add matching items to the source pack of this run (or attach them upstream); the backend
-            rejects generation if any of these is missing.
+            {t(
+              'documentStudio.intake.requiredSourcesHint',
+              'Add matching items to the source pack of this run (or attach them upstream); the backend rejects generation if any of these is missing.'
+            )}
           </p>
           <ul className="mt-2 space-y-1 text-xs">
             {selectedTemplate.requiredInputs.map((requirement) => (
@@ -212,14 +264,18 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
 
       <label className="flex flex-col gap-1 text-sm">
         <span className="font-medium text-slate-700 dark:text-slate-200">
-          Description <span className="text-danger-500">*</span>
+          {t('documentStudio.intake.descriptionLabel', 'Description')}{' '}
+          <span className="text-danger-500">*</span>
         </span>
         <textarea
           data-testid="docstudio-intake-input"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={5}
-          placeholder="e.g., Prepare an interview summary report for the client board: scope, key findings, risks, recommendations."
+          placeholder={t(
+            'documentStudio.intake.descriptionPlaceholder',
+            'e.g., Prepare an interview summary report for the client board: scope, key findings, risks, recommendations.'
+          )}
           className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-white"
           required
           minLength={10}
@@ -227,19 +283,26 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
       </label>
 
       <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium text-slate-700 dark:text-slate-200">Title (optional)</span>
+        <span className="font-medium text-slate-700 dark:text-slate-200">
+          {t('documentStudio.intake.titleLabel', 'Title (optional)')}
+        </span>
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Auto-derived from description if empty"
+          placeholder={t(
+            'documentStudio.intake.titlePlaceholder',
+            'Auto-derived from description if empty'
+          )}
           className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-white"
         />
       </label>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-slate-700 dark:text-slate-200">Document type</span>
+          <span className="font-medium text-slate-700 dark:text-slate-200">
+            {t('documentStudio.intake.documentTypeLabel', 'Document type')}
+          </span>
           <select
             value={documentType}
             onChange={(e) => setDocumentType(e.target.value as DocumentTypeKey | '')}
@@ -247,26 +310,30 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           >
             {DOCUMENT_TYPE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
-                {opt.label}
+                {t(opt.labelKey, opt.label)}
               </option>
             ))}
           </select>
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-slate-700 dark:text-slate-200">Language</span>
+          <span className="font-medium text-slate-700 dark:text-slate-200">
+            {t('documentStudio.intake.languageLabel', 'Language')}
+          </span>
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value as 'pl' | 'en')}
             className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-white"
           >
-            <option value="pl">Polish</option>
-            <option value="en">English</option>
+            <option value="pl">{t('documentStudio.intake.languagePolish', 'Polish')}</option>
+            <option value="en">{t('documentStudio.intake.languageEnglish', 'English')}</option>
           </select>
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-slate-700 dark:text-slate-200">Density</span>
+          <span className="font-medium text-slate-700 dark:text-slate-200">
+            {t('documentStudio.intake.densityLabel', 'Density')}
+          </span>
           <select
             value={density}
             onChange={(e) => setDensity(e.target.value as DocumentDensity)}
@@ -274,14 +341,16 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           >
             {DENSITY_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
-                {opt.label}
+                {t(`documentStudio.density.${opt.value}`, opt.label)}
               </option>
             ))}
           </select>
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-slate-700 dark:text-slate-200">Goal</span>
+          <span className="font-medium text-slate-700 dark:text-slate-200">
+            {t('documentStudio.intake.goalLabel', 'Goal')}
+          </span>
           <select
             value={goal}
             onChange={(e) => setGoal(e.target.value as DocumentGoal)}
@@ -289,7 +358,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           >
             {GOAL_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
-                {opt.label}
+                {t(`documentStudio.goal.${opt.value}`, opt.label)}
               </option>
             ))}
           </select>
@@ -298,7 +367,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
 
       <label className="flex flex-col gap-1 text-sm">
         <span className="font-medium text-slate-700 dark:text-slate-200">
-          Audience (comma-separated)
+          {t('documentStudio.intake.audienceLabel', 'Audience (comma-separated)')}
         </span>
         <input
           type="text"
@@ -322,12 +391,13 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           />
           <span>
             <span className="font-medium text-slate-700 dark:text-slate-200">
-              Refine outline with AI (optional)
+              {t('documentStudio.intake.useLlmLabel', 'Refine outline with AI (optional)')}
             </span>
             <span className="block text-xs text-slate-500 dark:text-slate-400">
-              Allows the planner to reorder sections and rewrite section purposes. Falls back
-              silently to the deterministic outline if AI is unavailable. New or invented sections
-              are rejected.
+              {t(
+                'documentStudio.intake.useLlmHint',
+                'Allows the planner to reorder sections and rewrite section purposes. Falls back silently to the deterministic outline if AI is unavailable. New or invented sections are rejected.'
+              )}
             </span>
           </span>
         </label>
@@ -347,12 +417,14 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           {loading ? (
             <span className="inline-flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
-              {inTemplateMode ? 'Generating…' : 'Planning…'}
+              {inTemplateMode
+                ? t('documentStudio.intake.generating', 'Generating…')
+                : t('documentStudio.intake.planning', 'Planning…')}
             </span>
           ) : inTemplateMode ? (
-            'Generate from template'
+            t('documentStudio.intake.submitTemplate', 'Generate from template')
           ) : (
-            'Plan document'
+            t('documentStudio.intake.submitPlan', 'Plan document')
           )}
         </Button>
       </div>
