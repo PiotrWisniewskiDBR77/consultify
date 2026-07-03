@@ -191,21 +191,23 @@ export const COLUMN_TYPE_LABELS: Record<ColumnType, { en: string; pl: string }> 
   last_edited_by: { en: 'Edited by', pl: 'Edytowano przez' },
 };
 
+// Categorical row accents → canonical c-tag palette (distinct hues, NOT crimson).
+// CSS vars so light/dark themes resolve automatically.
 export const ROW_ACCENT_COLORS = [
-  '#6366f1',
-  '#6366f1',
-  '#3b82f6',
-  '#3b82f6',
-  '#10b981',
-  '#84cc16',
-  '#eab308',
-  '#f59e0b',
-  '#f43f5e',
-  '#ec4899',
-  '#a855f7',
-  '#3b82f6',
-  '#f59e0b',
-  '#64748b',
+  'var(--c-tag-1)',
+  'var(--c-tag-2)',
+  'var(--c-tag-3)',
+  'var(--c-tag-4)',
+  'var(--c-tag-5)',
+  'var(--c-tag-6)',
+  'var(--c-tag-7)',
+  'var(--c-tag-8)',
+  'var(--c-tag-9)',
+  'var(--c-tag-10)',
+  'var(--c-tag-11)',
+  'var(--c-tag-12)',
+  'var(--c-tag-2)',
+  'var(--c-tag-8)',
 ];
 
 export const COLOR_PALETTES: Record<string, { name: string; colors: string[] }> = {
@@ -304,17 +306,19 @@ export const COLUMN_TYPE_COLORS: Partial<Record<ColumnType, string>> = {
   last_edited_by: '#94a3b8',
 };
 
+// Categorical select/lane colors → canonical c-tag palette (distinct hues,
+// theme-aware via CSS vars). Was a hardcoded pastel hex ramp.
 export const SELECT_COLORS = [
-  '#e0e7ff',
-  '#dbeafe',
-  '#d1fae5',
-  '#fef3c7',
-  '#fce7f3',
-  '#ede9fe',
-  '#ccfbf1',
-  '#fee2e2',
-  '#e0f2fe',
-  '#f3e8ff',
+  'var(--c-tag-1)',
+  'var(--c-tag-2)',
+  'var(--c-tag-3)',
+  'var(--c-tag-4)',
+  'var(--c-tag-5)',
+  'var(--c-tag-6)',
+  'var(--c-tag-7)',
+  'var(--c-tag-8)',
+  'var(--c-tag-9)',
+  'var(--c-tag-10)',
 ];
 
 export function evaluateFormula(formula: string, row: Record<string, any>): string | number {

@@ -59,12 +59,33 @@ interface GanttChartProps {
 // No default phases — component requires real data from parent
 const DEFAULT_PHASES: Phase[] = [];
 
-// Status icons and colors
+// Status icons and colors — semantic status → design tokens (theme-aware,
+// non-crimson). completed=success, in_progress=info, pending=muted, at_risk=danger.
 const STATUS_CONFIG = {
-  completed: { icon: CheckCircle, color: '#10b981', label: 'Completed', labelPl: 'Zakończone' },
-  in_progress: { icon: Clock, color: '#3b82f6', label: 'In Progress', labelPl: 'W trakcie' },
-  pending: { icon: Clock, color: '#94a3b8', label: 'Pending', labelPl: 'Oczekujące' },
-  at_risk: { icon: AlertCircle, color: '#f43f5e', label: 'At Risk', labelPl: 'Zagrożone' },
+  completed: {
+    icon: CheckCircle,
+    color: 'var(--c-success)',
+    label: 'Completed',
+    labelPl: 'Zakończone',
+  },
+  in_progress: {
+    icon: Clock,
+    color: 'var(--c-info)',
+    label: 'In Progress',
+    labelPl: 'W trakcie',
+  },
+  pending: {
+    icon: Clock,
+    color: 'var(--c-text-muted)',
+    label: 'Pending',
+    labelPl: 'Oczekujące',
+  },
+  at_risk: {
+    icon: AlertCircle,
+    color: 'var(--c-danger)',
+    label: 'At Risk',
+    labelPl: 'Zagrożone',
+  },
 };
 
 // ============================================
@@ -358,11 +379,11 @@ export const GanttChart: React.FC<GanttChartProps> = ({
   if (phases.length === 0) {
     return (
       <div
-        className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-12 text-center ${className}`}
+        className={`bg-c-surface rounded-xl border border-c-border p-12 text-center ${className}`}
       >
-        <Calendar className="w-12 h-12 mx-auto mb-3 text-slate-600 dark:text-slate-400" />
-        <p className="text-lg font-medium text-navy-900 dark:text-white">No schedule data</p>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        <Calendar className="w-12 h-12 mx-auto mb-3 text-c-text-secondary" />
+        <p className="text-lg font-medium text-c-text">No schedule data</p>
+        <p className="text-sm text-c-text-muted mt-1">
           Add phases to your roadmap to see the Gantt chart
         </p>
       </div>
@@ -371,12 +392,12 @@ export const GanttChart: React.FC<GanttChartProps> = ({
 
   return (
     <div
-      className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden ${className}`}
+      className={`bg-c-surface rounded-xl border border-c-border overflow-hidden ${className}`}
     >
       {/* D4.2: Clean Toolbar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-c-border bg-c-surface-raised">
         <div className="flex items-center gap-3">
-          <h3 className="font-semibold text-navy-900 dark:text-white">
+          <h3 className="font-semibold text-c-text">
             {isPolish ? 'Roadmapa Transformacji' : 'Transformation Roadmap'}
           </h3>
           {scheduleWarnings.length > 0 && (
@@ -388,23 +409,23 @@ export const GanttChart: React.FC<GanttChartProps> = ({
         </div>
         <div className="flex items-center gap-3">
           {/* Zoom controls */}
-          <div className="flex items-center bg-white dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-navy-700">
+          <div className="flex items-center bg-c-surface rounded-lg border border-c-border">
             <button
               onClick={() => setZoom('year')}
               className={`px-3 py-1.5 text-xs font-medium transition-colors rounded-l-lg ${
                 zoom === 'year'
-                  ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400'
-                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-200'
+                  ? 'bg-c-info/15 text-c-info'
+                  : 'text-c-text-muted hover:text-c-text'
               }`}
             >
               {isPolish ? 'Rok' : 'Year'}
             </button>
             <button
               onClick={() => setZoom('quarter')}
-              className={`px-3 py-1.5 text-xs font-medium transition-colors border-x border-slate-200 dark:border-navy-700 ${
+              className={`px-3 py-1.5 text-xs font-medium transition-colors border-x border-c-border ${
                 zoom === 'quarter'
-                  ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400'
-                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-200'
+                  ? 'bg-c-info/15 text-c-info'
+                  : 'text-c-text-muted hover:text-c-text'
               }`}
             >
               {isPolish ? 'Kwartał' : 'Quarter'}
@@ -413,8 +434,8 @@ export const GanttChart: React.FC<GanttChartProps> = ({
               onClick={() => setZoom('month')}
               className={`px-3 py-1.5 text-xs font-medium transition-colors rounded-r-lg ${
                 zoom === 'month'
-                  ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400'
-                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-200'
+                  ? 'bg-c-info/15 text-c-info'
+                  : 'text-c-text-muted hover:text-c-text'
               }`}
             >
               {isPolish ? 'Miesiąc' : 'Month'}
@@ -422,15 +443,15 @@ export const GanttChart: React.FC<GanttChartProps> = ({
           </div>
 
           {/* Separator */}
-          <div className="w-px h-5 bg-slate-200 dark:bg-navy-700" />
+          <div className="w-px h-5 bg-c-border" />
 
           {/* Critical path toggle */}
           <button
             onClick={() => setShowCriticalPath((v) => !v)}
             className={`p-1.5 rounded-lg transition-colors ${
               showCriticalPath
-                ? 'bg-danger-100 dark:bg-danger-900/30 text-danger-600 dark:text-danger-400'
-                : 'text-slate-600 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10'
+                ? 'bg-c-danger/15 text-c-danger'
+                : 'text-c-text-muted hover:text-c-text hover:bg-c-surface-raised'
             }`}
             title={
               showCriticalPath
@@ -446,11 +467,11 @@ export const GanttChart: React.FC<GanttChartProps> = ({
           </button>
 
           {/* D4.2: Ask AI about schedule sensibility */}
-          <div className="w-px h-5 bg-slate-200 dark:bg-navy-700" />
+          <div className="w-px h-5 bg-c-border" />
           {onAskScheduleSensibility && (
             <button
               onClick={onAskScheduleSensibility}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 hover:bg-primary-200 dark:hover:bg-primary-900/50 transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-c-accent-soft text-c-accent hover:bg-c-accent/15 transition-colors"
               title={
                 isPolish
                   ? 'Zapytaj AI o sensowność harmonogramu'
@@ -465,7 +486,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
           {onPMPerspectiveCheck && (
             <button
               onClick={onPMPerspectiveCheck}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-c-info/15 text-c-info hover:bg-c-info/25 transition-colors"
               title={isPolish ? 'Weryfikacja z perspektywy PM' : 'PM perspective check'}
             >
               <Shield size={14} />
@@ -476,7 +497,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
           {onOpenScheduleChat && (
             <button
               onClick={onOpenScheduleChat}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-c-info/15 text-c-info hover:bg-c-info/25 transition-colors"
               title={isPolish ? 'Otwórz chat o harmonogramie' : 'Chat about schedule'}
             >
               <MessageSquare size={14} />
@@ -517,27 +538,27 @@ export const GanttChart: React.FC<GanttChartProps> = ({
       )}
 
       {/* Legend */}
-      <div className="px-4 py-2 border-b border-slate-200 dark:border-navy-700 flex items-center gap-6 text-xs flex-wrap">
+      <div className="px-4 py-2 border-b border-c-border flex items-center gap-6 text-xs flex-wrap">
         {Object.entries(STATUS_CONFIG).map(([key, config]) => (
           <div key={key} className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: config.color }} />
-            <span className="text-slate-600 dark:text-slate-400">
+            <span className="text-c-text-secondary">
               {isPolish ? config.labelPl : config.label}
             </span>
           </div>
         ))}
         <div className="flex items-center gap-1.5">
-          <Flag className="w-3 h-3 text-slate-500 dark:text-slate-400" />
-          <span className="text-slate-600 dark:text-slate-400">
+          <Flag className="w-3 h-3 text-c-text-muted" />
+          <span className="text-c-text-secondary">
             {isPolish ? 'Kamień milowy' : 'Milestone'}
           </span>
         </div>
         {showCriticalPath && (
           <>
-            <div className="w-px h-3 bg-slate-300 dark:bg-navy-600" />
+            <div className="w-px h-3 bg-c-border" />
             <div className="flex items-center gap-1.5">
-              <Route className="w-3 h-3 text-danger-500" />
-              <span className="text-slate-600 dark:text-slate-400">
+              <Route className="w-3 h-3 text-c-danger" />
+              <span className="text-c-text-secondary">
                 {isPolish ? 'Ścieżka krytyczna' : 'Critical Path'}
               </span>
             </div>
@@ -549,15 +570,15 @@ export const GanttChart: React.FC<GanttChartProps> = ({
       <div className="overflow-x-auto">
         <div style={{ minWidth: totalWidth + 200 }}>
           {/* Timeline header */}
-          <div className="flex border-b border-slate-200 dark:border-navy-700">
-            <div className="w-48 flex-shrink-0 px-4 py-2 bg-slate-50 dark:bg-navy-800/50 font-medium text-sm text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-navy-700">
+          <div className="flex border-b border-c-border">
+            <div className="w-48 flex-shrink-0 px-4 py-2 bg-c-surface-raised font-medium text-sm text-c-text-secondary border-r border-c-border">
               {isPolish ? 'Faza' : 'Phase'}
             </div>
             <div className="flex">
               {timelineHeaders.map((header) => (
                 <div
                   key={header.key}
-                  className="flex-shrink-0 px-2 py-2 text-center text-xs font-medium text-slate-500 dark:text-slate-400 border-r border-slate-200 dark:border-navy-700"
+                  className="flex-shrink-0 px-2 py-2 text-center text-xs font-medium text-c-text-muted border-r border-c-border"
                   style={{
                     width:
                       (cellWidth * header.span) /
@@ -591,7 +612,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                   refY="3"
                   orient="auto"
                 >
-                  <polygon points="0 0, 8 3, 0 6" fill="#94a3b8" />
+                  <polygon points="0 0, 8 3, 0 6" fill="var(--c-border-strong)" />
                 </marker>
                 <marker
                   id="gantt-arrow-warn"
@@ -601,7 +622,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                   refY="3"
                   orient="auto"
                 >
-                  <polygon points="0 0, 8 3, 0 6" fill="#f59e0b" />
+                  <polygon points="0 0, 8 3, 0 6" fill="var(--c-warning)" />
                 </marker>
                 <marker
                   id="gantt-arrow-crit"
@@ -611,17 +632,17 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                   refY="3"
                   orient="auto"
                 >
-                  <polygon points="0 0, 8 3, 0 6" fill="#f43f5e" />
+                  <polygon points="0 0, 8 3, 0 6" fill="var(--c-danger)" />
                 </marker>
               </defs>
               {dependencyLines.map((line, idx) => {
                 const midX = (line.x1 + line.x2) / 2;
                 const curveY = Math.abs(line.y2 - line.y1) * 0.3;
                 const stroke = line.isCritical
-                  ? '#f43f5e'
+                  ? 'var(--c-danger)'
                   : line.isConflict
-                    ? '#f59e0b'
-                    : '#94a3b8';
+                    ? 'var(--c-warning)'
+                    : 'var(--c-border-strong)';
                 const marker = line.isCritical
                   ? 'url(#gantt-arrow-crit)'
                   : line.isConflict
@@ -659,12 +680,12 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: phaseIndex * 0.1 }}
-                  className={`flex border-b border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${
-                    isCritical ? 'bg-danger-50/40 dark:bg-danger-900/5' : ''
+                  className={`flex border-b border-c-border hover:bg-c-surface-raised transition-colors ${
+                    isCritical ? 'bg-c-danger/5' : ''
                   }`}
                 >
                   {/* Phase name */}
-                  <div className="w-48 flex-shrink-0 px-4 py-3 border-r border-slate-200 dark:border-navy-700">
+                  <div className="w-48 flex-shrink-0 px-4 py-3 border-r border-c-border">
                     <div className="flex items-center gap-2">
                       {/* D4.1: Warning indicator */}
                       {hasWarning && (
@@ -673,16 +694,16 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                         </span>
                       )}
                       {/* D5.1: Critical path indicator */}
-                      {isCritical && <Route className="w-3.5 h-3.5 text-danger-500 shrink-0" />}
+                      {isCritical && <Route className="w-3.5 h-3.5 text-c-danger shrink-0" />}
                       {React.createElement(status.icon, {
                         className: 'w-4 h-4 shrink-0',
                         style: { color: status.color },
                       })}
                       <div className="min-w-0">
-                        <p className="font-medium text-sm text-navy-900 dark:text-white truncate">
+                        <p className="font-medium text-sm text-c-text truncate">
                           {isPolish ? phase.namePl : phase.name}
                         </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                        <p className="text-xs text-c-text-muted">
                           {phase.duration} {isPolish ? 'mies.' : 'mo.'}
                         </p>
                       </div>
@@ -696,7 +717,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                       {timelineHeaders.map((header) => (
                         <div
                           key={header.key}
-                          className="flex-shrink-0 border-r border-slate-200 dark:border-navy-700"
+                          className="flex-shrink-0 border-r border-c-border"
                           style={{
                             width:
                               (cellWidth * header.span) /
@@ -746,13 +767,13 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                           style={{ left: `${milestonePos}%` }}
                         >
                           <div
-                            className="w-4 h-4 rounded-full bg-white dark:bg-navy-900 border-2 flex items-center justify-center cursor-pointer transform hover:scale-125 transition-transform"
+                            className="w-4 h-4 rounded-full bg-c-surface border-2 flex items-center justify-center cursor-pointer transform hover:scale-125 transition-transform"
                             style={{ borderColor: phase.color }}
                           >
                             <Flag className="w-2 h-2" style={{ color: phase.color }} />
                           </div>
                           {/* Tooltip */}
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-white dark:bg-navy-900 text-slate-900 dark:text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-c-surface text-c-text text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                             {isPolish ? milestone.labelPl : milestone.label}
                           </div>
                         </div>
@@ -767,15 +788,15 @@ export const GanttChart: React.FC<GanttChartProps> = ({
       </div>
 
       {/* Summary footer */}
-      <div className="px-4 py-3 bg-slate-50 dark:bg-navy-800/50 border-t border-slate-200 dark:border-navy-700">
+      <div className="px-4 py-3 bg-c-surface-raised border-t border-c-border">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-slate-600 dark:text-slate-400">
+          <span className="text-c-text-secondary">
             {isPolish ? 'Całkowity czas transformacji' : 'Total transformation time'}:{' '}
-            <strong className="text-navy-900 dark:text-white">
+            <strong className="text-c-text">
               {maxMonth} {isPolish ? 'miesięcy' : 'months'}
             </strong>
           </span>
-          <span className="text-slate-600 dark:text-slate-400">
+          <span className="text-c-text-secondary">
             {phases.length} {isPolish ? 'faz' : 'phases'} •{' '}
             {phases.reduce((sum, p) => sum + (p.milestones?.length || 0), 0)}{' '}
             {isPolish ? 'kamieni milowych' : 'milestones'}
@@ -783,7 +804,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
               <>
                 {' '}
                 •{' '}
-                <span className="text-danger-500 font-medium">
+                <span className="text-c-danger font-medium">
                   {criticalPathIds.size} {isPolish ? 'na ścieżce krytycznej' : 'on critical path'}
                 </span>
               </>

@@ -201,13 +201,13 @@ export const DecisionsTimelineView: React.FC<DecisionsTimelineViewProps> = ({
   );
 
   return (
-    <div className="flex h-full overflow-hidden bg-navy-950" tabIndex={0} onKeyDown={handleKeyDown}>
+    <div className="flex h-full overflow-hidden bg-c-bg" tabIndex={0} onKeyDown={handleKeyDown}>
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
         {/* Toolbar */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-navy-700/50 bg-navy-900/50">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-c-border-subtle bg-c-surface">
           {/* Zoom controls — pill button group */}
           <div
-            className="inline-flex rounded-full border border-navy-700/60 bg-navy-800/40 p-0.5"
+            className="inline-flex rounded-full border border-c-border bg-c-surface-raised p-0.5"
             role="group"
           >
             {zoomOptions.map((opt) => (
@@ -216,8 +216,8 @@ export const DecisionsTimelineView: React.FC<DecisionsTimelineViewProps> = ({
                 onClick={() => onZoomChange(opt.id)}
                 className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                   zoomLevel === opt.id
-                    ? 'bg-navy-700/80 text-slate-100'
-                    : 'text-slate-600 hover:text-slate-200 hover:bg-white/[0.03]'
+                    ? 'bg-c-accent-soft text-c-text'
+                    : 'text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised'
                 }`}
               >
                 {opt.label}
@@ -229,16 +229,16 @@ export const DecisionsTimelineView: React.FC<DecisionsTimelineViewProps> = ({
           <div className="relative">
             <button
               onClick={() => setPriorityDropdownOpen((v) => !v)}
-              className="flex items-center gap-2 rounded-lg border border-navy-700/60 bg-navy-800/40 px-3 py-1.5 text-xs text-slate-600 hover:bg-white/[0.03] transition-colors"
+              className="flex items-center gap-2 rounded-lg border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised transition-colors"
             >
               <GanttChart size={14} />
               {t('myWork.decisions.timeline.priorityFilter', 'Priority')}
               {priorityFilter.length > 0 && (
-                <span className="rounded-full bg-primary-500/20 px-1.5 py-0.5 text-[10px] text-primary-300">
+                <span className="rounded-full bg-c-accent-soft px-1.5 py-0.5 text-[10px] text-c-accent">
                   {priorityFilter.length}
                 </span>
               )}
-              <ChevronDown size={12} className="text-slate-500" />
+              <ChevronDown size={12} className="text-c-text-muted" />
             </button>
             {priorityDropdownOpen && (
               <>
@@ -246,19 +246,19 @@ export const DecisionsTimelineView: React.FC<DecisionsTimelineViewProps> = ({
                   className="fixed inset-0 z-40"
                   onClick={() => setPriorityDropdownOpen(false)}
                 />
-                <div className="absolute left-0 top-full mt-1 z-50 w-44 rounded-lg border border-navy-700 bg-navy-900 py-2 shadow-xl">
+                <div className="absolute left-0 top-full mt-1 z-50 w-44 rounded-lg border border-c-border bg-c-surface py-2 shadow-xl">
                   {priorityOptions.map((opt) => (
                     <label
                       key={opt.id}
-                      className="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:bg-white/[0.03]"
+                      className="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:bg-c-surface-raised"
                     >
                       <input
                         type="checkbox"
                         checked={priorityFilter.includes(opt.id)}
                         onChange={() => togglePriority(opt.id)}
-                        className="rounded border-navy-600 bg-navy-800 text-primary-500 focus:ring-primary-500/50"
+                        className="rounded border-c-border bg-c-surface-raised text-c-accent focus:ring-c-focus"
                       />
-                      <span className="text-sm text-slate-600">{opt.label}</span>
+                      <span className="text-sm text-c-text-secondary">{opt.label}</span>
                     </label>
                   ))}
                 </div>
@@ -269,9 +269,9 @@ export const DecisionsTimelineView: React.FC<DecisionsTimelineViewProps> = ({
 
         {/* Timeline area */}
         <div className="flex-1 overflow-auto p-4" ref={chartRef}>
-          <div className="min-h-[400px] rounded-xl border border-navy-700/50 bg-navy-900/30">
+          <div className="min-h-[400px] rounded-xl border border-c-border-subtle bg-c-surface">
             {/* X-axis labels */}
-            <div className="flex justify-between px-4 py-2 text-[10px] uppercase tracking-wider text-slate-500 border-b border-navy-700/50">
+            <div className="flex justify-between px-4 py-2 text-[10px] uppercase tracking-wider text-c-text-muted border-b border-c-border-subtle">
               <span>
                 {rangeStart.toLocaleDateString(undefined, {
                   month: 'short',
@@ -294,7 +294,7 @@ export const DecisionsTimelineView: React.FC<DecisionsTimelineViewProps> = ({
               style={{ minHeight: filteredDecisions.length * rowHeight + 40 }}
             >
               {filteredDecisions.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-slate-500">
+                <div className="flex flex-col items-center justify-center py-16 text-c-text-muted">
                   <GanttChart size={32} className="mb-2 opacity-50" />
                   <p className="text-sm">
                     {t('myWork.decisions.timeline.empty', 'No decisions in range')}
@@ -320,7 +320,7 @@ export const DecisionsTimelineView: React.FC<DecisionsTimelineViewProps> = ({
                       style={{ height: rowHeight }}
                     >
                       <div
-                        className="w-32 shrink-0 text-xs text-slate-600 truncate"
+                        className="w-32 shrink-0 text-xs text-c-text-secondary truncate"
                         title={item.title}
                       >
                         {item.title.slice(0, 20)}
@@ -333,8 +333,8 @@ export const DecisionsTimelineView: React.FC<DecisionsTimelineViewProps> = ({
                           onDoubleClick={() => onOpenFull(item.id)}
                           className={`absolute top-0 h-9 rounded-lg border flex items-center gap-2 px-2 min-w-[60px] transition-all ${style.bg} ${style.border} ${
                             isSelected
-                              ? 'ring-2 ring-primary-500/50 ring-offset-2 ring-offset-navy-900'
-                              : 'hover:bg-white/[0.05]'
+                              ? 'ring-2 ring-c-focus ring-offset-2 ring-offset-c-surface'
+                              : 'hover:brightness-110'
                           }`}
                           style={{
                             left: startX,
@@ -342,7 +342,7 @@ export const DecisionsTimelineView: React.FC<DecisionsTimelineViewProps> = ({
                           }}
                         >
                           <span className={`w-2 h-2 rounded-full shrink-0 ${style.dot}`} />
-                          <span className="text-xs font-medium text-slate-200 truncate flex-1 text-left">
+                          <span className="text-xs font-medium text-c-text truncate flex-1 text-left">
                             {item.title}
                           </span>
                           <span
@@ -455,7 +455,7 @@ export const DecisionsTimelineContainer: React.FC<DecisionsTimelineContainerProp
 
   if (loading) {
     return (
-      <div className="flex flex-1 items-center justify-center h-64 bg-navy-950">
+      <div className="flex flex-1 items-center justify-center h-64 bg-c-bg">
         <LoadingState variant="spinner" />
       </div>
     );
@@ -463,7 +463,7 @@ export const DecisionsTimelineContainer: React.FC<DecisionsTimelineContainerProp
 
   if (loadError) {
     return (
-      <div className="flex flex-1 items-center justify-center h-full bg-navy-950">
+      <div className="flex flex-1 items-center justify-center h-full bg-c-bg">
         <ErrorState message={loadError} retry={fetchDecisions} />
       </div>
     );
