@@ -114,8 +114,8 @@ const FocusTaskCard: React.FC<FocusTaskCardProps> = ({ task, onToggle, onClick, 
       onClick={() => onClick(task.id)}
       className={`
         group flex items-center gap-2.5 px-3 py-2 rounded-xl
-        bg-navy-800/60 dark:bg-navy-800/40
-        hover:bg-white/[0.06] dark:hover:bg-navy-700/50
+        bg-c-surface-raised
+        hover:bg-c-surface-raised/70
         transition-colors cursor-pointer
         ${isDragging ? 'opacity-50' : ''}
       `}
@@ -153,8 +153,8 @@ const FocusTaskCard: React.FC<FocusTaskCardProps> = ({ task, onToggle, onClick, 
         <span
           className={`text-sm truncate block ${
             task.isDone
-              ? 'text-slate-500 dark:text-slate-500 line-through'
-              : 'text-slate-100 dark:text-slate-200'
+              ? 'text-c-text-muted line-through'
+              : 'text-c-text'
           }`}
         >
           {task.title}
@@ -242,7 +242,7 @@ const FocusLaneColumn: React.FC<FocusLaneColumnProps> = ({
       onDrop={handleDrop}
       className={`
         flex flex-col min-w-0 flex-1 rounded-xl
-        bg-navy-900/80 dark:bg-navy-900/60
+        bg-c-surface
         min-h-[200px]
         ${dragOver ? 'ring-1 ring-primary-500/50 ring-inset' : ''}
       `}
@@ -253,7 +253,7 @@ const FocusLaneColumn: React.FC<FocusLaneColumnProps> = ({
           <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500 truncate">
             {laneLabels[lane]}
           </span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/5 dark:bg-navy-800 text-slate-600 dark:text-slate-500 shrink-0">
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-c-surface-raised text-slate-600 dark:text-slate-500 shrink-0">
             {tasks.length}
           </span>
         </div>
@@ -261,8 +261,8 @@ const FocusLaneColumn: React.FC<FocusLaneColumnProps> = ({
           <button
             onClick={() => onCreateTask(lane)}
             className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium
-              bg-white/5 dark:bg-navy-800 text-slate-600 dark:text-slate-500
-              hover:bg-white/[0.08] dark:hover:bg-navy-700 hover:text-slate-300 dark:hover:text-slate-300
+              bg-c-surface-raised text-slate-600 dark:text-slate-500
+              hover:bg-c-surface-raised/70 hover:text-slate-300 dark:hover:text-slate-300
               transition-colors shrink-0"
           >
             <Plus size={12} />
@@ -331,7 +331,7 @@ export const FocusCockpit: React.FC<FocusCockpitProps> = ({
   );
 
   return (
-    <div className="flex h-full min-h-0 bg-navy-900 dark:bg-navy-950">
+    <div className="flex h-full min-h-0 bg-c-bg">
       {/* Main: 3 Lanes */}
       <div className="flex-1 flex gap-3 p-4 min-w-0 overflow-x-auto">
         {LANES.map((lane) => (
@@ -351,12 +351,12 @@ export const FocusCockpit: React.FC<FocusCockpitProps> = ({
       {renderPreview && selectedTask && (
         <div
           className={`
-            w-72 shrink-0 border-l border-white/5 dark:border-navy-700/50
+            w-72 shrink-0 border-l border-c-border-subtle
             flex flex-col overflow-hidden
             ${previewOpen ? '' : 'hidden'}
           `}
         >
-          <div className="flex items-center justify-between px-3 py-2 border-b border-white/5 dark:border-navy-700/50">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
               {t('myWork.focusCockpit.preview', 'Preview')}
             </span>
@@ -375,7 +375,7 @@ export const FocusCockpit: React.FC<FocusCockpitProps> = ({
       {renderToolsStrip && (
         <div
           className={`
-            w-16 shrink-0 border-l border-white/5 dark:border-navy-700/50
+            w-16 shrink-0 border-l border-c-border-subtle
             flex flex-col items-center py-2 gap-1
             ${toolsStripOpen ? '' : ''}
           `}
