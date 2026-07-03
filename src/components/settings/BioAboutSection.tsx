@@ -132,22 +132,22 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({ currentUser, o
 
   // Styling classes
   const inputClass =
-    'w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none transition-all';
-  const labelClass = 'text-xs font-medium text-slate-500 dark:text-slate-400';
+    'w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-md text-navy-900 focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none transition-all';
+  const labelClass = 'text-xs font-medium text-c-text-muted';
   const cardClass =
-    'bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-6';
+    'bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg p-6';
   const sectionTitleClass =
-    'text-sm font-bold text-navy-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2';
+    'text-sm font-bold text-navy-900 mb-4 uppercase tracking-wider flex items-center gap-2';
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-bold text-navy-900 dark:text-white">
+          <h3 className="text-lg font-bold text-navy-900">
             {t('settings.profile.bioAbout.title', 'Bio & About')}
           </h3>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             {t(
               'settings.profile.bioAbout.description',
               'Tell others about yourself and your expertise'
@@ -157,7 +157,7 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({ currentUser, o
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary-500/20"
+          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-c-accent"
         >
           {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {isSaving ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
@@ -167,7 +167,7 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({ currentUser, o
       {/* Short Bio */}
       <div className={cardClass}>
         <h4 className={sectionTitleClass}>
-          <FileText size={16} className="text-primary-500" />
+          <FileText size={16} className="text-c-accent" />
           {t('settings.profile.bioAbout.shortBio', 'Short Bio')}
         </h4>
         <div className="space-y-2">
@@ -181,7 +181,7 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({ currentUser, o
             maxLength={150}
             className={inputClass}
           />
-          <div className="flex justify-between text-xs text-slate-600 dark:text-slate-500">
+          <div className="flex justify-between text-xs text-c-text-secondary">
             <span>
               {t('settings.profile.bioAbout.shortBioHint', 'Displayed on your profile card')}
             </span>
@@ -193,7 +193,7 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({ currentUser, o
       {/* Long Bio */}
       <div className={cardClass}>
         <h4 className={sectionTitleClass}>
-          <FileText size={16} className="text-primary-500" />
+          <FileText size={16} className="text-c-accent" />
           {t('settings.profile.bioAbout.longBio', 'About Me')}
         </h4>
         <div className="space-y-2">
@@ -208,7 +208,7 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({ currentUser, o
             rows={6}
             className={inputClass + ' resize-none'}
           />
-          <div className="flex justify-between text-xs text-slate-600 dark:text-slate-500">
+          <div className="flex justify-between text-xs text-c-text-secondary">
             <span>
               {t('settings.profile.bioAbout.longBioHint', 'Markdown formatting supported')}
             </span>
@@ -220,7 +220,7 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({ currentUser, o
       {/* Skills */}
       <div className={cardClass}>
         <h4 className={sectionTitleClass}>
-          <Award size={16} className="text-primary-500" />
+          <Award size={16} className="text-c-accent" />
           {t('settings.profile.bioAbout.skills', 'Skills & Expertise')}
         </h4>
 
@@ -229,19 +229,19 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({ currentUser, o
           {formState.skills.map((skill) => (
             <span
               key={skill}
-              className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 rounded-full text-sm"
+              className="inline-flex items-center gap-1 px-3 py-1.5 bg-c-accent-soft dark:bg-c-accent-soft text-c-accent rounded-full text-sm"
             >
               {skill}
               <button
                 onClick={() => removeSkill(skill)}
-                className="ml-1 hover:text-primary-900 dark:hover:text-primary-100 transition-colors"
+                className="ml-1 hover:text-c-accent transition-colors"
               >
                 <X size={14} />
               </button>
             </span>
           ))}
           {formState.skills.length === 0 && (
-            <span className="text-slate-600 dark:text-slate-500 text-sm italic">
+            <span className="text-c-text-secondary text-sm italic">
               {t('settings.profile.bioAbout.noSkills', 'No skills added yet')}
             </span>
           )}
@@ -268,13 +268,13 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({ currentUser, o
 
               {/* Suggestions dropdown */}
               {showSkillSuggestions && filteredSuggestions.length > 0 && (
-                <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg shadow-lg">
+                <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg shadow-lg">
                   {filteredSuggestions.slice(0, 8).map((skill) => (
                     <button
                       key={skill}
                       type="button"
                       onClick={() => addSkill(skill)}
-                      className="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors"
+                      className="w-full px-3 py-2 text-left text-sm text-c-text-secondary hover:bg-c-accent-soft dark:hover:bg-c-accent-soft transition-colors"
                     >
                       {skill}
                     </button>
@@ -285,7 +285,7 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({ currentUser, o
             <button
               onClick={() => addSkill(newSkill)}
               disabled={!newSkill.trim()}
-              className="px-4 py-2 bg-slate-100 dark:bg-navy-950 hover:bg-slate-200 dark:hover:bg-navy-800 text-slate-600 dark:text-slate-300 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-navy-800 text-c-text-secondary rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus size={18} />
             </button>
@@ -296,7 +296,7 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({ currentUser, o
       {/* Experience */}
       <div className={cardClass}>
         <h4 className={sectionTitleClass}>
-          <Briefcase size={16} className="text-primary-500" />
+          <Briefcase size={16} className="text-c-accent" />
           {t('settings.profile.bioAbout.experience', 'Experience')}
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

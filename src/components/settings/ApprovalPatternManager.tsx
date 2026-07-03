@@ -243,10 +243,10 @@ export const ApprovalPatternManager: React.FC = () => {
             <Brain className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-800 dark:text-white">
+            <h2 className="text-lg font-bold text-c-text">
               {language === 'pl' ? 'Wzorce Zatwierdzania AI' : 'AI Approval Patterns'}
             </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {language === 'pl'
                 ? 'Zarządzaj nauczonymi wzorcami decyzji'
                 : 'Manage learned decision patterns'}
@@ -257,7 +257,7 @@ export const ApprovalPatternManager: React.FC = () => {
         <button
           onClick={fetchData}
           disabled={isLoading}
-          className="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors disabled:opacity-50"
+          className="p-2 text-c-text-muted hover:text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg transition-colors disabled:opacity-50"
         >
           <RefreshCw size={18} className={isLoading ? 'animate-spin' : ''} />
         </button>
@@ -266,11 +266,11 @@ export const ApprovalPatternManager: React.FC = () => {
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 bg-slate-50 dark:bg-navy-900/50 rounded-xl border border-slate-200 dark:border-navy-700">
-            <div className="text-2xl font-bold text-slate-800 dark:text-white">
+          <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle dark:border-navy-700">
+            <div className="text-2xl font-bold text-c-text">
               {stats.totalPatterns}
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-1">
+            <div className="text-xs text-c-text-muted flex items-center gap-1 mt-1">
               <Brain size={12} />
               {language === 'pl' ? 'Wzorców' : 'Patterns'}
             </div>
@@ -327,7 +327,7 @@ export const ApprovalPatternManager: React.FC = () => {
 
       {/* Patterns List */}
       <div className="space-y-3">
-        <h3 className="text-sm font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+        <h3 className="text-sm font-bold text-c-text-secondary uppercase tracking-wider">
           {language === 'pl' ? 'Nauczone Wzorce' : 'Learned Patterns'}
         </h3>
 
@@ -347,20 +347,20 @@ export const ApprovalPatternManager: React.FC = () => {
             {patterns.map((pattern) => (
               <div
                 key={pattern.id}
-                className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden"
+                className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 overflow-hidden"
               >
                 {/* Pattern Header */}
                 <div
-                  className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                  className="p-4 flex items-center justify-between cursor-pointer hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
                   onClick={() => toggleExpanded(pattern.id)}
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <DecisionBadge decision={pattern.decision} />
-                    <span className="font-medium text-slate-700 dark:text-slate-300 truncate">
+                    <span className="font-medium text-c-text-secondary truncate">
                       {formatActionType(pattern.action_type)}
                     </span>
                     <RiskBadge level={pattern.risk_level} />
-                    <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                    <span className="text-xs text-c-text-muted flex items-center gap-1">
                       <Clock size={12} />
                       {pattern.decision_count}x
                     </span>
@@ -377,7 +377,7 @@ export const ApprovalPatternManager: React.FC = () => {
                       className={`flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                         pattern.auto_apply
                           ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                          : 'bg-slate-100 text-slate-500 dark:bg-navy-800 dark:text-slate-400'
+                          : 'bg-c-surface-raised text-c-text-muted'
                       } disabled:opacity-50`}
                     >
                       {updatingPatterns.has(pattern.id) ? (
@@ -403,7 +403,7 @@ export const ApprovalPatternManager: React.FC = () => {
                         handleDeletePattern(pattern.id);
                       }}
                       disabled={deletingPatterns.has(pattern.id)}
-                      className="p-2 text-slate-600 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors disabled:opacity-50"
+                      className="p-2 text-c-text-secondary hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors disabled:opacity-50"
                     >
                       {deletingPatterns.has(pattern.id) ? (
                         <RefreshCw size={16} className="animate-spin" />
@@ -414,46 +414,46 @@ export const ApprovalPatternManager: React.FC = () => {
 
                     {/* Expand/collapse */}
                     {expandedPatterns.has(pattern.id) ? (
-                      <ChevronUp size={18} className="text-slate-600 dark:text-slate-500" />
+                      <ChevronUp size={18} className="text-c-text-secondary" />
                     ) : (
-                      <ChevronDown size={18} className="text-slate-600 dark:text-slate-500" />
+                      <ChevronDown size={18} className="text-c-text-secondary" />
                     )}
                   </div>
                 </div>
 
                 {/* Expanded Details */}
                 {expandedPatterns.has(pattern.id) && (
-                  <div className="px-4 pb-4 border-t border-slate-200 dark:border-navy-700 pt-3">
+                  <div className="px-4 pb-4 border-t border-c-border-subtle dark:border-navy-700 pt-3">
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="text-slate-500 dark:text-slate-400 text-xs">
+                        <span className="text-c-text-muted text-xs">
                           {language === 'pl' ? 'Liczba decyzji' : 'Decision count'}
                         </span>
-                        <p className="font-semibold text-slate-700 dark:text-slate-300">
+                        <p className="font-semibold text-c-text-secondary">
                           {pattern.decision_count}
                         </p>
                       </div>
                       <div>
-                        <span className="text-slate-500 dark:text-slate-400 text-xs">
+                        <span className="text-c-text-muted text-xs">
                           {language === 'pl' ? 'Ostatnia decyzja' : 'Last decision'}
                         </span>
-                        <p className="font-semibold text-slate-700 dark:text-slate-300">
+                        <p className="font-semibold text-c-text-secondary">
                           {formatDate(pattern.last_decision_at)}
                         </p>
                       </div>
                       <div>
-                        <span className="text-slate-500 dark:text-slate-400 text-xs">
+                        <span className="text-c-text-muted text-xs">
                           {language === 'pl' ? 'Utworzono' : 'Created'}
                         </span>
-                        <p className="font-semibold text-slate-700 dark:text-slate-300">
+                        <p className="font-semibold text-c-text-secondary">
                           {formatDate(pattern.created_at)}
                         </p>
                       </div>
                       <div>
-                        <span className="text-slate-500 dark:text-slate-400 text-xs">
+                        <span className="text-c-text-muted text-xs">
                           {language === 'pl' ? 'Poziom ryzyka' : 'Risk level'}
                         </span>
-                        <p className="font-semibold text-slate-700 dark:text-slate-300">
+                        <p className="font-semibold text-c-text-secondary">
                           {pattern.risk_level}
                         </p>
                       </div>

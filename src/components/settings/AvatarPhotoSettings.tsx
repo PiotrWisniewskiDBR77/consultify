@@ -200,11 +200,11 @@ export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
   return (
     <div className="space-y-8">
       {/* Avatar Preview Section */}
-      <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl p-8">
+      <div className="bg-c-surface-raised rounded-xl p-8">
         <div className="flex flex-col items-center">
           {/* Large Avatar */}
           <div
-            className="relative w-48 h-48 rounded-full overflow-hidden bg-gradient-to-br from-brand/20 to-primary-500/20 border-4 border-white dark:border-navy-700 shadow-xl"
+            className="relative w-48 h-48 rounded-full overflow-hidden bg-gradient-to-br from-brand/20 to-c-accent-soft border-4 border-white dark:border-navy-700 shadow-xl"
             style={{ transform: `scale(${zoom})` }}
           >
             {currentAvatar ? (
@@ -214,7 +214,7 @@ export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand to-primary-600">
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand to-c-accent-soft">
                 <span className="text-5xl font-bold text-white">{getInitials()}</span>
               </div>
             )}
@@ -235,10 +235,10 @@ export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
 
           {/* User info below avatar */}
           <div className="mt-6 text-center">
-            <h3 className="text-xl font-semibold text-slate-900 dark:text-white">
+            <h3 className="text-xl font-semibold text-c-text">
               {currentUser?.firstName} {currentUser?.lastName}
             </h3>
-            <p className="text-slate-500 dark:text-slate-400">{currentUser?.email}</p>
+            <p className="text-c-text-muted">{currentUser?.email}</p>
           </div>
 
           {/* Zoom controls (when preview active) */}
@@ -246,16 +246,16 @@ export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
             <div className="flex items-center gap-4 mt-4">
               <button
                 onClick={() => setZoom((z) => Math.max(0.5, z - 0.1))}
-                className="p-2 rounded-lg bg-slate-200 dark:bg-navy-700 hover:bg-slate-300 dark:hover:bg-navy-600 transition-colors"
+                className="p-2 rounded-lg bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-navy-600 transition-colors"
               >
                 <ZoomOut size={18} />
               </button>
-              <span className="text-sm text-slate-600 dark:text-slate-400">
+              <span className="text-sm text-c-text-secondary">
                 {Math.round(zoom * 100)}%
               </span>
               <button
                 onClick={() => setZoom((z) => Math.min(2, z + 0.1))}
-                className="p-2 rounded-lg bg-slate-200 dark:bg-navy-700 hover:bg-slate-300 dark:hover:bg-navy-600 transition-colors"
+                className="p-2 rounded-lg bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-navy-600 transition-colors"
               >
                 <ZoomIn size={18} />
               </button>
@@ -291,7 +291,7 @@ export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
                     ${
                       isDragging
                         ? 'border-brand bg-brand/5 dark:bg-brand/10'
-                        : 'border-slate-300 dark:border-navy-600 hover:border-brand hover:bg-slate-50 dark:hover:bg-navy-800/50'
+                        : 'border-c-border dark:border-navy-600 hover:border-brand hover:bg-c-surface-raised dark:hover:bg-navy-800/50'
                     }
                 `}
       >
@@ -307,10 +307,10 @@ export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
           <div className="space-y-4">
             <div className="flex items-center justify-center gap-3">
               <Check className="text-green-500" size={24} />
-              <span className="text-slate-900 dark:text-white font-medium">
+              <span className="text-c-text font-medium">
                 {selectedFile.name}
               </span>
-              <span className="text-slate-500 dark:text-slate-400 text-sm">
+              <span className="text-c-text-muted text-sm">
                 ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
               </span>
             </div>
@@ -320,7 +320,7 @@ export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
                   e.stopPropagation();
                   handleCancel();
                 }}
-                className="px-4 py-2 rounded-lg bg-slate-200 dark:bg-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-navy-600 transition-colors"
+                className="px-4 py-2 rounded-lg bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-600 transition-colors"
               >
                 {t('common.cancel', 'Cancel')}
               </button>
@@ -352,10 +352,10 @@ export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
               <Upload className="text-brand" size={28} />
             </div>
             <div>
-              <p className="text-slate-900 dark:text-white font-medium">
+              <p className="text-c-text font-medium">
                 {t('settings.avatar.dropzone', 'Drop your photo here or click to browse')}
               </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-sm text-c-text-muted mt-1">
                 {t('settings.avatar.formats', 'Supports JPG, PNG, GIF, WebP up to 5MB')}
               </p>
             </div>
@@ -396,10 +396,10 @@ export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
         <div className="border border-danger-200 dark:border-danger-800/50 rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
-              <h4 className="font-medium text-slate-900 dark:text-white">
+              <h4 className="font-medium text-c-text">
                 {t('settings.avatar.removeTitle', 'Remove Profile Photo')}
               </h4>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-sm text-c-text-muted mt-1">
                 {t('settings.avatar.removeDesc', 'Your initials will be displayed instead')}
               </p>
             </div>
