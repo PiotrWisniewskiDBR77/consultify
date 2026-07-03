@@ -11276,6 +11276,9 @@
         "ready": "Gotowy"
       },
       "next": "następne"
+    },
+    "session": {
+      "notLoadedYet": "Sesja wciąż się ładuje — spróbuj ponownie za chwilę"
     }
   },
   "aiAuthoring": {

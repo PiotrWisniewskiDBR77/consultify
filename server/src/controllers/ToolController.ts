@@ -386,11 +386,15 @@ const ensureToolsSchema = async (): Promise<void> => {
       // column already exists
     }
     // P27-B: wizard state, missing items, failure reason
+    // H3: output_json — generated tool outputs; read by the Conclusions sync
+    // (ConclusionService.syncToolOutputs) and written by demo seeds. Aligning
+    // the runtime schema here keeps that SELECT from failing on fresh DBs.
     for (const col of [
       { name: 'wizard_state_json', def: 'TEXT' },
       { name: 'missing_items_json', def: 'TEXT' },
       { name: 'failure_reason', def: 'TEXT' },
       { name: 'last_generation_batch_id', def: 'TEXT' },
+      { name: 'output_json', def: 'TEXT' },
     ]) {
       try {
         await queryHelpers.queryRun(`ALTER TABLE tool_sessions ADD COLUMN ${col.name} ${col.def}`);
@@ -949,8 +953,10 @@ export class ToolController {
         updatedAt: session.updated_at,
         reviewRequestedAt: session.review_requested_at,
         approvedAt: session.approved_at,
-        answers: session.answers_json ? JSON.parse(session.answers_json) : {},
-        contextSnapshot: session.context_snapshot ? JSON.parse(session.context_snapshot) : {},
+        // Fail-soft: a corrupt JSON blob must degrade to an empty object (the UI
+        // shows an empty-but-editable session), never a 500 that blocks resume.
+        answers: safeJsonParse(session.answers_json),
+        contextSnapshot: safeJsonParse(session.context_snapshot),
         wizardState: safeParseJSON((session as any).wizard_state_json, null),
         missingItems: safeParseJSON((session as any).missing_items_json, []),
         failureReason: (session as any).failure_reason || null,
@@ -1072,24 +1078,32 @@ export class ToolController {
       }
 
       const now = new Date().toISOString();
-      const setClauses = [
-        'answers_json = ?',
-        'context_snapshot = ?',
-        'completion_percent = ?',
-        'confidence_avg = ?',
-        'status = ?',
-        'updated_by = ?',
-        'updated_at = ?',
-      ];
-      const params: unknown[] = [
-        JSON.stringify(answers || {}),
-        JSON.stringify(contextSnapshot || {}),
-        completionPercent ?? 0,
-        confidenceAvg ?? 0,
-        newStatus,
-        user.id,
-        now,
-      ];
+      // H3 resume-hardening: PARTIAL update semantics. All payload fields are
+      // optional (UpdateToolSessionSchema) and live callers save different
+      // slices (e.g. wizard auto-save sends only wizardState+status). The old
+      // unconditional SET wiped answers_json/context_snapshot to '{}' and
+      // zeroed completion/confidence on every partial save — destroying the
+      // session state a user resumes into and permanently blocking the DoD
+      // gate (confidence >= 3). Only update columns the caller actually sent.
+      const setClauses = ['status = ?', 'updated_by = ?', 'updated_at = ?'];
+      const params: unknown[] = [newStatus, user.id, now];
+
+      if (answers !== undefined) {
+        setClauses.push('answers_json = ?');
+        params.push(JSON.stringify(answers || {}));
+      }
+      if (contextSnapshot !== undefined) {
+        setClauses.push('context_snapshot = ?');
+        params.push(JSON.stringify(contextSnapshot || {}));
+      }
+      if (completionPercent !== undefined) {
+        setClauses.push('completion_percent = ?');
+        params.push(completionPercent ?? 0);
+      }
+      if (confidenceAvg !== undefined) {
+        setClauses.push('confidence_avg = ?');
+        params.push(confidenceAvg ?? 0);
+      }
 
       if (wizardState !== undefined) {
         setClauses.push('wizard_state_json = ?');
@@ -1145,7 +1159,9 @@ export class ToolController {
           sessionId: toolId,
           toolType: req.body?.toolType || existing.tool_type || null,
           name: req.body?.name || existing.name || null,
-          answers,
+          // Partial saves may omit answers — bridge from the persisted state so
+          // a wizard-only save cannot erase an already-generated W2 conclusion.
+          answers: answers !== undefined ? answers : safeJsonParse(existing.answers_json),
           confidenceAvg: confidenceAvg ?? Number(existing.confidence_avg || 0),
         },
         { logger }
