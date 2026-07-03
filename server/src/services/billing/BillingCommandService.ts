@@ -2,6 +2,7 @@ import type Stripe from 'stripe';
 import type { Stripe as StripeTypes } from 'stripe';
 
 import logger from '../../utils/Logger.js';
+import { templateExists as emailTemplateExists } from '../email/emailTemplateRenderer.js';
 import { BillingEventService } from './BillingEventService.js';
 import { BillingQueryService } from './BillingQueryService.js';
 import { assertSandboxAllowed } from './billingSandboxGuard.js';
@@ -704,21 +705,45 @@ export class BillingCommandService {
 
       const EmailService = (await import('../emailService.js')).default;
       const daysRemaining = Math.ceil((accessUntil.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      const accessUntilDate = accessUntil.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+
+      // Prefer the branded billing/subscription_canceled.hbs template (Task
+      // #84). When present, emailService renders the .hbs from `template`+`data`.
+      // When absent, we still pass the inline generateCancellationEmailHtml()
+      // as the fallback so the send is never blocked or degraded.
+      const hasTemplate = emailTemplateExists('billing/subscription_canceled');
 
       for (const admin of admins) {
         await EmailService.send({
           to: admin.email,
           subject: 'Your Consultify subscription has been canceled',
-          html: this.generateCancellationEmailHtml({
+          ...(hasTemplate
+            ? { template: 'subscription_canceled' as const }
+            : {
+                html: this.generateCancellationEmailHtml({
+                  firstName: admin.first_name,
+                  orgName: org?.name || 'Your organization',
+                  accessUntil: accessUntilDate,
+                  daysRemaining,
+                }),
+              }),
+          data: {
+            recipientName: admin.first_name,
             firstName: admin.first_name,
             orgName: org?.name || 'Your organization',
-            accessUntil: accessUntil.toLocaleDateString('en-US', {
+            cancellationDate: new Date().toLocaleDateString('en-US', {
               year: 'numeric',
               month: 'long',
               day: 'numeric',
             }),
+            accessUntilDate,
+            accessUntil: accessUntilDate,
             daysRemaining,
-          }),
+          },
         });
       }
 

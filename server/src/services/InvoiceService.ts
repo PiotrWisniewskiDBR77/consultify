@@ -376,16 +376,29 @@ export class InvoiceServiceClass {
 
     await this.dbRun(`UPDATE invoices SET pdf_url = ? WHERE id = ?`, [pdfUrl, invoiceId]);
 
+    const invoiceUrl = `${process.env.FRONTEND_URL}/billing/invoices/${invoiceId}`;
     await EmailService.send({
       to: admin.email,
       subject: `Invoice ${invoice.invoice_number} from Consultify`,
-      template: 'invoice',
+      // Renders billing/invoice_created.hbs via emailService (Task #84).
+      template: 'invoice_created',
       data: {
+        // Legacy fields kept for the inline JSON fallback.
         firstName: admin.first_name,
-        invoiceNumber: invoice.invoice_number,
         total: invoice.formattedTotal,
+        viewUrl: invoiceUrl,
+        // Fields consumed by billing/invoice_created.hbs.
+        recipientName: admin.first_name,
+        invoiceNumber: invoice.invoice_number,
+        amount: invoice.formattedTotal ?? String(invoice.total),
+        currency: invoice.currency ?? '',
+        invoiceDate: invoice.created_at ?? '',
         dueDate: invoice.due_date,
-        viewUrl: `${process.env.FRONTEND_URL}/billing/invoices/${invoiceId}`,
+        billingPeriod:
+          invoice.billing_period_start && invoice.billing_period_end
+            ? `${invoice.billing_period_start} – ${invoice.billing_period_end}`
+            : '',
+        invoiceUrl,
       },
       attachments: pdfUrl ? [{ filename: `${invoice.invoice_number}.pdf`, path: pdfUrl }] : [],
     });
