@@ -111,15 +111,15 @@ export const FirstRunOnboarding: React.FC = () => {
               key={i}
               className={`h-1.5 rounded-full transition-all duration-300 ${
                 i + 1 === STEP_INDEX[step]
-                  ? 'w-8 bg-crimson-600'
+                  ? 'w-8 bg-c-accent'
                   : i + 1 < STEP_INDEX[step]
-                    ? 'w-3 bg-crimson-300'
-                    : 'w-3 bg-slate-200 dark:bg-navy-700'
+                    ? 'w-3 bg-c-accent'
+                    : 'w-3 bg-c-surface-raised'
               }`}
             />
           ))}
         </div>
-        <p className="mt-2 text-center text-xs font-medium text-slate-600 dark:text-slate-500">
+        <p className="mt-2 text-center text-xs font-medium text-c-text-secondary dark:text-c-text-muted">
           {stepLabel}
         </p>
 
@@ -173,16 +173,16 @@ const WelcomeStep: React.FC<StepCommonProps & { onStart: () => void; onSkip: () 
 
   return (
     <div className="text-center">
-      <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-crimson-50 text-crimson-600 dark:bg-crimson-900/20 dark:text-crimson-300">
+      <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-c-accent-soft text-c-accent dark:bg-c-accent-soft dark:text-c-accent">
         <Sparkles size={26} />
       </div>
-      <p className="text-xs font-semibold uppercase tracking-wide text-crimson-600 dark:text-crimson-400">
+      <p className="text-xs font-semibold uppercase tracking-wide text-c-accent">
         {t('firstRun.welcome.eyebrow', 'Welcome to Consultify')}
       </p>
-      <h1 className="mt-2 text-2xl font-bold text-navy-900 dark:text-white">
+      <h1 className="mt-2 text-2xl font-bold text-c-text">
         {t('firstRun.welcome.title', 'Meet Teresa — a consultant that talks')}
       </h1>
-      <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+      <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-c-text-muted">
         {t(
           'firstRun.welcome.subtitle',
           'Teresa is your AI co-thinker. Describe a decision in plain language and she structures the thinking with you.'
@@ -193,9 +193,9 @@ const WelcomeStep: React.FC<StepCommonProps & { onStart: () => void; onSkip: () 
         {points.map((point, i) => (
           <li
             key={i}
-            className="flex items-start gap-2.5 text-sm text-slate-600 dark:text-slate-300"
+            className="flex items-start gap-2.5 text-sm text-c-text-secondary"
           >
-            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-crimson-50 text-crimson-600 dark:bg-crimson-900/30 dark:text-crimson-300">
+            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-c-accent-soft text-c-accent dark:bg-c-accent-soft dark:text-c-accent">
               <Check size={13} />
             </span>
             {point}
@@ -210,7 +210,7 @@ const WelcomeStep: React.FC<StepCommonProps & { onStart: () => void; onSkip: () 
         <button
           type="button"
           onClick={onSkip}
-          className="text-xs font-medium text-slate-600 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
+          className="text-xs font-medium text-c-text-secondary transition-colors hover:text-c-text-secondary dark:hover:text-c-text-muted"
         >
           {t('firstRun.welcome.skip', 'Skip for now')}
         </button>
@@ -232,10 +232,10 @@ const RoleStep: React.FC<
 > = ({ selectedRole, onSelect, onBack, onContinue, t }) => (
   <div>
     <div className="mb-6 text-center">
-      <h2 className="text-xl font-bold text-navy-900 dark:text-white">
+      <h2 className="text-xl font-bold text-c-text">
         {t('firstRun.role.title', 'What brings you here?')}
       </h2>
-      <p className="mx-auto mt-2 max-w-lg text-sm text-slate-500 dark:text-slate-400">
+      <p className="mx-auto mt-2 max-w-lg text-sm text-c-text-muted">
         {t(
           'firstRun.role.subtitle',
           'Pick your main goal so we can open the right door first. You can change direction anytime.'
@@ -255,29 +255,29 @@ const RoleStep: React.FC<
             aria-pressed={isSelected}
             className={`relative flex items-start gap-3 rounded-2xl border-2 p-4 text-left transition-all duration-150 ${
               isSelected
-                ? 'border-crimson-500 bg-crimson-50/60 shadow-sm dark:border-crimson-500 dark:bg-crimson-900/20'
-                : 'border-slate-200 bg-white hover:border-slate-300 dark:border-navy-700 dark:bg-navy-800 dark:hover:border-navy-600'
+                ? 'border-c-accent bg-c-accent-soft shadow-sm dark:border-c-accent dark:bg-c-accent-soft'
+                : 'border-c-border bg-c-surface hover:border-c-border-subtle dark:bg-c-surface-raised dark:hover:border-c-border'
             }`}
           >
             <span
               className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
                 isSelected
-                  ? 'bg-crimson-100 text-crimson-600 dark:bg-crimson-900/40 dark:text-crimson-300'
-                  : 'bg-slate-100 text-slate-600 dark:bg-navy-900 dark:text-slate-500'
+                  ? 'bg-c-accent-soft text-c-accent dark:bg-c-accent-soft dark:text-c-accent'
+                  : 'bg-c-surface-raised text-c-text-secondary dark:bg-c-surface dark:text-c-text-muted'
               }`}
             >
               <Icon size={20} />
             </span>
             <span className="min-w-0">
-              <span className="block text-sm font-semibold text-navy-900 dark:text-white">
+              <span className="block text-sm font-semibold text-c-text">
                 {t(`firstRun.role.options.${role.i18nKey}.title`, role.title)}
               </span>
-              <span className="mt-0.5 block text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+              <span className="mt-0.5 block text-xs leading-relaxed text-c-text-muted">
                 {t(`firstRun.role.options.${role.i18nKey}.description`, role.description)}
               </span>
             </span>
             {isSelected && (
-              <span className="absolute right-3 top-3 text-crimson-600 dark:text-crimson-300">
+              <span className="absolute right-3 top-3 text-c-accent">
                 <Check size={16} />
               </span>
             )}
@@ -315,10 +315,10 @@ const SampleStep: React.FC<
 > = ({ onBack, onOpenDemo, onStartFresh, busy, t }) => (
   <div>
     <div className="mb-6 text-center">
-      <h2 className="text-xl font-bold text-navy-900 dark:text-white">
+      <h2 className="text-xl font-bold text-c-text">
         {t('firstRun.sample.title', 'Start with a sample or a clean slate?')}
       </h2>
-      <p className="mx-auto mt-2 max-w-lg text-sm text-slate-500 dark:text-slate-400">
+      <p className="mx-auto mt-2 max-w-lg text-sm text-c-text-muted">
         {t(
           'firstRun.sample.subtitle',
           'Not sure where to begin? Explore the Atelier Toys demo workspace — a fully populated example you can click around safely.'
@@ -327,14 +327,14 @@ const SampleStep: React.FC<
     </div>
 
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      <div className="flex flex-col rounded-2xl border-2 border-slate-200 bg-white p-5 dark:border-navy-700 dark:bg-navy-800">
-        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-crimson-50 text-crimson-600 dark:bg-crimson-900/30 dark:text-crimson-300">
+      <div className="flex flex-col rounded-2xl border-2 border-c-border bg-c-surface p-5 dark:border-c-border-subtle dark:bg-c-surface-raised">
+        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-c-accent-soft text-c-accent dark:bg-c-accent-soft dark:text-c-accent">
           <FlaskConical size={22} />
         </span>
-        <h3 className="mt-4 text-sm font-semibold text-navy-900 dark:text-white">
+        <h3 className="mt-4 text-sm font-semibold text-c-text">
           {t('firstRun.sample.demo.title', 'Explore the Atelier Toys demo')}
         </h3>
-        <p className="mt-1 flex-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+        <p className="mt-1 flex-1 text-xs leading-relaxed text-c-text-muted">
           {t(
             'firstRun.sample.demo.description',
             'A read-only sample workspace with realistic data so you can see Consultify in action.'
@@ -345,14 +345,14 @@ const SampleStep: React.FC<
         </Button>
       </div>
 
-      <div className="flex flex-col rounded-2xl border-2 border-slate-200 bg-white p-5 dark:border-navy-700 dark:bg-navy-800">
-        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-500 dark:bg-navy-900 dark:text-slate-400">
+      <div className="flex flex-col rounded-2xl border-2 border-c-border bg-c-surface p-5 dark:border-c-border-subtle dark:bg-c-surface-raised">
+        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-c-surface-raised text-c-text-muted dark:bg-c-surface dark:text-c-text-muted">
           <Rocket size={22} />
         </span>
-        <h3 className="mt-4 text-sm font-semibold text-navy-900 dark:text-white">
+        <h3 className="mt-4 text-sm font-semibold text-c-text">
           {t('firstRun.sample.fresh.title', 'Start fresh')}
         </h3>
-        <p className="mt-1 flex-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+        <p className="mt-1 flex-1 text-xs leading-relaxed text-c-text-muted">
           {t(
             'firstRun.sample.fresh.description',
             'Go straight to your own workspace and begin with your real work.'

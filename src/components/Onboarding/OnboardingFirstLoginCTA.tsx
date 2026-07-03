@@ -46,11 +46,11 @@ export const OnboardingFirstLoginCTA: React.FC = () => {
 
     const id = toast.custom(
       (toastInstance) => (
-        <div className="max-w-sm w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 shadow-xl rounded-xl p-4">
-          <div className="text-sm font-bold text-slate-900 dark:text-white">
+        <div className="max-w-sm w-full bg-c-surface border border-c-border-subtle shadow-xl rounded-xl p-4">
+          <div className="text-sm font-bold text-c-text">
             {t('help.onboarding.cta.toast.title', 'Start onboarding')}
           </div>
-          <div className="text-sm text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+          <div className="text-sm text-c-text-secondary mt-1 leading-relaxed">
             {t(
               'help.onboarding.cta.toast.body',
               'Take the “First 30 minutes” path to reach your first value fast — no walls of text, just steps and deep links.'
@@ -67,7 +67,7 @@ export const OnboardingFirstLoginCTA: React.FC = () => {
                 await logEvent('first-30-min', 'CTA_DISMISSED', { source: 'first_login_toast' });
                 toast.dismiss(toastInstance.id);
               }}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-800 dark:text-slate-300 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised transition-colors"
             >
               {t('help.onboarding.cta.toast.later', 'Later')}
             </button>
@@ -77,7 +77,7 @@ export const OnboardingFirstLoginCTA: React.FC = () => {
                 toast.dismiss(toastInstance.id);
                 navigate(ROUTES.APP_INTRO);
               }}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-white transition-colors"
+ className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-c-text text-c-surface hover:opacity-90 transition-colors"
             >
               {t('help.onboarding.cta.toast.start', 'Open intro')}
             </button>

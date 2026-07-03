@@ -61,7 +61,7 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
       <div className="relative">
         {/* Ambient background */}
         <div className="fixed inset-0 pointer-events-none z-0">
-          <div className="absolute inset-0 bg-[linear-gradient(160deg,#f8fafc_0%,#eef2ff_45%,#f8fafc_100%)] dark:bg-[linear-gradient(160deg,#0B1220_0%,#0F172A_45%,#0B1220_100%)]" />
+          <div className="absolute inset-0 bg-c-bg" />
           <div
             className="absolute inset-0 opacity-[0.03] dark:opacity-[0.04]"
             style={{
@@ -76,12 +76,12 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
         </div>
 
         {/* Breadcrumb */}
-        <div className="relative z-10 border-b border-slate-200/80 dark:border-white/[0.06]">
+        <div className="relative z-10 border-b border-c-border dark:border-white/[0.06]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
-            <nav className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-slate-500 dark:text-white/40 overflow-hidden">
+            <nav className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-c-text-muted dark:text-c-text-muted overflow-hidden">
               <Link
                 to="/knowledge-base"
-                className="flex items-center gap-1 hover:text-primary-500 dark:hover:text-primary-400 transition-colors flex-shrink-0"
+                className="flex items-center gap-1 hover:text-c-accent dark:hover:text-c-accent transition-colors flex-shrink-0"
               >
                 <Home size={14} />
                 <span className="hidden sm:inline">
@@ -90,7 +90,7 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
               </Link>
               <ChevronRight size={12} className="flex-shrink-0 sm:hidden" />
               <ChevronRight size={14} className="flex-shrink-0 hidden sm:block" />
-              <span className="text-slate-900 font-semibold dark:text-white truncate">
+              <span className="text-c-text font-semibold dark:text-c-text truncate">
                 {collection?.title || categorySlug}
               </span>
             </nav>
@@ -105,15 +105,15 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
           className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-10 sm:py-16"
         >
           <div className="max-w-3xl">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-[1.05] dark:text-white">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-c-text tracking-tight leading-[1.05] dark:text-c-text">
               {collection?.title || categorySlug}
             </h1>
             {collection?.description && (
-              <p className="mt-3 sm:mt-4 text-base sm:text-lg text-slate-600 font-medium leading-relaxed dark:text-white/45">
+              <p className="mt-3 sm:mt-4 text-base sm:text-lg text-c-text-secondary font-medium leading-relaxed dark:text-c-text-muted">
                 {collection.description}
               </p>
             )}
-            <div className="mt-3 sm:mt-4 text-sm text-slate-500 font-semibold dark:text-white/30">
+            <div className="mt-3 sm:mt-4 text-sm text-c-text-muted font-semibold dark:text-c-text-muted">
               {articles.length} {t('kb.articles', 'articles')}
             </div>
           </div>
@@ -126,12 +126,12 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
               {Array.from({ length: 6 }).map((_, i) => (
                 <div
                   key={i}
-                  className="animate-pulse rounded-xl sm:rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 dark:border-white/[0.06] dark:bg-white/[0.02]"
+                  className="animate-pulse rounded-xl sm:rounded-2xl border border-c-border bg-c-surface p-4 sm:p-6 dark:border-white/[0.06] dark:bg-white/[0.02]"
                 >
-                  <div className="aspect-[16/9] rounded-lg bg-slate-100 mb-4 dark:bg-white/[0.04]" />
-                  <div className="h-4 bg-slate-200 rounded w-2/3 mb-3 dark:bg-white/[0.06]" />
-                  <div className="h-3 bg-slate-100 rounded w-full mb-2 dark:bg-white/[0.04]" />
-                  <div className="h-3 bg-slate-100 rounded w-4/5 dark:bg-white/[0.04]" />
+                  <div className="aspect-[16/9] rounded-lg bg-c-surface-raised mb-4 dark:bg-white/[0.04]" />
+                  <div className="h-4 bg-c-surface-raised rounded w-2/3 mb-3 dark:bg-white/[0.06]" />
+                  <div className="h-3 bg-c-surface-raised rounded w-full mb-2 dark:bg-white/[0.04]" />
+                  <div className="h-3 bg-c-surface-raised rounded w-4/5 dark:bg-white/[0.04]" />
                 </div>
               ))}
             </div>
@@ -139,8 +139,8 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
             <div className="space-y-16">
               {featuredArticles.length > 0 && (
                 <div>
-                  <h2 className="text-lg font-black text-slate-900 mb-6 flex items-center gap-2 uppercase tracking-[0.15em] dark:text-white">
-                    <BookOpen size={18} className="text-primary-400" />
+                  <h2 className="text-lg font-black text-c-text mb-6 flex items-center gap-2 uppercase tracking-[0.15em] dark:text-c-text">
+                    <BookOpen size={18} className="text-c-accent" />
                     {t('kb.category.featured', 'Featured')}
                   </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -158,7 +158,7 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
               {otherArticles.length > 0 && (
                 <div>
                   {featuredArticles.length > 0 && (
-                    <h2 className="text-lg font-black text-slate-900 mb-6 uppercase tracking-[0.15em] dark:text-white">
+                    <h2 className="text-lg font-black text-c-text mb-6 uppercase tracking-[0.15em] dark:text-c-text">
                       {t('kb.category.all', 'All Articles')}
                     </h2>
                   )}
@@ -180,8 +180,8 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
         {/* Other Categories */}
         {otherCollections.length > 0 && (
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pb-16 sm:pb-20">
-            <div className="border-t border-slate-200 dark:border-white/[0.06] pt-8 sm:pt-12">
-              <h3 className="text-lg font-black text-slate-900 mb-6 tracking-tight dark:text-white">
+            <div className="border-t border-c-border dark:border-white/[0.06] pt-8 sm:pt-12">
+              <h3 className="text-lg font-black text-c-text mb-6 tracking-tight dark:text-c-text">
                 {t('kb.category.otherCategories', 'Explore other collections')}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -189,22 +189,22 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
                   <Link
                     key={coll.id}
                     to={`/knowledge-base/${coll.slug}`}
-                    className="group flex items-center gap-4 p-5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:bg-white/[0.04] dark:hover:border-white/[0.12]"
+                    className="group flex items-center gap-4 p-5 rounded-2xl border border-c-border bg-c-surface hover:bg-c-surface-raised hover:border-c-border transition-all duration-200 dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:bg-white/[0.04] dark:hover:border-white/[0.12]"
                   >
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-white/50">
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-c-surface-raised text-c-text-muted dark:bg-white/[0.06] dark:text-c-text-muted">
                       <FolderOpen size={18} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-bold text-slate-900 group-hover:text-primary-500 dark:text-white dark:group-hover:text-primary-300 transition-colors">
+                      <h4 className="font-bold text-c-text group-hover:text-c-accent dark:text-c-text dark:group-hover:text-c-accent transition-colors">
                         {coll.title}
                       </h4>
-                      <p className="text-xs text-slate-500 mt-1 dark:text-white/40">
+                      <p className="text-xs text-c-text-muted mt-1 dark:text-c-text-muted">
                         {coll.article_count} {t('kb.articles', 'articles')}
                       </p>
                     </div>
                     <ChevronRight
                       size={16}
-                      className="text-slate-600 group-hover:text-primary-500 group-hover:translate-x-0.5 transition-all dark:text-white/20 dark:group-hover:text-primary-400"
+                      className="text-c-text-secondary group-hover:text-c-accent group-hover:translate-x-0.5 transition-all dark:text-c-text-muted dark:group-hover:text-c-accent"
                     />
                   </Link>
                 ))}
@@ -228,13 +228,13 @@ const CategoryArticleCard: React.FC<{ article: KbArticleListItem; categorySlug: 
       to={`/knowledge-base/${categorySlug}/${article.slug}`}
       className={cn(
         'group flex flex-col rounded-2xl border transition-all duration-300 overflow-hidden',
-        'border-slate-200 bg-white backdrop-blur-sm dark:border-white/[0.06] dark:bg-white/[0.025]',
-        'hover:bg-slate-50 hover:border-slate-300 dark:hover:bg-white/[0.04] dark:hover:border-white/[0.12]',
+        'border-c-border bg-c-surface backdrop-blur-sm dark:border-white/[0.06] dark:bg-white/[0.025]',
+        'hover:bg-c-surface-raised hover:border-c-border dark:hover:bg-white/[0.04] dark:hover:border-white/[0.12]',
         'hover:shadow-[0_0_40px_-12px_rgba(165,28,48,0.20)]'
       )}
     >
       {article.thumbnail_url ? (
-        <div className="relative aspect-[16/9] overflow-hidden bg-slate-100 dark:bg-[#0B1220]">
+        <div className="relative aspect-[16/9] overflow-hidden bg-c-surface-raised">
           <img
             src={kbImg(article.thumbnail_url)}
             alt={article.title}
@@ -245,29 +245,29 @@ const CategoryArticleCard: React.FC<{ article: KbArticleListItem; categorySlug: 
             loading="lazy"
             decoding="async"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A]/60 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-c-bg via-transparent to-transparent" />
           {article.is_featured && (
-            <span className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-amber-500/90 text-white">
+            <span className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-c-warning text-white">
               {t('kb.card.featured', 'Featured')}
             </span>
           )}
         </div>
       ) : (
-        <div className="relative aspect-[16/9] bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center dark:from-[#0B1220] dark:to-[#0B1220]">
-          <BookOpen size={32} className="text-slate-600 dark:text-white/15" />
+        <div className="relative aspect-[16/9] bg-c-surface-raised flex items-center justify-center">
+          <BookOpen size={32} className="text-c-text-secondary dark:text-c-text-muted" />
         </div>
       )}
 
       <div className="p-4 sm:p-5 flex-1 flex flex-col">
-        <h3 className="text-[15px] font-bold text-slate-900 group-hover:text-primary-500 dark:text-white dark:group-hover:text-primary-300 transition-colors line-clamp-2 leading-snug">
+        <h3 className="text-[15px] font-bold text-c-text group-hover:text-c-accent dark:text-c-text dark:group-hover:text-c-accent transition-colors line-clamp-2 leading-snug">
           {article.title}
         </h3>
         {article.summary && (
-          <p className="mt-2 text-xs text-slate-600 line-clamp-2 leading-relaxed flex-1 dark:text-white/40">
+          <p className="mt-2 text-xs text-c-text-secondary line-clamp-2 leading-relaxed flex-1 dark:text-c-text-muted">
             {article.summary}
           </p>
         )}
-        <div className="mt-4 flex items-center gap-4 text-[11px] text-slate-500 font-medium dark:text-white/30">
+        <div className="mt-4 flex items-center gap-4 text-[11px] text-c-text-muted font-medium dark:text-c-text-muted">
           <span className="flex items-center gap-1">
             <Clock size={11} />
             {article.reading_time_minutes} {t('kb.card.min', 'min')}
@@ -280,13 +280,13 @@ const CategoryArticleCard: React.FC<{ article: KbArticleListItem; categorySlug: 
           )}
         </div>
       </div>
-      <div className="px-4 sm:px-5 py-2.5 sm:py-3 border-t border-slate-200 dark:border-white/[0.04] flex items-center justify-between">
-        <span className="text-xs font-bold text-primary-500 dark:text-primary-400">
+      <div className="px-4 sm:px-5 py-2.5 sm:py-3 border-t border-c-border dark:border-white/[0.04] flex items-center justify-between">
+        <span className="text-xs font-bold text-c-accent dark:text-c-accent">
           {t('kb.card.read', 'Read article')}
         </span>
         <ArrowRight
           size={13}
-          className="text-primary-500 dark:text-primary-400 group-hover:translate-x-1 transition-transform"
+          className="text-c-accent dark:text-c-accent group-hover:translate-x-1 transition-transform"
         />
       </div>
     </Link>

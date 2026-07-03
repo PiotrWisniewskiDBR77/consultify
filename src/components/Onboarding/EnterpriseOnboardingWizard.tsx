@@ -184,16 +184,16 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
   // Step 1: Terms & Privacy
   if (step === 1) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-crimson-100 dark:from-navy-900 dark:to-navy-800 flex items-center justify-center p-4">
-        <div className="max-w-2xl w-full bg-white dark:bg-navy-800 rounded-xl shadow-2xl p-8">
+      <div className="min-h-screen bg-c-bg flex items-center justify-center p-4">
+        <div className="max-w-2xl w-full bg-c-surface-raised rounded-xl shadow-2xl p-8">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FileText className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+            <div className="w-16 h-16 bg-c-accent-soft rounded-full flex items-center justify-center mx-auto mb-4">
+              <FileText className="w-8 h-8 text-c-accent dark:text-c-accent" />
             </div>
-            <h1 className="text-3xl font-bold text-navy-900 dark:text-white mb-2">
+            <h1 className="text-3xl font-bold text-c-text mb-2">
               Start your partner application
             </h1>
-            <p className="text-slate-600 dark:text-slate-300">
+            <p className="text-c-text-secondary">
               To jest ta sama sciezka aplikacyjna uruchamiana z LP i z produktu.
             </p>
           </div>
@@ -201,21 +201,21 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
           {/* Progress */}
           <div className="mb-8">
             <div className="flex items-center justify-between text-sm mb-2">
-              <span className="text-primary-600 dark:text-primary-400 font-medium">
+              <span className="text-c-accent dark:text-c-accent font-medium">
                 Step 1 of 4
               </span>
-              <span className="text-slate-500 dark:text-slate-400">Partner agreement</span>
+              <span className="text-c-text-muted">Partner agreement</span>
             </div>
-            <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
-              <div className="h-full bg-navy-900 w-1/4 transition-all duration-300" />
+            <div className="h-2 bg-c-surface-raised rounded-full overflow-hidden">
+              <div className="h-full bg-c-surface w-1/4 transition-all duration-300" />
             </div>
           </div>
 
           <div className="space-y-6">
             {/* Terms & Conditions */}
-            <div className="border border-slate-200 dark:border-navy-700 rounded-xl p-6 bg-slate-50 dark:bg-navy-900/50">
-              <h3 className="font-semibold text-navy-900 dark:text-white mb-3">Warunki programu</h3>
-              <div className="max-h-40 overflow-y-auto text-sm text-slate-600 dark:text-slate-300 mb-4 space-y-2">
+            <div className="border border-c-border-subtle rounded-xl p-6 bg-c-surface-raised dark:bg-c-surface">
+              <h3 className="font-semibold text-c-text mb-3">Warunki programu</h3>
+              <div className="max-h-40 overflow-y-auto text-sm text-c-text-secondary mb-4 space-y-2">
                 <p>By using Consultify, you agree to our enterprise service agreement...</p>
                 <p>• Professional services and AI-powered consulting tools</p>
                 <p>• Data processing and privacy compliance (GDPR compliant)</p>
@@ -226,20 +226,20 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
                   type="checkbox"
                   checked={termsAccepted}
                   onChange={(e) => setTermsAccepted(e.target.checked)}
-                  className="mt-1 w-5 h-5 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
+                  className="mt-1 w-5 h-5 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"
                 />
-                <span className="text-sm text-slate-700 dark:text-slate-300">
+                <span className="text-sm text-c-text-secondary">
                   Akceptuje warunki programu partnerskiego
                 </span>
               </label>
             </div>
 
             {/* Privacy Policy */}
-            <div className="border border-slate-200 dark:border-navy-700 rounded-xl p-6 bg-slate-50 dark:bg-navy-900/50">
-              <h3 className="font-semibold text-navy-900 dark:text-white mb-3">
+            <div className="border border-c-border-subtle rounded-xl p-6 bg-c-surface-raised dark:bg-c-surface">
+              <h3 className="font-semibold text-c-text mb-3">
                 Polityka prywatnosci
               </h3>
-              <div className="max-h-40 overflow-y-auto text-sm text-slate-600 dark:text-slate-300 mb-4 space-y-2">
+              <div className="max-h-40 overflow-y-auto text-sm text-c-text-secondary mb-4 space-y-2">
                 <p>We respect your privacy and protect your data...</p>
                 <p>• We collect only necessary business information</p>
                 <p>• Your data is encrypted and secure</p>
@@ -250,9 +250,9 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
                   type="checkbox"
                   checked={privacyAccepted}
                   onChange={(e) => setPrivacyAccepted(e.target.checked)}
-                  className="mt-1 w-5 h-5 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
+                  className="mt-1 w-5 h-5 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"
                 />
-                <span className="text-sm text-slate-700 dark:text-slate-300">
+                <span className="text-sm text-c-text-secondary">
                   Akceptuje polityke prywatnosci
                 </span>
               </label>
@@ -262,7 +262,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
           <button
             onClick={handleAcceptTerms}
             disabled={!termsAccepted || !privacyAccepted || loading}
-            className="w-full mt-8 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white font-semibold py-4 rounded-xl transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed"
+ className="w-full mt-8 bg-c-text text-c-surface hover:opacity-90 disabled:bg-c-border dark:disabled:bg-c-surface-raised font-semibold py-4 rounded-xl transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed"
           >
             {loading ? (
               <>
@@ -351,16 +351,16 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
     ];
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-crimson-100 dark:from-navy-900 dark:to-navy-800 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-c-bg flex items-center justify-center p-4">
         <div className="max-w-6xl w-full">
           <div className="text-center mb-12">
-            <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <DollarSign className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+            <div className="w-16 h-16 bg-c-accent-soft rounded-full flex items-center justify-center mx-auto mb-4">
+              <DollarSign className="w-8 h-8 text-c-accent dark:text-c-accent" />
             </div>
-            <h1 className="text-3xl font-bold text-navy-900 dark:text-white mb-2">
+            <h1 className="text-3xl font-bold text-c-text mb-2">
               Choose your partner track
             </h1>
-            <p className="text-slate-600 dark:text-slate-300">
+            <p className="text-c-text-secondary">
               Wybierz model wejscia, ktory najlepiej pasuje do planu wspolpracy.
             </p>
           </div>
@@ -368,13 +368,13 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
           {/* Progress */}
           <div className="mb-12 max-w-2xl mx-auto">
             <div className="flex items-center justify-between text-sm mb-2">
-              <span className="text-primary-600 dark:text-primary-400 font-medium">
+              <span className="text-c-accent dark:text-c-accent font-medium">
                 Step 2 of 4
               </span>
-              <span className="text-slate-500 dark:text-slate-400">Partner track</span>
+              <span className="text-c-text-muted">Partner track</span>
             </div>
-            <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
-              <div className="h-full bg-navy-900 w-2/4 transition-all duration-300" />
+            <div className="h-2 bg-c-surface-raised rounded-full overflow-hidden">
+              <div className="h-full bg-c-surface w-2/4 transition-all duration-300" />
             </div>
           </div>
 
@@ -383,39 +383,39 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
               <div
                 key={tier.id}
                 onClick={() => setSelectedTier(tier.id)}
-                className={`relative bg-white dark:bg-navy-800 rounded-xl p-8 cursor-pointer transition-all border-2 ${
+                className={`relative bg-c-surface-raised rounded-xl p-8 cursor-pointer transition-all border-2 ${
                   selectedTier === tier.id
-                    ? 'border-primary-500 shadow-2xl scale-105'
-                    : 'border-transparent hover:border-primary-200 dark:hover:border-primary-900'
-                } ${tier.popular ? 'ring-2 ring-primary-500 ring-offset-4' : ''}`}
+                    ? 'border-c-accent shadow-2xl scale-105'
+                    : 'border-transparent hover:border-c-accent dark:hover:border-c-accent'
+                } ${tier.popular ? 'ring-2 ring-c-accent ring-offset-4' : ''}`}
               >
                 {tier.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-navy-900 text-white px-4 py-1 rounded-full text-sm font-semibold">
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-c-surface text-white px-4 py-1 rounded-full text-sm font-semibold">
                     Most Popular
                   </div>
                 )}
 
                 <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
+                  <h3 className="text-2xl font-bold text-c-text mb-2">
                     {tier.name}
                   </h3>
                   <div className="flex items-baseline justify-center gap-1">
-                    <span className="text-4xl font-bold text-primary-600">{tier.price}</span>
-                    <span className="text-slate-500 dark:text-slate-400">{tier.period}</span>
+                    <span className="text-4xl font-bold text-c-accent">{tier.price}</span>
+                    <span className="text-c-text-muted">{tier.period}</span>
                   </div>
                 </div>
 
                 <ul className="space-y-3 mb-6">
                   {tier.features.map((feature: string, idx: number) => (
                     <li key={idx} className="flex items-start gap-2 text-sm">
-                      <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-slate-700 dark:text-slate-300">{feature}</span>
+                      <CheckCircle className="w-5 h-5 text-c-success flex-shrink-0 mt-0.5" />
+                      <span className="text-c-text-secondary">{feature}</span>
                     </li>
                   ))}
                 </ul>
 
                 {selectedTier === tier.id && (
-                  <div className="absolute top-4 right-4 w-8 h-8 bg-navy-900 rounded-full flex items-center justify-center">
+                  <div className="absolute top-4 right-4 w-8 h-8 bg-c-surface rounded-full flex items-center justify-center">
                     <CheckCircle className="w-5 h-5 text-white" />
                   </div>
                 )}
@@ -427,7 +427,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
             <button
               onClick={handleSelectTier}
               disabled={!selectedTier || loading}
-              className="w-full bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white font-semibold py-4 rounded-xl transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed"
+ className="w-full bg-c-text text-c-surface hover:opacity-90 disabled:bg-c-border dark:disabled:bg-c-surface-raised font-semibold py-4 rounded-xl transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <>
@@ -451,16 +451,16 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
   // Step 3: Payout readiness
   if (step === 3) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-crimson-100 dark:from-navy-900 dark:to-navy-800 flex items-center justify-center p-4">
-        <div className="max-w-2xl w-full bg-white dark:bg-navy-800 rounded-xl shadow-2xl p-8">
+      <div className="min-h-screen bg-c-bg flex items-center justify-center p-4">
+        <div className="max-w-2xl w-full bg-c-surface-raised rounded-xl shadow-2xl p-8">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CreditCard className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+            <div className="w-16 h-16 bg-c-accent-soft rounded-full flex items-center justify-center mx-auto mb-4">
+              <CreditCard className="w-8 h-8 text-c-accent dark:text-c-accent" />
             </div>
-            <h1 className="text-3xl font-bold text-navy-900 dark:text-white mb-2">
+            <h1 className="text-3xl font-bold text-c-text mb-2">
               Payout and billing readiness
             </h1>
-            <p className="text-slate-600 dark:text-slate-300">
+            <p className="text-c-text-secondary">
               Ustal dane do rozliczen teraz albo przejdz dalej i dopnij je z zespołem partnerskim.
             </p>
           </div>
@@ -468,24 +468,24 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
           {/* Progress */}
           <div className="mb-8">
             <div className="flex items-center justify-between text-sm mb-2">
-              <span className="text-primary-600 dark:text-primary-400 font-medium">
+              <span className="text-c-accent dark:text-c-accent font-medium">
                 Step 3 of 4
               </span>
-              <span className="text-slate-500 dark:text-slate-400">Payout readiness</span>
+              <span className="text-c-text-muted">Payout readiness</span>
             </div>
-            <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
-              <div className="h-full bg-navy-900 w-3/4 transition-all duration-300" />
+            <div className="h-2 bg-c-surface-raised rounded-full overflow-hidden">
+              <div className="h-full bg-c-surface w-3/4 transition-all duration-300" />
             </div>
           </div>
 
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6 mb-8">
+          <div className="bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)] border-l-2 border-c-info rounded-xl p-6 mb-8">
             <div className="flex gap-3">
-              <Shield className="w-6 h-6 text-blue-600 flex-shrink-0" />
+              <Shield className="w-6 h-6 text-c-info flex-shrink-0" />
               <div>
-                <h3 className="font-semibold text-blue-900 dark:text-blue-200 mb-1">
+                <h3 className="font-semibold text-c-text mb-1">
                   Rozliczenia partnera
                 </h3>
-                <p className="text-sm text-blue-700 dark:text-blue-300">
+                <p className="text-sm text-c-text-secondary">
                   Finalne dane payout i billing mozna uzgodnic automatycznie w flow albo manualnie z
                   zespołem partnerskim dla niestandardowych warunkow.
                 </p>
@@ -494,10 +494,10 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
           </div>
 
           {/* Placeholder for Stripe Elements */}
-          <div className="border-2 border-dashed border-slate-300 dark:border-navy-600 rounded-xl p-12 mb-8 text-center">
-            <CreditCard className="w-16 h-16 text-slate-600 dark:text-slate-500 mx-auto mb-4" />
-            <p className="text-slate-500 dark:text-slate-400 mb-2">Payout and billing setup</p>
-            <p className="text-sm text-slate-600 dark:text-slate-500">
+          <div className="border-2 border-dashed border-c-border rounded-xl p-12 mb-8 text-center">
+            <CreditCard className="w-16 h-16 text-c-text-secondary dark:text-c-text-muted mx-auto mb-4" />
+            <p className="text-c-text-muted mb-2">Payout and billing setup</p>
+            <p className="text-sm text-c-text-secondary dark:text-c-text-muted">
               (Automated payout setup can be expanded in the next rollout)
             </p>
           </div>
@@ -505,14 +505,14 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
           <div className="flex gap-4">
             <button
               onClick={handleSkipPayment}
-              className="flex-1 border-2 border-primary-600 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 font-semibold py-4 rounded-xl transition-all"
+              className="flex-1 border-2 border-c-accent text-c-accent hover:bg-c-accent-soft font-semibold py-4 rounded-xl transition-all"
             >
               Continue and finish later
             </button>
             <button
               onClick={handleSetupPayment}
               disabled={loading}
-              className="flex-1 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white font-semibold py-4 rounded-xl transition-all flex items-center justify-center gap-2"
+ className="flex-1 bg-c-text text-c-surface hover:opacity-90 disabled:bg-c-border dark:disabled:bg-c-surface-raised font-semibold py-4 rounded-xl transition-all flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
@@ -534,20 +534,20 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
 
   // Step 4: Completion (shouldn't normally reach here, but just in case)
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-crimson-100 dark:from-navy-900 dark:to-navy-800 flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full bg-white dark:bg-navy-800 rounded-xl shadow-2xl p-8 text-center">
-        <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-          <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400" />
+    <div className="min-h-screen bg-c-bg flex items-center justify-center p-4">
+      <div className="max-w-2xl w-full bg-c-surface-raised rounded-xl shadow-2xl p-8 text-center">
+        <div className="w-20 h-20 bg-[color-mix(in_srgb,var(--c-success)_15%,transparent)] rounded-full flex items-center justify-center mx-auto mb-6">
+          <CheckCircle className="w-12 h-12 text-c-success" />
         </div>
-        <h1 className="text-3xl font-bold text-navy-900 dark:text-white mb-4">
+        <h1 className="text-3xl font-bold text-c-text mb-4">
           Partner application completed
         </h1>
-        <p className="text-lg text-slate-600 dark:text-slate-300 mb-8">
+        <p className="text-lg text-c-text-secondary mb-8">
           Twoj workspace jest gotowy do kolejnego kroku aktywacji i pracy w programie.
         </p>
         <button
           onClick={() => navigate('/app')}
-          className="bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-white font-semibold px-8 py-4 rounded-xl transition-all inline-flex items-center gap-2"
+ className="bg-c-text text-c-surface hover:opacity-90 font-semibold px-8 py-4 rounded-xl transition-all inline-flex items-center gap-2"
         >
           Go to workspace
           <ArrowRight className="w-5 h-5" />
