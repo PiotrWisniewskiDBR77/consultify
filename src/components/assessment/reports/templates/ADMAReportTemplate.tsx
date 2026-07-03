@@ -36,6 +36,7 @@ import {
   ConclusionGapCards,
   FoFRoadBar,
 } from '../ConclusionSummary';
+import { MaturityPathwaySection } from '../MaturityPathwaySection';
 
 interface ADMAReportTemplateProps {
   data: ADMAAssessmentData;
@@ -534,6 +535,17 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
           })}
         </div>
       </section>
+
+      {/* Maturity Pathway (N → N+1) — co zrobić, by przejść wyżej */}
+      <MaturityPathwaySection
+        framework="adma"
+        language="pl"
+        dimensions={dimensionsWithGaps.map((d) => ({
+          dimensionId: d.id,
+          currentLevel: d.current,
+          targetLevel: d.target,
+        }))}
+      />
 
       {/* Maturity Level Legend */}
       <section className="mb-8">
