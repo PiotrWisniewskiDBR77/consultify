@@ -61,20 +61,79 @@ export function hex(color: string): string {
   return color.replace('#', '').toUpperCase();
 }
 
+// ---------------------------------------------------------------------------
+// Neutral / status tokens — shared constants (parity with DOCX_PALETTE).
+//
+// The old renderer scattered raw hex literals (F5F8FC, E3E7EE, FF0000, 00A651…)
+// across KPI cards, split panels and the RAG chart. That produced subtle drift:
+// three shades of "panel grey", pure-red RAG dots, no single source of truth.
+// These frozen tokens are the PPTX analogue of documentDocxStyles.DOCX_PALETTE —
+// every chrome tint, hairline and status color now resolves from ONE place, so
+// the deck reads as the same brand as the DOCX/XLSX exports.
+// ---------------------------------------------------------------------------
+export const DECK_TOKENS = Object.freeze({
+  /** Hairline / thin border grey (matches DOCX gridline). */
+  gridline: 'E3E7EE',
+  /** Soft navy-tinted panel fill (KPI cards, "today"/problem panel). */
+  panelFill: 'F5F8FC',
+  /** Soft teal-tinted panel fill (accent / "target"/answer panel). */
+  panelAccentFill: 'F2F9F6',
+  /** Muted caption / footer / label grey (matches DOCX muted, slate-500). */
+  muted: '64748B',
+  /** White. */
+  white: 'FFFFFF',
+  /** Status — success/positive (teal-green, matches DOCX success). */
+  statusSuccess: '1D9E75',
+  /** Status — warning/amber (matches DOCX warning, never chrome). */
+  statusWarning: 'D97706',
+  /** Status — danger/negative (softened crimson, NEVER chrome). */
+  statusDanger: 'C0392B',
+} as const);
+
 export interface DeckStyle {
   theme: DeliverableTheme;
   headingFont: string;
   bodyFont: string;
-  /** Navy dominant (hex, no #). */
+  /** Navy dominant (hex, no #) — headings, cover, bands. */
   dominant: string;
-  /** Teal accent (hex, no #). */
+  /** One step down the dominant (hex, no #) — sub-headers, secondary bands. */
+  dominantSoft: string;
+  /** Teal accent (hex, no #) — rules, KPI figures, positive deltas. */
   accent: string;
+  /** Deep accent (hex, no #) — accent text readable on a light tint. */
+  accentInk: string;
   /** Neutral body text (hex, no #). */
   neutral: string;
   /** Muted caption / footer text (hex, no #). */
   muted: string;
   /** Readable text color ON the dominant band (usually white). */
   onDominant: string;
+}
+
+/** Lightens a hex color toward white by `amount` (0..1). Deterministic. */
+function lighten(hexNoHash: string, amount: number): string {
+  const n = parseInt(hexNoHash, 16);
+  const r = (n >> 16) & 0xff;
+  const g = (n >> 8) & 0xff;
+  const b = n & 0xff;
+  const mix = (c: number) => Math.round(c + (255 - c) * amount);
+  return [mix(r), mix(g), mix(b)]
+    .map((c) => c.toString(16).padStart(2, '0'))
+    .join('')
+    .toUpperCase();
+}
+
+/** Darkens a hex color toward black by `amount` (0..1). Deterministic. */
+function darken(hexNoHash: string, amount: number): string {
+  const n = parseInt(hexNoHash, 16);
+  const r = (n >> 16) & 0xff;
+  const g = (n >> 8) & 0xff;
+  const b = n & 0xff;
+  const mix = (c: number) => Math.round(c * (1 - amount));
+  return [mix(r), mix(g), mix(b)]
+    .map((c) => c.toString(16).padStart(2, '0'))
+    .join('')
+    .toUpperCase();
 }
 
 /**
@@ -89,14 +148,21 @@ export function resolveDeckStyle(
   }
 ): DeckStyle {
   const theme = resolveTheme(themeId, brandOverride);
+  const dominant = hex(theme.palette.dominant);
+  const accent = hex(theme.palette.accent);
   return {
     theme,
     headingFont: theme.fontPair.heading,
     bodyFont: theme.fontPair.body,
-    dominant: hex(theme.palette.dominant),
-    accent: hex(theme.palette.accent),
+    dominant,
+    // Derived one-step-down navy + deep accent, so the deck carries the SAME
+    // two-tone heading hierarchy the DOCX gets from navy/navySoft/tealInk —
+    // computed from the theme so brand overrides propagate automatically.
+    dominantSoft: lighten(dominant, 0.22),
+    accent,
+    accentInk: darken(accent, 0.32),
     neutral: hex(theme.palette.neutralText),
-    muted: '8A94A6',
+    muted: DECK_TOKENS.muted,
     onDominant: hex(readableTextOn(theme.palette.dominant)),
   };
 }
@@ -301,17 +367,25 @@ export function renderCover(
   const LEFT = 0.85;
   const TEXT_W = 8.3;
 
+  // Subtle depth: a darker navy footer band grounds the composition (instead of
+  // a flat single-color field) — the cover reads as designed, not defaulted.
+  slide.addShape('rect', {
+    x: 0, y: 4.72, w: DECK_GRID.slideW, h: DECK_GRID.slideH - 4.72,
+    fill: { color: darken(style.dominant, 0.22) },
+    line: { color: darken(style.dominant, 0.22), width: 0 },
+  });
+
   // Left accent spine.
   slide.addShape('rect', {
     x: 0, y: 0, w: 0.16, h: DECK_GRID.slideH,
     fill: { color: style.accent }, line: { color: style.accent, width: 0 },
   });
 
-  // Eyebrow.
+  // Eyebrow / kicker — uppercase, tracked, accent-tinted.
   slide.addText(opts.isPolish ? 'PREZENTACJA' : 'PRESENTATION', {
     x: LEFT, y: 1.4, w: TEXT_W, h: 0.32,
-    fontFace: style.bodyFont, fontSize: 12, bold: true,
-    color: style.accent, charSpacing: 2, align: 'left', valign: 'middle', margin: 0,
+    fontFace: style.bodyFont, fontSize: PPT_TYPE_SCALE.kicker, bold: true,
+    color: style.accent, charSpacing: 3, align: 'left', valign: 'middle', margin: 0,
   });
 
   // Title — thesis scale, shrink-fit so long titles never overflow the cover.
@@ -330,21 +404,22 @@ export function renderCover(
   if (opts.company) {
     slide.addText(opts.company, {
       x: LEFT, y: 3.78, w: TEXT_W, h: 0.6,
-      fontFace: style.bodyFont, fontSize: 18, color: style.onDominant, align: 'left', valign: 'top',
+      fontFace: style.bodyFont, fontSize: PPT_TYPE_SCALE.lead - 6, color: style.onDominant,
+      align: 'left', valign: 'top',
     });
   }
 
   if (opts.date) {
     slide.addText(opts.date, {
       x: LEFT, y: 4.92, w: 6.0, h: 0.4,
-      fontFace: style.bodyFont, fontSize: 13, bold: true,
+      fontFace: style.bodyFont, fontSize: PPT_TYPE_SCALE.caption + 2, bold: true,
       color: style.onDominant, align: 'left', valign: 'middle', margin: 0,
     });
   }
 
   slide.addText('CONSULTIFY', {
     x: 7.0, y: 4.92, w: 2.65, h: 0.4,
-    fontFace: style.bodyFont, fontSize: 11, bold: true,
+    fontFace: style.bodyFont, fontSize: PPT_TYPE_SCALE.caption, bold: true,
     color: style.onDominant, charSpacing: 3, align: 'right', valign: 'middle', margin: 0,
   });
 }
@@ -358,10 +433,15 @@ export function renderSectionDivider(
   style: DeckStyle,
   opts: { label: string; kicker?: string }
 ): void {
-  slide.background = { color: 'FFFFFF' };
+  slide.background = { color: DECK_TOKENS.white };
   slide.addShape('rect', {
     x: 0, y: 1.4, w: DECK_GRID.slideW, h: 2.85,
     fill: { color: style.dominant }, line: { color: style.dominant, width: 0 },
+  });
+  // Darker navy foot-edge on the band — a two-tone band reads richer than a slab.
+  slide.addShape('rect', {
+    x: 0, y: 4.17, w: DECK_GRID.slideW, h: 0.08,
+    fill: { color: darken(style.dominant, 0.22) }, line: { color: darken(style.dominant, 0.22), width: 0 },
   });
   slide.addShape('rect', {
     x: DECK_GRID.marginX, y: 1.62, w: 0.9, h: 0.08,
@@ -370,14 +450,15 @@ export function renderSectionDivider(
   if (opts.kicker) {
     slide.addText(opts.kicker.toUpperCase(), {
       x: DECK_GRID.marginX, y: 1.85, w: CONTENT_W, h: 0.4,
-      fontFace: style.bodyFont, fontSize: 13, bold: true,
-      color: style.accent, charSpacing: 2, align: 'left', valign: 'middle',
+      fontFace: style.bodyFont, fontSize: PPT_TYPE_SCALE.kicker + 1, bold: true,
+      color: style.accent, charSpacing: 3, align: 'left', valign: 'middle',
     });
   }
   slide.addText(opts.label, {
     x: DECK_GRID.marginX, y: 2.3, w: CONTENT_W, h: 1.4,
-    fontFace: style.headingFont, fontSize: 32, bold: true,
-    color: style.onDominant, align: 'left', valign: 'top', fit: 'shrink',
+    fontFace: style.headingFont, fontSize: PPT_TYPE_SCALE.sectionTitle, bold: true,
+    color: style.onDominant, align: 'left', valign: 'top',
+    lineSpacingMultiple: 0.98, fit: 'shrink',
   });
 }
 
@@ -391,11 +472,16 @@ export function renderContentChrome(
   style: DeckStyle,
   opts: { title: string; company?: string; pageNumber: number; isPolish: boolean }
 ): { contentTop: number } {
-  slide.background = { color: 'FFFFFF' };
+  slide.background = { color: DECK_TOKENS.white };
 
-  // Top accent bar.
+  // Top accent bar — a thin dominant lead-in with a teal accent tab on the left,
+  // so the header rule carries the two-tone brand chord rather than a flat strip.
   slide.addShape('rect', {
     x: 0, y: 0, w: DECK_GRID.slideW, h: 0.12,
+    fill: { color: style.dominant }, line: { color: style.dominant, width: 0 },
+  });
+  slide.addShape('rect', {
+    x: 0, y: 0, w: 1.6, h: 0.12,
     fill: { color: style.accent }, line: { color: style.accent, width: 0 },
   });
 
@@ -407,10 +493,15 @@ export function renderContentChrome(
     lineSpacingMultiple: 0.98,
   });
 
-  // Thin divider under the title.
+  // Thin divider under the title (teal segment + hairline continuation) — the
+  // PPTX analogue of the DOCX teal hairline under every H1.
   slide.addShape('line', {
-    x: DECK_GRID.marginX, y: 1.55, w: CONTENT_W, h: 0,
-    line: { color: 'E3E7EE', width: 1 },
+    x: DECK_GRID.marginX, y: 1.55, w: 0.7, h: 0,
+    line: { color: style.accent, width: 2 },
+  });
+  slide.addShape('line', {
+    x: DECK_GRID.marginX + 0.75, y: 1.55, w: CONTENT_W - 0.75, h: 0,
+    line: { color: DECK_TOKENS.gridline, width: 1 },
   });
 
   renderFooter(slide, style, opts);
@@ -452,11 +543,12 @@ export function renderBullets(
   const rows = onSlide.map((b) => ({
     text: b,
     options: {
-      bullet: { code: '25AA', indent: 18 }, // ▪ square marker
+      bullet: { code: '25AA', indent: 20 }, // ▪ square marker
       color: style.neutral,
       fontFace: style.bodyFont,
       fontSize: PPT_TYPE_SCALE.body,
-      paraSpaceAfter: 8,
+      paraSpaceAfter: 12, // generous inter-bullet rhythm (parity with DOCX bodyAfter)
+      lineSpacingMultiple: 1.08,
     },
   }));
 
@@ -489,6 +581,13 @@ export function renderClosing(
   const LEFT = 0.85;
   const TEXT_W = 8.3;
 
+  // Darker navy footer band (mirrors the cover — visual symmetry as a bookend).
+  slide.addShape('rect', {
+    x: 0, y: 4.72, w: DECK_GRID.slideW, h: DECK_GRID.slideH - 4.72,
+    fill: { color: darken(style.dominant, 0.22) },
+    line: { color: darken(style.dominant, 0.22), width: 0 },
+  });
+
   // Left accent spine (mirrors the cover).
   slide.addShape('rect', {
     x: 0, y: 0, w: 0.16, h: DECK_GRID.slideH,
@@ -498,14 +597,14 @@ export function renderClosing(
   // Eyebrow — this is the ASK, not a thank-you.
   slide.addText(opts.isPolish ? 'DECYZJA' : 'THE ASK', {
     x: LEFT, y: 1.15, w: TEXT_W, h: 0.32,
-    fontFace: style.bodyFont, fontSize: 12, bold: true,
-    color: style.accent, charSpacing: 2, align: 'left', valign: 'middle', margin: 0,
+    fontFace: style.bodyFont, fontSize: PPT_TYPE_SCALE.kicker, bold: true,
+    color: style.accent, charSpacing: 3, align: 'left', valign: 'middle', margin: 0,
   });
 
   // K3 — what to do first (thesis scale, shrink-fit).
   slide.addText(opts.ask, {
     x: LEFT, y: 1.55, w: TEXT_W, h: 1.5,
-    fontFace: style.headingFont, fontSize: 30, bold: true,
+    fontFace: style.headingFont, fontSize: PPT_TYPE_SCALE.slideTitle + 2, bold: true,
     color: style.onDominant, align: 'left', valign: 'top',
     lineSpacingMultiple: 1.0, fit: 'shrink',
   });
@@ -519,21 +618,21 @@ export function renderClosing(
   if (opts.outcome) {
     slide.addText((opts.isPolish ? 'Czego oczekiwać: ' : 'What to expect: ') + opts.outcome, {
       x: LEFT, y: 3.42, w: TEXT_W, h: 1.3,
-      fontFace: style.bodyFont, fontSize: 15, color: style.onDominant,
-      align: 'left', valign: 'top', lineSpacingMultiple: 1.05, fit: 'shrink',
+      fontFace: style.bodyFont, fontSize: PPT_TYPE_SCALE.body - 3, color: style.onDominant,
+      align: 'left', valign: 'top', lineSpacingMultiple: 1.06, fit: 'shrink',
     });
   }
 
   if (opts.date) {
     slide.addText(opts.date, {
       x: LEFT, y: 4.92, w: 6.0, h: 0.4,
-      fontFace: style.bodyFont, fontSize: 13, bold: true,
+      fontFace: style.bodyFont, fontSize: PPT_TYPE_SCALE.caption + 2, bold: true,
       color: style.onDominant, align: 'left', valign: 'middle', margin: 0,
     });
   }
   slide.addText('CONSULTIFY', {
     x: 7.0, y: 4.92, w: 2.65, h: 0.4,
-    fontFace: style.bodyFont, fontSize: 11, bold: true,
+    fontFace: style.bodyFont, fontSize: PPT_TYPE_SCALE.caption, bold: true,
     color: style.onDominant, charSpacing: 3, align: 'right', valign: 'middle', margin: 0,
   });
 }
@@ -596,30 +695,31 @@ export function renderKpiBand(
     // Panel.
     slide.addShape('rect', {
       x, y: top, w: cardW, h: cardH,
-      fill: { color: 'F5F8FC' }, line: { color: 'E3E7EE', width: 1 },
+      fill: { color: DECK_TOKENS.panelFill }, line: { color: DECK_TOKENS.gridline, width: 1 },
     });
     // Accent top rule.
     slide.addShape('rect', {
       x, y: top, w: cardW, h: 0.07,
       fill: { color: style.accent }, line: { color: style.accent, width: 0 },
     });
-    // Big figure.
+    // Big figure — dominant navy so the number is the anchor; the accent lives
+    // on the rule + label kicker (avoids a wall of teal digits).
     slide.addText(s.value.trim(), {
-      x: x + 0.12, y: top + 0.28, w: cardW - 0.24, h: 0.95,
+      x: x + 0.14, y: top + 0.3, w: cardW - 0.28, h: 0.95,
       fontFace: style.headingFont, fontSize: valueSize, bold: true,
       color: style.dominant, align: 'left', valign: 'top', fit: 'shrink',
     });
-    // Label.
-    slide.addText(s.label.trim(), {
-      x: x + 0.12, y: top + 1.28, w: cardW - 0.24, h: 0.7,
-      fontFace: style.bodyFont, fontSize: 12, bold: true,
-      color: style.neutral, align: 'left', valign: 'top', lineSpacingMultiple: 1.0,
+    // Label — uppercase kicker, tracked, deep-accent tint (reads as a metric name).
+    slide.addText(s.label.trim().toUpperCase(), {
+      x: x + 0.14, y: top + 1.32, w: cardW - 0.28, h: 0.62,
+      fontFace: style.bodyFont, fontSize: PPT_TYPE_SCALE.caption, bold: true,
+      color: style.accentInk, charSpacing: 1, align: 'left', valign: 'top', lineSpacingMultiple: 1.02,
     });
     // Caption (benchmark/delta).
     if (s.caption?.trim()) {
       slide.addText(s.caption.trim(), {
-        x: x + 0.12, y: top + cardH - 0.5, w: cardW - 0.24, h: 0.42,
-        fontFace: style.bodyFont, fontSize: 10, italic: true,
+        x: x + 0.14, y: top + cardH - 0.5, w: cardW - 0.28, h: 0.42,
+        fontFace: style.bodyFont, fontSize: PPT_TYPE_SCALE.micro + 1, italic: true,
         color: style.muted, align: 'left', valign: 'bottom',
       });
     }
@@ -657,18 +757,18 @@ export function renderTwoColumnSplit(
     // Panel background.
     slide.addShape('rect', {
       x, y: top, w: colW, h: colH,
-      fill: { color: accentHeader ? 'F2F9F6' : 'F5F8FC' },
-      line: { color: 'E3E7EE', width: 1 },
+      fill: { color: accentHeader ? DECK_TOKENS.panelAccentFill : DECK_TOKENS.panelFill },
+      line: { color: DECK_TOKENS.gridline, width: 1 },
     });
     // Header band.
     slide.addShape('rect', {
-      x, y: top, w: colW, h: 0.5,
+      x, y: top, w: colW, h: 0.52,
       fill: { color: accentHeader ? style.accent : style.dominant },
       line: { color: accentHeader ? style.accent : style.dominant, width: 0 },
     });
     slide.addText(o.heading.trim(), {
-      x: x + 0.18, y: top, w: colW - 0.36, h: 0.5,
-      fontFace: style.headingFont, fontSize: 14, bold: true,
+      x: x + 0.2, y: top, w: colW - 0.4, h: 0.52,
+      fontFace: style.headingFont, fontSize: PPT_TYPE_SCALE.body - 2, bold: true,
       color: style.onDominant, align: 'left', valign: 'middle', fit: 'shrink',
     });
     // Bullets.
@@ -680,12 +780,13 @@ export function renderTwoColumnSplit(
           bullet: { code: '25AA', indent: 16 },
           color: style.neutral,
           fontFace: style.bodyFont,
-          fontSize: 13,
-          paraSpaceAfter: 7,
+          fontSize: PPT_TYPE_SCALE.body - 3,
+          paraSpaceAfter: 9,
+          lineSpacingMultiple: 1.06,
         },
       }));
       slide.addText(rows as unknown as string, {
-        x: x + 0.18, y: top + 0.68, w: colW - 0.36, h: colH - 0.85,
+        x: x + 0.2, y: top + 0.7, w: colW - 0.4, h: colH - 0.9,
         align: 'left', valign: 'top', fit: 'shrink',
       });
     }
@@ -720,12 +821,13 @@ export function renderLeadWithSupport(
     fill: { color: style.accent }, line: { color: style.accent, width: 0 },
   });
 
-  const leadFit = fitProse(opts.lead, leadW - 0.25, h, 24, 16);
+  const leadFit = fitProse(opts.lead, leadW - 0.25, h, PPT_TYPE_SCALE.lead, 16);
   slide.addText(leadFit.text, {
     x: DECK_GRID.marginX + 0.22, y: top, w: leadW - 0.25, h,
     fontFace: style.headingFont, fontSize: leadFit.fontSize, bold: true,
-    color: style.dominant, align: 'left', valign: 'top', lineSpacingMultiple: 1.02,
+    color: style.dominant, align: 'left', valign: 'top', lineSpacingMultiple: 1.04,
   });
+  if (leadFit.overflowNote) pushNote(slide, leadFit.overflowNote);
 
   const { onSlide } = enforceBulletDiscipline(opts.support, { maxCount: 6, maxWords: 12 });
   if (onSlide.length > 0) {
@@ -736,7 +838,8 @@ export function renderLeadWithSupport(
         color: style.neutral,
         fontFace: style.bodyFont,
         fontSize: PPT_TYPE_SCALE.body - 3,
-        paraSpaceAfter: 8,
+        paraSpaceAfter: 11,
+        lineSpacingMultiple: 1.06,
       },
     }));
     slide.addText(rows as unknown as string, {
