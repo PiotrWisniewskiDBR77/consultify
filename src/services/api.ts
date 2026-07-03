@@ -709,7 +709,19 @@ export const getMapVersionFromPayload = (payload: unknown): number | null => {
 };
 
 // Wrapper for fetch that handles 401 with automatic token refresh
-type FetchWithRetryOptions = RequestInit & { skipDefaultHeaders?: boolean };
+type FetchWithRetryOptions = RequestInit & {
+  skipDefaultHeaders?: boolean;
+  /**
+   * Override the default 20s hard timeout (ms). Heavy operations — AI
+   * generation, deck/report/model materialization, long exports — legitimately
+   * take longer than 20s; without this override they abort mid-flight as
+   * "Request timed out" (Cloudflare-style 524 from the client side). Only
+   * applies when the caller does NOT pass its own AbortSignal. See finding
+   * baseclient_20s_timeout — this mirrors the same override already present in
+   * services/api/baseClient.ts.
+   */
+  timeoutMs?: number;
+};
 
 /**
  * FIX-1 (429 self-storm): in-flight GET de-duplication.
@@ -774,7 +786,7 @@ const fetchWithRetryInner = async (
   const blockedResponse = maybeGetBlockedTransportResponse(transportPath);
   if (blockedResponse) return blockedResponse;
 
-  const { skipDefaultHeaders, ...fetchOptions } = options;
+  const { skipDefaultHeaders, timeoutMs: timeoutOverride, ...fetchOptions } = options;
   const baseHeaders = skipDefaultHeaders ? {} : getHeaders();
   const headers = {
     ...baseHeaders,
@@ -784,9 +796,12 @@ const fetchWithRetryInner = async (
   const isAiRefine = typeof url === 'string' && url.includes('/api/ai/refine-text');
   // Stabilization: every request that does not carry its own AbortSignal gets a
   // hard timeout so a stalled network call can never hang a list/table spinner
-  // forever. AI refine keeps its longer 25s budget; everything else uses 20s.
+  // forever. Callers may raise the ceiling via `timeoutMs` for heavy ops
+  // (generation/materialize/export); AI refine keeps its longer 25s default;
+  // everything else uses 20s.
   const shouldApplyTimeout = !hasExternalSignal;
-  const timeoutMs = shouldApplyTimeout ? (isAiRefine ? 25000 : 20000) : null;
+  const defaultTimeoutMs = isAiRefine ? 25000 : 20000;
+  const timeoutMs = shouldApplyTimeout ? (timeoutOverride ?? defaultTimeoutMs) : null;
   const controller = shouldApplyTimeout ? new AbortController() : null;
   const timer = controller
     ? window.setTimeout(() => {
@@ -3227,6 +3242,8 @@ export const Api = {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data || {}),
+      // Heavy: LLM turns a full transcript into structured notes; exceeds 20s.
+      timeoutMs: 120000,
     });
     return handleResponse(res, 'Failed to generate meeting notes');
   },
@@ -3277,6 +3294,8 @@ export const Api = {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({}),
+      // Heavy: LLM regenerates a full operator plan; exceeds 20s.
+      timeoutMs: 120000,
     });
     return handleResponse(res, 'Failed to regenerate AI operator plan');
   },
@@ -7510,6 +7529,8 @@ export const Api = {
       headers: authHeader,
       body: formData,
       skipDefaultHeaders: true,
+      // Heavy: server parses/extracts (PDF/large docs) + embeds; exceeds 20s.
+      timeoutMs: 120000,
     });
     return handleResponse(res, 'Failed to ingest attachment');
   },
@@ -7533,6 +7554,8 @@ export const Api = {
         url,
         title: options?.title,
       }),
+      // Heavy: server fetches remote URL, extracts and embeds; exceeds 20s.
+      timeoutMs: 120000,
     });
     return handleResponse(res, 'Failed to ingest URL');
   },
@@ -7612,6 +7635,8 @@ export const Api = {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
+      // Heavy: LLM composes structured feedback; can exceed 20s.
+      timeoutMs: 120000,
     });
     return handleResponse(res, 'AI compose failed');
   },
@@ -9332,6 +9357,8 @@ export const Api = {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(payload || {}),
+      // Heavy: LLM drafts a full initiative (multi-section); exceeds 20s.
+      timeoutMs: 120000,
     });
     return handleResponse(res, 'Failed to generate initiatives');
   },
@@ -10527,6 +10554,8 @@ export const Api = {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ prompt, diagramType }),
+      // Heavy: LLM composes a full diagram from a prompt; can exceed 20s.
+      timeoutMs: 120000,
     });
     return handleResponse(res, 'Failed to generate diagram');
   },
@@ -10548,6 +10577,8 @@ export const Api = {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ prompt, nodes, edges }),
+      // Heavy: LLM rewrites an existing diagram; can exceed 20s.
+      timeoutMs: 120000,
     });
     return handleResponse(res, 'Failed to modify diagram');
   },
@@ -10574,6 +10605,8 @@ export const Api = {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ message, documentId, context }),
+      // Heavy: LLM chat over document context; can exceed 20s.
+      timeoutMs: 120000,
     });
     return handleResponse(res, 'Failed to process chat message');
   },
@@ -10596,6 +10629,8 @@ export const Api = {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ nodes, edges, diagramType }),
+      // Heavy: LLM analyzes the diagram to propose changes; can exceed 20s.
+      timeoutMs: 120000,
     });
     return handleResponse(res, 'Failed to get suggestions');
   },
@@ -14553,6 +14588,8 @@ export const Api = {
     const res = await fetchWithRetry(`${API_URL}/artifacts/wave5/fill-template`, {
       method: 'POST',
       body: JSON.stringify(payload),
+      // Heavy: LLM fills a full document template (multi-section); exceeds 20s.
+      timeoutMs: 120000,
     });
     return handleResponse(res, 'Failed to fill Wave 5 document template');
   },
@@ -14572,6 +14609,8 @@ export const Api = {
     const res = await fetchWithRetry(`${API_URL}/artifacts/wave5/generate`, {
       method: 'POST',
       body: JSON.stringify(payload),
+      // Heavy: LLM generates a full structured artifact (report/deck/table); exceeds 20s.
+      timeoutMs: 120000,
     });
     return handleResponse(res, 'Failed to generate Wave 5 structured artifact');
   },
@@ -14883,6 +14922,8 @@ export const Api = {
     const res = await fetchWithRetry(`${API_URL}/ai-outcomes/reports`, {
       method: 'POST',
       body: JSON.stringify(payload),
+      // Heavy: LLM builds a full Wave 9 outcome report; exceeds 20s.
+      timeoutMs: 120000,
     });
     return handleResponse(res, 'Failed to build Wave 9 report');
   },
