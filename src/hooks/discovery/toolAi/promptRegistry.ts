@@ -599,38 +599,40 @@ Return JSON:
 }
 
 export function getToolSummaryPrompt(toolType: ToolType, inputData: unknown): string {
+  const isPolish = detectIsPolish(inputData);
+
   // SMED Planner and DMS Builder carry a grounded W2 conclusion layer
   // (src/config/smedplanner, src/config/dmsbuilder). Prefer the fact-seeded
   // prompt; fall through to the generic operational summary when the session is
   // too empty to synthesize (builder returns null).
   if (toolType === 'smed-planner') {
     const op = inputData as OperationalToolData | undefined;
-    const prompt = buildSmedConclusionPrompt(toSmedSession(op?.sections), false);
+    const prompt = buildSmedConclusionPrompt(toSmedSession(op?.sections), isPolish);
     if (prompt) return prompt;
   }
   if (toolType === 'dms-builder') {
     const op = inputData as OperationalToolData | undefined;
-    const prompt = buildDmsConclusionPrompt(toDmsSession(op?.sections), false);
+    const prompt = buildDmsConclusionPrompt(toDmsSession(op?.sections), isPolish);
     if (prompt) return prompt;
   }
   if (toolType === 'inventory-autopilot') {
     const op = inputData as OperationalToolData | undefined;
-    const prompt = buildInventoryConclusionPrompt(toInventorySession(op?.sections), false);
+    const prompt = buildInventoryConclusionPrompt(toInventorySession(op?.sections), isPolish);
     if (prompt) return prompt;
   }
   if (toolType === 'ai-discovery') {
     const op = inputData as OperationalToolData | undefined;
-    const prompt = buildAiDiscoveryConclusionPrompt(toDiscoverySession(op?.sections), false);
+    const prompt = buildAiDiscoveryConclusionPrompt(toDiscoverySession(op?.sections), isPolish);
     if (prompt) return prompt;
   }
   if (toolType === 'pain-explorer') {
     const op = inputData as OperationalToolData | undefined;
-    const prompt = buildPainConclusionPrompt(toPainSession(op?.sections), false);
+    const prompt = buildPainConclusionPrompt(toPainSession(op?.sections), isPolish);
     if (prompt) return prompt;
   }
   if (toolType === 'rpa-scanner') {
     const op = inputData as OperationalToolData | undefined;
-    const prompt = buildRpaConclusionPrompt(toRpaSession(op?.sections), false);
+    const prompt = buildRpaConclusionPrompt(toRpaSession(op?.sections), isPolish);
     if (prompt) return prompt;
   }
 
@@ -643,36 +645,65 @@ export function getToolSummaryPrompt(toolType: ToolType, inputData: unknown): st
     const op = inputData as (OperationalToolData & { flow?: { processAutomation?: unknown } }) | undefined;
     const prompt = buildProcessAutomationConclusionPrompt(
       toAutomationSession(op?.sections, (op?.flow?.processAutomation as any) ?? undefined),
-      false
+      isPolish
     );
     if (prompt) return prompt;
+  }
+
+  // A3 / SOP grounded W2 conclusions (CONCLUSION_LAYER variant W2). These MUST
+  // run BEFORE the generic OPERATIONAL_TOOL_TYPES summary below — both tool
+  // types are in that list, so a later check would be unreachable dead code
+  // (which is exactly what happened before OXFORD #102).
+  if (toolType === 'a3-problem-solving') {
+    const grounded = buildA3ConclusionPrompt(inputData as OperationalToolData, isPolish);
+    if (grounded) return grounded;
+  }
+  if (toolType === 'sop-builder') {
+    const grounded = buildSopConclusionPrompt(inputData as OperationalToolData, isPolish);
+    if (grounded) return grounded;
   }
 
   if (OPERATIONAL_TOOL_TYPES.includes(toolType)) {
     const opData = inputData as any;
     const sectionsSummary = Object.entries(opData?.sections || {})
-      .map(
-        ([key, items]: [string, any]) =>
-          `- ${humanizeStepId(key)}: ${(Array.isArray(items) ? items : []).length} item(s)`
-      )
+      .map(([key, items]: [string, any]) => {
+        const list = Array.isArray(items) ? items : [];
+        const titles = list
+          .slice(0, 8)
+          .map((item: any) => item?.title)
+          .filter(Boolean)
+          .join('; ');
+        return `- ${humanizeStepId(key)} (${list.length} item(s))${titles ? `: ${titles}` : ''}`;
+      })
       .join('\n');
 
-    return `Based on this completed operational analysis, create a consulting-grade final summary:
+    return `Act as an operational-excellence partner closing this engagement. You sign this summary with your own name in front of the client. Write the finishing block per CONCLUSION_LAYER_STANDARD variant W2 from the session work below.
 
+=== SESSION WORK (the only admissible source of facts) ===
 ${sectionsSummary || '- (no sections populated yet)'}
 
-Provide:
-1. Executive Summary (3-4 sentences)
-2. Top 3 Key Insights
-3. Applied Conclusions: what to do, what to standardize, what to validate next
-4. Initiatives to drive the work forward
-5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
+W2 STRUCTURE (mandatory):
+1. "summary.verdict" — answer-first, 1-2 sentences: what this analysis means for the operation's DECISION. A thesis, not a topic.
+2. "summary.executiveSummary" — 3-4 sentences: restates the verdict, then the why, anchored in the section items above.
+3. "summary.tradeoffs" — >= 1 at recommendation level: what we choose AT THE COST of what. No trade-off = no decision, only a list.
+4. "initiatives" (3-5) — each a decision with a rationale that names the trade-off and the rejected variant; description carries the first step (verb + artifact + role).
+5. "summary.expectedEffect" — behaviorally observable, WITH a time horizon; no numbers absent from the session items.
+
+QUALITY BARS:
+- Zero filler and zero AI meta-phrases ("As an AI", "Based on the provided data", "In conclusion") — write like a partner signing the work.
+- Every sentence falsifiable: with opposite items it would read differently.
+- Respond in ${isPolish ? 'Polish' : 'English'}, active voice, partner tone.
 
 Return as JSON:
 {
-  "summary": "executive summary",
-  "insights": ["insight 1", "insight 2"],
-  "appliedConclusions": ["..."],
+  "summary": {
+    "verdict": "answer-first, 1-2 sentences",
+    "executiveSummary": "3-4 sentences, opens by restating the verdict",
+    "keyInsights": ["insight 1", "insight 2", "insight 3"],
+    "appliedConclusions": ["what to do first", "what to standardize", "what NOT to do", "what to validate next"],
+    "tradeoffs": [{"chosen":"...","rejected":"...","why":"..."}],
+    "expectedEffect": {"text":"...","horizon":"..."}
+  },
   "initiatives": [{"title": "...", "description": "...", "type": "operational|strategic|growth|defensive", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "..."}]
 }`;
   }
@@ -1010,23 +1041,35 @@ Return as JSON:
       )
       .join('\n');
 
-    return `Based on this Ansoff Growth Paths analysis, create a consulting-grade final summary:
+    return `Act as a growth strategy partner closing this Ansoff Growth Paths session. You sign this summary with your own name in front of the client. Write the finishing block per CONCLUSION_LAYER_STANDARD variant W2.
 
+=== GROWTH OPTIONS BY QUADRANT (the only admissible source of facts) ===
 ${optionsSummary}
 
-Provide:
-1. Executive Summary (3-4 sentences)
-2. Top 3 growth insights
-3. Applied Conclusions: what to scale, what to test, what to avoid, what to validate next
-4. 3-5 Recommended Growth Moves
-5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
+W2 STRUCTURE (mandatory):
+1. "summary.verdict" — answer-first, 1-2 sentences: which growth path to bet on FIRST and why. A thesis, not a quadrant recap.
+2. "summary.executiveSummary" — 3-4 sentences: restates the verdict, then the why, anchored in the options above.
+3. "summary.tradeoffs" — >= 1 at recommendation level: which path we scale AT THE COST of which; the canonical rejected alternative is "pursue every quadrant at once -> diluted resources".
+4. "moves" (3-5) — each a growth DECISION (scale-core/enter-market/build-product/diversify/validate-first) with tradeOff (what it costs) and rejectedVariant (what you deliberately do NOT do and why), plus firstStep. If evidence is weak, keep a validate-first move before full scaling.
+5. "summary.expectedEffect" — growth outcome, behaviorally observable, WITH a time horizon; no numbers absent from the options.
+
+QUALITY BARS:
+- Zero filler and zero AI meta-phrases ("As an AI", "Based on the provided data", "In conclusion") — write like a partner signing the work.
+- Every sentence falsifiable: with different options it would read differently.
+- Respond in ${isPolish ? 'Polish' : 'English'}, active voice, partner tone.
+- Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}.
 
 Return JSON:
 {
-  "summary": "executive summary",
-  "insights": ["insight 1", "insight 2"],
-  "appliedConclusions": ["..."],
-  "moves": [{"title":"...","category":"scale-core|enter-market|build-product|diversify|validate-first","rationale":"...","linkedOptionIds":[],"linkedQuadrants":["marketPenetration"],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
+  "summary": {
+    "verdict": "answer-first: which growth path first and why",
+    "executiveSummary": "3-4 sentences, opens by restating the verdict",
+    "keyInsights": ["insight 1", "insight 2", "insight 3"],
+    "appliedConclusions": ["what to scale", "what to test", "what to avoid", "what to validate next"],
+    "tradeoffs": [{"chosen":"...","rejected":"...","why":"..."}],
+    "expectedEffect": {"text":"...","horizon":"..."}
+  },
+  "moves": [{"title":"...","category":"scale-core|enter-market|build-product|diversify|validate-first","rationale":"...","tradeOff":"...","rejectedVariant":"...","linkedOptionIds":[],"linkedQuadrants":["marketPenetration"],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
   "initiatives": [{"title": "...", "description": "...", "type": "growth|strategic|operational", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": ["marketPenetration"]}],
   "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedQuadrants": ["marketPenetration"], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
 }`;
@@ -1103,29 +1146,6 @@ Return JSON:
   "initiatives": [{"title": "...", "description": "...", "type": "strategic|operational", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": []}],
   "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedRiskIds": [], "linkedScenarioIds": [], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
 }`;
-  }
-
-  // Grounded W2 conclusion overrides for A3 / SOP (CONCLUSION_LAYER variant W2).
-  // Backward-compatible: falls through to the generic operational summary below
-  // when the engine has nothing yet (returns null).
-  if (toolType === 'a3-problem-solving') {
-    const grounded = buildA3ConclusionPrompt(inputData as OperationalToolData, false);
-    if (grounded) return grounded;
-  }
-
-  if (toolType === 'sop-builder') {
-    const grounded = buildSopConclusionPrompt(inputData as OperationalToolData, false);
-    if (grounded) return grounded;
-  }
-
-  if (OPERATIONAL_TOOL_TYPES.includes(toolType)) {
-    return `Summarize the operational analysis:
-1. Executive Summary
-2. Top 3 insights
-3. 3-5 operational initiatives
-
-Return JSON:
-{"summary": "...", "insights": ["..."], "initiatives": [{"title": "...", "description": "...", "rationale": "..."}]}`;
   }
 
   return '';
