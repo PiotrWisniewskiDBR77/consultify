@@ -2163,6 +2163,12 @@
     }
   },
   "initiatives": {
+    "card": {
+      "openInitiative": "Otwórz inicjatywę: {{title}}",
+      "advanceStatus": "Przejdź do następnego statusu",
+      "assignOwners": "Przypisz właścicieli",
+      "flagForAttention": "Oznacz do uwagi"
+    },
     "gateAi": {
       "pill": {
         "ariaReady": "Gotowość AI: gotowe, wynik {{score}} na 100",

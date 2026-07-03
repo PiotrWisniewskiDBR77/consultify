@@ -2953,6 +2953,12 @@
     }
   },
   "initiatives": {
+    "card": {
+      "openInitiative": "Open initiative: {{title}}",
+      "advanceStatus": "Advance to next status",
+      "assignOwners": "Assign owners",
+      "flagForAttention": "Flag for attention"
+    },
     "gateAi": {
       "pill": {
         "ariaReady": "AI readiness: ready, score {{score}} out of 100",
