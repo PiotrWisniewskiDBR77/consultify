@@ -70,6 +70,20 @@ const PLANS: DeckPlanSlide[] = [
     },
   },
   {
+    slideIndex: 3.5,
+    layoutIntent: 'key_metrics_overview',
+    title: 'The evidence base is decision-grade, and the value pool is concentrated',
+    keyMessage:
+      'Four numbers frame the mandate: a deep evidence base, a large but concentrated value pool, and a renewal gap that alone protects the biggest single pool.',
+    // R4 §8 — explicit KPI-STAT BAND composition (a wall of numbers = evidence).
+    stats: [
+      { value: '440', label: 'Interview answers analysed', caption: '22 leadership personas' },
+      { value: '14–22 M€', label: 'Run-rate value at stake', caption: 'across 6 benchmarked gaps' },
+      { value: '18', label: 'Technology insights', caption: 'mapped to 20 initiatives' },
+      { value: '+12 pp', label: 'Renewal-gap to top quartile', caption: '76–80% → 88–92%' },
+    ],
+  },
+  {
     slideIndex: 4,
     layoutIntent: 'risk_management',
     title: 'The executive heatmap sequences Wave 1 where evidence and value both concentrate',
@@ -92,14 +106,16 @@ const PLANS: DeckPlanSlide[] = [
     slideIndex: 5,
     layoutIntent: 'single_insight',
     title: 'Factory telemetry is rich, but supervisors react 30 minutes after the loss',
-    keyMessage:
-      'Alerts exist; routing, classification and action protocols are inconsistent across shifts. A 20-30 min event-to-response lag leaks 0.8-1.2 M EUR/yr on Line 3 before changeover and downtime gains are layered in.',
-    bullets: [
-      'Decision required: approve a Line 3 shift-decision contract',
-      'Event taxonomy + alert routing + action protocol + learning capture',
-      'Fund Digital Twin as an operating system, not a dashboard',
-      'Adoption KPIs sit next to outcome KPIs',
-    ],
+    // R4 §8 — explicit LEAD-THESIS composition: big assertion + support column.
+    lead: {
+      text: 'Alerts exist; routing, classification and action protocols are inconsistent across shifts — a 20–30 minute event-to-response lag leaks 0.8–1.2 M EUR/yr on Line 3.',
+      support: [
+        'Decision required: approve a Line 3 shift-decision contract',
+        'Event taxonomy + alert routing + action protocol + learning capture',
+        'Fund Digital Twin as an operating system, not a dashboard',
+        'Adoption KPIs sit next to outcome KPIs',
+      ],
+    },
   },
   {
     slideIndex: 6,
@@ -133,13 +149,26 @@ const PLANS: DeckPlanSlide[] = [
     title: 'US expansion raises the bar: data, AI, partner and tariff readiness need evidence',
     keyMessage:
       'Atelier is genuinely strong on operations and ESG credentials, but district procurement, COPPA posture, AI use-case governance and origin-aware sourcing become contractual deal-blockers before US scale is a safe bet.',
-    bullets: [
-      'District & GPO contract readiness — Partial, close before scale',
-      'COPPA / US state privacy posture — Needs evidence',
-      'AI use-case governance for child-facing AI — Needs evidence',
-      'Tariff & origin-aware procurement — Needs evidence',
-      'ESG & supply-chain traceability — Yes, package as buyer asset',
-    ],
+    // R4 §8 — explicit TWO-COLUMN SPLIT composition (strong vs to-close).
+    split: {
+      left: {
+        heading: 'Already an asset',
+        bullets: [
+          'ESG & supply-chain traceability — package as buyer proof',
+          'Operations & OEE credentials — genuine strength',
+          'Learning-outcome usage data — partial, extendable',
+        ],
+      },
+      right: {
+        heading: 'Close before US scale',
+        bullets: [
+          'District & GPO contract readiness — standardize pack',
+          'COPPA / US state privacy — document child-data flows',
+          'AI use-case governance — approved-use registry + audit',
+          'Tariff & origin-aware procurement — scenario model',
+        ],
+      },
+    },
   },
   {
     slideIndex: 9,

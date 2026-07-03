@@ -70,6 +70,18 @@ export function currencyFormat(currency: CurrencyHint | undefined): string {
   }
 }
 
+/**
+ * Accounting-grade currency format with NEGATIVES IN RED and parentheses — the
+ * convention a finance reviewer expects. Positive uses the plain locale format;
+ * negative reuses it wrapped in ( ) and coloured red via the [Red] token. Zero
+ * renders as a dash (accounting blank). Used for currency columns when
+ * consultant styling is on and the column can carry negatives (deltas, variance).
+ */
+export function accountingCurrencyFormat(currency: CurrencyHint | undefined): string {
+  const pos = currencyFormat(currency);
+  return `${pos};[Red](${pos});"–"`;
+}
+
 /** Per-type default number format. Returns undefined for text/boolean. */
 export function defaultNumberFormat(
   type: string | undefined,
@@ -211,6 +223,55 @@ export function addSubtleColorScale(
   } catch {
     /* CF is cosmetic — never fail the build over it */
   }
+}
+
+// ---------------------------------------------------------------------------
+// Status semaphores — auto RAG fills for status/health text columns
+// ---------------------------------------------------------------------------
+
+/** A resolved semaphore fill (ARGB fill + readable font). */
+export interface SemaphoreStyle {
+  fill: string;
+  font: string;
+  bold?: boolean;
+}
+
+/** RAG palette for status chips (soft fills + readable ink; crimson=status ok). */
+const SEMAPHORE = {
+  green: { fill: 'FFE4F4EC', font: 'FF1D7A54', bold: true },
+  amber: { fill: 'FFFDF3E0', font: 'FF9A6A00' },
+  red: { fill: 'FFFCE4E4', font: 'FF85182F', bold: true },
+  neutral: { fill: 'FFEEF2F7', font: 'FF64748B' },
+} as const;
+
+const GREEN_WORDS =
+  /\b(on\s?track|done|complete|completed|healthy|ready|yes|green|ok|live|zielony|gotowe|zrealizowane|tak|ukończ)/i;
+const RED_WORDS =
+  /\b(at\s?risk|blocked|overdue|critical|fail|failed|red|no|needs?\s?evidence|missing|czerwony|ryzyko|zablokow|krytyczn|brak|nie\b)/i;
+const AMBER_WORDS =
+  /\b(in\s?progress|executing|partial|pending|review|amber|yellow|warning|w\s?toku|realizacja|częściow|oczekuj|żółty|uwaga)/i;
+
+/**
+ * Classifies a status-like cell string to a semaphore, or null when it does not
+ * read as a status. Order matters: red beats amber beats green so "not on track"
+ * lands red. Case/locale-tolerant (EN + PL).
+ */
+export function classifyStatus(value: unknown): SemaphoreStyle | null {
+  const s = String(value ?? '').trim();
+  if (!s || s.length > 40) return null;
+  if (RED_WORDS.test(s)) return SEMAPHORE.red;
+  if (AMBER_WORDS.test(s)) return SEMAPHORE.amber;
+  if (GREEN_WORDS.test(s)) return SEMAPHORE.green;
+  return null;
+}
+
+/** Does this column's key/header read as a status/health/RAG column? */
+const STATUS_HINT =
+  /status|health|rag|stan|readiness|gotow|ryzyk|risk|state|flag|priorytet\s?flag/i;
+
+export function looksLikeStatusColumn(col: ColumnDef): boolean {
+  if (col.type && col.type !== 'text') return false;
+  return STATUS_HINT.test(col.key) || STATUS_HINT.test(col.header ?? '');
 }
 
 // ---------------------------------------------------------------------------

@@ -627,7 +627,7 @@ export const MeetingHub: React.FC = () => {
           <button
             type="button"
             onClick={openCreateModal}
-            className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-navy-900 text-white hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 transition-colors"
+            className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-c-accent text-white hover:opacity-90 transition-colors"
           >
             <span>{t('meeting.actions.new', 'New meeting')}</span>
           </button>
@@ -764,7 +764,7 @@ export const MeetingHub: React.FC = () => {
       </ModuleHub>
 
       {showCreateModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-2xl rounded-2xl bg-c-surface border border-c-border-subtle">
             <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
               <div>
@@ -857,7 +857,7 @@ export const MeetingHub: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleSaveMeeting}
-                  className="h-9 px-4 rounded-full bg-navy-900 text-white text-sm font-medium hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200"
+                  className="h-9 px-4 rounded-full bg-c-accent text-white text-sm font-medium hover:opacity-90"
                 >
                   {editingId
                     ? t('meeting.actions.save', 'Save changes')
@@ -869,7 +869,7 @@ export const MeetingHub: React.FC = () => {
         </div>
       ) : null}
       {showDecisionModal && activeMeeting ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-lg rounded-2xl bg-c-surface border border-c-border-subtle">
             <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
               <div>
@@ -908,7 +908,7 @@ export const MeetingHub: React.FC = () => {
               <button
                 type="button"
                 onClick={handleAddDecision}
-                className="h-9 px-4 rounded-full bg-navy-900 text-white text-sm font-medium hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200"
+                className="h-9 px-4 rounded-full bg-c-accent text-white text-sm font-medium hover:opacity-90"
               >
                 {t('meeting.decisions.actions.add', 'Add decision')}
               </button>
@@ -917,7 +917,7 @@ export const MeetingHub: React.FC = () => {
         </div>
       ) : null}
       {showFollowUpModal && activeMeeting ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-lg rounded-2xl bg-c-surface border border-c-border-subtle">
             <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
               <div>
@@ -963,7 +963,7 @@ export const MeetingHub: React.FC = () => {
               <button
                 type="button"
                 onClick={handleAddFollowUp}
-                className="h-9 px-4 rounded-full bg-navy-900 text-white text-sm font-medium hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200"
+                className="h-9 px-4 rounded-full bg-c-accent text-white text-sm font-medium hover:opacity-90"
               >
                 {t('meeting.followUp.actions.add', 'Add follow-up')}
               </button>
@@ -972,7 +972,7 @@ export const MeetingHub: React.FC = () => {
         </div>
       ) : null}
       {showNotesModal && activeMeeting ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-2xl rounded-2xl bg-c-surface border border-c-border-subtle max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-c-border-subtle">
               <div className="min-w-0">
@@ -1085,7 +1085,7 @@ export const MeetingHub: React.FC = () => {
                   type="button"
                   onClick={handleGenerateNotes}
                   disabled={generatingNotes || !notesTranscript.trim()}
-                  className="h-9 px-4 rounded-full bg-navy-900 text-white text-sm font-medium inline-flex items-center gap-1.5 disabled:opacity-50 hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200"
+                  className="h-9 px-4 rounded-full bg-c-accent text-white text-sm font-medium inline-flex items-center gap-1.5 disabled:opacity-50 hover:opacity-90"
                 >
                   <Sparkles className="w-4 h-4" />
                   {generatingNotes
@@ -1098,7 +1098,7 @@ export const MeetingHub: React.FC = () => {
         </div>
       ) : null}
       {deleteTarget ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-md rounded-2xl bg-c-surface border border-c-border-subtle">
             <div className="px-5 py-4 border-b border-c-border-subtle">
               <div className="text-sm font-semibold text-c-text">
@@ -1127,7 +1127,7 @@ export const MeetingHub: React.FC = () => {
                 type="button"
                 onClick={handleDeleteMeeting}
                 disabled={deleting}
-                className="inline-flex items-center gap-2 h-9 px-4 rounded-full bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-60"
+                className="inline-flex items-center gap-2 h-9 px-4 rounded-full bg-c-danger text-white text-sm font-medium hover:opacity-90 disabled:opacity-60"
               >
                 {deleting ? <Loader2 size={14} className="animate-spin" /> : null}
                 {t('meeting.delete.action', 'Delete meeting')}
@@ -1181,7 +1181,7 @@ const MeetingDetailView: React.FC<{
   const { t } = useTranslation();
   return (
   <div className="p-4 lg:p-6">
-    <div className="rounded-2xl border border-c-border-subtle bg-white/80 dark:bg-white/[0.04] overflow-hidden">
+    <div className="rounded-2xl border border-c-border-subtle bg-c-surface overflow-hidden">
       <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-c-border-subtle">
         <div className="min-w-0">
           <div className="text-[11px] uppercase tracking-wide text-c-text-muted">
@@ -1228,14 +1228,14 @@ const MeetingDetailView: React.FC<{
           <button
             type="button"
             onClick={onAddFollowUp}
-            className="h-9 px-4 rounded-full bg-navy-900 text-white text-sm font-medium hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200"
+            className="h-9 px-4 rounded-full bg-c-accent text-white text-sm font-medium hover:opacity-90"
           >
             {t('meeting.addFollowUp2')}
           </button>
           <button
             type="button"
             onClick={onGenerateNotes}
-            className="h-9 px-4 rounded-full bg-navy-900 text-white text-sm font-medium inline-flex items-center gap-1.5 hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200"
+            className="h-9 px-4 rounded-full bg-c-accent text-white text-sm font-medium inline-flex items-center gap-1.5 hover:opacity-90"
             title={t('meeting.generateAiNotesFromTranscript')}
           >
             <Sparkles className="w-4 h-4" />
@@ -1283,7 +1283,7 @@ const MeetingDetailView: React.FC<{
           items={meeting.decisions}
           emptyLabel={t('meeting.noDecisionsYet')}
         />
-        <div className="rounded-xl border border-c-border-subtle bg-white/70 dark:bg-white/[0.04] p-3 lg:col-span-2">
+        <div className="rounded-xl border border-c-border-subtle bg-c-surface p-3 lg:col-span-2">
           <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
             <CheckSquare2 size={14} />
             <span>{t('meeting.followUps2')}</span>
@@ -1349,7 +1349,7 @@ const MeetingPreview: React.FC<{
   const pills: MetaPill[] = [
     {
       label: formatDateTime(meeting.startAt, isPolish),
-      className: 'bg-slate-100 dark:bg-white/[0.06] text-c-text-secondary',
+      className: 'bg-c-surface-raised text-c-text-secondary',
     },
   ];
 
@@ -1478,7 +1478,7 @@ const PreviewSection: React.FC<{
   items: string[];
   emptyLabel: string;
 }> = ({ icon, title, items, emptyLabel }) => (
-  <div className="rounded-xl border border-c-border-subtle bg-white/70 dark:bg-white/[0.04] p-3">
+  <div className="rounded-xl border border-c-border-subtle bg-c-surface p-3">
     <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
       {icon}
       <span>{title}</span>
@@ -1618,7 +1618,7 @@ const MeetingCalendarView: React.FC<{
                 <span
                   className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[11px] ${
                     isToday
-                      ? 'bg-navy-900 font-semibold text-white dark:bg-slate-100 dark:text-navy-950'
+                      ? 'bg-c-accent font-semibold text-white'
                       : inMonth
                         ? 'text-c-text-secondary'
                         : 'text-c-text-secondary'

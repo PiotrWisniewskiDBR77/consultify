@@ -208,6 +208,9 @@ export const DocumentStudioView: React.FC = () => {
         label: 'Generate',
         icon: Sparkles,
         kind: 'toggle',
+        // Mode switch — secondary tier (editor-shell-canon § 2 STREFA GÓRNA);
+        // these are the doc-studio segmented modes, not the run action.
+        group: 'secondary',
         active: activeTab === 'generate',
         onClick: () => setActiveTab('generate'),
         tooltip: 'Generuj dokument',
@@ -217,6 +220,7 @@ export const DocumentStudioView: React.FC = () => {
         label: 'Plan template',
         icon: Layers,
         kind: 'toggle',
+        group: 'secondary',
         active: activeTab === 'templates',
         onClick: () => setActiveTab('templates'),
         tooltip: 'Szablon dokumentu',

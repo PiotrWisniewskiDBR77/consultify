@@ -26,6 +26,11 @@ import { buildValueChainStaircasePromptRules } from '@/config/valuechain/valueCh
 import { buildPorterConclusionPrompt } from '@/config/porter/conclusionPrompts';
 import { buildValueChainConclusionPrompt } from '@/config/valuechain/conclusionPrompts';
 import { buildPortfolioConclusionPrompt } from '@/config/portfolio/conclusionPrompts';
+import { buildCapabilityMapperConclusionPrompt } from '@/config/capabilitymapper/conclusionPrompts';
+import { buildAmbitionDecomposerConclusionPrompt } from '@/config/ambitiondecomposer/conclusionPrompts';
+import { buildFocusConclusionPrompt } from '@/config/focustradeoffs';
+import { buildNarrativeConclusionPrompt } from '@/config/narrativeengine';
+import { buildRiskConclusionPrompt } from '@/config/riskuncertainty';
 import {
   buildValueChainMovePromptRules,
   deriveLeverCandidates,
@@ -854,6 +859,12 @@ Return as JSON:
 
   if (toolType === 'capability-mapper') {
     const capData = inputData as any;
+    // Grounded W2 conclusion (CONCLUSION_LAYER_STANDARD): seed the gap ranking +
+    // W2 sourcing sequence from the synthesis engine. Falls through to the generic
+    // summary below when no capability has a real gap yet (returns null).
+    const grounded = buildCapabilityMapperConclusionPrompt(capData, detectIsPolish(capData));
+    if (grounded) return grounded;
+
     const capsSummary = (capData?.capabilities || [])
       .map(
         (c: any) =>
@@ -885,6 +896,12 @@ Return as JSON:
 
   if (toolType === 'ambition-decomposer') {
     const ambData = inputData as any;
+    // Grounded W2 conclusion (CONCLUSION_LAYER_STANDARD): seed the prerequisite-
+    // aware theme sequence + W2 moves from the synthesis engine. Falls through to
+    // the generic summary below when there are no themes yet (returns null).
+    const grounded = buildAmbitionDecomposerConclusionPrompt(ambData, detectIsPolish(ambData));
+    if (grounded) return grounded;
+
     const themesSummary = (ambData?.themes || [])
       .map((t: any) => `- ${t.title}: ${t.targetMetric} → ${t.targetValue} (${t.horizon}, ${t.importance})`)
       .join('\n');
@@ -914,6 +931,13 @@ Return as JSON:
 
   if (toolType === 'focus-tradeoff') {
     const focData = inputData as any;
+    // Grounded W2 conclusion (CONCLUSION_LAYER_STANDARD): seed the priority
+    // ranking + commit/defer/cut sequence from the synthesis engine
+    // (src/config/focustradeoffs). Falls through to the generic summary below
+    // when no priority is scored yet (returns null).
+    const grounded = buildFocusConclusionPrompt(focData, detectIsPolish(focData));
+    if (grounded) return grounded;
+
     const prioritiesSummary = (focData?.priorities || [])
       .map((p: any) => `- ${p.title}: value ${p.valueScore}, effort ${p.effortScore}, fit ${p.strategicFit} → ${p.recommendation}`)
       .join('\n');
@@ -942,6 +966,13 @@ Return as JSON:
 
   if (toolType === 'narrative-engine') {
     const narData = inputData as any;
+    // Grounded W2 conclusion (CONCLUSION_LAYER_STANDARD): seed the pillar
+    // ranking + open/prove/reframe/cut delivery sequence from the synthesis
+    // engine (src/config/narrativeengine). Falls through to the generic summary
+    // below when no pillar is scored yet (returns null).
+    const grounded = buildNarrativeConclusionPrompt(narData, detectIsPolish(narData));
+    if (grounded) return grounded;
+
     const pillarsSummary = (narData?.pillars || [])
       .map((p: any) => `- ${p.title}: ${p.message} (${(p.proofPoints || []).length} proof, ${p.audienceResonance})`)
       .join('\n');
@@ -1040,6 +1071,13 @@ Return JSON:
 
   if (toolType === 'risk-uncertainty') {
     const risk = inputData as any;
+    // Grounded W2 conclusion (CONCLUSION_LAYER_STANDARD): seed the risk exposure
+    // ranking + assumption fragility + W2 resilience move sequence from the
+    // synthesis engine. Falls through to the generic summary below when no risk
+    // or assumption is accepted yet (returns null).
+    const grounded = buildRiskConclusionPrompt(risk, detectIsPolish(risk));
+    if (grounded) return grounded;
+
     const riskSummary = (risk?.risks || [])
       .map(
         (item: any) => `- ${item.title || item.description}: P${item.probability}/I${item.impact}`

@@ -29,7 +29,10 @@ import {
   renderContentChrome,
   renderCover,
   renderFooter,
+  renderKpiBand,
+  renderLeadWithSupport,
   renderSectionDivider,
+  renderTwoColumnSplit,
   resolveDeckStyle,
   trimToWords,
   wordCount,
@@ -314,5 +317,77 @@ describe('DeckStyler — pushNote', () => {
     pushNote(slide, '  ');
     pushNote(slide, 'real note');
     expect(slide.rec.notes).toEqual(['real note']);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// R4 §8 — composition renderers (KPI band / two-column split / lead+support)
+// ---------------------------------------------------------------------------
+
+describe('DeckStyler — renderKpiBand (composition)', () => {
+  const style = resolveDeckStyle('executive');
+
+  it('draws one card per stat (≤4), each with the big figure + label', () => {
+    const slide = fakeSlide();
+    renderKpiBand(slide, style, [
+      { value: '440', label: 'Interviews', caption: '22 personas' },
+      { value: '14–22 M€', label: 'Value at stake' },
+    ]);
+    const texts = slide.rec.texts.map((t) => t.text);
+    expect(texts).toContain('440');
+    expect(texts).toContain('14–22 M€');
+    expect(texts).toContain('Interviews');
+    expect(texts).toContain('22 personas'); // caption
+    // Each card = panel rect + accent top rule → ≥2 shapes per card.
+    expect(slide.rec.shapes.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it('caps at 4 cards and returns a bottom baseline below the band', () => {
+    const slide = fakeSlide();
+    const stats = Array.from({ length: 6 }, (_, i) => ({ value: `${i}`, label: `L${i}` }));
+    const { bottom } = renderKpiBand(slide, style, stats);
+    const figures = slide.rec.texts.filter((t) => typeof t.text === 'string' && /^\d$/.test(t.text as string));
+    expect(figures.length).toBe(4);
+    expect(bottom).toBeGreaterThan(DECK_GRID.contentTop);
+  });
+
+  it('empty stats → no emit, bottom = contentTop', () => {
+    const slide = fakeSlide();
+    const { bottom } = renderKpiBand(slide, style, []);
+    expect(slide.rec.texts).toHaveLength(0);
+    expect(bottom).toBe(DECK_GRID.contentTop);
+  });
+});
+
+describe('DeckStyler — renderTwoColumnSplit (composition)', () => {
+  const style = resolveDeckStyle('executive');
+
+  it('emits both panel headings and their bullets', () => {
+    const slide = fakeSlide();
+    renderTwoColumnSplit(slide, style, {
+      left: { heading: 'Today', bullets: ['a gap', 'another gap'] },
+      right: { heading: 'Target', bullets: ['a fix'] },
+    });
+    const texts = slide.rec.texts.map((t) => t.text);
+    expect(texts).toContain('Today');
+    expect(texts).toContain('Target');
+    // Two panels → ≥4 shapes (bg + header band each).
+    expect(slide.rec.shapes.length).toBeGreaterThanOrEqual(4);
+  });
+});
+
+describe('DeckStyler — renderLeadWithSupport (composition)', () => {
+  const style = resolveDeckStyle('executive');
+
+  it('emits the lead thesis text + an accent tick + support column', () => {
+    const slide = fakeSlide();
+    renderLeadWithSupport(slide, style, {
+      lead: 'Telemetry is rich but response is thirty minutes late.',
+      support: ['approve a decision contract', 'fund the operating system'],
+    });
+    const joined = slide.rec.texts.map((t) => String(t.text)).join(' ');
+    expect(joined).toContain('Telemetry is rich');
+    // Accent tick shape present.
+    expect(slide.rec.shapes.length).toBeGreaterThanOrEqual(1);
   });
 });

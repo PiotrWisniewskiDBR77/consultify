@@ -694,6 +694,23 @@ export interface ReconciliationVarianceItem {
   variancePercent: number | null;
   /** True when projected and realized are both known and differ beyond rounding. */
   hasMismatch: boolean;
+  /**
+   * Finance-model driver/benefit key this KPI was reconciled against, when the
+   * reconciliation ENGINE (resultsFinanceReconciliationService) has run. Null on
+   * legacy display-only rows.
+   */
+  driverKey?: string | null;
+  /**
+   * CONCLUSION_LAYER payload persisted by the reconciliation engine
+   * (headline / K2 meaning / K3 actions / K4 effect). Null when the engine has
+   * not reconciled this pair yet.
+   */
+  conclusion?: unknown | null;
+  /**
+   * True when the projected/realized/variance figures above come from the
+   * engine's unit-normalised deviation rather than the legacy monetary heuristic.
+   */
+  engineReconciled?: boolean;
   createdAt: string;
   updatedAt: string;
 }

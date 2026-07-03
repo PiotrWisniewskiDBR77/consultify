@@ -11,15 +11,18 @@
  *   * No second toolbar below this row.
  *   * DBR77 monochrome — no per-module accent colors except via
  *     `dotTone` on chips.
- *   * Chips overflow into a `…` menu only on viewports < 1280 px (the
- *     menu lives in the parent shell; this component just renders the
- *     visible strip).
+ *   * Command-row hierarchy (editor-shell-canon § 2 STREFA GÓRNA):
+ *     chips are partitioned into three tiers by `resolveChipGroup` —
+ *     `primary` (prominent, always visible) · `secondary` (ghost,
+ *     grouped) · `overflow` (folded behind a `⋯` menu). No flat row of
+ *     equal-weight buttons.
  */
 
-import { ArrowLeft, ChevronRight } from 'lucide-react';
-import React, { useState } from 'react';
+import { ArrowLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import {
+  resolveChipGroup,
   sortChipsByMelsOrder,
   type TopBarChipDescriptor,
   type TopBarChipDotTone,
@@ -50,7 +53,10 @@ const DOT_TONE_CLASS: Record<Exclude<TopBarChipDotTone, null>, string> = {
   info: 'bg-sky-500',
 };
 
-const Chip: React.FC<{ descriptor: TopBarChipDescriptor }> = ({ descriptor }) => {
+const Chip: React.FC<{ descriptor: TopBarChipDescriptor; menuItem?: boolean }> = ({
+  descriptor,
+  menuItem = false,
+}) => {
   const {
     icon: Icon,
     label,
@@ -64,17 +70,45 @@ const Chip: React.FC<{ descriptor: TopBarChipDescriptor }> = ({ descriptor }) =>
     id,
   } = descriptor;
 
+  // Overflow menu item — full-width row in the `⋯` dropdown, label always shown.
+  if (menuItem) {
+    return (
+      <button
+        type="button"
+        onClick={disabled ? undefined : onClick}
+        disabled={disabled}
+        className="flex w-full items-center gap-2 px-3 py-2 rounded-md text-sm text-left text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        title={tooltip ?? label}
+        aria-label={label}
+        aria-pressed={kind === 'toggle' ? Boolean(active) : undefined}
+        data-testid={testId ?? `mels-chip-${id}`}
+        data-mels-chip={id}
+      >
+        {Icon ? <Icon size={14} aria-hidden="true" className="flex-shrink-0" /> : null}
+        <span className="flex-1 truncate">{label}</span>
+        {dotTone ? (
+          <span
+            aria-hidden="true"
+            className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${DOT_TONE_CLASS[dotTone]}`}
+          />
+        ) : null}
+      </button>
+    );
+  }
+
   const baseClasses =
     'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors flex-shrink-0';
 
   let stateClasses = '';
   if (kind === 'primary') {
+    // Primary tier — prominent accent button (only 1-4 per module).
     stateClasses =
       'bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed';
   } else if (active) {
     stateClasses =
       'text-primary-600 dark:text-primary-300 bg-primary-50 dark:bg-primary-500/10 hover:bg-primary-100 dark:hover:bg-primary-500/15';
   } else {
+    // Secondary tier — ghost button, lower visual weight.
     stateClasses =
       'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 disabled:opacity-40 disabled:cursor-not-allowed';
   }
@@ -103,6 +137,63 @@ const Chip: React.FC<{ descriptor: TopBarChipDescriptor }> = ({ descriptor }) =>
   );
 };
 
+/**
+ * Overflow `⋯` menu — folds rare/advanced chips behind a single button
+ * per editor-shell-canon § 2 STREFA GÓRNA. Portaled visually via a
+ * `z-dropdown`-tokened panel (canon § 3 z-index scale).
+ */
+const OverflowMenu: React.FC<{ chips: TopBarChipDescriptor[] }> = ({ chips }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (e: MouseEvent): void => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  if (chips.length === 0) return null;
+
+  return (
+    <div className="relative flex-shrink-0" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+        title="More actions"
+        aria-label="More actions"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        data-testid="mels-topbar-overflow"
+      >
+        <MoreHorizontal size={16} aria-hidden="true" />
+      </button>
+      {open ? (
+        <div
+          role="menu"
+          className="absolute right-0 top-full mt-1 z-dropdown min-w-[200px] rounded-token-md border border-c-border bg-c-surface p-1 shadow-lg"
+          data-testid="mels-topbar-overflow-menu"
+          onClick={() => setOpen(false)}
+        >
+          {chips.map((chip) => (
+            <Chip key={chip.id} descriptor={chip} menuItem />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+};
+
 export const TopBar: React.FC<TopBarProps> = ({
   moduleLabel,
   title,
@@ -124,6 +215,13 @@ export const TopBar: React.FC<TopBarProps> = ({
 
   const orderedChips = respectMelsOrder ? sortChipsByMelsOrder(chips) : chips;
 
+  // Command-row hierarchy (editor-shell-canon § 2 STREFA GÓRNA): partition
+  // into three tiers. Secondary sits left of primary; overflow folds into
+  // the `⋯` menu. Order within each tier is preserved from `orderedChips`.
+  const secondaryChips = orderedChips.filter((c) => resolveChipGroup(c) === 'secondary');
+  const primaryChips = orderedChips.filter((c) => resolveChipGroup(c) === 'primary');
+  const overflowChips = orderedChips.filter((c) => resolveChipGroup(c) === 'overflow');
+
   const commit = () => {
     setEditing(false);
     if (draft !== title) onTitleChange?.(draft);
@@ -132,7 +230,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   return (
     <div
       className={
-        'h-14 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 flex items-center px-4 gap-3 flex-shrink-0 ' +
+        'h-14 border-b border-c-border bg-c-surface flex items-center px-4 gap-3 flex-shrink-0 relative z-sticky ' +
         (className ?? '')
       }
       data-testid={testId ?? 'mels-topbar'}
@@ -187,9 +285,23 @@ export const TopBar: React.FC<TopBarProps> = ({
       </div>
 
       <div className="flex items-center gap-1 flex-shrink-0" data-testid="mels-topbar-chips">
-        {orderedChips.map((chip) => (
+        {secondaryChips.map((chip) => (
           <Chip key={chip.id} descriptor={chip} />
         ))}
+        <OverflowMenu chips={overflowChips} />
+        {primaryChips.length > 0 ? (
+          <>
+            {secondaryChips.length > 0 || overflowChips.length > 0 ? (
+              <span
+                aria-hidden="true"
+                className="mx-1 h-5 w-px bg-slate-200 dark:bg-navy-700"
+              />
+            ) : null}
+            {primaryChips.map((chip) => (
+              <Chip key={chip.id} descriptor={chip} />
+            ))}
+          </>
+        ) : null}
       </div>
 
       {presenceSlot ? (

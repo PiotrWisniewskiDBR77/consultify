@@ -16,13 +16,16 @@ import {
 } from '../../../server/src/services/workbook/WorkbookBuilder.js';
 import type { WorkbookSchema } from '../../../server/src/services/workbook/WorkbookSchema.js';
 import {
+  accountingCurrencyFormat,
   alignmentForType,
+  classifyStatus,
   colLetter,
   colorScaleColumns,
   computeColumnWidth,
   currencyFormat,
   defaultNumberFormat,
   inferCurrency,
+  looksLikeStatusColumn,
 } from '../../../server/src/services/workbook/WorkbookStyler.js';
 
 // ---------------------------------------------------------------------------
@@ -131,6 +134,45 @@ describe('WorkbookStyler — color-scale column detection', () => {
     };
     // 1-based indices: roi=2, readiness=3; count(4) not score-like
     expect(colorScaleColumns(sheet)).toEqual([2, 3]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// R4 depth — status semaphores + accounting currency (pure helpers)
+// ---------------------------------------------------------------------------
+
+describe('WorkbookStyler — status semaphore classification', () => {
+  it('classifies EN + PL statuses to RAG (red beats amber beats green)', () => {
+    expect(classifyStatus('On Track')?.fill).toBe('FFE4F4EC'); // green
+    expect(classifyStatus('Zielony')?.fill).toBe('FFE4F4EC');
+    expect(classifyStatus('At Risk')?.fill).toBe('FFFCE4E4'); // red
+    expect(classifyStatus('Needs evidence')?.fill).toBe('FFFCE4E4');
+    expect(classifyStatus('In Progress')?.fill).toBe('FFFDF3E0'); // amber
+    expect(classifyStatus('Częściowo')?.fill).toBe('FFFDF3E0');
+  });
+
+  it('returns null for non-status text and overlong strings', () => {
+    expect(classifyStatus('Line 3 Digital Twin')).toBeNull();
+    expect(classifyStatus('')).toBeNull();
+    expect(classifyStatus('x'.repeat(60))).toBeNull();
+  });
+
+  it('looksLikeStatusColumn matches status/health/readiness text columns only', () => {
+    expect(looksLikeStatusColumn({ key: 'status', header: 'Status', type: 'text' })).toBe(true);
+    expect(looksLikeStatusColumn({ key: 'health', header: 'Health', type: 'text' })).toBe(true);
+    expect(looksLikeStatusColumn({ key: 'readiness', header: 'Readiness', type: 'text' })).toBe(true);
+    // numeric column never a text-semaphore column
+    expect(looksLikeStatusColumn({ key: 'status', header: 'Status', type: 'number' })).toBe(false);
+    expect(looksLikeStatusColumn({ key: 'owner', header: 'Owner', type: 'text' })).toBe(false);
+  });
+});
+
+describe('WorkbookStyler — accountingCurrencyFormat', () => {
+  it('wraps negatives in red parentheses and dashes zero', () => {
+    const f = accountingCurrencyFormat('eur');
+    expect(f).toContain('[Red]');
+    expect(f).toContain('(€#,##0.00)');
+    expect(f).toContain('"–"'); // zero → dash
   });
 });
 
@@ -250,5 +292,71 @@ describe('WorkbookBuilder — consultant styling OFF (raw)', () => {
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(buf);
     expect(wb.worksheets.map((w) => w.name)).toContain('Info');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// R4 depth — semaphore fill + total-row accounting rule land in a REAL .xlsx
+// ---------------------------------------------------------------------------
+
+const STATUS_SEED: WorkbookSchema = {
+  title: 'Portfolio status',
+  author: 'tests',
+  sheets: [
+    {
+      name: 'Portfolio',
+      columns: [
+        { key: 'name', header: 'Initiative', type: 'text' },
+        { key: 'value', header: 'Value', type: 'currency' },
+        // status column with NO explicit CF → auto-semaphore should fire.
+        { key: 'health', header: 'Health', type: 'text' },
+      ],
+      rows: [
+        { cells: { name: { value: 'A' }, value: { value: 10 }, health: { value: 'On Track' } } },
+        { cells: { name: { value: 'B' }, value: { value: 20 }, health: { value: 'At Risk' } } },
+        { cells: { name: { value: 'TOTAL' }, value: { formula: 'SUM(B2:B3)' }, health: { value: '' } } },
+      ],
+    },
+  ],
+};
+
+describe('WorkbookBuilder — R4 depth (semaphores + total rule)', () => {
+  it('auto RAG-fills an un-CF status column (green + red land in styles)', async () => {
+    const buf = await buildWorkbookBuffer(STATUS_SEED, { applyConsultantStyling: true });
+    const styles = await styleXml(buf);
+    expect(styles).toContain('E4F4EC'); // green semaphore fill (On Track)
+    expect(styles).toContain('FCE4E4'); // red semaphore fill (At Risk)
+  });
+
+  it('bolds the TOTAL row and keeps its SUM formula intact', async () => {
+    const buf = await buildWorkbookBuffer(STATUS_SEED, { applyConsultantStyling: true });
+    const ExcelJS = (await import('exceljs')).default;
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(buf);
+    const ws = wb.getWorksheet('Portfolio')!;
+    const totalCell = ws.getRow(4).getCell(1);
+    expect(String(totalCell.value)).toBe('TOTAL');
+    expect(totalCell.font?.bold).toBe(true);
+    const sumCell = ws.getRow(4).getCell(2).value as { formula?: string };
+    expect(sumCell.formula).toContain('SUM(B2:B3)');
+  });
+
+  it('respects explicit CF: a status column WITH a CF block is not auto-filled', async () => {
+    const withCf: WorkbookSchema = {
+      title: 'x',
+      author: 'tests',
+      sheets: [
+        {
+          ...STATUS_SEED.sheets[0],
+          conditionalFormatting: [
+            { ref: 'C2:C3', rules: [{ type: 'cellIs', operator: 'equal', formulae: ['"At Risk"'], style: { bgColor: 'FF0000' } }] },
+          ],
+        },
+      ],
+    };
+    const buf = await buildWorkbookBuffer(withCf, { applyConsultantStyling: true });
+    const styles = await styleXml(buf);
+    // Auto green fill must NOT appear (explicit CF owns the column).
+    expect(styles).not.toContain('E4F4EC');
   });
 });

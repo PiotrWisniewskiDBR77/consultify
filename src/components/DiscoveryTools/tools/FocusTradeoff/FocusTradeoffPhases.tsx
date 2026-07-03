@@ -27,6 +27,7 @@ import {
   useToolStore,
 } from '@/store/useToolStore';
 
+import { CreateInitiativeFromMoveButton } from '../../shared/createInitiativeFromMove';
 import { ProposalCardActions as CardActions } from '../../shared/ProposalCardGovernance';
 import { FocusTradeoffVisual } from '../../shared/StrategicCanvasVisuals';
 import { PriorityCard } from './PriorityCard';
@@ -402,6 +403,9 @@ export function FocusTradeoffInsightsPhase({
                 {move.firstStep}
               </div>
             )}
+            <div className="flex justify-end">
+              <CreateInitiativeFromMoveButton session={session} move={move} isPolish={isPolish} />
+            </div>
           </div>
         ))}
       </div>

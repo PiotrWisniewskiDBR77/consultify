@@ -137,6 +137,11 @@ export function buildTabeleTopBarChips(args: {
   const confidentiality = state.confidentiality ?? 'internal';
   const verdict = state.governanceVerdict ?? null;
 
+  // Command-row hierarchy (editor-shell-canon § 2 STREFA GÓRNA): the 10
+  // MELS chips are tiered instead of rendered flat. Primary = Run (the
+  // lane action). Secondary = frequent state chips (Confidentiality,
+  // Theme, QA, Share, Agent). Overflow (`⋯`) = rare/advisory chips
+  // (History, Governance, Analytics, Audit).
   const chips: TopBarChipDescriptor[] = [
     {
       id: 'internal',
@@ -146,6 +151,7 @@ export function buildTabeleTopBarChips(args: {
       disabled: !handlers.onConfidentiality,
       dotTone: CONFIDENTIALITY_TONE[confidentiality],
       tooltip: `Confidentiality: ${L.internalLabels[confidentiality]}`,
+      group: 'secondary',
     },
     {
       id: 'theme',
@@ -153,6 +159,7 @@ export function buildTabeleTopBarChips(args: {
       icon: Palette,
       onClick: handlers.onTheme,
       disabled: !handlers.onTheme,
+      group: 'secondary',
     },
     {
       id: 'history',
@@ -160,6 +167,7 @@ export function buildTabeleTopBarChips(args: {
       icon: History,
       onClick: handlers.onHistory,
       disabled: !handlers.onHistory,
+      group: 'overflow',
     },
     {
       id: 'qa',
@@ -168,6 +176,7 @@ export function buildTabeleTopBarChips(args: {
       onClick: handlers.onQa,
       disabled: !handlers.onQa,
       dotTone: state.qaDotTone ?? null,
+      group: 'secondary',
     },
     {
       id: 'governance',
@@ -176,6 +185,7 @@ export function buildTabeleTopBarChips(args: {
       onClick: handlers.onGovernance,
       disabled: !handlers.onGovernance,
       dotTone: verdict ? VERDICT_TONE[verdict] : null,
+      group: 'overflow',
     },
     {
       id: 'analytics',
@@ -183,6 +193,7 @@ export function buildTabeleTopBarChips(args: {
       icon: Activity,
       onClick: handlers.onAnalytics,
       disabled: !handlers.onAnalytics || state.analyticsEnabled === false,
+      group: 'overflow',
     },
     {
       id: 'audit',
@@ -190,6 +201,7 @@ export function buildTabeleTopBarChips(args: {
       icon: FileSearch,
       onClick: handlers.onAudit,
       disabled: !handlers.onAudit,
+      group: 'overflow',
     },
     {
       id: 'share',
@@ -197,6 +209,7 @@ export function buildTabeleTopBarChips(args: {
       icon: Share2,
       onClick: handlers.onShare,
       disabled: !handlers.onShare,
+      group: 'secondary',
     },
     {
       id: 'agent',
@@ -206,6 +219,7 @@ export function buildTabeleTopBarChips(args: {
       disabled: !handlers.onToggleAgent,
       kind: 'toggle',
       active: Boolean(state.agentOpen),
+      group: 'secondary',
     },
     {
       id: 'run',
@@ -214,6 +228,7 @@ export function buildTabeleTopBarChips(args: {
       onClick: handlers.onRun,
       disabled: !handlers.onRun || state.runEnabled === false,
       kind: 'primary',
+      group: 'primary',
     },
   ];
 

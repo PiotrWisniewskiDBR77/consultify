@@ -29,6 +29,7 @@ import {
   useToolStore,
 } from '@/store/useToolStore';
 
+import { CreateInitiativeFromMoveButton } from '../../shared/createInitiativeFromMove';
 import { ProposalCardActions as CardActions } from '../../shared/ProposalCardGovernance';
 import { AmbitionDecompositionVisual } from '../../shared/StrategicCanvasVisuals';
 import { ThemeCard } from './ThemeCard';
@@ -404,6 +405,9 @@ export function AmbitionDecomposerInsightsPhase({
                 {move.firstStep}
               </div>
             )}
+            <div className="flex justify-end">
+              <CreateInitiativeFromMoveButton session={session} move={move} isPolish={isPolish} />
+            </div>
           </div>
         ))}
       </div>

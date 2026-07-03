@@ -85,14 +85,28 @@ const schema: WorkbookSchema = {
         { key: 'poolLow', header: 'Pool low (M EUR)', type: 'currency' },
         { key: 'poolHigh', header: 'Pool high (M EUR)', type: 'currency' },
         { key: 'gapScore', header: 'Gap severity (0-100)', type: 'number' },
+        // No explicit CF on this column → exercises AUTO status-semaphore path.
+        { key: 'health', header: 'Health', type: 'text' },
       ],
       rows: [
-        row({ theme: 'Line 3 OEE', current: '62-66%', benchmark: '78-82%', poolLow: 2.4, poolHigh: 3.6, gapScore: 82 }),
-        row({ theme: 'Digital gross renewal', current: '76-80%', benchmark: '88-92%', poolLow: 4.0, poolHigh: 6.0, gapScore: 90 }),
-        row({ theme: 'Supplier risk governance', current: 'Visible, not governed', benchmark: 'War-room + escalation', poolLow: 2.0, poolHigh: 3.5, gapScore: 74 }),
-        row({ theme: 'Repeat defect rate', current: '9-12%', benchmark: '3-4%', poolLow: 0.9, poolHigh: 1.6, gapScore: 68 }),
-        row({ theme: 'Partner 90-day activation', current: '~50% productive', benchmark: '75%', poolLow: 2.0, poolHigh: 3.0, gapScore: 66 }),
-        row({ theme: 'Changeover time', current: '16-20 min', benchmark: '8-10 min', poolLow: 0.6, poolHigh: 1.1, gapScore: 60 }),
+        row({ theme: 'Line 3 OEE', current: '62-66%', benchmark: '78-82%', poolLow: 2.4, poolHigh: 3.6, gapScore: 82, health: 'At Risk' }),
+        row({ theme: 'Digital gross renewal', current: '76-80%', benchmark: '88-92%', poolLow: 4.0, poolHigh: 6.0, gapScore: 90, health: 'At Risk' }),
+        row({ theme: 'Supplier risk governance', current: 'Visible, not governed', benchmark: 'War-room + escalation', poolLow: 2.0, poolHigh: 3.5, gapScore: 74, health: 'In Progress' }),
+        row({ theme: 'Repeat defect rate', current: '9-12%', benchmark: '3-4%', poolLow: 0.9, poolHigh: 1.6, gapScore: 68, health: 'In Progress' }),
+        row({ theme: 'Partner 90-day activation', current: '~50% productive', benchmark: '75%', poolLow: 2.0, poolHigh: 3.0, gapScore: 66, health: 'On Track' }),
+        row({ theme: 'Changeover time', current: '16-20 min', benchmark: '8-10 min', poolLow: 0.6, poolHigh: 1.1, gapScore: 60, health: 'On Track' }),
+        // Accounting TOTAL row — WorkbookBuilder bolds it and adds a top rule.
+        {
+          cells: {
+            theme: { value: 'TOTAL' },
+            current: { value: '' },
+            benchmark: { value: '' },
+            poolLow: { formula: 'SUM(D2:D7)' },
+            poolHigh: { formula: 'SUM(E2:E7)' },
+            gapScore: { formula: 'ROUND(AVERAGE(F2:F7),0)' },
+            health: { value: '' },
+          },
+        },
       ],
     },
 

@@ -20,14 +20,19 @@ import {
   addInfoSheet,
   addSubtleColorScale,
   alignmentForType,
+  classifyStatus,
   colLetter as colLetterLocal,
   colorScaleColumns,
   currencyFormat,
   HEADER_NAVY_HEX,
   inferCurrency,
+  looksLikeStatusColumn,
   type StyleContext,
   ZEBRA_HEX,
 } from './WorkbookStyler.js';
+
+/** Brand teal (ARGB) for the header underline rule. */
+const HEADER_RULE_ARGB = 'FF1D9E75';
 
 // ---------------------------------------------------------------------------
 // Style mapping
@@ -319,10 +324,40 @@ export async function buildWorkbookBuffer(
     headerRow.eachCell((cell) => applyStyle(cell, { wrapText: true, ...defaultHeaderStyle }));
     headerRow.height = 24;
 
+    // Consultant depth: a brand-teal underline rule under the header row — the
+    // crisp "table starts here" line a designed sheet has and a raw grid lacks.
+    if (applyStyling && !sheetDef.headerStyle) {
+      headerRow.eachCell((cell) => {
+        cell.border = {
+          ...(cell.border ?? {}),
+          bottom: { style: 'medium', color: { argb: HEADER_RULE_ARGB } },
+        };
+      });
+    }
+
     // Default banded rows (zebra) when the schema didn't specify one — this is
     // exactly the "brak formatowania" gap the LLM leaves.
     const effectiveAlternate =
       sheetDef.alternateRowColor ?? (applyStyling ? ZEBRA_HEX : undefined);
+
+    // Consultant depth: which text columns read as status/health columns and
+    // should get auto RAG semaphores? Only when styling is on AND the schema did
+    // not already decorate that column with an explicit CF block (respect intent).
+    const explicitCfLetters = new Set<string>();
+    for (const b of sheetDef.conditionalFormatting ?? []) {
+      const m = b.ref.match(/^([A-Z]+)/i);
+      if (m) explicitCfLetters.add(m[1].toUpperCase());
+    }
+    const semaphoreCols = applyStyling
+      ? sheetDef.columns
+          .map((c, i) => ({ col: c, letter: colLetterLocal(i + 1) }))
+          .filter(
+            ({ col, letter }) =>
+              looksLikeStatusColumn(col) && !explicitCfLetters.has(letter)
+          )
+          .map(({ col }) => col.key)
+      : [];
+    const semaphoreColSet = new Set(semaphoreCols);
 
     // Data rows
     for (let rowIdx = 0; rowIdx < sheetDef.rows.length; rowIdx++) {
@@ -394,6 +429,26 @@ export async function buildWorkbookBuffer(
           };
         }
 
+        // Consultant depth: auto RAG semaphore on status columns, ONLY where the
+        // schema left the cell/column unstyled (never clobber an explicit fill or
+        // a select chip). Fills the "raw status text" gap the LLM leaves.
+        if (
+          semaphoreColSet.has(col.key) &&
+          !cellDef.style?.bgColor &&
+          !col.style?.bgColor
+        ) {
+          const sem = classifyStatus(cellDef.value);
+          if (sem) {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: sem.fill } };
+            cell.font = {
+              ...(cell.font ?? {}),
+              color: { argb: sem.font },
+              ...(sem.bold ? { bold: true } : {}),
+            };
+            cell.alignment = { vertical: 'middle', ...(cell.alignment ?? {}), horizontal: 'center' };
+          }
+        }
+
         if (cellDef.comment) {
           cell.note = cellDef.comment;
         }
@@ -412,11 +467,18 @@ export async function buildWorkbookBuffer(
         });
       }
 
-      // W7.7 — Bold total rows (TOTAL / Razem / Total / etc.)
+      // W7.7 — Bold total rows (TOTAL / Razem / Total / etc.) + accounting rule.
       if (isTotal && !rowDef.isSummary) {
         try {
           excelRow.eachCell((cell) => {
             cell.font = { ...(cell.font ?? {}), bold: true };
+            // Accounting convention: a top border separates the total from data.
+            if (applyStyling) {
+              cell.border = {
+                ...(cell.border ?? {}),
+                top: { style: 'thin', color: { argb: 'FF64748B' } },
+              };
+            }
           });
         } catch {
           // fail-soft: skip if cell iteration errors

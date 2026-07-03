@@ -155,7 +155,7 @@ const ALLOWED_STATUSES: InitiativeStatus[] =
 
 // Subtle "coming soon" badge (task #11) for non-functional CTAs. Neutral, app-consistent.
 const COMING_SOON_BADGE =
-  'ml-1.5 inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-c-text-muted dark:bg-white/[0.06]';
+  'ml-1.5 inline-flex items-center rounded-full bg-c-surface-raised px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-c-text-muted';
 
 // D1.1: Initiative type/level — determines governance complexity
 // Downgrade blocked, upgrade possible
@@ -1539,7 +1539,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               </button>
               <button
                 onClick={() => setLoadError(null)}
-                className="h-9 rounded-lg border border-white/20 px-3 text-sm text-slate-200 hover:bg-white/10"
+                className="h-9 rounded-lg border border-c-border px-3 text-sm text-c-text-secondary hover:bg-c-surface-raised"
               >
                 {t('initiatives.hub.dismiss')}
               </button>
@@ -1858,10 +1858,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             setScope(opt.id);
             if (opt.id === 'active') setActiveStatusFilter(null);
           }}
-          className={`inline-flex items-center justify-center h-8 px-3 rounded-full text-[11px] font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+          className={`inline-flex items-center justify-center h-8 px-3 rounded-full text-[11px] font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-c-bg ${
             scope === opt.id
               ? 'bg-c-surface text-c-text shadow-sm border border-c-border-subtle'
-              : 'text-c-text-secondary hover:bg-white/60 dark:hover:bg-white/[0.06]'
+              : 'text-c-text-secondary hover:bg-c-surface-raised'
           }`}
           title={
             opt.id === 'active'
@@ -2051,7 +2051,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         <button
           type="button"
           onClick={handleClearSelection}
-          className="inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-[11px] font-medium text-c-text-secondary transition-colors hover:bg-white/60 dark:hover:bg-white/[0.06]"
+          className="inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-[11px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
         >
           <X className="h-3.5 w-3.5" />
           {t('common.clear', 'Clear')}
@@ -2162,7 +2162,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               onClick={() => setActiveStatusFilter(isActive ? null : s)}
               className={isActive ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
             >
-              <span className={`w-2 h-2 rounded-full ${meta?.dotColor || 'bg-slate-400'}`} />
+              <span className={`w-2 h-2 rounded-full ${meta?.dotColor || 'bg-c-text-muted'}`} />
               <span>{meta?.label || s}</span>
               <span className={isActive ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
                 {count}
@@ -2217,7 +2217,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             <button
               type="button"
               onClick={() => dispatchPilotAccessBlocked({ href: '/initiatives' })}
-              className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-slate-200 dark:bg-white/10 text-slate-400 dark:text-white/30 cursor-not-allowed"
+              className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-c-surface-raised text-c-text-muted cursor-not-allowed"
               title={t('initiatives.pilot.createLocked', 'Available in the next project phase')}
             >
               <span>{t('initiatives.form.newInitiative')}</span>
@@ -2226,7 +2226,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             <button
               type="button"
               onClick={() => setShowInitiativeWizard(true)}
-              className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors duration-150"
+              className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-c-accent text-white hover:opacity-90 transition-colors duration-150"
             >
               <span>{t('initiatives.form.newInitiative')}</span>
             </button>
@@ -2509,7 +2509,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   setIsCreating(false);
                 }
               }}
-              className="w-full mt-6 py-2 text-sm text-white bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors rounded-lg disabled:opacity-50"
+              className="w-full mt-6 py-2 text-sm text-white bg-c-accent hover:opacity-90 transition-colors rounded-lg disabled:opacity-50"
             >
               {isCreating ? t('initiatives.form.creating') : t('initiatives.form.create')}
             </button>
@@ -2611,7 +2611,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               </button>
               <button
                 onClick={handleBulkApply}
-                className="px-4 py-2 text-sm text-white bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg"
+                className="px-4 py-2 text-sm text-white bg-c-accent hover:opacity-90 rounded-lg"
               >
                 {t('initiatives.bulkEdit.applyChanges')}
               </button>

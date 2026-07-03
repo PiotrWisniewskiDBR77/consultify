@@ -20,6 +20,10 @@ import {
 } from '../../services/results/kpiReportSnapshotService.js';
 import { resultsEnterpriseService } from '../../services/resultsEnterpriseService.js';
 import {
+  pullAndReconcileInitiative,
+  type KpiDriverMapping,
+} from '../../services/v8/resultsFinanceReconciliationService.js';
+import {
   getReconciliationOverview,
   getResultsDashboard,
   getResultsKpiCatalog,
@@ -363,6 +367,96 @@ router.get(
     return res.json({
       data: overview,
       meta: resultsMeta(),
+    });
+  })
+);
+
+/**
+ * POST /api/v8/results/reconciliations/pull
+ * Reconciliation ENGINE (M15 ↔ M16). Pulls actuals from Results for one
+ * initiative, maps each KPI to its finance-model driver via a unit-conversion
+ * multiplier, computes the realized-vs-projected deviation and persists it with
+ * a CONCLUSION_LAYER. Body: { initiativeId, mappings:[{kpiId, driverKey,
+ * unitMultiplier?, projectedValue?}] }.
+ */
+router.post(
+  '/reconciliations/pull',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const body = (req.body ?? {}) as {
+      initiativeId?: unknown;
+      mappings?: unknown;
+    };
+
+    const initiativeId =
+      typeof body.initiativeId === 'string' && body.initiativeId.trim()
+        ? body.initiativeId.trim()
+        : '';
+    if (!initiativeId) {
+      return res.status(400).json({
+        error: 'initiativeId is required',
+        code: 'RESULTS_RECONCILIATION_INITIATIVE_REQUIRED',
+      });
+    }
+
+    if (!Array.isArray(body.mappings) || body.mappings.length === 0) {
+      return res.status(400).json({
+        error: 'mappings[] (kpiId → driverKey) is required',
+        code: 'RESULTS_RECONCILIATION_MAPPINGS_REQUIRED',
+      });
+    }
+
+    // Org-scope guard: the initiative must belong to the caller's org.
+    const initiative = await dbGet<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, organizationId],
+      { fallback: true }
+    );
+    if (!initiative?.id) {
+      return res.status(404).json({
+        error: `Initiative ${initiativeId} not found`,
+        code: 'INITIATIVE_NOT_FOUND',
+      });
+    }
+
+    const mappings: KpiDriverMapping[] = [];
+    for (const raw of body.mappings as unknown[]) {
+      const m = (raw ?? {}) as Record<string, unknown>;
+      const kpiId = typeof m.kpiId === 'string' ? m.kpiId.trim() : '';
+      const driverKey = typeof m.driverKey === 'string' ? m.driverKey.trim() : '';
+      if (!kpiId || !driverKey) continue;
+      mappings.push({
+        kpiId,
+        driverKey,
+        unitMultiplier: typeof m.unitMultiplier === 'number' ? m.unitMultiplier : undefined,
+        projectedValue: typeof m.projectedValue === 'number' ? m.projectedValue : undefined,
+      });
+    }
+
+    if (mappings.length === 0) {
+      return res.status(400).json({
+        error: 'no valid mappings (each needs kpiId + driverKey)',
+        code: 'RESULTS_RECONCILIATION_MAPPINGS_INVALID',
+      });
+    }
+
+    let result;
+    try {
+      result = await pullAndReconcileInitiative(organizationId, initiativeId, mappings, {
+        initiatedBy: 'results',
+        recordedBy: userId,
+      });
+    } catch (err) {
+      logger.error(`[V8:Results] Reconciliation pull failed: ${String(err)}`);
+      return res.status(500).json({
+        error: 'Failed to reconcile actuals against finance model',
+        code: 'RESULTS_RECONCILIATION_PULL_FAILED',
+      });
+    }
+
+    return res.json({
+      data: result,
+      meta: resultsWriteMeta(),
     });
   })
 );

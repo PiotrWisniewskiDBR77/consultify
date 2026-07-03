@@ -22,6 +22,7 @@ import {
   useToolStore,
 } from '@/store/useToolStore';
 
+import { CreateInitiativeFromMoveButton } from '../../shared/createInitiativeFromMove';
 import { ProposalCardActions as CardActions } from '../../shared/ProposalCardGovernance';
 import { ValueChainVisual } from '../../shared/StrategicCanvasVisuals';
 import { ActivityCard } from './ActivityCard';
@@ -410,6 +411,9 @@ export function ValueChainInsightsPhase({
                 {move.firstStep}
               </div>
             )}
+            <div className="flex justify-end">
+              <CreateInitiativeFromMoveButton session={session} move={move} isPolish={isPolish} />
+            </div>
           </div>
         ))}
       </div>

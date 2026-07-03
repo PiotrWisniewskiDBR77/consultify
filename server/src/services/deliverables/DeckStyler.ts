@@ -547,3 +547,201 @@ export function pushNote(slide: PptxSlide, note: string): void {
   if (!n) return;
   if (typeof slide.addNotes === 'function') slide.addNotes(n);
 }
+
+// ---------------------------------------------------------------------------
+// COMPOSITION LAYER (R4 §8) — geometry varies with intent, not just chart-vs-text.
+//
+// A premium deck does not draw every slide as "title + bullets". It composes:
+// a metrics slide becomes a KPI-stat band; a comparison becomes a two-column
+// split; a single insight becomes a lead-thesis + support column. These
+// deterministic emitters give the runtime that vocabulary — the Gamma-killer is
+// LAYOUT variety, which the AI content already earns but the old renderer flattened.
+// ---------------------------------------------------------------------------
+
+/** One KPI stat: a big number + its label + optional supporting delta/caption. */
+export interface KpiStat {
+  /** The headline figure, already formatted (e.g. "14–22 M€", "88–92%"). */
+  value: string;
+  /** Short label under the number (e.g. "Run-rate value at stake"). */
+  label: string;
+  /** Optional delta / benchmark caption (e.g. "vs 62% today"). */
+  caption?: string;
+}
+
+/**
+ * Renders a KPI-STAT BAND: up to four big-number cards across the content band.
+ * Each card is a soft-tinted panel with an accent top-rule, an oversized figure,
+ * a label, and an optional caption. This is the canonical "metrics overview"
+ * composition — a wall of numbers reads as evidence, not as a bullet list.
+ * Returns the y-baseline just under the band so a caller can add a source line.
+ */
+export function renderKpiBand(
+  slide: PptxSlide,
+  style: DeckStyle,
+  stats: KpiStat[],
+  opts: { top?: number } = {}
+): { bottom: number } {
+  const items = (stats ?? []).filter((s) => (s?.value ?? '').trim()).slice(0, 4);
+  if (items.length === 0) return { bottom: DECK_GRID.contentTop };
+
+  const top = opts.top ?? DECK_GRID.contentTop;
+  const gap = 0.25;
+  const cardH = 2.35;
+  const cardW = (CONTENT_W - gap * (items.length - 1)) / items.length;
+  // Big figure scales down as cards get narrower (4 stats → smaller than 2).
+  const valueSize = items.length >= 4 ? 30 : items.length === 3 ? 34 : 40;
+
+  items.forEach((s, i) => {
+    const x = DECK_GRID.marginX + i * (cardW + gap);
+    // Panel.
+    slide.addShape('rect', {
+      x, y: top, w: cardW, h: cardH,
+      fill: { color: 'F5F8FC' }, line: { color: 'E3E7EE', width: 1 },
+    });
+    // Accent top rule.
+    slide.addShape('rect', {
+      x, y: top, w: cardW, h: 0.07,
+      fill: { color: style.accent }, line: { color: style.accent, width: 0 },
+    });
+    // Big figure.
+    slide.addText(s.value.trim(), {
+      x: x + 0.12, y: top + 0.28, w: cardW - 0.24, h: 0.95,
+      fontFace: style.headingFont, fontSize: valueSize, bold: true,
+      color: style.dominant, align: 'left', valign: 'top', fit: 'shrink',
+    });
+    // Label.
+    slide.addText(s.label.trim(), {
+      x: x + 0.12, y: top + 1.28, w: cardW - 0.24, h: 0.7,
+      fontFace: style.bodyFont, fontSize: 12, bold: true,
+      color: style.neutral, align: 'left', valign: 'top', lineSpacingMultiple: 1.0,
+    });
+    // Caption (benchmark/delta).
+    if (s.caption?.trim()) {
+      slide.addText(s.caption.trim(), {
+        x: x + 0.12, y: top + cardH - 0.5, w: cardW - 0.24, h: 0.42,
+        fontFace: style.bodyFont, fontSize: 10, italic: true,
+        color: style.muted, align: 'left', valign: 'bottom',
+      });
+    }
+  });
+
+  return { bottom: top + cardH + 0.15 };
+}
+
+/**
+ * Renders a TWO-COLUMN SPLIT: a left panel and a right panel with a header +
+ * bullets each. The canonical "comparison" / "before-after" / "us-vs-them"
+ * composition — far more legible than one merged bullet list. Left panel is
+ * tinted (the "today"/problem side), right panel carries an accent header (the
+ * "target"/answer side). Overflow bullets spill to notes via the caller.
+ */
+export function renderTwoColumnSplit(
+  slide: PptxSlide,
+  style: DeckStyle,
+  opts: {
+    left: { heading: string; bullets: string[] };
+    right: { heading: string; bullets: string[] };
+    top?: number;
+  }
+): void {
+  const top = opts.top ?? DECK_GRID.contentTop;
+  const gap = 0.4;
+  const colW = (CONTENT_W - gap) / 2;
+  const colH = DECK_GRID.footerY - top - 0.2;
+
+  const panel = (
+    x: number,
+    o: { heading: string; bullets: string[] },
+    accentHeader: boolean
+  ): void => {
+    // Panel background.
+    slide.addShape('rect', {
+      x, y: top, w: colW, h: colH,
+      fill: { color: accentHeader ? 'F2F9F6' : 'F5F8FC' },
+      line: { color: 'E3E7EE', width: 1 },
+    });
+    // Header band.
+    slide.addShape('rect', {
+      x, y: top, w: colW, h: 0.5,
+      fill: { color: accentHeader ? style.accent : style.dominant },
+      line: { color: accentHeader ? style.accent : style.dominant, width: 0 },
+    });
+    slide.addText(o.heading.trim(), {
+      x: x + 0.18, y: top, w: colW - 0.36, h: 0.5,
+      fontFace: style.headingFont, fontSize: 14, bold: true,
+      color: style.onDominant, align: 'left', valign: 'middle', fit: 'shrink',
+    });
+    // Bullets.
+    const { onSlide } = enforceBulletDiscipline(o.bullets, { maxCount: 6, maxWords: 12 });
+    if (onSlide.length > 0) {
+      const rows = onSlide.map((b) => ({
+        text: b,
+        options: {
+          bullet: { code: '25AA', indent: 16 },
+          color: style.neutral,
+          fontFace: style.bodyFont,
+          fontSize: 13,
+          paraSpaceAfter: 7,
+        },
+      }));
+      slide.addText(rows as unknown as string, {
+        x: x + 0.18, y: top + 0.68, w: colW - 0.36, h: colH - 0.85,
+        align: 'left', valign: 'top', fit: 'shrink',
+      });
+    }
+  };
+
+  panel(DECK_GRID.marginX, opts.left, false);
+  panel(DECK_GRID.marginX + colW + gap, opts.right, true);
+}
+
+/**
+ * Renders a LEAD-THESIS composition: an oversized lead sentence (the insight
+ * stated once, large) on the left, a supporting bullet column on the right.
+ * The canonical "single insight" / "recommendation" composition — the eye lands
+ * on the assertion first, then reads the evidence. Returns nothing; overflow is
+ * pushed to notes by the caller.
+ */
+export function renderLeadWithSupport(
+  slide: PptxSlide,
+  style: DeckStyle,
+  opts: { lead: string; support: string[]; top?: number }
+): void {
+  const top = opts.top ?? DECK_GRID.contentTop;
+  const leadW = 4.6;
+  const gap = 0.5;
+  const supX = DECK_GRID.marginX + leadW + gap;
+  const supW = CONTENT_W - leadW - gap;
+  const h = DECK_GRID.footerY - top - 0.2;
+
+  // Accent tick before the lead.
+  slide.addShape('rect', {
+    x: DECK_GRID.marginX, y: top + 0.05, w: 0.08, h: 0.9,
+    fill: { color: style.accent }, line: { color: style.accent, width: 0 },
+  });
+
+  const leadFit = fitProse(opts.lead, leadW - 0.25, h, 24, 16);
+  slide.addText(leadFit.text, {
+    x: DECK_GRID.marginX + 0.22, y: top, w: leadW - 0.25, h,
+    fontFace: style.headingFont, fontSize: leadFit.fontSize, bold: true,
+    color: style.dominant, align: 'left', valign: 'top', lineSpacingMultiple: 1.02,
+  });
+
+  const { onSlide } = enforceBulletDiscipline(opts.support, { maxCount: 6, maxWords: 12 });
+  if (onSlide.length > 0) {
+    const rows = onSlide.map((b) => ({
+      text: b,
+      options: {
+        bullet: { code: '25AA', indent: 16 },
+        color: style.neutral,
+        fontFace: style.bodyFont,
+        fontSize: PPT_TYPE_SCALE.body - 3,
+        paraSpaceAfter: 8,
+      },
+    }));
+    slide.addText(rows as unknown as string, {
+      x: supX, y: top, w: supW, h,
+      align: 'left', valign: 'top', fit: 'shrink',
+    });
+  }
+}

@@ -137,7 +137,7 @@ const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick }) 
           <span className="font-medium">{formatCurrency(initiative.budget || 0)}</span>
         </div>
         {initiative.expectedRoi && initiative.expectedRoi > 0 && (
-          <div className="flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400">
+          <div className="flex items-center gap-1.5 text-sm text-c-success">
             <TrendingUp size={14} />
             <span className="font-medium">{initiative.expectedRoi.toFixed(1)}x ROI</span>
           </div>

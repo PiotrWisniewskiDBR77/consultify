@@ -61,7 +61,7 @@ const STATUS_DOT_CLASS: Record<string, string> = {
   warning: 'bg-c-warning',
   success: 'bg-c-success',
   danger: 'bg-c-danger',
-  neutral: 'bg-slate-400 dark:bg-slate-500',
+  neutral: 'bg-c-text-muted',
 };
 
 interface PortfolioListViewProps {
@@ -395,9 +395,9 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
 
   return (
     <div className={canvasClassName}>
-      <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl overflow-x-auto">
+      <div className="bg-c-surface backdrop-blur border border-c-border-subtle rounded-xl overflow-x-auto">
         <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full table-fixed" style={{ minWidth: 1080 }}>
-          <thead className="sticky top-0 z-10 bg-slate-50/80 dark:bg-navy-900/50 backdrop-blur border-b border-slate-200/60 dark:border-white/[0.03]">
+          <thead className="sticky top-0 z-10 bg-c-surface-raised backdrop-blur border-b border-c-border-subtle">
             <tr>
               <th className="w-10 px-4 py-2">
                 <input
@@ -434,7 +434,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-slate-200/60 dark:divide-white/[0.03]">
+          <tbody className="divide-y divide-c-border-subtle">
             {sortedInitiatives.map((initiative) => {
               const terminal = isTerminal(initiative.status);
               const owner = initiative.ownerBusiness || initiative.ownerExecution;
@@ -451,7 +451,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                   className={`group cursor-pointer transition-colors ${
                     selected
                       ? SELECTED_ROW_CLASS
-                      : 'hover:bg-slate-50/70 dark:hover:bg-white/[0.03]'
+                      : 'hover:bg-c-surface-raised'
                   } ${terminal ? 'opacity-50' : ''}`}
                   onClick={() => onInitiativeClick(initiative)}
                   onDoubleClick={() => onOpenFull?.(initiative)}
@@ -516,7 +516,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                   <td className="px-4 py-2">
                     {owner ? (
                       <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-white/[0.06] flex items-center justify-center text-[10px] font-medium text-c-text-secondary overflow-hidden flex-shrink-0">
+                        <div className="w-5 h-5 rounded-full bg-c-surface-raised flex items-center justify-center text-[10px] font-medium text-c-text-secondary overflow-hidden flex-shrink-0">
                           {owner.avatarUrl ? (
                             <img
                               src={owner.avatarUrl}

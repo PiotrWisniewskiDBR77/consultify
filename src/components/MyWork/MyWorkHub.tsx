@@ -1392,7 +1392,22 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     const nextDoc = intent.doc;
     if (!nextDoc) return;
     if (nextDoc.type === 'idea' && nextDoc.data?.initialTool) {
-      setIdeaActiveTool(nextDoc.data.initialTool as CanvasToolType);
+      const deepLinkTool = nextDoc.data.initialTool as CanvasToolType;
+      // A deep link (/whiteboard, /mind-map, /process-flow, /table) is
+      // AUTHORITATIVE about which tool opens. Setting only the `ideaActiveTool`
+      // fallback is not enough: the workspace renders
+      // `activeIdeaWorkspaceState?.activeTool || ideaActiveTool`, and
+      // `activeIdeaWorkspaceState` is derived from the PERSISTED
+      // `ideaWorkspaceStateById[id]`. If the idea was previously opened with a
+      // different tool (e.g. Process Flow), that stale saved tool wins over the
+      // deep link — the documented `forcedIdeaDeepLinkRef` fix never actually
+      // landed in code, so the race was still live (Harvard R4 #10 / #3).
+      // Patch the persisted state too so the deep-linked tool wins
+      // deterministically regardless of mount ordering.
+      setIdeaActiveTool(deepLinkTool);
+      setIdeaWorkspaceStateById((prev) =>
+        patchIdeaWorkspaceState(prev, nextDoc, { activeTool: deepLinkTool })
+      );
     }
     if (activeTab === intent.tab) {
       handleOpenDocument(nextDoc);

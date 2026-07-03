@@ -525,9 +525,13 @@ export const PresentationStudioPage: React.FC = () => {
     >
       {/* Local Menu 3 / command row. Per the AI-actions-menu3 rule, the
           contextual AI action ("Run preview") MUST live on the right side of
-          the local command row, not inside the canvas. */}
+          the local command row, not inside the canvas. Command-row hierarchy
+          (editor-shell-canon § 2 STREFA GÓRNA): secondary actions (Run
+          preview · Request approval) sit left of the primary accent action
+          (Confirm generate). Uses the canonical `z-sticky` token, not raw
+          z-index (canon § 3 z-index scale). */}
       <header
-        className="sticky top-0 z-10 border-b border-c-border bg-c-surface/90 backdrop-blur-sm"
+        className="sticky top-0 z-sticky border-b border-c-border bg-c-surface/90 backdrop-blur-sm"
         data-testid="presentation-studio-command-row"
       >
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-3">
@@ -575,6 +579,13 @@ export const PresentationStudioPage: React.FC = () => {
                   {approval.pending === 'requesting' ? 'Requesting approval…' : 'Request approval'}
                 </span>
               </button>
+            ) : null}
+
+            {approval.ticket ? (
+              <span
+                aria-hidden="true"
+                className="mx-1 h-5 w-px self-center bg-c-border"
+              />
             ) : null}
 
             {approval.ticket ? (

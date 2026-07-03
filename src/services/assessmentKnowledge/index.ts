@@ -12,6 +12,12 @@ export type { LeanLevelKnowledge, LeanWasteKnowledge } from './leanKnowledge';
 export { getLeanKnowledge, getLeanLevelMeaning, getLeanWasteKnowledge } from './leanKnowledge';
 export type { SIRIDimensionLevelKey, SIRILevelKnowledge } from './siriKnowledge';
 export { getSIRIBuildingBlockInfo, getSIRIKnowledge } from './siriKnowledge';
+export type {
+  MaturityPathwayFramework,
+  MaturityPathwayInput,
+  MaturityPathwayRecommendation,
+} from './maturityPathwayService';
+export { getMaturityPathway } from './maturityPathwayService';
 
 /**
  * Universal knowledge getter for any framework

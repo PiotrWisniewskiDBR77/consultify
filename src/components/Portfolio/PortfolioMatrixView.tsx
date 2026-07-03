@@ -342,15 +342,15 @@ export const PortfolioMatrixView: React.FC<PortfolioMatrixViewProps> = ({
           <span>Critical</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-amber-500" />
+          <div className="w-3 h-3 rounded-full bg-c-warning" />
           <span>High</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-blue-500" />
+          <div className="w-3 h-3 rounded-full bg-c-info" />
           <span>Medium</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-green-500" />
+          <div className="w-3 h-3 rounded-full bg-c-success" />
           <span>Low</span>
         </div>
       </div>

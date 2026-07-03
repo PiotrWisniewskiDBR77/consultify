@@ -408,7 +408,7 @@ export const AuditsHub: React.FC = () => {
               </div>
               <button
                 onClick={load}
-                className="flex items-center gap-1.5 rounded-lg border border-danger-200 bg-white px-3 py-1.5 text-xs font-medium text-danger-700 transition-colors hover:bg-danger-50 dark:border-danger-500/30 dark:bg-transparent dark:text-danger-300 dark:hover:bg-danger-500/10"
+                className="flex items-center gap-1.5 rounded-lg border border-danger-200 bg-c-surface px-3 py-1.5 text-xs font-medium text-danger-700 transition-colors hover:bg-danger-50 dark:border-danger-500/30 dark:bg-transparent dark:text-danger-300 dark:hover:bg-danger-500/10"
               >
                 <RefreshCw className="h-3 w-3" />
                 {t('common.retry', 'Retry')}

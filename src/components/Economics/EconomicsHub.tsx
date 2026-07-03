@@ -57,7 +57,7 @@ const getStatusMeta = (
 ): Record<string, { label: string; dotColor: string; itemStatus: ItemStatus }> => ({
   DRAFT: {
     label: t('economics.status.draft', 'Draft'),
-    dotColor: 'bg-slate-400',
+    dotColor: 'bg-c-text-muted',
     itemStatus: 'DRAFT',
   },
   REVIEW: {
@@ -200,7 +200,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
           return (
             <div className="flex items-center gap-2">
               <Calculator size={14} className="text-emerald-400" />
-              <span className="font-mono text-xs font-bold text-slate-300">{code}</span>
+              <span className="font-mono text-xs font-bold text-c-text-secondary">{code}</span>
             </div>
           );
         },
@@ -210,8 +210,8 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
         label: t('economics.columns.name', 'Name'),
         render: (row: DigitizationAnalysis) => (
           <div>
-            <span className="text-sm text-white font-medium">{row.name}</span>
-            {row.projectName && <p className="text-xs text-slate-400 mt-0.5">{row.projectName}</p>}
+            <span className="text-sm text-c-text font-medium">{row.name}</span>
+            {row.projectName && <p className="text-xs text-c-text-muted mt-0.5">{row.projectName}</p>}
           </div>
         ),
       },
@@ -230,7 +230,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
           return (
             <div className="flex items-center gap-2">
               <span className={`w-2 h-2 rounded-full ${meta.dotColor}`} />
-              <span className="text-sm text-slate-300">{meta.label}</span>
+              <span className="text-sm text-c-text-secondary">{meta.label}</span>
             </div>
           );
         },
@@ -243,15 +243,15 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
           const score = row.overallScore || 0;
           return (
             <div className="flex items-center gap-2">
-              <div className="flex-1 h-1.5 bg-navy-700 rounded-full overflow-hidden">
+              <div className="flex-1 h-1.5 bg-c-border rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all ${
-                    score >= 5 ? 'bg-emerald-500' : score >= 3 ? 'bg-amber-500' : 'bg-slate-500'
+                    score >= 5 ? 'bg-c-success' : score >= 3 ? 'bg-c-warning' : 'bg-c-text-muted'
                   }`}
                   style={{ width: `${(score / 7) * 100}%` }}
                 />
               </div>
-              <span className="text-xs text-slate-400">{score.toFixed(1)}/7</span>
+              <span className="text-xs text-c-text-muted">{score.toFixed(1)}/7</span>
             </div>
           );
         },
@@ -389,8 +389,8 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
               <Calculator size={20} className="text-emerald-400" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-white">{selectedAnalysis.name}</h3>
-              <p className="text-xs text-slate-400">
+              <h3 className="text-sm font-semibold text-c-text">{selectedAnalysis.name}</h3>
+              <p className="text-xs text-c-text-muted">
                 {selectedAnalysis.projectName
                   ? t('economics.detail.project', 'Project: {{name}}', {
                       name: selectedAnalysis.projectName,
@@ -406,7 +406,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowVersionHistory(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-400 hover:text-white hover:bg-navy-800/40 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-c-text-muted hover:text-c-text hover:bg-c-surface-raised rounded-lg transition-colors"
               title="Version History"
             >
               <History size={14} />
@@ -414,7 +414,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
             </button>
             <button
               onClick={handleExcelExport}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-400 hover:text-white hover:bg-navy-800/40 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-c-text-muted hover:text-c-text hover:bg-c-surface-raised rounded-lg transition-colors"
               title="Export Excel"
             >
               <Download size={14} />
@@ -422,7 +422,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
             </button>
             <button
               onClick={() => setShowPDFExport(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-400 hover:text-white hover:bg-navy-800/40 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-c-text-muted hover:text-c-text hover:bg-c-surface-raised rounded-lg transition-colors"
               title="Export PDF"
             >
               <FileText size={14} />
@@ -515,11 +515,11 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
       if (approvedAnalyses.length === 0) {
         return (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <BarChart3 className="w-16 h-16 text-slate-600 mb-4" />
-            <h3 className="text-lg font-semibold text-white mb-2">
+            <BarChart3 className="w-16 h-16 text-c-text-muted mb-4" />
+            <h3 className="text-lg font-semibold text-c-text mb-2">
               {t('economics.empty.noCompleted', 'No completed analyses')}
             </h3>
-            <p className="text-sm text-slate-400 mb-6">
+            <p className="text-sm text-c-text-muted mb-6">
               {t(
                 'economics.empty.completeToSee',
                 'Complete analyses to see results and recommendations.'
@@ -534,12 +534,12 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
           {approvedAnalyses.map((analysis) => (
             <div
               key={analysis.id}
-              className="bg-navy-900 border border-navy-700 rounded-xl overflow-hidden"
+              className="bg-c-surface border border-c-border-subtle rounded-xl overflow-hidden"
             >
-              <div className="px-4 py-3 border-b border-navy-700 flex items-center justify-between">
+              <div className="px-4 py-3 border-b border-c-border-subtle flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Target className="text-emerald-400" size={18} />
-                  <h3 className="font-semibold text-white">{analysis.name}</h3>
+                  <h3 className="font-semibold text-c-text">{analysis.name}</h3>
                 </div>
                 <button
                   onClick={() => handleOpenDocument(analysis)}
