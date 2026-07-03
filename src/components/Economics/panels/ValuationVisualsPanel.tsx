@@ -12,6 +12,7 @@
  * NIE wpięty w ValuationWorkspace (uniknięcie regresji), do wpięcia osobno.
  */
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { FootballField, SensitivityHeatmap, TornadoChart } from '@/components/Economics/charts';
 import type { FootballFieldRange } from '@/components/Economics/charts/FootballField';
@@ -49,8 +50,13 @@ interface Props {
 
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
+type TFn = (key: string, defaultValue: string) => string;
+
 /** Buduje pasy football field z DCF / comps / asset-based. */
-function buildRanges(v: ValuationResults): { ranges: FootballFieldRange[]; point?: number } {
+function buildRanges(
+  v: ValuationResults,
+  t: TFn
+): { ranges: FootballFieldRange[]; point?: number } {
   const ranges: FootballFieldRange[] = [];
 
   // DCF: jeśli mamy sensitivity, użyj min/max z matrix jako low/high; inaczej ±15%.
@@ -74,7 +80,12 @@ function buildRanges(v: ValuationResults): { ranges: FootballFieldRange[]; point
     const min = isNum(comps.min) ? comps.min : isNum(comps.median) ? comps.median : (comps.max as number);
     const max = isNum(comps.max) ? comps.max : isNum(comps.median) ? comps.median : (comps.min as number);
     const median = isNum(comps.median) ? comps.median : (min + max) / 2;
-    ranges.push({ label: 'Porównawcza', low: Math.min(min, max), mid: median, high: Math.max(min, max) });
+    ranges.push({
+      label: t('valuation.visuals.methodComps', 'Comparables'),
+      low: Math.min(min, max),
+      mid: median,
+      high: Math.max(min, max),
+    });
   }
 
   // Asset-based / NAV: pojedyncza wartość → degenerowany pas (low=mid=high).
@@ -84,7 +95,12 @@ function buildRanges(v: ValuationResults): { ranges: FootballFieldRange[]; point
       ? (v.assetBased!.netAssetValue as number)
       : undefined;
   if (isNum(nav)) {
-    ranges.push({ label: 'Majątkowa (NAV)', low: nav, mid: nav, high: nav });
+    ranges.push({
+      label: t('valuation.visuals.methodAsset', 'Asset-based (NAV)'),
+      low: nav,
+      mid: nav,
+      high: nav,
+    });
   }
 
   // Punkt referencyjny (triangulacja): główna wycena = DCF jeśli jest, inaczej mediana comps.
@@ -136,9 +152,10 @@ const SectionEmpty: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 );
 
 export const ValuationVisualsPanel: React.FC<Props> = ({ valuation }) => {
+  const { t } = useTranslation();
   const v = valuation ?? {};
 
-  const { ranges, point } = useMemo(() => buildRanges(v), [v]);
+  const { ranges, point } = useMemo(() => buildRanges(v, t), [v, t]);
   const { xLabels, yLabels, cells } = useMemo(() => buildHeatmap(v), [v]);
   const { bars, base } = useMemo(() => buildTornado(v), [v]);
 
@@ -154,40 +171,54 @@ export const ValuationVisualsPanel: React.FC<Props> = ({ valuation }) => {
         data-testid="valuation-visuals-panel"
         data-empty="true"
       >
-        <p className="text-sm text-gray-500">Uruchom wycenę, aby zobaczyć wizualizacje.</p>
+        <p className="text-sm text-gray-500">
+          {t('valuation.visuals.emptyAll', 'Run the valuation to see the visualizations.')}
+        </p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4" data-testid="valuation-visuals-panel">
-      {/* Football field — triangulacja wyceny */}
+      {/* Football field — valuation triangulation */}
       <section className="rounded-xl border border-gray-200 bg-white p-4" data-testid="valuation-football">
-        <h3 className="mb-3 text-sm font-semibold text-gray-900">Triangulacja wyceny</h3>
+        <h3 className="mb-3 text-sm font-semibold text-gray-900">
+          {t('valuation.visuals.triangulation', 'Valuation triangulation')}
+        </h3>
         {hasFootball ? (
           <FootballField ranges={ranges} point={point} />
         ) : (
-          <SectionEmpty>Brak metod wyceny — uruchom wycenę.</SectionEmpty>
+          <SectionEmpty>
+            {t('valuation.visuals.emptyMethods', 'No valuation methods — run the valuation.')}
+          </SectionEmpty>
         )}
       </section>
 
-      {/* Sensitivity heatmap — WACC × wzrost */}
+      {/* Sensitivity heatmap — WACC × growth */}
       <section className="rounded-xl border border-gray-200 bg-white p-4" data-testid="valuation-heatmap">
-        <h3 className="mb-3 text-sm font-semibold text-gray-900">Wrażliwość WACC×wzrost</h3>
+        <h3 className="mb-3 text-sm font-semibold text-gray-900">
+          {t('valuation.visuals.sensitivity', 'Sensitivity: WACC × growth')}
+        </h3>
         {hasHeatmap ? (
           <SensitivityHeatmap xLabels={xLabels} yLabels={yLabels} matrix={cells} />
         ) : (
-          <SectionEmpty>Brak analizy wrażliwości — uruchom wycenę.</SectionEmpty>
+          <SectionEmpty>
+            {t('valuation.visuals.emptySensitivity', 'No sensitivity analysis — run the valuation.')}
+          </SectionEmpty>
         )}
       </section>
 
-      {/* Tornado — wrażliwość jednozmiennowa */}
+      {/* Tornado — one-way sensitivity */}
       <section className="rounded-xl border border-gray-200 bg-white p-4" data-testid="valuation-tornado">
-        <h3 className="mb-3 text-sm font-semibold text-gray-900">Wrażliwość jednozmiennowa</h3>
+        <h3 className="mb-3 text-sm font-semibold text-gray-900">
+          {t('valuation.visuals.tornado', 'One-way sensitivity')}
+        </h3>
         {hasTornado ? (
           <TornadoChart bars={bars} base={base} />
         ) : (
-          <SectionEmpty>Brak driverów wrażliwości — uruchom wycenę.</SectionEmpty>
+          <SectionEmpty>
+            {t('valuation.visuals.emptyDrivers', 'No sensitivity drivers — run the valuation.')}
+          </SectionEmpty>
         )}
       </section>
     </div>

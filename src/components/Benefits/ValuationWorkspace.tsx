@@ -95,6 +95,32 @@ const DEFAULT_MULTIPLES: MultiplesState = {
   peerSet: [],
 };
 
+type TranslateFn = (key: string, defaultValue: string) => string;
+
+/** Localized label for a valuation status enum (DRAFT / REVIEW / APPROVED). */
+function valuationStatusLabel(raw: unknown, t: TranslateFn): string {
+  const s = String(raw ?? '')
+    .trim()
+    .toUpperCase();
+  if (s === 'APPROVED') return t('valuation.enum.status.approved', 'Approved');
+  if (s === 'REVIEW') return t('valuation.enum.status.review', 'In review');
+  if (s === 'DRAFT') return t('valuation.enum.status.draft', 'Draft');
+  return s || t('valuation.enum.status.draft', 'Draft');
+}
+
+/** Localized label for a valuation source type (budget / financial_model / manual). */
+function valuationSourceLabel(raw: unknown, t: TranslateFn): string {
+  const s = String(raw ?? '')
+    .trim()
+    .toLowerCase();
+  if (s === 'budget') return t('valuation.enum.source.budget', 'Budget');
+  if (s === 'financial_model') return t('valuation.enum.source.financialModel', 'Financial model');
+  if (s === 'financial_analysis')
+    return t('valuation.enum.source.financialAnalysis', 'Financial analysis');
+  if (s === 'manual') return t('valuation.enum.source.manual', 'Manual');
+  return raw ? String(raw) : t('valuation.enum.source.manual', 'Manual');
+}
+
 interface ValuationWorkspaceProps {
   initialValuationId?: string;
   hideSidebar?: boolean;
@@ -110,6 +136,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [busy, setBusy] = useState(false);
   const [valuations, setValuations] = useState<ValuationListItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -143,11 +170,15 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
     setLoading(true);
     try {
       const res = await fetch(`${API_URL}/economics/valuations`, { headers: getHeaders() });
-      if (!res.ok) return;
+      if (!res.ok) {
+        setLoadError(true);
+        return;
+      }
       const d = (await res.json()) as any;
       setValuations((d?.valuations || []) as ValuationListItem[]);
+      setLoadError(false);
     } catch {
-      // ignore
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -518,6 +549,19 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                 <div className="p-4">
                   <LoadingState template="list" rows={4} />
                 </div>
+              ) : loadError && valuations.length === 0 ? (
+                <EmptyState
+                  variant="error"
+                  compact
+                  title={t('valuation.list.loadErrorTitle', 'Could not load valuations')}
+                  description={t(
+                    'valuation.list.loadErrorDesc',
+                    'The valuations source could not be reached. Check your connection and try again.',
+                  )}
+                  onRetry={() => {
+                    void fetchValuations();
+                  }}
+                />
               ) : valuations.length === 0 ? (
                 <EmptyState
                   variant="new"
@@ -552,7 +596,9 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                           {v.title}
                         </div>
                         <div className="text-xs text-c-text-muted dark:text-c-text-muted mt-0.5">
-                          {t('valuation.list.source', 'Source')}: {v.sourceType} • {v.status}
+                          {t('valuation.list.source', 'Source')}:{' '}
+                          {valuationSourceLabel(v.sourceType, t)} •{' '}
+                          {valuationStatusLabel(v.status, t)}
                         </div>
                       </div>
                     </div>
@@ -583,7 +629,8 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                   </div>
                   <div className="text-xs text-c-text-muted dark:text-c-text-muted mt-0.5 flex items-center gap-2 flex-wrap">
                     <span>
-                      {t('valuation.detail.status', 'Status')}: {selected.status} •{' '}
+                      {t('valuation.detail.status', 'Status')}:{' '}
+                      {valuationStatusLabel(selected.status, t)} •{' '}
                       {t('valuation.detail.currency', 'Currency')}: {selected.currency}
                     </span>
                     {selected.source_type &&
