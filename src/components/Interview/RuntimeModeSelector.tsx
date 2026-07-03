@@ -89,11 +89,11 @@ export const RuntimeModeSelector: React.FC<RuntimeModeSelectorProps> = ({
 
   if (compact && currentMode) {
     return (
-      <div className="flex items-center gap-3 rounded-lg bg-slate-50/50 dark:bg-navy-900/50 px-3 py-2">
-        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+      <div className="flex items-center gap-3 rounded-token-md bg-[var(--c-surface-raised)] px-3 py-2">
+        <span className="text-xs font-medium text-[var(--c-text-muted)]">
           {t('interview.runtimeMode.label')}:
         </span>
-        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+        <span className="text-sm font-medium text-[var(--c-text)]">
           {currentMode === 'single_question'
             ? t('interview.runtimeMode.singleQuestion.title')
             : currentMode === 'conversational'
@@ -109,7 +109,7 @@ export const RuntimeModeSelector: React.FC<RuntimeModeSelectorProps> = ({
               const next = order[(idx + 1) % order.length];
               onModeSelect(next);
             }}
-            className="flex items-center gap-1 text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors"
+            className="flex items-center gap-1 text-xs font-medium text-[var(--c-accent)] hover:brightness-110 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] rounded-token-xs"
           >
             <ChevronRight size={14} className="rotate-90" />
             {t('interview.runtimeMode.switch')}
@@ -122,7 +122,7 @@ export const RuntimeModeSelector: React.FC<RuntimeModeSelectorProps> = ({
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+        <span className="text-sm font-semibold text-[var(--c-text)]">
           {t('interview.runtimeMode.chooseTitle')}
         </span>
       </div>
@@ -139,41 +139,41 @@ export const RuntimeModeSelector: React.FC<RuntimeModeSelectorProps> = ({
               type="button"
               onClick={() => !locked && onModeSelect(mode)}
               disabled={locked}
-              className={`relative flex flex-col items-start gap-3 p-4 rounded-xl text-left transition-all ${
+              className={`relative flex flex-col items-start gap-3 p-4 rounded-token-lg text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] ${
                 isSelected
-                  ? 'bg-primary-500/10 dark:bg-primary-500/15 ring-1 ring-primary-500/40'
-                  : 'bg-slate-50 dark:bg-navy-900/50 hover:bg-slate-100 dark:hover:bg-navy-800/50'
+                  ? 'bg-[var(--c-accent-soft)] ring-1 ring-[var(--c-accent)]/40'
+                  : 'bg-[var(--c-surface-raised)] hover:bg-[var(--c-surface)] border border-[var(--c-border-subtle)]'
               } ${locked ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
             >
               {isRecommended && (
-                <span className="absolute top-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary-500/20 text-primary-600 dark:text-primary-400">
+                <span className="absolute top-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-token-pill text-[10px] font-medium bg-[var(--c-accent-soft)] text-[var(--c-accent)]">
                   <Sparkles size={10} />
                   {t('interview.runtimeMode.recommended')}
                 </span>
               )}
               <div className="flex items-start gap-3 w-full">
                 <div
-                  className={`shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
+                  className={`shrink-0 w-10 h-10 rounded-token-md flex items-center justify-center ${
                     isSelected
-                      ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400'
-                      : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
+                      ? 'bg-[var(--c-accent-soft)] text-[var(--c-accent)]'
+                      : 'bg-[var(--c-surface)] text-[var(--c-text-secondary)]'
                   }`}
                 >
                   <Icon size={20} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  <h4 className="text-sm font-semibold text-[var(--c-text)]">
                     {t(config.titleKey)}
                   </h4>
-                  <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  <p className="mt-0.5 text-xs text-[var(--c-text-secondary)] leading-relaxed">
                     {t(config.descKey)}
                   </p>
                 </div>
                 <div
-                  className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center border-2 ${
+                  className={`shrink-0 w-5 h-5 rounded-token-pill flex items-center justify-center border-2 ${
                     isSelected
-                      ? 'border-primary-500 bg-primary-500'
-                      : 'border-slate-300 dark:border-navy-600'
+                      ? 'border-[var(--c-accent)] bg-[var(--c-accent)]'
+                      : 'border-[var(--c-border)]'
                   }`}
                 >
                   {isSelected && <Check size={12} className="text-white" strokeWidth={3} />}
@@ -181,16 +181,16 @@ export const RuntimeModeSelector: React.FC<RuntimeModeSelectorProps> = ({
               </div>
               <div className="flex gap-4 text-[11px] w-full">
                 <div className="flex-1">
-                  <span className="font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                  <span className="font-medium text-[var(--c-text-muted)] uppercase tracking-wide">
                     {t('interview.runtimeMode.pros')}
                   </span>
-                  <p className="mt-0.5 text-slate-600 dark:text-slate-400">{t(config.prosKey)}</p>
+                  <p className="mt-0.5 text-[var(--c-text-secondary)]">{t(config.prosKey)}</p>
                 </div>
                 <div className="flex-1">
-                  <span className="font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                  <span className="font-medium text-[var(--c-text-muted)] uppercase tracking-wide">
                     {t('interview.runtimeMode.cons')}
                   </span>
-                  <p className="mt-0.5 text-slate-600 dark:text-slate-400">{t(config.consKey)}</p>
+                  <p className="mt-0.5 text-[var(--c-text-secondary)]">{t(config.consKey)}</p>
                 </div>
               </div>
             </button>
