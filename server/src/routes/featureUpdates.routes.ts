@@ -70,6 +70,11 @@ const safeJson = <T>(value: unknown, fallback: T): T => {
 };
 
 async function ensureFeatureUpdatesSchema(): Promise<void> {
+  // Fail-soft: this opportunistic DDL runs first in the "what's new" feed read
+  // path (GET /feed), which loads on virtually every page. Use fallback:true so a
+  // transient DDL failure (lock/timeout/brief read-only) can NEVER reject and
+  // bubble up as a bare HTTP 500 / white screen — the feed degrades to empty
+  // instead. The additive ALTERs and indexes below keep their own try/catch.
   await dbRun(
     `
     CREATE TABLE IF NOT EXISTS feature_updates (
@@ -98,7 +103,7 @@ async function ensureFeatureUpdatesSchema(): Promise<void> {
     );
     `,
     [],
-    { fallback: false }
+    { fallback: true }
   );
 
   const extraColumns = [
@@ -132,7 +137,7 @@ async function ensureFeatureUpdatesSchema(): Promise<void> {
     );
     `,
     [],
-    { fallback: false }
+    { fallback: true }
   );
 
   await dbRun(
@@ -148,7 +153,7 @@ async function ensureFeatureUpdatesSchema(): Promise<void> {
     );
     `,
     [],
-    { fallback: false }
+    { fallback: true }
   );
 
   // Indexes (best-effort)
@@ -365,13 +370,13 @@ router.get(
         LIMIT ?
       `,
       [orgId, now, now, limit],
-      { fallback: false }
+      { fallback: true }
     );
 
     const reads = await dbAll<{ update_id: string; read_at: string }>(
       `SELECT update_id, read_at FROM feature_update_reads WHERE user_id = ?`,
       [userId],
-      { fallback: false }
+      { fallback: true }
     );
     const readMap = new Map(reads.map((r) => [r.update_id, r.read_at]));
 
