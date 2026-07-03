@@ -82,6 +82,27 @@
     --c-tag-10: #5566b8; /* blue */
     --c-tag-11: #a0568f; /* plum */
     --c-tag-12: #4f9e6f; /* emerald-muted */
+    /* Foreground for text/icon placed ON a SATURATED tag/chart swatch used as a
+     * DOT/BAR/STROKE (graphic, ≥3:1) — NOT for body text on a filled chip. The tag
+     * hues are mid-tone: white clears AA-Large (≥3:1) as a graphic marker, but NOT
+     * AA body-text (4.5:1) on light fills. For a text CHIP use the soft-tint pattern
+     * (bg = hue @ ~12% alpha, text = the hue itself), never white-on-saturated-fill. */
+    --c-tag-foreground: #ffffff;
+    /* Chart-series palette (light) — ORDERED for line/bar legibility (blue-first,
+     * then green, amber, violet…). Distinct from the identity --c-tag ramp: tags
+     * are equal-weight category dots; charts are an ORDERED series ramp read in
+     * sequence (series 1,2,3…). NEVER red-first so a series is never mistaken for
+     * an alarm. Used as line/bar/area STROKES & FILLS (graphic contrast ≥3:1); each
+     * clears ≥3.4:1 on --c-surface #ffffff. Colorblind-aware: 1/2 (blue/green) and
+     * 3/4 (amber/violet) differ in luminance, not just hue. Ratios below = vs white. */
+    --c-chart-1: #2f6f95; /* deep blue    5.48:1 (AA text) */
+    --c-chart-2: #2f8f6b; /* teal-green   3.99:1 (AA-Large/graphic) */
+    --c-chart-3: #b5793a; /* amber-brown  3.65:1 (AA-Large/graphic) */
+    --c-chart-4: #7a56c8; /* violet       5.26:1 (AA text) */
+    --c-chart-5: #2a97a8; /* cyan         3.45:1 (AA-Large/graphic) */
+    --c-chart-6: #a8517f; /* plum-magenta 5.06:1 (AA text) */
+    --c-chart-7: #6e8a2f; /* olive        3.93:1 (AA-Large/graphic) */
+    --c-chart-8: #5f7488; /* slate        4.84:1 (AA text) */
   }
 
   .dark {
@@ -158,6 +179,20 @@
     --c-tag-10: #7d8de0;
     --c-tag-11: #c47fb0;
     --c-tag-12: #6fc492;
+    /* On navy, tag/chart hues are lifted and read as bright DOTS/STROKES (graphic
+     * ≥3:1). White-on-fill is NOT AA body-text here — use soft-tint chips (see :root). */
+    --c-tag-foreground: #ffffff;
+    /* Chart-series palette (dark) — same ORDER as light, lifted for navy so each
+     * series stroke/fill clears ≥3:1 on --c-surface #0f172a. Blue-first, never
+     * red-first (a series is never an alarm). */
+    --c-chart-1: #5aa3d4; /* deep blue    */
+    --c-chart-2: #57c08c; /* teal-green   */
+    --c-chart-3: #d29a5a; /* amber-brown  */
+    --c-chart-4: #a98ae6; /* violet       */
+    --c-chart-5: #4fc2d4; /* cyan         */
+    --c-chart-6: #d287ae; /* plum-magenta */
+    --c-chart-7: #a8b35f; /* olive        */
+    --c-chart-8: #93a6bc; /* slate        */
   }
 }
 
