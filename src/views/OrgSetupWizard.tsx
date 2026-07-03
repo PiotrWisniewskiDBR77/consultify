@@ -245,10 +245,10 @@ export const OrgSetupWizard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-navy-950 px-6 py-10">
+    <div className="min-h-screen bg-c-surface px-6 py-10">
       <div className="mx-auto w-full max-w-3xl">
-        <div className="rounded-3xl border border-slate-200/80 bg-white shadow-sm dark:border-navy-700 dark:bg-navy-900/90">
-          <div className="border-b border-slate-200 px-6 py-6 dark:border-navy-700 sm:px-8">
+        <div className="rounded-3xl border border-c-border-subtle/80 bg-c-surface shadow-sm dark:border-navy-700 dark:bg-navy-900/90">
+          <div className="border-b border-c-border-subtle px-6 py-6 dark:border-navy-700 sm:px-8">
             <div className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
               <Building2 size={14} />
               Nowa organizacja
@@ -256,14 +256,14 @@ export const OrgSetupWizard: React.FC = () => {
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-navy-900 dark:text-white">
               Utwórz przestrzeń dla swojego zespołu
             </h1>
-            <p className="mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-400 sm:text-base">
+            <p className="mt-2 max-w-2xl text-sm text-c-text-secondary sm:text-base">
               Zacznij od nazwy. Resztę możesz doprecyzować teraz albo później w ustawieniach
               organizacji.
             </p>
           </div>
 
           <div className="space-y-6 px-6 py-6 sm:px-8 sm:py-8">
-            <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-sm text-slate-700 dark:border-navy-700 dark:bg-navy-950/60 dark:text-slate-300">
+            <div className="grid gap-3 rounded-2xl border border-c-border-subtle bg-c-bg/80 p-4 text-sm text-c-text-secondary dark:border-navy-700 dark:bg-navy-950/60 dark:text-slate-300">
               <div className="flex items-start gap-3">
                 <Check size={16} className="mt-0.5 shrink-0 text-emerald-500" />
                 <span>Tworzysz wspólną przestrzeń dla decyzji, wiedzy i pracy zespołu.</span>
@@ -280,7 +280,7 @@ export const OrgSetupWizard: React.FC = () => {
 
             <section className="space-y-4">
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                <label className="mb-2 block text-sm font-medium text-c-text-secondary">
                   Nazwa organizacji
                 </label>
                 <input
@@ -288,17 +288,17 @@ export const OrgSetupWizard: React.FC = () => {
                   value={state.orgName}
                   onChange={(e) => updateState({ orgName: e.target.value })}
                   placeholder='Np. "VTS Group" lub "PMO Europa"'
-                  className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-lg text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                  className="w-full rounded-xl border-2 border-c-border-subtle bg-c-surface px-4 py-3 text-lg text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
                   autoFocus
                 />
-                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                <p className="mt-2 text-sm text-c-text-muted">
                   To jedyne pole wymagane na start.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <label className="mb-2 block text-sm font-medium text-c-text-secondary">
                     Domena lub strona www
                   </label>
                   <input
@@ -306,17 +306,17 @@ export const OrgSetupWizard: React.FC = () => {
                     value={state.domain}
                     onChange={(e) => updateState({ domain: normalizeDomain(e.target.value) })}
                     placeholder="np. vtsgroup.com"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                    className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <label className="mb-2 block text-sm font-medium text-c-text-secondary">
                     Kraj
                   </label>
                   <select
                     value={state.country}
                     onChange={(e) => updateState({ country: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                    className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
                   >
                     <option value="">Wybierz lub pomiń</option>
                     {COUNTRIES.map((c) => (
@@ -329,17 +329,17 @@ export const OrgSetupWizard: React.FC = () => {
               </div>
             </section>
 
-            <details className="group rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/30">
-              <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900 dark:text-white">
+            <details className="group rounded-2xl border border-c-border-subtle bg-c-surface p-4 dark:border-navy-700 dark:bg-navy-950/30">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-c-text">
                 Doprecyzuj teraz lub zrób to później
-                <span className="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">
+                <span className="ml-2 text-xs font-normal text-c-text-muted">
                   rola, branża, skala, VAT
                 </span>
               </summary>
 
               <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <label className="mb-2 block text-sm font-medium text-c-text-secondary">
                     Twoje stanowisko
                   </label>
                   <input
@@ -347,11 +347,11 @@ export const OrgSetupWizard: React.FC = () => {
                     value={state.userTitle}
                     onChange={(e) => updateState({ userTitle: e.target.value })}
                     placeholder="np. CFO, PMO Lead"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                    className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <label className="mb-2 block text-sm font-medium text-c-text-secondary">
                     Telefon
                   </label>
                   <input
@@ -359,11 +359,11 @@ export const OrgSetupWizard: React.FC = () => {
                     value={state.phone}
                     onChange={(e) => updateState({ phone: e.target.value })}
                     placeholder="+48 123 456 789"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                    className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <label className="mb-2 block text-sm font-medium text-c-text-secondary">
                     Twoja rola
                   </label>
                   <select
@@ -371,7 +371,7 @@ export const OrgSetupWizard: React.FC = () => {
                     onChange={(e) =>
                       updateState({ userRole: (e.target.value as OrgUserRole) || null })
                     }
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                    className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
                   >
                     <option value="">Nie teraz</option>
                     {USER_ROLES.map((role) => (
@@ -382,13 +382,13 @@ export const OrgSetupWizard: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <label className="mb-2 block text-sm font-medium text-c-text-secondary">
                     Typ organizacji
                   </label>
                   <select
                     value={state.orgType || ''}
                     onChange={(e) => updateState({ orgType: (e.target.value as OrgType) || null })}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                    className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
                   >
                     <option value="">Nie teraz</option>
                     <option value="OPERATING">Firma operacyjna</option>
@@ -396,13 +396,13 @@ export const OrgSetupWizard: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <label className="mb-2 block text-sm font-medium text-c-text-secondary">
                     Branża
                   </label>
                   <select
                     value={state.industry}
                     onChange={(e) => updateState({ industry: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                    className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
                   >
                     <option value="">Nie teraz</option>
                     {INDUSTRIES.map((ind) => (
@@ -413,7 +413,7 @@ export const OrgSetupWizard: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <label className="mb-2 block text-sm font-medium text-c-text-secondary">
                     Wielkość organizacji
                   </label>
                   <select
@@ -421,7 +421,7 @@ export const OrgSetupWizard: React.FC = () => {
                     onChange={(e) =>
                       updateState({ companySize: (e.target.value as CompanySize) || null })
                     }
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                    className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
                   >
                     <option value="">Nie teraz</option>
                     {COMPANY_SIZES.map((size) => (
@@ -432,7 +432,7 @@ export const OrgSetupWizard: React.FC = () => {
                   </select>
                 </div>
                 <div className="md:col-span-2">
-                  <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <label className="mb-2 block text-sm font-medium text-c-text-secondary">
                     NIP / VAT
                   </label>
                   <input
@@ -440,23 +440,23 @@ export const OrgSetupWizard: React.FC = () => {
                     value={state.vatNumber}
                     onChange={(e) => updateState({ vatNumber: e.target.value })}
                     placeholder="np. LU12345678 lub PL1234567890"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                    className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
                   />
                 </div>
               </div>
             </details>
 
-            <section className="rounded-2xl border border-slate-200 bg-slate-50/80 p-5 dark:border-navy-700 dark:bg-navy-950/60">
+            <section className="rounded-2xl border border-c-border-subtle bg-c-bg/80 p-5 dark:border-navy-700 dark:bg-navy-950/60">
               <div className="flex items-start gap-3">
                 <ShieldCheck
                   className="mt-0.5 shrink-0 text-primary-600 dark:text-primary-300"
                   size={20}
                 />
                 <div>
-                  <h2 className="font-semibold text-slate-900 dark:text-white">
+                  <h2 className="font-semibold text-c-text">
                     Pamięć organizacji
                   </h2>
-                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                  <p className="mt-1 text-sm text-c-text-secondary">
                     System będzie zapamiętywał kontekst organizacji, ustalenia i wnioski zespołu,
                     żeby kolejne interakcje miały ciągłość.
                   </p>
@@ -468,9 +468,9 @@ export const OrgSetupWizard: React.FC = () => {
                   type="checkbox"
                   checked={state.memoryConsent}
                   onChange={(e) => updateState({ memoryConsent: e.target.checked })}
-                  className="mt-1 h-5 w-5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
+                  className="mt-1 h-5 w-5 rounded border-c-border text-primary-600 focus:ring-primary-500 dark:border-navy-700"
                 />
-                <span className="text-sm text-slate-700 dark:text-slate-300">
+                <span className="text-sm text-c-text-secondary">
                   Rozumiem i akceptuję, że pamięć pracy należy do organizacji, a nie do pojedynczej
                   osoby.
                 </span>
@@ -486,14 +486,14 @@ export const OrgSetupWizard: React.FC = () => {
               )}
             </section>
 
-            <div className="flex flex-col-reverse gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between dark:border-navy-700">
-              <div className="text-sm text-slate-500 dark:text-slate-400">
+            <div className="flex flex-col-reverse gap-3 border-t border-c-border-subtle pt-6 sm:flex-row sm:items-center sm:justify-between dark:border-navy-700">
+              <div className="text-sm text-c-text-muted">
                 Wszystko to zmienisz później w ustawieniach organizacji.
               </div>
               <div className="flex items-center justify-between gap-3 sm:justify-end">
                 <button
                   onClick={handleSkipSetup}
-                  className="text-sm text-slate-500 transition-colors hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                  className="text-sm text-c-text-muted transition-colors hover:text-c-text-secondary dark:hover:text-slate-200"
                 >
                   Pomiń konfigurację
                 </button>
@@ -503,7 +503,7 @@ export const OrgSetupWizard: React.FC = () => {
                   className={`inline-flex items-center gap-2 rounded-xl px-5 py-3 font-semibold transition-colors ${
                     canSubmit && !state.isSubmitting
                       ? 'bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800'
-                      : 'cursor-not-allowed bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-500'
+                      : 'cursor-not-allowed bg-slate-200 text-c-text-secondary dark:bg-slate-800 dark:text-c-text-muted'
                   }`}
                 >
                   {state.isSubmitting ? (
