@@ -77,7 +77,7 @@ export const InsertMenu: React.FC<InsertMenuProps> = ({
         onClick();
         setOpen(false);
       }}
-      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors text-left"
+      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-c-text hover:bg-c-surface-raised transition-colors text-left"
     >
       {icon}
       <span>{pl ? labelPl : label}</span>
@@ -88,7 +88,7 @@ export const InsertMenu: React.FC<InsertMenuProps> = ({
     <div ref={ref} className={`relative ${className}`} data-insert-menu>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 hover:text-slate-800 dark:hover:text-slate-200 transition-colors text-sm font-medium"
+        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors text-sm font-medium"
       >
         <Plus size={14} />
         <span>{pl ? 'Wstaw' : 'Insert'}</span>
@@ -96,9 +96,9 @@ export const InsertMenu: React.FC<InsertMenuProps> = ({
       </button>
 
       {open && (
-        <div className="absolute top-full left-0 mt-1 z-50 w-56 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg overflow-hidden">
+        <div className="absolute top-full left-0 mt-1 z-50 w-56 rounded-xl border border-c-border bg-c-surface shadow-lg overflow-hidden">
           <div className="p-3 space-y-2">
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500 px-1">
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-c-text-muted px-1">
               {pl ? 'Bloki' : 'Blocks'}
             </div>
             <div className="space-y-0.5">
@@ -106,25 +106,25 @@ export const InsertMenu: React.FC<InsertMenuProps> = ({
                 'Delete block',
                 'Usuń blok',
                 () => deleteContainingBlock(editor),
-                <Trash2 size={14} className="text-rose-500" />
+                <Trash2 size={14} className="text-c-danger" />
               )}
               {btn(
                 'Callout',
                 'Wyróżnienie',
                 () => (editor.commands as any).setCallout({ variant: 'info' }),
-                <Info size={14} className="text-blue-500" />
+                <Info size={14} className="text-c-info" />
               )}
               {btn(
                 'Warning',
                 'Ostrzeżenie',
                 () => (editor.commands as any).setCallout({ variant: 'warning' }),
-                <AlertTriangle size={14} className="text-amber-500" />
+                <AlertTriangle size={14} className="text-c-warning" />
               )}
               {btn(
                 'Toggle',
                 'Sekcja zwijana',
                 () => (editor.commands as any).setDetails(),
-                <ToggleRight size={14} className="text-slate-500" />
+                <ToggleRight size={14} className="text-c-text-muted" />
               )}
               {btn(
                 'Table',
@@ -135,35 +135,35 @@ export const InsertMenu: React.FC<InsertMenuProps> = ({
                     .focus()
                     .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
                     .run(),
-                <Columns3 size={14} className="text-slate-500" />
+                <Columns3 size={14} className="text-c-text-muted" />
               )}
               {btn(
                 'Divider',
                 'Separator',
                 () => editor.chain().focus().setHorizontalRule().run(),
-                <Minus size={14} className="text-slate-500" />
+                <Minus size={14} className="text-c-text-muted" />
               )}
               {btn(
                 'Bullet list',
                 'Lista punktowana',
                 () => editor.chain().focus().toggleBulletList().run(),
-                <List size={14} className="text-slate-500" />
+                <List size={14} className="text-c-text-muted" />
               )}
               {btn(
                 'Numbered list',
                 'Lista numerowana',
                 () => editor.chain().focus().toggleOrderedList().run(),
-                <ListOrdered size={14} className="text-slate-500" />
+                <ListOrdered size={14} className="text-c-text-muted" />
               )}
               {btn(
                 'Checklist',
                 'Checklista',
                 () => editor.chain().focus().toggleTaskList().run(),
-                <ListChecks size={14} className="text-slate-500" />
+                <ListChecks size={14} className="text-c-text-muted" />
               )}
             </div>
 
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500 px-1 pt-2">
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-c-text-muted px-1 pt-2">
               {pl ? 'Nagłówki' : 'Headings'}
             </div>
             <div className="space-y-0.5">
@@ -171,19 +171,19 @@ export const InsertMenu: React.FC<InsertMenuProps> = ({
                 'Heading 1',
                 'Nagłówek 1',
                 () => editor.chain().focus().toggleHeading({ level: 1 }).run(),
-                <Heading1 size={14} className="text-slate-500" />
+                <Heading1 size={14} className="text-c-text-muted" />
               )}
               {btn(
                 'Heading 2',
                 'Nagłówek 2',
                 () => editor.chain().focus().toggleHeading({ level: 2 }).run(),
-                <Heading2 size={14} className="text-slate-500" />
+                <Heading2 size={14} className="text-c-text-muted" />
               )}
               {btn(
                 'Heading 3',
                 'Nagłówek 3',
                 () => editor.chain().focus().toggleHeading({ level: 3 }).run(),
-                <Heading3 size={14} className="text-slate-500" />
+                <Heading3 size={14} className="text-c-text-muted" />
               )}
             </div>
 

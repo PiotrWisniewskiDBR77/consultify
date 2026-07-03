@@ -30,22 +30,22 @@ const TYPE_CONFIG = {
     icon: Target,
     label: 'Initiatives',
     labelPl: 'Inicjatywy',
-    color: 'text-blue-600 dark:text-blue-400',
-    bg: 'bg-blue-500/10',
+    color: 'text-c-info',
+    bg: 'bg-[var(--c-info)]/10',
   },
   task: {
     icon: CheckSquare,
     label: 'Tasks',
     labelPl: 'Zadania',
-    color: 'text-emerald-600 dark:text-emerald-400',
-    bg: 'bg-emerald-500/10',
+    color: 'text-c-success',
+    bg: 'bg-[var(--c-success)]/10',
   },
   decision: {
     icon: Scale,
     label: 'Decisions',
     labelPl: 'Decyzje',
-    color: 'text-amber-600 dark:text-amber-400',
-    bg: 'bg-amber-500/10',
+    color: 'text-c-warning',
+    bg: 'bg-[var(--c-warning)]/10',
   },
 } as const;
 
@@ -177,23 +177,23 @@ export const PulseItemPickerModal: React.FC<PulseItemPickerModalProps> = ({
     >
       <div className="flex flex-col gap-4 min-h-0">
         <div className="relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-secondary" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={pl ? 'Szukaj po tytule...' : 'Search by title...'}
-            className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--c-focus)] focus:border-[var(--c-focus-solid)] text-sm"
+            className="w-full pl-9 pr-4 py-2 rounded-lg border border-c-border bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-[var(--c-focus)] focus:border-[var(--c-focus-solid)] text-sm"
           />
         </div>
 
         <div className="flex-1 overflow-y-auto min-h-[280px] max-h-[50vh] space-y-1.5 pr-1">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 size={24} className="animate-spin text-slate-600" />
+              <Loader2 size={24} className="animate-spin text-c-text-secondary" />
             </div>
           ) : items.length === 0 ? (
-            <div className="py-12 text-center text-sm text-slate-500 dark:text-slate-400">
+            <div className="py-12 text-center text-sm text-c-text-muted">
               {pl
                 ? 'Brak wyników. Zmień zapytanie lub wybierz inny typ.'
                 : 'No results. Try a different search or type.'}
@@ -202,14 +202,14 @@ export const PulseItemPickerModal: React.FC<PulseItemPickerModalProps> = ({
             items.map((item) => (
               <div
                 key={item.id}
-                className="rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-900/60 px-4 py-3 flex items-center justify-between gap-3"
+                className="rounded-lg border border-c-border bg-c-surface-raised px-4 py-3 flex items-center justify-between gap-3"
               >
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
+                  <div className="text-sm font-medium text-c-text truncate">
                     {item.title}
                   </div>
                   {item.status && (
-                    <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 capitalize">
+                    <div className="mt-0.5 text-[11px] text-c-text-muted capitalize">
                       {item.status}
                     </div>
                   )}
@@ -225,7 +225,7 @@ export const PulseItemPickerModal: React.FC<PulseItemPickerModalProps> = ({
                   {onOpenItem && (
                     <button
                       onClick={() => handleOpen(item)}
-                      className="flex items-center gap-1.5 rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-400 px-3 py-1.5 text-xs font-medium hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-colors"
+                      className="flex items-center gap-1.5 rounded-md bg-c-surface-raised text-c-text-secondary px-3 py-1.5 text-xs font-medium hover:bg-c-surface-raised transition-colors"
                     >
                       <ExternalLink size={12} />
                       {pl ? 'Otwórz' : 'Open'}
@@ -237,7 +237,7 @@ export const PulseItemPickerModal: React.FC<PulseItemPickerModalProps> = ({
           )}
         </div>
 
-        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+        <p className="text-[11px] text-c-text-muted">
           {pl
             ? 'Wstaw odniesienie do notatki, aby pokazać kontekst rozmowy.'
             : 'Insert a reference into the note to show conversation context.'}
