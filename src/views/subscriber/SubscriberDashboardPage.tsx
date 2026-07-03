@@ -258,7 +258,7 @@ const SubscriberDashboardPage: React.FC = () => {
             type="button"
             onClick={() => void loadDashboard()}
             disabled={loading}
-            className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="inline-flex items-center gap-1.5 rounded-md border border-c-border-subtle bg-c-surface px-3 py-1.5 text-xs font-medium text-c-text-secondary shadow-sm transition-colors hover:bg-c-bg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
             aria-label={COPY.refresh}
           >
             {loading ? (
@@ -273,7 +273,7 @@ const SubscriberDashboardPage: React.FC = () => {
           <button
             type="button"
             onClick={handleSignOut}
-            className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="inline-flex items-center gap-1.5 rounded-md border border-c-border-subtle bg-c-surface px-3 py-1.5 text-xs font-medium text-c-text-secondary shadow-sm transition-colors hover:bg-c-bg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
           >
             <LogOut size={12} aria-hidden />
             {COPY.signOut}
@@ -375,7 +375,7 @@ const TokenEntryView: React.FC<TokenEntryProps> = ({ onSubmit }) => {
 
   return (
     <div className="mx-auto max-w-xl">
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+      <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
         <div className="flex items-center gap-3">
           <span
             aria-hidden
@@ -383,14 +383,14 @@ const TokenEntryView: React.FC<TokenEntryProps> = ({ onSubmit }) => {
           >
             <KeyRound size={18} />
           </span>
-          <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{COPY.title}</h1>
+          <h1 className="text-lg font-semibold text-c-text">{COPY.title}</h1>
         </div>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{COPY.subtitle}</p>
+        <p className="mt-2 text-sm text-c-text-secondary">{COPY.subtitle}</p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-3">
           <label
             htmlFor="subscriber-token"
-            className="block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+            className="block text-xs font-semibold uppercase tracking-wide text-c-text-muted"
           >
             {COPY.tokenLabel}
           </label>
@@ -405,7 +405,7 @@ const TokenEntryView: React.FC<TokenEntryProps> = ({ onSubmit }) => {
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onBlur={() => setTouched(true)}
-            className="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            className="block w-full rounded-md border border-c-border bg-c-surface px-3 py-2 font-mono text-sm text-c-text shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
             aria-describedby="subscriber-token-help"
           />
           {showInvalidHint && (
@@ -413,7 +413,7 @@ const TokenEntryView: React.FC<TokenEntryProps> = ({ onSubmit }) => {
               {COPY.invalidTokenInline}
             </p>
           )}
-          <p id="subscriber-token-help" className="text-xs text-slate-500 dark:text-slate-400">
+          <p id="subscriber-token-help" className="text-xs text-c-text-muted">
             {COPY.tokenHelp}
           </p>
           <button
@@ -434,17 +434,17 @@ const TokenEntryView: React.FC<TokenEntryProps> = ({ onSubmit }) => {
 
 const SkeletonView: React.FC = () => (
   <div className="space-y-4" aria-busy="true" aria-live="polite">
-    <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+    <div className="flex items-center gap-2 text-sm text-c-text-secondary">
       <Loader2 size={14} className="animate-spin text-indigo-500" aria-hidden />
       {COPY.loading}
     </div>
     {[0, 1, 2].map((i) => (
       <div
         key={i}
-        className="h-24 animate-pulse rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"
+        className="h-24 animate-pulse rounded-lg border border-c-border-subtle bg-c-surface shadow-sm dark:border-slate-800 dark:bg-slate-900"
       />
     ))}
-    <div className="h-48 animate-pulse rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900" />
+    <div className="h-48 animate-pulse rounded-lg border border-c-border-subtle bg-c-surface shadow-sm dark:border-slate-800 dark:bg-slate-900" />
   </div>
 );
 
@@ -471,13 +471,13 @@ const LoadedView: React.FC<LoadedProps> = ({ data, lastRefreshAt }) => {
 
 const HeaderStrip: React.FC<LoadedProps> = ({ data, lastRefreshAt }) => {
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 rounded-lg border border-c-border-subtle bg-c-surface p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="font-mono text-sm font-semibold text-slate-900 dark:text-slate-100">
+          <span className="font-mono text-sm font-semibold text-c-text">
             {data.subscription.target || '—'}
           </span>
-          <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700 dark:bg-slate-500/20 dark:text-slate-300">
+          <span className="inline-flex items-center rounded-full bg-c-surface-raised px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-c-text-secondary dark:bg-slate-500/20 dark:text-slate-300">
             {data.subscription.channel || '—'}
           </span>
           {!data.subscription.active && (
@@ -486,13 +486,13 @@ const HeaderStrip: React.FC<LoadedProps> = ({ data, lastRefreshAt }) => {
             </span>
           )}
         </div>
-        <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+        <p className="mt-1 text-[11px] text-c-text-muted">
           Min severity: {data.subscription.minSeverity || '—'}
         </p>
       </div>
       <div className="flex flex-col items-start gap-1 sm:items-end">
         <SubscriberHealthBadge overall={data.health.overall} reasons={data.health.reasons} />
-        <p className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
+        <p className="flex items-center gap-1 text-[11px] text-c-text-muted">
           <Clock size={11} aria-hidden />
           Last refreshed: {formatClock(lastRefreshAt)}
         </p>
@@ -511,14 +511,14 @@ const SignatureCard: React.FC<{ data: ClientSubscriberSnapshot }> = ({ data }) =
     data.signature.rotationDueWithinDays <= 30;
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div className="rounded-lg border border-c-border-subtle bg-c-surface p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div className="flex items-center gap-2">
-        <ShieldCheck size={14} className="text-slate-500 dark:text-slate-400" aria-hidden />
-        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+        <ShieldCheck size={14} className="text-c-text-muted" aria-hidden />
+        <h3 className="text-sm font-semibold text-c-text">
           {COPY.signatureCardTitle}
         </h3>
       </div>
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-700 dark:text-slate-300">
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-c-text-secondary">
         <span className="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 font-mono text-[10px] font-semibold text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300">
           {data.signature.algorithm}
         </span>
@@ -528,7 +528,7 @@ const SignatureCard: React.FC<{ data: ClientSubscriberSnapshot }> = ({ data }) =
             {formatRelative(data.signature.secretLastRotatedAt)}
           </strong>
           {data.signature.daysSinceRotation !== null && (
-            <span className="ml-1 text-slate-500 dark:text-slate-400">
+            <span className="ml-1 text-c-text-muted">
               ({data.signature.daysSinceRotation}d)
             </span>
           )}
@@ -557,7 +557,7 @@ const SignatureCard: React.FC<{ data: ClientSubscriberSnapshot }> = ({ data }) =
         {open ? <ChevronUp size={12} aria-hidden /> : <ChevronDown size={12} aria-hidden />}
       </button>
       {open && (
-        <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">{COPY.signatureWhyBody}</p>
+        <p className="mt-2 text-xs text-c-text-secondary">{COPY.signatureWhyBody}</p>
       )}
     </div>
   );
@@ -566,15 +566,15 @@ const SignatureCard: React.FC<{ data: ClientSubscriberSnapshot }> = ({ data }) =
 const DeliverySummary: React.FC<{ data: ClientSubscriberSnapshot }> = ({ data }) => {
   const { delivery } = data;
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+    <div className="rounded-lg border border-c-border-subtle bg-c-surface p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <h3 className="text-sm font-semibold text-c-text">
         {COPY.deliveryCardTitle}
       </h3>
       <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <DeliveryColumn label="Last 7 days" agg={delivery.last7Days} />
         <DeliveryColumn label="Last 30 days" agg={delivery.last30Days} />
       </div>
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-c-text-muted">
         <span>
           {COPY.lastDispatchPrefix} {formatRelative(delivery.lastDispatchAt)}
         </span>
@@ -600,11 +600,11 @@ interface DeliveryColumnProps {
 
 const DeliveryColumn: React.FC<DeliveryColumnProps> = ({ label, agg }) => {
   return (
-    <div className="rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/40">
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+    <div className="rounded-md border border-c-border-subtle bg-c-bg p-3 dark:border-slate-800 dark:bg-slate-900/40">
+      <div className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
         {label}
       </div>
-      <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-700 dark:text-slate-300 sm:grid-cols-4">
+      <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-c-text-secondary sm:grid-cols-4">
         <DeliveryStat label={COPY.deliverySent} value={agg.sent} tone="emerald" />
         <DeliveryStat label={COPY.deliveryFailed} value={agg.failed} tone="rose" />
         <DeliveryStat label={COPY.deliverySuppressed} value={agg.suppressed} tone="slate" />
@@ -623,14 +623,14 @@ interface DeliveryStatProps {
 const STAT_TONE: Record<DeliveryStatProps['tone'], string> = {
   emerald: 'text-emerald-700 dark:text-emerald-300',
   rose: 'text-danger-700 dark:text-danger-300',
-  slate: 'text-slate-700 dark:text-slate-200',
+  slate: 'text-c-text-secondary',
   sky: 'text-sky-700 dark:text-sky-300',
 };
 
 const DeliveryStat: React.FC<DeliveryStatProps> = ({ label, value, tone }) => {
   return (
     <div>
-      <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+      <div className="text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
         {label}
       </div>
       <div className={`tabular-nums text-base font-semibold ${STAT_TONE[tone]}`}>
@@ -645,14 +645,14 @@ const ReasonsAndWarnings: React.FC<{ data: ClientSubscriberSnapshot }> = ({ data
     (s) => typeof s === 'string' && s.length > 0
   );
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+    <div className="rounded-lg border border-c-border-subtle bg-c-surface p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <h3 className="text-sm font-semibold text-c-text">
         {COPY.warningsHeading}
       </h3>
       {items.length === 0 ? (
-        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{COPY.noWarnings}</p>
+        <p className="mt-2 text-xs text-c-text-muted">{COPY.noWarnings}</p>
       ) : (
-        <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-slate-700 dark:text-slate-300">
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-c-text-secondary">
           {items.map((s) => (
             <li key={s}>{s}</li>
           ))}
@@ -684,7 +684,7 @@ const ERROR_TONE: Record<SubscriberFetchStatus, string> = {
   storage_unavailable:
     'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-200',
   network_error:
-    'border-slate-200 bg-slate-50 text-slate-800 dark:border-slate-800 dark:bg-slate-900/30 dark:text-slate-200',
+    'border-c-border-subtle bg-c-bg text-c-text dark:border-slate-800 dark:bg-slate-900/30 dark:text-slate-200',
 };
 
 const ERROR_ICON: Record<
@@ -715,7 +715,7 @@ const ErrorView: React.FC<ErrorViewProps> = ({ status, embed, onSignOut, onRetry
             <button
               type="button"
               onClick={onRetry}
-              className="inline-flex items-center gap-1.5 rounded-md border border-current bg-white/40 px-3 py-1.5 text-xs font-semibold shadow-sm transition-colors hover:bg-white/70 focus:outline-none focus:ring-2 focus:ring-current dark:bg-slate-900/40 dark:hover:bg-slate-900/70"
+              className="inline-flex items-center gap-1.5 rounded-md border border-current bg-c-surface/40 px-3 py-1.5 text-xs font-semibold shadow-sm transition-colors hover:bg-c-surface/70 focus:outline-none focus:ring-2 focus:ring-current dark:bg-slate-900/40 dark:hover:bg-slate-900/70"
             >
               <RefreshCcw size={12} aria-hidden />
               {COPY.errorTryAgain}
@@ -724,7 +724,7 @@ const ErrorView: React.FC<ErrorViewProps> = ({ status, embed, onSignOut, onRetry
               <button
                 type="button"
                 onClick={onSignOut}
-                className="inline-flex items-center gap-1.5 rounded-md border border-current bg-white/40 px-3 py-1.5 text-xs font-semibold shadow-sm transition-colors hover:bg-white/70 focus:outline-none focus:ring-2 focus:ring-current dark:bg-slate-900/40 dark:hover:bg-slate-900/70"
+                className="inline-flex items-center gap-1.5 rounded-md border border-current bg-c-surface/40 px-3 py-1.5 text-xs font-semibold shadow-sm transition-colors hover:bg-c-surface/70 focus:outline-none focus:ring-2 focus:ring-current dark:bg-slate-900/40 dark:hover:bg-slate-900/70"
               >
                 <LogOut size={12} aria-hidden />
                 {COPY.signOut}
