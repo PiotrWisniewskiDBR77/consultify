@@ -23,7 +23,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { EntityStatusChip, LoadingState } from '@/components/ui/primitives';
+import { LoadingState } from '@/components/shared/states';
+import { EntityStatusChip } from '@/components/ui/primitives';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
@@ -580,8 +581,8 @@ export const PresentationsHub: React.FC = () => {
 
     if (isLoading) {
       return (
-        <div className="flex items-center justify-center h-full min-h-[200px]">
-          <LoadingState variant="spinner" label={t('presentations.loading', 'Loading decks...')} />
+        <div className="p-6">
+          <LoadingState template="card" count={6} label={t('presentations.loading', 'Loading decks…')} />
         </div>
       );
     }

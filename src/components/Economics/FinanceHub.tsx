@@ -42,6 +42,7 @@ import { usePolicySnapshot } from '@/contexts/AccessPolicyContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useV8FeatureFlag } from '@/hooks/useV8FeatureFlag';
 import { ROUTES } from '@/routes/routeConfig';
+import { EmptyState, LoadingState } from '@/components/shared/states';
 import { Api } from '@/services/api';
 import {
   shouldFallbackToLegacyFinance,
@@ -2079,28 +2080,20 @@ export const FinanceHub: React.FC = () => {
       );
     if (loadingTab)
       return (
-        <div className="flex items-center justify-center h-full py-24">
-          <div className="text-sm text-slate-500 dark:text-slate-400">
-            {t('common.loading', 'Loading…')}
-          </div>
+        <div className="p-6">
+          <LoadingState template="list" rows={6} />
         </div>
       );
     if (!activeDocumentId && loadError)
       return (
-        <div className="flex items-center justify-center h-full p-6">
-          <div className="w-full max-w-3xl rounded-2xl border border-amber-200/70 dark:border-amber-400/20 bg-amber-50/80 dark:bg-amber-500/10 p-6">
-            <div className="text-lg font-semibold text-slate-900 dark:text-white">
-              {t('finance.errors.realSourceTitle', 'Real finance source needs attention')}
-            </div>
-            <div className="mt-2 text-sm text-slate-700 dark:text-slate-200">{loadError}</div>
-            <div className="mt-4 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              {t(
-                'finance.errors.realSourceHint',
-                'No synthetic demo fallback was injected. Verify active DB, organization scope, and data-context before retrying.'
-              )}
-            </div>
-          </div>
-        </div>
+        <EmptyState
+          variant="error"
+          title={t('finance.errors.realSourceTitle', 'Real finance source needs attention')}
+          description={`${loadError} — ${t(
+            'finance.errors.realSourceHint',
+            'No synthetic demo fallback was injected. Verify active DB, organization scope, and data-context before retrying.'
+          )}`}
+        />
       );
     if (!activeDocumentId && activeTab === 'investment' && filteredRows.length === 0)
       return (

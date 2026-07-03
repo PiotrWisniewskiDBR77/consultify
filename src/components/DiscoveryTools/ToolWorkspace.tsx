@@ -9,6 +9,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/shared/states';
 import { computeTensionCoverage, validateMoveSet } from '@/config/swot/swotTensionEngine';
 import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useToolAI } from '@/hooks/discovery/useToolAI';
@@ -664,8 +665,11 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
 
   if (!currentSession) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-pulse text-c-text-secondary">Loading...</div>
+      <div className="p-6">
+        <LoadingState
+          template="panel"
+          label={isPolish ? 'Ładowanie narzędzia…' : 'Loading tool…'}
+        />
       </div>
     );
   }

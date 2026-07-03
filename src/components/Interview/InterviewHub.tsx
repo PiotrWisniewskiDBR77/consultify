@@ -49,7 +49,6 @@ import {
   MessageSquare,
   Minus,
   MoreVertical,
-  RefreshCw,
   Rocket,
   RotateCcw,
   Send,
@@ -88,8 +87,9 @@ import {
   MENU_3_ROW_CLASS,
 } from '@/components/shared/ModuleMenu3';
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
+import { EmptyState, LoadingState } from '@/components/shared/states';
 import { TeresaMark } from '@/components/shared/TeresaMark';
-import { Badge, type BadgeVariant, LoadingState } from '@/components/ui/primitives';
+import { Badge, type BadgeVariant } from '@/components/ui/primitives';
 import { AssigneeCell, ProgressCell } from '@/components/ui/primitives/cells';
 import {
   categoryTone,
@@ -10422,31 +10422,27 @@ Return ONLY the answer text (no markdown fences).`;
   // Render list content based on active tab
   const renderListContent = () => {
     if (isLoading || assignmentsLoading) {
-      return <LoadingState variant="spinner" className="h-64 py-0" />;
+      return (
+        <div className="p-6">
+          <LoadingState template="list" rows={6} />
+        </div>
+      );
     }
 
     if (loadError) {
       return (
-        <div className="flex items-center justify-center h-full p-6">
-          <div className="w-full max-w-3xl rounded-2xl border-l-4 border-l-amber-500 border border-amber-300/50 dark:border-amber-400/20 bg-amber-100 dark:bg-amber-500/10 p-6">
-            <div className="text-lg font-semibold text-c-text">
-              {isPolish ? 'Nie udało się załadować wywiadów' : 'Could not load your interviews'}
-            </div>
-            <div className="mt-2 text-sm text-c-text-secondary">
-              {isPolish
-                ? 'Coś poszło nie tak podczas ładowania wywiadów. Odśwież stronę lub skontaktuj się z pomocą techniczną, jeśli problem się powtarza.'
-                : 'Something went wrong loading your interviews. Please refresh or contact support if the issue persists.'}
-            </div>
-            <button
-              type="button"
-              onClick={() => window.location.reload()}
-              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-navy-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-            >
-              <RefreshCw size={14} />
-              {isPolish ? 'Odśwież' : 'Refresh'}
-            </button>
-          </div>
-        </div>
+        <EmptyState
+          variant="error"
+          title={
+            isPolish ? 'Nie udało się załadować wywiadów' : 'Could not load your interviews'
+          }
+          description={
+            isPolish
+              ? 'Coś poszło nie tak podczas ładowania wywiadów. Odśwież stronę lub skontaktuj się z pomocą techniczną, jeśli problem się powtarza.'
+              : 'Something went wrong loading your interviews. Please refresh or contact support if the issue persists.'
+          }
+          onRetry={() => window.location.reload()}
+        />
       );
     }
 

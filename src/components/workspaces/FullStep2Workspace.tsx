@@ -3,6 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { EmptyState } from '@/components/shared/states';
 import { ROUTES } from '@/routes/routeConfig';
 
 import { useAppStore } from '../../store/useAppStore';
@@ -265,19 +266,23 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
         ))}
 
         {filteredInitiatives.length === 0 && (
-          <div className="border border-dashed border-slate-300 dark:border-navy-700 rounded-xl p-10 text-center text-slate-600 dark:text-slate-500 text-sm">
-            <p>No initiatives match your filters.</p>
-            <button
-              onClick={() => {
+          <EmptyState
+            variant="filter"
+            compact
+            title={translate('fullStep2.empty.title', 'No initiatives match your filters')}
+            description={translate(
+              'fullStep2.empty.desc',
+              'Try a wider axis or priority, or clear the filters.'
+            )}
+            primaryAction={{
+              label: translate('common.clearFilters', 'Clear filters'),
+              onClick: () => {
                 setSearchQuery('');
                 setFilterPriority('ALL');
                 setFilterAxis('ALL');
-              }}
-              className="text-blue-500 hover:underline mt-2"
-            >
-              Clear Filters
-            </button>
-          </div>
+              },
+            }}
+          />
         )}
       </div>
 

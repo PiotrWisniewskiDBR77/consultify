@@ -40,7 +40,6 @@ import {
   LayoutList,
   Lightbulb,
   List,
-  Loader2,
   Lock,
   Rocket,
   Scale,
@@ -65,6 +64,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { presentationsTabQueryForHomeBridge } from '@/components/ReportsAndPresentations/outputsLibraryTabQuery';
 import { Menu3DropdownChip } from '@/components/shared/Menu3DropdownChip';
+import { LoadingState } from '@/components/shared/states';
 import {
   MENU_2_TAB_ACTIVE,
   MENU_2_TAB_INACTIVE,
@@ -613,11 +613,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   } = useAppStore();
 
   const lazyFallback = (
-    <div className="flex h-[60vh] items-center justify-center">
-      <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        <span>{isPolish ? 'Ładowanie…' : 'Loading…'}</span>
-      </div>
+    <div className="p-6">
+      <LoadingState template="panel" label={isPolish ? 'Ładowanie…' : 'Loading…'} />
     </div>
   );
 

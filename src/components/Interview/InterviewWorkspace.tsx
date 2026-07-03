@@ -24,7 +24,6 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  CircleAlert,
   ClipboardList,
   Clock,
   Copy,
@@ -36,7 +35,6 @@ import {
   MessageSquare,
   Mic,
   Paperclip,
-  RefreshCw,
   Save,
   Send,
   Shield,
@@ -58,7 +56,7 @@ import {
   NModeSectionWrapper,
   NModeShell,
 } from '@/components/shared/NModeLayout';
-import { LoadingState } from '@/components/ui/primitives';
+import { EmptyState, LoadingState } from '@/components/shared/states';
 import { EntityStatusChip } from '@/components/ui/primitives/chips';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
@@ -1753,11 +1751,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
-        <LoadingState
-          variant="spinner"
-          label={isPolish ? 'Ładowanie wywiadu...' : 'Loading interview...'}
-        />
+      <div className="min-h-screen bg-c-surface p-8">
+        <div className="mx-auto max-w-3xl">
+          <LoadingState
+            template="panel"
+            label={isPolish ? 'Ładowanie wywiadu…' : 'Loading interview…'}
+          />
+        </div>
       </div>
     );
   }
@@ -1765,29 +1765,25 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   // IMPACT-UX-002: Degraded UX Error State
   if (loadError) {
     return (
-      <div className="flex flex-col items-center justify-center h-full min-h-screen bg-c-surface-raised p-8 text-center">
-        <CircleAlert className="w-12 h-12 text-c-danger mb-4" />
-        <h3 className="text-xl font-semibold text-c-text mb-2">
-          {loadError.isTransportBlock
-            ? isPolish
-              ? 'Ochrona przed pętlą zapytań (Transport Safeguard)'
-              : 'Requests blocked by global transport safeguard'
-            : isPolish
-              ? 'Błąd pobierania danych'
-              : 'Data Loading Error'}
-        </h3>
-        <p className="text-c-text-muted max-w-md mb-6">{loadError.message}</p>
-        <button
-          onClick={() => {
+      <div className="flex min-h-screen items-center justify-center bg-c-surface-raised p-8">
+        <EmptyState
+          variant="error"
+          title={
+            loadError.isTransportBlock
+              ? isPolish
+                ? 'Ochrona przed pętlą zapytań (Transport Safeguard)'
+                : 'Requests blocked by global transport safeguard'
+              : isPolish
+                ? 'Błąd pobierania danych'
+                : 'Data Loading Error'
+          }
+          description={loadError.message}
+          onRetry={() => {
             setLoadError(null);
             setIsLoading(true);
             window.location.reload();
           }}
-          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-white rounded-md font-medium"
-        >
-          <RefreshCw className="w-4 h-4" />
-          {isPolish ? 'Spróbuj ponownie' : 'Retry'}
-        </button>
+        />
       </div>
     );
   }

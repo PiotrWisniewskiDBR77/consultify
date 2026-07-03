@@ -60,7 +60,7 @@ import type { ReportConfig } from '@/components/Reports/Wizard';
 import { ReportGeneratorWizard } from '@/components/Reports/Wizard';
 import { Callout } from '@/components/shared/NModeBlocks';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
-import { LoadingState } from '@/components/ui/primitives';
+import { LoadingState } from '@/components/shared/states';
 import { DueChip, EntityStatusChip } from '@/components/ui/primitives/chips';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
@@ -2734,8 +2734,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
     if (isLoadingTasks) {
       return (
-        <div className="flex items-center justify-center h-full">
-          <LoadingState variant="spinner" />
+        <div className="p-6">
+          <LoadingState template="list" rows={6} />
         </div>
       );
     }
@@ -3216,8 +3216,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const renderTasksQueue = () => {
     if (isLoadingTasks) {
       return (
-        <div className="flex items-center justify-center h-full">
-          <LoadingState variant="spinner" />
+        <div className="p-6">
+          <LoadingState template="list" rows={6} />
         </div>
       );
     }
@@ -3403,8 +3403,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const renderDecisionsBuckets = () => {
     if (isLoadingDecisions) {
       return (
-        <div className="flex items-center justify-center h-full">
-          <LoadingState variant="spinner" />
+        <div className="p-6">
+          <LoadingState template="list" rows={6} />
         </div>
       );
     }
