@@ -8,6 +8,7 @@
 import { ArrowRight, CheckCircle2, X } from 'lucide-react';
 import React from 'react';
 import toast, { Toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -28,31 +29,30 @@ interface StatusChangeToastProps {
 }
 
 export const StatusChangeToast: React.FC<StatusChangeToastProps> = ({
-  t,
+  t: toastRef,
   initiativeName,
   newStatus,
   previousModule,
 }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const statusMeta = getStatusMeta(newStatus);
   const newModule = getModuleForStatus(newStatus);
   const moduleConfig = MODULES[newModule];
 
   const hasModuleChanged =
-    previousModule &&
-    previousModule !== newModule &&
-    !isBetaClosed(moduleConfig.betaModuleId);
+    previousModule && previousModule !== newModule && !isBetaClosed(moduleConfig.betaModuleId);
 
   const handleNavigate = () => {
     navigate(moduleConfig.route);
-    toast.dismiss(t.id);
+    toast.dismiss(toastRef.id);
   };
 
   return (
     <div
       className={`${
-        t.visible ? 'animate-enter' : 'animate-leave'
-      } max-w-md w-full bg-white dark:bg-navy-900 shadow-xl rounded-xl pointer-events-auto ring-1 ring-slate-200 dark:ring-navy-700 overflow-hidden`}
+        toastRef.visible ? 'animate-enter' : 'animate-leave'
+      } max-w-md w-full bg-c-surface-raised shadow-xl rounded-xl pointer-events-auto ring-1 ring-c-border overflow-hidden`}
     >
       <div className="p-4">
         <div className="flex items-start gap-3">
@@ -60,26 +60,28 @@ export const StatusChangeToast: React.FC<StatusChangeToastProps> = ({
             <CheckCircle2 size={20} className={statusMeta.color} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-slate-900 dark:text-white">
-              Status updated to {statusMeta.label}
+            <p className="text-sm font-medium text-c-text">
+              {t('statusChangeToast.updatedTo', 'Status updated to {{status}}', {
+                status: statusMeta.label,
+              })}
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
-              {initiativeName}
-            </p>
+            <p className="text-xs text-c-text-secondary truncate mt-0.5">{initiativeName}</p>
 
             {hasModuleChanged && (
               <button
                 onClick={handleNavigate}
-                className="flex items-center gap-1.5 mt-2 text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                className="flex items-center gap-1.5 mt-2 text-xs text-c-accent hover:opacity-80 transition-opacity"
               >
-                View in {moduleConfig.name}
+                {t('statusChangeToast.viewIn', 'View in {{module}}', {
+                  module: moduleConfig.name,
+                })}
                 <ArrowRight size={12} />
               </button>
             )}
           </div>
           <button
-            onClick={() => toast.dismiss(t.id)}
-            className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded"
+            onClick={() => toast.dismiss(toastRef.id)}
+            className="p-1 text-c-text-secondary hover:text-c-text rounded"
           >
             <X size={16} />
           </button>
