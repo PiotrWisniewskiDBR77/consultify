@@ -125,6 +125,24 @@ function buildActionTargetPayload(artifact: {
     };
   }
 
+  // HOTFIX task#63 (UI-M5): a promoted assessment is registered with
+  // originRuntime 'assessment_report' and originRecordId = the assessment RUN id.
+  // No report_builder_reports row exists for it, so it must NOT route to
+  // /reports/builder/{id} (that opens an empty "Add first block" builder =
+  // looks like data loss). Route back to the assessment run it came from.
+  if (originRuntime === 'assessment_report') {
+    return {
+      artifactId: artifact.artifactId,
+      originRuntime,
+      originRecordId,
+      openPath: `/assessment?assessmentId=${encodeURIComponent(originRecordId)}`,
+      exportPath: null,
+      deletePath: null,
+      reviewPath,
+      authority: 'assessment_workbench',
+    };
+  }
+
   if (originRuntime === 'report') {
     return {
       artifactId: artifact.artifactId,
