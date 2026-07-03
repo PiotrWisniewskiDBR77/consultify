@@ -516,7 +516,7 @@ export function InitiativeTeamComposerModal(props: {
                     type="button"
                     onClick={onAddSelectedUser}
                     disabled={!selectedUserId}
-                    className="h-10 px-3 rounded-xl bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-semibold transition-colors inline-flex items-center gap-2"
+                    className="h-10 px-3 rounded-xl bg-c-text hover:bg-c-text-secondary disabled:bg-c-border-strong text-c-bg text-sm font-semibold transition-colors inline-flex items-center gap-2"
                   >
                     <Plus size={16} />
                     {isPl ? 'Dodaj' : 'Add'}
@@ -756,7 +756,7 @@ export function InitiativeTeamComposerModal(props: {
                           type="button"
                           onClick={inviteConsultant}
                           disabled={busy || !inviteEmail}
-                          className="h-10 px-4 rounded-xl bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-semibold transition-colors inline-flex items-center gap-2"
+                          className="h-10 px-4 rounded-xl bg-c-text hover:bg-c-text-secondary disabled:bg-c-border-strong text-c-bg text-sm font-semibold transition-colors inline-flex items-center gap-2"
                         >
                           {busy ? (
                             <Loader2 size={16} className="animate-spin" />

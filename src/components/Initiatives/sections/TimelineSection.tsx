@@ -1376,7 +1376,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                 aria-pressed={active}
                 className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors ${
                   active
-                    ? 'bg-primary-500 text-white'
+                    ? 'bg-c-text text-c-bg'
                     : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
                 }`}
               >
