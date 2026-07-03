@@ -290,7 +290,7 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
               <button
                 onClick={() => fileRef.current?.click()}
                 disabled={locked}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r   text-[11px] font-bold text-c-info dark:text-c-info hover: hover: transition-all disabled:opacity-40"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-c-surface-raised text-[11px] font-bold text-c-info dark:text-c-info transition-all disabled:opacity-40"
               >
                 <Upload size={14} />
                 {isPl ? 'Wybierz plik' : 'Choose file'}
@@ -339,7 +339,7 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
             <button
               onClick={handleImport}
               disabled={locked}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r   text-c-info dark:text-c-info hover: hover: border border-c-info transition-all disabled:opacity-40"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-c-surface-raised text-c-info dark:text-c-info border border-c-info transition-all disabled:opacity-40"
             >
               <FileUp size={12} />
               {isPl ? 'Importuj do mapy' : 'Import to map'}

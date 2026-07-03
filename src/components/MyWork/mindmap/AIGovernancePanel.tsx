@@ -262,7 +262,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
       title={isPl ? 'Governance AI' : 'AI Governance'}
       subtitle={isPl ? 'Przegląd i kontrola' : 'Review & control'}
       icon={
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br   flex items-center justify-center shadow-sm shadow-primary-500/20">
+        <div className="w-7 h-7 rounded-lg bg-c-surface-raised flex items-center justify-center shadow-sm ">
           <Shield size={13} className="text-c-text" />
         </div>
       }
@@ -574,7 +574,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                     <div className="h-2 rounded-full bg-c-surface-raised dark:bg-c-surface overflow-hidden">
                       {stats.totalNodes > 0 && (
                         <div
-                          className="h-full rounded-full bg-gradient-to-r  "
+                          className="h-full rounded-full bg-c-surface-raised  "
                           style={{
                             width: `${Math.round((stats.nodesFromAI / stats.totalNodes) * 100)}%`,
                           }}

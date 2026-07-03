@@ -207,7 +207,7 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ open, onClose,
           <div className="flex-1" />
           <button
             onClick={handleSave}
-            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[10px] font-bold bg-gradient-to-r   text-c-warning dark:text-c-warning hover: hover: border border-c-warning transition-all"
+            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[10px] font-bold bg-c-surface-raised text-c-warning dark:text-c-warning border border-c-warning transition-all"
           >
             <Save size={12} />
             {isPl ? 'Zapisz' : 'Save'}

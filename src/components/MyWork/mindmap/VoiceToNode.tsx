@@ -152,7 +152,7 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
               <button
                 onClick={startListening}
                 disabled={locked}
-                className="w-16 h-16 rounded-full bg-gradient-to-br from-danger-500 to-danger-600 hover:from-danger-600 hover:to-danger-700 text-c-text flex items-center justify-center shadow-lg shadow-danger-500/20 transition-all disabled:opacity-40"
+                className="w-16 h-16 rounded-full bg-c-surface-raised from-danger-500 to-danger-600 hover:from-danger-600 hover:to-danger-700 text-c-text flex items-center justify-center shadow-lg shadow-danger-500/20 transition-all disabled:opacity-40"
               >
                 <Mic size={24} />
               </button>
@@ -212,7 +212,7 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
           <button
             onClick={handleApply}
             disabled={parsedNodes.length === 0 || locked}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r   text-c-success dark:text-c-success hover: hover: border border-c-success transition-all disabled:opacity-40"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-c-surface-raised text-c-success dark:text-c-success border border-c-success transition-all disabled:opacity-40"
           >
             <Sparkles size={12} />
             {isPl ? `Dodaj ${parsedNodes.length} pomysłów` : `Add ${parsedNodes.length} ideas`}

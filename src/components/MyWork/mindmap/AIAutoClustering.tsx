@@ -141,7 +141,7 @@ export const AIAutoClustering: React.FC<AIAutoClusteringProps> = ({
               <button
                 onClick={detectClusters}
                 disabled={loading || locked}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r   text-[11px] font-bold text-c-info dark:text-c-info hover: hover: transition-all disabled:opacity-40"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-c-surface-raised text-[11px] font-bold text-c-info dark:text-c-info transition-all disabled:opacity-40"
               >
                 <Sparkles size={14} />
                 {isPl ? 'Wykryj klastry' : 'Detect clusters'}

@@ -167,7 +167,7 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
               <button
                 onClick={analyze}
                 disabled={loading || locked}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r   text-[11px] font-bold text-c-warning dark:text-c-warning hover: hover: transition-all disabled:opacity-40"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-c-surface-raised text-[11px] font-bold text-c-warning dark:text-c-warning transition-all disabled:opacity-40"
               >
                 <Sparkles size={14} />
                 {isPl ? 'Analizuj priorytety' : 'Analyze priorities'}
@@ -262,7 +262,7 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
             <button
               onClick={handleApplyAll}
               disabled={locked}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r   text-c-warning dark:text-c-warning hover: hover: border border-c-warning transition-all disabled:opacity-40"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-c-surface-raised text-c-warning dark:text-c-warning border border-c-warning transition-all disabled:opacity-40"
             >
               <CheckCircle2 size={12} />
               {isPl ? 'Zastosuj priorytety' : 'Apply priorities'}

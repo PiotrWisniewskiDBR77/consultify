@@ -405,7 +405,7 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
                 setLabel(t(`Wersja ${snapshots.length + 1}`, `Version ${snapshots.length + 1}`));
                 setShowInput(true);
               }}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gradient-to-r   hover: hover: transition-all mb-3"
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-c-surface-raised transition-all mb-3"
             >
               <Save size={14} className="text-c-warning" />
               <span className="text-[11px] font-bold text-c-warning dark:text-c-warning">

@@ -872,7 +872,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
           <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
             <button
               onClick={() => onDrillDown(nodeData.nodeId)}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gradient-to-r   hover: hover: transition-all"
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-c-surface-raised transition-all"
             >
               <ChevronRight size={14} className="text-c-warning" />
               <span className="text-[11px] font-bold text-c-warning dark:text-c-warning">
@@ -967,7 +967,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
           <button
             onClick={() => onConvertNode(nodeData.nodeId, 'initiative')}
             disabled={locked}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold bg-gradient-to-r   text-c-warning dark:text-c-warning hover: hover: border border-c-warning transition-all disabled:opacity-40"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold bg-c-surface-raised text-c-warning dark:text-c-warning border border-c-warning transition-all disabled:opacity-40"
           >
             <Rocket size={12} />
             {isPl ? 'Konwertuj → Inicjatywa' : 'Convert → Initiative'}
@@ -975,7 +975,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
           <button
             onClick={() => onConvertNode(nodeData.nodeId, 'decision')}
             disabled={locked}
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold bg-gradient-to-r   text-c-info dark:text-c-info hover: hover: border border-c-info transition-all disabled:opacity-40"
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold bg-c-surface-raised text-c-info dark:text-c-info border border-c-info transition-all disabled:opacity-40"
           >
             <Star size={12} />
             {isPl ? 'Decyzja' : 'Decision'}

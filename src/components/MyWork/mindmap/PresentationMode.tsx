@@ -162,7 +162,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
       {/* Progress bar */}
       <div className="h-1 bg-c-surface-raised dark:bg-c-surface">
         <div
-          className="h-full bg-gradient-to-r   transition-all duration-500"
+          className="h-full bg-c-surface-raised transition-all duration-500"
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -220,7 +220,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
                 return (
                   <div
                     key={b.branchKey}
-                    className={`px-3 py-1.5 rounded-full ${colors.text} text-[10px] font-bold bg-gradient-to-r ${colors.bg}`}
+                    className={`px-3 py-1.5 rounded-full ${colors.text} text-[10px] font-bold bg-c-surface-raised ${colors.bg}`}
                   >
                     {b.label} ({b.nodes.length})
                   </div>
@@ -248,7 +248,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
                   {b.nodes.map((node, idx) => (
                     <div
                       key={node.id}
-                      className={`p-4 rounded-2xl bg-gradient-to-br ${colors.bg} border border-c-border-subtle dark:border-c-border animate-slide-up`}
+                      className={`p-4 rounded-2xl bg-c-surface-raised ${colors.bg} border border-c-border-subtle dark:border-c-border animate-slide-up`}
                       style={{ animationDelay: `${idx * 100}ms` }}
                     >
                       <div className="flex items-start gap-2">
@@ -270,7 +270,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
 
                 <button
                   onClick={() => onFocusBranch(b.branchKey)}
-                  className={`mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-bold ${colors.text} bg-gradient-to-r ${colors.bg} hover:opacity-80 transition-opacity`}
+                  className={`mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-bold ${colors.text} bg-c-surface-raised ${colors.bg} hover:opacity-80 transition-opacity`}
                 >
                   <ChevronRight size={14} />
                   {isPl ? 'Przejdź do gałęzi na mapie' : 'Go to branch on map'}

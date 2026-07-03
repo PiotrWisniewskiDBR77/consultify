@@ -129,7 +129,7 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
               <button
                 onClick={analyzeSentiment}
                 disabled={loading || locked}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r   text-[11px] font-bold text-c-success dark:text-c-success hover: hover: transition-all disabled:opacity-40"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-c-surface-raised text-[11px] font-bold text-c-success dark:text-c-success transition-all disabled:opacity-40"
               >
                 <Sparkles size={14} />
                 {isPl ? 'Analizuj sentyment' : 'Analyze sentiment'}
@@ -222,7 +222,7 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
             <button
               onClick={handleApply}
               disabled={locked}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r   text-c-success dark:text-c-success hover: hover: border border-c-success transition-all disabled:opacity-40"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-c-surface-raised text-c-success dark:text-c-success border border-c-success transition-all disabled:opacity-40"
             >
               <SmilePlus size={12} />
               {isPl ? 'Zastosuj kolory' : 'Apply colors'}
