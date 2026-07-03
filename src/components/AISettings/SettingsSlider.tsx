@@ -32,7 +32,7 @@ export const SettingsSlider: React.FC<SettingsSliderProps> = ({
   label,
   description,
   icon: Icon,
-  iconColor = 'text-slate-600 dark:text-slate-500',
+  iconColor = 'text-c-text-secondary',
   value,
   onChange,
   min,
@@ -65,18 +65,18 @@ export const SettingsSlider: React.FC<SettingsSliderProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span
-                className={`font-medium ${isDisabled ? 'text-slate-500 dark:text-slate-400' : 'text-slate-200'}`}
+                className={`font-medium ${isDisabled ? 'text-c-text-muted' : 'text-c-text-muted'}`}
               >
                 {label}
               </span>
               {locked && (
                 <div className="relative group">
-                  <Lock className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                  <Lock className="w-3.5 h-3.5 text-c-text-muted" />
                   <div
                     className="
                                         absolute left-1/2 -translate-x-1/2 bottom-full mb-2
-                                        px-2 py-1 rounded bg-slate-800 border border-slate-700
-                                        text-xs text-slate-600 dark:text-slate-500 whitespace-nowrap
+                                        px-2 py-1 rounded bg-c-surface border border-c-border-strong
+                                        text-xs text-c-text-secondary whitespace-nowrap
                                         opacity-0 invisible group-hover:opacity-100 group-hover:visible
                                         transition-all duration-200 z-50
                                     "
@@ -90,9 +90,9 @@ export const SettingsSlider: React.FC<SettingsSliderProps> = ({
             <div className="flex items-center gap-2">
               <motion.span
                 key={value}
-                initial={{ scale: 1.2, color: '#E45868' }}
-                animate={{ scale: 1, color: '#e2e8f0' }}
-                className="text-sm font-mono text-slate-200 bg-slate-800 px-2 py-0.5 rounded"
+                initial={{ scale: 1.2 }}
+                animate={{ scale: 1 }}
+                className="text-sm font-mono text-c-text bg-c-surface px-2 py-0.5 rounded"
               >
                 {displayValue}
                 {unit}
@@ -101,7 +101,7 @@ export const SettingsSlider: React.FC<SettingsSliderProps> = ({
               {canReset && !isDisabled && (
                 <button
                   onClick={() => onChange(defaultValue!)}
-                  className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-300 transition-colors"
+                  className="p-1 text-c-text-muted hover:text-c-text-muted transition-colors"
                   title="Reset to default"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
@@ -112,7 +112,7 @@ export const SettingsSlider: React.FC<SettingsSliderProps> = ({
 
           {description && (
             <p
-              className={`text-sm mt-0.5 ${isDisabled ? 'text-slate-600 dark:text-slate-400' : 'text-slate-600'}`}
+              className={`text-sm mt-0.5 ${isDisabled ? 'text-c-text-secondary' : 'text-c-text-secondary'}`}
             >
               {description}
             </p>
@@ -123,10 +123,10 @@ export const SettingsSlider: React.FC<SettingsSliderProps> = ({
       {/* Slider */}
       <div className="relative pt-1 pb-2">
         {/* Track background */}
-        <div className="h-2 rounded-full bg-slate-700/50 overflow-hidden">
+        <div className="h-2 rounded-full bg-c-surface overflow-hidden">
           {/* Filled portion */}
           <motion.div
-            className="h-full bg-gradient-to-r from-primary-500 to-primary-500 rounded-full"
+            className="h-full bg-gradient-to-r from-c-accent-soft to-c-accent-soft rounded-full"
             initial={false}
             animate={{ width: `${percentage}%` }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
@@ -152,7 +152,7 @@ export const SettingsSlider: React.FC<SettingsSliderProps> = ({
         <motion.div
           className={`
                         absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full
-                        bg-white dark:bg-navy-900 shadow-lg border-2 border-primary-500
+                        bg-c-surface shadow-lg border-2 border-c-accent
                         pointer-events-none
                         ${isDisabled ? 'opacity-50' : ''}
                     `}
@@ -162,7 +162,7 @@ export const SettingsSlider: React.FC<SettingsSliderProps> = ({
         />
 
         {/* Min/Max labels */}
-        <div className="flex justify-between mt-1 text-xs text-slate-500 dark:text-slate-400">
+        <div className="flex justify-between mt-1 text-xs text-c-text-muted">
           <span>
             {min}
             {unit}
