@@ -41,10 +41,10 @@ const GROUP_ROW_HEIGHT_PX = 32;
 const VIRTUAL_BUFFER = 10;
 
 const headerCell =
-  'bg-slate-50 dark:bg-navy-800/50 text-xs uppercase tracking-wider text-slate-500 border-b border-slate-200 dark:border-navy-800 font-semibold text-left whitespace-nowrap select-none';
+  'bg-c-surface-raised text-xs uppercase tracking-wider text-c-text-muted border-b border-c-border-subtle font-semibold text-left whitespace-nowrap select-none';
 
 const bodyCell =
-  'border-b border-slate-200 dark:border-navy-800 h-9 px-3 align-middle text-sm text-slate-800 dark:text-slate-200';
+  'border-b border-c-border-subtle h-9 px-3 align-middle text-sm text-c-text';
 
 const stickyTop = 'sticky top-0 z-10';
 
@@ -367,7 +367,7 @@ const DataGrid: React.FC<DataGridProps> = ({
       if (isMissingField(col.key, viewConfig)) {
         return (
           <div
-            className="text-xs text-amber-500 dark:text-amber-400 italic select-none"
+            className="text-xs text-c-warning italic select-none"
             aria-hidden
           >
             —
@@ -433,7 +433,7 @@ const DataGrid: React.FC<DataGridProps> = ({
         <div
           role="gridcell"
           tabIndex={0}
-          className="min-w-0 min-h-[36px] flex items-center outline-none focus-visible:ring-1 focus-visible:ring-primary-500/40 cursor-text"
+          className="min-w-0 min-h-[36px] flex items-center outline-none focus-visible:ring-1 focus-visible:ring-c-focus cursor-text"
           onDoubleClick={(e) => {
             e.stopPropagation();
             if (locked || pf?.isComputed) return;
@@ -464,7 +464,7 @@ const DataGrid: React.FC<DataGridProps> = ({
 
   if (processedRows.length === 0) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-slate-600 dark:text-slate-500">
+      <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-c-text-muted">
         <Image size={32} />
         <span className="text-sm font-medium">{isPl ? 'Brak elementów' : 'No items'}</span>
       </div>
@@ -476,7 +476,7 @@ const DataGrid: React.FC<DataGridProps> = ({
   return (
     <div
       data-testid="table-grid"
-      className="flex h-full min-h-0 flex-1 flex-col rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white/90 dark:bg-navy-950/40"
+      className="flex h-full min-h-0 flex-1 flex-col rounded-xl border border-c-border-subtle bg-c-surface"
     >
       <div
         ref={scrollRef}
@@ -488,11 +488,11 @@ const DataGrid: React.FC<DataGridProps> = ({
             <tr>
               <th
                 style={{ width: CHECK_COL_PX, minWidth: CHECK_COL_PX }}
-                className={`${headerCell} sticky left-0 z-20 border-r border-slate-200 dark:border-navy-800 px-2 py-2`}
+                className={`${headerCell} sticky left-0 z-20 border-r border-c-border-subtle px-2 py-2`}
               >
                 <input
                   type="checkbox"
-                  className="rounded border-slate-300 dark:border-navy-600"
+                  className="rounded border-c-border"
                   checked={allSelected}
                   disabled={locked}
                   onChange={toggleSelectAll}
@@ -516,9 +516,9 @@ const DataGrid: React.FC<DataGridProps> = ({
                         maxWidth: w,
                         ...(isPrimary ? { left: stickyPrimaryLeft } : {}),
                       }}
-                      className={`relative border-r border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-xs px-3 py-2 border-b border-amber-200 dark:border-amber-800 font-semibold text-left whitespace-nowrap select-none ${
+                      className={`relative border-r border-[color-mix(in_srgb,var(--c-warning)_35%,transparent)] bg-[color-mix(in_srgb,var(--c-warning)_12%,transparent)] text-c-warning text-xs px-3 py-2 border-b border-[color-mix(in_srgb,var(--c-warning)_35%,transparent)] font-semibold text-left whitespace-nowrap select-none ${
                         isPrimary
-                          ? `sticky z-[15] border-r border-amber-200 dark:border-amber-800`
+                          ? `sticky z-[15] border-r border-[color-mix(in_srgb,var(--c-warning)_35%,transparent)]`
                           : ''
                       }`}
                     >
@@ -528,7 +528,7 @@ const DataGrid: React.FC<DataGridProps> = ({
                         <button
                           type="button"
                           onClick={() => onRemoveMissingField?.(col.key)}
-                          className="ml-auto shrink-0 text-amber-500 hover:text-amber-700 dark:hover:text-amber-300"
+                          className="ml-auto shrink-0 text-c-warning hover:brightness-110"
                           title={isPl ? 'Usuń z widoku' : 'Remove from view'}
                           aria-label={isPl ? 'Usuń z widoku' : 'Remove from view'}
                         >
@@ -538,7 +538,7 @@ const DataGrid: React.FC<DataGridProps> = ({
                       <button
                         type="button"
                         aria-label={isPl ? 'Zmień szerokość' : 'Resize column'}
-                        className="absolute right-0 top-0 z-30 h-full w-1 cursor-col-resize hover:bg-primary-400/50"
+                        className="absolute right-0 top-0 z-30 h-full w-1 cursor-col-resize hover:bg-[color-mix(in_srgb,var(--c-focus-solid)_50%,transparent)]"
                         onMouseDown={(e) => onResizeMouseDown(e, col.key)}
                       />
                     </th>
@@ -554,9 +554,9 @@ const DataGrid: React.FC<DataGridProps> = ({
                       maxWidth: w,
                       ...(isPrimary ? { left: stickyPrimaryLeft } : {}),
                     }}
-                    className={`${headerCell} relative border-r border-slate-200 dark:border-navy-800 px-3 py-2 ${
+                    className={`${headerCell} relative border-r border-c-border-subtle px-3 py-2 ${
                       isPrimary
-                        ? `sticky z-[15] border-r border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50`
+                        ? `sticky z-[15] border-r border-c-border-subtle bg-c-surface-raised`
                         : ''
                     }`}
                   >
@@ -564,7 +564,7 @@ const DataGrid: React.FC<DataGridProps> = ({
                     <button
                       type="button"
                       aria-label={isPl ? 'Zmień szerokość' : 'Resize column'}
-                      className="absolute right-0 top-0 z-30 h-full w-1 cursor-col-resize hover:bg-primary-400/50"
+                      className="absolute right-0 top-0 z-30 h-full w-1 cursor-col-resize hover:bg-[color-mix(in_srgb,var(--c-focus-solid)_50%,transparent)]"
                       onMouseDown={(e) => onResizeMouseDown(e, col.key)}
                     />
                   </th>
@@ -582,10 +582,10 @@ const DataGrid: React.FC<DataGridProps> = ({
               const i = start + j;
               if (item.kind === 'group') {
                 return (
-                  <tr key={`g-${item.label}-${i}`} className="bg-slate-100/90 dark:bg-navy-900/80">
+                  <tr key={`g-${item.label}-${i}`} className="bg-c-surface-raised">
                     <td
                       colSpan={colSpan}
-                      className="h-8 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-navy-800"
+                      className="h-8 px-3 text-[10px] font-bold uppercase tracking-wider text-c-text-muted border-b border-c-border-subtle"
                     >
                       {item.label}
                     </td>
@@ -612,13 +612,13 @@ const DataGrid: React.FC<DataGridProps> = ({
                 <tr
                   key={row.id}
                   data-testid={`table-row-${row.id}`}
-                  className={`${selected ? 'bg-slate-100/70 dark:bg-white/[0.05]' : ''} hover:bg-slate-50 dark:hover:bg-navy-800/30`}
+                  className={`${selected ? 'bg-c-surface-raised' : ''} hover:bg-c-surface-raised`}
                   onClick={() => onOpenDetail(row.id)}
                 >
                   <td
                     style={{ width: CHECK_COL_PX, minWidth: CHECK_COL_PX }}
-                    className={`${bodyCell} sticky left-0 z-[8] border-r border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-950 ${
-                      selected ? 'bg-slate-100/70 dark:bg-white/[0.05]' : ''
+                    className={`${bodyCell} sticky left-0 z-[8] border-r border-c-border-subtle bg-c-surface ${
+                      selected ? 'bg-c-surface-raised' : ''
                     } text-center relative`}
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -628,7 +628,7 @@ const DataGrid: React.FC<DataGridProps> = ({
                     />
                     <input
                       type="checkbox"
-                      className="rounded border-slate-300 dark:border-navy-600"
+                      className="rounded border-c-border"
                       checked={selected}
                       disabled={locked}
                       onClick={(e) => {
@@ -662,26 +662,26 @@ const DataGrid: React.FC<DataGridProps> = ({
                         }}
                         className={[
                           missing
-                            ? 'bg-amber-50/50 dark:bg-amber-900/10 border-b border-amber-100 dark:border-amber-800/50 px-3 py-2 text-xs text-amber-500 dark:text-amber-400 italic h-9 align-middle'
+                            ? 'bg-[color-mix(in_srgb,var(--c-warning)_8%,transparent)] border-b border-[color-mix(in_srgb,var(--c-warning)_20%,transparent)] px-3 py-2 text-xs text-c-warning italic h-9 align-middle'
                             : bodyCell,
-                          !missing && 'border-r border-slate-200 dark:border-navy-800 min-w-0',
-                          missing && 'border-r border-amber-100 dark:border-amber-800/50 min-w-0',
+                          !missing && 'border-r border-c-border-subtle min-w-0',
+                          missing && 'border-r border-[color-mix(in_srgb,var(--c-warning)_20%,transparent)] min-w-0',
                           isPrimary &&
                             !missing &&
-                            'sticky z-[5] border-r border-slate-200 dark:border-navy-700',
+                            'sticky z-[5] border-r border-c-border-subtle',
                           isPrimary &&
                             missing &&
-                            'sticky z-[5] border-r border-amber-200 dark:border-amber-800',
+                            'sticky z-[5] border-r border-[color-mix(in_srgb,var(--c-warning)_35%,transparent)]',
                           isPrimary &&
                             !missing &&
                             (selected
-                              ? 'bg-primary-50 dark:bg-primary-900/20'
-                              : 'bg-white dark:bg-navy-950'),
+                              ? 'bg-c-accent-soft'
+                              : 'bg-c-surface'),
                           isPrimary &&
                             missing &&
                             (selected
-                              ? 'bg-primary-50 dark:bg-primary-900/20'
-                              : 'bg-amber-50/50 dark:bg-amber-900/10'),
+                              ? 'bg-c-accent-soft'
+                              : 'bg-[color-mix(in_srgb,var(--c-warning)_8%,transparent)]'),
                         ]
                           .filter(Boolean)
                           .join(' ')}
@@ -705,15 +705,15 @@ const DataGrid: React.FC<DataGridProps> = ({
 
       <div
         ref={footerScrollRef}
-        className="shrink-0 overflow-x-auto border-t border-slate-200/80 dark:border-navy-700/80 bg-slate-50/90 dark:bg-navy-900/60"
+        className="shrink-0 overflow-x-auto border-t border-c-border-subtle bg-c-surface-raised"
         onScroll={onFooterScroll}
       >
-        <table className="w-max min-w-full border-collapse text-left text-xs text-slate-600 dark:text-slate-300">
+        <table className="w-max min-w-full border-collapse text-left text-xs text-c-text-secondary">
           <tbody>
             <tr>
               <td
                 style={{ width: CHECK_COL_PX, minWidth: CHECK_COL_PX }}
-                className="sticky left-0 z-[8] border-r border-slate-200 dark:border-navy-800 bg-slate-50/90 dark:bg-navy-900/60 px-3 py-2 font-semibold uppercase tracking-wider text-slate-500"
+                className="sticky left-0 z-[8] border-r border-c-border-subtle bg-c-surface-raised px-3 py-2 font-semibold uppercase tracking-wider text-c-text-muted"
               >
                 {isPl ? 'Podsum.' : 'Totals'}
               </td>
@@ -737,13 +737,13 @@ const DataGrid: React.FC<DataGridProps> = ({
                     }}
                     className={`${
                       missing
-                        ? 'border-r border-amber-100 dark:border-amber-800/40 bg-amber-50/40 dark:bg-amber-900/10 px-3 py-2 text-xs text-amber-400/80'
-                        : 'border-r border-slate-200 dark:border-navy-800 px-3 py-2 tabular-nums'
+                        ? 'border-r border-[color-mix(in_srgb,var(--c-warning)_20%,transparent)] bg-[color-mix(in_srgb,var(--c-warning)_6%,transparent)] px-3 py-2 text-xs text-c-warning'
+                        : 'border-r border-c-border-subtle px-3 py-2 tabular-nums'
                     } ${
                       isPrimary
                         ? missing
-                          ? 'sticky z-[5] border-r border-amber-200 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-900/10'
-                          : 'sticky z-[5] bg-slate-50/90 dark:bg-navy-900/60 border-r border-slate-200 dark:border-navy-700'
+                          ? 'sticky z-[5] border-r border-[color-mix(in_srgb,var(--c-warning)_35%,transparent)] bg-[color-mix(in_srgb,var(--c-warning)_6%,transparent)]'
+                          : 'sticky z-[5] bg-c-surface-raised border-r border-c-border-subtle'
                         : ''
                     }`}
                   >
@@ -908,7 +908,7 @@ export const GridView: React.FC<GridViewProps> = (props) => {
       ? 'GridView wymaga TableDataProvider lub właściwości rows i columns.'
       : 'GridView requires TableDataProvider or rows and columns props.';
     return (
-      <div className="flex flex-1 items-center justify-center p-6 text-sm text-slate-500">
+      <div className="flex flex-1 items-center justify-center p-6 text-sm text-c-text-muted">
         {msg}
       </div>
     );
