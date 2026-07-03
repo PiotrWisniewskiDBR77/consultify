@@ -2953,7 +2953,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                     </div>
                     <div className="h-2 bg-c-border-subtle rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-primary-500 to-primary-400 rounded-full transition-all"
+                        className="h-full bg-gradient-to-r from-indigo-500 to-indigo-400 rounded-full transition-all"
                         style={{ width: `${completionPercent}%` }}
                       />
                     </div>
@@ -3196,7 +3196,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               setIsLoading(true);
               fetchData();
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-md font-medium"
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-md font-medium"
           >
             <RefreshCw className="w-4 h-4" />
             {isPolish ? 'Spróbuj ponownie' : 'Retry'}
