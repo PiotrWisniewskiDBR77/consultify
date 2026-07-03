@@ -78,8 +78,8 @@ const SUBTLE = {
 };
 
 const NEUTRAL: BadgeStyle = {
-  bg: 'bg-slate-100 dark:bg-navy-800/60',
-  text: 'text-slate-600 dark:text-slate-400',
+  bg: 'bg-c-surface-raised',
+  text: 'text-c-text-secondary',
   dot: 'bg-slate-400 dark:bg-slate-500',
   tier: 'neutral',
 };
@@ -179,8 +179,8 @@ export const DUE_DATE_STYLES: Record<string, BadgeStyle> = {
   upcoming: NEUTRAL,
   completed: SUBTLE.emerald,
   no_date: {
-    bg: 'bg-slate-50 dark:bg-slate-800/50',
-    text: 'text-slate-600 dark:text-slate-500',
+    bg: 'bg-c-surface-raised',
+    text: 'text-c-text-secondary',
     dot: 'bg-slate-300 dark:bg-slate-600',
     tier: 'neutral',
   },
@@ -219,7 +219,7 @@ export function getStatusDotColor(status?: string): string {
 /** Active pill tab style — ONE color, not per-tab rainbow */
 export const PILL_ACTIVE = 'bg-slate-800 dark:bg-white/15 text-white';
 export const PILL_INACTIVE =
-  'text-slate-600 dark:text-slate-400 hover:bg-slate-200/80 dark:hover:bg-navy-800/60';
+  'text-c-text-secondary hover:bg-slate-200/80 dark:hover:bg-navy-800/60';
 
 // ─────────────────────────────────────────────
 // PROGRESS BAR COLOR
@@ -228,4 +228,4 @@ export const PILL_INACTIVE =
 /** Standard progress bar fill — always primary, green when 100% */
 export const PROGRESS_BAR_FILL = 'bg-navy-900';
 export const PROGRESS_BAR_COMPLETE = 'bg-emerald-500';
-export const PROGRESS_BAR_TRACK = 'bg-slate-200 dark:bg-navy-700';
+export const PROGRESS_BAR_TRACK = 'bg-c-border-subtle';
