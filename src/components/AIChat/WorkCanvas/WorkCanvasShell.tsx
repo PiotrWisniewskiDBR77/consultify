@@ -15,6 +15,7 @@ import {
   Table2,
   X,
 } from 'lucide-react';
+import type { TFunction } from 'i18next';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
@@ -67,7 +68,7 @@ const CANVAS_KINDS: WorkCanvasKind[] = [
   'deck',
 ];
 
-type TFn = (key: string, defaultValueOrOptions?: string | Record<string, unknown>) => string;
+type TFn = TFunction;
 
 function buildQuickPrompts(t: TFn): string[] {
   return [

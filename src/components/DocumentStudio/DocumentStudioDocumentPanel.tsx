@@ -21,6 +21,7 @@ import {
   Table2,
   Users,
 } from 'lucide-react';
+import type { TFunction } from 'i18next';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -90,7 +91,7 @@ interface DocumentStudioDocumentPanelProps {
   onSchemaUpdated: (nextSchema: DocumentSchema) => void;
 }
 
-type TFn = (key: string, defaultValueOrOptions?: string | Record<string, unknown>) => string;
+type TFn = TFunction;
 
 function metadataLabel(value: string | string[] | undefined, notSet: string): string {
   if (Array.isArray(value)) return value.length > 0 ? value.join(', ') : notSet;

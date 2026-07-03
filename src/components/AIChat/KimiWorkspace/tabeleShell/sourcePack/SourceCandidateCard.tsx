@@ -7,6 +7,7 @@
  * Block C · EPIC-T12 · Sprint C-S6.
  */
 
+import type { TFunction } from 'i18next';
 import { Check, Plus, ShieldCheck } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -39,7 +40,7 @@ function formatScore(n: number): string {
   return Math.round(n * 100).toString();
 }
 
-function useFormatRelative(t: (key: string, opts: Record<string, unknown> | string) => string) {
+function useFormatRelative(t: TFunction) {
   return (iso: string): string => {
     const parsed = Date.parse(iso);
     if (!Number.isFinite(parsed)) return '';

@@ -24,6 +24,7 @@ import {
   Upload,
   X,
 } from 'lucide-react';
+import type { TFunction } from 'i18next';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -495,7 +496,7 @@ const materializedTargetIcons: Record<string, React.ComponentType<{ size?: numbe
   task: CheckSquare,
 };
 
-type CanvasPanelTFn = (key: string, defaultValue?: string) => string;
+type CanvasPanelTFn = TFunction;
 
 function materializedTargetLabel(target: string, t: CanvasPanelTFn): string {
   if (target === 'idea') return t('canvas.panel.materialized.idea', 'Idea');
