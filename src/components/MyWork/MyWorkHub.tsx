@@ -540,7 +540,16 @@ const BUTTON_ACTIVE = MENU_2_TAB_ACTIVE;
 // Topbar pills (filters / view tool) — keep consistent with BUTTON_* but smaller text.
 const TOPBAR_PILL_BASE =
   'inline-flex items-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-const TOPBAR_PILL_INACTIVE = `${TOPBAR_PILL_BASE} bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
+const TOPBAR_PILL_INACTIVE = `${TOPBAR_PILL_BASE} bg-transparent border-c-border text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text`;
+
+// Segmented view-mode toggle (list/grid/kanban/calendar). Container + button
+// tones on the c.* token layer — active = accent-soft tint (§9.2 ③), never crimson text.
+const SEG_TOGGLE_CONTAINER =
+  'inline-flex items-center rounded-full border border-c-border bg-c-surface-raised p-0.5';
+const SEG_TOGGLE_BTN_BASE =
+  'inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-[var(--c-surface)]';
+const SEG_TOGGLE_BTN_ACTIVE = `${SEG_TOGGLE_BTN_BASE} bg-c-surface text-c-text shadow-sm border border-c-border`;
+const SEG_TOGGLE_BTN_INACTIVE = `${SEG_TOGGLE_BTN_BASE} text-c-text-secondary hover:bg-c-surface hover:text-c-text`;
 
 // Canon §15.2/§19.1: kontrolki Menu 2 = h-9 rounded-full (jeden family z pillami topbara).
 const CTA_BASE =
@@ -2466,7 +2475,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           <div className="relative">
             <Search
               size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-muted"
             />
             <input
               type="text"
@@ -2494,12 +2503,12 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                           : 'Search inbox...'
               }
               autoFocus
-              className="w-full pl-10 pr-10 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-900 dark:text-white placeholder:text-slate-500 dark:text-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
+              className="w-full pl-10 pr-10 py-2 rounded-token-md bg-c-surface border border-c-border text-c-text placeholder:text-c-text-muted focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus transition-all"
             />
             {searchQuery && (
               <button
                 onClick={handleCloseSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.06]"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-token-md text-c-text-muted hover:bg-c-surface-raised hover:text-c-text"
               >
                 <X size={16} />
               </button>
@@ -3689,9 +3698,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   }, [activeTab]);
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950">
+    <div className="flex flex-col h-full bg-c-bg">
       {/* Navigation Bar (Golden Standard - same as InterviewHub) */}
-      <div className="bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.05]">
+      <div className="bg-c-surface border-b border-c-border-subtle">
         {/* Main Navigation Row */}
         <div className="flex items-center justify-between gap-4 px-4 py-3">
           {/* Left: Search + Main Tabs */}
@@ -3699,10 +3708,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             {/* Search Toggle */}
             <button
               onClick={() => setShowSearch(!showSearch)}
-              className={`h-9 w-9 inline-flex items-center justify-center rounded-full border transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+              className={`h-9 w-9 inline-flex items-center justify-center rounded-full border transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-[var(--c-surface)] ${
                 showSearch
-                  ? 'bg-primary-50 dark:bg-primary-500/10 border-primary-200 dark:border-primary-500/30 text-primary-700 dark:text-primary-200'
-                  : 'bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
+                  ? 'bg-c-accent-soft border-c-border-strong text-c-text'
+                  : 'bg-transparent border-c-border text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text'
               }`}
               title={isPolish ? 'Szukaj' : 'Search'}
             >
@@ -3765,11 +3774,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     onChange={(e) => handleFilterChange(e.target.value)}
                     className="
                     appearance-none h-9 pl-3 pr-9 rounded-full text-xs font-medium
-                    bg-white/70 dark:bg-white/[0.04]
-                    border border-slate-200/70 dark:border-white/[0.06]
-                    text-slate-700 dark:text-slate-200
-                    hover:bg-slate-100/70 dark:hover:bg-white/[0.06]
-                    focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
+                    bg-transparent
+                    border border-c-border
+                    text-c-text-secondary
+                    hover:bg-c-surface-raised hover:text-c-text
+                    focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus
                     transition-colors duration-150
                     cursor-pointer min-w-[140px]
                   "
@@ -3783,7 +3792,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   </select>
                   <ChevronDown
                     size={16}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 pointer-events-none"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-c-text-muted pointer-events-none"
                   />
                 </div>
               )}
@@ -3795,7 +3804,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               {/* Tasks View Mode Toggle (icons; no dropdown) */}
               {activeTab === 'tasks' && !activeDocumentId && (
                 <div
-                  className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+                  className="inline-flex items-center rounded-full border border-c-border bg-c-surface-raised p-0.5"
                   role="radiogroup"
                   aria-label={isPolish ? 'Tryb widoku zadań' : 'Tasks view mode'}
                 >
@@ -3826,10 +3835,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                       <button
                         key={id}
                         onClick={() => setTasksViewMode(id)}
-                        className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+                        className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-[var(--c-surface)] ${
                           isActive
-                            ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                            : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
+                            ? 'bg-c-surface text-c-text shadow-sm border border-c-border'
+                            : 'text-c-text-secondary hover:bg-c-surface hover:text-c-text'
                         }`}
                         title={isPolish ? titlePl : titleEn}
                         role="radio"
@@ -3846,7 +3855,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               {/* Decisions View Mode Toggle (icons; no dropdown) */}
               {activeTab === 'decisions' && !activeDocumentId && (
                 <div
-                  className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+                  className="inline-flex items-center rounded-full border border-c-border bg-c-surface-raised p-0.5"
                   role="radiogroup"
                   aria-label={isPolish ? 'Tryb widoku decyzji' : 'Decisions view mode'}
                 >
@@ -3873,10 +3882,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                       <button
                         key={id}
                         onClick={() => setDecisionsViewMode(id)}
-                        className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+                        className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-[var(--c-surface)] ${
                           isActive
-                            ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                            : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
+                            ? 'bg-c-surface text-c-text shadow-sm border border-c-border'
+                            : 'text-c-text-secondary hover:bg-c-surface hover:text-c-text'
                         }`}
                         title={isPolish ? titlePl : titleEn}
                         role="radio"
@@ -3893,16 +3902,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               {/* Inbox View Mode Toggle (list / cards) — match screenshot (pill container + dark bg) */}
               {activeTab === 'inbox' && !activeDocumentId && (
                 <div
-                  className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+                  className="inline-flex items-center rounded-full border border-c-border bg-c-surface-raised p-0.5"
                   role="radiogroup"
                   aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
                 >
                   <button
                     onClick={() => setInboxViewMode('flat')}
-                    className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+                    className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-[var(--c-surface)] ${
                       inboxViewMode === 'flat'
-                        ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                        : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
+                        ? 'bg-c-surface text-c-text shadow-sm border border-c-border'
+                        : 'text-c-text-secondary hover:bg-c-surface hover:text-c-text'
                     }`}
                     title={isPolish ? 'Lista' : 'List'}
                     role="radio"
@@ -3912,10 +3921,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   </button>
                   <button
                     onClick={() => setInboxViewMode('sections')}
-                    className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+                    className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-[var(--c-surface)] ${
                       inboxViewMode === 'sections'
-                        ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                        : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
+                        ? 'bg-c-surface text-c-text shadow-sm border border-c-border'
+                        : 'text-c-text-secondary hover:bg-c-surface hover:text-c-text'
                     }`}
                     title={isPolish ? 'Karty' : 'Cards'}
                     role="radio"
@@ -3939,7 +3948,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               {/* Ideas: canonical view mode switcher — table / grid */}
               {activeTab === 'ideas' && !activeDocumentId && (
                 <div
-                  className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+                  className="inline-flex items-center rounded-full border border-c-border bg-c-surface-raised p-0.5"
                   role="radiogroup"
                   aria-label={isPolish ? 'Tryb widoku pomyslow' : 'Ideas view mode'}
                 >
@@ -3962,10 +3971,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     <button
                       key={id}
                       onClick={() => setIdeasViewMode(id)}
-                      className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+                      className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-[var(--c-surface)] ${
                         ideasViewMode === id
-                          ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                          : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
+                          ? 'bg-c-surface text-c-text shadow-sm border border-c-border'
+                          : 'text-c-text-secondary hover:bg-c-surface hover:text-c-text'
                       }`}
                       title={isPolish ? labelPl : label}
                       role="radio"

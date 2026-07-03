@@ -1692,8 +1692,8 @@ const MeetingCalendarView: React.FC<{
                     title={meeting.title}
                     className={`block w-full truncate rounded-md px-1.5 py-0.5 text-left text-[11px] font-medium transition-colors ${
                       meeting.status === 'completed'
-                        ? 'bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300'
-                        : 'bg-sky-500/10 text-sky-700 hover:bg-sky-500/20 dark:text-sky-300'
+                        ? 'bg-[color:var(--c-success)]/10 text-c-success hover:bg-[color:var(--c-success)]/20'
+                        : 'bg-[color:var(--c-info)]/10 text-c-info hover:bg-[color:var(--c-info)]/20'
                     }`}
                   >
                     {new Date(meeting.startAt).toLocaleTimeString(locale, {
