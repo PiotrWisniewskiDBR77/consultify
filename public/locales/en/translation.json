@@ -3059,10 +3059,7 @@
   },
   "initiatives": {
     "card": {
-      "openInitiative": "Open initiative: {{title}}",
-      "advanceStatus": "Advance to next status",
-      "assignOwners": "Assign owners",
-      "flagForAttention": "Flag for attention"
+      "nextStep": "Next step"
     },
     "gateAi": {
       "pill": {
@@ -5092,9 +5089,6 @@
     },
     "confirmDelete": "Permanently delete \"{{name}}\"? This cannot be undone.",
     "thisInitiative": "this initiative",
-    "card": {
-      "nextStep": "Next step"
-    },
     "observability": {
       "funnelTitle": "Portfolio conversion funnel",
       "lineageTitle": "Initiative lineage chain",
@@ -10393,6 +10387,106 @@
     },
     "tabs": {
       "templates": "Templates"
+    },
+    "membersRoles": {
+      "title": "Members & Roles",
+      "subtitle": "Canonical P32 surface for membership, role changes, and ownership safeguards.",
+      "loadFailed": "Failed to load members",
+      "loading": "Loading members…",
+      "empty": "No members found for this workspace.",
+      "unknownMember": "Unknown member",
+      "roles": {
+        "owner": "Owner",
+        "admin": "Admin",
+        "member": "Member",
+        "guest": "Guest"
+      },
+      "columns": {
+        "member": "Member",
+        "email": "Email",
+        "role": "Role",
+        "status": "Status"
+      },
+      "guidance": {
+        "owner": {
+          "description": "Full workspace control, ownership transfer, and owner-only safeguards.",
+          "denial": "Only an owner can assign or remove another owner."
+        },
+        "admin": {
+          "description": "Can manage team members, member roles, and team invite codes.",
+          "denial": "Cannot change owner membership or bypass owner protections."
+        },
+        "member": {
+          "description": "Standard workspace access without team administration permissions.",
+          "denial": "Cannot open Team Admin or change membership."
+        },
+        "guest": {
+          "description": "Restricted collaborator role with no admin access.",
+          "denial": "Guests cannot access admin tools."
+        }
+      },
+      "invite": {
+        "cta": "Add member",
+        "placeholder": "member@company.com",
+        "emailLabel": "Member email",
+        "noOrg": "No active organization — reload the page and try again.",
+        "denied": "Only a team owner or admin can add members.",
+        "ownerFlow": "Owner changes must use the ownership transfer flow.",
+        "emptyEmail": "Enter an email address before adding a member.",
+        "invalidEmail": "Enter a valid email address (e.g. member@company.com).",
+        "added": "{{email}} added to the workspace.",
+        "addedToast": "Member added to workspace",
+        "notFound": "No account exists for that email yet. Use the Team Invite Code below so they can self-register, or create the account first.",
+        "failed": "Failed to add member."
+      },
+      "role": {
+        "denied": "Only a team owner or admin can change member roles",
+        "ownerFlow": "Owner changes must use the ownership transfer flow",
+        "updated": "Member role updated",
+        "updateFailed": "Failed to update role"
+      },
+      "remove": {
+        "action": "Remove",
+        "removed": "Member removed",
+        "failed": "Failed to remove member"
+      },
+      "code": {
+        "title": "Team Invite Code",
+        "subtitle": "Generate one shared code for team onboarding. The default limit is set to 50 members and you can copy the ready registration link below.",
+        "note": "Team members register with email and password after opening the invite link. Phone number remains optional.",
+        "cta": "Generate code",
+        "maxUsesLabel": "Maximum team registrations",
+        "noCode": "Code was not returned by the server",
+        "generated": "Access code generated",
+        "generateFailed": "Failed to generate access code",
+        "ready": "Ready for team onboarding",
+        "accessCode": "Access code",
+        "copyCode": "Copy code",
+        "codeCopied": "Access code copied",
+        "regLink": "Registration link",
+        "copyLink": "Copy link",
+        "linkCopied": "Registration link copied",
+        "copyFailed": "Failed to copy to clipboard"
+      }
+    },
+    "operations": {
+      "title": "Organization Operations",
+      "subtitle": "Tenant-critical organization operations are available from P32, while deeper business profile editing still remains accessible in the Organization workspace.",
+      "openProfile": "Open organization profile",
+      "tabs": {
+        "domains": {
+          "label": "Domains",
+          "desc": "Tenant domain verification and routing"
+        },
+        "branding": {
+          "label": "Branding",
+          "desc": "Identity, locale, and trust posture"
+        },
+        "competencies": {
+          "label": "Competencies",
+          "desc": "Capability catalog used across the tenant"
+        }
+      }
     }
   },
   "access": {

@@ -2274,10 +2274,7 @@
   },
   "initiatives": {
     "card": {
-      "openInitiative": "Otwórz inicjatywę: {{title}}",
-      "advanceStatus": "Przejdź do następnego statusu",
-      "assignOwners": "Przypisz właścicieli",
-      "flagForAttention": "Oznacz do uwagi"
+      "nextStep": "Następny krok"
     },
     "gateAi": {
       "pill": {
@@ -4307,9 +4304,6 @@
     },
     "confirmDelete": "Trwale usunąć „{{name}}\"? Tej operacji nie można cofnąć.",
     "thisInitiative": "tę inicjatywę",
-    "card": {
-      "nextStep": "Następny krok"
-    },
     "observability": {
       "funnelTitle": "Lejek konwersji portfela",
       "lineageTitle": "Łańcuch pochodzenia inicjatywy",
@@ -11024,6 +11018,106 @@
     },
     "tabs": {
       "templates": "Wzorce"
+    },
+    "membersRoles": {
+      "title": "Członkowie i role",
+      "subtitle": "Kanoniczna powierzchnia P32 do zarządzania członkostwem, zmianami ról i zabezpieczeniami właściciela.",
+      "loadFailed": "Nie udało się załadować członków",
+      "loading": "Ładowanie członków…",
+      "empty": "Nie znaleziono członków dla tej przestrzeni roboczej.",
+      "unknownMember": "Nieznany członek",
+      "roles": {
+        "owner": "Właściciel",
+        "admin": "Administrator",
+        "member": "Członek",
+        "guest": "Gość"
+      },
+      "columns": {
+        "member": "Członek",
+        "email": "E-mail",
+        "role": "Rola",
+        "status": "Status"
+      },
+      "guidance": {
+        "owner": {
+          "description": "Pełna kontrola nad przestrzenią, przekazanie własności i zabezpieczenia zarezerwowane dla właściciela.",
+          "denial": "Tylko właściciel może przypisać lub usunąć innego właściciela."
+        },
+        "admin": {
+          "description": "Może zarządzać członkami zespołu, ich rolami i kodami zaproszeń.",
+          "denial": "Nie może zmienić członkostwa właściciela ani ominąć jego zabezpieczeń."
+        },
+        "member": {
+          "description": "Standardowy dostęp do przestrzeni bez uprawnień administracyjnych zespołu.",
+          "denial": "Nie może otworzyć administracji zespołu ani zmieniać członkostwa."
+        },
+        "guest": {
+          "description": "Ograniczona rola współpracownika bez dostępu administracyjnego.",
+          "denial": "Goście nie mają dostępu do narzędzi administracyjnych."
+        }
+      },
+      "invite": {
+        "cta": "Dodaj członka",
+        "placeholder": "czlonek@firma.com",
+        "emailLabel": "E-mail członka",
+        "noOrg": "Brak aktywnej organizacji — odśwież stronę i spróbuj ponownie.",
+        "denied": "Tylko właściciel lub administrator zespołu może dodawać członków.",
+        "ownerFlow": "Zmiany właściciela muszą przebiegać przez proces przekazania własności.",
+        "emptyEmail": "Podaj adres e-mail przed dodaniem członka.",
+        "invalidEmail": "Podaj prawidłowy adres e-mail (np. czlonek@firma.com).",
+        "added": "{{email}} dodano do przestrzeni roboczej.",
+        "addedToast": "Członek dodany do przestrzeni roboczej",
+        "notFound": "Dla tego adresu e-mail nie istnieje jeszcze konto. Użyj poniższego kodu zaproszenia zespołu, aby umożliwić samodzielną rejestrację, lub najpierw utwórz konto.",
+        "failed": "Nie udało się dodać członka."
+      },
+      "role": {
+        "denied": "Tylko właściciel lub administrator zespołu może zmieniać role członków",
+        "ownerFlow": "Zmiany właściciela muszą przebiegać przez proces przekazania własności",
+        "updated": "Zaktualizowano rolę członka",
+        "updateFailed": "Nie udało się zaktualizować roli"
+      },
+      "remove": {
+        "action": "Usuń",
+        "removed": "Członek usunięty",
+        "failed": "Nie udało się usunąć członka"
+      },
+      "code": {
+        "title": "Kod zaproszenia zespołu",
+        "subtitle": "Wygeneruj jeden wspólny kod do onboardingu zespołu. Domyślny limit to 50 członków, a gotowy link rejestracyjny możesz skopiować poniżej.",
+        "note": "Członkowie zespołu rejestrują się z użyciem e-maila i hasła po otwarciu linku zaproszenia. Numer telefonu pozostaje opcjonalny.",
+        "cta": "Wygeneruj kod",
+        "maxUsesLabel": "Maksymalna liczba rejestracji zespołu",
+        "noCode": "Serwer nie zwrócił kodu",
+        "generated": "Kod dostępu wygenerowany",
+        "generateFailed": "Nie udało się wygenerować kodu dostępu",
+        "ready": "Gotowe do onboardingu zespołu",
+        "accessCode": "Kod dostępu",
+        "copyCode": "Kopiuj kod",
+        "codeCopied": "Skopiowano kod dostępu",
+        "regLink": "Link rejestracyjny",
+        "copyLink": "Kopiuj link",
+        "linkCopied": "Skopiowano link rejestracyjny",
+        "copyFailed": "Nie udało się skopiować do schowka"
+      }
+    },
+    "operations": {
+      "title": "Operacje organizacji",
+      "subtitle": "Kluczowe operacje organizacji dla najemcy są dostępne od P32, natomiast głębsza edycja profilu biznesowego pozostaje dostępna w przestrzeni roboczej organizacji.",
+      "openProfile": "Otwórz profil organizacji",
+      "tabs": {
+        "domains": {
+          "label": "Domeny",
+          "desc": "Weryfikacja i routing domen najemcy"
+        },
+        "branding": {
+          "label": "Branding",
+          "desc": "Tożsamość, ustawienia regionalne i profil zaufania"
+        },
+        "competencies": {
+          "label": "Kompetencje",
+          "desc": "Katalog kompetencji używany w całej organizacji"
+        }
+      }
     }
   },
   "access": {
