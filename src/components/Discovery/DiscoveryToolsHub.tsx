@@ -3208,11 +3208,12 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     // Show loading state
     if (isLoading) {
       return (
-        <div className="flex items-center justify-center h-full">
-          <div className="flex flex-col items-center gap-3 text-c-text-muted">
-            <Loader2 className="w-8 h-8 animate-spin" />
-            <span>Loading tool sessions...</span>
-          </div>
+        <div className="mx-auto max-w-6xl px-6 py-6">
+          <SharedLoadingState
+            template="list"
+            rows={6}
+            label={t('tools.hub.loadingSessions', 'Loading tool sessions…')}
+          />
         </div>
       );
     }

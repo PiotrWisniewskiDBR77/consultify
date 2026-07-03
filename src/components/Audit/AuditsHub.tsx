@@ -36,6 +36,7 @@ import {
 } from '@/components/shared/ModuleHub';
 import type { ModuleTab, ViewMode } from '@/components/shared/ModuleHub/types';
 import type { RowAction } from '@/components/shared/RowActionsMenu';
+import { LoadingState } from '@/components/shared/states';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { EntityStatusChip, MetaChip } from '@/components/ui/primitives/chips';
 
@@ -392,7 +393,7 @@ export const AuditsHub: React.FC = () => {
           <button
             type="button"
             onClick={() => openWizard('iso27001')}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-c-border px-3 py-2 text-sm text-c-text-secondary hover:bg-c-surface-raised"
+            className="inline-flex items-center gap-1.5 rounded-token-lg border border-c-border px-3 py-2 text-sm text-c-text-secondary hover:bg-c-surface-raised"
           >
             <ShieldCheck className="h-4 w-4" />
             {t('audit.iso27001')}
@@ -401,14 +402,14 @@ export const AuditsHub: React.FC = () => {
       >
         <div className="mx-auto max-w-6xl px-6 py-6">
           {error && (
-            <div className="mb-4 flex items-start gap-3 rounded-xl border border-danger-200 bg-danger-50 p-4 dark:border-danger-500/20 dark:bg-danger-500/10">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-danger-600 dark:text-danger-400" />
+            <div className="mb-4 flex items-start gap-3 rounded-token-lg border border-c-danger/30 bg-c-danger/10 p-4">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-c-danger" />
               <div className="flex-1">
-                <p className="text-sm text-danger-800 dark:text-danger-300">{error}</p>
+                <p className="text-sm text-c-danger">{error}</p>
               </div>
               <button
                 onClick={load}
-                className="flex items-center gap-1.5 rounded-lg border border-danger-200 bg-c-surface px-3 py-1.5 text-xs font-medium text-danger-700 transition-colors hover:bg-danger-50 dark:border-danger-500/30 dark:bg-transparent dark:text-danger-300 dark:hover:bg-danger-500/10"
+                className="flex items-center gap-1.5 rounded-token-md border border-c-danger/30 bg-c-surface px-3 py-1.5 text-xs font-medium text-c-danger transition-colors hover:bg-c-danger/10"
               >
                 <RefreshCw className="h-3 w-3" />
                 {t('common.retry', 'Retry')}
@@ -417,16 +418,15 @@ export const AuditsHub: React.FC = () => {
           )}
 
           {loading ? (
-            <div className="flex items-center justify-center gap-2 rounded-xl border border-c-border bg-c-surface py-12 text-sm text-c-text-muted">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              {t('audit.loading')}
+            <div className="rounded-token-lg border border-c-border bg-c-surface p-4">
+              <LoadingState template="list" rows={6} label={t('audit.loading')} />
             </div>
           ) : (
             <>
               {/* §27 — canonical FilterableTable + preview. Single click selects a
                   row and opens the per-program dashboard in the preview pane. Row
                   actions (⋮) carry Generate surveys / Delete. */}
-              <div className="rounded-xl border border-c-border bg-c-surface">
+              <div className="rounded-token-lg border border-c-border bg-c-surface">
                 <TableWithPreviewLayout<AuditRow>
                   selectedId={selectedId}
                   selectedItem={rows.find((r) => r.id === selectedId) ?? null}
@@ -466,7 +466,7 @@ export const AuditsHub: React.FC = () => {
                     type="button"
                     onClick={() => void loadMore()}
                     disabled={loadingMore}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-c-border px-4 py-2 text-sm text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-60"
+                    className="inline-flex items-center gap-1.5 rounded-token-lg border border-c-border px-4 py-2 text-sm text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-60"
                   >
                     {loadingMore && <Loader2 className="h-4 w-4 animate-spin" />}
                     {t('audit.loadMore')}
@@ -540,7 +540,7 @@ const ProgramDashboard: React.FC<{
   }, [program.id, surveysGenerated]);
 
   return (
-    <div className="space-y-4 rounded-xl border border-c-border bg-c-surface p-5">
+    <div className="space-y-4 rounded-token-lg border border-c-border bg-c-surface p-5">
       <div>
         <h3 className="font-semibold text-c-text">{program.name}</h3>
         {preset && (
@@ -557,7 +557,7 @@ const ProgramDashboard: React.FC<{
 
       {/* Completion (#19e): real rollup over the program's generated interview
           assignments (submitted/approved/completed vs total). */}
-      <div className="rounded-xl bg-c-surface-raised p-3">
+      <div className="rounded-token-lg bg-c-surface-raised p-3">
         <div className="mb-1 flex items-center justify-between">
           <span className="text-xs font-medium text-c-text-secondary">
             {t('audit.completion')}
@@ -617,7 +617,7 @@ const ProgramDashboard: React.FC<{
 };
 
 const Stat: React.FC<{ label: string; value: number }> = ({ label, value }) => (
-  <div className="rounded-xl bg-c-surface-raised p-3">
+  <div className="rounded-token-lg bg-c-surface-raised p-3">
     <div className="text-2xl font-semibold text-c-text">{value}</div>
     <div className="text-xs text-c-text-muted">{label}</div>
   </div>
