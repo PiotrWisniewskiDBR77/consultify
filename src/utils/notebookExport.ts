@@ -15,6 +15,19 @@
 
 import { notebookContentToMarkdown } from '@/components/MyWork/notebook/notebookExpandToDocument';
 
+/**
+ * Brand-consistent export palette (navy / teal). Exports render outside the app
+ * (standalone HTML window / jsPDF), so CSS vars are unavailable — these fixed
+ * values mirror the DBR77 navy ink used across pdfExport.ts. NEVER var() here.
+ */
+const EXPORT_COLORS = {
+  htmlInk: '#0f172a', // navy-900 — body text in standalone HTML export
+  ink: [15, 23, 42] as [number, number, number], // navy-900 — PDF body/headings
+  navy: [15, 23, 42] as [number, number, number], // brand navy — title
+  inkMuted: [100, 116, 128] as [number, number, number], // slate-500 — captions
+  hairline: [203, 210, 218] as [number, number, number], // separators
+};
+
 export interface NotebookExportPage {
   id?: string;
   title?: string | null;
@@ -81,7 +94,7 @@ export function buildNotebookPrintHtml(page: NotebookExportPage): string {
   return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(
     title
   )}</title><style>
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:48rem;margin:2rem auto;padding:0 1rem;color:#1f2937;line-height:1.6}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:48rem;margin:2rem auto;padding:0 1rem;color:${EXPORT_COLORS.htmlInk};line-height:1.6}
     h1{font-size:1.875rem}h2{font-size:1.5rem}h3{font-size:1.25rem}
     ul{padding-left:1.25rem}
   </style></head><body><h1>${escapeHtml(title)}</h1>${htmlParts.join('')}</body></html>`;
@@ -133,14 +146,14 @@ export async function exportNotebookAsPdf(page: NotebookExportPage): Promise<voi
     };
 
     pdf.setFontSize(20);
-    pdf.setTextColor(20, 30, 70);
+    pdf.setTextColor(...EXPORT_COLORS.navy);
     pdf.text(title, margin, y + 6);
     y += 14;
     pdf.setFontSize(9);
-    pdf.setTextColor(140, 140, 140);
+    pdf.setTextColor(...EXPORT_COLORS.inkMuted);
     pdf.text(`Exported ${new Date().toLocaleString()} • Consultify`, margin, y);
     y += 6;
-    pdf.setDrawColor(210, 210, 210);
+    pdf.setDrawColor(...EXPORT_COLORS.hairline);
     pdf.line(margin, y, pageWidth - margin, y);
     y += 6;
 
@@ -157,7 +170,7 @@ export async function exportNotebookAsPdf(page: NotebookExportPage): Promise<voi
         addPageIfNeeded(size * 0.6);
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(size);
-        pdf.setTextColor(30, 41, 59);
+        pdf.setTextColor(...EXPORT_COLORS.ink);
         const wrapped = pdf.splitTextToSize(heading[2], maxWidth);
         pdf.text(wrapped, margin, y);
         y += wrapped.length * (size * 0.42) + 2;
@@ -165,7 +178,7 @@ export async function exportNotebookAsPdf(page: NotebookExportPage): Promise<voi
       }
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(10);
-      pdf.setTextColor(31, 41, 55);
+      pdf.setTextColor(...EXPORT_COLORS.ink);
       const wrapped = pdf.splitTextToSize(line, maxWidth);
       addPageIfNeeded(wrapped.length * 5);
       pdf.text(wrapped, margin, y);
