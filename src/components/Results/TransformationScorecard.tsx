@@ -46,11 +46,13 @@ const FUNNEL_LABEL: Record<string, string> = {
 };
 const FUNNEL_ORDER = ['ideas', 'validated', 'inflight', 'realized'];
 
+// Decision chips = semantic data tones (§9.1: crimson NEVER a data category).
+// STOP → c-danger (semantic negative), not brand crimson.
 const ACTION_STYLE: Record<DecisionAction, string> = {
-  SCALE: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  INTERVENE: 'bg-amber-100 text-amber-700 border-amber-200',
-  STOP: 'bg-red-100 text-red-700 border-red-200',
-  HOLD: 'bg-gray-100 text-gray-500 border-gray-200',
+  SCALE: 'bg-c-success/10 text-c-success border-c-success/30',
+  INTERVENE: 'bg-c-warning/10 text-c-warning border-c-warning/30',
+  STOP: 'bg-c-danger/10 text-c-danger border-c-danger/30',
+  HOLD: 'bg-c-surface-raised text-c-text-muted border-c-border',
 };
 const ACTION_LABEL: Record<DecisionAction, string> = {
   SCALE: 'Skaluj',
@@ -111,7 +113,7 @@ export const TransformationScorecard: React.FC<Props> = ({ projectId, fetcher })
 
   const wrap = (children: React.ReactNode) => (
     <section
-      className="rounded-xl border border-gray-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900"
+      className="rounded-xl border border-c-border bg-c-surface p-4"
       data-testid="transformation-scorecard"
     >
       {children}
@@ -119,11 +121,11 @@ export const TransformationScorecard: React.FC<Props> = ({ projectId, fetcher })
   );
 
   if (failed)
-    return wrap(<p className="text-sm text-gray-400">Narracja wartości niedostępna chwilowo.</p>);
-  if (loading && !data) return wrap(<p className="text-sm text-gray-400">Ładowanie wartości…</p>);
+    return wrap(<p className="text-sm text-c-text-muted">Narracja wartości niedostępna chwilowo.</p>);
+  if (loading && !data) return wrap(<p className="text-sm text-c-text-muted">Ładowanie wartości…</p>);
   if (!data || (data.scorecard?.itemCount ?? 0) === 0)
     return wrap(
-      <p className="text-sm text-gray-400" data-testid="scorecard-empty">
+      <p className="text-sm text-c-text-muted" data-testid="scorecard-empty">
         Brak danych wartości — dodaj ROI/realizację inicjatyw.
       </p>
     );
@@ -136,7 +138,7 @@ export const TransformationScorecard: React.FC<Props> = ({ projectId, fetcher })
 
   return wrap(
     <>
-      <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-slate-100">
+      <h3 className="mb-3 text-sm font-semibold text-c-text">
         Wartość transformacji
       </h3>
 
@@ -146,34 +148,34 @@ export const TransformationScorecard: React.FC<Props> = ({ projectId, fetcher })
         <Stat label="Zagrożone" value={fmt(sc.atRisk)} tone="red" />
       </div>
       <div className="mt-2">
-        <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-navy-800">
+        <div className="h-2 w-full overflow-hidden rounded-full bg-c-surface-raised">
           <div
-            className="h-2 rounded-full bg-emerald-500"
+            className="h-2 rounded-full bg-c-success"
             style={{ width: `${Math.min(100, Math.round((sc.pctOfTarget || 0) * 100))}%` }}
           />
         </div>
-        <p className="mt-1 text-[11px] text-gray-400">
+        <p className="mt-1 text-[11px] text-c-text-muted">
           {Math.round((sc.pctOfTarget || 0) * 100)}% z celu {fmt(sc.totalTarget)}
         </p>
       </div>
 
       <div className="mt-4" data-testid="scorecard-funnel">
-        <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+        <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
           Lejek wartości
         </p>
         <div className="flex flex-col gap-1">
           {orderedFunnel.map((f) => (
             <div key={f.stage} className="flex items-center gap-2">
-              <span className="w-24 shrink-0 text-[11px] text-gray-500">
+              <span className="w-24 shrink-0 text-[11px] text-c-text-muted">
                 {FUNNEL_LABEL[f.stage] || f.stage}
               </span>
-              <div className="h-3 flex-1 overflow-hidden rounded bg-gray-50 dark:bg-navy-800">
+              <div className="h-3 flex-1 overflow-hidden rounded bg-c-surface-raised">
                 <div
-                  className="h-3 rounded bg-blue-400/70"
+                  className="h-3 rounded bg-c-info/70"
                   style={{ width: `${Math.round((f.value / funnelMax) * 100)}%` }}
                 />
               </div>
-              <span className="w-20 shrink-0 text-right text-[11px] text-gray-500">
+              <span className="w-20 shrink-0 text-right text-[11px] text-c-text-muted">
                 {fmt(f.value)} · {f.count}
               </span>
             </div>
@@ -183,14 +185,14 @@ export const TransformationScorecard: React.FC<Props> = ({ projectId, fetcher })
 
       {(data.decisions || []).length > 0 && (
         <div className="mt-4" data-testid="scorecard-decisions">
-          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
             Rekomendacje
           </p>
           <ul className="flex flex-col gap-1">
             {data.decisions.slice(0, 6).map((d) => (
               <li
                 key={d.id}
-                className="flex items-center justify-between gap-2 rounded-lg border border-gray-100 p-2 dark:border-navy-700"
+                className="flex items-center justify-between gap-2 rounded-lg border border-c-border p-2"
               >
                 <div className="flex min-w-0 items-center gap-2">
                   <span
@@ -198,11 +200,11 @@ export const TransformationScorecard: React.FC<Props> = ({ projectId, fetcher })
                   >
                     {ACTION_LABEL[d.action] || d.action}
                   </span>
-                  <span className="truncate text-xs text-gray-700 dark:text-slate-200">
+                  <span className="truncate text-xs text-c-text-secondary">
                     {d.name || d.id}
                   </span>
                 </div>
-                <span className="shrink-0 text-[11px] text-gray-400">{fmt(d.valueAtStake)}</span>
+                <span className="shrink-0 text-[11px] text-c-text-muted">{fmt(d.valueAtStake)}</span>
               </li>
             ))}
           </ul>
@@ -217,15 +219,12 @@ const Stat: React.FC<{ label: string; value: string; tone: 'emerald' | 'blue' | 
   value,
   tone,
 }) => {
+  // Semantic value tones (banked=success, in-flight=info, at-risk=danger).
   const color =
-    tone === 'emerald'
-      ? 'text-emerald-600'
-      : tone === 'blue'
-        ? 'text-blue-600'
-        : 'text-red-600';
+    tone === 'emerald' ? 'text-c-success' : tone === 'blue' ? 'text-c-info' : 'text-c-danger';
   return (
-    <div className="rounded-lg border border-gray-100 p-2 dark:border-navy-700">
-      <p className="text-[10px] uppercase tracking-wide text-gray-400">{label}</p>
+    <div className="rounded-lg border border-c-border p-2">
+      <p className="text-[10px] uppercase tracking-wide text-c-text-muted">{label}</p>
       <p className={`text-xl font-bold ${color}`}>{value}</p>
     </div>
   );
