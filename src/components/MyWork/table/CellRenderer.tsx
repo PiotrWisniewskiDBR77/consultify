@@ -264,7 +264,7 @@ const RatingCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
 
 const PersonCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
   <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary-400 to-crimson-500 flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0">
+    <div className="w-5 h-5 rounded-full bg-c-accent flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0">
       {String(value || '?')
         .charAt(0)
         .toUpperCase()}

@@ -53,10 +53,10 @@ const popularStarts = IDEA_STARTING_POINTS.slice(0, 4);
 
 const COLOR_MAP: Record<string, { bg: string; text: string; border: string; ring: string }> = {
   violet: {
-    bg: 'bg-primary-500/10',
-    text: 'text-primary-500',
-    border: 'border-primary-500/30',
-    ring: 'ring-primary-500/40',
+    bg: 'bg-c-accent-soft',
+    text: 'text-c-accent',
+    border: 'border-c-accent',
+    ring: 'ring-c-focus',
   },
   blue: {
     bg: 'bg-blue-500/10',
@@ -168,19 +168,19 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-[520px] max-h-[90vh] overflow-y-auto rounded-2xl border border-white/[0.06] bg-white/95 dark:bg-navy-900/[0.97] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.35)] backdrop-blur-xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+      <div className="w-[520px] max-h-[90vh] overflow-y-auto rounded-2xl border border-c-border-subtle bg-c-surface shadow-[0_32px_64px_-12px_rgba(0,0,0,0.35)] backdrop-blur-xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
         {/* ── Header ─────────────────────────────────────────── */}
-        <div className="relative flex items-center justify-between px-6 py-4 border-b border-slate-200/30 dark:border-white/[0.04]">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary-500/[0.03] via-transparent to-blue-500/[0.03] dark:from-primary-500/[0.06] dark:to-blue-500/[0.06]" />
+        <div className="relative flex items-center justify-between px-6 py-4 border-b border-c-border-subtle">
+          <div className="absolute inset-0 bg-c-surface-raised" />
           <div className="relative flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500/20 to-blue-500/20 flex items-center justify-center">
-              <Sparkles size={16} className="text-primary-500" />
+            <div className="w-9 h-9 rounded-xl bg-c-accent-soft flex items-center justify-center">
+              <Sparkles size={16} className="text-c-accent" />
             </div>
             <div>
-              <h3 className="text-[15px] font-semibold text-slate-900 dark:text-slate-100">
+              <h3 className="text-[15px] font-semibold text-c-text">
                 {isPl ? 'Nowy pomysł' : 'New Idea'}
               </h3>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-[11px] text-c-text-muted mt-0.5">
                 {isPl
                   ? 'Spokojny start, szybkie przejście do workspace.'
                   : 'Calm start, fast handoff into workspace.'}
@@ -189,9 +189,9 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="relative p-1.5 rounded-lg hover:bg-slate-100/80 dark:hover:bg-white/[0.06] transition-colors duration-150"
+            className="relative p-1.5 rounded-lg hover:bg-c-surface-raised transition-colors duration-150"
           >
-            <X size={16} className="text-slate-600" />
+            <X size={16} className="text-c-text-secondary" />
           </button>
         </div>
 
@@ -199,13 +199,13 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
         <div className="px-6 py-5 space-y-5">
           {/* Problem description */}
           <div>
-            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary-500/80 dark:text-primary-400/70 mb-1.5">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-c-accent mb-1.5">
               {isPl ? 'Twój pomysł' : 'Your idea'}
             </div>
-            <h4 className="text-lg font-semibold text-slate-900 dark:text-slate-100 tracking-tight">
+            <h4 className="text-lg font-semibold text-c-text tracking-tight">
               {isPl ? 'Opisz problem, pomysł albo wynik' : 'Describe the problem, idea, or outcome'}
             </h4>
-            <p className="mt-1 text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed">
+            <p className="mt-1 text-[13px] text-c-text-muted leading-relaxed">
               {isPl
                 ? 'Lekki start bez ciężkiego formularza. Brief dodasz tylko gdy potrzebujesz.'
                 : 'Light start without a heavy form. Add a brief only when you need one.'}
@@ -220,7 +220,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                   : 'E.g. I want to structure transformation initiatives and find the best rollout order...'
               }
               autoFocus
-              className="mt-3 w-full rounded-xl border border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] px-4 py-3 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400/70 focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none transition-shadow duration-200"
+              className="mt-3 w-full rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface px-4 py-3 text-sm text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none transition-shadow duration-200"
             />
           </div>
 
@@ -229,16 +229,16 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
             {/* Start with AI */}
             <PrimaryStartButton
               onClick={() => handleSelect('describe_with_ai')}
-              className="group flex flex-col items-center gap-2.5 rounded-xl border border-primary-500/20 bg-gradient-to-b from-primary-500/[0.08] to-transparent px-3 py-4 text-center transition-all duration-200 hover:border-primary-500/40 hover:shadow-lg hover:shadow-primary-500/10 hover:-translate-y-0.5"
+              className="group flex flex-col items-center gap-2.5 rounded-xl border border-c-accent bg-c-accent-soft px-3 py-4 text-center transition-all duration-200 hover:border-c-accent hover:shadow-lg hover:-translate-y-0.5"
             >
-              <div className="rounded-xl p-2.5 bg-primary-500/10 text-primary-500 transition-transform duration-200 group-hover:scale-110">
+              <div className="rounded-xl p-2.5 bg-c-accent-soft text-c-accent transition-transform duration-200 group-hover:scale-110">
                 <Wand2 size={18} />
               </div>
               <div className="min-w-0">
-                <div className="text-[13px] font-semibold text-primary-600 dark:text-primary-300">
+                <div className="text-[13px] font-semibold text-c-accent">
                   Start with AI
                 </div>
-                <div className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400 leading-snug">
+                <div className="mt-0.5 text-[10px] text-c-text-muted leading-snug">
                   {isPl
                     ? 'Przenieś seed do workspace i od razu uruchom builder flow.'
                     : 'Transfer seed to workspace and launch builder flow.'}
@@ -246,23 +246,23 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
               </div>
               <ArrowRight
                 size={12}
-                className="text-slate-600/60 transition-transform group-hover:translate-x-0.5"
+                className="text-c-text-secondary transition-transform group-hover:translate-x-0.5"
               />
             </PrimaryStartButton>
 
             {/* Blank canvas */}
             <PrimaryStartButton
               onClick={() => handleSelect('blank_canvas')}
-              className="group flex flex-col items-center gap-2.5 rounded-xl border border-slate-200/50 dark:border-white/[0.06] bg-gradient-to-b from-slate-500/[0.05] to-transparent px-3 py-4 text-center transition-all duration-200 hover:border-slate-300/80 dark:hover:border-white/[0.12] hover:shadow-lg hover:shadow-slate-500/5 hover:-translate-y-0.5"
+              className="group flex flex-col items-center gap-2.5 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-4 text-center transition-all duration-200 hover:border-c-border hover:shadow-lg hover:-translate-y-0.5"
             >
-              <div className="rounded-xl p-2.5 bg-slate-500/10 text-slate-500 transition-transform duration-200 group-hover:scale-110">
+              <div className="rounded-xl p-2.5 bg-c-surface text-c-text-muted transition-transform duration-200 group-hover:scale-110">
                 <Brain size={18} />
               </div>
               <div className="min-w-0">
-                <div className="text-[13px] font-semibold text-slate-700 dark:text-slate-200">
+                <div className="text-[13px] font-semibold text-c-text">
                   Blank canvas
                 </div>
-                <div className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400 leading-snug">
+                <div className="mt-0.5 text-[10px] text-c-text-muted leading-snug">
                   {isPl
                     ? 'Otwórz spokojny workspace z wybranym systemem startowym.'
                     : 'Open a calm workspace with your chosen starting system.'}
@@ -270,23 +270,23 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
               </div>
               <ArrowRight
                 size={12}
-                className="text-slate-600/60 transition-transform group-hover:translate-x-0.5"
+                className="text-c-text-secondary transition-transform group-hover:translate-x-0.5"
               />
             </PrimaryStartButton>
 
             {/* Use template */}
             <PrimaryStartButton
               onClick={() => handleSelect('use_template')}
-              className="group flex flex-col items-center gap-2.5 rounded-xl border border-emerald-500/20 bg-gradient-to-b from-emerald-500/[0.08] to-transparent px-3 py-4 text-center transition-all duration-200 hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/10 hover:-translate-y-0.5"
+              className="group flex flex-col items-center gap-2.5 rounded-xl border border-c-success bg-c-surface-raised px-3 py-4 text-center transition-all duration-200 hover:border-c-success hover:shadow-lg hover:-translate-y-0.5"
             >
-              <div className="rounded-xl p-2.5 bg-emerald-500/10 text-emerald-500 transition-transform duration-200 group-hover:scale-110">
+              <div className="rounded-xl p-2.5 text-c-success transition-transform duration-200 group-hover:scale-110" style={{ backgroundColor: 'color-mix(in srgb, var(--c-success) 12%, transparent)' }}>
                 <LayoutGrid size={18} />
               </div>
               <div className="min-w-0">
                 <div className="text-[13px] font-semibold text-emerald-600 dark:text-emerald-300">
                   {isPl ? 'Użyj szablonu' : 'Use template'}
                 </div>
-                <div className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400 leading-snug">
+                <div className="mt-0.5 text-[10px] text-c-text-muted leading-snug">
                   {isPl
                     ? 'Wejdź przez szablon startowy i ustaw domyślny system pracy.'
                     : 'Enter via a starter template with a default work system.'}
@@ -294,20 +294,20 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
               </div>
               <ArrowRight
                 size={12}
-                className="text-slate-600/60 transition-transform group-hover:translate-x-0.5"
+                className="text-c-text-secondary transition-transform group-hover:translate-x-0.5"
               />
             </PrimaryStartButton>
           </div>
 
-          <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.06] bg-slate-50/60 dark:bg-white/[0.02] p-3">
+          <div className="rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised p-3">
             <div className="flex items-center justify-between gap-3">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-500">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-c-text-muted">
                 {isPl ? 'Popularne starty' : 'Popular starts'}
               </div>
               <button
                 type="button"
                 onClick={() => setShowStructuredBrief((next) => !next)}
-                className="text-[11px] font-medium text-primary-600 dark:text-primary-300 hover:underline"
+                className="text-[11px] font-medium text-c-accent hover:underline"
               >
                 {showStructuredBrief
                   ? isPl
@@ -324,7 +324,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                   key={start.id}
                   type="button"
                   onClick={() => handlePopularStart(start)}
-                  className="rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.03] px-3 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:border-primary-500/40 hover:text-primary-600 dark:hover:text-primary-300"
+                  className="rounded-full border border-c-border-subtle bg-c-surface-raised px-3 py-1.5 text-[11px] font-medium text-c-text-secondary hover:border-c-accent hover:text-c-accent"
                 >
                   {isPl ? start.labelPl : start.labelEn}
                 </button>
@@ -338,7 +338,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                     setStructuredBrief((prev) => ({ ...prev, problem: e.target.value }))
                   }
                   placeholder={isPl ? 'Problem' : 'Problem'}
-                  className="rounded-lg border border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] px-3 py-2 text-xs"
+                  className="rounded-lg border border-c-border-subtle dark:border-c-border-subtle bg-c-surface px-3 py-2 text-xs"
                 />
                 <input
                   value={structuredBrief.goal}
@@ -346,7 +346,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                     setStructuredBrief((prev) => ({ ...prev, goal: e.target.value }))
                   }
                   placeholder={isPl ? 'Cel / wynik' : 'Goal / outcome'}
-                  className="rounded-lg border border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] px-3 py-2 text-xs"
+                  className="rounded-lg border border-c-border-subtle dark:border-c-border-subtle bg-c-surface px-3 py-2 text-xs"
                 />
                 <textarea
                   value={structuredBrief.constraints}
@@ -357,7 +357,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                   placeholder={
                     isPl ? 'Ograniczenia, po jednym w linii' : 'Constraints, one per line'
                   }
-                  className="rounded-lg border border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] px-3 py-2 text-xs resize-none"
+                  className="rounded-lg border border-c-border-subtle dark:border-c-border-subtle bg-c-surface px-3 py-2 text-xs resize-none"
                 />
               </div>
             )}
@@ -365,7 +365,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
 
           {/* Workspace selector */}
           <div>
-            <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-500 mb-2.5">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-c-text-muted mb-2.5">
               {isPl ? 'Workspace' : 'Workspace'}
             </div>
             <div className="grid grid-cols-4 gap-2">
@@ -383,16 +383,16 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                       ${
                         active
                           ? `${c.bg} ${c.border} border-2 ring-2 ${c.ring} shadow-sm`
-                          : 'border border-slate-200/40 dark:border-white/[0.04] hover:border-slate-300/70 dark:hover:border-white/[0.08] hover:bg-slate-50/50 dark:hover:bg-white/[0.02]'
+                          : 'border border-c-border-subtle hover:border-c-border hover:bg-c-surface-raised'
                       }
                     `}
                   >
                     <Icon
                       size={18}
-                      className={active ? c.text : 'text-slate-600 dark:text-slate-500'}
+                      className={active ? c.text : 'text-c-text-secondary'}
                     />
                     <span
-                      className={`text-[11px] font-medium ${active ? c.text : 'text-slate-500 dark:text-slate-400'}`}
+                      className={`text-[11px] font-medium ${active ? c.text : 'text-c-text-muted'}`}
                     >
                       {isPl ? ws.labelPl : ws.labelEn}
                     </span>
