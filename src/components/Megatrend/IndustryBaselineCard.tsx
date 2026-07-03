@@ -30,13 +30,13 @@ export const IndustryBaselineCard: React.FC<IndustryBaselineCardProps> = ({
   const isEmpty = !loading && !error && megatrends.length === 0;
   return (
     <div className="space-y-6">
-      <div className="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-lg flex items-start gap-3 border border-blue-100 dark:border-navy-700">
-        <Sparkles className="text-blue-600 mt-1" size={18} />
+      <div className="bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)] p-4 rounded-lg flex items-start gap-3 border-l-2 border-c-info">
+        <Sparkles className="text-c-info mt-1" size={18} />
         <div>
-          <h4 className="font-bold text-blue-900 dark:text-blue-300">
+          <h4 className="font-bold text-c-text">
             Industry Standard Trends: {industry.charAt(0).toUpperCase() + industry.slice(1)}
           </h4>
-          <p className="text-xs text-blue-800 dark:text-blue-200 mt-1">
+          <p className="text-xs text-c-text-secondary mt-1">
             Below are the top megatrends affecting your industry globally. AI has prioritized these
             based on market signals and your context.
           </p>
@@ -48,32 +48,32 @@ export const IndustryBaselineCard: React.FC<IndustryBaselineCardProps> = ({
           {[0, 1, 2, 3].map((i) => (
             <div
               key={i}
-              className="h-32 rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] animate-pulse"
+              className="h-32 rounded-2xl border border-c-border dark:border-white/[0.08] bg-c-surface-raised dark:bg-c-surface/[0.04] animate-pulse"
             />
           ))}
         </div>
       )}
 
       {error && (
-        <div className="rounded-2xl border border-dashed border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] p-8 text-center">
-          <Globe className="mx-auto mb-3 text-slate-600" size={28} strokeWidth={1.5} />
-          <p className="text-base font-medium text-slate-700 dark:text-slate-200">
+        <div className="rounded-2xl border border-dashed border-c-border dark:border-white/[0.08] bg-c-surface-raised dark:bg-c-surface/[0.04] p-8 text-center">
+          <Globe className="mx-auto mb-3 text-c-text-secondary" size={28} strokeWidth={1.5} />
+          <p className="text-base font-medium text-c-text-secondary">
             {t('tools.megatrends.notAvailable', 'Megatrends data is not yet configured')}
           </p>
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{error}</p>
-          <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-sm text-c-text-muted">{error}</p>
+          <p className="mt-3 text-sm text-c-text-muted">
             {t('tools.megatrends.contactAdmin', 'Contact your admin')}
           </p>
         </div>
       )}
 
       {isEmpty && (
-        <div className="rounded-2xl border border-dashed border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] p-8 text-center">
-          <Globe className="mx-auto mb-3 text-slate-600" size={28} strokeWidth={1.5} />
-          <p className="text-base font-medium text-slate-700 dark:text-slate-200">
+        <div className="rounded-2xl border border-dashed border-c-border dark:border-white/[0.08] bg-c-surface-raised dark:bg-c-surface/[0.04] p-8 text-center">
+          <Globe className="mx-auto mb-3 text-c-text-secondary" size={28} strokeWidth={1.5} />
+          <p className="text-base font-medium text-c-text-secondary">
             {t('tools.megatrends.notAvailable', 'Megatrends data is not yet configured')}
           </p>
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-sm text-c-text-muted">
             {t('tools.megatrends.contactAdmin', 'Contact your admin')}
           </p>
         </div>
@@ -84,16 +84,16 @@ export const IndustryBaselineCard: React.FC<IndustryBaselineCardProps> = ({
           {megatrends.map((trend) => (
             <div
               key={trend.id}
-              className="p-5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 hover:shadow-lg hover:border-primary-200 dark:hover:border-primary-500/30 transition-all duration-200 group relative overflow-hidden"
+              className="p-5 rounded-lg border border-c-border-subtle bg-c-surface-raised hover:shadow-lg hover:border-c-border-strong transition-all duration-200 group relative overflow-hidden"
             >
               {/* Accent Bar */}
               <div
                 className={`absolute left-0 top-0 bottom-0 w-1 ${
                   trend.type === 'Technology'
-                    ? 'bg-blue-500'
+                    ? 'bg-c-tag-1'
                     : trend.type === 'Business'
-                      ? 'bg-navy-900'
-                      : 'bg-amber-500'
+                      ? 'bg-c-tag-3'
+                      : 'bg-c-tag-9'
                 }`}
               ></div>
 
@@ -101,10 +101,10 @@ export const IndustryBaselineCard: React.FC<IndustryBaselineCardProps> = ({
                 <span
                   className={`text-[10px] uppercase font-bold px-2 py-1 rounded-full ${
                     trend.type === 'Technology'
-                      ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                      ? 'bg-c-tag-1 text-white'
                       : trend.type === 'Business'
-                        ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
-                        : 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                        ? 'bg-c-tag-3 text-white'
+                        : 'bg-c-tag-9 text-white'
                   }`}
                 >
                   {trend.type}
@@ -112,24 +112,24 @@ export const IndustryBaselineCard: React.FC<IndustryBaselineCardProps> = ({
                 <span
                   className={`text-[10px] font-bold px-2 py-1 rounded ${
                     trend.impactScore >= 6
-                      ? 'bg-danger-100 text-danger-600 dark:bg-danger-900/30 dark:text-danger-300'
-                      : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                      ? 'bg-c-danger text-white'
+                      : 'bg-c-surface-raised text-c-text-secondary'
                   }`}
                 >
                   Impact: {trend.impactScore}/7
                 </span>
               </div>
 
-              <h3 className="font-bold text-navy-900 dark:text-white text-lg pl-3 mb-2 group-hover:text-primary-500 transition-colors">
+              <h3 className="font-bold text-c-text text-lg pl-3 mb-2 group-hover:text-c-accent transition-colors">
                 {trend.label}
               </h3>
 
-              <p className="text-xs text-slate-500 dark:text-slate-400 pl-3 mb-4 line-clamp-2">
+              <p className="text-xs text-c-text-muted pl-3 mb-4 line-clamp-2">
                 {trend.shortDescription}
               </p>
 
               <div
-                className="pl-3 mt-auto flex items-center gap-2 text-xs font-bold text-primary-600 hover:text-primary-700 cursor-pointer"
+                className="pl-3 mt-auto flex items-center gap-2 text-xs font-bold text-c-accent hover:opacity-80 cursor-pointer"
                 onClick={() => onTrendSelect(trend.id)}
               >
                 See Strategic Impact{' '}
