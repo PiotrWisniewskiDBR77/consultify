@@ -228,14 +228,14 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
       aria-label={t('kimi.tabeleShell.sourcePack.ariaLabel', 'Tabele source pack builder')}
     >
       <header className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+        <h3 className="text-sm font-semibold text-c-text">
           {t('kimi.tabeleShell.sourcePack.title', 'Source Pack')}
         </h3>
         <button
           type="button"
           onClick={() => void refreshCandidates()}
           disabled={searching || !tableId}
-          className="inline-flex items-center gap-1 rounded-md border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-2 py-1 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50"
+          className="inline-flex items-center gap-1 rounded-md border border-c-border bg-c-surface-raised px-2 py-1 text-xs text-c-text hover:bg-c-surface-raised disabled:opacity-50"
           data-testid="source-pack-refresh"
           aria-label={t('kimi.tabeleShell.sourcePack.refreshAriaLabel', 'Refresh candidate search')}
         >
@@ -250,19 +250,19 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
 
       <div className="space-y-2">
         <label className="relative block">
-          <Search className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-600 dark:text-slate-500" />
+          <Search className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-c-text-secondary" />
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t('kimi.tabeleShell.sourcePack.searchPlaceholder', 'Search records by content')}
-            className="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 py-1.5 pl-7 pr-2 text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-400 dark:focus:ring-slate-500"
+            className="w-full rounded-md border border-c-border bg-c-surface py-1.5 pl-7 pr-2 text-xs text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-1 focus:ring-c-border"
             data-testid="source-pack-search-input"
             aria-label={t('kimi.tabeleShell.sourcePack.searchAriaLabel', 'Search records')}
           />
         </label>
         <div className="flex flex-wrap items-center gap-2">
-          <label className="inline-flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-400">
+          <label className="inline-flex items-center gap-1 text-[11px] text-c-text-secondary">
             <input
               type="checkbox"
               checked={verifiedOnly}
@@ -276,7 +276,7 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
           <select
             value={recencyDays === null ? '' : String(recencyDays)}
             onChange={(e) => setRecencyDays(e.target.value === '' ? null : Number(e.target.value))}
-            className="rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-1.5 py-0.5 text-[11px] text-slate-700 dark:text-slate-300"
+            className="rounded-md border border-c-border bg-c-surface px-1.5 py-0.5 text-[11px] text-c-text"
             data-testid="source-pack-recency-select"
             aria-label={t('kimi.tabeleShell.sourcePack.recencyAriaLabel', 'Recency filter')}
           >
@@ -286,7 +286,7 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
               </option>
             ))}
           </select>
-          <span className="ml-auto text-[11px] text-slate-500 dark:text-slate-400">
+          <span className="ml-auto text-[11px] text-c-text-secondary">
             {t('kimi.tabeleShell.sourcePack.selectedCount', {
               defaultValue: '{{count}} / {{max}} selected',
               count: selectedCount,
@@ -298,13 +298,13 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
 
       <div className="flex-1 min-h-0 overflow-y-auto">
         {searching && candidates.length === 0 ? (
-          <div className="flex items-center justify-center p-4 text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex items-center justify-center p-4 text-xs text-c-text-secondary">
             <Loader2 className="mr-2 h-3 w-3 animate-spin" />{' '}
             {t('kimi.tabeleShell.sourcePack.searching', 'Searching…')}
           </div>
         ) : sortedCandidates.length === 0 ? (
           <div
-            className="rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-xs text-slate-500 dark:text-slate-400"
+            className="rounded-md border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs text-c-text-secondary"
             data-testid="source-pack-candidates-empty"
           >
             {t('kimi.tabeleShell.sourcePack.noCandidates', 'No candidate records match your filters.')}
@@ -324,8 +324,8 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
         )}
       </div>
 
-      <div className="rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 p-2">
-        <h4 className="mb-1 text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+      <div className="rounded-md border border-c-border-subtle bg-c-surface-raised p-2">
+        <h4 className="mb-1 text-[11px] uppercase tracking-wide text-c-text-secondary">
           {t('kimi.tabeleShell.sourcePack.savePack', 'Save pack')}
         </h4>
         <div className="space-y-1.5">
@@ -335,7 +335,7 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
             onChange={(e) => setPackName(e.target.value)}
             placeholder={t('kimi.tabeleShell.sourcePack.packNamePlaceholder', 'Pack name')}
             maxLength={200}
-            className="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2 py-1 text-xs text-slate-800 dark:text-slate-100"
+            className="w-full rounded-md border border-c-border bg-c-surface px-2 py-1 text-xs text-c-text"
             data-testid="source-pack-name-input"
             aria-label={t('kimi.tabeleShell.sourcePack.packNameAriaLabel', 'Pack name')}
           />
@@ -345,7 +345,7 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
             placeholder={t('kimi.tabeleShell.sourcePack.descriptionPlaceholder', 'Optional description')}
             rows={2}
             maxLength={2000}
-            className="w-full resize-none rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2 py-1 text-xs text-slate-800 dark:text-slate-100"
+            className="w-full resize-none rounded-md border border-c-border bg-c-surface px-2 py-1 text-xs text-c-text"
             data-testid="source-pack-description-input"
             aria-label={t('kimi.tabeleShell.sourcePack.descriptionAriaLabel', 'Pack description')}
           />
@@ -367,16 +367,16 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
       </div>
 
       <div>
-        <h4 className="mb-1 text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <h4 className="mb-1 text-[11px] uppercase tracking-wide text-c-text-secondary">
           {t('kimi.tabeleShell.sourcePack.savedPacks', 'Saved packs')}
         </h4>
         {packsLoading ? (
-          <div className="flex items-center gap-1 px-2 py-1 text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-1 px-2 py-1 text-xs text-c-text-secondary">
             <Loader2 className="h-3 w-3 animate-spin" /> {t('kimi.tabeleShell.sourcePack.loading', 'Loading…')}
           </div>
         ) : savedPacks.length === 0 ? (
           <div
-            className="rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 px-3 py-2 text-xs text-slate-500 dark:text-slate-400"
+            className="rounded-md border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs text-c-text-secondary"
             data-testid="source-pack-saved-empty"
           >
             {t('kimi.tabeleShell.sourcePack.noSavedPacks', 'No saved packs yet.')}
@@ -386,17 +386,17 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
             {savedPacks.map((p) => (
               <li
                 key={p.id}
-                className="flex items-center justify-between gap-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1.5"
+                className="flex items-center justify-between gap-2 rounded-md border border-c-border-subtle bg-c-surface px-2.5 py-1.5"
                 data-testid="source-pack-saved-card"
               >
                 <div className="min-w-0 flex-1">
                   <p
-                    className="truncate text-xs font-medium text-slate-800 dark:text-slate-100"
+                    className="truncate text-xs font-medium text-c-text"
                     title={p.name}
                   >
                     {p.name}
                   </p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  <p className="text-[11px] text-c-text-secondary">
                     {t('kimi.tabeleShell.sourcePack.packMeta', {
                       defaultValue: '{{count}} records · used {{used}}×',
                       count: p.candidateRecordIds.length,
@@ -408,7 +408,7 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
                   <button
                     type="button"
                     onClick={() => onUseInAiEditor(p)}
-                    className="inline-flex items-center gap-1 rounded-md border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-2 py-1 text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
+                    className="inline-flex items-center gap-1 rounded-md border border-c-border bg-c-surface-raised px-2 py-1 text-[11px] text-c-text hover:bg-c-surface-raised"
                     data-testid="source-pack-use-in-ai"
                     aria-label={t('kimi.tabeleShell.sourcePack.useInAiEditorAriaLabel', 'Use pack in AI Editor')}
                   >

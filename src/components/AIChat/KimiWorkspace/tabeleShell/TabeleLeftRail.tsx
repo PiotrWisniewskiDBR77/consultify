@@ -84,7 +84,7 @@ const DEFAULT_OUTLINE_LABEL_KEY: Record<string, string> = {
 };
 
 const TONE_DOT: Record<NonNullable<TabeleOutlineItem['tone']>, string> = {
-  neutral: 'bg-slate-400',
+  neutral: 'bg-c-text-muted',
   success: 'bg-emerald-500',
   warning: 'bg-amber-500',
   danger: 'bg-danger-500',
@@ -117,7 +117,7 @@ export const TabeleLeftRail: React.FC<TabeleLeftRailProps> = ({
         aria-label={t('kimi.tabeleShell.leftRail.ariaLabel', 'Tabele outline')}
       >
         {empty ? (
-          <li className="px-3 py-6 text-slate-500 dark:text-slate-400 text-xs italic flex items-center gap-2">
+          <li className="px-3 py-6 text-c-text-secondary text-xs italic flex items-center gap-2">
             <AlertTriangle size={14} />
             {emptyLabel ?? t('kimi.tabeleShell.leftRail.empty', 'No sections to display.')}
           </li>
@@ -136,8 +136,8 @@ export const TabeleLeftRail: React.FC<TabeleLeftRailProps> = ({
                   disabled={item.disabled}
                   className={`w-full flex items-center gap-2 px-3 py-1.5 text-left transition-colors ${
                     active
-                      ? 'bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-300'
-                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+                      ? 'bg-c-accent-soft text-c-accent'
+                      : 'text-c-text hover:bg-c-surface-raised'
                   } disabled:opacity-40 disabled:cursor-not-allowed`}
                   data-testid={`tabele-outline-${item.id}`}
                   data-active={active ? 'true' : 'false'}
@@ -148,8 +148,8 @@ export const TabeleLeftRail: React.FC<TabeleLeftRailProps> = ({
                     <span
                       className={`text-[11px] tabular-nums px-1.5 py-0.5 rounded-md ${
                         item.tone && item.tone !== 'neutral'
-                          ? `${TONE_DOT[item.tone]} text-white`
-                          : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300'
+                          ? `${TONE_DOT[item.tone]} text-c-text`
+                          : 'bg-c-surface-raised text-c-text-secondary'
                       }`}
                       aria-label={t('kimi.tabeleShell.leftRail.countAriaLabel', {
                         defaultValue: '{{label}} count',

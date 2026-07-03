@@ -62,8 +62,8 @@ const LANE_META: Record<
   wordy: {
     icon: FileText,
     route: '/wordy',
-    accentBg: 'bg-primary-500/10',
-    accentText: 'text-primary-500',
+    accentBg: 'bg-c-accent-soft0',
+    accentText: 'text-c-accent',
   },
   excele: {
     icon: FileSpreadsheet,
@@ -168,7 +168,7 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
   ];
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-slate-50 dark:bg-navy-950">
+    <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-c-surface-raised">
       {/* Hero */}
       <div className="px-6 pt-8 pb-4">
         <div className="flex items-center gap-3 mb-3">
@@ -176,15 +176,15 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
             <Icon size={22} className={meta.accentText} />
           </div>
           <div>
-            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">{laneLabel}</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{heroText}</p>
+            <h1 className="text-lg font-semibold text-c-text">{laneLabel}</h1>
+            <p className="text-sm text-c-text-secondary">{heroText}</p>
           </div>
         </div>
 
         {/* New button */}
         <button
           onClick={handleNewClick}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 text-sm font-medium hover:bg-navy-800 dark:hover:bg-[#DDE5EF] transition-colors mt-2"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-c-text text-c-bg text-sm font-medium hover:opacity-90 transition-opacity mt-2"
         >
           <Plus size={16} />
           {t('kimi.artifactHome.startNew', 'Start new')}
@@ -202,8 +202,8 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
               onClick={() => setActiveTab(tab.id)}
               className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
                 isActive
-                  ? 'bg-white shadow-sm text-slate-900 dark:bg-white/[0.12] dark:text-[var(--c-info)]'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+                  ? 'bg-c-surface shadow-sm text-c-text/[0.12] dark:text-[var(--c-info)]'
+                  : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-border-subtle'
               }`}
             >
               <TabIcon size={14} />
@@ -531,7 +531,7 @@ function TemplatesGrid({
   if (loading && allCards.length === 0) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 size={24} className="animate-spin text-slate-600" />
+        <Loader2 size={24} className="animate-spin text-c-text-secondary" />
       </div>
     );
   }
@@ -542,12 +542,12 @@ function TemplatesGrid({
         <button
           key={card.id}
           onClick={() => onTemplateClick(card.id, card.isBuiltin ? card.builtinPrompt : undefined)}
-          className="group text-left p-4 rounded-xl border border-slate-200/70 dark:border-white/5 bg-white dark:bg-navy-900 hover:border-brand/40 dark:hover:border-brand/30 hover:shadow-sm transition-all"
+          className="group text-left p-4 rounded-xl border border-c-border-subtle bg-c-surface hover:border-brand/40 dark:hover:border-brand/30 hover:shadow-sm transition-all"
         >
-          <p className="text-sm font-medium text-slate-800 dark:text-slate-200 group-hover:text-brand transition-colors line-clamp-1">
+          <p className="text-sm font-medium text-c-text group-hover:text-brand transition-colors line-clamp-1">
             {card.title}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+          <p className="text-xs text-c-text-secondary mt-1 line-clamp-2">
             {card.desc}
           </p>
         </button>
@@ -580,7 +580,7 @@ function ArtifactsList({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 size={24} className="animate-spin text-slate-600" />
+        <Loader2 size={24} className="animate-spin text-c-text-secondary" />
       </div>
     );
   }
@@ -588,8 +588,8 @@ function ArtifactsList({
   if (artifacts.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <FolderOpen size={32} className="text-slate-600 dark:text-slate-400 mb-3" />
-        <p className="text-sm text-slate-500 dark:text-slate-400">{emptyLabel}</p>
+        <FolderOpen size={32} className="text-c-text-secondary mb-3" />
+        <p className="text-sm text-c-text-secondary">{emptyLabel}</p>
       </div>
     );
   }
@@ -605,13 +605,13 @@ function ArtifactsList({
           <button
             key={safeId}
             onClick={() => onArtifactClick(safeId)}
-            className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-200/70 dark:border-white/5 bg-white dark:bg-navy-900 hover:border-brand/40 dark:hover:border-brand/30 hover:shadow-sm transition-all text-left"
+            className="w-full flex items-center justify-between p-3 rounded-xl border border-c-border-subtle bg-c-surface hover:border-brand/40 dark:hover:border-brand/30 hover:shadow-sm transition-all text-left"
           >
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
+              <p className="text-sm font-medium text-c-text truncate">
                 {item.title}
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-xs text-c-text-secondary mt-0.5">
                 {d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
                   day: 'numeric',
                   month: 'short',
@@ -619,7 +619,7 @@ function ArtifactsList({
                 })}
               </p>
             </div>
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full ml-3 shrink-0">
+            <span className="text-xs font-medium text-c-text-secondary bg-c-surface-raised px-2 py-0.5 rounded-full ml-3 shrink-0">
               {item.statusKey}
             </span>
           </button>

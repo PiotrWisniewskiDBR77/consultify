@@ -18,7 +18,7 @@ import type { AiEditorLevel, QaSuggestion } from '@/services/api/tablePlatform.a
 const SEVERITY_DOT: Record<QaSuggestion['severity'], string> = {
   high: 'bg-danger-500',
   medium: 'bg-amber-500',
-  low: 'bg-slate-400',
+  low: 'bg-c-text-muted',
 };
 
 const SEVERITY_LABEL_KEY: Record<QaSuggestion['severity'], string> = {
@@ -103,7 +103,7 @@ export const QaSuggestionList: React.FC<QaSuggestionListProps> = ({
       {suggestions.map((s) => (
         <li
           key={s.id}
-          className="rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3"
+          className="rounded-md border border-c-border-subtle bg-c-surface p-3"
           data-testid="qa-suggestion-card"
         >
           <div className="flex items-start gap-2">
@@ -116,10 +116,10 @@ export const QaSuggestionList: React.FC<QaSuggestionListProps> = ({
             />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                <span className="text-[11px] uppercase tracking-wide text-c-text-secondary">
                   {t(AXIS_SHORT_KEY[s.axis], AXIS_SHORT_EN[s.axis])}
                 </span>
-                <span className="text-[11px] text-slate-600 dark:text-slate-500">
+                <span className="text-[11px] text-c-text-secondary">
                   →{' '}
                   {t(
                     LEVEL_LABEL_KEY[s.recommendedAction.level],
@@ -127,13 +127,13 @@ export const QaSuggestionList: React.FC<QaSuggestionListProps> = ({
                   )}
                 </span>
               </div>
-              <p className="mt-1 text-sm text-slate-800 dark:text-slate-100">{s.description}</p>
+              <p className="mt-1 text-sm text-c-text">{s.description}</p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 {onOpenInAiEditor && (
                   <button
                     type="button"
                     onClick={() => onOpenInAiEditor(s)}
-                    className="inline-flex items-center gap-1 rounded-md border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-2 py-1 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
+                    className="inline-flex items-center gap-1 rounded-md border border-c-border bg-c-surface-raised px-2 py-1 text-xs text-c-text hover:bg-c-surface-raised"
                     data-testid="qa-suggestion-open-ai"
                   >
                     <Sparkles className="h-3 w-3" />{' '}
@@ -144,7 +144,7 @@ export const QaSuggestionList: React.FC<QaSuggestionListProps> = ({
                   <button
                     type="button"
                     onClick={() => onDismiss(s)}
-                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-c-text-secondary hover:text-c-text"
                     data-testid="qa-suggestion-dismiss"
                   >
                     <X className="h-3 w-3" /> {t('kimi.tabeleShell.qa.markNotApplicable', 'Mark not applicable')}

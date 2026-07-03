@@ -139,14 +139,14 @@ export const TabeleQaPanel: React.FC<TabeleQaPanelProps> = ({
       aria-label={t('kimi.tabeleShell.qa.ariaLabel', 'Tabele QA report')}
     >
       <header className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+        <h3 className="text-sm font-semibold text-c-text">
           {t('kimi.tabeleShell.qa.title', 'QA Report')}
         </h3>
         <button
           type="button"
           onClick={handleRecompute}
           disabled={computing || !tableId}
-          className="inline-flex items-center gap-1 rounded-md border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-2 py-1 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50"
+          className="inline-flex items-center gap-1 rounded-md border border-c-border bg-c-surface-raised px-2 py-1 text-xs text-c-text hover:bg-c-surface-raised disabled:opacity-50"
           data-testid="qa-recompute-button"
           aria-label={t('kimi.tabeleShell.qa.recomputeAriaLabel', 'Recompute QA report')}
         >
@@ -172,7 +172,7 @@ export const TabeleQaPanel: React.FC<TabeleQaPanelProps> = ({
       )}
 
       <div>
-        <h4 className="mb-1.5 text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <h4 className="mb-1.5 text-[11px] uppercase tracking-wide text-c-text-secondary">
           {t('kimi.tabeleShell.qa.suggestions', 'Suggestions')}
         </h4>
         <QaSuggestionList

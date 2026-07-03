@@ -42,7 +42,7 @@ const META: Record<
     en: 'Draft',
     icon: <Circle size={12} />,
     activeClass:
-      'bg-slate-200 text-slate-700 border-slate-400 dark:bg-slate-700/50 dark:text-slate-200 dark:border-slate-500',
+      'bg-c-border-subtle text-c-text border-c-border-strong',
   },
   deprecated: {
     en: 'Deprecated',
@@ -53,7 +53,7 @@ const META: Record<
 };
 
 const INACTIVE_CLASS =
-  'bg-transparent text-slate-500 border-slate-300 dark:text-slate-400 dark:border-slate-600';
+  'bg-transparent text-c-text-secondary border-c-border';
 
 export const TemplateLifecycleFilter: React.FC<TemplateLifecycleFilterProps> = ({
   value,

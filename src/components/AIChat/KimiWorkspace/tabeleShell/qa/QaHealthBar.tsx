@@ -85,14 +85,14 @@ export const QaHealthBar: React.FC<QaHealthBarProps> = ({ report, computing }) =
   if (computing && !report) {
     return (
       <div
-        className="h-12 rounded-md bg-slate-100 dark:bg-slate-800 animate-pulse"
+        className="h-12 rounded-md bg-c-surface-raised animate-pulse"
         data-testid="qa-health-bar-loading"
       />
     );
   }
   if (!report) {
     return (
-      <div className="text-xs text-slate-500 dark:text-slate-400">
+      <div className="text-xs text-c-text-secondary">
         {t('kimi.tabeleShell.qa.noReportYet', 'No QA report yet — run a recompute.')}
       </div>
     );
@@ -100,7 +100,7 @@ export const QaHealthBar: React.FC<QaHealthBarProps> = ({ report, computing }) =
   const overallBand = bandFromScore(report.overallScore);
   return (
     <div
-      className="rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3"
+      className="rounded-md border border-c-border-subtle bg-c-surface p-3"
       data-testid="qa-health-bar"
     >
       <div className="flex items-center justify-between gap-3">
@@ -109,22 +109,22 @@ export const QaHealthBar: React.FC<QaHealthBarProps> = ({ report, computing }) =
             className={`inline-block h-2.5 w-2.5 rounded-full ${BAND_COLORS[overallBand]}`}
             aria-hidden
           />
-          <span className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <span className="text-xs uppercase tracking-wide text-c-text-secondary">
             {t('kimi.tabeleShell.qa.health', 'Health')}
           </span>
           <span className={`text-sm font-semibold ${BAND_TEXT[overallBand]}`}>
             {Math.round(report.overallScore * 100)}%
           </span>
-          <span className="text-xs text-slate-500 dark:text-slate-400">
+          <span className="text-xs text-c-text-secondary">
             {t(BAND_LABEL_KEY[overallBand], BAND_LABEL_EN[overallBand])}
           </span>
         </div>
-        <span className="text-[10px] text-slate-600 dark:text-slate-500">
+        <span className="text-[10px] text-c-text-secondary">
           {new Date(report.computedAt).toLocaleString()}
         </span>
       </div>
       <div
-        className="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-slate-200/70 dark:bg-slate-800/70"
+        className="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-c-border-subtle"
         role="img"
         aria-label={t('kimi.tabeleShell.qa.overallScoreAriaLabel', {
           defaultValue: 'Overall QA score {{pct}} percent',

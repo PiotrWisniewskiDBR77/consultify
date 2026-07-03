@@ -54,22 +54,22 @@ export const ProposalDiffCard: React.FC<ProposalDiffCardProps> = ({
   const { label } = translateLevelMeta(meta, t);
   return (
     <article
-      className="rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+      className="rounded-md border border-c-border-subtle bg-c-surface"
       data-testid="ai-proposal-diff-card"
       data-proposal-id={proposalId}
     >
-      <header className="flex items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 px-3 py-2">
+      <header className="flex items-center justify-between gap-2 border-b border-c-border-subtle px-3 py-2">
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 dark:border-slate-700 px-2 py-0.5 text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-300">
+          <span className="inline-flex items-center gap-1 rounded-full border border-c-border-subtle px-2 py-0.5 text-[11px] uppercase tracking-wide text-c-text-secondary">
             {label}
           </span>
-          <span className="text-[10px] text-slate-600 dark:text-slate-500">
+          <span className="text-[10px] text-c-text-secondary">
             {handlerStatus === 'live'
               ? t('kimi.tabeleShell.aiEditor.handlerLive', 'live')
               : t('kimi.tabeleShell.aiEditor.handlerStub', 'stub')}
           </span>
         </div>
-        <span className="font-mono text-[10px] text-slate-600 dark:text-slate-500">
+        <span className="font-mono text-[10px] text-c-text-secondary">
           {proposalId.slice(0, 8)}
         </span>
       </header>
@@ -84,18 +84,18 @@ export const ProposalDiffCard: React.FC<ProposalDiffCardProps> = ({
       )}
 
       <section className="px-3 py-2">
-        <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <p className="text-[11px] uppercase tracking-wide text-c-text-secondary">
           {t('kimi.tabeleShell.aiEditor.promptSection', 'Prompt')}
         </p>
-        <p className="mt-1 text-sm text-slate-700 dark:text-slate-200">{prompt}</p>
+        <p className="mt-1 text-sm text-c-text">{prompt}</p>
       </section>
 
-      <section className="border-t border-slate-200 dark:border-slate-800 px-3 py-2">
-        <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+      <section className="border-t border-c-border-subtle px-3 py-2">
+        <p className="text-[11px] uppercase tracking-wide text-c-text-secondary">
           {t('kimi.tabeleShell.aiEditor.proposedOperations', 'Proposed operations')}
         </p>
         {!operations || operations.length === 0 ? (
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-xs text-c-text-secondary">
             {t(
               'kimi.tabeleShell.aiEditor.noOperationsPreview',
               'No operations preview available. Use the workspace audit log for full diff.'
@@ -103,7 +103,7 @@ export const ProposalDiffCard: React.FC<ProposalDiffCardProps> = ({
           </p>
         ) : (
           <ul
-            className="mt-1 max-h-44 overflow-auto rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 p-2 text-[11px] font-mono"
+            className="mt-1 max-h-44 overflow-auto rounded border border-c-border-subtle bg-c-surface-raised p-2 text-[11px] font-mono"
             data-testid="ai-proposal-operations"
           >
             {operations.slice(0, 25).map((op, idx) => {
@@ -111,7 +111,7 @@ export const ProposalDiffCard: React.FC<ProposalDiffCardProps> = ({
               return (
                 <li
                   key={idx}
-                  className="truncate text-slate-600 dark:text-slate-300"
+                  className="truncate text-c-text-secondary"
                   title={JSON.stringify(op)}
                 >
                   {idx + 1}. {opObj?.type ?? t('kimi.tabeleShell.aiEditor.opFallback', 'op')} —{' '}
@@ -120,7 +120,7 @@ export const ProposalDiffCard: React.FC<ProposalDiffCardProps> = ({
               );
             })}
             {operations.length > 25 && (
-              <li className="text-slate-600 dark:text-slate-500">
+              <li className="text-c-text-secondary">
                 {t('kimi.tabeleShell.aiEditor.moreOperations', {
                   defaultValue: '+{{count}} more',
                   count: operations.length - 25,
@@ -131,12 +131,12 @@ export const ProposalDiffCard: React.FC<ProposalDiffCardProps> = ({
         )}
       </section>
 
-      <footer className="flex items-center justify-end gap-2 border-t border-slate-200 dark:border-slate-800 px-3 py-2">
+      <footer className="flex items-center justify-end gap-2 border-t border-c-border-subtle px-3 py-2">
         <button
           type="button"
           onClick={onReject}
           disabled={busyApply || busyReject}
-          className="inline-flex items-center gap-1 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-1 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50"
+          className="inline-flex items-center gap-1 rounded-md border border-c-border bg-c-surface px-2 py-1 text-xs text-c-text hover:bg-c-surface-raised disabled:opacity-50"
           data-testid="ai-proposal-reject"
         >
           {busyReject ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
@@ -146,7 +146,7 @@ export const ProposalDiffCard: React.FC<ProposalDiffCardProps> = ({
           type="button"
           onClick={onApply}
           disabled={busyApply || busyReject}
-          className="inline-flex items-center gap-1 rounded-md border border-slate-800 dark:border-slate-200 bg-slate-800 dark:bg-slate-100 px-2 py-1 text-xs text-white dark:text-slate-900 hover:bg-slate-900 dark:hover:bg-slate-50 disabled:opacity-50"
+          className="inline-flex items-center gap-1 rounded-md border border-c-border bg-c-surface px-2 py-1 text-xs text-c-text hover:bg-c-bg disabled:opacity-50"
           data-testid="ai-proposal-apply"
         >
           {busyApply ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
