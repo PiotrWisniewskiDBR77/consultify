@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AssessmentWorkbenchPanel } from '../../../src/components/assessment/AssessmentWorkbenchPanel';
@@ -10,6 +10,7 @@ import { AssessmentWorkbenchPanel } from '../../../src/components/assessment/Ass
 const getWorkbench = vi.fn();
 const getWorkbenchDefinition = vi.fn();
 const getWorkbenchPromotionPayload = vi.fn();
+const applyWorkbenchPreset = vi.fn();
 
 vi.mock('react-hot-toast', () => ({
   toast: {
@@ -23,7 +24,7 @@ vi.mock('@/services/api/v8/assessment', () => ({
     getWorkbench: (...args: unknown[]) => getWorkbench(...args),
     getWorkbenchDefinition: (...args: unknown[]) => getWorkbenchDefinition(...args),
     getWorkbenchPromotionPayload: (...args: unknown[]) => getWorkbenchPromotionPayload(...args),
-    applyWorkbenchPreset: vi.fn(),
+    applyWorkbenchPreset: (...args: unknown[]) => applyWorkbenchPreset(...args),
     transitionWorkbench: vi.fn(),
     addWorkbenchEvidence: vi.fn(),
     setRequiredEvidenceKinds: vi.fn(),
@@ -104,5 +105,45 @@ describe('AssessmentWorkbenchPanel', () => {
     expect(screen.getByText('Missing interpretation proposal')).toBeInTheDocument();
     expect(screen.getByText('Review Readiness')).toBeInTheDocument();
     expect(screen.getByText('Downstream Status')).toBeInTheDocument();
+  });
+
+  it('applies the preset for the assessment methodology (SIRI), not hardcoded DRD', async () => {
+    // Anti-false-green: stary kod zawsze wysyłał 'DRD' i renderował
+    // "Apply DRD preset" — ten test czerwieni się na takim kodzie.
+    getWorkbench.mockResolvedValue({
+      workbench: {
+        contractVersion: 'p28_workbench_v1',
+        assessmentDefinitionRef: {
+          definitionId: 'asdef_siri_1_0',
+          methodologyId: 'SIRI',
+          version: '1.0',
+          status: 'published',
+          readOnly: true,
+        },
+        assessmentRunId: 'a-siri',
+        orgId: 'org-1',
+        runState: 'draft',
+        startedBy: 'user-1',
+        startedAt: '2026-07-03T00:00:00.000Z',
+        evidencePointers: [],
+        scoreProposal: null,
+        scoreReview: null,
+        interpretationProposal: null,
+        interpretationReview: null,
+        promotionTraces: [],
+      },
+      whatNext: [],
+    });
+    getWorkbenchDefinition.mockResolvedValue({ definitionRef: null, definition: null });
+    applyWorkbenchPreset.mockResolvedValue({});
+
+    render(<AssessmentWorkbenchPanel assessmentId="a-siri" />);
+
+    const presetButton = await screen.findByRole('button', { name: 'Apply SIRI preset' });
+    fireEvent.click(presetButton);
+
+    await waitFor(() => {
+      expect(applyWorkbenchPreset).toHaveBeenCalledWith('a-siri', 'SIRI');
+    });
   });
 });

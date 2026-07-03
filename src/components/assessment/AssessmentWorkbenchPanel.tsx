@@ -129,6 +129,9 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
 
   const evidenceOptions = workbench?.evidencePointers || [];
 
+  /** Preset musi odpowiadać metodologii tego assessmentu (DRD/SIRI/ADMA), nie zawsze DRD. */
+  const presetKey = workbench?.assessmentDefinitionRef?.methodologyId || 'DRD';
+
   const canComplete = useMemo(() => {
     return (
       workbench?.runState === 'interpretation_reviewed' || workbench?.runState === 'score_reviewed'
@@ -202,13 +205,13 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
             className="rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF] px-3 py-1.5 text-sm disabled:opacity-50"
             onClick={() =>
               void runAction(
-                () => V8AssessmentApi.applyWorkbenchPreset(assessmentId, 'DRD'),
+                () => V8AssessmentApi.applyWorkbenchPreset(assessmentId, presetKey),
                 'Preset applied'
               )
             }
             disabled={isLoading || isBusy || !canEditUi}
           >
-            Apply DRD preset
+            Apply {presetKey} preset
           </button>
           <button
             type="button"
