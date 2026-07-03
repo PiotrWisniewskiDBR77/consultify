@@ -269,7 +269,7 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
                     <button
                       onClick={handleCreateBranch}
                       disabled={!newBranchName.trim()}
-                      className="p-1.5 bg-primary-500 text-white rounded-lg hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="p-1.5 bg-c-text text-c-bg rounded-lg hover:bg-c-text-secondary disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Plus size={14} />
                     </button>

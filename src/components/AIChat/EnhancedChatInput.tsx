@@ -1366,7 +1366,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                 className={`p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center shadow-lg group ${
                   teresaVoiceAvailable
                     ? 'bg-c-text text-c-bg hover:opacity-90 shadow-primary-500/25'
-                    : 'bg-primary-600/40 text-white cursor-not-allowed shadow-none'
+                    : 'bg-c-text text-c-bg cursor-not-allowed shadow-none'
                 }`}
                 title={
                   teresaVoiceAvailable

@@ -3211,7 +3211,7 @@ function WorkCanvasMarkdownDocumentPanel({
                     <button
                       type="button"
                       onClick={insertQuickAddElement}
-                      className="mt-2 w-full rounded-xl bg-primary-600 px-3 py-2 text-xs font-semibold text-white hover:bg-primary-700"
+                      className="mt-2 w-full rounded-xl bg-c-text px-3 py-2 text-xs font-semibold text-c-bg hover:bg-c-text-secondary"
                     >
                       {t('canvas.panel.addElement.submit', 'Add to canvas')}
                     </button>
@@ -3269,7 +3269,7 @@ function WorkCanvasMarkdownDocumentPanel({
                       <button
                         type="button"
                         onClick={() => void previewSelectionMenuPrompt()}
-                        className="flex-1 rounded-xl bg-primary-600 px-3 py-2 text-xs font-semibold text-white hover:bg-primary-700"
+                        className="flex-1 rounded-xl bg-c-text px-3 py-2 text-xs font-semibold text-c-bg hover:bg-c-text-secondary"
                       >
                         {t('canvas.panel.selection.preview', 'Preview AI edit')}
                       </button>
@@ -3346,7 +3346,7 @@ function WorkCanvasMarkdownDocumentPanel({
                         <button
                           type="button"
                           onClick={applyBuiltTemplate}
-                          className="flex-1 rounded-lg bg-primary-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-primary-700"
+                          className="flex-1 rounded-lg bg-c-text px-2.5 py-1.5 text-xs font-semibold text-c-bg hover:bg-c-text-secondary"
                         >
                           {t('canvas.panel.templates.apply', 'Apply template')}
                         </button>
