@@ -209,7 +209,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
           <p className="text-c-text-secondary">{error}</p>
           <button
             onClick={fetchData}
-            className="mt-4 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600"
+            className="mt-4 px-4 py-2 bg-c-text text-c-bg rounded-lg hover:bg-c-text-secondary"
           >
             {t.refresh[lang]}
           </button>
@@ -250,7 +250,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
           </select>
           <button
             onClick={fetchData}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600"
+            className="flex items-center gap-2 px-4 py-2 bg-c-text text-c-bg rounded-lg hover:bg-c-text-secondary"
           >
             <RefreshCw size={16} />
             {t.refresh[lang]}

@@ -375,7 +375,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
               <select
                 value={filters.contentType}
                 onChange={(e) => handleFilterChange('contentType', e.target.value)}
-                className="w-full px-3 py-2 bg-primary-600 border border-c-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               >
                 <option value="ALL">All Types</option>
                 <option value="PLAYBOOK">Playbooks</option>
@@ -393,7 +393,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
                 onChange={(e) =>
                   handleFilterChange('status', e.target.value ? [e.target.value] : [])
                 }
-                className="w-full px-3 py-2 bg-primary-600 border border-c-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               >
                 <option value="">All Statuses</option>
                 <option value="DRAFT">Draft</option>
@@ -412,7 +412,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
                 onChange={(e) =>
                   handleFilterChange('sortBy', e.target.value as SearchFilters['sortBy'])
                 }
-                className="w-full px-3 py-2 bg-primary-600 border border-c-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               >
                 <option value="relevance">Relevance</option>
                 <option value="date">Date</option>
@@ -431,7 +431,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
                 onChange={(e) =>
                   handleFilterChange('sortOrder', e.target.value as SearchFilters['sortOrder'])
                 }
-                className="w-full px-3 py-2 bg-primary-600 border border-c-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               >
                 <option value="desc">Descending</option>
                 <option value="asc">Ascending</option>

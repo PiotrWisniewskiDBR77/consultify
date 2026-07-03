@@ -107,7 +107,7 @@ export const BillingOverviewPanel: React.FC = () => {
                 onClick={() => setPeriod(p)}
                 className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
                   period === p
-                    ? 'bg-primary-600 text-white'
+                    ? 'bg-c-text text-c-bg'
                     : 'text-slate-600 dark:text-slate-500 hover:text-white'
                 }`}
               >

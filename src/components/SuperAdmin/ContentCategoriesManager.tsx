@@ -380,7 +380,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                 value={formData.name}
                 onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                 placeholder="Category name..."
-                className="w-full px-3 py-2 bg-primary-600 border border-c-border rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               />
             </div>
             <div>
@@ -390,7 +390,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                 value={formData.description}
                 onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                 placeholder="Optional description..."
-                className="w-full px-3 py-2 bg-primary-600 border border-c-border rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               />
             </div>
           </div>

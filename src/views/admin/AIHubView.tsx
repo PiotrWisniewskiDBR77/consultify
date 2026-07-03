@@ -376,7 +376,7 @@ PODEJŚCIE:
                       value={editingPrompt}
                       onChange={(e) => setEditingPrompt(e.target.value)}
                       placeholder="Wpisz instrukcje dla AI..."
-                      className="w-full h-full bg-primary-600 border border-white/10 rounded-xl p-4 text-white text-sm font-mono resize-none focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/20"
+                      className="w-full h-full bg-c-text text-c-bg border border-white/10 rounded-xl p-4 text-sm font-mono resize-none focus:outline-none focus:border-c-accent/50 focus:ring-1 focus:ring-primary-500/20"
                     />
                   </div>
                   <div className="shrink-0 p-4 border-t border-white/5 text-xs text-slate-500 dark:text-slate-400">

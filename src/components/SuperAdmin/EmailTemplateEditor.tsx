@@ -344,7 +344,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                     }))
                   }
                   placeholder="welcome-email"
-                  className="w-full px-3 py-2 bg-primary-600 border border-c-border rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50 font-mono text-sm"
+                  className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50 font-mono text-sm"
                   disabled={!isNew}
                 />
               </div>
@@ -356,7 +356,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                   value={formData.name}
                   onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                   placeholder="Welcome Email"
-                  className="w-full px-3 py-2 bg-primary-600 border border-c-border rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+                  className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50"
                 />
               </div>
 
@@ -371,7 +371,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                   }
                   placeholder="Brief description of this template..."
                   rows={2}
-                  className="w-full px-3 py-2 bg-primary-600 border border-c-border rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50 resize-none"
+                  className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50 resize-none"
                 />
               </div>
             </div>
@@ -391,7 +391,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                   value={formData.subject}
                   onChange={(e) => setFormData((prev) => ({ ...prev, subject: e.target.value }))}
                   placeholder="Welcome to {{organizationName}}, {{firstName}}!"
-                  className="w-full px-3 py-2 bg-primary-600 border border-c-border rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+                  className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50"
                 />
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                   Use {'{{variableName}}'} for dynamic content
@@ -403,7 +403,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                 <select
                   value={formData.categoryId}
                   onChange={(e) => setFormData((prev) => ({ ...prev, categoryId: e.target.value }))}
-                  className="w-full px-3 py-2 bg-primary-600 border border-c-border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+                  className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500/50"
                 >
                   <option value="">No category</option>
                   {categories.map((cat) => (
@@ -421,7 +421,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, languageCode: e.target.value }))
                   }
-                  className="w-full px-3 py-2 bg-primary-600 border border-c-border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+                  className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500/50"
                 >
                   <option value="en">English</option>
                   <option value="pl">Polish</option>
@@ -457,7 +457,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                   value={newVariable}
                   onChange={(e) => setNewVariable(e.target.value.replace(/[^a-zA-Z0-9]/g, ''))}
                   placeholder="Add variable..."
-                  className="flex-1 px-3 py-1.5 bg-primary-600 border border-c-border rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50 text-sm font-mono"
+                  className="flex-1 px-3 py-1.5 bg-c-text text-c-bg border border-c-border rounded-lg placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50 text-sm font-mono"
                 />
                 <button
                   onClick={addVariable}
@@ -490,7 +490,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                           [varName]: e.target.value,
                         }))
                       }
-                      className="w-full px-2.5 py-1.5 bg-primary-600 border border-c-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+                      className="w-full px-2.5 py-1.5 bg-c-text text-c-bg border border-c-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/50"
                     />
                   </div>
                 ))}
@@ -639,7 +639,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, textContent: e.target.value }))
                   }
-                  className="w-full h-32 p-3 bg-primary-600 border border-c-border rounded-lg text-white font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+                  className="w-full h-32 p-3 bg-c-text text-c-bg border border-c-border rounded-lg font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-pink-500/50"
                   placeholder="Plain text fallback for email clients that don't support HTML..."
                 />
               </div>

@@ -43,7 +43,7 @@ import { GroupPermission, User, UserGroup } from '../../types';
 const GROUP_COLORS = [
   {
     id: 'violet',
-    bg: 'bg-primary-500',
+    bg: 'bg-c-accent',
     text: 'text-primary-500',
     light: 'bg-primary-100 dark:bg-primary-900/30',
   },
@@ -765,7 +765,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                                   onClick={() => togglePermission(resource.id, action)}
                                   className={`w-6 h-6 rounded ${
                                     hasPermission(resource.id, action)
-                                      ? 'bg-primary-600 text-white'
+                                      ? 'bg-c-text text-c-bg'
                                       : 'bg-slate-200 dark:bg-navy-700 text-c-text-muted'
                                   }`}
                                 >

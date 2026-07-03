@@ -374,7 +374,7 @@ export const PartnerCodeInput: React.FC<PartnerCodeInputProps> = ({ className })
               <button
                 onClick={handleApplyCode}
                 disabled={applying || !validationResult?.valid}
-                className="px-4 py-2.5 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-primary-600/50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium flex items-center gap-2"
+                className="px-4 py-2.5 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-c-text text-c-bg/50 disabled:cursor-not-allowed rounded-lg text-sm font-medium flex items-center gap-2"
               >
                 {applying && (
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

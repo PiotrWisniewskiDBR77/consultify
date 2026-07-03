@@ -447,7 +447,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
               <button
                 onClick={() => handleAction('addTags')}
                 disabled={selectedTagIds.length === 0 || isProcessing}
-                className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-600 disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-c-text text-c-bg rounded-lg font-medium hover:bg-c-text-secondary disabled:opacity-50"
               >
                 {isProcessing ? (
                   <RefreshCw size={14} className="animate-spin" />
@@ -539,7 +539,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
             <select
               value={selectedCategoryId}
               onChange={(e) => setSelectedCategoryId(e.target.value)}
-              className="w-full px-3 py-2 bg-primary-600 border border-c-border rounded-lg text-white mb-3 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+              className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
             >
               <option value="">Select a category...</option>
               {availableCategories.map((cat) => (
@@ -561,7 +561,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
               <button
                 onClick={() => handleAction('setCategory')}
                 disabled={!selectedCategoryId || isProcessing}
-                className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-600 disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-c-text text-c-bg rounded-lg font-medium hover:bg-c-text-secondary disabled:opacity-50"
               >
                 {isProcessing ? (
                   <RefreshCw size={14} className="animate-spin" />

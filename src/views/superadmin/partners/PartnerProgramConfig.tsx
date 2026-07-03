@@ -505,7 +505,7 @@ export const PartnerProgramConfig: React.FC = () => {
               onChange={(e) =>
                 setDiscountConfig({ ...discountConfig, discountType: e.target.value as any })
               }
-              className="w-full px-4 py-2.5 bg-primary-600 border border-white/10 rounded-lg text-white"
+              className="w-full px-4 py-2.5 bg-c-text text-c-bg border border-white/10 rounded-lg"
             >
               <option value="PERCENTAGE">Percentage</option>
               <option value="FLAT">Flat Amount</option>
@@ -524,7 +524,7 @@ export const PartnerProgramConfig: React.FC = () => {
               }
               min={0}
               max={discountConfig.discountType === 'PERCENTAGE' ? 100 : undefined}
-              className="w-full px-4 py-2.5 bg-primary-600 border border-white/10 rounded-lg text-white"
+              className="w-full px-4 py-2.5 bg-c-text text-c-bg border border-white/10 rounded-lg"
             />
           </div>
 
@@ -540,7 +540,7 @@ export const PartnerProgramConfig: React.FC = () => {
               }
               min={1}
               max={60}
-              className="w-full px-4 py-2.5 bg-primary-600 border border-white/10 rounded-lg text-white"
+              className="w-full px-4 py-2.5 bg-c-text text-c-bg border border-white/10 rounded-lg"
             />
           </div>
 
@@ -558,7 +558,7 @@ export const PartnerProgramConfig: React.FC = () => {
                 })
               }
               placeholder="No limit"
-              className="w-full px-4 py-2.5 bg-primary-600 border border-white/10 rounded-lg text-white"
+              className="w-full px-4 py-2.5 bg-c-text text-c-bg border border-white/10 rounded-lg"
             />
           </div>
         </div>
@@ -808,7 +808,7 @@ export const PartnerProgramConfig: React.FC = () => {
                 setPayoutSettings({ ...payoutSettings, minimumThreshold: Number(e.target.value) })
               }
               min={0}
-              className="w-full px-4 py-2.5 bg-primary-600 border border-white/10 rounded-lg text-white"
+              className="w-full px-4 py-2.5 bg-c-text text-c-bg border border-white/10 rounded-lg"
             />
           </div>
 
@@ -821,7 +821,7 @@ export const PartnerProgramConfig: React.FC = () => {
               onChange={(e) =>
                 setPayoutSettings({ ...payoutSettings, payoutSchedule: e.target.value as any })
               }
-              className="w-full px-4 py-2.5 bg-primary-600 border border-white/10 rounded-lg text-white"
+              className="w-full px-4 py-2.5 bg-c-text text-c-bg border border-white/10 rounded-lg"
             >
               <option value="WEEKLY">Weekly</option>
               <option value="BIWEEKLY">Bi-weekly</option>
@@ -845,7 +845,7 @@ export const PartnerProgramConfig: React.FC = () => {
               min={0}
               max={10}
               step={0.1}
-              className="w-full px-4 py-2.5 bg-primary-600 border border-white/10 rounded-lg text-white"
+              className="w-full px-4 py-2.5 bg-c-text text-c-bg border border-white/10 rounded-lg"
             />
           </div>
 
@@ -893,7 +893,7 @@ export const PartnerProgramConfig: React.FC = () => {
                 className={cn(
                   'flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors',
                   payoutSettings.paymentMethods.includes(method.id)
-                    ? 'bg-primary-600/20 border-primary-500 text-white'
+                    ? 'bg-c-text text-c-bg/20 border-primary-500'
                     : 'bg-c-surface border-white/10 text-slate-600 dark:text-slate-500 hover:text-white'
                 )}
               >

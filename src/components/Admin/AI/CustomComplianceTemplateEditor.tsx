@@ -590,7 +590,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
             <button
               key={base.id}
               onClick={() => selectBaseTemplate(base.id)}
-              className="p-6 bg-c-surface/50 border border-white/10 rounded-xl text-left hover:border-primary-500/50 hover:bg-primary-500/5 transition-all"
+              className="p-6 bg-c-surface/50 border border-white/10 rounded-xl text-left hover:border-c-accent/50 hover:bg-c-accent/5 transition-all"
             >
               <h3 className="font-semibold text-c-text mb-2">{base.name}</h3>
               <p className="text-sm text-slate-600 dark:text-slate-500">{base.description}</p>

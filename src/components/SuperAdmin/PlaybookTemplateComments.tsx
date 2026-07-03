@@ -268,7 +268,7 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
             <textarea
               value={editText}
               onChange={(e) => setEditText(e.target.value)}
-              className="w-full px-3 py-2 bg-primary-600 border border-c-border rounded-lg text-white text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+              className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               rows={3}
             />
             <div className="flex justify-end gap-2">
@@ -284,7 +284,7 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
               <button
                 onClick={() => handleEditComment(comment.id)}
                 disabled={submitting}
-                className="px-3 py-1.5 bg-primary-500 text-white text-sm rounded-lg hover:bg-primary-600 disabled:opacity-50"
+                className="px-3 py-1.5 bg-c-text text-c-bg text-sm rounded-lg hover:bg-c-text-secondary disabled:opacity-50"
               >
                 Save
               </button>
@@ -315,13 +315,13 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
               placeholder="Write a reply..."
-              className="flex-1 px-3 py-2 bg-primary-600 border border-c-border rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+              className="flex-1 px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               onKeyPress={(e) => e.key === 'Enter' && handleSubmitReply(comment.id)}
             />
             <button
               onClick={() => handleSubmitReply(comment.id)}
               disabled={submitting || !replyText.trim()}
-              className="px-3 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 disabled:opacity-50"
+              className="px-3 py-2 bg-c-text text-c-bg rounded-lg hover:bg-c-text-secondary disabled:opacity-50"
             >
               <Send size={16} />
             </button>

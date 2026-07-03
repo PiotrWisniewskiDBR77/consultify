@@ -973,7 +973,7 @@ export const APIManagementView: React.FC = () => {
           <button
             disabled
             title={webhookWorkflowUnavailableReason}
-            className="px-4 py-2 bg-primary-600 text-white rounded-lg font-medium flex items-center gap-2 opacity-50 cursor-not-allowed"
+            className="px-4 py-2 bg-c-text text-c-bg rounded-lg font-medium flex items-center gap-2 opacity-50 cursor-not-allowed"
           >
             <Plus size={16} />
             Add Webhook

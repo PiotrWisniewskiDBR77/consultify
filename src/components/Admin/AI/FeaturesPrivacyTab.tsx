@@ -662,7 +662,7 @@ Example:
                       onChange={(e) =>
                         setEditingPrompt({ ...editingPrompt, description: e.target.value })
                       }
-                      className="w-full bg-primary-600 border border-white/10 rounded p-2 text-white text-sm"
+                      className="w-full bg-c-text text-c-bg border border-white/10 rounded p-2 text-sm"
                     />
                   </div>
                   <div>
@@ -674,7 +674,7 @@ Example:
                       onChange={(e) =>
                         setEditingPrompt({ ...editingPrompt, content: e.target.value })
                       }
-                      className="w-full h-64 bg-primary-600 border border-white/10 rounded p-4 text-white font-mono text-sm leading-relaxed focus:border-primary-500 outline-none resize-none"
+                      className="w-full h-64 bg-c-text text-c-bg border border-white/10 rounded p-4 font-mono text-sm leading-relaxed focus:border-primary-500 outline-none resize-none"
                     />
                   </div>
 

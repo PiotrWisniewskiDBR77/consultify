@@ -320,7 +320,7 @@ export const LoginAttemptsPanel: React.FC = () => {
                 onClick={() => setFilterStatus(status)}
                 className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
                   filterStatus === status
-                    ? 'bg-primary-600 text-white'
+                    ? 'bg-c-text text-c-bg'
                     : 'text-slate-600 dark:text-slate-500 hover:text-white'
                 }`}
               >

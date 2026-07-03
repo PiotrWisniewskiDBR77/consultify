@@ -495,7 +495,7 @@ export const SecuritySettings: React.FC = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, passwordExpiryDays: parseInt(e.target.value) })
                 }
-                className="w-full bg-primary-600 border border-white/10 rounded-lg p-3 text-white"
+                className="w-full bg-c-text text-c-bg border border-white/10 rounded-lg p-3"
               />
             </div>
           </div>
@@ -517,7 +517,7 @@ export const SecuritySettings: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, sessionTimeoutMinutes: parseInt(e.target.value) })
                   }
-                  className="w-full bg-primary-600 border border-white/10 rounded-lg p-3 text-white"
+                  className="w-full bg-c-text text-c-bg border border-white/10 rounded-lg p-3"
                 />
               </div>
 
@@ -533,7 +533,7 @@ export const SecuritySettings: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, maxSessionsPerUser: parseInt(e.target.value) })
                   }
-                  className="w-full bg-primary-600 border border-white/10 rounded-lg p-3 text-white"
+                  className="w-full bg-c-text text-c-bg border border-white/10 rounded-lg p-3"
                 />
               </div>
             </div>
@@ -544,7 +544,7 @@ export const SecuritySettings: React.FC = () => {
             <button
               onClick={handleSaveSettings}
               disabled={saving}
-              className="flex items-center gap-2 px-6 py-3 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-primary-600/50 text-white rounded-lg font-medium transition-colors"
+              className="flex items-center gap-2 px-6 py-3 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-c-text text-c-bg/50 rounded-lg font-medium transition-colors"
             >
               {saving ? <RefreshCw size={16} className="animate-spin" /> : <Check size={16} />}
               Save Settings

@@ -158,7 +158,7 @@ export const AdminIamPolicyPanel: React.FC = () => {
         <button
           onClick={() => void save()}
           disabled={saving}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-c-text text-c-bg px-4 py-2 text-sm font-medium hover:bg-c-text-secondary disabled:opacity-50"
         >
           <Save className="h-4 w-4" />
           {saving ? 'Saving...' : 'Save IAM policy'}
@@ -358,7 +358,7 @@ export const AdminIamPolicyPanel: React.FC = () => {
           />
           <button
             onClick={() => void createAssignment()}
-            className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            className="rounded-lg bg-c-text text-c-bg px-4 py-2 text-sm font-medium hover:bg-c-text-secondary"
           >
             Assign delegated role
           </button>

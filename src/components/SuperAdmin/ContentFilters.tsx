@@ -218,7 +218,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
                   }
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     filters.contentType === type
-                      ? 'bg-primary-600 text-white'
+                      ? 'bg-c-text text-c-bg'
                       : 'bg-c-surface text-slate-400 dark:text-slate-500 hover:bg-c-surface-raised hover:text-white'
                   }`}
                 >
@@ -340,7 +340,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
                       dateRange: { ...filters.dateRange, from: e.target.value },
                     })
                   }
-                  className="w-full px-3 py-2 bg-primary-600 border border-c-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                  className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
                 />
               </div>
               <div>
@@ -354,7 +354,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
                       dateRange: { ...filters.dateRange, to: e.target.value },
                     })
                   }
-                  className="w-full px-3 py-2 bg-primary-600 border border-c-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                  className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
                 />
               </div>
             </div>
@@ -403,7 +403,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
             <select
               value={filters.language}
               onChange={(e) => onChange({ ...filters, language: e.target.value })}
-              className="w-full px-3 py-2 bg-primary-600 border border-c-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+              className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
             >
               <option value="">All languages</option>
               {languages.map((lang) => (

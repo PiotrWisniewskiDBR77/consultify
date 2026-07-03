@@ -218,7 +218,7 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
             disabled={Boolean(loadError)}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               statusFilter === status
-                ? 'bg-primary-600 text-white'
+                ? 'bg-c-text text-c-bg'
                 : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5'
             }`}
           >

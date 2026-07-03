@@ -187,7 +187,7 @@ export const SuperAdminStorageDetailModal: React.FC<StorageModalProps> = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               disabled={Boolean(loadError)}
-              className="w-full pl-10 pr-4 py-2 bg-primary-600 border border-white/10 rounded-lg text-white focus:outline-none focus:border-pink-500"
+              className="w-full pl-10 pr-4 py-2 bg-c-text text-c-bg border border-white/10 rounded-lg focus:outline-none focus:border-pink-500"
             />
           </div>
         </div>

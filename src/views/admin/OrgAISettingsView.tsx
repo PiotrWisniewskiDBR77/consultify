@@ -376,7 +376,7 @@ export const OrgAISettingsView: React.FC = () => {
                             flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap
                             ${
                               activeTab === tab.id
-                                ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/20'
+                                ? 'bg-c-text text-c-bg shadow-lg shadow-primary-500/20'
                                 : 'text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20'
                             }
                         `}

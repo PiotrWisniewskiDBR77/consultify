@@ -266,7 +266,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
             <div
               className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-colors ${
                 step === s
-                  ? 'bg-primary-600 text-white'
+                  ? 'bg-c-text text-c-bg'
                   : ['select', 'configure', 'running', 'done'].indexOf(step) > i
                     ? 'bg-primary-500/20 text-primary-400'
                     : 'bg-white/5 text-slate-500'

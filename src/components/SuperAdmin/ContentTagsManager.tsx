@@ -226,7 +226,7 @@ export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
               value={formData.name}
               onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
               placeholder="Tag name..."
-              className="w-full px-3 py-2 bg-primary-600 border border-c-border rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+              className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
               onKeyPress={(e) => e.key === 'Enter' && handleCreate()}
             />
           </div>
@@ -293,7 +293,7 @@ export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                    className="px-2 py-1 bg-primary-600 border border-slate-600 rounded text-white text-sm w-24 focus:outline-none"
+                    className="px-2 py-1 bg-c-text text-c-bg border border-slate-600 rounded text-sm w-24 focus:outline-none"
                     autoFocus
                   />
                   <div className="flex gap-1">

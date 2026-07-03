@@ -2090,7 +2090,7 @@ const SectionRow: React.FC<SectionRowProps> = ({
       <div className="flex items-center gap-2 px-3 py-2">
         <button
           onClick={onToggle}
-          className={`w-5 h-5 rounded border-2 flex items-center justify-center transition flex-shrink-0 ${isEnabled ? 'bg-primary-600 border-c-border text-white' : 'border-slate-300 dark:border-navy-600 hover:border-primary-400'}`}
+          className={`w-5 h-5 rounded border-2 flex items-center justify-center transition flex-shrink-0 ${isEnabled ? 'bg-c-text text-c-bg border-c-border' : 'border-slate-300 dark:border-navy-600 hover:border-primary-400'}`}
         >
           {isEnabled && <Check size={12} />}
         </button>

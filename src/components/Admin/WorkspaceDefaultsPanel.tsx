@@ -107,7 +107,7 @@ const COLOR_OPTIONS = [
   { id: 'amber', bg: 'bg-amber-500', light: 'bg-amber-100' },
   { id: 'green', bg: 'bg-green-500', light: 'bg-green-100' },
   { id: 'blue', bg: 'bg-blue-500', light: 'bg-blue-100' },
-  { id: 'violet', bg: 'bg-primary-500', light: 'bg-primary-100' },
+  { id: 'violet', bg: 'bg-c-accent', light: 'bg-c-accent/10' },
   { id: 'pink', bg: 'bg-pink-500', light: 'bg-pink-100' },
 ];
 
@@ -330,7 +330,7 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({
           <button
             onClick={saveSettings}
             disabled={!hasChanges || saving}
-            className="px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-lg flex items-center gap-2 transition-colors"
+            className="px-4 py-2 bg-c-text text-c-bg hover:bg-c-text-secondary disabled:bg-slate-300 dark:disabled:bg-slate-700 rounded-lg flex items-center gap-2 transition-colors"
           >
             <Save size={18} className={saving ? 'animate-spin' : ''} />
             {t('common.save', 'Save Changes')}
@@ -763,7 +763,7 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({
                     onClick={() => toggleWorkingDay(day.value)}
                     className={`w-10 h-10 text-xs font-medium rounded-lg transition-colors ${
                       settings.workingDays.includes(day.value)
-                        ? 'bg-primary-600 text-white'
+                        ? 'bg-c-text text-c-bg'
                         : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-600'
                     }`}
                   >

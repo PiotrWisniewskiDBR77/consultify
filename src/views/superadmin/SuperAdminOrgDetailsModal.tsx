@@ -231,7 +231,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
             onChange={(e) =>
               setEditingOrg({ ...editingOrg, plan: e.target.value as Organization['plan'] })
             }
-            className="w-full px-3 py-2 bg-primary-600 border border-white/10 rounded text-white focus:border-blue-500 outline-none"
+            className="w-full px-3 py-2 bg-c-text text-c-bg border border-white/10 rounded focus:border-blue-500 outline-none"
           >
             <option value="free">Free</option>
             <option value="pro">Pro</option>
@@ -248,7 +248,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
             onChange={(e) =>
               setEditingOrg({ ...editingOrg, status: e.target.value as Organization['status'] })
             }
-            className="w-full px-3 py-2 bg-primary-600 border border-white/10 rounded text-white focus:border-blue-500 outline-none"
+            className="w-full px-3 py-2 bg-c-text text-c-bg border border-white/10 rounded focus:border-blue-500 outline-none"
           >
             <option value="active">Active</option>
             <option value="trial">Trial</option>
@@ -270,7 +270,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
             onChange={(e) =>
               setEditingOrg({ ...editingOrg, discount_percent: parseInt(e.target.value) || 0 })
             }
-            className="w-32 px-3 py-2 bg-primary-600 border border-white/10 rounded text-white focus:border-blue-500 outline-none"
+            className="w-32 px-3 py-2 bg-c-text text-c-bg border border-white/10 rounded focus:border-blue-500 outline-none"
           />
           <p className="text-xs text-slate-500 dark:text-slate-400">
             Discount applied to all future invoices.

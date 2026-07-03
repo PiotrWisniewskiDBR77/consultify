@@ -219,7 +219,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
             onClick={() => setActiveTab(tab.id as any)}
             className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${
               activeTab === tab.id
-                ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/30'
+                ? 'bg-c-text text-c-bg shadow-lg shadow-primary-900/30'
                 : 'text-c-text-muted hover:text-navy-900 dark:hover:text-slate-200 hover:bg-c-surface-raised dark:hover:bg-c-surface/5'
             }`}
           >
@@ -248,7 +248,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                       <input
                         value={editForm.name}
                         onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                        className="w-full bg-primary-600 border border-white/10 rounded-xl p-4 text-white focus:border-primary-500 outline-none"
+                        className="w-full bg-c-text text-c-bg border border-white/10 rounded-xl p-4 focus:border-primary-500 outline-none"
                       />
                     </div>
                     <div>
@@ -259,7 +259,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                         value={editForm.description}
                         onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
                         rows={4}
-                        className="w-full bg-primary-600 border border-white/10 rounded-xl p-4 text-white focus:border-primary-500 outline-none resize-none"
+                        className="w-full bg-c-text text-c-bg border border-white/10 rounded-xl p-4 focus:border-primary-500 outline-none resize-none"
                       />
                     </div>
                     <div>
@@ -269,7 +269,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                       <input
                         value={editForm.goal}
                         onChange={(e) => setEditForm({ ...editForm, goal: e.target.value })}
-                        className="w-full bg-primary-600 border border-white/10 rounded-xl p-4 text-white focus:border-primary-500 outline-none"
+                        className="w-full bg-c-text text-c-bg border border-white/10 rounded-xl p-4 focus:border-primary-500 outline-none"
                       />
                     </div>
                     <div>
@@ -284,7 +284,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                             status: e.target.value as Project['status'],
                           })
                         }
-                        className="w-full bg-primary-600 border border-white/10 rounded-xl p-4 text-white focus:border-primary-500 outline-none appearance-none"
+                        className="w-full bg-c-text text-c-bg border border-white/10 rounded-xl p-4 focus:border-primary-500 outline-none appearance-none"
                       >
                         <option value="active">Active</option>
                         <option value="archived">Archived</option>

@@ -1769,7 +1769,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                                 {isConnected ? null : connectable ? (
                                   <button
                                     onClick={() => handleConnect(conn.id)}
-                                    className="px-3 py-1 text-xs bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors"
+                                    className="px-3 py-1 text-xs bg-c-text text-c-bg hover:bg-c-text-secondary rounded-lg transition-colors"
                                   >
                                     {t('integrations.syncHub.connect', 'Connect')}
                                   </button>
@@ -2312,7 +2312,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                                       handlePendingConfigDraftChange(int.id, field, e.target.value)
                                     }
                                     placeholder={formatConfigFieldLabel(field)}
-                                    className="w-full rounded-lg border border-c-border bg-primary-600 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-amber-500/40 focus:outline-none"
+                                    className="w-full rounded-lg border border-c-border bg-c-text text-c-bg px-3 py-2 text-xs placeholder:text-slate-500 focus:border-amber-500/40 focus:outline-none"
                                   />
                                 </label>
                               ))}
@@ -2607,7 +2607,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               )
                             }
                             placeholder="acct-123"
-                            className="w-full rounded-lg border border-c-border bg-primary-600 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-primary-500/40 focus:outline-none"
+                            className="w-full rounded-lg border border-c-border bg-c-text text-c-bg px-3 py-2 text-xs placeholder:text-slate-500 focus:border-c-accent/40 focus:outline-none"
                           />
                         </label>
                         <label className="block">
@@ -2625,7 +2625,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               )
                             }
                             placeholder="tenant-456"
-                            className="w-full rounded-lg border border-c-border bg-primary-600 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-primary-500/40 focus:outline-none"
+                            className="w-full rounded-lg border border-c-border bg-c-text text-c-bg px-3 py-2 text-xs placeholder:text-slate-500 focus:border-c-accent/40 focus:outline-none"
                           />
                         </label>
                         <label className="block">
@@ -2639,7 +2639,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               handleCredentialDraftChange(int.id, 'scopesGranted', e.target.value)
                             }
                             placeholder="read:jira-work, write:jira-work"
-                            className="w-full rounded-lg border border-c-border bg-primary-600 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-primary-500/40 focus:outline-none"
+                            className="w-full rounded-lg border border-c-border bg-c-text text-c-bg px-3 py-2 text-xs placeholder:text-slate-500 focus:border-c-accent/40 focus:outline-none"
                           />
                         </label>
                         <label className="block">
@@ -2653,7 +2653,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               handleCredentialDraftChange(int.id, 'tokenExpiresAt', e.target.value)
                             }
                             placeholder="2026-03-27T19:00:00.000Z"
-                            className="w-full rounded-lg border border-c-border bg-primary-600 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-primary-500/40 focus:outline-none"
+                            className="w-full rounded-lg border border-c-border bg-c-text text-c-bg px-3 py-2 text-xs placeholder:text-slate-500 focus:border-c-accent/40 focus:outline-none"
                           />
                         </label>
                         <div className="flex items-center gap-2">
@@ -2706,7 +2706,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                                     e.target.value as RefreshResultDraft
                                   )
                                 }
-                                className="w-full rounded-lg border border-c-border bg-primary-600 px-3 py-2 text-xs text-white focus:border-primary-500/40 focus:outline-none"
+                                className="w-full rounded-lg border border-c-border bg-c-text text-c-bg px-3 py-2 text-xs focus:border-c-accent/40 focus:outline-none"
                               >
                                 <option value="success">success</option>
                                 <option value="transient_failure">transient_failure</option>
@@ -2829,7 +2829,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               handleRefreshSecretDraftChange(int.id, 'clientId', e.target.value)
                             }
                             placeholder="client-id"
-                            className="w-full rounded-lg border border-c-border bg-primary-600 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-sky-500/40 focus:outline-none"
+                            className="w-full rounded-lg border border-c-border bg-c-text text-c-bg px-3 py-2 text-xs placeholder:text-slate-500 focus:border-sky-500/40 focus:outline-none"
                           />
                         </label>
                         <label className="block">
@@ -2843,7 +2843,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               handleRefreshSecretDraftChange(int.id, 'clientSecret', e.target.value)
                             }
                             placeholder="client-secret"
-                            className="w-full rounded-lg border border-c-border bg-primary-600 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-sky-500/40 focus:outline-none"
+                            className="w-full rounded-lg border border-c-border bg-c-text text-c-bg px-3 py-2 text-xs placeholder:text-slate-500 focus:border-sky-500/40 focus:outline-none"
                           />
                         </label>
                         <label className="block">
@@ -2857,7 +2857,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               handleRefreshSecretDraftChange(int.id, 'refreshToken', e.target.value)
                             }
                             placeholder="refresh-token"
-                            className="w-full rounded-lg border border-c-border bg-primary-600 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-sky-500/40 focus:outline-none"
+                            className="w-full rounded-lg border border-c-border bg-c-text text-c-bg px-3 py-2 text-xs placeholder:text-slate-500 focus:border-sky-500/40 focus:outline-none"
                           />
                         </label>
                         <label className="block">
@@ -2875,7 +2875,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               )
                             }
                             placeholder="https://auth.atlassian.com/oauth/token"
-                            className="w-full rounded-lg border border-c-border bg-primary-600 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-sky-500/40 focus:outline-none"
+                            className="w-full rounded-lg border border-c-border bg-c-text text-c-bg px-3 py-2 text-xs placeholder:text-slate-500 focus:border-sky-500/40 focus:outline-none"
                           />
                         </label>
                         <div className="text-[11px] text-sky-100/60">
@@ -3042,7 +3042,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         </div>
         <button
           onClick={() => window.location.assign('/settings/integrations')}
-          className="h-9 px-4 bg-primary-600 hover:bg-primary-500 text-white text-sm rounded-lg flex items-center gap-2 transition-colors shrink-0"
+          className="h-9 px-4 bg-c-text text-c-bg hover:bg-c-text-secondary text-sm rounded-lg flex items-center gap-2 transition-colors shrink-0"
         >
           <Plus size={16} />
           {t('integrations.syncHub.manageInSettings', 'Manage in Settings')}
@@ -3137,7 +3137,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               setActiveTab('apps');
               window.location.assign('/settings/integrations');
             }}
-            className="shrink-0 inline-flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg bg-primary-600 hover:bg-primary-500 text-white transition-colors"
+            className="shrink-0 inline-flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg bg-c-text text-c-bg hover:bg-c-text-secondary transition-colors"
           >
             <Plus size={14} />
             {t('integrations.syncHub.manageInSettings', 'Manage in Settings')}

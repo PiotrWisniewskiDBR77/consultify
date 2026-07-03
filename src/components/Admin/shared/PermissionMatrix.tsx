@@ -309,7 +309,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                                   className={cn(
                                     'w-6 h-6 rounded flex items-center justify-center transition-all',
                                     allGranted
-                                      ? 'bg-primary-600 text-white'
+                                      ? 'bg-c-text text-c-bg'
                                       : someGranted
                                         ? 'bg-primary-200 dark:bg-primary-900/50 text-primary-600'
                                         : 'bg-slate-200 dark:bg-navy-700 text-slate-400 dark:text-slate-500 hover:bg-slate-300 dark:hover:bg-navy-600'
@@ -372,7 +372,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                                   className={cn(
                                     'w-5 h-5 rounded flex items-center justify-center transition-all',
                                     granted
-                                      ? 'bg-primary-600 text-white'
+                                      ? 'bg-c-text text-c-bg'
                                       : 'bg-slate-200 dark:bg-navy-700',
                                     !readOnly &&
                                       !isLocked &&

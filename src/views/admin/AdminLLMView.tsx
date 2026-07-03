@@ -713,7 +713,7 @@ export const AdminLLMView: React.FC = () => {
 
                   <div className="flex flex-wrap gap-1 mb-3">
                     <span
-                      className={`px-2 py-0.5 rounded text-xs ${p.isDefault ? 'bg-primary-500/20 text-primary-300' : 'bg-c-surface-raised/50 text-c-text-secondary'}`}
+                      className={`px-2 py-0.5 rounded text-xs ${p.isDefault ? 'bg-c-accent/20 text-c-accent' : 'bg-c-surface-raised/50 text-c-text-secondary'}`}
                     >
                       {p.isDefault ? '★ Default' : p.tier}
                     </span>

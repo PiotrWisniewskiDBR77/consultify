@@ -360,7 +360,7 @@ export function ABTestingDashboard() {
               disabled={!!error}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 statusFilter === status
-                  ? 'bg-primary-600 text-white'
+                  ? 'bg-c-text text-c-bg'
                   : 'bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-navy-700'
               }`}
             >
