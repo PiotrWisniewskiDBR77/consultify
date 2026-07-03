@@ -227,7 +227,7 @@ export const SecurityView: React.FC = () => {
   const handleContactClick = () => navigate('/contact');
 
   return (
-    <div className="min-h-screen bg-white dark:bg-navy-950 flex flex-col">
+    <div className="min-h-screen bg-c-surface flex flex-col">
       <EntryTopBar
         onTrialClick={handleTrialClick}
         onDemoClick={handleDemoClick}
@@ -253,7 +253,7 @@ export const SecurityView: React.FC = () => {
               {t('security.hero.titlePost', 'not marketing claims.')}
             </h1>
 
-            <p className="text-lg text-slate-600 dark:text-slate-300 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg text-c-text-secondary max-w-3xl mx-auto leading-relaxed">
               {t(
                 'security.hero.subtitle',
                 'Consultify and DBR77 Vector deliver enterprise-grade AI through technical solutions — from encryption and data sovereignty to dedicated deployment models and ISO 27001 alignment.'
@@ -279,7 +279,7 @@ export const SecurityView: React.FC = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: idx * 0.1, duration: 0.5 }}
-                  className="p-6 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm hover:shadow-lg transition-shadow"
+                  className="p-6 bg-c-surface rounded-xl border border-c-border-subtle shadow-sm hover:shadow-lg transition-shadow"
                 >
                   <div
                     className={`w-12 h-12 ${feature.bgColor} rounded-xl flex items-center justify-center mb-4`}
@@ -289,7 +289,7 @@ export const SecurityView: React.FC = () => {
                   <h3 className="text-lg font-bold text-navy-950 dark:text-white mb-2">
                     {t(`security.infra.features.${idx}.title`, feature.title)}
                   </h3>
-                  <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                  <p className="text-c-text-secondary text-sm leading-relaxed">
                     {t(`security.infra.features.${idx}.description`, feature.description)}
                   </p>
                 </motion.div>
@@ -300,7 +300,7 @@ export const SecurityView: React.FC = () => {
       </section>
 
       {/* ── Six Pillars of AI Security ── */}
-      <section className="py-20 px-6 bg-slate-50 dark:bg-navy-900/40">
+      <section className="py-20 px-6 bg-c-surface-raised/40">
         <div className="max-w-6xl mx-auto">
           <motion.div {...fadeUp} className="text-center mb-14">
             <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-widest mb-4">
@@ -310,7 +310,7 @@ export const SecurityView: React.FC = () => {
             <h2 className="text-3xl md:text-4xl font-black text-navy-950 dark:text-white tracking-tight">
               {t('security.pillars.title', 'Six Pillars of Industrial AI Security')}
             </h2>
-            <p className="mt-4 text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+            <p className="mt-4 text-c-text-secondary max-w-2xl mx-auto">
               {t(
                 'security.pillars.subtitle',
                 'Every aspect of DBR77 Vector — from training data to deployment to inference — is designed for environments where data sovereignty and auditability are non-negotiable.'
@@ -328,7 +328,7 @@ export const SecurityView: React.FC = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.45, delay: idx * 0.08 }}
-                  className="rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] p-7"
+                  className="rounded-2xl border border-c-border-subtle dark:border-white/[0.08] bg-c-surface dark:bg-c-surface/[0.02] p-7"
                 >
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-500/20 mb-5">
                     <Icon size={20} />
@@ -336,7 +336,7 @@ export const SecurityView: React.FC = () => {
                   <h3 className="text-base font-black text-navy-950 dark:text-white mb-2">
                     {t(`security.pillars.items.${idx}.title`, pillar.title)}
                   </h3>
-                  <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                  <p className="text-sm leading-relaxed text-c-text-secondary">
                     {t(`security.pillars.items.${idx}.body`, pillar.body)}
                   </p>
                 </motion.div>
@@ -353,7 +353,7 @@ export const SecurityView: React.FC = () => {
             <h2 className="text-3xl md:text-4xl font-black text-navy-950 dark:text-white tracking-tight">
               {t('security.deployment.title', 'Choose Your Deployment Model')}
             </h2>
-            <p className="mt-4 text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+            <p className="mt-4 text-c-text-secondary max-w-2xl mx-auto">
               {t(
                 'security.deployment.subtitle',
                 'Same Vector intelligence, same domain depth. The difference is where it runs and who manages the infrastructure.'
@@ -371,27 +371,27 @@ export const SecurityView: React.FC = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.45, delay: idx * 0.1 }}
-                  className="group relative rounded-3xl border border-slate-200 bg-white/95 p-7 shadow-lg shadow-slate-900/5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 dark:border-white/[0.08] dark:bg-slate-950/70"
+                  className="group relative rounded-3xl border border-c-border-subtle bg-c-surface/95 p-7 shadow-lg shadow-slate-900/5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 dark:border-white/[0.08] dark:bg-slate-950/70"
                 >
                   <div
                     className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${model.accent} text-white shadow-lg ${model.shadow} mb-5`}
                   >
                     <Icon size={24} />
                   </div>
-                  <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-white/50 mb-4">
+                  <span className="inline-flex items-center rounded-full border border-c-border-subtle bg-c-bg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-c-text-muted dark:border-white/[0.08] dark:bg-c-surface/[0.04] dark:text-white/50 mb-4">
                     {t(`security.deployment.models.${idx}.tag`, model.tag)}
                   </span>
-                  <h3 className="text-xl font-black text-slate-900 dark:text-white mb-3">
+                  <h3 className="text-xl font-black text-c-text mb-3">
                     {t(`security.deployment.models.${idx}.title`, model.title)}
                   </h3>
-                  <p className="text-sm leading-6 text-slate-600 dark:text-white/55 mb-4">
+                  <p className="text-sm leading-6 text-c-text-secondary dark:text-white/55 mb-4">
                     {t(`security.deployment.models.${idx}.body`, model.body)}
                   </p>
                   <ul className="space-y-2">
                     {model.bullets.map((b, bIdx) => (
                       <li
                         key={b}
-                        className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
+                        className="flex items-start gap-2 text-sm text-c-text-secondary"
                       >
                         <CheckCircle size={14} className="text-green-500 mt-0.5 shrink-0" />
                         {t(`security.deployment.models.${idx}.bullets.${bIdx}`, b)}
@@ -406,7 +406,7 @@ export const SecurityView: React.FC = () => {
       </section>
 
       {/* ── Data Sovereignty & Residency ── */}
-      <section className="py-20 px-6 bg-slate-50 dark:bg-navy-900/40">
+      <section className="py-20 px-6 bg-c-surface-raised/40">
         <div className="max-w-4xl mx-auto">
           <motion.div {...fadeUp} className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-black text-navy-950 dark:text-white tracking-tight">
@@ -416,7 +416,7 @@ export const SecurityView: React.FC = () => {
 
           <motion.div
             {...fadeUp}
-            className="rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] p-8 md:p-10"
+            className="rounded-2xl border border-c-border-subtle dark:border-white/[0.08] bg-c-surface dark:bg-c-surface/[0.02] p-8 md:p-10"
           >
             <div className="grid md:grid-cols-2 gap-8">
               <div>
@@ -444,7 +444,7 @@ export const SecurityView: React.FC = () => {
                   ].map((item, i) => (
                     <li
                       key={i}
-                      className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-400"
+                      className="flex items-start gap-3 text-sm text-c-text-secondary"
                     >
                       <CheckCircle size={14} className="text-green-500 mt-0.5 shrink-0" />
                       {item}
@@ -480,7 +480,7 @@ export const SecurityView: React.FC = () => {
                   ].map((item, i) => (
                     <li
                       key={i}
-                      className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-400"
+                      className="flex items-start gap-3 text-sm text-c-text-secondary"
                     >
                       <CheckCircle size={14} className="text-green-500 mt-0.5 shrink-0" />
                       {item}
@@ -512,7 +512,7 @@ export const SecurityView: React.FC = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, delay: idx * 0.07 }}
-                  className="flex items-center gap-4 rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] p-5"
+                  className="flex items-center gap-4 rounded-2xl border border-c-border-subtle dark:border-white/[0.08] bg-c-surface dark:bg-c-surface/[0.02] p-5"
                 >
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-500 text-white shadow-lg shadow-blue-500/20">
                     <Icon size={20} />
@@ -521,7 +521,7 @@ export const SecurityView: React.FC = () => {
                     <p className="text-sm font-black text-navy-950 dark:text-white">
                       {t(`security.techControls.items.${idx}.label`, ctrl.label)}
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-500">
+                    <p className="text-xs text-c-text-muted">
                       {t(`security.techControls.items.${idx}.sub`, ctrl.sub)}
                     </p>
                   </div>
@@ -533,13 +533,13 @@ export const SecurityView: React.FC = () => {
       </section>
 
       {/* ── Compliance & Standards ── */}
-      <section className="py-20 px-6 bg-slate-50 dark:bg-navy-900/40">
+      <section className="py-20 px-6 bg-c-surface-raised/40">
         <div className="max-w-5xl mx-auto">
           <motion.div {...fadeUp} className="text-center mb-14">
             <h2 className="text-3xl md:text-4xl font-black text-navy-950 dark:text-white tracking-tight">
               {t('security.compliance.title', 'Compliance & Standards')}
             </h2>
-            <p className="mt-4 text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
+            <p className="mt-4 text-c-text-secondary max-w-xl mx-auto">
               {t(
                 'security.compliance.subtitle',
                 'Designed to pass enterprise procurement, legal, and IT security reviews.'
@@ -555,12 +555,12 @@ export const SecurityView: React.FC = () => {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: idx * 0.07 }}
-                className="rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] p-6 text-center"
+                className="rounded-2xl border border-c-border-subtle dark:border-white/[0.08] bg-c-surface dark:bg-c-surface/[0.02] p-6 text-center"
               >
                 <p className="text-xl font-black text-navy-950 dark:text-white mb-1">
                   {t(`security.compliance.standards.${idx}.label`, std.label)}
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-500 mb-3">
+                <p className="text-xs text-c-text-muted mb-3">
                   {t(`security.compliance.standards.${idx}.sub`, std.sub)}
                 </p>
                 <span className="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/30 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-green-600 dark:text-green-400">
@@ -579,7 +579,7 @@ export const SecurityView: React.FC = () => {
             <h2 className="text-3xl md:text-4xl font-black text-navy-950 dark:text-white tracking-tight">
               {t('security.comparison.title', 'DBR77 Vector vs. Public LLMs')}
             </h2>
-            <p className="mt-4 text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
+            <p className="mt-4 text-c-text-secondary max-w-xl mx-auto">
               {t(
                 'security.comparison.subtitle',
                 'Security side by side — how Vector compares on the dimensions that matter most.'
@@ -589,18 +589,18 @@ export const SecurityView: React.FC = () => {
 
           <motion.div
             {...fadeUp}
-            className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/[0.08]"
+            className="overflow-x-auto rounded-2xl border border-c-border-subtle dark:border-white/[0.08]"
           >
             <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full text-sm">
               <thead>
-                <tr className="bg-slate-100 dark:bg-white/[0.04]">
+                <tr className="bg-c-surface-raised dark:bg-c-surface/[0.04]">
                   <th className="text-left px-6 py-4 font-bold text-navy-950 dark:text-white">
                     {t('security.comparison.dimensionHeader', 'Dimension')}
                   </th>
                   <th className="text-left px-6 py-4 font-bold text-green-600 dark:text-green-400">
                     {t('security.comparison.vectorHeader', 'DBR77 Vector')}
                   </th>
-                  <th className="text-left px-6 py-4 font-bold text-slate-500">
+                  <th className="text-left px-6 py-4 font-bold text-c-text-muted">
                     {t('security.comparison.llmHeader', 'Public LLM')}
                   </th>
                 </tr>
@@ -611,17 +611,17 @@ export const SecurityView: React.FC = () => {
                     key={row.dimension}
                     className={
                       idx % 2 === 0
-                        ? 'bg-white dark:bg-transparent'
-                        : 'bg-slate-50/50 dark:bg-white/[0.02]'
+                        ? 'bg-c-surface dark:bg-transparent'
+                        : 'bg-c-bg/50 dark:bg-c-surface/[0.02]'
                     }
                   >
                     <td className="px-6 py-4 font-semibold text-navy-950 dark:text-white whitespace-nowrap">
                       {t(`security.comparison.rows.${idx}.dimension`, row.dimension)}
                     </td>
-                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
+                    <td className="px-6 py-4 text-c-text-secondary">
                       {t(`security.comparison.rows.${idx}.vector`, row.vector)}
                     </td>
-                    <td className="px-6 py-4 text-slate-500 dark:text-slate-500">
+                    <td className="px-6 py-4 text-c-text-muted">
                       {t(`security.comparison.rows.${idx}.generic`, row.generic)}
                     </td>
                   </tr>
@@ -664,9 +664,9 @@ export const SecurityView: React.FC = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, delay: idx * 0.07 }}
-                  className="flex-1 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 text-center"
+                  className="flex-1 rounded-2xl border border-white/[0.08] bg-c-surface/[0.03] p-5 text-center"
                 >
-                  <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.06] mb-3">
+                  <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-c-surface/[0.06] mb-3">
                     <Icon size={18} className="text-white/50" />
                   </div>
                   <p className="text-sm font-bold text-white/80">
@@ -683,7 +683,7 @@ export const SecurityView: React.FC = () => {
       </section>
 
       {/* ── Responsible Disclosure ── */}
-      <section className="py-20 px-6 bg-slate-50 dark:bg-navy-900/50">
+      <section className="py-20 px-6 bg-c-surface-raised/50">
         <div className="max-w-4xl mx-auto">
           <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30 rounded-xl p-8">
             <div className="flex items-start gap-4">
@@ -694,13 +694,13 @@ export const SecurityView: React.FC = () => {
                 <h3 className="text-xl font-bold text-navy-950 dark:text-white mb-2">
                   {t('security.disclosure.title', 'Responsible Disclosure')}
                 </h3>
-                <p className="text-slate-600 dark:text-slate-300 mb-4">
+                <p className="text-c-text-secondary mb-4">
                   {t(
                     'security.disclosure.intro',
                     'We take security vulnerabilities seriously. If you discover a security issue, please report it to us responsibly. We commit to:'
                   )}
                 </p>
-                <ul className="list-disc list-inside text-slate-600 dark:text-slate-300 space-y-1 mb-4">
+                <ul className="list-disc list-inside text-c-text-secondary space-y-1 mb-4">
                   <li>{t('security.disclosure.items.0', 'Acknowledge receipt within 24 hours')}</li>
                   <li>
                     {t(
@@ -721,7 +721,7 @@ export const SecurityView: React.FC = () => {
                     )}
                   </li>
                 </ul>
-                <p className="text-slate-600 dark:text-slate-300">
+                <p className="text-c-text-secondary">
                   {t('security.disclosure.report', 'Report security issues to:')}{' '}
                   <a
                     href={`mailto:${COMPANY.securityEmail}`}
@@ -744,7 +744,7 @@ export const SecurityView: React.FC = () => {
             <h2 className="text-2xl font-bold text-navy-950 dark:text-white mb-4">
               {t('security.cta.title', 'Ready for an enterprise security review?')}
             </h2>
-            <p className="text-slate-600 dark:text-slate-300 mb-8 max-w-xl mx-auto">
+            <p className="text-c-text-secondary mb-8 max-w-xl mx-auto">
               {t(
                 'security.cta.subtitle',
                 'For deployment-specific security detail, legal review, or architecture walkthrough — contact us before procurement or rollout.'
@@ -764,7 +764,7 @@ export const SecurityView: React.FC = () => {
               </a>
               <button
                 onClick={handleContactClick}
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-sm font-semibold border border-slate-200 dark:border-white/12 text-slate-700 dark:text-white/70 hover:bg-slate-50 dark:hover:bg-white/5 transition-all"
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-sm font-semibold border border-c-border-subtle dark:border-white/12 text-c-text-secondary dark:text-white/70 hover:bg-c-bg dark:hover:bg-c-surface/5 transition-all"
               >
                 {t('security.cta.walkthrough', 'Schedule Architecture Walkthrough')}
                 <ArrowRight size={15} />
