@@ -15852,5 +15852,12 @@
   "statusChangeToast": {
     "updatedTo": "Status updated to {{status}}",
     "viewIn": "View in {{module}}"
+  },
+  "aiFreezeBanner": {
+    "title": "AI FREEZE ACTIVE:",
+    "message": "Budget hard limit reached ({{scope}}). AI functionality is temporarily restricted.",
+    "scopeGlobal": "Global",
+    "protocol": "Budget Control Protocol",
+    "increaseBudget": "Increase Budget"
   }
 }

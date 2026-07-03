@@ -16903,5 +16903,12 @@
   "statusChangeToast": {
     "updatedTo": "Status zmieniony na {{status}}",
     "viewIn": "Zobacz w module {{module}}"
+  },
+  "aiFreezeBanner": {
+    "title": "BLOKADA AI AKTYWNA:",
+    "message": "Osiągnięto twardy limit budżetu ({{scope}}). Funkcje AI są tymczasowo ograniczone.",
+    "scopeGlobal": "Globalnie",
+    "protocol": "Protokół kontroli budżetu",
+    "increaseBudget": "Zwiększ budżet"
   }
 }
