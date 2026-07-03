@@ -24,7 +24,7 @@ export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected 
     <>
       <NodeResizer isVisible={selected && !data?.locked} minWidth={100} minHeight={40} />
       <div
-        className={`relative w-full h-full min-w-[100px] min-h-[40px] overflow-auto p-3 rounded-xl border border-slate-200/80 dark:border-slate-400/25 bg-white/95 dark:bg-navy-900/80 dark:backdrop-blur-md shadow-lg shadow-slate-200/50 dark:shadow-[0_0_12px_rgba(148,163,184,0.15)] transition-shadow ${selected ? 'ring-2 ring-slate-500/60 shadow-xl' : ''}`}
+        className={`relative w-full h-full min-w-[100px] min-h-[40px] overflow-auto p-3 rounded-xl border border-c-border-subtle bg-c-surface dark:backdrop-blur-md shadow-lg dark:shadow-[0_0_12px_rgba(148,163,184,0.15)] transition-shadow ${selected ? 'ring-2 ring-c-border-strong shadow-xl' : ''}`}
         onDoubleClick={() => {
           if (!data?.locked) {
             setEditValue(String(data?.label || ''));
@@ -32,7 +32,7 @@ export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected 
           }
         }}
       >
-        <Handle type="target" position={Position.Top} className="!w-2 !h-2 !bg-slate-400 !-top-1" />
+        <Handle type="target" position={Position.Top} className="!w-2 !h-2 !bg-c-border-strong !-top-1" />
         {editing ? (
           <textarea
             ref={textareaRef}
@@ -46,18 +46,18 @@ export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected 
                 commitEdit();
               }
             }}
-            className="w-full min-h-[40px] bg-transparent text-xs text-slate-800 dark:text-slate-200 outline-none resize-none border-b border-slate-400 dark:border-slate-500"
+            className="w-full min-h-[40px] bg-transparent text-xs text-c-text outline-none resize-none border-b border-c-border-strong"
             rows={2}
           />
         ) : (
           <div>
             {data?.semanticLabel && (
-              <div className="mb-1 text-[9px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+              <div className="mb-1 text-[9px] font-bold uppercase tracking-[0.14em] text-c-text-muted">
                 {String(data.semanticLabel)}
               </div>
             )}
             <div
-              className="text-xs text-slate-800 dark:text-slate-200 whitespace-pre-wrap break-words"
+              className="text-xs text-c-text whitespace-pre-wrap break-words"
               style={typeof data?.fontSize === 'number' ? { fontSize: data.fontSize } : undefined}
             >
               {data?.label || ''}
@@ -91,7 +91,7 @@ export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected 
         <Handle
           type="source"
           position={Position.Bottom}
-          className="!w-2 !h-2 !bg-slate-400 !-bottom-1"
+          className="!w-2 !h-2 !bg-c-border-strong !-bottom-1"
         />
       </div>
     </>

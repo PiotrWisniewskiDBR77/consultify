@@ -383,7 +383,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
         {...getIdeasToolInteractionProps('whiteboard', { locked })}
         deleteKeyCode={null}
         fitView
-        className="bg-slate-100/80 dark:bg-[#0b1020]"
+        className="bg-c-surface-raised dark:bg-[#0b1020]"
         defaultEdgeOptions={{ type: 'labeled' }}
         onMoveEnd={(_event: unknown, viewport: { x: number; y: number; zoom: number }) =>
           onViewportChange?.(viewport)
@@ -430,7 +430,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
               return isDarkCanvas ? '#1e293b' : '#e2e8f0';
             }}
             maskColor={isDarkCanvas ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.08)'}
-            className="!bg-white/80 dark:!bg-navy-900/80 !border-slate-200 dark:!border-white/[0.06] !rounded-xl"
+            className="!bg-c-surface dark:!bg-c-surface !border-c-border-subtle dark:!border-white/[0.06] !rounded-xl"
           />
         )}
         <CanvasZoomControls
@@ -2827,7 +2827,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 
   return (
     <div
-      className="w-full h-full flex flex-col bg-white dark:bg-navy-950"
+      className="w-full h-full flex flex-col bg-c-surface"
       role="region"
       aria-label={t('myWork.whiteboard.regionLabel')}
     >
@@ -2882,17 +2882,17 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       {loading ? (
         <div className="flex-1 flex flex-col gap-4 p-6">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-32 bg-slate-100 dark:bg-navy-800 rounded-xl animate-pulse" />
-            <div className="h-8 w-24 bg-slate-100 dark:bg-navy-800 rounded-xl animate-pulse" />
-            <div className="h-8 w-20 bg-slate-100 dark:bg-navy-800 rounded-xl animate-pulse" />
+            <div className="h-8 w-32 bg-c-surface-raised rounded-xl animate-pulse" />
+            <div className="h-8 w-24 bg-c-surface-raised rounded-xl animate-pulse" />
+            <div className="h-8 w-20 bg-c-surface-raised rounded-xl animate-pulse" />
           </div>
           <div className="flex-1 grid grid-cols-3 gap-4">
-            <div className="h-40 bg-slate-100 dark:bg-navy-800 rounded-2xl animate-pulse" />
-            <div className="h-32 bg-slate-100 dark:bg-navy-800 rounded-2xl animate-pulse mt-8" />
-            <div className="h-36 bg-slate-100 dark:bg-navy-800 rounded-2xl animate-pulse mt-4" />
-            <div className="h-28 bg-slate-100 dark:bg-navy-800 rounded-2xl animate-pulse" />
-            <div className="h-44 bg-slate-100 dark:bg-navy-800 rounded-2xl animate-pulse" />
-            <div className="h-24 bg-slate-100 dark:bg-navy-800 rounded-2xl animate-pulse mt-6" />
+            <div className="h-40 bg-c-surface-raised rounded-2xl animate-pulse" />
+            <div className="h-32 bg-c-surface-raised rounded-2xl animate-pulse mt-8" />
+            <div className="h-36 bg-c-surface-raised rounded-2xl animate-pulse mt-4" />
+            <div className="h-28 bg-c-surface-raised rounded-2xl animate-pulse" />
+            <div className="h-44 bg-c-surface-raised rounded-2xl animate-pulse" />
+            <div className="h-24 bg-c-surface-raised rounded-2xl animate-pulse mt-6" />
           </div>
         </div>
       ) : (
@@ -2912,7 +2912,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 
           {/* Idea lifecycle stage badge */}
           {ideaStage && (
-            <div className="absolute top-2 right-2 z-20 px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider bg-white/80 dark:bg-navy-900/80 backdrop-blur-sm border border-slate-200/50 dark:border-white/[0.06] text-slate-600 dark:text-slate-300 shadow-sm">
+            <div className="absolute top-2 right-2 z-20 px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider bg-c-surface backdrop-blur-sm border border-c-border-subtle text-c-text-secondary shadow-sm">
               {ideaStage}
             </div>
           )}
@@ -2991,19 +2991,19 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           )}
 
           {outlineImportOpen && (
-            <div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/20 backdrop-blur-[1px]">
-              <div className="w-full max-w-lg rounded-2xl border border-slate-200/70 bg-white p-4 shadow-2xl dark:border-white/[0.08] dark:bg-navy-950/95 dark:shadow-[0_0_40px_rgba(0,0,0,0.5)]">
-                <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+            <div className="absolute inset-0 z-30 flex items-center justify-center backdrop-blur-[1px]" style={{ backgroundColor: "color-mix(in srgb, var(--c-bg) 45%, transparent)" }}>
+              <div className="w-full max-w-lg rounded-2xl border border-c-border-subtle bg-c-surface p-4 shadow-2xl dark:shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+                <div className="text-sm font-semibold text-c-text">
                   {t('myWork.whiteboard.outlineImport.title')}
                 </div>
-                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                <div className="mt-1 text-xs text-c-text-muted">
                   {t('myWork.whiteboard.outlineImport.description')}
                 </div>
                 <textarea
                   value={outlineImportValue}
                   onChange={(event) => setOutlineImportValue(event.target.value)}
                   rows={8}
-                  className="mt-3 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-slate-400 dark:border-navy-700 dark:bg-navy-950 dark:text-slate-100"
+                  className="mt-3 w-full rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm text-c-text outline-none focus:border-c-border-strong"
                   placeholder={t('myWork.whiteboard.outlineImport.placeholder')}
                 />
                 <div className="mt-3 flex items-center justify-end gap-2">
@@ -3013,14 +3013,14 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
                       setOutlineImportOpen(false);
                       setOutlineImportValue('');
                     }}
-                    className="rounded-xl px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-navy-800"
+                    className="rounded-xl px-3 py-2 text-xs font-semibold text-c-text-secondary hover:bg-c-surface-raised"
                   >
                     {t('myWork.whiteboard.outlineImport.cancel')}
                   </button>
                   <button
                     type="button"
                     onClick={applyOutlineImport}
-                    className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
+                    className="rounded-xl bg-c-accent px-3 py-2 text-xs font-semibold text-white hover:brightness-110"
                   >
                     {t('myWork.whiteboard.outlineImport.confirm')}
                   </button>

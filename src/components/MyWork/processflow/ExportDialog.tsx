@@ -50,9 +50,9 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-sm bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700">
+      <DialogContent className="sm:max-w-sm bg-c-surface border-c-border-subtle">
         <DialogHeader>
-          <DialogTitle className="text-slate-800 dark:text-slate-100">
+          <DialogTitle className="text-c-text">
             {isPl ? 'Eksport procesu' : 'Export process'}
           </DialogTitle>
           <DialogDescription>
@@ -67,19 +67,19 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
               size="lg"
               onClick={() => onExport(f.id)}
               disabled={isExporting}
-              className="w-full justify-start gap-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 px-4 py-3 hover:bg-slate-100 dark:hover:bg-navy-700 h-auto text-left"
+              className="w-full justify-start gap-3 rounded-xl border border-c-border-subtle bg-c-surface-raised px-4 py-3 hover:bg-c-surface-raised h-auto text-left"
             >
               <div className="text-primary-500 flex-shrink-0">{f.icon}</div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                <div className="text-sm font-medium text-c-text">
                   {f.title}
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">{f.desc}</div>
+                <div className="text-xs text-c-text-muted">{f.desc}</div>
               </div>
               {isExporting ? (
-                <Loader2 size={16} className="ml-auto animate-spin text-slate-600 flex-shrink-0" />
+                <Loader2 size={16} className="ml-auto animate-spin text-c-text-secondary flex-shrink-0" />
               ) : (
-                <Download size={16} className="ml-auto text-slate-600 flex-shrink-0" />
+                <Download size={16} className="ml-auto text-c-text-secondary flex-shrink-0" />
               )}
             </Button>
           ))}

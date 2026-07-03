@@ -89,7 +89,7 @@ export const SHAPE_CONFIG: Record<
 };
 
 export const STATUS_COLORS: Record<string, string> = {
-  todo: 'bg-slate-300',
+  todo: "bg-c-border-strong",
   in_progress: 'bg-blue-500',
   done: 'bg-green-500',
   blocked: 'bg-danger-500',
@@ -135,7 +135,7 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
     start:
       'rounded-full border-2 border-green-500 bg-green-50 dark:bg-green-900/30 dark:border-green-400',
     end: 'rounded-full border-2 border-danger-500 bg-danger-50 dark:bg-danger-900/30 dark:border-danger-400',
-    action: 'rounded-xl border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800',
+    action: 'rounded-xl border border-c-border bg-c-surface',
     decision:
       'rotate-45 border-2 border-amber-500 bg-amber-50 dark:bg-amber-900/30 dark:border-amber-400',
     bpmn_event:
@@ -167,7 +167,7 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
     vsm_inventory:
       'border-2 border-amber-600 bg-amber-50 dark:bg-amber-900/30 dark:border-amber-400',
     vsm_supplier:
-      'rounded-xl border-2 border-slate-600 bg-slate-50 dark:bg-slate-800 dark:border-slate-400',
+      'rounded-xl border-2 border-c-border-strong bg-c-surface-raised',
     vsm_customer:
       'rounded-xl border-2 border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 dark:border-emerald-400',
     vsm_kaizen:
@@ -189,7 +189,7 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
 
   return (
     <div
-      className={`relative flex flex-col items-center justify-center min-w-[80px] min-h-[48px] px-3 py-2 shadow-sm transition-shadow ${shapeStyles[shape]} ${selected ? 'ring-2 ring-slate-500/60 dark:ring-white/30' : ''}`}
+      className={`relative flex flex-col items-center justify-center min-w-[80px] min-h-[48px] px-3 py-2 shadow-sm transition-shadow ${shapeStyles[shape]} ${selected ? 'ring-2 ring-c-border-strong' : ''}`}
       style={{
         borderLeftColor: laneColor,
         borderLeftWidth: shape === 'action' ? 4 : undefined,
@@ -212,7 +212,7 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
         setShowTooltip(false);
       }}
     >
-      <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-slate-400" />
+      <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-c-border-strong" />
 
       {/* Status dot */}
       {data?.status && data.status !== 'todo' && !isGhost && (
@@ -223,7 +223,7 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
 
       {/* Attachment badge */}
       {hasAttachments && !isGhost && (
-        <div className="absolute top-1 left-1 flex items-center gap-0.5 px-1 py-0.5 rounded bg-slate-100/80 dark:bg-navy-700/80 text-[7px] font-bold text-slate-500 dark:text-slate-400">
+        <div className="absolute top-1 left-1 flex items-center gap-0.5 px-1 py-0.5 rounded bg-c-surface-raised text-[7px] font-bold text-c-text-muted">
           📎 {data.attachments.length}
         </div>
       )}
@@ -253,11 +253,11 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
             if (e.key === 'Enter') commitEdit();
             if (e.key === 'Escape') setEditing(false);
           }}
-          className={`bg-transparent text-xs font-medium text-slate-800 dark:text-slate-200 text-center outline-none border-b border-slate-400 w-full ${innerRotate}`}
+          className={`bg-transparent text-xs font-medium text-c-text text-center outline-none border-b border-c-border-strong w-full ${innerRotate}`}
         />
       ) : (
         <div
-          className={`text-xs font-medium text-slate-800 dark:text-slate-200 text-center ${innerRotate}`}
+          className={`text-xs font-medium text-c-text text-center ${innerRotate}`}
         >
           {data?.label || shape}
         </div>
@@ -293,7 +293,7 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
               ? 'bg-emerald-500 text-white'
               : data.automationPotential === 'medium'
                 ? 'bg-amber-500 text-white'
-                : 'bg-slate-400 text-white'
+                : 'bg-c-text-muted text-white'
           }`}
           title={`Automation: ${data.automationPotential || 'low'}`}
         >
@@ -312,7 +312,7 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
       {shape === 'vsm_process' &&
         (data?.cycleTime || data?.changeoverTime || data?.uptimePercent) && (
           <div
-            className={`text-[8px] text-slate-500 dark:text-slate-400 mt-1 space-y-0.5 ${innerRotate}`}
+            className={`text-[8px] text-c-text-muted mt-1 space-y-0.5 ${innerRotate}`}
           >
             {data.cycleTime && <div>C/T: {data.cycleTime}</div>}
             {data.changeoverTime && <div>C/O: {data.changeoverTime}</div>}
@@ -328,12 +328,12 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
         </div>
       )}
 
-      <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-slate-400" />
+      <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-c-border-strong" />
 
       {/* Context tooltip on hover */}
       {showTooltip && !editing && !isGhost && (data?.owner || data?.description || hasMetrics) && (
         <div className="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full z-50 pointer-events-none">
-          <div className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-lg px-2.5 py-1.5 shadow-lg text-[9px] max-w-[200px] whitespace-normal">
+          <div className="bg-c-text text-c-bg rounded-lg px-2.5 py-1.5 shadow-lg text-[9px] max-w-[200px] whitespace-normal">
             {data?.owner && (
               <div>
                 <span className="font-bold">Owner:</span> {data.owner}

@@ -24,8 +24,8 @@ export const PoolNode: React.FC<NodeProps<any>> = ({ id, data, selected }) => {
 
   return (
     <div
-      className={`relative flex items-stretch min-w-[200px] min-h-[80px] rounded-lg border-2 border-slate-500 dark:border-navy-400 bg-white/50 dark:bg-navy-900/40 shadow-sm transition-shadow ${
-        selected ? 'ring-2 ring-slate-500/60 dark:ring-white/30' : ''
+      className={`relative flex items-stretch min-w-[200px] min-h-[80px] rounded-lg border-2 border-c-border-strong bg-c-surface shadow-sm transition-shadow ${
+        selected ? 'ring-2 ring-c-border-strong' : ''
       }`}
       onDoubleClick={() => {
         if (!data?.locked) {
@@ -38,9 +38,9 @@ export const PoolNode: React.FC<NodeProps<any>> = ({ id, data, selected }) => {
         }
       }}
     >
-      <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-slate-400" />
+      <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-c-border-strong" />
 
-      <div className="w-7 flex-shrink-0 border-r border-slate-500 dark:border-navy-400 bg-slate-100 dark:bg-navy-800 flex items-center justify-center rounded-l-lg">
+      <div className="w-7 flex-shrink-0 border-r border-c-border-strong bg-c-surface-raised flex items-center justify-center rounded-l-lg">
         {editing ? (
           <input
             ref={inputRef}
@@ -51,22 +51,22 @@ export const PoolNode: React.FC<NodeProps<any>> = ({ id, data, selected }) => {
               if (e.key === 'Enter') commitEdit();
               if (e.key === 'Escape') setEditing(false);
             }}
-            className="bg-transparent text-[10px] font-bold text-slate-700 dark:text-slate-200 text-center outline-none border-b border-primary-400 w-full [writing-mode:vertical-rl] rotate-180"
+            className="bg-transparent text-[10px] font-bold text-c-text-secondary text-center outline-none border-b border-primary-400 w-full [writing-mode:vertical-rl] rotate-180"
           />
         ) : (
-          <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200 [writing-mode:vertical-rl] rotate-180 select-none whitespace-nowrap px-0.5">
+          <span className="text-[10px] font-bold text-c-text-secondary [writing-mode:vertical-rl] rotate-180 select-none whitespace-nowrap px-0.5">
             {data?.label || 'Pool'}
           </span>
         )}
       </div>
 
       <div className="flex-1 p-2 flex items-center justify-center">
-        <span className="text-[9px] text-slate-600 dark:text-slate-500 italic select-none">
+        <span className="text-[9px] text-c-text-secondary italic select-none">
           {data?.participantCount ? `${data.participantCount} participants` : ''}
         </span>
       </div>
 
-      <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-slate-400" />
+      <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-c-border-strong" />
     </div>
   );
 };

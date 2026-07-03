@@ -14,9 +14,9 @@ export const ImageNode: React.FC<NodeProps> = ({ data, selected }) => {
         keepAspectRatio
       />
       <div
-        className={`relative w-full h-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-500/20 shadow-sm dark:shadow-[0_0_12px_rgba(148,163,184,0.1)] transition-shadow ${selected ? 'ring-2 ring-slate-500/60 shadow-lg' : ''}`}
+        className={`relative w-full h-full rounded-xl overflow-hidden border border-c-border-subtle shadow-sm dark:shadow-[0_0_12px_rgba(148,163,184,0.1)] transition-shadow ${selected ? 'ring-2 ring-c-border-strong shadow-lg' : ''}`}
       >
-        <Handle type="target" position={Position.Top} className="!w-2 !h-2 !bg-slate-400 !-top-1" />
+        <Handle type="target" position={Position.Top} className="!w-2 !h-2 !bg-c-border-strong !-top-1" />
         {imgSrc ? (
           <img
             src={imgSrc}
@@ -25,7 +25,7 @@ export const ImageNode: React.FC<NodeProps> = ({ data, selected }) => {
             draggable={false}
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 dark:bg-navy-900/80 text-slate-600">
+          <div className="w-full h-full flex flex-col items-center justify-center bg-c-surface-raised text-c-text-secondary">
             <ImageIcon size={24} />
             <div className="text-[10px] mt-1">{data?.label || 'Image'}</div>
           </div>
@@ -38,7 +38,7 @@ export const ImageNode: React.FC<NodeProps> = ({ data, selected }) => {
         <Handle
           type="source"
           position={Position.Bottom}
-          className="!w-2 !h-2 !bg-slate-400 !-bottom-1"
+          className="!w-2 !h-2 !bg-c-border-strong !-bottom-1"
         />
       </div>
     </>

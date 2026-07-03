@@ -46,21 +46,21 @@ export const WhiteboardSessionPanel: React.FC<WhiteboardSessionPanelProps> = ({
 
   return (
     <div className="absolute top-3 left-3 z-20 flex flex-col gap-2 max-w-[280px]">
-      <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.08] bg-white/95 dark:bg-navy-950/90 dark:backdrop-blur-xl backdrop-blur-sm shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] px-3 py-2.5">
+      <div className="rounded-2xl border border-c-border-subtle bg-c-surface dark:backdrop-blur-xl backdrop-blur-sm shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] px-3 py-2.5">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+            <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-c-text-muted">
               {t('myWork.whiteboard.sessionPanel.layer')}
             </div>
-            <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-100">
+            <div className="text-[11px] font-semibold text-c-text">
               {roleLabel}
             </div>
           </div>
           <div className="text-right">
-            <div className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+            <div className="text-[10px] font-semibold text-c-text-secondary">
               {whiteboardModeCopy.modeLabel}
             </div>
-            <div className="text-[9px] text-slate-600 dark:text-slate-500">
+            <div className="text-[9px] text-c-text-secondary">
               {sessionState.timerEndsAt
                 ? `${Math.max(0, Math.ceil((sessionState.timerEndsAt - Date.now()) / 1000))}s`
                 : t('myWork.whiteboard.sessionPanel.timerOff')}
@@ -68,15 +68,15 @@ export const WhiteboardSessionPanel: React.FC<WhiteboardSessionPanelProps> = ({
           </div>
         </div>
         <div className="mt-2 flex items-center gap-1.5 flex-wrap">
-          <span className="px-2 py-1 rounded-full bg-slate-100 dark:bg-navy-800 text-[10px] font-medium text-slate-700 dark:text-slate-200">
+          <span className="px-2 py-1 rounded-full bg-c-surface-raised text-[10px] font-medium text-c-text-secondary">
             {whiteboardModeCopy.exitHint}
           </span>
-          <span className="px-2 py-1 rounded-full bg-slate-100 dark:bg-navy-800 text-[10px] font-medium text-slate-600 dark:text-slate-300">
+          <span className="px-2 py-1 rounded-full bg-c-surface-raised text-[10px] font-medium text-c-text-secondary">
             {sessionState.votingOpen
               ? t('myWork.whiteboard.sessionPanel.votingOpen')
               : t('myWork.whiteboard.sessionPanel.votingClosed')}
           </span>
-          <span className="px-2 py-1 rounded-full bg-slate-100 dark:bg-navy-800 text-[10px] font-medium text-slate-600 dark:text-slate-300">
+          <span className="px-2 py-1 rounded-full bg-c-surface-raised text-[10px] font-medium text-c-text-secondary">
             {sessionState.followMe
               ? t('myWork.whiteboard.sessionPanel.followOn')
               : t('myWork.whiteboard.sessionPanel.followOff')}
@@ -87,7 +87,7 @@ export const WhiteboardSessionPanel: React.FC<WhiteboardSessionPanelProps> = ({
             </span>
           )}
         </div>
-        <div className="mt-2 border-t border-slate-200/40 dark:border-white/[0.04] pt-2">
+        <div className="mt-2 border-t border-c-border-subtle pt-2">
           <WhiteboardPhaseBar
             isPl={isPl}
             currentPhase={sessionState.facilitationPhase}
@@ -95,27 +95,27 @@ export const WhiteboardSessionPanel: React.FC<WhiteboardSessionPanelProps> = ({
             onPhaseChange={onPhaseChange}
           />
         </div>
-        <div className="mt-2 text-[10px] leading-4 text-slate-500 dark:text-slate-400">
+        <div className="mt-2 text-[10px] leading-4 text-c-text-muted">
           {whiteboardModeCopy.helper}
         </div>
       </div>
 
       {(activityLog.length > 0 || libraryItems.length > 0 || historyLog.length > 0) && (
-        <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.08] bg-white/95 dark:bg-navy-950/90 dark:backdrop-blur-xl backdrop-blur-sm shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] px-3 py-2.5 space-y-2">
+        <div className="rounded-2xl border border-c-border-subtle bg-c-surface dark:backdrop-blur-xl backdrop-blur-sm shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] px-3 py-2.5 space-y-2">
           <div className="flex items-center justify-between gap-3">
-            <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+            <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-c-text-muted">
               {t('myWork.whiteboard.sessionPanel.opsGovernance')}
             </div>
             <button
               type="button"
               onClick={onCycleGovernance}
-              className="text-[10px] font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+              className="text-[10px] font-semibold text-c-text-secondary hover:text-c-text transition-colors"
             >
               {t('myWork.whiteboard.sessionPanel.cyclePolicy')}
             </button>
           </div>
           {libraryItems[0] && (
-            <div className="text-[10px] text-slate-600 dark:text-slate-300">
+            <div className="text-[10px] text-c-text-secondary">
               {t('myWork.whiteboard.sessionPanel.libraryPrefix')} {libraryItems[0].name}
             </div>
           )}
@@ -123,13 +123,13 @@ export const WhiteboardSessionPanel: React.FC<WhiteboardSessionPanelProps> = ({
             <button
               type="button"
               onClick={onRestoreLatestHistory}
-              className="w-full text-left px-2 py-1.5 rounded-xl bg-slate-100/80 dark:bg-navy-800/80 text-[10px] font-medium text-slate-700 dark:text-slate-200"
+              className="w-full text-left px-2 py-1.5 rounded-xl bg-c-surface-raised text-[10px] font-medium text-c-text-secondary"
             >
               {t('myWork.whiteboard.sessionPanel.restorePrefix')} {historyLog[0].label}
             </button>
           )}
           {activityLog.slice(0, 3).map((entry) => (
-            <div key={entry.id} className="text-[10px] text-slate-500 dark:text-slate-400">
+            <div key={entry.id} className="text-[10px] text-c-text-muted">
               {entry.label}
             </div>
           ))}

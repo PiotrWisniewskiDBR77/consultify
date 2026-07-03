@@ -50,16 +50,16 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
         {isPl ? 'Błędy' : 'Invalid'}
       </span>
     ) : (
-      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600 dark:bg-navy-700 dark:text-slate-300">
+      <span className="rounded-full bg-c-surface-raised px-2 py-0.5 text-xs font-semibold text-c-text-secondary">
         {isPl ? 'Brak wyniku' : 'No result'}
       </span>
     );
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white text-sm text-slate-800 shadow-sm dark:border-navy-700 dark:bg-navy-800 dark:text-slate-200">
-      <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-4 py-3 dark:border-navy-700">
+    <div className="rounded-xl border border-c-border-subtle bg-c-surface text-sm text-c-text shadow-sm">
+      <div className="flex items-center justify-between gap-2 border-b border-c-border-subtle px-4 py-3">
         <div className="flex items-center gap-2">
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+          <h2 className="text-sm font-semibold text-c-text">
             {isPl ? 'Walidacja' : 'Validation'}
           </h2>
           {validBadge}
@@ -71,16 +71,16 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
 
       <div className="p-4">
         {isValidating ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-10 text-slate-500 dark:text-slate-400">
+          <div className="flex flex-col items-center justify-center gap-3 py-10 text-c-text-muted">
             <div
-              className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-primary-500 dark:border-navy-600 dark:border-t-primary-400"
+              className="h-8 w-8 animate-spin rounded-full border-2 border-c-border-subtle border-t-primary-500 dark:border-t-primary-400"
               role="status"
               aria-label={isPl ? 'Ładowanie' : 'Loading'}
             />
             <span className="text-xs">{isPl ? 'Sprawdzanie…' : 'Validating…'}</span>
           </div>
         ) : !result ? (
-          <p className="py-6 text-center text-xs text-slate-500 dark:text-slate-400">
+          <p className="py-6 text-center text-xs text-c-text-muted">
             {isPl ? 'Uruchom walidację, aby zobaczyć wyniki.' : 'Run validation to see results.'}
           </p>
         ) : result.issues.length === 0 ? (
@@ -88,7 +88,7 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
             <CheckCircle2 className="h-10 w-10" strokeWidth={1.5} />
             <p className="text-sm font-medium">{isPl ? 'Brak problemów' : 'No issues found'}</p>
             {result.validated_at && (
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-c-text-muted">
                 {new Date(result.validated_at).toLocaleString(isPl ? 'pl-PL' : 'en-US')}
               </p>
             )}
@@ -96,7 +96,7 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
         ) : (
           <div className="space-y-4">
             {result.validated_at && (
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-c-text-muted">
                 {isPl ? 'Ostatnia walidacja: ' : 'Last validated: '}
                 {new Date(result.validated_at).toLocaleString(isPl ? 'pl-PL' : 'en-US')}
               </p>
@@ -106,8 +106,8 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
               if (list.length === 0) return null;
               return (
                 <div key={layer}>
-                  <div className="mb-2 flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    <ChevronRight size={14} className="text-slate-600" aria-hidden />
+                  <div className="mb-2 flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-c-text-muted">
+                    <ChevronRight size={14} className="text-c-text-secondary" aria-hidden />
                     {LAYER_LABEL[layer][isPl ? 'pl' : 'en']}
                   </div>
                   <ul className="space-y-1">
@@ -120,17 +120,17 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
                           : 'text-amber-500 dark:text-amber-400';
                       const rowClass = `flex w-full items-start gap-2 rounded-lg border border-transparent px-2 py-2 text-left text-xs ${
                         clickable
-                          ? 'cursor-pointer hover:border-slate-200 hover:bg-slate-50 dark:hover:border-navy-600 dark:hover:bg-navy-900/40'
+                          ? 'cursor-pointer hover:border-c-border-subtle hover:bg-c-surface-raised'
                           : ''
                       }`;
                       const body = (
                         <>
                           <Icon className={`mt-0.5 shrink-0 ${iconClass}`} size={16} aria-hidden />
                           <span className="min-w-0 flex-1">
-                            <span className="font-semibold text-slate-800 dark:text-slate-100">
+                            <span className="font-semibold text-c-text">
                               {issue.rule}
                             </span>
-                            <span className="mt-0.5 block text-slate-600 dark:text-slate-300">
+                            <span className="mt-0.5 block text-c-text-secondary">
                               {issue.message}
                             </span>
                           </span>

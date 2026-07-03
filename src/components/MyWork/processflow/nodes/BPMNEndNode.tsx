@@ -59,16 +59,16 @@ export const BPMNEndNode: React.FC<NodeProps<any>> = ({ data, selected }) => {
               if (e.key === 'Enter') commitEdit();
               if (e.key === 'Escape') setEditing(false);
             }}
-            className="bg-transparent text-xs font-medium text-slate-800 dark:text-slate-200 text-center outline-none border-b border-primary-400 w-full"
+            className="bg-transparent text-xs font-medium text-c-text text-center outline-none border-b border-primary-400 w-full"
           />
         ) : (
-          <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
+          <span className="text-xs font-medium text-c-text">
             {data?.label || 'End'}
           </span>
         )}
       </div>
 
-      <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-slate-400" />
+      <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-c-border-strong" />
     </div>
   );
 };

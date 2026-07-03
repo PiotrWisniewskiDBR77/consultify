@@ -103,7 +103,7 @@ export const MessageFlowEdge: React.FC<EdgeProps> = ({
               if (e.key === 'Enter') commitEdit();
               if (e.key === 'Escape') setEditing(false);
             }}
-            className="w-full text-[9px] font-medium text-center bg-white dark:bg-navy-800 border border-indigo-400 rounded px-1 outline-none"
+            className="w-full text-[9px] font-medium text-center bg-c-surface border border-indigo-400 rounded px-1 outline-none"
           />
         ) : (
           <div

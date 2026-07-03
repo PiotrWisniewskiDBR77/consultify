@@ -5,7 +5,7 @@ import { Handle, Position } from 'reactflow';
 import { DEFAULT_LANE_COLOR } from '../FlowNodeComponent';
 
 const STATUS_COLORS: Record<string, string> = {
-  todo: 'bg-slate-300',
+  todo: "bg-c-border-strong",
   in_progress: 'bg-blue-500',
   done: 'bg-green-500',
   blocked: 'bg-danger-500',
@@ -30,8 +30,8 @@ export const ActivityNode: React.FC<NodeProps<any>> = ({ id, data, selected }) =
 
   return (
     <div
-      className={`relative flex flex-col items-center justify-center min-w-[120px] min-h-[56px] px-3 py-2 rounded-xl border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 shadow-sm transition-shadow ${
-        selected ? 'ring-2 ring-slate-500/60 dark:ring-white/30' : ''
+      className={`relative flex flex-col items-center justify-center min-w-[120px] min-h-[56px] px-3 py-2 rounded-xl border border-c-border bg-c-surface shadow-sm transition-shadow ${
+        selected ? 'ring-2 ring-c-border-strong' : ''
       }`}
       style={{
         borderLeftColor: laneColor,
@@ -49,7 +49,7 @@ export const ActivityNode: React.FC<NodeProps<any>> = ({ id, data, selected }) =
         }
       }}
     >
-      <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-slate-400" />
+      <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-c-border-strong" />
 
       {data?.status && data.status !== 'todo' && (
         <div
@@ -64,7 +64,7 @@ export const ActivityNode: React.FC<NodeProps<any>> = ({ id, data, selected }) =
               ? 'bg-emerald-500 text-white'
               : data.automationPotential === 'medium'
                 ? 'bg-amber-500 text-white'
-                : 'bg-slate-400 text-white'
+                : 'bg-c-text-muted text-white'
           }`}
           title={`Automation: ${data.automationPotential || 'low'}`}
         >
@@ -82,10 +82,10 @@ export const ActivityNode: React.FC<NodeProps<any>> = ({ id, data, selected }) =
             if (e.key === 'Enter') commitEdit();
             if (e.key === 'Escape') setEditing(false);
           }}
-          className="bg-transparent text-xs font-medium text-slate-800 dark:text-slate-200 text-center outline-none border-b border-primary-400 w-full"
+          className="bg-transparent text-xs font-medium text-c-text text-center outline-none border-b border-primary-400 w-full"
         />
       ) : (
-        <div className="text-xs font-medium text-slate-800 dark:text-slate-200 text-center">
+        <div className="text-xs font-medium text-c-text text-center">
           {data?.label || 'Activity'}
         </div>
       )}
@@ -111,7 +111,7 @@ export const ActivityNode: React.FC<NodeProps<any>> = ({ id, data, selected }) =
         </div>
       )}
 
-      <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-slate-400" />
+      <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-c-border-strong" />
     </div>
   );
 };
