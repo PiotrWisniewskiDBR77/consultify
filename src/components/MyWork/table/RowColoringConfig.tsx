@@ -118,14 +118,14 @@ export const RowColoringConfig: React.FC<RowColoringConfigProps> = ({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <Palette size={12} className="text-slate-600" />
-          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          <Palette size={12} className="text-c-text-secondary" />
+          <span className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider">
             {isPl ? 'Kolorowanie wierszy' : 'Row coloring'}
           </span>
         </div>
         <button
           onClick={addRule}
-          className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
+          className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium text-c-accent hover:bg-c-accent-soft transition-colors"
         >
           <Plus size={10} />
           {isPl ? 'Dodaj regułę' : 'Add rule'}
@@ -133,7 +133,7 @@ export const RowColoringConfig: React.FC<RowColoringConfigProps> = ({
       </div>
 
       {rules.length === 0 && (
-        <div className="text-[10px] text-slate-600 dark:text-slate-500 text-center py-3">
+        <div className="text-[10px] text-c-text-secondary text-center py-3">
           {isPl ? 'Brak reguł kolorowania' : 'No coloring rules'}
         </div>
       )}
@@ -143,7 +143,7 @@ export const RowColoringConfig: React.FC<RowColoringConfigProps> = ({
         return (
           <div
             key={rule.id}
-            className="p-2.5 rounded-xl border border-slate-200/60 dark:border-navy-700/40 space-y-2"
+            className="p-2.5 rounded-xl border border-c-border-subtle space-y-2"
             style={{ borderLeftWidth: 3, borderLeftColor: rule.color }}
           >
             <div className="flex items-center gap-2">
@@ -151,7 +151,7 @@ export const RowColoringConfig: React.FC<RowColoringConfigProps> = ({
               <select
                 value={rule.fieldId}
                 onChange={(e) => updateRule(rule.id, { fieldId: e.target.value })}
-                className="flex-1 h-7 px-2 rounded-lg text-[10px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none"
+                className="flex-1 h-7 px-2 rounded-lg text-[10px] bg-c-surface-raised border border-c-border-subtle text-c-text outline-none"
               >
                 {fields.map((f) => (
                   <option key={f.key} value={f.key}>
@@ -166,7 +166,7 @@ export const RowColoringConfig: React.FC<RowColoringConfigProps> = ({
                 onChange={(e) =>
                   updateRule(rule.id, { operator: e.target.value as RowColorOperator })
                 }
-                className="w-28 h-7 px-2 rounded-lg text-[10px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none"
+                className="w-28 h-7 px-2 rounded-lg text-[10px] bg-c-surface-raised border border-c-border-subtle text-c-text outline-none"
               >
                 {(Object.keys(OPERATOR_LABELS) as RowColorOperator[]).map((op) => (
                   <option key={op} value={op}>
@@ -178,7 +178,7 @@ export const RowColoringConfig: React.FC<RowColoringConfigProps> = ({
               {/* Delete */}
               <button
                 onClick={() => removeRule(rule.id)}
-                className="p-1 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-500/10 text-slate-600 hover:text-danger-500 transition-colors"
+                className="p-1 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-500/10 text-c-text-secondary hover:text-danger-500 transition-colors"
               >
                 <Trash2 size={12} />
               </button>
@@ -192,7 +192,7 @@ export const RowColoringConfig: React.FC<RowColoringConfigProps> = ({
                   value={rule.value || ''}
                   onChange={(e) => updateRule(rule.id, { value: e.target.value })}
                   placeholder={isPl ? 'Wartość...' : 'Value...'}
-                  className="flex-1 h-7 px-2 rounded-lg text-[10px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none"
+                  className="flex-1 h-7 px-2 rounded-lg text-[10px] bg-c-surface-raised border border-c-border-subtle text-c-text outline-none"
                 />
               )}
 
@@ -203,7 +203,7 @@ export const RowColoringConfig: React.FC<RowColoringConfigProps> = ({
                     key={c}
                     onClick={() => updateRule(rule.id, { color: c })}
                     className={`w-4 h-4 rounded-full border-2 transition-transform hover:scale-125 ${
-                      rule.color === c ? 'border-primary-500 scale-110' : 'border-transparent'
+                      rule.color === c ? 'border-c-accent scale-110' : 'border-transparent'
                     }`}
                     style={{ backgroundColor: c }}
                   />
