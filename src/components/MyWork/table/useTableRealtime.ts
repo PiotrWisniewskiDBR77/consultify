@@ -81,8 +81,11 @@ export function useTableRealtime(options: UseTableRealtimeOptions) {
     setConnected(false);
     setConnectionState('connecting');
 
+    // #101 Grupa 0 — the namespace now rejects anonymous connections; identity
+    // comes from the verified JWT (client-sent userId is cosmetic only).
+    const token = typeof window !== 'undefined' ? window.localStorage.getItem('token') || '' : '';
     const socket = io('/table-platform', {
-      auth: { userId, userName },
+      auth: { token, userId, userName },
       transports: ['websocket'],
     });
 
