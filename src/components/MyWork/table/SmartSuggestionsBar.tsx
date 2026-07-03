@@ -236,21 +236,21 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
   const IconComp = ICON_MAP[current.icon || 'lightbulb'] || Lightbulb;
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-primary-500/5 via-crimson-500/5 to-primary-500/5 border-t border-primary-500/10 dark:border-primary-500/20">
+    <div className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-primary-500/5 via-crimson-500/5 to-primary-500/5 border-t border-c-accent">
       {/* Sparkle icon */}
-      <div className="flex items-center justify-center w-7 h-7 rounded-xl bg-primary-500/10 flex-shrink-0">
+      <div className="flex items-center justify-center w-7 h-7 rounded-xl bg-c-accent-soft flex-shrink-0">
         {loading ? (
-          <Loader2 size={13} className="text-primary-500 animate-spin" />
+          <Loader2 size={13} className="text-c-accent animate-spin" />
         ) : (
-          <Sparkles size={13} className="text-primary-500" />
+          <Sparkles size={13} className="text-c-accent" />
         )}
       </div>
 
       {/* Suggestion content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 mb-0.5">
-          <IconComp size={10} className="text-primary-500" />
-          <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">
+          <IconComp size={10} className="text-c-accent" />
+          <span className="text-[10px] font-bold text-c-text">
             {current.title}
           </span>
           <span
@@ -258,22 +258,22 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
             style={{
               backgroundColor:
                 current.confidence > 0.8
-                  ? '#10b98120'
+                  ? 'color-mix(in srgb, var(--c-success) 15%, transparent)'
                   : current.confidence > 0.6
-                    ? '#f59e0b20'
-                    : '#6366f120',
+                    ? 'color-mix(in srgb, var(--c-warning) 15%, transparent)'
+                    : 'color-mix(in srgb, var(--c-info) 15%, transparent)',
               color:
                 current.confidence > 0.8
-                  ? '#10b981'
+                  ? 'var(--c-success)'
                   : current.confidence > 0.6
-                    ? '#f59e0b'
-                    : '#6366f1',
+                    ? 'var(--c-warning)'
+                    : 'var(--c-info)',
             }}
           >
             {Math.round(current.confidence * 100)}%
           </span>
         </div>
-        <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed truncate">
+        <p className="text-[10px] text-c-text-muted leading-relaxed truncate">
           {current.detail}
         </p>
       </div>
@@ -282,7 +282,7 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
       {current.action && onApplySuggestion && (
         <button
           onClick={() => onApplySuggestion(current)}
-          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[9px] font-bold text-primary-600 dark:text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 transition-colors whitespace-nowrap flex-shrink-0"
+          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[9px] font-bold text-c-accent bg-c-accent-soft hover:bg-c-accent-soft transition-colors whitespace-nowrap flex-shrink-0"
         >
           {current.action.label}
           <ArrowRight size={9} />
@@ -296,18 +296,18 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
             onClick={() =>
               setCurrentIdx((currentIdx - 1 + activeSuggestions.length) % activeSuggestions.length)
             }
-            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-1 rounded hover:bg-c-surface-raised transition-colors"
           >
-            <ChevronLeft size={12} className="text-slate-600" />
+            <ChevronLeft size={12} className="text-c-text-secondary" />
           </button>
-          <span className="text-[8px] text-slate-600 w-8 text-center">
+          <span className="text-[8px] text-c-text-secondary w-8 text-center">
             {currentIdx + 1}/{activeSuggestions.length}
           </span>
           <button
             onClick={() => setCurrentIdx((currentIdx + 1) % activeSuggestions.length)}
-            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-1 rounded hover:bg-c-surface-raised transition-colors"
           >
-            <ChevronRight size={12} className="text-slate-600" />
+            <ChevronRight size={12} className="text-c-text-secondary" />
           </button>
         </div>
       )}
@@ -315,18 +315,18 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
       {/* Dismiss current */}
       <button
         onClick={() => handleDismissSuggestion(current.id)}
-        className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors flex-shrink-0"
+        className="p-1 rounded hover:bg-c-surface-raised transition-colors flex-shrink-0"
       >
-        <X size={11} className="text-slate-600" />
+        <X size={11} className="text-c-text-secondary" />
       </button>
 
       {/* Dismiss all */}
       <button
         onClick={onDismiss}
-        className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors flex-shrink-0"
+        className="p-1 rounded hover:bg-c-surface-raised transition-colors flex-shrink-0"
         title={isPl ? 'Zamknij pasek' : 'Close bar'}
       >
-        <CheckCircle2 size={11} className="text-slate-600" />
+        <CheckCircle2 size={11} className="text-c-text-secondary" />
       </button>
     </div>
   );
