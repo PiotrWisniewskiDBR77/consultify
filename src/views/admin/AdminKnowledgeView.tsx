@@ -925,7 +925,7 @@ export const AdminKnowledgeView: React.FC = () => {
                       </div>
                       <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-navy-900 transition-all duration-500"
+                          className="h-full bg-c-surface transition-all duration-500"
                           style={{ width: `${s.progress_percentage || 0}%` }}
                         />
                       </div>
@@ -1043,7 +1043,7 @@ export const AdminKnowledgeView: React.FC = () => {
 
                     <div className="w-full h-1 bg-slate-200 rounded-full overflow-hidden">
                       <div
-                        className={`h-full transition-all duration-500 ${s.is_active ? "w-full bg-navy-900" : "w-0"}`}
+                        className={`h-full transition-all duration-500 ${s.is_active ? "w-full bg-c-surface" : "w-0"}`}
                       />
                     </div>
                     <div className="mt-2 text-xs text-right text-c-text-muted">
@@ -1141,7 +1141,7 @@ export const AdminKnowledgeView: React.FC = () => {
                       {/* Content Gaps */}
                       <div className="space-y-4">
                         <h3 className="flex items-center gap-2 text-lg font-bold text-c-text">
-                          <div className="w-2 h-8 bg-navy-900 rounded-full"></div>
+                          <div className="w-2 h-8 bg-c-surface rounded-full"></div>
                           Knowledge Gaps
                         </h3>
                         <div className="space-y-3">

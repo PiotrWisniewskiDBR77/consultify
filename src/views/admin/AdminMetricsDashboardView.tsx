@@ -175,7 +175,7 @@ export const AdminMetricsDashboardView: React.FC = () => {
                 label="Invitations Sent"
                 value={teamMetrics?.invitations?.sent || 0}
                 percent={100}
-                color="bg-slate-700"
+                color="bg-c-surface-raised"
               />
               <div className="h-8 flex justify-center py-1">
                 <div className="w-0.5 bg-gradient-to-b from-slate-700 to-primary-600 opacity-50" />
@@ -184,7 +184,7 @@ export const AdminMetricsDashboardView: React.FC = () => {
                 label="Invitations Accepted"
                 value={teamMetrics?.invitations?.accepted || 0}
                 percent={teamMetrics?.invitations?.acceptanceRate || 0}
-                color="bg-navy-900"
+                color="bg-c-surface"
               />
               <div className="h-8 flex justify-center py-1">
                 <div className="w-0.5 bg-gradient-to-b from-primary-600 to-green-600 opacity-50" />
@@ -430,7 +430,7 @@ const FunnelStep: React.FC<{ label: string; value: number; percent: number; colo
           className={`h-full ${color} rounded-xl transition-all duration-1000 shadow-xl opacity-80 group-hover:opacity-100`}
           style={{ width: `${percent}%` }}
         />
-        <div className="absolute left-4 font-black text-white text-xl tracking-tighter drop-shadow-md">
+        <div className="absolute left-4 font-black text-c-text text-xl tracking-tighter drop-shadow-md">
           {value}
         </div>
       </div>

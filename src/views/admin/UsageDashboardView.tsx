@@ -217,7 +217,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-medium text-white flex items-center gap-2">
+          <h2 className="text-lg font-medium text-c-text flex items-center gap-2">
             <Activity size={18} className="text-c-text-muted" />
             {t('admin.billing.usageDashboard', 'Usage Dashboard')}
           </h2>
@@ -242,7 +242,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                 disabled={!!loadError}
                 className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                   timeRange === range
-                    ? 'bg-c-surface/[0.08] text-white'
+                    ? 'bg-c-surface/[0.08] text-c-text'
                     : 'text-c-text-muted hover:text-slate-300'
                 }`}
               >
@@ -310,7 +310,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                 )}
               </div>
               <div className="mb-2">
-                <span className="text-2xl font-semibold text-white">
+                <span className="text-2xl font-semibold text-c-text">
                   {formatNumber(usage?.tokens.used || 0)}
                 </span>
                 <span className="text-c-text-muted text-sm ml-1">
@@ -339,7 +339,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                 </div>
               </div>
               <div className="mb-2">
-                <span className="text-2xl font-semibold text-white">
+                <span className="text-2xl font-semibold text-c-text">
                   {usage?.storage.usedFormatted || '0 B'}
                 </span>
                 <span className="text-c-text-muted text-sm ml-1">
@@ -368,7 +368,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                 </div>
               </div>
               <div className="mb-2">
-                <span className="text-2xl font-semibold text-white">{usage?.seats.used || 0}</span>
+                <span className="text-2xl font-semibold text-c-text">{usage?.seats.used || 0}</span>
                 <span className="text-c-text-muted text-sm ml-1">
                   / {usage?.seats.limit || 0}
                 </span>
@@ -396,7 +396,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                 <span className="text-xs text-c-text-muted">this period</span>
               </div>
               <div className="mb-2">
-                <span className="text-2xl font-semibold text-white">
+                <span className="text-2xl font-semibold text-c-text">
                   ${(usage?.cost.current || 0).toFixed(2)}
                 </span>
               </div>
@@ -442,7 +442,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                         ? 'text-danger-300'
                         : organizationContextQuota.tone === 'warning'
                           ? 'text-amber-300'
-                          : 'text-white'
+                          : 'text-c-text'
                     }`}
                   >
                     {organizationContextQuota.title}
@@ -459,7 +459,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
               </div>
               <div className="min-w-[220px]">
                 <div className="flex items-baseline justify-between mb-2">
-                  <span className="text-lg font-semibold text-white">
+                  <span className="text-lg font-semibold text-c-text">
                     {usage?.storage.usedFormatted || '0 B'}
                   </span>
                   <span className="text-xs text-c-text-muted">
@@ -483,7 +483,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Usage Trend Chart */}
             <div className="lg:col-span-2 admin-card p-4">
-              <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+              <h3 className="text-sm font-medium text-c-text mb-4 flex items-center gap-2">
                 <TrendingUp size={14} className="text-c-text-muted" />
                 Usage Trend
               </h3>
@@ -541,7 +541,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
             {/* Breakdown Pie Chart */}
             <div className="admin-card p-4">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-medium text-white flex items-center gap-2">
+                <h3 className="text-sm font-medium text-c-text flex items-center gap-2">
                   <PieChart size={14} className="text-c-text-muted" />
                   Breakdown
                 </h3>
@@ -593,7 +593,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
           {/* Detailed Breakdown Table */}
           <div className="admin-card p-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-white flex items-center gap-2">
+              <h3 className="text-sm font-medium text-c-text flex items-center gap-2">
                 <BarChart3 size={14} className="text-c-text-muted" />
                 Detailed Usage by{' '}
                 {breakdownView === 'user'
@@ -610,7 +610,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                     disabled={!!loadError || !usage}
                     className={`px-3 py-1 text-xs font-medium rounded-md transition-all capitalize ${
                       breakdownView === view
-                        ? 'bg-c-surface/[0.08] text-white'
+                        ? 'bg-c-surface/[0.08] text-c-text'
                         : 'text-c-text-muted hover:text-slate-300'
                     }`}
                   >
@@ -667,7 +667,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                         >
                           <td className="py-3 px-4">
                             <div>
-                              <p className="text-sm text-white">
+                              <p className="text-sm text-c-text">
                                 {item.name || item.feature || 'Unknown'}
                               </p>
                               {item.email && (
@@ -678,7 +678,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                             </div>
                           </td>
                           <td className="py-3 px-4 text-right">
-                            <span className="text-sm text-white font-medium">
+                            <span className="text-sm text-c-text font-medium">
                               {formatNumber(item.tokens)}
                             </span>
                           </td>

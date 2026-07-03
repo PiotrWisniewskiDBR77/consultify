@@ -400,7 +400,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
           <div className="bg-c-surface border border-c-border-subtle rounded-xl p-8 w-full max-w-lg shadow-2xl animate-in zoom-in duration-200">
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-navy-900 rounded-lg text-white">
+                <div className="p-2 bg-primary-600 rounded-lg text-white">
                   <Plus size={20} />
                 </div>
                 <h2 className="text-xl font-bold text-navy-900 dark:text-white">

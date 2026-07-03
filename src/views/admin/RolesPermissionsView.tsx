@@ -318,7 +318,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
         light: 'bg-amber-100 dark:bg-amber-900/30',
       },
       violet: {
-        bg: 'bg-navy-900',
+        bg: 'bg-primary-500',
         text: 'text-primary-500',
         light: 'bg-primary-100 dark:bg-primary-900/30',
       },
@@ -334,7 +334,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
         light: 'bg-green-100 dark:bg-green-900/30',
       },
       purple: {
-        bg: 'bg-navy-900',
+        bg: 'bg-primary-500',
         text: 'text-primary-500',
         light: 'bg-primary-100 dark:bg-primary-900/30',
       },
@@ -756,7 +756,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                               onClick={() => togglePermission(perm.id)}
                               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                                 formData.permissions.includes(perm.id)
-                                  ? 'bg-navy-900 text-white'
+                                  ? 'bg-primary-600 text-white'
                                   : 'bg-c-surface text-c-text-secondary border border-c-border-subtle hover:border-primary-300'
                               }`}
                             >

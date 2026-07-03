@@ -66,11 +66,11 @@ export const TokenBillingManagementView = () => {
   }, []);
 
   return (
-    <div className="p-8 h-full overflow-y-auto bg-navy-950">
+    <div className="p-8 h-full overflow-y-auto bg-c-bg">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white mb-1">Token Billing Management</h1>
+          <h1 className="text-2xl font-bold text-c-text mb-1">Token Billing Management</h1>
           <p className="text-slate-600 dark:text-slate-500 text-sm">
             Configure pricing, margins, and packages for the token economy.
           </p>
@@ -79,7 +79,7 @@ export const TokenBillingManagementView = () => {
           <button
             onClick={loadStats}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-700 text-white rounded-lg transition-colors text-sm font-medium border border-white/10"
+            className="flex items-center gap-2 px-4 py-2 bg-c-surface-raised hover:bg-c-surface-raised text-c-text rounded-lg transition-colors text-sm font-medium border border-white/10"
           >
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
             Refresh Data
@@ -157,7 +157,7 @@ const KPICard = ({
   loading: boolean;
   subtext?: string;
 }) => (
-  <div className="bg-navy-900 border border-white/5 rounded-xl p-4 shadow-lg relative overflow-hidden group hover:border-white/10 transition-colors">
+  <div className="bg-c-surface border border-white/5 rounded-xl p-4 shadow-lg relative overflow-hidden group hover:border-white/10 transition-colors">
     <div className="absolute top-0 right-0 p-4 opacity-50 bg-gradient-to-br from-white/5 to-transparent w-24 h-24 rounded-bl-full -mr-10 -mt-10" />
     <div className="flex justify-between items-start mb-4 relative z-10">
       <h3 className="text-slate-600 dark:text-slate-500 text-xs font-medium uppercase tracking-wider">
@@ -171,7 +171,7 @@ const KPICard = ({
       {loading ? (
         <div className="h-8 w-16 bg-white/10 animate-pulse rounded" />
       ) : (
-        <div className="text-2xl font-bold text-white">{value}</div>
+        <div className="text-2xl font-bold text-c-text">{value}</div>
       )}
       {subtext && <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">{subtext}</p>}
     </div>

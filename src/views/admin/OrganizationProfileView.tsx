@@ -664,13 +664,13 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                   <div className="flex items-center gap-3">
                     <button
                       style={{ backgroundColor: profile.brandColor }}
-                      className="px-4 py-2 text-white rounded-lg font-medium"
+                      className="px-4 py-2 text-c-text rounded-lg font-medium"
                     >
                       Primary Button
                     </button>
                     <button
                       style={{ backgroundColor: profile.accentColor }}
-                      className="px-4 py-2 text-white rounded-lg font-medium"
+                      className="px-4 py-2 text-c-text rounded-lg font-medium"
                     >
                       Accent Button
                     </button>

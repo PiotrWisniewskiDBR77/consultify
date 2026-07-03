@@ -469,13 +469,13 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="relative">
-                        <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-white font-medium">
+                        <div className="w-10 h-10 rounded-full bg-c-surface-raised flex items-center justify-center text-c-text font-medium">
                           {user.firstName?.[0] || '?'}
                         </div>
                         {/* Owner Crown Badge */}
                         {(user.isOwner || user.role === 'OWNER') && (
                           <div className="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center">
-                            <Crown size={12} className="text-white" />
+                            <Crown size={12} className="text-c-text" />
                           </div>
                         )}
                       </div>
@@ -758,7 +758,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
               <div className="flex gap-3 pt-4">
                 <button
                   onClick={() => setShowTransferModal(false)}
-                  className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium"
+                  className="flex-1 py-3 bg-c-surface-raised hover:bg-slate-600 text-c-text rounded-lg font-medium"
                 >
                   Cancel
                 </button>
