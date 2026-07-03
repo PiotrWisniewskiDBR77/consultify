@@ -523,7 +523,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
     if (!item.badge) return null;
 
     const badgeStyles = {
-      count: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
+      count: 'bg-c-accent-soft text-c-accent',
       new: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
       beta: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
       warning: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400',
@@ -544,16 +544,16 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
   return (
     <div
       className={cn(
-        'flex flex-col h-full w-[280px] bg-white dark:bg-navy-950 border-r border-slate-200 dark:border-navy-800',
+        'flex flex-col h-full w-[280px] bg-c-surface border-r border-c-border-subtle dark:border-navy-800',
         className
       )}
     >
       {/* Header - Admin style (no icon, bold title) */}
       <div className="px-5 pt-5 pb-4">
-        <h1 className="text-lg font-bold text-navy-900 dark:text-white tracking-wide">
+        <h1 className="text-lg font-bold text-navy-900 tracking-wide">
           {t('settings.sidebar.title', 'SETTINGS')}
         </h1>
-        <p className="text-sm text-slate-600 dark:text-slate-500 mt-0.5">
+        <p className="text-sm text-c-text-secondary mt-0.5">
           {t('settings.sidebar.subtitle', 'Personal, tenant, and module settings')}
         </p>
       </div>
@@ -569,7 +569,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                 {/* Group Header - Clickable, no icon (Admin style) */}
                 <button
                   onClick={() => toggleGroup(group.id)}
-                  className="w-full flex items-center justify-between px-2 py-2.5 text-[11px] font-semibold tracking-wider text-slate-500 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300 transition-colors"
+                  className="w-full flex items-center justify-between px-2 py-2.5 text-[11px] font-semibold tracking-wider text-c-text-muted hover:text-c-text-secondary transition-colors"
                 >
                   <span>{group.label}</span>
                   <ChevronDown
@@ -599,8 +599,8 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                           className={cn(
                             'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150',
                             isActive
-                              ? 'bg-slate-100 text-slate-900 font-medium dark:bg-white/[0.08] dark:text-white'
-                              : 'text-slate-600 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-navy-800/20 hover:text-navy-900 dark:hover:text-white'
+                              ? 'bg-c-surface-raised text-c-text font-medium.08]'
+                              : 'text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-800/20 hover:text-navy-900 dark:hover:text-white'
                           )}
                         >
                           <Icon
@@ -608,7 +608,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                               'w-4 h-4 flex-shrink-0',
                               isActive
                                 ? 'text-[var(--c-info)]'
-                                : 'text-slate-600 dark:text-slate-400'
+                                : 'text-c-text-secondary'
                             )}
                           />
                           <span className="flex-1 text-left">{item.label}</span>
@@ -626,10 +626,10 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="p-3 border-t border-slate-200 dark:border-white/5">
+      <div className="p-3 border-t border-c-border-subtle">
         <button
           onClick={onBack || (() => window.history.back())}
-          className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-slate-600 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded-lg transition-colors"
+          className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-c-text-secondary hover:text-navy-900 dark:hover:text-white hover:bg-c-surface-raised dark:hover:bg-navy-800/20 rounded-lg transition-colors"
         >
           <LogOut className="w-4 h-4 rotate-180" />
           {t('settings.sidebar.backToDashboard', 'Back to Dashboard')}

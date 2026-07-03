@@ -137,15 +137,15 @@ const SectionCard: React.FC<{
   onAction?: () => void;
   children: React.ReactNode;
 }> = ({ title, subtitle, icon: Icon, actionLabel, onAction, children }) => (
-  <section className="rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-5 shadow-sm">
+  <section className="rounded-2xl border border-c-border-subtle dark:border-navy-700 bg-c-surface p-5 shadow-sm">
     <div className="flex items-start justify-between gap-4">
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-c-accent-soft text-c-accent dark:bg-c-accent-soft">
           <Icon size={18} />
         </div>
         <div>
-          <h3 className="text-base font-semibold text-slate-900 dark:text-white">{title}</h3>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{subtitle}</p>
+          <h3 className="text-base font-semibold text-c-text">{title}</h3>
+          <p className="mt-1 text-sm text-c-text-secondary">{subtitle}</p>
         </div>
       </div>
       {actionLabel && onAction ? (
@@ -165,18 +165,18 @@ const ValueRow: React.FC<{
   readOnly?: boolean;
   t: TFunction;
 }> = ({ label, value, source, readOnly = false, t }) => (
-  <div className="flex flex-col gap-1 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950/60 px-4 py-3">
+  <div className="flex flex-col gap-1 rounded-xl border border-c-border-subtle dark:border-navy-700 bg-c-surface-raised px-4 py-3">
     <div className="flex items-center justify-between gap-3">
-      <span className="text-sm font-medium text-slate-900 dark:text-white">{label}</span>
+      <span className="text-sm font-medium text-c-text">{label}</span>
       {readOnly ? (
         <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
           {t('settings.ownership.readOnly', 'Read-only')}
         </span>
       ) : null}
     </div>
-    <div className="text-sm text-slate-700 dark:text-slate-300">{value}</div>
+    <div className="text-sm text-c-text-secondary">{value}</div>
     {source ? (
-      <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-500">
+      <div className="text-xs uppercase tracking-wide text-c-text-muted">
         {t('settings.ownership.source', 'Source')}: {source}
       </div>
     ) : null}
@@ -186,7 +186,7 @@ const ValueRow: React.FC<{
 const EmptyState: React.FC<{ error?: string | null; t: TFunction }> = ({ error, t }) => (
   <div
     role="alert"
-    className="rounded-2xl border border-dashed border-slate-300 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-950/60 p-6 text-sm text-slate-600 dark:text-slate-400"
+    className="rounded-2xl border border-dashed border-c-border dark:border-navy-700 bg-c-surface-raised p-6 text-sm text-c-text-secondary"
   >
     <div className="flex items-center gap-3">
       <AlertTriangle size={18} className="text-amber-500" />
@@ -468,17 +468,17 @@ function ModulePreferencesPanel({
         {cards.map((card) => (
           <div
             key={card.id}
-            className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950/60 p-4"
+            className="rounded-xl border border-c-border-subtle dark:border-navy-700 bg-c-surface-raised p-4"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                <div className="text-sm font-semibold text-c-text">
                   {card.title}
                 </div>
-                <div className="mt-2 space-y-1 text-sm text-slate-600 dark:text-slate-400">
+                <div className="mt-2 space-y-1 text-sm text-c-text-secondary">
                   {card.values.map(([label, value]) => (
                     <div key={label}>
-                      <span className="font-medium text-slate-800 dark:text-slate-200">
+                      <span className="font-medium text-c-text">
                         {label}:
                       </span>{' '}
                       {value}
