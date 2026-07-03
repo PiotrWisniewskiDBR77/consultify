@@ -59,7 +59,7 @@ interface FormData {
 }
 
 const INPUT_BASE =
-  'w-full px-4 h-[48px] bg-white/[0.04] border border-white/[0.10] rounded-xl text-white placeholder-white/30 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500/30 transition-all';
+  'w-full px-4 h-[48px] bg-white/[0.04] border border-white/[0.10] rounded-xl text-white placeholder-white/30 text-sm focus:outline-none focus:ring-2 focus:ring-c-focus/40 focus:border-c-accent/30 transition-all';
 
 const INPUT_CLASS = INPUT_BASE;
 
@@ -236,7 +236,7 @@ export const ContactView: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary-500/30 bg-primary-500/10 backdrop-blur-sm text-xs font-bold text-primary-300 tracking-wide mb-8">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-c-accent/30 bg-c-accent/10 backdrop-blur-sm text-xs font-bold text-c-accent tracking-wide mb-8">
               <Mail size={14} />
               <span>{t('contact.badge', 'Get in touch')}</span>
             </div>
@@ -282,7 +282,7 @@ export const ContactView: React.FC = () => {
                 <div className="space-y-5">
                   {[OFFICES.usa, OFFICES.germany].map((office) => (
                     <div key={office.name} className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-500/10 border border-primary-500/20 text-lg shrink-0">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-c-accent/10 border border-c-accent/20 text-lg shrink-0">
                         {office.flag}
                       </div>
                       <div>
@@ -311,7 +311,7 @@ export const ContactView: React.FC = () => {
                       <span className="text-xs text-white/40 w-16 shrink-0">{item.label}</span>
                       <a
                         href={`mailto:${item.email}`}
-                        className="text-sm font-medium text-primary-400 hover:text-primary-300 transition-colors"
+                        className="text-sm font-medium text-c-accent hover:text-c-accent/80 transition-colors"
                       >
                         {item.email}
                       </a>
@@ -402,7 +402,7 @@ export const ContactView: React.FC = () => {
                   className="rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-sm p-6 sm:p-8"
                 >
                   <div className="flex items-center gap-3 mb-8">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-blue-500 text-white shadow-lg shadow-primary-500/20">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-c-accent to-c-info text-white shadow-lg shadow-c-accent/20">
                       <Send size={18} />
                     </div>
                     <div>
@@ -499,7 +499,7 @@ export const ContactView: React.FC = () => {
                       onChange={handleChange}
                       required
                       rows={5}
-                      className="w-full px-4 py-3.5 bg-white/[0.04] border border-white/[0.10] rounded-xl text-white placeholder-white/30 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500/30 transition-all resize-none"
+                      className="w-full px-4 py-3.5 bg-white/[0.04] border border-white/[0.10] rounded-xl text-white placeholder-white/30 text-sm focus:outline-none focus:ring-2 focus:ring-c-focus/40 focus:border-c-accent/30 transition-all resize-none"
                       placeholder={t('contact.form.messagePlaceholder', 'How can we help you?')}
                     />
                   </div>

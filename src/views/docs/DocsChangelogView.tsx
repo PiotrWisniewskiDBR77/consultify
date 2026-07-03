@@ -261,7 +261,7 @@ const CHANGE_TYPE_CONFIG: Record<
   security: {
     icon: CheckCircle2,
     label: 'Security',
-    color: 'bg-primary-500/20 text-primary-400 border-primary-500/30',
+    color: 'bg-c-accent-soft text-c-accent border-c-accent/30',
   },
 };
 
@@ -295,22 +295,22 @@ function ReleaseCard({ release }: { release: Release }) {
       layout
       className={cn(
         'relative border rounded-xl overflow-hidden',
-        release.isLatest ? 'border-blue-500/50 bg-blue-500/5' : 'border-zinc-800 bg-zinc-900/30'
+        release.isLatest ? 'border-blue-500/50 bg-blue-500/5' : 'border-c-border bg-c-surface'
       )}
     >
       {/* Timeline connector */}
-      <div className="absolute left-8 top-0 bottom-0 w-px bg-zinc-800" />
+      <div className="absolute left-8 top-0 bottom-0 w-px bg-c-border" />
 
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-start gap-6 p-6 text-left hover:bg-zinc-800/30 transition-colors"
+        className="w-full flex items-start gap-6 p-6 text-left hover:bg-c-surface-raised transition-colors"
       >
         {/* Version marker */}
         <div
           className={cn(
             'relative z-10 flex-shrink-0 w-4 h-4 rounded-full border-2',
-            release.isMajor ? 'bg-blue-500 border-blue-400' : 'bg-zinc-800 border-zinc-600'
+            release.isMajor ? 'bg-blue-500 border-blue-400' : 'bg-c-surface-raised border-c-border-strong'
           )}
         />
 
@@ -325,7 +325,7 @@ function ReleaseCard({ release }: { release: Release }) {
             {release.isMajor && (
               <Badge
                 variant="outline"
-                className="bg-primary-500/20 text-primary-400 border-primary-500/50"
+                className="bg-c-accent-soft text-c-accent border-c-accent/50"
               >
                 <Star size={12} className="mr-1" />
                 Major
@@ -333,10 +333,10 @@ function ReleaseCard({ release }: { release: Release }) {
             )}
           </div>
 
-          <h4 className="text-lg text-zinc-200 mb-2">{release.title}</h4>
-          <p className="text-sm text-zinc-500 mb-3">{release.description}</p>
+          <h4 className="text-lg text-c-text mb-2">{release.title}</h4>
+          <p className="text-sm text-c-text-muted mb-3">{release.description}</p>
 
-          <div className="flex items-center gap-4 text-xs text-zinc-500">
+          <div className="flex items-center gap-4 text-xs text-c-text-muted">
             <span className="flex items-center gap-1">
               <Calendar size={12} />
               {new Date(release.date).toLocaleDateString('en-US', {
@@ -356,7 +356,7 @@ function ReleaseCard({ release }: { release: Release }) {
 
         <ChevronRight
           size={20}
-          className={cn('text-zinc-500 transition-transform', isExpanded && 'rotate-90')}
+          className={cn('text-c-text-muted transition-transform', isExpanded && 'rotate-90')}
         />
       </button>
 
@@ -366,7 +366,7 @@ function ReleaseCard({ release }: { release: Release }) {
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 'auto', opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
-          className="border-t border-zinc-800 px-6 py-4 ml-16"
+          className="border-t border-c-border px-6 py-4 ml-16"
         >
           <div className="space-y-3">
             {release.changes.map((change, idx) => (
@@ -374,15 +374,15 @@ function ReleaseCard({ release }: { release: Release }) {
                 <ChangeTypeBadge type={change.type} />
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-zinc-200">{change.title}</span>
+                    <span className="text-sm text-c-text">{change.title}</span>
                     {change.module && (
-                      <span className="text-xs text-zinc-600 bg-zinc-800 px-1.5 py-0.5 rounded">
+                      <span className="text-xs text-c-text-muted bg-c-surface-raised px-1.5 py-0.5 rounded">
                         {change.module}
                       </span>
                     )}
                   </div>
                   {change.description && (
-                    <p className="text-xs text-zinc-500 mt-0.5">{change.description}</p>
+                    <p className="text-xs text-c-text-muted mt-0.5">{change.description}</p>
                   )}
                 </div>
               </div>
@@ -408,9 +408,9 @@ export function DocsChangelogView() {
   });
 
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen bg-c-bg">
       {/* Hero Section */}
-      <div className="bg-gradient-to-b from-primary-900/20 to-zinc-950 border-b border-zinc-800">
+      <div className="bg-gradient-to-b from-c-accent-soft to-c-bg border-b border-c-border">
         <div className="max-w-4xl mx-auto px-6 py-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -418,10 +418,10 @@ export function DocsChangelogView() {
             className="text-center"
           >
             <div className="flex items-center justify-center gap-2 mb-4">
-              <GitBranch className="text-primary-400" size={32} />
+              <GitBranch className="text-c-accent" size={32} />
             </div>
             <h1 className="text-4xl font-bold text-white mb-4">Changelog</h1>
-            <p className="text-xl text-zinc-600 max-w-2xl mx-auto mb-8">
+            <p className="text-xl text-c-text-secondary max-w-2xl mx-auto mb-8">
               Track all updates, new features, and improvements to the Consultify platform.
             </p>
 
@@ -438,14 +438,14 @@ export function DocsChangelogView() {
       <div className="max-w-4xl mx-auto px-6 py-8">
         {/* Filters */}
         <div className="flex items-center gap-2 mb-8">
-          <span className="text-sm text-zinc-500">Filter:</span>
+          <span className="text-sm text-c-text-muted">Filter:</span>
           {(['all', 'major', 'breaking'] as const).map((f) => (
             <Button
               key={f}
               size="sm"
               variant={filter === f ? 'primary' : 'ghost'}
               onClick={() => setFilter(f)}
-              className={cn(filter === f ? 'bg-zinc-700' : 'text-zinc-600')}
+              className={cn(filter === f ? 'bg-c-surface-raised' : 'text-c-text-muted')}
             >
               {f === 'all' && 'All Releases'}
               {f === 'major' && 'Major Only'}
@@ -470,7 +470,7 @@ export function DocsChangelogView() {
 
         {/* Footer CTA */}
         <div className="mt-12 text-center space-y-4">
-          <p className="text-zinc-500">
+          <p className="text-c-text-muted">
             Looking for older releases? Check our{' '}
             <a href="#" className="text-blue-400 hover:underline">
               release archive
@@ -479,7 +479,7 @@ export function DocsChangelogView() {
           </p>
           <Link
             to="/docs"
-            className="inline-flex items-center gap-2 text-primary-400 hover:text-primary-300 transition-colors"
+            className="inline-flex items-center gap-2 text-c-accent hover:text-c-accent/80 transition-colors"
           >
             <ArrowRight size={16} />
             Back to Documentation Home
