@@ -308,7 +308,7 @@ export const TransformTextSection: React.FC<TransformTextSectionProps> = ({ isPl
               </div>
             </div>
             <ChevronDown
-              size={12}
+              size={14}
               className={`text-slate-600 transition-transform ${styleMenuOpen ? 'rotate-180' : ''}`}
             />
           </button>
