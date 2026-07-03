@@ -42,7 +42,7 @@
      * ======================================================================== */
     --c-bg: #fafaf9; /* warm off-white — app background */
     --c-surface: #ffffff; /* cards / panels */
-    --c-surface-raised: #f8fafc; /* popovers / chips — slight tint so a chip reads off a white row */
+    --c-surface-raised: #eef1f6; /* popovers / chips — cool step-DOWN from white so a raised chip/popover reads against BOTH surface #fff (1.13:1) AND app bg #fafaf9 (1.08:1). Prev #f8fafc was luminance-identical to --c-bg (1.00:1) → Menu-2 pill track & popovers were invisible on the app background in light mode. */
     --c-border-subtle: #e6e9ed; /* hairlines */
     --c-border: #cbd2da; /* default borders — strengthened so chip outline is visible on white (light mode) */
     --c-border-strong: #9aa6b5; /* hover/active borders */
