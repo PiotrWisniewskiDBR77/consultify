@@ -289,7 +289,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
       } catch (error: any) {
         toast.error(
           error?.response?.data?.error ||
-            t('initiatives.toast.statusChangeError', 'Nie udało się zmienić statusu')
+            t('initiatives.toast.statusChangeError', 'Could not change status')
         );
       } finally {
         setIsLoading(false);

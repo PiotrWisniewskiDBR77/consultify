@@ -1,21 +1,21 @@
 /**
- * InitiativeSuggestionBadge — F2 SKRZYNKA KANDYDATÓW (D5/D8): badge kontekstowy
- * „AI sugeruje inicjatywę →" przy artefaktach rozpoznania (insight / assessment / audyt).
+ * InitiativeSuggestionBadge — F2 CANDIDATE INBOX (D5/D8): contextual badge
+ * "AI suggests an initiative →" next to recognition artifacts (insight / assessment / audit).
  *
- * Cel: gdy AI wygenerował kandydata inicjatywy z TEGO artefaktu (i czeka on jako
- * `pending` w skrzynce), pokaż przy artefakcie dyskretny przycisk, który pozwala
- * jednym kliknięciem zaakceptować propozycję (→ generator F1) bez wchodzenia w hub.
+ * Goal: when AI has generated an initiative candidate from THIS artifact (and it waits as
+ * `pending` in the inbox), show a discreet button next to the artifact that lets you
+ * accept the suggestion with one click (→ generator F1) without entering the hub.
  *
- * Zachowanie:
- *   - czyta pending-kandydatów (GET /api/initiatives/candidates?status=pending),
- *   - renderuje się TYLKO gdy któryś kandydat pasuje do (sourceType, sourceId),
- *   - klik → jeśli `onCreate` podany → woła go z kandydatem (host decyduje co dalej,
- *     np. otwiera generator F1); w przeciwnym razie → POST /candidates/:id/accept
- *     i znika po sukcesie.
+ * Behavior:
+ *   - reads pending candidates (GET /api/initiatives/candidates?status=pending),
+ *   - renders ONLY when a candidate matches (sourceType, sourceId),
+ *   - click → if `onCreate` provided → calls it with the candidate (host decides what next,
+ *     e.g. opens generator F1); otherwise → POST /candidates/:id/accept
+ *     and disappears on success.
  *
- * Samowystarczalny: reużywa API_URL/getHeaders z baseClient (zero edycji współdzielonych
- * API), i18n PL/EN przez t() z fallbackami PL, dark-mode-aware (klasy dark:). Fail-soft —
- * błąd fetcha = badge ukryty (nie psuje widoku-hosta).
+ * Self-contained: reuses API_URL/getHeaders from baseClient (zero edits to shared
+ * APIs), i18n PL/EN via t() with EN fallbacks, dark-mode-aware (dark: classes). Fail-soft —
+ * fetch error = badge hidden (does not break the host view).
  */
 import { Loader2, Sparkles } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -27,7 +27,7 @@ import { API_URL, getHeaders } from '@/services/api/baseClient';
 // Types
 // ---------------------------------------------------------------------------
 
-/** Typ artefaktu rozpoznania, do którego przypięty jest badge. */
+/** Type of recognition artifact the badge is pinned to. */
 export type SuggestionSourceType = 'interview_insight' | 'assessment' | 'audit' | string;
 
 export interface InitiativeCandidateLite {
@@ -41,17 +41,17 @@ export interface InitiativeCandidateLite {
 }
 
 export interface InitiativeSuggestionBadgeProps {
-  /** Typ artefaktu-źródła (np. 'audit'). */
+  /** Type of the source artifact (e.g. 'audit'). */
   sourceType: SuggestionSourceType;
-  /** Id artefaktu-źródła. */
+  /** Id of the source artifact. */
   sourceId: string;
   /**
-   * Opcjonalny handler kliknięcia. Gdy podany — wołany z dopasowanym kandydatem
-   * ZAMIAST domyślnego POST accept (host przejmuje akcję, np. otwiera generator F1).
-   * Może być async; badge pokazuje stan zajętości na czas jego trwania.
+   * Optional click handler. When provided — called with the matched candidate
+   * INSTEAD of the default POST accept (host takes over the action, e.g. opens generator F1).
+   * May be async; the badge shows a busy state for its duration.
    */
   onCreate?: (candidate: InitiativeCandidateLite) => void | Promise<void>;
-  /** Dodatkowe klasy kontenera (host layout). */
+  /** Extra container classes (host layout). */
   className?: string;
 }
 
@@ -88,7 +88,7 @@ export function InitiativeSuggestionBadge({
     };
   }, []);
 
-  // Pobierz pending-kandydatów i znajdź dopasowanie do tego artefaktu.
+  // Fetch pending candidates and find a match for this artifact.
   useEffect(() => {
     let cancelled = false;
     if (!sourceType || !sourceId) {
@@ -114,7 +114,7 @@ export function InitiativeSuggestionBadge({
           ) ?? null;
         if (!cancelled && mounted.current) setCandidate(match);
       } catch {
-        // fail-soft — brak dopasowania = badge ukryty, host nietknięty
+        // fail-soft — no match = badge hidden, host untouched
         if (!cancelled && mounted.current) setCandidate(null);
       }
     })();
@@ -139,16 +139,16 @@ export function InitiativeSuggestionBadge({
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       if (mounted.current) setAccepted(true);
     } catch {
-      // fail-soft — zostaw badge widoczny by można było spróbować ponownie
+      // fail-soft — keep the badge visible so it can be retried
     } finally {
       if (mounted.current) setBusy(false);
     }
   }, [candidate, busy, onCreate]);
 
-  // Brak dopasowanego kandydata lub już zaakceptowany → nic nie renderuj.
+  // No matched candidate or already accepted → render nothing.
   if (!candidate || accepted) return null;
 
-  const label = t('initiatives.suggestionBadge.label', 'AI sugeruje inicjatywę');
+  const label = t('initiatives.suggestionBadge.label', 'AI suggests an initiative');
 
   return (
     <button
@@ -157,7 +157,7 @@ export function InitiativeSuggestionBadge({
       disabled={busy}
       aria-label={t(
         'initiatives.suggestionBadge.aria',
-        'Akceptuj sugerowaną inicjatywę z tego artefaktu'
+        'Accept the suggested initiative from this artifact'
       )}
       title={candidate.rationale || label}
       className={[

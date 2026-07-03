@@ -1,21 +1,21 @@
 /**
- * ResultsUIPrimitives — M15/W6 task 6.9: standard graficzny M15.
+ * ResultsUIPrimitives — M15/W6 task 6.9: M15 visual standard.
  *
- * 10 reużywalnych prymitywów UI dla wszystkich widoków M15.
- * Bazują na CANON.md + M15-ANALIZA-SWIATOWA (Część V: UI standard).
- * Użyj tych komponentów zamiast jednorazowych stylów — zero inline-styles.
+ * 10 reusable UI primitives for all M15 views.
+ * Based on CANON.md + M15-ANALIZA-SWIATOWA (Part V: UI standard).
+ * Use these components instead of one-off styles — zero inline-styles.
  *
- * Prymitywy:
- *  1. ValueCard        — karta wartości (główna metryka + trend + RAG)
- *  2. RagPill          — badge RAG + confidence %
- *  3. DriverTreeNode   — węzeł drzewa (stylizacja)
- *  4. WaterfallBar     — pasek wodospadowy (zmiana vs baseline)
- *  5. FunnelStage      — etap lejka wartości
- *  6. ScorecardGrid    — siatka BSC (4 perspektywy)
- *  7. BdnStatCard      — stat-karta BDN
- *  8. TrendSparkline   — miniatura wykresu trendu (SVG)
- *  9. ExecValueHeader  — nagłówek executive (banked/forecast/at-risk w jednej linii)
- * 10. ValueDrawer      — 7-sekcyjny drawer szczegółów KPI/korzyści
+ * Primitives:
+ *  1. ValueCard        — value card (main metric + trend + RAG)
+ *  2. RagPill          — RAG badge + confidence %
+ *  3. DriverTreeNode   — tree node (styling)
+ *  4. WaterfallBar     — waterfall bar (change vs baseline)
+ *  5. FunnelStage      — value funnel stage
+ *  6. ScorecardGrid    — BSC grid (4 perspectives)
+ *  7. BdnStatCard      — BDN stat card
+ *  8. TrendSparkline   — trend chart thumbnail (SVG)
+ *  9. ExecValueHeader  — executive header (banked/forecast/at-risk on one line)
+ * 10. ValueDrawer      — 7-section KPI/benefit detail drawer
  */
 
 import React from 'react';
@@ -61,7 +61,7 @@ export const ValueCard: React.FC<ValueCardProps> = ({
         <div className="h-1 rounded-full bg-slate-100 dark:bg-white/[0.06] overflow-hidden">
           <div className="h-full rounded-full bg-primary-500" style={{ width: `${Math.round(confidence * 100)}%` }} />
         </div>
-        <div className="text-xs text-slate-400 mt-0.5">{Math.round(confidence * 100)}% pewność</div>
+        <div className="text-xs text-slate-400 mt-0.5">{Math.round(confidence * 100)}% confidence</div>
       </div>
     )}
   </div>
@@ -91,9 +91,9 @@ const RAG_DOT: Record<RagStatus, string> = {
 
 const RAG_LABELS: Record<RagStatus, string> = {
   green: 'OK',
-  amber: 'Ryzyko',
-  red: 'Krytyczne',
-  grey: 'Brak danych',
+  amber: 'At risk',
+  red: 'Critical',
+  grey: 'No data',
 };
 
 export const RagPill: React.FC<RagPillProps> = ({ status, label, confidence }) => (
@@ -306,20 +306,20 @@ export const ExecValueHeader: React.FC<ExecValueHeaderProps> = ({
   <div data-testid="exec-value-header" className="flex flex-wrap gap-6 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] px-6 py-4">
     {label && <div className="w-full text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1">{label}</div>}
     <div>
-      <div className="text-xs text-slate-500 dark:text-slate-400">ZABANKOWANE</div>
+      <div className="text-xs text-slate-500 dark:text-slate-400">BANKED</div>
       <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{fmtM(banked)}</div>
     </div>
     <div>
-      <div className="text-xs text-slate-500 dark:text-slate-400">W REALIZACJI</div>
+      <div className="text-xs text-slate-500 dark:text-slate-400">IN PROGRESS</div>
       <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">{fmtM(forecast)}</div>
     </div>
     <div>
-      <div className="text-xs text-slate-500 dark:text-slate-400">ZAGROŻONE</div>
+      <div className="text-xs text-slate-500 dark:text-slate-400">AT RISK</div>
       <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{fmtM(atRisk)}</div>
     </div>
     {target != null && (
       <div>
-        <div className="text-xs text-slate-500 dark:text-slate-400">CEL</div>
+        <div className="text-xs text-slate-500 dark:text-slate-400">TARGET</div>
         <div className="text-2xl font-bold text-slate-700 dark:text-slate-200">{fmtM(target)}</div>
       </div>
     )}

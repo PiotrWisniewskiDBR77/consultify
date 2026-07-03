@@ -1,13 +1,13 @@
 /**
- * F2 — SKRZYNKA KANDYDATÓW (D5/D8): zakładka „Kandydaci" w hubie inicjatyw.
+ * F2 — CANDIDATES INBOX (D5/D8): "Candidates" tab in the initiatives hub.
  *
- * AI proaktywnie sugeruje inicjatywy z rozpoznania (insights / assessments / audits).
- * Ten panel listuje kandydatów (tytuł · uzasadnienie · dopasowanie) i pozwala
- * zaakceptować (→ generator F1) lub odrzucić.
+ * AI proactively suggests initiatives from discovery (insights / assessments / audits).
+ * This panel lists candidates (title · rationale · fit) and lets you
+ * accept (→ F1 generator) or dismiss.
  *
- * Samowystarczalny: własny mini-hook fetch (reużywa getHeaders/API_URL z baseClient,
- * bez edycji współdzielonych API). i18n PL/EN przez t() z fallbackami. Read-mostly +
- * 3 mutacje (scan/accept/dismiss).
+ * Self-contained: own mini fetch hook (reuses getHeaders/API_URL from baseClient,
+ * no shared API edits). i18n PL/EN via t() with fallbacks. Read-mostly +
+ * 3 mutations (scan/accept/dismiss).
  */
 import { Loader2, RefreshCw, Sparkles, ThumbsDown, ThumbsUp } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -42,9 +42,9 @@ export interface AcceptCandidatePayload {
   title: string;
   rationale: string;
   brief: string;
-  /** Gdy serwer już utworzył inicjatywę z kandydata (accept tworzy+wypełnia) — nawiguj do niej, nie twórz drugiej. */
+  /** When the server already created an initiative from the candidate (accept creates+fills) — navigate to it, don't create a second one. */
   initiativeId?: string | null;
-  /** Czy generator wypełnił karty (auto-fill). */
+  /** Whether the generator filled the cards (auto-fill). */
   filled?: boolean;
 }
 
@@ -127,8 +127,8 @@ export function useCandidates(status: CandidateStatus = 'pending'): UseCandidate
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await readJson(res);
         setCandidates((prev) => prev.filter((c) => c.id !== id));
-        // Serwer tworzy+wypełnia inicjatywę i zwraca initiativeId — scal do payloadu,
-        // żeby hub nawigował do niej zamiast tworzyć drugą (anty-dublet F2→F1).
+        // The server creates+fills the initiative and returns initiativeId — merge into the payload,
+        // so the hub navigates to it instead of creating a second one (anti-duplicate F2→F1).
         const payload = (data?.payload as AcceptCandidatePayload) ?? null;
         if (!payload && !data?.initiativeId) return null;
         return {
@@ -189,7 +189,7 @@ function FitScoreBadge({ score }: { score: number }) {
 // ---------------------------------------------------------------------------
 
 export interface CandidatesPanelProps {
-  /** Wywoływane po akceptacji — host (hub) może uruchomić generator F1 z payloadem. */
+  /** Invoked after acceptance — the host (hub) can launch the F1 generator with the payload. */
   onAccept?: (payload: AcceptCandidatePayload) => void;
 }
 
@@ -211,12 +211,12 @@ export function CandidatesPanel({ onAccept }: CandidatesPanelProps) {
       <header className="flex flex-wrap items-center gap-2">
         <Sparkles className="h-4 w-4 text-primary-500" />
         <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-          {t('initiatives.candidates.title', 'Kandydaci AI')}
+          {t('initiatives.candidates.title', 'AI Candidates')}
         </h3>
         <p className="basis-full text-xs text-slate-500 dark:text-slate-400">
           {t(
             'initiatives.candidates.subtitle',
-            'AI proponuje inicjatywy na podstawie rozpoznania (insighty, assessmenty, audyty).'
+            'AI proposes initiatives based on discovery (insights, assessments, audits).'
           )}
         </p>
         <button
@@ -230,26 +230,26 @@ export function CandidatesPanel({ onAccept }: CandidatesPanelProps) {
           ) : (
             <RefreshCw className="h-3.5 w-3.5" />
           )}
-          {t('initiatives.candidates.scan', 'Przeskanuj rozpoznanie')}
+          {t('initiatives.candidates.scan', 'Scan discovery')}
         </button>
       </header>
 
       {error && (
         <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
-          {t('initiatives.candidates.error', 'Nie udało się pobrać kandydatów.')}
+          {t('initiatives.candidates.error', 'Failed to load candidates.')}
         </div>
       )}
 
       {loading ? (
         <div className="flex items-center gap-2 py-6 text-sm text-slate-500">
           <Loader2 className="h-4 w-4 animate-spin" />
-          {t('common.loading', 'Ładowanie…')}
+          {t('common.loading', 'Loading…')}
         </div>
       ) : candidates.length === 0 ? (
         <p className="py-6 text-sm text-slate-500">
           {t(
             'initiatives.candidates.empty',
-            'Brak kandydatów. Uruchom skan, aby AI zaproponowało inicjatywy z rozpoznania.'
+            'No candidates. Run a scan so AI can propose initiatives from discovery.'
           )}
         </p>
       ) : (
@@ -271,7 +271,7 @@ export function CandidatesPanel({ onAccept }: CandidatesPanelProps) {
                     </div>
                     <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{c.rationale}</p>
                     <div className="mt-2 text-[11px] uppercase tracking-wide text-slate-400">
-                      {t('initiatives.candidates.source', 'Źródło')}: {c.sourceType}
+                      {t('initiatives.candidates.source', 'Source')}: {c.sourceType}
                     </div>
                   </div>
                   <div className="flex shrink-0 flex-col gap-2">
@@ -286,7 +286,7 @@ export function CandidatesPanel({ onAccept }: CandidatesPanelProps) {
                       ) : (
                         <ThumbsUp className="h-3.5 w-3.5" />
                       )}
-                      {t('initiatives.candidates.accept', 'Akceptuj')}
+                      {t('initiatives.candidates.accept', 'Accept')}
                     </button>
                     <button
                       type="button"
@@ -295,7 +295,7 @@ export function CandidatesPanel({ onAccept }: CandidatesPanelProps) {
                       className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                     >
                       <ThumbsDown className="h-3.5 w-3.5" />
-                      {t('initiatives.candidates.dismiss', 'Odrzuć')}
+                      {t('initiatives.candidates.dismiss', 'Dismiss')}
                     </button>
                   </div>
                 </div>
