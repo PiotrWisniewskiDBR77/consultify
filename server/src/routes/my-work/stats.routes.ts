@@ -7,6 +7,7 @@ import type { Response } from 'express';
 import { Router } from 'express';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
+import { requireRole } from '../../middleware/rbac.middleware.js';
 import { getCapacityOverview } from '../../services/workloadCapacityService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
@@ -142,10 +143,18 @@ router.get(
 
 /**
  * GET /api/my-work/team-workload
- * Simple team rollup for ExecutiveDashboard (no mock data)
+ * Simple team rollup for ExecutiveDashboard (no mock data).
+ *
+ * RBAC: org-wide roll-up — exposes EVERY user's capacity/utilization, so it is
+ * a manager surface. Mirrors the client gate (MyWorkHub `canViewManager` =
+ * admin | manager | superadmin/owner; see useUserCan). requireRole('manager',
+ * 'admin') admits manager (exact), admin (level ≥ 2) and superadmin/owner
+ * (short-circuit) while blocking plain USER/VIEWER/GUEST — who previously could
+ * read the whole team's workload directly despite the Manager tab being hidden.
  */
 router.get(
   '/team-workload',
+  requireRole('manager', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
