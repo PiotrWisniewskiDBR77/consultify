@@ -37,6 +37,59 @@ export interface NotebookExportPage {
 
 export type NotebookExportFormat = 'markdown' | 'pdf' | 'docx';
 
+/**
+ * Inline-markdown segment for formatted rendering. A run of text plus the
+ * emphasis flags that apply to it. Used by PDF/DOCX/HTML sinks so a client-ready
+ * export never shows raw `**`, `*`, `` ` `` or `[label](url)` markers.
+ */
+export interface InlineSegment {
+  text: string;
+  bold?: boolean;
+  italic?: boolean;
+  code?: boolean;
+}
+
+/**
+ * Parse a single line of inline markdown into styled segments. Handles
+ * `**bold**`, `*italic*` / `_italic_`, `` `code` `` and `[label](url)` (kept as
+ * "label (url)"). Deliberately line-scoped (no block parsing) — callers split on
+ * `\n` and classify headings/lists first. Pure + unit-testable.
+ */
+export function parseInlineMarkdown(input: string): InlineSegment[] {
+  const src = String(input ?? '');
+  const segments: InlineSegment[] = [];
+  // Links first: [label](url) → "label (url)" so downstream emphasis still applies.
+  const linkResolved = src.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_m, label, url) => {
+    const u = String(url).trim();
+    return u ? `${label} (${u})` : String(label);
+  });
+  // Token regex: **bold**, `code`, *italic*, _italic_ (order matters — bold before italic).
+  const re = /(\*\*([^*]+)\*\*)|(`([^`]+)`)|(\*([^*]+)\*)|(_([^_]+)_)/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(linkResolved)) !== null) {
+    if (match.index > lastIndex) {
+      segments.push({ text: linkResolved.slice(lastIndex, match.index) });
+    }
+    if (match[2] !== undefined) segments.push({ text: match[2], bold: true });
+    else if (match[4] !== undefined) segments.push({ text: match[4], code: true });
+    else if (match[6] !== undefined) segments.push({ text: match[6], italic: true });
+    else if (match[8] !== undefined) segments.push({ text: match[8], italic: true });
+    lastIndex = re.lastIndex;
+  }
+  if (lastIndex < linkResolved.length) {
+    segments.push({ text: linkResolved.slice(lastIndex) });
+  }
+  return segments.length ? segments : [{ text: linkResolved }];
+}
+
+/** Flatten inline markdown to plain text (markers stripped). */
+export function stripInlineMarkdown(input: string): string {
+  return parseInlineMarkdown(input)
+    .map((s) => s.text)
+    .join('');
+}
+
 const sanitizeFilename = (name: string): string =>
   String(name || 'note')
     .trim()
@@ -60,34 +113,53 @@ export function buildNotebookPrintHtml(page: NotebookExportPage): string {
   // Minimal markdown → HTML for print: headings, lists, paragraphs.
   const escapeHtml = (s: string) =>
     s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  // Render inline markdown (bold/italic/code/links) to safe HTML.
+  const inlineHtml = (s: string) =>
+    parseInlineMarkdown(s)
+      .map((seg) => {
+        const t = escapeHtml(seg.text);
+        if (seg.code) return `<code>${t}</code>`;
+        if (seg.bold) return `<strong>${t}</strong>`;
+        if (seg.italic) return `<em>${t}</em>`;
+        return t;
+      })
+      .join('');
   const lines = md.split('\n');
   const htmlParts: string[] = [];
-  let inList = false;
+  let listTag: 'ul' | 'ol' | null = null;
   const closeList = () => {
-    if (inList) {
-      htmlParts.push('</ul>');
-      inList = false;
+    if (listTag) {
+      htmlParts.push(`</${listTag}>`);
+      listTag = null;
+    }
+  };
+  const openList = (tag: 'ul' | 'ol') => {
+    if (listTag !== tag) {
+      closeList();
+      htmlParts.push(`<${tag}>`);
+      listTag = tag;
     }
   };
   for (const raw of lines) {
     const line = raw.trimEnd();
     const heading = /^(#{1,6})\s+(.*)$/.exec(line);
     const bullet = /^[-*]\s+(.*)$/.exec(line);
+    const ordered = /^\d+[.)]\s+(.*)$/.exec(line);
     if (heading) {
       closeList();
       const level = heading[1].length;
-      htmlParts.push(`<h${level}>${escapeHtml(heading[2])}</h${level}>`);
+      htmlParts.push(`<h${level}>${inlineHtml(heading[2])}</h${level}>`);
     } else if (bullet) {
-      if (!inList) {
-        htmlParts.push('<ul>');
-        inList = true;
-      }
-      htmlParts.push(`<li>${escapeHtml(bullet[1])}</li>`);
+      openList('ul');
+      htmlParts.push(`<li>${inlineHtml(bullet[1])}</li>`);
+    } else if (ordered) {
+      openList('ol');
+      htmlParts.push(`<li>${inlineHtml(ordered[1])}</li>`);
     } else if (line.trim() === '') {
       closeList();
     } else {
       closeList();
-      htmlParts.push(`<p>${escapeHtml(line)}</p>`);
+      htmlParts.push(`<p>${inlineHtml(line)}</p>`);
     }
   }
   closeList();
@@ -96,7 +168,9 @@ export function buildNotebookPrintHtml(page: NotebookExportPage): string {
   )}</title><style>
     body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:48rem;margin:2rem auto;padding:0 1rem;color:${EXPORT_COLORS.htmlInk};line-height:1.6}
     h1{font-size:1.875rem}h2{font-size:1.5rem}h3{font-size:1.25rem}
-    ul{padding-left:1.25rem}
+    ul,ol{padding-left:1.25rem}
+    code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#f1f5f9;padding:0.1em 0.3em;border-radius:3px;font-size:0.9em}
+    strong{font-weight:600}
   </style></head><body><h1>${escapeHtml(title)}</h1>${htmlParts.join('')}</body></html>`;
 }
 
@@ -157,9 +231,46 @@ export async function exportNotebookAsPdf(page: NotebookExportPage): Promise<voi
     pdf.line(margin, y, pageWidth - margin, y);
     y += 6;
 
+    // Render a run of inline segments with per-word wrapping + emphasis fonts.
+    // jsPDF has no rich-text layout, so we lay out word-by-word tracking the x
+    // cursor and switch the font style per segment (bold/italic/code).
+    const renderInline = (
+      segments: InlineSegment[],
+      x0: number,
+      fontSize: number,
+      lineHeight: number
+    ) => {
+      pdf.setFontSize(fontSize);
+      pdf.setTextColor(...EXPORT_COLORS.ink);
+      let x = x0;
+      const spaceW = pdf.getTextWidth(' ');
+      for (const seg of segments) {
+        const style = seg.bold ? 'bold' : seg.italic ? 'italic' : 'normal';
+        pdf.setFont(seg.code ? 'courier' : 'helvetica', style);
+        const words = seg.text.split(/(\s+)/).filter((w) => w !== '');
+        for (const word of words) {
+          if (/^\s+$/.test(word)) {
+            x += spaceW;
+            continue;
+          }
+          const w = pdf.getTextWidth(word);
+          if (x + w > margin + maxWidth && x > x0) {
+            y += lineHeight;
+            addPageIfNeeded(lineHeight);
+            x = x0;
+          }
+          pdf.text(word, x, y);
+          x += w;
+        }
+      }
+      pdf.setFont('helvetica', 'normal');
+    };
+
     for (const raw of md.split('\n')) {
       const line = raw.replace(/\s+$/, '');
       const heading = /^(#{1,6})\s+(.*)$/.exec(line);
+      const bullet = /^[-*]\s+(.*)$/.exec(line);
+      const ordered = /^(\d+)[.)]\s+(.*)$/.exec(line);
       if (line.trim() === '') {
         y += 3;
         continue;
@@ -168,21 +279,27 @@ export async function exportNotebookAsPdf(page: NotebookExportPage): Promise<voi
         const level = heading[1].length;
         const size = Math.max(11, 18 - (level - 1) * 2);
         addPageIfNeeded(size * 0.6);
-        pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(size);
-        pdf.setTextColor(...EXPORT_COLORS.ink);
-        const wrapped = pdf.splitTextToSize(heading[2], maxWidth);
-        pdf.text(wrapped, margin, y);
-        y += wrapped.length * (size * 0.42) + 2;
+        renderInline(parseInlineMarkdown(heading[2]), margin, size, size * 0.5);
+        y += size * 0.42 + 2;
         continue;
       }
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(10);
-      pdf.setTextColor(...EXPORT_COLORS.ink);
-      const wrapped = pdf.splitTextToSize(line, maxWidth);
-      addPageIfNeeded(wrapped.length * 5);
-      pdf.text(wrapped, margin, y);
-      y += wrapped.length * 5 + 1;
+      if (bullet || ordered) {
+        const marker = bullet ? '•' : `${ordered![1]}.`;
+        const text = bullet ? bullet[1] : ordered![2];
+        const indent = margin + 6;
+        addPageIfNeeded(5);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(10);
+        pdf.setTextColor(...EXPORT_COLORS.ink);
+        pdf.text(marker, margin + 1, y);
+        renderInline(parseInlineMarkdown(text), indent, 10, 5);
+        y += 5 + 1;
+        continue;
+      }
+      addPageIfNeeded(5);
+      renderInline(parseInlineMarkdown(line), margin, 10, 5);
+      y += 5 + 1;
     }
 
     pdf.save(`${sanitizeFilename(title)}.pdf`);
@@ -218,7 +335,7 @@ export async function exportNotebookAsDocx(page: NotebookExportPage): Promise<vo
 
   try {
     const docx: any = await import('docx');
-    const { Document, Packer, Paragraph, HeadingLevel, TextRun } = docx;
+    const { Document, Packer, Paragraph, HeadingLevel, TextRun, LevelFormat, AlignmentType } = docx;
     const headingForLevel = (lvl: number) =>
       [
         HeadingLevel.HEADING_1,
@@ -229,26 +346,64 @@ export async function exportNotebookAsDocx(page: NotebookExportPage): Promise<vo
         HeadingLevel.HEADING_6,
       ][Math.min(Math.max(lvl, 1), 6) - 1];
 
+    // Build styled docx TextRuns from inline markdown segments.
+    const runsFor = (s: string) =>
+      parseInlineMarkdown(s).map(
+        (seg) =>
+          new TextRun({
+            text: seg.text,
+            bold: seg.bold || undefined,
+            italics: seg.italic || undefined,
+            font: seg.code ? 'Courier New' : undefined,
+          })
+      );
+
     const children: any[] = [new Paragraph({ text: title, heading: HeadingLevel.TITLE })];
     for (const raw of md.split('\n')) {
       const line = raw.replace(/\s+$/, '');
       const heading = /^(#{1,6})\s+(.*)$/.exec(line);
       const bullet = /^[-*]\s+(.*)$/.exec(line);
+      const ordered = /^(\d+)[.)]\s+(.*)$/.exec(line);
       if (line.trim() === '') {
         continue;
       }
       if (heading) {
         children.push(
-          new Paragraph({ text: heading[2], heading: headingForLevel(heading[1].length) })
+          new Paragraph({
+            children: runsFor(heading[2]),
+            heading: headingForLevel(heading[1].length),
+          })
         );
       } else if (bullet) {
-        children.push(new Paragraph({ text: bullet[1], bullet: { level: 0 } }));
+        children.push(new Paragraph({ children: runsFor(bullet[1]), bullet: { level: 0 } }));
+      } else if (ordered) {
+        children.push(
+          new Paragraph({ children: runsFor(ordered[2]), numbering: { reference: 'nb-ol', level: 0 } })
+        );
       } else {
-        children.push(new Paragraph({ children: [new TextRun(line)] }));
+        children.push(new Paragraph({ children: runsFor(line) }));
       }
     }
 
-    const doc = new Document({ sections: [{ children }] });
+    const doc = new Document({
+      numbering: {
+        config: [
+          {
+            reference: 'nb-ol',
+            levels: [
+              {
+                level: 0,
+                format: LevelFormat?.DECIMAL ?? 'decimal',
+                text: '%1.',
+                alignment: AlignmentType?.START ?? 'start',
+                style: { paragraph: { indent: { left: 720, hanging: 360 } } },
+              },
+            ],
+          },
+        ],
+      },
+      sections: [{ children }],
+    });
     const blob: Blob = await Packer.toBlob(doc);
     triggerDownload(blob, `${sanitizeFilename(title)}.docx`);
     return;
