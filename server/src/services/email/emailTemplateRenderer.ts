@@ -92,15 +92,17 @@ function resolveTemplateRoot(): string | null {
 export function normalizeTemplateName(name: string): string | null {
   if (!name || typeof name !== 'string') return null;
 
-  let rel = name.trim().replace(/\\/g, '/');
-  rel = rel.replace(/\.hbs$/i, '');
-  // Strip a leading templates/emails prefix if the caller included it.
-  rel = rel.replace(/^\/+/, '').replace(/^(templates\/)?emails\//i, '');
-
-  // Reject traversal / absolute paths.
-  if (rel.includes('..') || rel.startsWith('/') || path.isAbsolute(rel)) {
+  const rawRel = name.trim().replace(/\\/g, '/');
+  // Reject absolute / traversal paths up-front, before any stripping so that a
+  // leading slash can't be silently normalized into a valid relative path.
+  if (rawRel.startsWith('/') || rawRel.includes('..') || path.isAbsolute(rawRel)) {
     return null;
   }
+
+  let rel = rawRel.replace(/\.hbs$/i, '');
+  // Strip a leading templates/emails prefix if the caller included it.
+  rel = rel.replace(/^(templates\/)?emails\//i, '');
+
   // Only allow safe path characters.
   if (!/^[a-zA-Z0-9_\-/]+$/.test(rel)) {
     return null;
