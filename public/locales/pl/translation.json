@@ -133,7 +133,14 @@
     "none": "brak",
     "runNow": "Uruchom teraz",
     "organization": "Organizacja",
-    "loadMore": "Załaduj więcej"
+    "loadMore": "Załaduj więcej",
+    "clear": "Wyczyść",
+    "bulk": {
+      "selectedCount": "Zaznaczono: {{count}}",
+      "done": "{{count}} {{noun}}",
+      "processedNoun": "przetworzono",
+      "partial": "Wykonano {{success}}, błędów: {{failed}}"
+    }
   },
   "superadmin": {
     "confirm": {
@@ -993,7 +1000,12 @@
       "rename": "Zmień nazwę"
     },
     "exportBlocked": "Eksport zablokowany przez bramki jakości. Otwórz prezentację, aby przejrzeć blokady.",
-    "openInBuilder": "Otwórz tę prezentację w pełnym edytorze, aby wyświetlić i edytować slajdy."
+    "openInBuilder": "Otwórz tę prezentację w pełnym edytorze, aby wyświetlić i edytować slajdy.",
+    "bulk": {
+      "confirmDeleteTitle": "Usunąć zaznaczone prezentacje?",
+      "confirmDeleteDesc": "Trwale usuniesz {{count}} prezentacji. Tej operacji nie można cofnąć.",
+      "deletedNoun": "usunięto"
+    }
   },
   "sidebar": {
     "module3_1": "Inicjatywy",
@@ -2160,6 +2172,11 @@
     },
     "glossary": {
       "title": "Słownik konsultingowy"
+    },
+    "bulk": {
+      "confirmDeleteTitle": "Usunąć zaznaczone pozycje?",
+      "confirmDeleteDesc": "Trwale usuniesz {{count}} pozycji. Tej operacji nie można cofnąć.",
+      "deletedNoun": "usunięto"
     }
   },
   "initiatives": {
@@ -13544,6 +13561,14 @@
     "breadcrumb": {
       "presentationWizard": "Kreator prezentacji",
       "deckBuilder": "Kreator prezentacji"
+    },
+    "bulk": {
+      "confirmArchiveTitle": "Zarchiwizować zaznaczone outputy?",
+      "confirmArchiveDesc": "Zarchiwizujesz {{count}} pozycji. Operacja jest odwracalna.",
+      "confirmArchiveReportsTitle": "Zarchiwizować zaznaczone raporty?",
+      "confirmArchiveReportsDesc": "Zarchiwizujesz {{count}} raportów. Operacja jest odwracalna.",
+      "confirmArchiveDecksTitle": "Zarchiwizować zaznaczone prezentacje?",
+      "confirmArchiveDecksDesc": "Zarchiwizujesz {{count}} prezentacji. Operacja jest odwracalna."
     }
   },
   "rbHub": {
@@ -14945,7 +14970,12 @@
         "generated": "Wygenerowana"
       }
     },
-    "operatorBriefError": "Nie udało się załadować briefu operatora."
+    "operatorBriefError": "Nie udało się załadować briefu operatora.",
+    "bulk": {
+      "confirmDeleteTitle": "Usunąć zaznaczone spotkania?",
+      "confirmDeleteDesc": "Trwale usuniesz {{count}} spotkań. Tej operacji nie można cofnąć.",
+      "deletedNoun": "usunięto"
+    }
   },
   "manager": {
     "col": {

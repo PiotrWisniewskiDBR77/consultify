@@ -1448,7 +1448,14 @@
     "none": "none",
     "runNow": "Run now",
     "organization": "Organization",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "clear": "Clear",
+    "bulk": {
+      "selectedCount": "{{count}} selected",
+      "done": "{{count}} {{noun}}",
+      "processedNoun": "processed",
+      "partial": "{{success}} done, {{failed}} failed"
+    }
   },
   "superadmin": {
     "confirm": {
@@ -2950,6 +2957,11 @@
     },
     "glossary": {
       "title": "Consulting Glossary"
+    },
+    "bulk": {
+      "confirmDeleteTitle": "Delete selected items?",
+      "confirmDeleteDesc": "You will permanently delete {{count}} item(s). This cannot be undone.",
+      "deletedNoun": "deleted"
     }
   },
   "initiatives": {
@@ -10881,6 +10893,11 @@
     },
     "outline": {
       "keyMessagePlaceholder": "Key message for this slide..."
+    },
+    "bulk": {
+      "confirmDeleteTitle": "Delete selected presentations?",
+      "confirmDeleteDesc": "You will permanently delete {{count}} presentation(s). This cannot be undone.",
+      "deletedNoun": "deleted"
     }
   },
   "finance": {
@@ -12952,6 +12969,14 @@
     "breadcrumb": {
       "presentationWizard": "Presentation Wizard",
       "deckBuilder": "Deck Builder"
+    },
+    "bulk": {
+      "confirmArchiveTitle": "Archive selected outputs?",
+      "confirmArchiveDesc": "You will archive {{count}} item(s). This is reversible.",
+      "confirmArchiveReportsTitle": "Archive selected reports?",
+      "confirmArchiveReportsDesc": "You will archive {{count}} report(s). This is reversible.",
+      "confirmArchiveDecksTitle": "Archive selected presentations?",
+      "confirmArchiveDecksDesc": "You will archive {{count}} presentation(s). This is reversible."
     }
   },
   "rbHub": {
@@ -13874,7 +13899,12 @@
         "generated": "Generated"
       }
     },
-    "operatorBriefError": "Could not load the operator brief."
+    "operatorBriefError": "Could not load the operator brief.",
+    "bulk": {
+      "confirmDeleteTitle": "Delete selected meetings?",
+      "confirmDeleteDesc": "You will permanently delete {{count}} meeting(s). This cannot be undone.",
+      "deletedNoun": "deleted"
+    }
   },
   "manager": {
     "col": {

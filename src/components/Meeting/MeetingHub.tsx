@@ -20,9 +20,12 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import {
+  type BulkAction,
+  BulkActionBar,
   type FilterChip,
   ModuleHub,
   type ModuleTab,
+  useTableSelection,
   type ViewMode,
 } from '@/components/shared/ModuleHub';
 import { FilterableTable, type TableColumn } from '@/components/shared/ModuleHub';
@@ -38,6 +41,7 @@ import {
 } from '@/components/shared/ModuleMenu3';
 import { type MetaPill, PreviewMetaCard } from '@/components/shared/PreviewPane';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { useConfirmDialog } from '@/components/MyWork/shared/ConfirmDialog';
 import { ErrorState, LoadingState, StatusChip } from '@/components/ui/primitives';
 import { EntityStatusChip } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
@@ -248,6 +252,8 @@ export const MeetingHub: React.FC = () => {
 
   const columns: TableColumn[] = useMemo(
     () => [
+      // canon §3.5 — leading selection column.
+      { id: 'select', label: '', type: 'select', width: '44px' },
       {
         id: 'title',
         label: t('meeting.columns.title', 'Meeting'),
@@ -502,6 +508,49 @@ export const MeetingHub: React.FC = () => {
     }
   };
 
+  // canon §3.5 — row selection + bulk delete (loops the existing Api.deleteMeeting;
+  // no new backend endpoint).
+  const selection = useTableSelection(filteredMeetings.map((m) => String(m.id)));
+  const { dialog: bulkConfirmDialog, confirm: confirmBulkDelete } = useConfirmDialog();
+  const bulkActions = useMemo<BulkAction[]>(
+    () => [
+      {
+        id: 'delete',
+        label: t('common.delete', 'Delete'),
+        icon: Trash2,
+        variant: 'danger',
+        onRun: async (sel) => {
+          const ok = await confirmBulkDelete({
+            title: t('meeting.bulk.confirmDeleteTitle', 'Usunąć zaznaczone spotkania?'),
+            description: t(
+              'meeting.bulk.confirmDeleteDesc',
+              'Trwale usuniesz {{count}} spotkań. Tej operacji nie można cofnąć.',
+              { count: sel.count }
+            ),
+            confirmLabel: t('common.delete', 'Delete'),
+            cancelLabel: t('common.cancel', 'Anuluj'),
+            variant: 'danger',
+          });
+          if (!ok) return;
+          const removed: string[] = [];
+          await sel.runBulk(
+            async (id) => {
+              await (Api as any).deleteMeeting?.(id);
+              removed.push(id);
+            },
+            { successNoun: t('meeting.bulk.deletedNoun', 'usunięto') }
+          );
+          if (removed.length > 0) {
+            setMeetings((prev) => prev.filter((m) => !removed.includes(String(m.id))));
+            setOpenDocuments((prev) => prev.filter((d) => !removed.includes(String(d.id))));
+            if (selectedId && removed.includes(selectedId)) setSelectedId(null);
+          }
+        },
+      },
+    ],
+    [confirmBulkDelete, selectedId, setMeetings, setOpenDocuments, t]
+  );
+
   const handleToggleMeetingStatus = async (meetingId: string) => {
     const current = meetings.find((meeting) => meeting.id === meetingId);
     if (!current) return;
@@ -705,10 +754,15 @@ export const MeetingHub: React.FC = () => {
                 />
               )}
             >
+              <div className="flex h-full min-h-0 flex-col">
+                <BulkActionBar selection={selection} actions={bulkActions} />
+                {bulkConfirmDialog}
+                <div className="min-h-0 flex-1">
               <FilterableTable
                 columns={columns}
                 data={filteredMeetings}
                 selectedRowId={selectedId}
+                selection={selection.selectionProp}
                 onRowClick={(row) => setSelectedId(row.id)}
                 onRowDoubleClick={(row) => openMeetingDocument(row as MeetingItem)}
                 getRowActions={(row) => [
@@ -758,6 +812,8 @@ export const MeetingHub: React.FC = () => {
                 emptyMessage={t('meeting.empty', 'No meetings yet')}
                 canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
               />
+                </div>
+              </div>
             </TableWithPreviewLayout>
           </div>
         )}
