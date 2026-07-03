@@ -90,14 +90,17 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
     return data;
   }, [initiatives, teamCapacity]);
 
-  // Get color based on utilization
+  // Utilization intensity — NON-red sequential scale (§Heatmap): normal load reads as a
+  // neutral→emphasis ramp on ONE sequential hue (c-tag-6 sage via opacity), so the map
+  // is not alarmist. Only true overallocation (>100%) escalates to c-danger.
+  // (c-chart-* sequential tokens pending VA1; using c-tag-6 opacity ramp defensively.)
   const getUtilizationColor = (percent: number): string => {
-    if (percent === 0) return 'bg-slate-100 dark:bg-slate-800';
-    if (percent <= 50) return 'bg-green-200 dark:bg-green-900/50';
-    if (percent <= 75) return 'bg-green-400 dark:bg-green-700';
-    if (percent <= 100) return 'bg-amber-400 dark:bg-amber-600';
-    if (percent <= 125) return 'bg-amber-500 dark:bg-amber-600';
-    return 'bg-danger-500 dark:bg-danger-600';
+    if (percent === 0) return 'bg-c-surface-raised';
+    if (percent <= 50) return 'bg-c-tag-6/25';
+    if (percent <= 75) return 'bg-c-tag-6/50';
+    if (percent <= 100) return 'bg-c-tag-6/80';
+    if (percent <= 125) return 'bg-c-warning/80';
+    return 'bg-c-danger';
   };
 
   // Calculate summary stats
@@ -133,22 +136,22 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
   }, [capacityData]);
 
   return (
-    <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+    <div className="bg-c-surface rounded-xl border border-c-border overflow-hidden">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700">
+      <div className="px-4 py-3 border-b border-c-border">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-navy-900 dark:text-white flex items-center gap-2">
-            <Users size={18} className="text-primary-500" />
+          <h3 className="font-semibold text-c-text flex items-center gap-2">
+            <Users size={18} className="text-c-text-muted" />
             Capacity Overview
           </h3>
           <div className="flex items-center gap-4 text-xs">
             {stats.overloadedMonths > 0 && (
-              <div className="flex items-center gap-1 text-danger-600 dark:text-danger-400">
+              <div className="flex items-center gap-1 text-c-danger">
                 <AlertTriangle size={14} />
                 {stats.overloadedMonths} months overloaded
               </div>
             )}
-            <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-1 text-c-text-muted">
               <TrendingUp size={14} />
               Avg: {stats.avgUtilization}%
             </div>
@@ -157,36 +160,32 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-4 gap-4 p-4 border-b border-slate-200 dark:border-navy-700">
+      <div className="grid grid-cols-4 gap-4 p-4 border-b border-c-border">
         <div className="text-center">
-          <p className="text-xs text-slate-500 dark:text-slate-400">Team Capacity</p>
-          <p className="text-lg font-bold text-navy-900 dark:text-white">{teamCapacity}h/mo</p>
+          <p className="text-xs text-c-text-muted">Team Capacity</p>
+          <p className="text-lg font-bold text-c-text">{teamCapacity}h/mo</p>
         </div>
         <div className="text-center">
-          <p className="text-xs text-slate-500 dark:text-slate-400">Avg Utilization</p>
+          <p className="text-xs text-c-text-muted">Avg Utilization</p>
           <p
             className={`text-lg font-bold ${
-              stats.avgUtilization > 100
-                ? 'text-danger-600 dark:text-danger-400'
-                : 'text-green-600 dark:text-green-400'
+              stats.avgUtilization > 100 ? 'text-c-danger' : 'text-c-success'
             }`}
           >
             {stats.avgUtilization}%
           </p>
         </div>
         <div className="text-center">
-          <p className="text-xs text-slate-500 dark:text-slate-400">Peak Month</p>
-          <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
+          <p className="text-xs text-c-text-muted">Peak Month</p>
+          <p className="text-lg font-bold text-c-warning">
             {stats.peakMonth.month} {stats.peakMonth.year}
           </p>
         </div>
         <div className="text-center">
-          <p className="text-xs text-slate-500 dark:text-slate-400">Overloaded</p>
+          <p className="text-xs text-c-text-muted">Overloaded</p>
           <p
             className={`text-lg font-bold ${
-              stats.overloadedMonths > 0
-                ? 'text-danger-600 dark:text-danger-400'
-                : 'text-green-600 dark:text-green-400'
+              stats.overloadedMonths > 0 ? 'text-c-danger' : 'text-c-success'
             }`}
           >
             {stats.overloadedMonths} months
@@ -198,24 +197,20 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
       <div className="p-4">
         {yearGroups.map((group) => (
           <div key={group.year} className="mb-4 last:mb-0">
-            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">
-              {group.year}
-            </p>
+            <p className="text-xs font-semibold text-c-text-muted mb-2">{group.year}</p>
             <div className="grid grid-cols-12 gap-1">
               {group.months.map((d, idx) => (
                 <div
                   key={idx}
                   onClick={() => onMonthClick?.(d.month, d.year)}
-                  className={`relative group rounded-md p-2 cursor-pointer transition-all hover:ring-2 hover:ring-primary-500 ${getUtilizationColor(
+                  className={`relative group rounded-md p-2 cursor-pointer transition-all hover:ring-2 hover:ring-c-focus-solid ${getUtilizationColor(
                     d.utilizationPercent
                   )}`}
                 >
-                  <p className="text-[10px] font-medium text-center text-slate-700 dark:text-slate-200">
-                    {d.month}
-                  </p>
+                  <p className="text-[10px] font-medium text-center text-c-text">{d.month}</p>
                   <p
                     className={`text-xs font-bold text-center ${
-                      d.isOverloaded ? 'text-white' : 'text-slate-600 dark:text-slate-300'
+                      d.isOverloaded ? 'text-white' : 'text-c-text-secondary'
                     }`}
                   >
                     {d.utilizationPercent}%
@@ -228,7 +223,7 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
 
                   {/* Tooltip */}
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-20">
-                    <div className="bg-navy-900 dark:bg-navy-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg whitespace-nowrap">
+                    <div className="bg-c-text text-c-surface text-xs rounded-lg px-3 py-2 shadow-lg whitespace-nowrap">
                       <p className="font-semibold">
                         {d.month} {d.year}
                       </p>
@@ -236,7 +231,7 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
                       <p>
                         {d.totalEffort}h / {d.capacity}h
                       </p>
-                      <p className={d.isOverloaded ? 'text-danger-400' : 'text-green-400'}>
+                      <p className={d.isOverloaded ? 'text-c-danger' : ''}>
                         {d.utilizationPercent}% utilized
                       </p>
                     </div>
@@ -249,28 +244,32 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
       </div>
 
       {/* Legend */}
-      <div className="px-4 py-3 bg-slate-50 dark:bg-navy-950 border-t border-slate-200 dark:border-navy-700">
-        <div className="flex items-center justify-center gap-4 text-xs">
-          <span className="text-slate-500 dark:text-slate-400">Utilization:</span>
+      <div className="px-4 py-3 bg-c-surface-raised border-t border-c-border">
+        <div className="flex items-center justify-center gap-4 text-xs text-c-text-secondary">
+          <span className="text-c-text-muted">Utilization:</span>
           <div className="flex items-center gap-1">
-            <div className="w-4 h-4 rounded bg-slate-100 dark:bg-slate-800" />
+            <div className="w-4 h-4 rounded bg-c-surface-raised border border-c-border" />
             <span>0%</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-4 h-4 rounded bg-green-200 dark:bg-green-900/50" />
+            <div className="w-4 h-4 rounded bg-c-tag-6/25" />
             <span>1-50%</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-4 h-4 rounded bg-green-400 dark:bg-green-700" />
+            <div className="w-4 h-4 rounded bg-c-tag-6/50" />
             <span>51-75%</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-4 h-4 rounded bg-amber-400 dark:bg-amber-600" />
+            <div className="w-4 h-4 rounded bg-c-tag-6/80" />
             <span>76-100%</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-4 h-4 rounded bg-danger-500 dark:bg-danger-600" />
-            <span>&gt;100%</span>
+            <div className="w-4 h-4 rounded bg-c-warning/80" />
+            <span>101-125%</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-4 h-4 rounded bg-c-danger" />
+            <span>&gt;125%</span>
           </div>
         </div>
       </div>
