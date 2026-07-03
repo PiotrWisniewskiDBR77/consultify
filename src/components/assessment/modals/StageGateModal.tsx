@@ -144,38 +144,38 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay p-4">
-      <div className="bg-white dark:bg-navy-900 rounded-xl w-full max-w-lg shadow-xl overflow-hidden">
+      <div className="bg-c-surface rounded-xl w-full max-w-lg shadow-xl overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 bg-gradient-to-r from-slate-50 to-white dark:from-navy-950 dark:to-navy-900">
+        <div className="px-6 py-4 border-b border-c-border-subtle bg-c-surface-raised">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div
                 className={`p-2 rounded-lg ${
                   isGatePassed
-                    ? 'bg-green-100 dark:bg-green-900/30'
-                    : 'bg-amber-100 dark:bg-amber-900/30'
+                    ? 'bg-[color-mix(in_srgb,var(--c-success)_15%,transparent)]'
+                    : 'bg-[color-mix(in_srgb,var(--c-warning)_15%,transparent)]'
                 }`}
               >
                 <Shield
                   className={`w-5 h-5 ${
                     isGatePassed
-                      ? 'text-green-600 dark:text-green-400'
-                      : 'text-amber-600 dark:text-amber-400'
+                      ? 'text-c-success'
+                      : 'text-c-warning'
                   }`}
                 />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-navy-900 dark:text-white">
+                <h3 className="text-lg font-bold text-c-text">
                   {gateConfig.title}
                 </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-c-text-muted">
                   {fromPhase} → {toPhase}
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+              className="p-2 text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-white/10 rounded-lg transition-colors"
             >
               <X size={20} />
             </button>
@@ -186,12 +186,12 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
         <div className="px-6 py-4">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+              <Loader2 className="w-8 h-8 text-c-accent animate-spin" />
             </div>
           ) : (
             <>
               {/* Description */}
-              <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
+              <p className="text-sm text-c-text-secondary mb-4">
                 {gateConfig.description}
               </p>
 
@@ -211,10 +211,10 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
 
               {/* Progress */}
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex-1 h-2 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
+                <div className="flex-1 h-2 bg-c-surface-raised rounded-full overflow-hidden">
                   <div
                     className={`h-full transition-all duration-500 ${
-                      progressPercent === 100 ? 'bg-green-500' : 'bg-amber-500'
+                      progressPercent === 100 ? 'bg-c-success' : 'bg-c-warning'
                     }`}
                     style={{ width: `${progressPercent}%` }}
                   />
@@ -222,8 +222,8 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
                 <span
                   className={`text-sm font-medium ${
                     progressPercent === 100
-                      ? 'text-green-600 dark:text-green-400'
-                      : 'text-amber-600 dark:text-amber-400'
+                      ? 'text-c-success'
+                      : 'text-c-warning'
                   }`}
                 >
                   {metCount}/{criteria.length}
@@ -237,29 +237,29 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
                     key={c.id}
                     className={`flex items-start gap-3 p-3 rounded-lg border ${
                       c.isMet
-                        ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-500/20'
-                        : 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-navy-700'
+                        ? 'bg-[color-mix(in_srgb,var(--c-success)_8%,transparent)] border-c-success'
+                        : 'bg-c-surface-raised dark:bg-c-bg border-c-border-subtle'
                     }`}
                   >
                     <div className="mt-0.5">
                       {c.isMet ? (
-                        <CheckCircle2 className="w-5 h-5 text-green-500" />
+                        <CheckCircle2 className="w-5 h-5 text-c-success" />
                       ) : (
-                        <XCircle className="w-5 h-5 text-slate-600 dark:text-slate-500" />
+                        <XCircle className="w-5 h-5 text-c-text-secondary dark:text-c-text-muted" />
                       )}
                     </div>
                     <div className="flex-1">
                       <p
                         className={`text-sm font-medium ${
                           c.isMet
-                            ? 'text-green-700 dark:text-green-300'
-                            : 'text-slate-600 dark:text-slate-400'
+                            ? 'text-c-success'
+                            : 'text-c-text-secondary dark:text-c-text-muted'
                         }`}
                       >
                         {c.criterion}
                       </p>
                       {c.evidence && (
-                        <p className="text-xs text-slate-500 dark:text-slate-500 mt-0.5">
+                        <p className="text-xs text-c-text-muted mt-0.5">
                           {c.evidence}
                         </p>
                       )}
@@ -272,21 +272,21 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
               <div
                 className={`mt-4 p-3 rounded-lg flex items-center gap-3 ${
                   isGatePassed
-                    ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-500/30'
-                    : 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30'
+                    ? 'bg-[color-mix(in_srgb,var(--c-success)_10%,transparent)] border border-c-success'
+                    : 'bg-[color-mix(in_srgb,var(--c-warning)_10%,transparent)] border-l-2 border-c-warning'
                 }`}
               >
                 {isGatePassed ? (
                   <>
-                    <Unlock className="w-5 h-5 text-green-600 dark:text-green-400" />
-                    <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                    <Unlock className="w-5 h-5 text-c-success" />
+                    <span className="text-sm font-medium text-c-success">
                       Bramka otwarta - możesz przejść dalej
                     </span>
                   </>
                 ) : (
                   <>
-                    <Lock className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                    <span className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                    <Lock className="w-5 h-5 text-c-warning" />
+                    <span className="text-sm font-medium text-c-warning">
                       Bramka zamknięta - spełnij wymagania
                     </span>
                   </>
@@ -297,11 +297,11 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950">
+        <div className="px-6 py-4 border-t border-c-border-subtle bg-c-surface-raised dark:bg-c-bg">
           <div className="flex items-center gap-3">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 rounded-lg font-medium hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+              className="flex-1 px-4 py-2.5 border border-c-border-subtle text-c-text-secondary dark:text-c-text-muted rounded-lg font-medium hover:bg-c-surface-raised dark:hover:bg-white/5 transition-colors"
             >
               Anuluj
             </button>
@@ -312,8 +312,8 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
                                 flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all
                                 ${
                                   isGatePassed && !passing
-                                    ? 'bg-green-600 hover:bg-green-500 text-white'
-                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
+                                    ? 'bg-c-success hover:opacity-90 text-white'
+                                    : 'bg-c-surface-raised text-c-text-secondary dark:text-c-text-muted cursor-not-allowed'
                                 }
                             `}
             >

@@ -79,8 +79,8 @@ export const QuestionExplanation: React.FC<QuestionExplanationProps> = ({
   return (
     <div
       className={`
-            bg-slate-50 dark:bg-navy-900/50
-            border border-slate-200 dark:border-slate-700
+            bg-c-surface-raised dark:bg-c-surface
+            border border-c-border-subtle
             rounded-lg overflow-hidden
             ${className}
         `}
@@ -88,14 +88,14 @@ export const QuestionExplanation: React.FC<QuestionExplanationProps> = ({
       {/* Header - always visible */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-100 dark:hover:bg-navy-800/50 transition-colors"
+        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
       >
-        <HelpCircle size={16} className="text-primary-500 shrink-0" />
-        <span className="text-sm font-medium text-primary-600 dark:text-primary-400">
+        <HelpCircle size={16} className="text-c-accent shrink-0" />
+        <span className="text-sm font-medium text-c-accent dark:text-c-accent">
           Dlaczego o to pytam?
         </span>
         <svg
-          className={`ml-auto w-4 h-4 text-slate-600 dark:text-slate-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+          className={`ml-auto w-4 h-4 text-c-text-secondary dark:text-c-text-muted transition-transform ${isExpanded ? 'rotate-180' : ''}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -107,30 +107,30 @@ export const QuestionExplanation: React.FC<QuestionExplanationProps> = ({
       {/* Expanded Content */}
       {isExpanded && (
         <div className="px-4 pb-4 pt-0 space-y-3">
-          <div className="flex items-start gap-3 bg-white dark:bg-navy-800 rounded-lg p-3 border border-slate-200 dark:border-slate-600">
-            <div className="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0">
-              <Icon size={16} className="text-primary-600 dark:text-primary-400" />
+          <div className="flex items-start gap-3 bg-c-surface-raised rounded-lg p-3 border border-c-border">
+            <div className="w-8 h-8 rounded-lg bg-c-accent-soft flex items-center justify-center shrink-0">
+              <Icon size={16} className="text-c-accent" />
             </div>
             <div>
-              <h4 className="font-semibold text-navy-900 dark:text-white text-sm mb-1">
+              <h4 className="font-semibold text-c-text text-sm mb-1">
                 {content.title}
               </h4>
-              <p className="text-slate-600 dark:text-slate-400 text-sm">{content.why}</p>
+              <p className="text-c-text-secondary dark:text-c-text-muted text-sm">{content.why}</p>
             </div>
           </div>
 
           <div className="grid gap-2 text-sm">
             <div className="flex gap-2">
-              <span className="font-medium text-slate-700 dark:text-slate-300 shrink-0">
+              <span className="font-medium text-c-text-secondary shrink-0">
                 Wpływ:
               </span>
-              <span className="text-slate-600 dark:text-slate-400">{content.impact}</span>
+              <span className="text-c-text-secondary dark:text-c-text-muted">{content.impact}</span>
             </div>
             <div className="flex gap-2">
-              <span className="font-medium text-slate-700 dark:text-slate-300 shrink-0">
+              <span className="font-medium text-c-text-secondary shrink-0">
                 Przykład:
               </span>
-              <span className="text-slate-500 dark:text-slate-500 italic">{content.example}</span>
+              <span className="text-c-text-muted italic">{content.example}</span>
             </div>
           </div>
         </div>
@@ -151,7 +151,7 @@ export const QuestionWithExplanation: React.FC<{
   return (
     <div className={`space-y-3 ${className}`}>
       <div>
-        <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-1">{question}</h3>
+        <h3 className="text-lg font-semibold text-c-text mb-1">{question}</h3>
         <QuestionExplanation questionType={questionType} />
       </div>
       {children}

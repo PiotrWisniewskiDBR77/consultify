@@ -323,9 +323,9 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
       case 'HIGH':
         return 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400';
       case 'MEDIUM':
-        return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
+        return 'bg-[color-mix(in_srgb,var(--c-warning)_15%,transparent)] text-c-warning';
       default:
-        return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+        return 'bg-[color-mix(in_srgb,var(--c-success)_15%,transparent)] text-c-success';
     }
   };
 
@@ -342,19 +342,19 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay p-4">
-      <div className="bg-white dark:bg-navy-900 rounded-xl w-full max-w-2xl shadow-xl overflow-hidden max-h-[90vh] flex flex-col">
+      <div className="bg-c-surface rounded-xl w-full max-w-2xl shadow-xl overflow-hidden max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="shrink-0 px-6 py-4 border-b border-slate-200 dark:border-navy-700">
+        <div className="shrink-0 px-6 py-4 border-b border-c-border-subtle">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
-                <Sparkles className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+              <div className="p-2 bg-c-accent-soft rounded-lg">
+                <Sparkles className="w-5 h-5 text-c-accent dark:text-c-accent" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-navy-900 dark:text-white">
+                <h3 className="text-lg font-bold text-c-text">
                   Generuj Inicjatywy
                 </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-c-text-muted">
                   {step === 'select-report' && 'Wybierz raport źródłowy'}
                   {step === 'configure' && 'Skonfiguruj parametry AI'}
                   {step === 'preview' &&
@@ -365,7 +365,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+              className="p-2 text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-white/10 rounded-lg transition-colors"
             >
               <X size={20} />
             </button>
@@ -384,16 +384,16 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                   <div
                     className={`
                                         flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium
-                                        ${isActive ? 'bg-slate-200/80 dark:bg-white/[0.1] text-slate-900 dark:text-white' : ''}
-                                        ${isPast ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : ''}
-                                        ${!isActive && !isPast ? 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400' : ''}
+                                        ${isActive ? 'bg-c-surface-raised dark:bg-white/[0.1] text-c-text' : ''}
+                                        ${isPast ? 'bg-[color-mix(in_srgb,var(--c-success)_15%,transparent)] text-c-success' : ''}
+                                        ${!isActive && !isPast ? 'bg-c-surface-raised text-c-text-muted' : ''}
                                     `}
                   >
                     {isPast ? <CheckCircle2 size={14} /> : <span>{idx + 1}</span>}
                     {stepLabels[idx]}
                   </div>
                   {idx < 2 && (
-                    <ChevronRight size={16} className="text-slate-500 dark:text-slate-400" />
+                    <ChevronRight size={16} className="text-c-text-muted" />
                   )}
                 </React.Fragment>
               );
@@ -406,13 +406,13 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
           {/* Success State */}
           {success && (
             <div className="flex flex-col items-center justify-center py-12">
-              <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-500/20 flex items-center justify-center mb-4">
-                <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
+              <div className="w-16 h-16 rounded-full bg-[color-mix(in_srgb,var(--c-success)_15%,transparent)] flex items-center justify-center mb-4">
+                <CheckCircle2 className="w-8 h-8 text-c-success" />
               </div>
-              <p className="text-lg font-medium text-navy-900 dark:text-white">
+              <p className="text-lg font-medium text-c-text">
                 Inicjatywy zapisane!
               </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-sm text-c-text-muted mt-1">
                 {selectedInitiatives.size} inicjatyw dodano do rejestru
               </p>
             </div>
@@ -423,15 +423,15 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
             <>
               {loadingReports ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+                  <Loader2 className="w-8 h-8 text-c-accent animate-spin" />
                 </div>
               ) : reports.length === 0 ? (
                 <div className="text-center py-12">
-                  <FileText className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
-                  <p className="text-slate-500 dark:text-slate-400 font-medium">
+                  <FileText className="w-12 h-12 text-c-text-secondary dark:text-c-text-muted mx-auto mb-3" />
+                  <p className="text-c-text-muted font-medium">
                     Brak sfinalizowanych raportów
                   </p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                  <p className="text-sm text-c-text-muted mt-1">
                     Najpierw sfinalizuj raport w zakładce Reports
                   </p>
                 </div>
@@ -441,7 +441,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                   {reports.length > 3 && (
                     <div className="relative mb-4">
                       <Search
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-muted"
                         size={16}
                       />
                       <input
@@ -449,7 +449,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Szukaj raportu..."
-                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white text-sm"
+                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface dark:bg-c-bg text-c-text text-sm"
                       />
                     </div>
                   )}
@@ -466,8 +466,8 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                                         w-full text-left p-4 rounded-lg border-2 transition-all
                                                         ${
                                                           isSelected
-                                                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                                                            : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
+                                                            ? 'border-c-accent bg-c-accent-soft'
+                                                            : 'border-c-border-subtle hover:border-c-border dark:hover:border-white/20'
                                                         }
                                                     `}
                         >
@@ -478,28 +478,28 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                                                 w-5 h-5 rounded-full flex items-center justify-center border-2
                                                                 ${
                                                                   isSelected
-                                                                    ? 'bg-primary-600 border-primary-600'
-                                                                    : 'border-slate-300 dark:border-slate-600'
+                                                                    ? 'bg-c-accent border-c-accent'
+                                                                    : 'border-c-border'
                                                                 }
                                                             `}
                               >
                                 {isSelected && <CheckCircle2 size={12} className="text-white" />}
                               </div>
                               <div>
-                                <p className="font-medium text-navy-900 dark:text-white">
+                                <p className="font-medium text-c-text">
                                   {report.name}
                                 </p>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                <p className="text-xs text-c-text-muted mt-0.5">
                                   Assessment: {report.assessmentName}
                                 </p>
                               </div>
                             </div>
                             <div className="text-right">
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-xs font-medium">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[color-mix(in_srgb,var(--c-success)_15%,transparent)] text-c-success rounded-full text-xs font-medium">
                                 <CheckCircle2 size={10} />
                                 Final
                               </span>
-                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                              <p className="text-xs text-c-text-muted mt-1">
                                 {report.createdAt ? formatDate(report.createdAt) : ''}
                               </p>
                             </div>
@@ -518,14 +518,14 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
             <div className="space-y-6">
               {/* Selected Report Summary */}
               {selectedReport && (
-                <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-500/30">
+                <div className="p-4 bg-c-accent-soft rounded-lg border border-c-accent dark:border-c-accent">
                   <div className="flex items-center gap-3">
-                    <FileText className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                    <FileText className="w-5 h-5 text-c-accent dark:text-c-accent" />
                     <div>
-                      <p className="font-medium text-navy-900 dark:text-white">
+                      <p className="font-medium text-c-text">
                         {selectedReport.name}
                       </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                      <p className="text-xs text-c-text-muted">
                         {selectedReport.assessmentName}
                       </p>
                     </div>
@@ -535,7 +535,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
 
               {/* Max Initiatives */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-c-text-secondary mb-2">
                   Maksymalna liczba inicjatyw
                 </label>
                 <div className="flex items-center gap-3">
@@ -547,7 +547,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                     onChange={(e) => setMaxInitiatives(parseInt(e.target.value))}
                     className="flex-1"
                   />
-                  <span className="w-8 text-center font-medium text-navy-900 dark:text-white">
+                  <span className="w-8 text-center font-medium text-c-text">
                     {maxInitiatives}
                   </span>
                 </div>
@@ -555,7 +555,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
 
               {/* Priority Filter */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-c-text-secondary mb-2">
                   Priorytet inicjatyw
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -571,8 +571,8 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                                 px-4 py-2 rounded-lg text-sm font-medium transition-all border-2
                                                 ${
                                                   priorityFilter === opt.value
-                                                    ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-500'
-                                                    : 'bg-white dark:bg-navy-950 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-navy-700 hover:border-slate-300'
+                                                    ? 'bg-c-accent-soft text-c-accent dark:text-c-accent border-c-accent'
+                                                    : 'bg-c-surface dark:bg-c-bg text-c-text-secondary dark:text-c-text-muted border-c-border-subtle hover:border-c-border'
                                                 }
                                             `}
                     >
@@ -583,13 +583,13 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
               </div>
 
               {/* AI Note */}
-              <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-200 dark:border-amber-500/30">
-                <Sparkles className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <div className="flex items-start gap-3 p-4 bg-[color-mix(in_srgb,var(--c-warning)_10%,transparent)] rounded-lg border-l-2 border-c-warning">
+                <Sparkles className="w-5 h-5 text-c-warning shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                  <p className="text-sm font-medium text-c-warning">
                     Generowanie AI
                   </p>
-                  <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
+                  <p className="text-xs text-c-warning mt-1">
                     AI przeanalizuje luki w assessment i wygeneruje rekomendacje inicjatyw
                     transformacyjnych. Każda inicjatywa będzie zawierać szacowany ROI, budżet i
                     poziom ryzyka.
@@ -606,13 +606,13 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
               <div className="flex items-center justify-between">
                 <button
                   onClick={toggleAll}
-                  className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
+                  className="text-sm text-c-accent dark:text-c-accent hover:underline"
                 >
                   {selectedInitiatives.size === generatedInitiatives.length
                     ? 'Odznacz wszystkie'
                     : 'Zaznacz wszystkie'}
                 </button>
-                <span className="text-sm text-slate-500 dark:text-slate-400">
+                <span className="text-sm text-c-text-muted">
                   Wybrano: {selectedInitiatives.size} / {generatedInitiatives.length}
                 </span>
               </div>
@@ -628,8 +628,8 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                                 p-4 rounded-lg border-2 transition-all
                                                 ${
                                                   isSelected
-                                                    ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/10'
-                                                    : 'border-slate-200 dark:border-navy-700'
+                                                    ? 'border-c-accent bg-c-accent-soft'
+                                                    : 'border-c-border-subtle'
                                                 }
                                             `}
                     >
@@ -641,8 +641,8 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                                         w-5 h-5 rounded shrink-0 mt-0.5 flex items-center justify-center border-2 transition-colors
                                                         ${
                                                           isSelected
-                                                            ? 'bg-primary-600 border-primary-600'
-                                                            : 'border-slate-300 dark:border-slate-600 hover:border-primary-400'
+                                                            ? 'bg-c-accent border-c-accent'
+                                                            : 'border-c-border hover:border-c-accent'
                                                         }
                                                     `}
                         >
@@ -653,35 +653,35 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
                             <div>
-                              <p className="font-medium text-navy-900 dark:text-white">
+                              <p className="font-medium text-c-text">
                                 {initiative.name}
                               </p>
-                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                              <p className="text-xs text-c-text-muted mt-0.5">
                                 {AXIS_LABELS[initiative.sourceAxisId] || initiative.sourceAxisId}
                                 {initiative.area && ` • ${initiative.area}`}
                               </p>
                             </div>
                             <button
                               onClick={() => removeInitiative(initiative.id)}
-                              className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors"
+                              className="p-1 text-c-text-muted hover:text-danger-500 transition-colors"
                             >
                               <Trash2 size={14} />
                             </button>
                           </div>
 
-                          <p className="text-sm text-slate-600 dark:text-slate-300 mt-2 line-clamp-2">
+                          <p className="text-sm text-c-text-secondary mt-2 line-clamp-2">
                             {initiative.description}
                           </p>
 
                           {/* Metrics */}
                           <div className="flex items-center gap-4 mt-3">
-                            <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
+                            <div className="flex items-center gap-1.5 text-c-success">
                               <TrendingUp size={14} />
                               <span className="text-xs font-medium">
                                 ROI: {initiative.estimatedROI}x
                               </span>
                             </div>
-                            <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                            <div className="flex items-center gap-1.5 text-c-text-muted">
                               <DollarSign size={14} />
                               <span className="text-xs">
                                 {formatCurrency(initiative.estimatedBudget)}
@@ -709,13 +709,13 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
 
               {generatedInitiatives.length === 0 && (
                 <div className="text-center py-8">
-                  <Lightbulb className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
-                  <p className="text-slate-500 dark:text-slate-400">
+                  <Lightbulb className="w-12 h-12 text-c-text-secondary dark:text-c-text-muted mx-auto mb-3" />
+                  <p className="text-c-text-muted">
                     Nie wygenerowano żadnych inicjatyw
                   </p>
                   <button
                     onClick={() => setStep('configure')}
-                    className="mt-4 text-primary-600 dark:text-primary-400 hover:underline text-sm"
+                    className="mt-4 text-c-accent dark:text-c-accent hover:underline text-sm"
                   >
                     Zmień konfigurację i spróbuj ponownie
                   </button>
@@ -727,11 +727,11 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
           {/* Saving State */}
           {step === 'saving' && !success && (
             <div className="flex flex-col items-center justify-center py-12">
-              <Loader2 className="w-12 h-12 text-primary-500 animate-spin mb-4" />
-              <p className="text-lg font-medium text-navy-900 dark:text-white">
+              <Loader2 className="w-12 h-12 text-c-accent animate-spin mb-4" />
+              <p className="text-lg font-medium text-c-text">
                 Zapisuję inicjatywy...
               </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-sm text-c-text-muted mt-1">
                 {selectedInitiatives.size} inicjatyw zostanie dodanych do rejestru
               </p>
             </div>
@@ -748,7 +748,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
 
         {/* Footer */}
         {!success && step !== 'saving' && (
-          <div className="shrink-0 px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950">
+          <div className="shrink-0 px-6 py-4 border-t border-c-border-subtle bg-c-surface-raised dark:bg-c-bg">
             <div className="flex items-center gap-3">
               {/* Back button */}
               {step !== 'select-report' && (
@@ -757,7 +757,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                     if (step === 'configure') setStep('select-report');
                     if (step === 'preview') setStep('configure');
                   }}
-                  className="flex items-center gap-1.5 px-4 py-2.5 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 rounded-lg font-medium hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                  className="flex items-center gap-1.5 px-4 py-2.5 border border-c-border-subtle text-c-text-secondary dark:text-c-text-muted rounded-lg font-medium hover:bg-c-surface-raised dark:hover:bg-white/5 transition-colors"
                 >
                   <ChevronLeft size={16} />
                   Wstecz
@@ -769,7 +769,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
               {/* Cancel */}
               <button
                 onClick={onClose}
-                className="px-4 py-2.5 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium transition-colors"
+                className="px-4 py-2.5 text-c-text-secondary dark:text-c-text-muted hover:text-c-text dark:hover:text-c-text-muted font-medium transition-colors"
               >
                 Anuluj
               </button>
@@ -783,8 +783,8 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                         flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all
                                         ${
                                           selectedReportId
-                                            ? 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]'
-                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
+                                            ? 'bg-c-text text-c-surface hover:opacity-90'
+                                            : 'bg-c-surface-raised text-c-text-secondary dark:text-c-text-muted cursor-not-allowed'
                                         }
                                     `}
                 >
@@ -797,7 +797,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                 <button
                   onClick={handleGenerate}
                   disabled={generating}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium transition-all"
+                  className="flex items-center gap-2 px-4 py-2.5 bg-c-text text-c-surface hover:opacity-90 rounded-lg font-medium transition-all"
                 >
                   {generating ? (
                     <>
@@ -821,8 +821,8 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                         flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all
                                         ${
                                           selectedInitiatives.size > 0 && !saving
-                                            ? 'bg-green-600 hover:bg-green-500 text-white'
-                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
+                                            ? 'bg-c-success hover:opacity-90 text-white'
+                                            : 'bg-c-surface-raised text-c-text-secondary dark:text-c-text-muted cursor-not-allowed'
                                         }
                                     `}
                 >
