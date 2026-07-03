@@ -191,13 +191,22 @@ const STATUS_CONFIG: Record<
   },
 };
 
-const TAG_COLORS = [
-  'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-  'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
-  'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-  'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
-  'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300',
-  'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+// Categorical tag chips — cycled by index (VA1 data-palette tokens).
+// Was crimson (bg-primary-*) + alarm-red (bg-danger-*) mixed in as if categories.
+// Now the semantic identity ramp (c-tag-*) as the CANONICAL category chip:
+// neutral raised surface + a hue-colored left border + the hue on the Hash icon
+// (both graphic markers, ≥3:1), LABEL stays neutral --c-text (guaranteed AA body).
+// NOTE: these --c-tag-* tokens are plain hex, so Tailwind's `/alpha` opacity
+// modifier (e.g. bg-c-tag-1/15) does NOT compile — use solid neutral surface +
+// hue border/icon instead. Tag hues are mid-tone: hue-as-text or white-on-fill
+// would fail AA body text — this border+icon pattern is the reference for chips.
+const TAG_COLORS: { chip: string; icon: string }[] = [
+  { chip: 'bg-c-surface-raised border border-c-tag-1 text-c-text', icon: 'text-c-tag-1' },
+  { chip: 'bg-c-surface-raised border border-c-tag-2 text-c-text', icon: 'text-c-tag-2' },
+  { chip: 'bg-c-surface-raised border border-c-tag-3 text-c-text', icon: 'text-c-tag-3' },
+  { chip: 'bg-c-surface-raised border border-c-tag-4 text-c-text', icon: 'text-c-tag-4' },
+  { chip: 'bg-c-surface-raised border border-c-tag-5 text-c-text', icon: 'text-c-tag-5' },
+  { chip: 'bg-c-surface-raised border border-c-tag-6 text-c-text', icon: 'text-c-tag-6' },
 ];
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -826,9 +835,9 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
               {(nodeData.tags || []).map((tag, i) => (
                 <span
                   key={tag}
-                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${TAG_COLORS[i % TAG_COLORS.length]}`}
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${TAG_COLORS[i % TAG_COLORS.length].chip}`}
                 >
-                  <Hash size={9} />
+                  <Hash size={9} className={TAG_COLORS[i % TAG_COLORS.length].icon} />
                   {tag}
                   {!locked && (
                     <button

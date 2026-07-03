@@ -93,7 +93,33 @@ export default {
           'tag-10': 'var(--c-tag-10)',
           'tag-11': 'var(--c-tag-11)',
           'tag-12': 'var(--c-tag-12)',
+          // Foreground for text/icon ON a filled tag or chart swatch (AA white in both themes).
+          'tag-foreground': 'var(--c-tag-foreground)',
+          // ---- Chart-series ramp (8) — ORDERED series for line/bar/area charts. ----
+          // Distinct role from tag-*: tags = equal-weight category dots (any order);
+          // chart-* = an ordered sequence (series 1,2,3…), blue-first, NEVER red-first.
+          // Vars in src/index.css (:root light + .dark).
+          'chart-1': 'var(--c-chart-1)',
+          'chart-2': 'var(--c-chart-2)',
+          'chart-3': 'var(--c-chart-3)',
+          'chart-4': 'var(--c-chart-4)',
+          'chart-5': 'var(--c-chart-5)',
+          'chart-6': 'var(--c-chart-6)',
+          'chart-7': 'var(--c-chart-7)',
+          'chart-8': 'var(--c-chart-8)',
         },
+        // ========================================================================
+        // DATA-PALETTE DECISION GUIDE — kiedy c-tag vs c-chart vs c-accent (brand)?
+        //   • c-accent (crimson/brand): TYLKO brand/CTA/selected — NIGDY jako dana,
+        //     seria wykresu, ani kolor kategorii. Crimson w danych = dług (VA-B sweep).
+        //   • c-success/warning/danger/info: SYGNAŁ (status/alarm/kierunek), nie kategoria.
+        //   • c-tag-1..12: KATEGORIA/TYP/ŹRÓDŁO — równoważne, bezkolejnościowe „kropki"
+        //     (chipy statusu-jako-typ, etykiety, tagi). ≤5 widocznych serii (§15.1).
+        //   • c-chart-1..8: SERIE WYKRESU — kolejność ma znaczenie (seria 1,2,3…);
+        //     blue-first, nigdy red-first. Recharts/SVG: rozwiązuj hex przez
+        //     financeChartTokens.ts / assessmentChartTokens.ts (var() nie działa w fill).
+        //   • c-tag-foreground: biały tekst/ikona NA wypełnionym swatchu (AA oba tryby).
+        // ========================================================================
         // ========================================
         // DBR77 COLOR SYSTEM STANDARD
         // See: docs/00_foundation/COLOR_SYSTEM_STANDARD.md
