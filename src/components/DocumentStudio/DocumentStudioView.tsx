@@ -67,11 +67,18 @@ export const DocumentStudioView: React.FC = () => {
       setApprovedTemplates([]);
       setTemplatesError(
         err instanceof Error
-          ? `Approved templates could not be loaded (${err.message}). You can still generate without a template.`
-          : 'Approved templates could not be loaded. You can still generate without a template.'
+          ? t('documentStudio.view.templatesLoadFailedWithReason', {
+              defaultValue:
+                'Approved templates could not be loaded ({{reason}}). You can still generate without a template.',
+              reason: err.message,
+            })
+          : t(
+              'documentStudio.view.templatesLoadFailed',
+              'Approved templates could not be loaded. You can still generate without a template.'
+            )
       );
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void refreshApprovedTemplates();
@@ -91,7 +98,11 @@ export const DocumentStudioView: React.FC = () => {
         setPhase('document');
       } catch (err) {
         if (cancelled) return;
-        setError(err instanceof Error ? err.message : 'Failed to load document');
+        setError(
+          err instanceof Error
+            ? err.message
+            : t('documentStudio.view.loadFailed', 'Failed to load document')
+        );
       } finally {
         if (!cancelled) setLoadingArtifact(false);
       }
@@ -125,12 +136,18 @@ export const DocumentStudioView: React.FC = () => {
       } catch (err) {
         if (err instanceof MissingRequiredSourceError) {
           setError(
-            `This template requires the following sources before it can generate: ${err.missing.join(
-              ', '
-            )}.`
+            t('documentStudio.view.missingRequiredSources', {
+              defaultValue:
+                'This template requires the following sources before it can generate: {{sources}}.',
+              sources: err.missing.join(', '),
+            })
           );
         } else {
-          setError(err instanceof Error ? err.message : 'Failed to generate from template');
+          setError(
+            err instanceof Error
+              ? err.message
+              : t('documentStudio.view.generateFromTemplateFailed', 'Failed to generate from template')
+          );
         }
       } finally {
         setGenerating(false);
@@ -148,7 +165,11 @@ export const DocumentStudioView: React.FC = () => {
       setActiveTemplateId(null);
       setPhase('outline');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to plan document outline');
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.view.planFailed', 'Failed to plan document outline')
+      );
     } finally {
       setPlanning(false);
     }
@@ -170,7 +191,11 @@ export const DocumentStudioView: React.FC = () => {
       setPhase('document');
       navigate(`/document-studio/${encodeURIComponent(result.artifactId)}`, { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to generate document artifact');
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.view.generateFailed', 'Failed to generate document artifact')
+      );
     } finally {
       setGenerating(false);
     }
@@ -205,7 +230,7 @@ export const DocumentStudioView: React.FC = () => {
     () => [
       {
         id: 'generate',
-        label: 'Generate',
+        label: t('documentStudio.view.tabGenerate', 'Generate'),
         icon: Sparkles,
         kind: 'toggle',
         // Mode switch — secondary tier (editor-shell-canon § 2 STREFA GÓRNA);
@@ -213,20 +238,26 @@ export const DocumentStudioView: React.FC = () => {
         group: 'secondary',
         active: activeTab === 'generate',
         onClick: () => setActiveTab('generate'),
-        tooltip: 'Generuj dokument',
+        tooltip: t(
+          'documentStudio.view.tabGenerateTooltip',
+          'Mode 1 / Mode 3 — intake → outline → document.'
+        ),
       },
       {
         id: 'templates',
-        label: 'Plan template',
+        label: t('documentStudio.view.tabPlanTemplate', 'Plan template'),
         icon: Layers,
         kind: 'toggle',
         group: 'secondary',
         active: activeTab === 'templates',
         onClick: () => setActiveTab('templates'),
-        tooltip: 'Szablon dokumentu',
+        tooltip: t(
+          'documentStudio.view.tabPlanTemplateTooltip',
+          'Mode 2 — Document Template Architect.'
+        ),
       },
     ],
-    [activeTab]
+    [activeTab, t]
   );
 
   return (
@@ -236,13 +267,13 @@ export const DocumentStudioView: React.FC = () => {
     >
       {showDocumentShell ? null : (
         <TopBar
-          moduleLabel="Document Studio"
+          moduleLabel={t('documentStudio.view.moduleLabel', 'Document Studio')}
           title={t('documentStudio.view.title', 'Consultify Document Studio')}
           chips={tabChips}
           respectMelsOrder={false}
           presenceSlot={
             <span className="hidden text-[11px] text-c-text-muted lg:inline">
-              Modes 1, 2, 3 · Word/PDF artifact runtime
+              {t('documentStudio.view.presenceNote', 'Modes 1, 2, 3 · Word/PDF artifact runtime')}
             </span>
           }
         />
@@ -256,7 +287,11 @@ export const DocumentStudioView: React.FC = () => {
             }}
           />
         ) : loadingArtifact ? (
-          <LoadingState variant="spinner" label="Loading document…" className="flex-1" />
+          <LoadingState
+            variant="spinner"
+            label={t('documentStudio.view.loadingDocument', 'Loading document…')}
+            className="flex-1"
+          />
         ) : phase === 'intake' ? (
           <DocumentStudioIntakeForm
             onSubmit={handleIntakeSubmit}
@@ -282,7 +317,7 @@ export const DocumentStudioView: React.FC = () => {
           />
         ) : (
           <div className="flex flex-1 items-center justify-center text-sm text-c-text-muted">
-            {error ?? 'No document loaded.'}
+            {error ?? t('documentStudio.view.noDocument', 'No document loaded.')}
           </div>
         )}
       </main>
