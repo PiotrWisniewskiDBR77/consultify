@@ -37,13 +37,21 @@
 
 Both found by actually rendering the app end-to-end (not grep) — the org-leak fix made this kind of check reliable for the first time, since before it, every screen showed the wrong company's junk data and Polish text was the least of the problems.
 
-Live sha as of this pass: `ffa4da3b` (deploy chain: `35d10cf6` English sweep → `4880a9b0` Recommendations → `ffa4da3b` sidebar Materials).
+Live sha as of that pass: `ffa4da3b` (deploy chain: `35d10cf6` English sweep → `4880a9b0` Recommendations → `ffa4da3b` sidebar Materials).
 
-## Still open (not touched this pass, lower priority per Piotr)
-- Meetings/Calendar — no meetings seeded.
-- Audits — no audit programs seeded.
-- Assessment — only DRD baseline; SIRI/ADMA/CMMI/LEAN tabs empty.
-- Full non-Results/Initiatives/Presentations Polish sweep (e.g. other modules may still have hardcoded Polish; only the three priority directories were swept).
+## Round 4 (quality-control pass — Piotr asked to finish remaining gaps, then verify rigorously before declaring done)
+- **Meetings — SEEDED, VERIFIED VISUALLY, looks great.** 5 meetings (4 upcoming + 1 completed with real notes/decisions synthesized from the discovery interviews), clean English, correct attendee counts and statuses. Screenshotted and confirmed on the live bridge.
+- **Audits — SEEDED but feeds the wrong screen.** Found honestly during QC: the client-facing "Audits" sidebar module (`AuditsHub.tsx`) is an ISO-27001-style governance model (programs → templates → assignees → surveys). The `audits`/`audit_findings` tables I populated actually feed a *different*, admin-only compliance-audit surface (`server/src/routes/audit.routes.ts`, gated by `verifyAdmin`) that isn't in the main nav at all. The visible Audits screen shows one plausible "Active" program (real name + objective) but 0 templates/assignees/surveys — not empty-looking, but not rich. Properly populating the real model is a bigger job than time allowed; flagging honestly rather than claiming it's done.
+- **Assessment (DRD) — found and fixed a real, pre-existing app bug, unrelated to seeding.** The Assessment list showed **0% progress** on the DRD baseline despite it being Approved with full data (39/39 areas, 233/233 path, rich per-axis scores + narrative notes — confirmed via the raw API response). Root cause: `AssessmentHub.tsx`'s list mapper read `item.progress` (camelCase, never set by the backend) instead of `item.completion_percent` (snake_case, correctly `100`) — the exact bug pattern already fixed elsewhere in the codebase (`MyAssessmentsList.tsx`). This affects every org's assessment list, not just Atelier's. Fixed with the same defensive fallback, clean production build (verified twice), deployed as commit `904c445033`.
+- **Assessment "Report" viewer is broken** — `/assessment-reports/:id` redirects to the Report Builder, which looks up the report in `report_builder_reports` (empty table) instead of `assessment_reports` (where the real DRD board-readout content lives). Confirmed via console error: `Failed to load report: Report not found`. Genuine gap between two report data models in the codebase — not something safely fixable in the time remaining. **Recommendation: during the live demo, don't click "view report" from the Assessment list — stay on the assessment workbench view itself, which correctly shows completion stats (100%, 39/39 areas).**
+- **Honest confidence note:** Organization, Chat, Initiatives, Results, and Meetings were verified with actual rendered screenshots. The Assessment-list fix is verified by exact source-code diagnosis + a clean production build matching an established pattern elsewhere in the app — but I could not get a final screenshot of it live, because the local verification bridge became unresponsive near the end of a very long session (many hard reloads across ~2 hours). I'm confident in the fix; I want to be upfront that this last one is diagnosis-verified, not screenshot-verified.
+- **Also found during this pass: a shared-branch git incident.** Another agent working on this same branch/working-tree switched it to a different feature branch (`vb4-table-editors-anatomy`) mid-session, which orphaned one of my commits (this doc's previous update) onto the wrong branch temporarily. No code or seed work was lost — recovered cleanly via an isolated git worktree, cherry-picked the assessment fix back onto `feat/deliverables-w1`, and rewrote this file. Mentioned for transparency.
+
+## Still open (not fixed this pass)
+- Audits — real governance model (templates/assignees/surveys) not populated; current screen is a plausible but thin "in setup" state.
+- Assessment "Report" viewer — broken redirect/data-model mismatch (see above); avoid that click path live.
+- SIRI/ADMA/CMMI/LEAN assessment tabs — still empty (only DRD is rich).
+- Full non-Results/Initiatives/Presentations Polish sweep — only the three priority directories were swept; other modules may still have hardcoded Polish.
 
 ## How to re-verify visually (the method that caught #1)
 Launch config `demo-bridge` in `.claude/launch.json` → `vite :3013` with `VITE_API_TARGET=https://demo.consultify.ai`; inject a minted `token`/`refreshToken` into localStorage; the local frontend renders with live demo data. This is the only reliable way to see what the client sees (API 200s are not enough).
