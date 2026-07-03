@@ -6,6 +6,7 @@
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import { safePersistToolSessionConclusion } from '../services/conclusions/toolConclusionBridge.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import KnownToolsService from '../services/KnownToolsService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
@@ -982,7 +983,7 @@ export class ToolController {
       } = req.body;
 
       const existing = (await queryHelpers.queryOne(
-        `SELECT status, missing_items_json, runtime_contract_json, answers_json, dod_status, completion_percent, confidence_avg
+        `SELECT status, missing_items_json, runtime_contract_json, answers_json, dod_status, completion_percent, confidence_avg, tool_type, name, project_id
          FROM tool_sessions WHERE id = ? AND organization_id = ?`,
         [toolId, user.organizationId]
       )) as Pick<
@@ -994,6 +995,9 @@ export class ToolController {
         | 'dod_status'
         | 'completion_percent'
         | 'confidence_avg'
+        | 'tool_type'
+        | 'name'
+        | 'project_id'
       > | null;
       if (!existing) {
         res.status(404).json({ error: 'Tool session not found' });
@@ -1128,6 +1132,24 @@ export class ToolController {
           confidenceAvg,
         },
       });
+
+      // CONCLUSION_LAYER bridge: when the synced answers carry a generated W2
+      // conclusion (summary.verdict / executiveSummary), persist it as a
+      // Conclusion candidate. Fire-and-forget + fail-safe — a Conclusion write
+      // failure must never break the tool session save.
+      void safePersistToolSessionConclusion(
+        {
+          organizationId: user.organizationId,
+          projectId: existing.project_id ?? null,
+          actorUserId: user.id,
+          sessionId: toolId,
+          toolType: req.body?.toolType || existing.tool_type || null,
+          name: req.body?.name || existing.name || null,
+          answers,
+          confidenceAvg: confidenceAvg ?? Number(existing.confidence_avg || 0),
+        },
+        { logger }
+      );
 
       res.json({ id: toolId, status: newStatus, updatedAt: now });
     }
@@ -1309,6 +1331,23 @@ export class ToolController {
       await logAudit(user.organizationId, user.id, 'tool_approved', toolId, {
         decisionId,
       });
+
+      // CONCLUSION_LAYER bridge: the approve gate is the strongest evidence
+      // signal — re-persist the session's W2 conclusion with the final answers.
+      // Fire-and-forget + fail-safe (must never break approval).
+      void safePersistToolSessionConclusion(
+        {
+          organizationId: user.organizationId,
+          projectId: session.project_id ?? null,
+          actorUserId: user.id,
+          sessionId: toolId,
+          toolType: session.tool_type || null,
+          name: session.name || null,
+          answers: safeParseJSON<Record<string, unknown>>(session.answers_json, {}),
+          confidenceAvg: Number(session.confidence_avg || 0),
+        },
+        { logger }
+      );
 
       res.json({ id: toolId, status: 'APPROVED' });
     }
