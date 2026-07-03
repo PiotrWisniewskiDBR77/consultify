@@ -461,12 +461,12 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
       {/* Minimalist Header */}
       <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
         <div className="flex items-center gap-4">
-          <div className="p-2 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg border border-white/10">
+          <div className="p-2 bg-c-surface-raised rounded-lg border border-white/10">
             <Brain className="w-6 h-6 text-white" />
           </div>
           <div>
             <h2 className="text-xl font-bold text-white tracking-tight">LLM Management</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest font-medium mt-0.5">
+            <p className="text-xs text-c-text-muted uppercase tracking-widest font-medium mt-0.5">
               Enterprise Control Plane
             </p>
           </div>
@@ -478,7 +478,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
             className={`px-6 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition ${
               saved
                 ? 'bg-green-500/10 text-green-400 border border-green-500/20'
-                : 'bg-slate-100 dark:bg-white/90 text-slate-700 dark:text-slate-900 hover:bg-slate-200 dark:hover:bg-white border border-slate-200 dark:border-white/20 shadow-sm'
+                : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface border border-c-border-subtle shadow-sm'
             }`}
           >
             {saved ? (
@@ -520,7 +520,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
           active={activeTab === 'local'}
           onClick={() => setActiveTab('local')}
         />
-        <div className="w-px h-6 bg-white/10 mx-2" />
+        <div className="w-px h-6 bg-c-surface-raised mx-2" />
         <NavTab
           id="proactivity"
           label="AI Proactivity"
@@ -576,7 +576,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   id: 'PREMIUM',
                   label: 'Premium Tier',
                   desc: 'Highest quality output. Best for complex analysis and creativity.',
-                  icon: <Sparkles size={24} className="text-primary-400" />,
+                  icon: <Sparkles size={24} className="text-c-accent" />,
                   color: 'purple',
                   example: 'GPT-4-Turbo, Opus',
                 },
@@ -604,7 +604,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   className={`p-6 rounded-xl border text-left transition relative group overflow-hidden ${
                     (currentUser.aiConfig as any)?.selectedTier === tier.id
                       ? `bg-${tier.color}-500/10 border-${tier.color}-500`
-                      : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-slate-100 dark:hover:bg-navy-800/40'
+                      : 'bg-c-surface-raised border-white/10 hover:border-white/20 hover:bg-c-surface-raised dark:hover:bg-navy-800/40'
                   }`}
                 >
                   <div className="flex items-start justify-between mb-4">
@@ -619,11 +619,11 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   </div>
 
                   <h3 className="text-lg font-bold text-white mb-1">{tier.label}</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-500 mb-4 h-10">
+                  <p className="text-sm text-c-text-secondary mb-4 h-10">
                     {tier.desc}
                   </p>
 
-                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-mono bg-black/20 p-2 rounded">
+                  <div className="flex items-center gap-2 text-xs text-c-text-muted font-mono bg-black/20 p-2 rounded">
                     <Server size={12} />
                     {tier.example}
                   </div>
@@ -647,7 +647,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   )}
                   <button
                     onClick={refreshCosts}
-                    className="text-xs text-slate-600 dark:text-slate-500 hover:text-white px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors"
+                    className="text-xs text-c-text-secondary hover:text-white px-2 py-1 rounded hover:bg-c-surface-raised dark:hover:bg-navy-800/40 transition-colors"
                   >
                     Refresh
                   </button>
@@ -670,26 +670,26 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   <p className="text-3xl font-bold text-white">
                     ${costSummary.totalCostThisMonth.toFixed(2)}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">this month</p>
+                  <p className="text-xs text-c-text-muted mt-1">this month</p>
                 </div>
 
                 <div className="bg-black/30 border border-white/10 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <Zap size={16} className="text-blue-400" />
-                    <span className="text-xs text-slate-600 dark:text-slate-500 uppercase font-bold tracking-wider">
+                    <span className="text-xs text-c-text-secondary uppercase font-bold tracking-wider">
                       Requests
                     </span>
                   </div>
                   <p className="text-3xl font-bold text-white">
                     {costSummary.totalRequestsThisMonth.toLocaleString()}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">AI interactions</p>
+                  <p className="text-xs text-c-text-muted mt-1">AI interactions</p>
                 </div>
 
                 <div className="bg-black/30 border border-white/10 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <FileText size={16} className="text-primary-400" />
-                    <span className="text-xs text-slate-600 dark:text-slate-500 uppercase font-bold tracking-wider">
+                    <FileText size={16} className="text-c-accent" />
+                    <span className="text-xs text-c-text-secondary uppercase font-bold tracking-wider">
                       Tokens
                     </span>
                   </div>
@@ -700,13 +700,13 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                         ? `${(costSummary.totalTokensThisMonth / 1000).toFixed(1)}k`
                         : costSummary.totalTokensThisMonth}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">consumed</p>
+                  <p className="text-xs text-c-text-muted mt-1">consumed</p>
                 </div>
 
                 <div className="bg-black/30 border border-white/10 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <Gauge size={16} className="text-amber-400" />
-                    <span className="text-xs text-slate-600 dark:text-slate-500 uppercase font-bold tracking-wider">
+                    <span className="text-xs text-c-text-secondary uppercase font-bold tracking-wider">
                       Avg/Request
                     </span>
                   </div>
@@ -718,14 +718,14 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                         ).toFixed(3)
                       : '0.00'}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">cost efficiency</p>
+                  <p className="text-xs text-c-text-muted mt-1">cost efficiency</p>
                 </div>
               </div>
 
               {/* Usage by Tier */}
               <div className="bg-black/20 border border-white/10 rounded-xl p-6">
                 <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-                  <BarChart2 size={16} className="text-primary-400" />
+                  <BarChart2 size={16} className="text-c-accent" />
                   Usage by Tier
                 </h4>
                 <div className="space-y-3">
@@ -735,16 +735,16 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     { tier: 'Premium', requests: 7, cost: 0.67, color: 'purple', percent: 6 },
                   ].map((stat) => (
                     <div key={stat.tier} className="flex items-center gap-4">
-                      <div className="w-20 text-xs font-medium text-slate-600 dark:text-slate-500">
+                      <div className="w-20 text-xs font-medium text-c-text-secondary">
                         {stat.tier}
                       </div>
-                      <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
+                      <div className="flex-1 h-2 bg-c-surface rounded-full overflow-hidden">
                         <div
                           className={`h-full bg-${stat.color}-500 rounded-full`}
                           style={{ width: `${stat.percent}%` }}
                         />
                       </div>
-                      <div className="w-20 text-xs text-slate-500 dark:text-slate-400 text-right">
+                      <div className="w-20 text-xs text-c-text-muted text-right">
                         {stat.requests} req
                       </div>
                       <div className="w-16 text-xs font-mono text-white text-right">
@@ -754,10 +754,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   ))}
                 </div>
                 <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center">
-                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                  <span className="text-xs text-c-text-muted">
                     Period: Jan 1 - Jan 31, 2026
                   </span>
-                  <button className="text-xs text-primary-400 hover:text-primary-300 flex items-center gap-1">
+                  <button className="text-xs text-c-accent hover:text-c-accent flex items-center gap-1">
                     View Full History <ChevronRight size={12} />
                   </button>
                 </div>
@@ -795,7 +795,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div>
-                    <label className="block text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold mb-2">
+                    <label className="block text-xs uppercase tracking-wider text-c-text-muted font-bold mb-2">
                       Provider
                     </label>
                     <div className="relative">
@@ -812,29 +812,29 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                         <option value="deepseek">DeepSeek</option>
                       </select>
                       <ChevronRight
-                        className="absolute right-4 top-3.5 text-slate-500 dark:text-slate-400 rotate-90 pointer-events-none"
+                        className="absolute right-4 top-3.5 text-c-text-muted rotate-90 pointer-events-none"
                         size={14}
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold mb-2">
+                    <label className="block text-xs uppercase tracking-wider text-c-text-muted font-bold mb-2">
                       Friendly Name
                     </label>
                     <input
                       placeholder="e.g. My Personal GPT-4 Key"
                       value={newProvider.name}
                       onChange={(e) => setNewProvider({ ...newProvider, name: e.target.value })}
-                      className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-600 focus:border-blue-500/50 outline-none transition"
+                      className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-c-text-muted focus:border-blue-500/50 outline-none transition"
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold mb-2">
+                    <label className="block text-xs uppercase tracking-wider text-c-text-muted font-bold mb-2">
                       API Secret Key
                     </label>
                     <div className="relative">
                       <Key
-                        className="absolute left-4 top-3.5 text-slate-600 dark:text-slate-400"
+                        className="absolute left-4 top-3.5 text-c-text-secondary"
                         size={16}
                       />
                       <input
@@ -842,10 +842,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                         placeholder="sk-..."
                         value={newProvider.apiKey}
                         onChange={(e) => setNewProvider({ ...newProvider, apiKey: e.target.value })}
-                        className="w-full bg-black/50 border border-white/10 rounded-lg pl-12 pr-4 py-3 text-white placeholder-slate-600 focus:border-blue-500/50 outline-none font-mono transition"
+                        className="w-full bg-black/50 border border-white/10 rounded-lg pl-12 pr-4 py-3 text-white placeholder-c-text-muted focus:border-blue-500/50 outline-none font-mono transition"
                       />
                     </div>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-2 flex items-center gap-1">
+                    <p className="text-[10px] text-c-text-muted mt-2 flex items-center gap-1">
                       <Lock size={10} />
                       Stored locally in your browser. Never sent to our servers.
                     </p>
@@ -854,7 +854,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 <div className="flex justify-end gap-3 pt-2 border-t border-white/5">
                   <button
                     onClick={() => setShowAddProvider(false)}
-                    className="px-5 py-2 text-sm text-slate-600 dark:text-slate-500 hover:text-white transition-colors"
+                    className="px-5 py-2 text-sm text-c-text-secondary hover:text-white transition-colors"
                   >
                     Cancel
                   </button>
@@ -871,7 +871,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
             <div className="border border-white/10 rounded-xl overflow-hidden bg-black/20">
               <table /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */  className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-white/5 border-b border-white/10 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">
+                  <tr className="bg-c-surface-raised border-b border-white/10 text-xs uppercase tracking-wider text-c-text-muted font-semibold">
                     <th className="px-6 py-4">Friendly Name</th>
                     <th className="px-6 py-4">Provider</th>
                     <th className="px-6 py-4">API Key Hash</th>
@@ -880,27 +880,27 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {apiProviders.map((p) => (
-                    <tr key={p.id} className="hover:bg-white/5 transition-colors group">
+                    <tr key={p.id} className="hover:bg-c-surface-raised transition-colors group">
                       <td className="px-6 py-4">
                         <div className="font-medium text-white flex items-center gap-3">
-                          <div className="p-2 bg-slate-50/30 dark:bg-navy-950/20 rounded border border-white/5 group-hover:border-white/10 transition-colors">
+                          <div className="p-2 bg-c-surface-raised rounded border border-white/5 group-hover:border-white/10 transition-colors">
                             <Globe size={16} className="text-blue-400" />
                           </div>
                           {p.name}
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-sm text-slate-600 dark:text-slate-500 capitalize bg-slate-50/30 dark:bg-navy-950/20 px-2 py-1 rounded border border-white/5">
+                        <span className="text-sm text-c-text-secondary capitalize bg-c-surface-raised px-2 py-1 rounded border border-white/5">
                           {p.provider}
                         </span>
                       </td>
-                      <td className="px-6 py-4 font-mono text-xs text-slate-600 dark:text-slate-400">
+                      <td className="px-6 py-4 font-mono text-xs text-c-text-secondary">
                         •••••••••••••••••{p.apiKey?.slice(-4)}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <button
                           onClick={() => removeLocalProvider(p.id)}
-                          className="text-slate-500 dark:text-slate-400 hover:text-danger-400 p-2 rounded hover:bg-danger-500/10 transition-colors"
+                          className="text-c-text-muted hover:text-danger-400 p-2 rounded hover:bg-danger-500/10 transition-colors"
                           title="Remove Key"
                         >
                           <Trash2 size={16} />
@@ -912,7 +912,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     <tr>
                       <td
                         colSpan={4}
-                        className="px-6 py-12 text-center text-slate-500 dark:text-slate-400"
+                        className="px-6 py-12 text-center text-c-text-muted"
                       >
                         <Key className="mx-auto mb-3 opacity-20" size={32} />
                         No personal API keys added yet.
@@ -950,16 +950,16 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
             <div className="mb-6 p-4 bg-black/20 border border-white/10 rounded-xl">
               <div className="flex flex-col md:flex-row md:items-end gap-4">
                 <div className="flex-1">
-                  <label className="block text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold mb-2">
+                  <label className="block text-xs uppercase tracking-wider text-c-text-muted font-bold mb-2">
                     Default Local Model ID
                   </label>
                   <input
                     value={localOllamaModelId}
                     onChange={(e) => setLocalOllamaModelId(e.target.value)}
                     placeholder="e.g. gemma3:27b"
-                    className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-600 focus:border-emerald-500/50 outline-none transition font-mono"
+                    className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-c-text-muted focus:border-emerald-500/50 outline-none transition font-mono"
                   />
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-2">
+                  <p className="text-[10px] text-c-text-muted mt-2">
                     Used when Chat is routed to Ollama.
                   </p>
                 </div>
@@ -972,7 +972,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                       Disable
                     </button>
                   ) : (
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400 self-center">
+                    <div className="text-[10px] text-c-text-muted self-center">
                       Not active (using system routing)
                     </div>
                   )}
@@ -990,23 +990,23 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div className="md:col-span-2">
-                    <label className="block text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold mb-2">
+                    <label className="block text-xs uppercase tracking-wider text-c-text-muted font-bold mb-2">
                       Connection Name
                     </label>
                     <input
                       placeholder="e.g. My MacBook Ollama"
                       value={newProvider.name}
                       onChange={(e) => setNewProvider({ ...newProvider, name: e.target.value })}
-                      className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-600 focus:border-emerald-500/50 outline-none transition"
+                      className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-c-text-muted focus:border-emerald-500/50 outline-none transition"
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold mb-2">
+                    <label className="block text-xs uppercase tracking-wider text-c-text-muted font-bold mb-2">
                       Endpoint URL
                     </label>
                     <div className="relative">
                       <Wifi
-                        className="absolute left-4 top-3.5 text-slate-600 dark:text-slate-400"
+                        className="absolute left-4 top-3.5 text-c-text-secondary"
                         size={16}
                       />
                       <input
@@ -1015,7 +1015,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                         onChange={(e) =>
                           setNewProvider({ ...newProvider, endpoint: e.target.value })
                         }
-                        className="w-full bg-black/50 border border-white/10 rounded-lg pl-12 pr-4 py-3 text-white placeholder-slate-600 focus:border-emerald-500/50 outline-none font-mono transition"
+                        className="w-full bg-black/50 border border-white/10 rounded-lg pl-12 pr-4 py-3 text-white placeholder-c-text-muted focus:border-emerald-500/50 outline-none font-mono transition"
                       />
                     </div>
                   </div>
@@ -1023,7 +1023,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 <div className="flex justify-end gap-3 pt-2 border-t border-white/5">
                   <button
                     onClick={() => setShowAddProvider(false)}
-                    className="px-5 py-2 text-sm text-slate-600 dark:text-slate-500 hover:text-white transition-colors"
+                    className="px-5 py-2 text-sm text-c-text-secondary hover:text-white transition-colors"
                   >
                     Cancel
                   </button>
@@ -1040,7 +1040,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
             <div className="border border-white/10 rounded-xl overflow-hidden bg-black/20">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-white/5 border-b border-white/10 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">
+                  <tr className="bg-c-surface-raised border-b border-white/10 text-xs uppercase tracking-wider text-c-text-muted font-semibold">
                     <th className="px-6 py-4">Instance Name</th>
                     <th className="px-6 py-4">Endpoint Type</th>
                     <th className="px-6 py-4">URL</th>
@@ -1049,7 +1049,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {localHostProviders.map((p) => (
-                    <tr key={p.id} className="hover:bg-white/5 transition-colors group">
+                    <tr key={p.id} className="hover:bg-c-surface-raised transition-colors group">
                       <td className="px-6 py-4">
                         <div className="font-medium text-white flex items-center gap-3">
                           <div className="p-2 bg-emerald-500/10 rounded border border-emerald-500/20">
@@ -1063,7 +1063,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                 Active for Chat
                               </div>
                             ) : (
-                              <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                              <div className="text-[10px] text-c-text-muted mt-0.5">
                                 Not active
                               </div>
                             )}
@@ -1071,11 +1071,11 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-sm text-slate-600 dark:text-slate-500">
+                        <span className="text-sm text-c-text-secondary">
                           Ollama / OpenAI Compatible
                         </span>
                       </td>
-                      <td className="px-6 py-4 font-mono text-xs text-slate-500 dark:text-slate-400 group-hover:text-slate-300 transition-colors">
+                      <td className="px-6 py-4 font-mono text-xs text-c-text-muted group-hover:text-c-text-muted transition-colors">
                         {p.endpoint}
                       </td>
                       <td className="px-6 py-4 text-right">
@@ -1091,7 +1091,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                           )}
                           <button
                             onClick={() => removeLocalProvider(p.id)}
-                            className="text-slate-500 dark:text-slate-400 hover:text-danger-400 p-2 rounded hover:bg-danger-500/10 transition-colors"
+                            className="text-c-text-muted hover:text-danger-400 p-2 rounded hover:bg-danger-500/10 transition-colors"
                             title="Disconnect"
                           >
                             <Trash2 size={16} />
@@ -1104,7 +1104,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     <tr>
                       <td
                         colSpan={4}
-                        className="px-6 py-12 text-center text-slate-500 dark:text-slate-400"
+                        className="px-6 py-12 text-center text-c-text-muted"
                       >
                         <Server className="mx-auto mb-3 opacity-20" size={32} />
                         No local inference engines connected.
@@ -1127,17 +1127,17 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
 
             {/* System Instructions */}
             <div className="mb-8">
-              <label className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">
+              <label className="flex items-center justify-between text-xs font-bold text-c-text-muted uppercase tracking-widest mb-3">
                 <span className="flex items-center gap-2">
                   <Terminal size={14} />
                   Global System Instructions
                 </span>
-                <span className="text-slate-600 dark:text-slate-400 font-normal normal-case">
+                <span className="text-c-text-secondary font-normal normal-case">
                   Applied to all chat sessions
                 </span>
               </label>
               <textarea
-                className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-sm font-mono text-slate-600 focus:border-white/20 focus:ring-0 transition-colors h-32 resize-y"
+                className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-sm font-mono text-c-text-secondary focus:border-white/20 focus:ring-0 transition-colors h-32 resize-y"
                 placeholder="e.g. You are a senior solutions architect. Always prioritize security and scalability in your responses..."
                 value={preferences.systemInstructions || ''}
                 onChange={(e) =>
@@ -1147,7 +1147,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
             </div>
 
             {/* Sliders Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 p-6 bg-c-surface-raised rounded-xl border border-white/5">
               <div>
                 <div className="flex justify-between items-center mb-4">
                   <label className="text-sm font-medium text-white flex items-center gap-2">
@@ -1167,9 +1167,9 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   onChange={(e) =>
                     setPreferences({ ...preferences, modelTemperature: parseFloat(e.target.value) })
                   }
-                  className="w-full accent-blue-500 bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
+                  className="w-full accent-blue-500 bg-c-surface-raised h-1.5 rounded-lg appearance-none cursor-pointer"
                 />
-                <div className="flex justify-between text-[10px] text-slate-500 dark:text-slate-400 mt-2 font-medium uppercase tracking-wider">
+                <div className="flex justify-between text-[10px] text-c-text-muted mt-2 font-medium uppercase tracking-wider">
                   <span>Precise</span>
                   <span>Creative</span>
                 </div>
@@ -1178,10 +1178,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
               <div>
                 <div className="flex justify-between items-center mb-4">
                   <label className="text-sm font-medium text-white flex items-center gap-2">
-                    <HardDrive size={16} className="text-primary-400" />
+                    <HardDrive size={16} className="text-c-accent" />
                     Max Output Tokens
                   </label>
-                  <span className="text-xs font-mono bg-black/50 px-2 py-1 rounded text-primary-400">
+                  <span className="text-xs font-mono bg-black/50 px-2 py-1 rounded text-c-accent">
                     {preferences.maxTokens ?? 4096}
                   </span>
                 </div>
@@ -1193,7 +1193,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   }
                   className="w-full bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-c-accent outline-none transition font-mono"
                 />
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-2">
+                <p className="text-[10px] text-c-text-muted mt-2">
                   Maximum length of generated response.
                 </p>
               </div>
@@ -1217,7 +1217,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   onChange={(e) =>
                     setPreferences({ ...preferences, topP: parseFloat(e.target.value) })
                   }
-                  className="w-full accent-amber-500 bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
+                  className="w-full accent-amber-500 bg-c-surface-raised h-1.5 rounded-lg appearance-none cursor-pointer"
                 />
               </div>
 
@@ -1273,7 +1273,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   label: 'Deep Study',
                   desc: 'Kompleksowa analiza',
                   tokens: '1000-4000',
-                  icon: <Brain size={24} className="text-primary-400" />,
+                  icon: <Brain size={24} className="text-c-accent" />,
                   color: 'purple',
                 },
               ].map((mode) => (
@@ -1294,7 +1294,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   className={`p-5 rounded-xl border transition text-center ${
                     preferences.contextualBehavior?.chatMode === mode.id
                       ? `bg-${mode.color}-500/10 border-${mode.color}-500/50`
-                      : 'bg-white/5 border-white/10 hover:border-white/30'
+                      : 'bg-c-surface-raised border-white/10 hover:border-white/30'
                   }`}
                 >
                   <div className="mx-auto mb-3">{mode.icon}</div>
@@ -1307,8 +1307,8 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   >
                     {mode.label}
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mb-2">{mode.desc}</div>
-                  <div className="text-xs font-mono text-slate-600 dark:text-slate-400">
+                  <div className="text-xs text-c-text-muted mb-2">{mode.desc}</div>
+                  <div className="text-xs font-mono text-c-text-secondary">
                     {mode.tokens} tokens
                   </div>
                 </button>
@@ -1316,9 +1316,9 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
             </div>
 
             {/* Fine-tune Length Sliders */}
-            <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/5 mb-6">
+            <div className="p-6 bg-c-surface-raised rounded-xl border border-white/5 mb-6">
               <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-                <Settings size={16} className="text-slate-600 dark:text-slate-500" />
+                <Settings size={16} className="text-c-text-secondary" />
                 Fine-tune Response Length
               </h4>
 
@@ -1326,7 +1326,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 {/* Quick Mode Length */}
                 <div>
                   <div className="flex justify-between mb-2">
-                    <span className="text-xs text-slate-600 dark:text-slate-500">Quick Mode</span>
+                    <span className="text-xs text-c-text-secondary">Quick Mode</span>
                     <span className="text-xs font-mono text-amber-400">
                       {preferences.responseLength?.quick || 'short'}
                     </span>
@@ -1335,7 +1335,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     type="range"
                     min="0"
                     max="2"
-                    className="w-full accent-amber-500 bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
+                    className="w-full accent-amber-500 bg-c-surface-raised h-1.5 rounded-lg appearance-none cursor-pointer"
                     value={['ultra_short', 'short', 'medium'].indexOf(
                       preferences.responseLength?.quick || 'short'
                     )}
@@ -1353,7 +1353,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                       );
                     }}
                   />
-                  <div className="flex justify-between text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                  <div className="flex justify-between text-[10px] text-c-text-muted mt-1">
                     <span>Ultra Short (50)</span>
                     <span>Short (150)</span>
                     <span>Medium (300)</span>
@@ -1363,7 +1363,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 {/* Standard Mode Length */}
                 <div>
                   <div className="flex justify-between mb-2">
-                    <span className="text-xs text-slate-600 dark:text-slate-500">
+                    <span className="text-xs text-c-text-secondary">
                       Standard Mode
                     </span>
                     <span className="text-xs font-mono text-blue-400">
@@ -1374,7 +1374,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     type="range"
                     min="0"
                     max="2"
-                    className="w-full accent-blue-500 bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
+                    className="w-full accent-blue-500 bg-c-surface-raised h-1.5 rounded-lg appearance-none cursor-pointer"
                     value={['short', 'medium', 'long'].indexOf(
                       preferences.responseLength?.standard || 'medium'
                     )}
@@ -1392,7 +1392,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                       );
                     }}
                   />
-                  <div className="flex justify-between text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                  <div className="flex justify-between text-[10px] text-c-text-muted mt-1">
                     <span>Short (250)</span>
                     <span>Medium (500)</span>
                     <span>Long (900)</span>
@@ -1402,10 +1402,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 {/* Deep Study Length */}
                 <div>
                   <div className="flex justify-between mb-2">
-                    <span className="text-xs text-slate-600 dark:text-slate-500">
+                    <span className="text-xs text-c-text-secondary">
                       Deep Study Mode
                     </span>
-                    <span className="text-xs font-mono text-primary-400">
+                    <span className="text-xs font-mono text-c-accent">
                       {preferences.responseLength?.deepStudy || 'long'}
                     </span>
                   </div>
@@ -1413,7 +1413,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     type="range"
                     min="0"
                     max="2"
-                    className="w-full accent-primary-500 bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
+                    className="w-full accent-c-accent bg-c-surface-raised h-1.5 rounded-lg appearance-none cursor-pointer"
                     value={['medium', 'long', 'comprehensive'].indexOf(
                       preferences.responseLength?.deepStudy || 'long'
                     )}
@@ -1431,7 +1431,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                       );
                     }}
                   />
-                  <div className="flex justify-between text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                  <div className="flex justify-between text-[10px] text-c-text-muted mt-1">
                     <span>Medium (800)</span>
                     <span>Long (1800)</span>
                     <span>Comprehensive (3500)</span>
@@ -1441,10 +1441,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
             </div>
 
             {/* Auto-detect Intent Toggle */}
-            <div className="flex items-center justify-between p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/5 mb-8">
+            <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-xl border border-white/5 mb-8">
               <div>
                 <div className="text-white font-medium text-sm">Auto-detect Intent</div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">
+                <div className="text-xs text-c-text-muted">
                   AI automatycznie wykryje czy potrzebujesz krótkiej czy szczegółowej odpowiedzi
                 </div>
               </div>
@@ -1483,7 +1483,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 className={`p-3 rounded-lg border text-center text-xs transition ${
                   preferences.formatting?.preferBulletPoints
                     ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
-                    : 'bg-white/5 border-white/10 text-slate-600 dark:text-slate-500 hover:border-white/30'
+                    : 'bg-c-surface-raised border-white/10 text-c-text-secondary hover:border-white/30'
                 }`}
               >
                 • Bullet Points
@@ -1504,7 +1504,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 className={`p-3 rounded-lg border text-center text-xs transition ${
                   preferences.formatting?.preferTables
                     ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
-                    : 'bg-white/5 border-white/10 text-slate-600 dark:text-slate-500 hover:border-white/30'
+                    : 'bg-c-surface-raised border-white/10 text-c-text-secondary hover:border-white/30'
                 }`}
               >
                 ⊞ Tables
@@ -1525,7 +1525,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 className={`p-3 rounded-lg border text-center text-xs transition ${
                   preferences.formatting?.includeActionItems
                     ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
-                    : 'bg-white/5 border-white/10 text-slate-600 dark:text-slate-500 hover:border-white/30'
+                    : 'bg-c-surface-raised border-white/10 text-c-text-secondary hover:border-white/30'
                 }`}
               >
                 ✓ Action Items
@@ -1546,7 +1546,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 className={`p-3 rounded-lg border text-center text-xs transition ${
                   preferences.formatting?.includeSources
                     ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
-                    : 'bg-white/5 border-white/10 text-slate-600 dark:text-slate-500 hover:border-white/30'
+                    : 'bg-c-surface-raised border-white/10 text-c-text-secondary hover:border-white/30'
                 }`}
               >
                 📚 Sources
@@ -1578,7 +1578,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   className={`text-left p-4 rounded-lg border transition ${
                     preferences.userRole === role.id
                       ? 'bg-blue-500/10 border-blue-500/50'
-                      : 'bg-white/5 border-white/5 hover:border-white/20'
+                      : 'bg-c-surface-raised border-white/5 hover:border-white/20'
                   }`}
                 >
                   <div
@@ -1586,7 +1586,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   >
                     {role.label}
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">{role.desc}</div>
+                  <div className="text-xs text-c-text-muted">{role.desc}</div>
                 </button>
               ))}
             </div>
@@ -1602,7 +1602,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
             />
 
             {/* Proactivity Selector */}
-            <div className="mb-8 p-6 rounded-xl border border-white/10 bg-white/5">
+            <div className="mb-8 p-6 rounded-xl border border-white/10 bg-c-surface-raised">
               <ProactivitySelector
                 value={proactivityMode}
                 onChange={setProactivityMode}
@@ -1616,26 +1616,26 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
               <div
                 className={`p-4 rounded-xl border transition ${
                   proactivityMode === 'REACTIVE'
-                    ? 'bg-slate-600/20 border-slate-500/50'
-                    : 'bg-white/5 border-white/5'
+                    ? 'bg-c-surface border-c-border-strong'
+                    : 'bg-c-surface-raised border-white/5'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <Pause size={18} className="text-slate-600 dark:text-slate-500" />
+                  <Pause size={18} className="text-c-text-secondary" />
                   <h4 className="font-semibold text-white text-sm">Reactive Mode</h4>
                 </div>
-                <p className="text-xs text-slate-600 dark:text-slate-500 leading-relaxed">
+                <p className="text-xs text-c-text-secondary leading-relaxed">
                   AI remains silent until you explicitly ask. Perfect for experienced users who
                   prefer full control and only want help when requested.
                 </p>
                 <div className="mt-3 pt-3 border-t border-white/10 space-y-1">
-                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                  <div className="flex items-center gap-2 text-xs text-c-text-muted">
                     <span>✗</span> No auto-suggestions
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                  <div className="flex items-center gap-2 text-xs text-c-text-muted">
                     <span>✗</span> No proactive nudges
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                  <div className="flex items-center gap-2 text-xs text-c-text-muted">
                     <span>✗</span> No conversation initiation
                   </div>
                 </div>
@@ -1644,15 +1644,15 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
               <div
                 className={`p-4 rounded-xl border transition ${
                   proactivityMode === 'BALANCED'
-                    ? 'bg-primary-600/20 border-primary-500/50'
-                    : 'bg-white/5 border-white/5'
+                    ? 'bg-c-accent-soft border-c-accent'
+                    : 'bg-c-surface-raised border-white/5'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <Scale size={18} className="text-primary-400" />
+                  <Scale size={18} className="text-c-accent" />
                   <h4 className="font-semibold text-white text-sm">Balanced Mode</h4>
                 </div>
-                <p className="text-xs text-slate-600 dark:text-slate-500 leading-relaxed">
+                <p className="text-xs text-c-text-secondary leading-relaxed">
                   AI provides helpful suggestions when relevant, but waits for you to drive major
                   interactions. Recommended for most users.
                 </p>
@@ -1663,7 +1663,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   <div className="flex items-center gap-2 text-xs text-emerald-400">
                     <span>✓</span> Helpful nudges
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                  <div className="flex items-center gap-2 text-xs text-c-text-muted">
                     <span>✗</span> No conversation initiation
                   </div>
                 </div>
@@ -1673,14 +1673,14 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 className={`p-4 rounded-xl border transition ${
                   proactivityMode === 'PROACTIVE'
                     ? 'bg-emerald-600/20 border-emerald-500/50'
-                    : 'bg-white/5 border-white/5'
+                    : 'bg-c-surface-raised border-white/5'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-2">
                   <Zap size={18} className="text-emerald-400" />
                   <h4 className="font-semibold text-white text-sm">Proactive Mode</h4>
                 </div>
-                <p className="text-xs text-slate-600 dark:text-slate-500 leading-relaxed">
+                <p className="text-xs text-c-text-secondary leading-relaxed">
                   AI actively monitors your work and proactively offers assistance, even starting
                   conversations about potential issues.
                 </p>
@@ -1725,7 +1725,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               {/* PII Redaction */}
-              <div className="p-6 rounded-xl border border-white/5 bg-slate-50/30 dark:bg-navy-950/20 hover:border-white/10 transition-colors">
+              <div className="p-6 rounded-xl border border-white/5 bg-c-surface-raised hover:border-white/10 transition-colors">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-danger-500/20 text-danger-400">
@@ -1733,7 +1733,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     </div>
                     <div>
                       <h3 className="text-sm font-semibold text-white">PII Redaction</h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                      <p className="text-xs text-c-text-muted">
                         Auto-remove sensitive data
                       </p>
                     </div>
@@ -1748,14 +1748,14 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     }
                   />
                 </div>
-                <p className="text-xs text-slate-600 dark:text-slate-500 leading-relaxed border-t border-white/5 pt-4">
+                <p className="text-xs text-c-text-secondary leading-relaxed border-t border-white/5 pt-4">
                   Automatically detects and redacts emails, phone numbers, and credit card patterns
                   before sending to the model.
                 </p>
               </div>
 
               {/* Web Search */}
-              <div className="p-6 rounded-xl border border-white/5 bg-slate-50/30 dark:bg-navy-950/20 hover:border-white/10 transition-colors">
+              <div className="p-6 rounded-xl border border-white/5 bg-c-surface-raised hover:border-white/10 transition-colors">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-blue-500/20 text-blue-400">
@@ -1763,7 +1763,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     </div>
                     <div>
                       <h3 className="text-sm font-semibold text-white">Web Connectivity</h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                      <p className="text-xs text-c-text-muted">
                         Allow external searches
                       </p>
                     </div>
@@ -1775,7 +1775,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     }
                   />
                 </div>
-                <p className="text-xs text-slate-600 dark:text-slate-500 leading-relaxed border-t border-white/5 pt-4">
+                <p className="text-xs text-c-text-secondary leading-relaxed border-t border-white/5 pt-4">
                   Enables the model to search the web for real-time information. May increase
                   latency.
                 </p>
@@ -1783,7 +1783,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
             </div>
 
             {/* Retention Policy */}
-            <div className="p-6 rounded-xl border border-white/5 bg-white/5">
+            <div className="p-6 rounded-xl border border-white/5 bg-c-surface-raised">
               <h3 className="text-sm font-semibold text-white mb-6 flex items-center gap-2">
                 <Activity size={16} className="text-emerald-400" />
                 Data Retention Policy
@@ -1818,7 +1818,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     className={`flex flex-col items-center justify-center p-4 rounded-lg border transition gap-3 ${
                       preferences.dataRetentionPolicy === policy.id
                         ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
-                        : 'bg-black/20 border-white/5 text-slate-600 dark:text-slate-500 hover:border-white/20'
+                        : 'bg-black/20 border-white/5 text-c-text-secondary hover:border-white/20'
                     }`}
                   >
                     {policy.icon}
@@ -1835,11 +1835,11 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
       </div>
 
       {/* Minimal Footer */}
-      <div className="mt-12 border-t border-white/5 pt-6 flex justify-between items-center text-[10px] text-slate-600 dark:text-slate-400 uppercase tracking-widest">
+      <div className="mt-12 border-t border-white/5 pt-6 flex justify-between items-center text-[10px] text-c-text-secondary uppercase tracking-widest">
         <span>AI Governance v2.4.0</span>
         <Link
           to="/legal/ai-policy"
-          className="hover:text-slate-400 dark:text-slate-500 transition-colors"
+          className="hover:text-c-text-muted transition-colors"
         >
           Safety Policy &rarr;
         </Link>
@@ -1854,8 +1854,8 @@ const NavTab = ({ id, label, icon, active, onClick }: any) => (
     onClick={onClick}
     className={`flex items-center gap-2 px-4 py-2 rounded-full border transition font-medium text-xs whitespace-nowrap ${
       active
-        ? 'bg-navy-900 dark:bg-white text-white dark:text-navy-950 border-navy-900 dark:border-white shadow-sm'
-        : 'text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/20'
+        ? 'bg-navy-900 dark:bg-c-surface text-white dark:text-navy-950 border-navy-900 dark:border-white shadow-sm'
+        : 'text-c-text-muted border-transparent hover:text-c-text dark:hover:text-white hover:bg-c-surface-raised dark:hover:bg-navy-800/20'
     }`}
   >
     {icon}
@@ -1866,7 +1866,7 @@ const NavTab = ({ id, label, icon, active, onClick }: any) => (
 const SectionHeader = ({ title, subtitle }: { title: string; subtitle: string }) => (
   <div className="mb-6">
     <h3 className="text-lg font-medium text-white">{title}</h3>
-    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{subtitle}</p>
+    <p className="text-sm text-c-text-muted mt-1">{subtitle}</p>
   </div>
 );
 
@@ -1874,13 +1874,13 @@ const Toggle = ({ enabled, onChange }: { enabled: boolean; onChange: () => void 
   <button
     onClick={onChange}
     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black ${
-      enabled ? 'bg-blue-600' : 'bg-slate-700'
+      enabled ? 'bg-blue-600' : 'bg-c-surface'
     }`}
   >
     <span
       className={`${
         enabled ? 'translate-x-6' : 'translate-x-1'
-      } inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+      } inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
     />
   </button>
 );

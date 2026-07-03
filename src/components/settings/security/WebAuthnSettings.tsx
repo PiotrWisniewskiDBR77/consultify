@@ -234,12 +234,12 @@ const WebAuthnSettings: React.FC = () => {
   function getDeviceIcon(deviceType: string) {
     switch (deviceType) {
       case 'platform':
-        return <Laptop className="text-primary-400" size={20} />;
+        return <Laptop className="text-c-accent" size={20} />;
       case 'cross-platform':
         return <Key className="text-amber-400" size={20} />;
       default:
         return (
-          <Smartphone className="text-gray-600 dark:text-gray-500 dark:text-gray-400" size={20} />
+          <Smartphone className="text-c-text-secondary" size={20} />
         );
     }
   }
@@ -267,14 +267,14 @@ const WebAuthnSettings: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-white">Passkeys & Security Keys</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-sm text-c-text-secondary mt-1">
             Use biometrics or security keys for secure passwordless login
           </p>
         </div>
         <button
           onClick={handleRegister}
           disabled={registering}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-c-accent hover:bg-c-accent disabled:opacity-50 text-white rounded-lg transition-colors"
         >
           {registering ? <RefreshCw className="animate-spin" size={18} /> : <Plus size={18} />}
           {registering ? 'Registering...' : 'Add Passkey'}
@@ -296,12 +296,12 @@ const WebAuthnSettings: React.FC = () => {
       )}
 
       {/* Info Box */}
-      <div className="bg-primary-500/10 border border-primary-500/30 rounded-xl p-4">
+      <div className="bg-c-accent-soft border border-c-accent rounded-xl p-4">
         <div className="flex items-start gap-3">
-          <Fingerprint className="text-primary-400 flex-shrink-0 mt-0.5" size={20} />
+          <Fingerprint className="text-c-accent flex-shrink-0 mt-0.5" size={20} />
           <div className="text-sm">
-            <p className="text-primary-300 font-medium">What are passkeys?</p>
-            <p className="text-primary-200/70 mt-1">
+            <p className="text-c-accent font-medium">What are passkeys?</p>
+            <p className="text-c-text-muted mt-1">
               Passkeys are a secure replacement for passwords. They use your device's biometrics
               (Face ID, Touch ID, fingerprint) or a physical security key to verify your identity.
             </p>
@@ -323,11 +323,11 @@ const WebAuthnSettings: React.FC = () => {
           {credentials.map((credential) => (
             <div
               key={credential.id}
-              className="bg-gray-800/50 border border-gray-700 rounded-xl p-4"
+              className="bg-c-surface border border-c-border-strong rounded-xl p-4"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-gray-700/50 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-lg bg-c-surface flex items-center justify-center">
                     {getDeviceIcon(credential.deviceType)}
                   </div>
                   <div>
@@ -338,7 +338,7 @@ const WebAuthnSettings: React.FC = () => {
                           value={newName}
                           onChange={(e) => setNewName(e.target.value)}
                           placeholder="Enter new name"
-                          className="px-2 py-1 bg-gray-900 border border-gray-600 rounded text-white text-sm"
+                          className="px-2 py-1 bg-c-surface border border-c-border-strong rounded text-white text-sm"
                           autoFocus
                         />
                         <button
@@ -352,7 +352,7 @@ const WebAuthnSettings: React.FC = () => {
                             setEditingId(null);
                             setNewName('');
                           }}
-                          className="p-1 text-gray-600 dark:text-gray-500 dark:text-gray-400 hover:text-gray-300"
+                          className="p-1 text-c-text-secondary hover:text-c-text-muted"
                         >
                           <X size={16} />
                         </button>
@@ -362,7 +362,7 @@ const WebAuthnSettings: React.FC = () => {
                         <h4 className="font-medium text-white">
                           {credential.deviceName || 'Unnamed Passkey'}
                         </h4>
-                        <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-500 dark:text-gray-400">
+                        <div className="flex items-center gap-3 text-sm text-c-text-secondary">
                           <span>Added {new Date(credential.createdAt).toLocaleDateString()}</span>
                           {credential.lastUsedAt && (
                             <span>
@@ -387,7 +387,7 @@ const WebAuthnSettings: React.FC = () => {
                           setEditingId(credential.id);
                           setNewName(credential.deviceName || '');
                         }}
-                        className="p-2 text-gray-600 dark:text-gray-500 dark:text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+                        className="p-2 text-c-text-secondary hover:text-white hover:bg-c-surface rounded-lg transition-colors"
                       >
                         <Edit2 size={16} />
                       </button>
@@ -407,9 +407,9 @@ const WebAuthnSettings: React.FC = () => {
       )}
 
       {/* Security Tips */}
-      <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
+      <div className="bg-c-surface border border-c-border-strong rounded-xl p-4">
         <h4 className="font-medium text-white mb-3">Security Tips</h4>
-        <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-500 dark:text-gray-400">
+        <ul className="space-y-2 text-sm text-c-text-secondary">
           <li className="flex items-start gap-2">
             <Shield className="text-green-400 flex-shrink-0 mt-0.5" size={16} />
             Register passkeys on multiple devices for backup access

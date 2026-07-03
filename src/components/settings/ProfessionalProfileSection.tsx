@@ -201,11 +201,11 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <UserCircle size={28} className="text-primary-500" />
+          <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
+            <UserCircle size={28} className="text-c-accent" />
             {t('settings.profile.professional.title', 'Professional Profile')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             {t(
               'settings.profile.professional.description',
               'Showcase your professional background and expertise'
@@ -223,8 +223,8 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
       </div>
 
       {/* Bio/About Me */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-c-text mb-4">
           {t('settings.profile.professional.bio', 'About Me')}
         </h3>
         <textarea
@@ -235,16 +235,16 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
             'Tell us about yourself, your experience, and what you do...'
           )}
           rows={6}
-          className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none resize-none"
+          className="w-full px-4 py-3 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none resize-none"
         />
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+        <p className="text-xs text-c-text-muted mt-2">
           {bio.length} / 2000 {t('settings.profile.professional.characters', 'characters')}
         </p>
       </div>
 
       {/* Skills */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Tag size={20} className="text-blue-500" />
           {t('settings.profile.professional.skills', 'Skills')}
         </h3>
@@ -252,12 +252,12 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
           {skills.map((skill, index) => (
             <span
               key={index}
-              className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 rounded-lg text-sm font-medium"
+              className="inline-flex items-center gap-2 px-3 py-1.5 bg-c-accent-soft dark:bg-c-accent-soft text-c-accent rounded-lg text-sm font-medium"
             >
               {skill}
               <button
                 onClick={() => removeSkill(skill)}
-                className="hover:text-primary-900 dark:hover:text-primary-100"
+                className="hover:text-c-accent"
               >
                 <X size={14} />
               </button>
@@ -271,7 +271,7 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
             onChange={(e) => setNewSkill(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && addSkill()}
             placeholder={t('settings.profile.professional.addSkill', 'Add a skill...')}
-            className="flex-1 px-4 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
+            className="flex-1 px-4 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
           />
           <button
             onClick={addSkill}
@@ -283,9 +283,9 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
       </div>
 
       {/* Certifications */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <Award size={20} className="text-amber-500" />
             {t('settings.profile.professional.certifications', 'Certifications')}
           </h3>
@@ -314,7 +314,7 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
             />
           ))}
           {certifications.length === 0 && (
-            <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8">
+            <p className="text-sm text-c-text-muted text-center py-8">
               {t('settings.profile.professional.noCerts', 'No certifications added yet')}
             </p>
           )}
@@ -322,9 +322,9 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
       </div>
 
       {/* Education */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <GraduationCap size={20} className="text-green-500" />
             {t('settings.profile.professional.education', 'Education')}
           </h3>
@@ -353,7 +353,7 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
             />
           ))}
           {education.length === 0 && (
-            <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8">
+            <p className="text-sm text-c-text-muted text-center py-8">
               {t('settings.profile.professional.noEdu', 'No education entries added yet')}
             </p>
           )}
@@ -361,9 +361,9 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
       </div>
 
       {/* Work Experience */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <Briefcase size={20} className="text-indigo-500" />
             {t('settings.profile.professional.workExperience', 'Work Experience')}
           </h3>
@@ -392,7 +392,7 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
             />
           ))}
           {workExperience.length === 0 && (
-            <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8">
+            <p className="text-sm text-c-text-muted text-center py-8">
               {t('settings.profile.professional.noWork', 'No work experience added yet')}
             </p>
           )}
@@ -400,8 +400,8 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
       </div>
 
       {/* Social Links */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Link2 size={20} className="text-pink-500" />
           {t('settings.profile.professional.socialLinks', 'Social Links')}
         </h3>
@@ -462,48 +462,48 @@ const CertificationCard: React.FC<CertificationCardProps> = ({
 }) => {
   if (isEditing) {
     return (
-      <div className="p-4 border border-primary-200 dark:border-primary-500/30 rounded-lg bg-primary-50 dark:bg-primary-500/5">
+      <div className="p-4 border border-c-accent dark:border-c-accent rounded-lg bg-c-accent-soft dark:bg-c-accent-soft">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input
             type="text"
             value={cert.name}
             onChange={(e) => onUpdate({ name: e.target.value })}
             placeholder="Certification Name"
-            className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
           />
           <input
             type="text"
             value={cert.issuer}
             onChange={(e) => onUpdate({ issuer: e.target.value })}
             placeholder="Issuing Organization"
-            className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
           />
           <input
             type="date"
             value={cert.issueDate}
             onChange={(e) => onUpdate({ issueDate: e.target.value })}
-            className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
           />
           <input
             type="date"
             value={cert.expiryDate || ''}
             onChange={(e) => onUpdate({ expiryDate: e.target.value || undefined })}
             placeholder="Expiry Date (optional)"
-            className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
           />
           <input
             type="text"
             value={cert.credentialId || ''}
             onChange={(e) => onUpdate({ credentialId: e.target.value })}
             placeholder="Credential ID (optional)"
-            className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
           />
           <input
             type="url"
             value={cert.credentialUrl || ''}
             onChange={(e) => onUpdate({ credentialUrl: e.target.value })}
             placeholder="Verification URL (optional)"
-            className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
           />
         </div>
         <div className="flex gap-2 mt-4">
@@ -515,7 +515,7 @@ const CertificationCard: React.FC<CertificationCardProps> = ({
           </button>
           <button
             onClick={onCancel}
-            className="px-4 py-2 bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm"
+            className="px-4 py-2 bg-c-surface-raised text-c-text-secondary rounded-lg text-sm"
           >
             Cancel
           </button>
@@ -531,12 +531,12 @@ const CertificationCard: React.FC<CertificationCardProps> = ({
   }
 
   return (
-    <div className="p-4 border border-slate-200 dark:border-navy-700 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+    <div className="p-4 border border-c-border-subtle dark:border-navy-700 rounded-lg hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors">
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <h4 className="font-semibold text-slate-900 dark:text-white">{cert.name}</h4>
-          <p className="text-sm text-slate-600 dark:text-slate-400">{cert.issuer}</p>
-          <div className="flex gap-4 mt-2 text-xs text-slate-500 dark:text-slate-400">
+          <h4 className="font-semibold text-c-text">{cert.name}</h4>
+          <p className="text-sm text-c-text-secondary">{cert.issuer}</p>
+          <div className="flex gap-4 mt-2 text-xs text-c-text-muted">
             <span>Issued: {new Date(cert.issueDate).toLocaleDateString()}</span>
             {cert.expiryDate && (
               <span>Expires: {new Date(cert.expiryDate).toLocaleDateString()}</span>
@@ -546,7 +546,7 @@ const CertificationCard: React.FC<CertificationCardProps> = ({
         <div className="flex gap-2">
           <button
             onClick={onEdit}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
+            className="p-2 hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg"
           >
             <Edit2 size={16} />
           </button>
@@ -555,7 +555,7 @@ const CertificationCard: React.FC<CertificationCardProps> = ({
               href={cert.credentialUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
+              className="p-2 hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg"
             >
               <ExternalLink size={16} />
             </a>
@@ -587,28 +587,28 @@ const EducationCard: React.FC<EducationCardProps> = ({
 }) => {
   if (isEditing) {
     return (
-      <div className="p-4 border border-primary-200 dark:border-primary-500/30 rounded-lg bg-primary-50 dark:bg-primary-500/5">
+      <div className="p-4 border border-c-accent dark:border-c-accent rounded-lg bg-c-accent-soft dark:bg-c-accent-soft">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input
             type="text"
             value={edu.institution}
             onChange={(e) => onUpdate({ institution: e.target.value })}
             placeholder="Institution Name"
-            className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
           />
           <input
             type="text"
             value={edu.degree}
             onChange={(e) => onUpdate({ degree: e.target.value })}
             placeholder="Degree"
-            className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
           />
           <input
             type="text"
             value={edu.fieldOfStudy || ''}
             onChange={(e) => onUpdate({ fieldOfStudy: e.target.value })}
             placeholder="Field of Study (optional)"
-            className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
           />
           <div className="flex items-center gap-2">
             <input
@@ -623,14 +623,14 @@ const EducationCard: React.FC<EducationCardProps> = ({
             type="date"
             value={edu.startDate}
             onChange={(e) => onUpdate({ startDate: e.target.value })}
-            className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
           />
           {!edu.isCurrent && (
             <input
               type="date"
               value={edu.endDate || ''}
               onChange={(e) => onUpdate({ endDate: e.target.value || undefined })}
-              className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+              className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
             />
           )}
           <textarea
@@ -638,7 +638,7 @@ const EducationCard: React.FC<EducationCardProps> = ({
             onChange={(e) => onUpdate({ description: e.target.value })}
             placeholder="Description (optional)"
             rows={3}
-            className="md:col-span-2 px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg resize-none"
+            className="md:col-span-2 px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg resize-none"
           />
         </div>
         <div className="flex gap-2 mt-4">
@@ -650,7 +650,7 @@ const EducationCard: React.FC<EducationCardProps> = ({
           </button>
           <button
             onClick={onCancel}
-            className="px-4 py-2 bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm"
+            className="px-4 py-2 bg-c-surface-raised text-c-text-secondary rounded-lg text-sm"
           >
             Cancel
           </button>
@@ -666,15 +666,15 @@ const EducationCard: React.FC<EducationCardProps> = ({
   }
 
   return (
-    <div className="p-4 border border-slate-200 dark:border-navy-700 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+    <div className="p-4 border border-c-border-subtle dark:border-navy-700 rounded-lg hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors">
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <h4 className="font-semibold text-slate-900 dark:text-white">{edu.degree}</h4>
-          <p className="text-sm text-slate-600 dark:text-slate-400">{edu.institution}</p>
+          <h4 className="font-semibold text-c-text">{edu.degree}</h4>
+          <p className="text-sm text-c-text-secondary">{edu.institution}</p>
           {edu.fieldOfStudy && (
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{edu.fieldOfStudy}</p>
+            <p className="text-xs text-c-text-muted mt-1">{edu.fieldOfStudy}</p>
           )}
-          <div className="flex gap-4 mt-2 text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex gap-4 mt-2 text-xs text-c-text-muted">
             <span>{new Date(edu.startDate).getFullYear()}</span>
             {edu.endDate && <span>- {new Date(edu.endDate).getFullYear()}</span>}
             {edu.isCurrent && <span className="text-green-600">Current</span>}
@@ -682,7 +682,7 @@ const EducationCard: React.FC<EducationCardProps> = ({
         </div>
         <button
           onClick={onEdit}
-          className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
+          className="p-2 hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg"
         >
           <Edit2 size={16} />
         </button>
@@ -712,28 +712,28 @@ const WorkExperienceCard: React.FC<WorkExperienceCardProps> = ({
 }) => {
   if (isEditing) {
     return (
-      <div className="p-4 border border-primary-200 dark:border-primary-500/30 rounded-lg bg-primary-50 dark:bg-primary-500/5">
+      <div className="p-4 border border-c-accent dark:border-c-accent rounded-lg bg-c-accent-soft dark:bg-c-accent-soft">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input
             type="text"
             value={work.company}
             onChange={(e) => onUpdate({ company: e.target.value })}
             placeholder="Company Name"
-            className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
           />
           <input
             type="text"
             value={work.position}
             onChange={(e) => onUpdate({ position: e.target.value })}
             placeholder="Position/Title"
-            className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
           />
           <input
             type="text"
             value={work.location || ''}
             onChange={(e) => onUpdate({ location: e.target.value })}
             placeholder="Location (optional)"
-            className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
           />
           <div className="flex items-center gap-2">
             <input
@@ -748,14 +748,14 @@ const WorkExperienceCard: React.FC<WorkExperienceCardProps> = ({
             type="date"
             value={work.startDate}
             onChange={(e) => onUpdate({ startDate: e.target.value })}
-            className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
           />
           {!work.isCurrent && (
             <input
               type="date"
               value={work.endDate || ''}
               onChange={(e) => onUpdate({ endDate: e.target.value || undefined })}
-              className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+              className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
             />
           )}
           <textarea
@@ -763,7 +763,7 @@ const WorkExperienceCard: React.FC<WorkExperienceCardProps> = ({
             onChange={(e) => onUpdate({ description: e.target.value })}
             placeholder="Description (optional)"
             rows={3}
-            className="md:col-span-2 px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg resize-none"
+            className="md:col-span-2 px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg resize-none"
           />
         </div>
         <div className="flex gap-2 mt-4">
@@ -775,7 +775,7 @@ const WorkExperienceCard: React.FC<WorkExperienceCardProps> = ({
           </button>
           <button
             onClick={onCancel}
-            className="px-4 py-2 bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm"
+            className="px-4 py-2 bg-c-surface-raised text-c-text-secondary rounded-lg text-sm"
           >
             Cancel
           </button>
@@ -791,15 +791,15 @@ const WorkExperienceCard: React.FC<WorkExperienceCardProps> = ({
   }
 
   return (
-    <div className="p-4 border border-slate-200 dark:border-navy-700 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+    <div className="p-4 border border-c-border-subtle dark:border-navy-700 rounded-lg hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors">
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <h4 className="font-semibold text-slate-900 dark:text-white">{work.position}</h4>
-          <p className="text-sm text-slate-600 dark:text-slate-400">{work.company}</p>
+          <h4 className="font-semibold text-c-text">{work.position}</h4>
+          <p className="text-sm text-c-text-secondary">{work.company}</p>
           {work.location && (
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{work.location}</p>
+            <p className="text-xs text-c-text-muted mt-1">{work.location}</p>
           )}
-          <div className="flex gap-4 mt-2 text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex gap-4 mt-2 text-xs text-c-text-muted">
             <span>{new Date(work.startDate).toLocaleDateString()}</span>
             {work.endDate && <span>- {new Date(work.endDate).toLocaleDateString()}</span>}
             {work.isCurrent && <span className="text-green-600">Current</span>}
@@ -807,7 +807,7 @@ const WorkExperienceCard: React.FC<WorkExperienceCardProps> = ({
         </div>
         <button
           onClick={onEdit}
-          className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
+          className="p-2 hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg"
         >
           <Edit2 size={16} />
         </button>
@@ -833,9 +833,9 @@ const SocialLinkInput: React.FC<SocialLinkInputProps> = ({
 }) => {
   return (
     <div className="flex items-center gap-3">
-      <div className="text-slate-600 dark:text-slate-500">{icon}</div>
+      <div className="text-c-text-secondary">{icon}</div>
       <div className="flex-1">
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+        <label className="block text-sm font-medium text-c-text-secondary mb-1">
           {label}
         </label>
         <input
@@ -843,7 +843,7 @@ const SocialLinkInput: React.FC<SocialLinkInputProps> = ({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
+          className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
         />
       </div>
     </div>

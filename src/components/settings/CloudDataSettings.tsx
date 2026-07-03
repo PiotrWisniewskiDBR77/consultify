@@ -178,7 +178,7 @@ export const CloudDataSettings: React.FC = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Cloud size={20} className="text-brand" />
-          <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
+          <h3 className="text-lg font-semibold text-navy-900">
             {t('cloud.title', 'Cloud Data Sources')}
           </h3>
         </div>
@@ -192,7 +192,7 @@ export const CloudDataSettings: React.FC = () => {
         </button>
       </div>
 
-      <p className="text-sm text-slate-500 dark:text-slate-400">
+      <p className="text-sm text-c-text-muted">
         {t('cloud.description', 'Connect cloud storage to import documents for AI analysis.')}
       </p>
 
@@ -201,15 +201,15 @@ export const CloudDataSettings: React.FC = () => {
       {actionError && <Banner variant="danger" title={actionError} />}
 
       {showAddForm && !loadError && (
-        <div className="p-4 bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 space-y-3">
+        <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle dark:border-navy-700 space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">
               {t('cloud.provider', 'Provider')}
             </label>
             <select
               value={newProvider}
               onChange={(e) => setNewProvider(e.target.value)}
-              className="w-full px-3 py-2 text-sm bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-600 rounded-lg"
+              className="w-full px-3 py-2 text-sm bg-c-surface border border-c-border-subtle dark:border-navy-600 rounded-lg"
             >
               {Object.keys(PROVIDER_LABELS).map((key) => (
                 <option key={key} value={key}>
@@ -219,7 +219,7 @@ export const CloudDataSettings: React.FC = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">
               {t('cloud.sourceName', 'Name')}
             </label>
             <input
@@ -227,20 +227,20 @@ export const CloudDataSettings: React.FC = () => {
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder={t('cloud.sourceNamePlaceholder', 'e.g. Company Drive')}
-              className="w-full px-3 py-2 text-sm bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-600 rounded-lg"
+              className="w-full px-3 py-2 text-sm bg-c-surface border border-c-border-subtle dark:border-navy-600 rounded-lg"
             />
           </div>
           <div className="flex gap-2 justify-end">
             <button
               onClick={() => setShowAddForm(false)}
-              className="px-3 py-1.5 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg"
+              className="px-3 py-1.5 text-sm text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-700 rounded-lg"
             >
               {t('common.cancel', 'Cancel')}
             </button>
             <button
               onClick={handleAdd}
               disabled={!newName.trim()}
-              className="px-3 py-1.5 text-sm font-medium text-white bg-brand hover:bg-brand-dark disabled:bg-slate-300 rounded-lg"
+              className="px-3 py-1.5 text-sm font-medium text-white bg-brand hover:bg-brand-dark disabled:bg-c-surface-raised rounded-lg"
             >
               {t('cloud.connect', 'Connect')}
             </button>
@@ -249,7 +249,7 @@ export const CloudDataSettings: React.FC = () => {
       )}
 
       {loading ? (
-        <div className="text-center py-8 text-slate-600">{t('common.loading', 'Loading...')}</div>
+        <div className="text-center py-8 text-c-text-secondary">{t('common.loading', 'Loading...')}</div>
       ) : sources.length === 0 && !loadError ? (
         <EmptyState
           icon={<Cloud />}
@@ -260,15 +260,15 @@ export const CloudDataSettings: React.FC = () => {
           {sources.map((source) => (
             <div
               key={source.id}
-              className="flex items-center justify-between p-3 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700"
+              className="flex items-center justify-between p-3 bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700"
             >
               <div className="flex items-center gap-3">
                 <span className="text-xl">{PROVIDER_ICONS[source.provider] || '📁'}</span>
                 <div>
-                  <div className="text-sm font-medium text-navy-900 dark:text-white">
+                  <div className="text-sm font-medium text-navy-900">
                     {source.name}
                   </div>
-                  <div className="text-xs text-slate-600">
+                  <div className="text-xs text-c-text-secondary">
                     {getProviderLabel(source.provider)} ·{' '}
                     <span
                       className={
@@ -276,7 +276,7 @@ export const CloudDataSettings: React.FC = () => {
                           ? 'text-green-500'
                           : source.status === 'error'
                             ? 'text-rose-500'
-                            : 'text-slate-600'
+                            : 'text-c-text-secondary'
                       }
                     >
                       {t(`cloud.status.${source.status}`, source.status)}
@@ -295,14 +295,14 @@ export const CloudDataSettings: React.FC = () => {
                 </button>
                 <button
                   onClick={() => openInProvider(source)}
-                  className="p-1.5 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700"
+                  className="p-1.5 text-c-text-secondary hover:text-c-text-secondary rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-700"
                   title={t('cloud.openInProvider', 'Open in provider')}
                 >
                   <ExternalLink size={14} />
                 </button>
                 <button
                   onClick={() => handleDelete(source.id)}
-                  className="p-1.5 text-slate-600 hover:text-rose-500 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                  className="p-1.5 text-c-text-secondary hover:text-rose-500 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20"
                   title={t('cloud.disconnect', 'Disconnect')}
                 >
                   <Trash2 size={14} />

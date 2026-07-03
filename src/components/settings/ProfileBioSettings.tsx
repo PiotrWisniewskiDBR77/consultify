@@ -110,19 +110,19 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+        <h3 className="text-lg font-semibold text-c-text mb-2">
           {t('settings.profile.bio.title', 'About Me')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-c-text-muted">
           {t('settings.profile.bio.subtitle', 'Tell others about yourself')}
         </p>
       </div>
 
       {/* Bio */}
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label className="block text-sm font-medium text-c-text-secondary">
           {t('settings.profile.bio.bio', 'Bio')}
-          <span className="text-slate-600 dark:text-slate-500 text-xs ml-1">
+          <span className="text-c-text-secondary text-xs ml-1">
             ({t('common.optional', 'Optional')})
           </span>
         </label>
@@ -135,25 +135,25 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
           )}
           rows={4}
           maxLength={500}
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none resize-none"
+          className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none resize-none"
         />
-        <p className="text-xs text-slate-600 dark:text-slate-500">
+        <p className="text-xs text-c-text-secondary">
           {bio.length}/500 {t('common.characters', 'characters')}
         </p>
       </div>
 
       {/* Pronouns */}
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label className="block text-sm font-medium text-c-text-secondary">
           {t('settings.profile.bio.pronouns', 'Pronouns')}
-          <span className="text-slate-600 dark:text-slate-500 text-xs ml-1">
+          <span className="text-c-text-secondary text-xs ml-1">
             ({t('common.optional', 'Optional')})
           </span>
         </label>
         <select
           value={pronouns}
           onChange={(e) => setPronouns(e.target.value)}
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
+          className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
         >
           <option value="">{t('settings.profile.bio.selectPronouns', 'Select pronouns')}</option>
           {PRONOUN_OPTIONS.map((option) => (
@@ -166,10 +166,10 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
 
       {/* Birthday */}
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+        <label className="block text-sm font-medium text-c-text-secondary flex items-center gap-2">
           <Calendar size={16} />
           {t('settings.profile.bio.birthday', 'Birthday')}
-          <span className="text-slate-600 dark:text-slate-500 text-xs ml-1">
+          <span className="text-c-text-secondary text-xs ml-1">
             ({t('common.optional', 'Optional')})
           </span>
         </label>
@@ -177,16 +177,16 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
           type="date"
           value={birthday}
           onChange={(e) => setBirthday(e.target.value)}
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
+          className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
         />
       </div>
 
       {/* Location */}
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+        <label className="block text-sm font-medium text-c-text-secondary flex items-center gap-2">
           <MapPin size={16} />
           {t('settings.profile.bio.location', 'Location')}
-          <span className="text-slate-600 dark:text-slate-500 text-xs ml-1">
+          <span className="text-c-text-secondary text-xs ml-1">
             ({t('common.optional', 'Optional')})
           </span>
         </label>
@@ -195,16 +195,16 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
           value={location}
           onChange={(e) => setLocation(e.target.value)}
           placeholder={t('settings.profile.bio.locationPlaceholder', 'e.g., Warsaw, Poland')}
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
+          className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
         />
       </div>
 
       {/* Skills */}
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+        <label className="block text-sm font-medium text-c-text-secondary flex items-center gap-2">
           <Tag size={16} />
           {t('settings.profile.bio.skills', 'Skills')}
-          <span className="text-slate-600 dark:text-slate-500 text-xs ml-1">
+          <span className="text-c-text-secondary text-xs ml-1">
             ({t('common.optional', 'Optional')})
           </span>
         </label>
@@ -220,7 +220,7 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
               }
             }}
             placeholder={t('settings.profile.bio.skillPlaceholder', 'Add a skill...')}
-            className="flex-1 px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
+            className="flex-1 px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
           />
           <button
             onClick={handleAddSkill}
@@ -235,12 +235,12 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
             {skills.map((skill) => (
               <span
                 key={skill}
-                className="inline-flex items-center gap-1 px-3 py-1 bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 rounded-full text-sm"
+                className="inline-flex items-center gap-1 px-3 py-1 bg-c-accent-soft dark:bg-c-accent-soft text-c-accent rounded-full text-sm"
               >
                 {skill}
                 <button
                   onClick={() => handleRemoveSkill(skill)}
-                  className="hover:text-primary-900 dark:hover:text-primary-100"
+                  className="hover:text-c-accent"
                 >
                   <X size={14} />
                 </button>

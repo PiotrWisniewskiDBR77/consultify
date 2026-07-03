@@ -67,7 +67,7 @@ export const AIPersonalitySettings: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-40">
-        <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
+        <Loader2 className="w-6 h-6 animate-spin text-c-accent" />
       </div>
     );
   }
@@ -78,11 +78,11 @@ export const AIPersonalitySettings: React.FC = () => {
 
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Sparkles size={22} className="text-primary-500" />
+          <h2 className="text-2xl font-bold text-c-text flex items-center gap-2">
+            <Sparkles size={22} className="text-c-accent" />
             {t('settings.ai.personalityTitle', 'AI Personality')}
           </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-muted mt-1">
             {t(
               'settings.ai.personalitySubtitle',
               'Set tone, voice and communication style for AI responses.'
@@ -92,7 +92,7 @@ export const AIPersonalitySettings: React.FC = () => {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-c-accent hover:bg-c-accent text-white rounded-lg transition-colors disabled:opacity-50"
         >
           {saving ? (
             <>
@@ -108,14 +108,14 @@ export const AIPersonalitySettings: React.FC = () => {
         </button>
       </div>
 
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
         <div className="flex items-center gap-2">
           <MessageSquare size={18} className="text-blue-500" />
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+          <h3 className="text-lg font-semibold text-c-text">
             {t('settings.ai.personalityInstructions', 'Custom Instructions')}
           </h3>
         </div>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-c-text-muted">
           {t(
             'settings.ai.personalityHelp',
             'Describe tone, style, dos and don’ts (e.g., concise, bullet lists, formal, playful).'
@@ -125,14 +125,14 @@ export const AIPersonalitySettings: React.FC = () => {
           value={preferences.customInstructions}
           onChange={(e) => setPreferences({ ...preferences, customInstructions: e.target.value })}
           rows={8}
-          className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white p-4 focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
+          className="w-full rounded-xl border border-c-border-subtle dark:border-navy-700 bg-c-surface-raised text-c-text p-4 focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
           placeholder={t(
             'settings.ai.personalityPlaceholder',
             'e.g., Friendly, concise, focus on practical solutions. Avoid long paragraphs.'
           )}
           maxLength={2000}
         />
-        <div className="text-right text-xs text-slate-500 dark:text-slate-400">
+        <div className="text-right text-xs text-c-text-muted">
           {preferences.customInstructions.length}/2000
         </div>
       </div>

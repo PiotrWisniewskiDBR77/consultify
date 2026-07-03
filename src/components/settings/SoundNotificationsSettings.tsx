@@ -129,10 +129,10 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+        <h3 className="text-lg font-semibold text-c-text mb-2">
           {t('settings.notifications.sounds.title', 'Sound & Desktop Notifications')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-c-text-muted">
           {t(
             'settings.notifications.sounds.subtitle',
             'Configure sound alerts and desktop notification settings'
@@ -141,18 +141,18 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
       </div>
 
       {/* Sound Toggle */}
-      <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950/50 rounded-lg border border-slate-200 dark:border-navy-700">
+      <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg border border-c-border-subtle dark:border-navy-700">
         <div className="flex items-center gap-3">
           {soundEnabled ? (
-            <Volume2 size={20} className="text-primary-600" />
+            <Volume2 size={20} className="text-c-accent" />
           ) : (
-            <VolumeX size={20} className="text-slate-600 dark:text-slate-500" />
+            <VolumeX size={20} className="text-c-text-secondary" />
           )}
           <div>
-            <label className="text-sm font-medium text-slate-900 dark:text-white">
+            <label className="text-sm font-medium text-c-text">
               {t('settings.notifications.sounds.enableSounds', 'Enable Sounds')}
             </label>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-c-text-muted">
               {t(
                 'settings.notifications.sounds.enableSoundsDesc',
                 'Play sound alerts for notifications'
@@ -163,11 +163,11 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
         <button
           onClick={() => setSoundEnabled(!soundEnabled)}
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-            soundEnabled ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
+            soundEnabled ? 'bg-c-accent' : 'bg-c-surface-raised'
           }`}
         >
           <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform ${
+            className={`inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform ${
               soundEnabled ? 'translate-x-6' : 'translate-x-1'
             }`}
           />
@@ -177,18 +177,18 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
       {/* Sound per Type */}
       {soundEnabled && (
         <div className="space-y-4">
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+          <label className="block text-sm font-medium text-c-text-secondary">
             {t('settings.notifications.sounds.soundPerType', 'Sound per Notification Type')}
           </label>
           {NOTIFICATION_TYPES.map((type) => (
             <div key={type.id} className="flex items-center justify-between">
-              <span className="text-sm text-slate-600 dark:text-slate-400">
+              <span className="text-sm text-c-text-secondary">
                 {t(`settings.notifications.sounds.type_${type.id}`, type.label)}
               </span>
               <select
                 value={soundPerType[type.id] || 'default'}
                 onChange={(e) => setSoundPerType({ ...soundPerType, [type.id]: e.target.value })}
-                className="px-3 py-1.5 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
+                className="px-3 py-1.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-sm text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
               >
                 {SOUND_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -203,7 +203,7 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
 
       {/* Desktop Position */}
       <div className="space-y-4">
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+        <label className="block text-sm font-medium text-c-text-secondary flex items-center gap-2">
           <Monitor size={16} />
           {t('settings.notifications.sounds.desktopPosition', 'Desktop Notification Position')}
         </label>
@@ -214,8 +214,8 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
               onClick={() => setDesktopPosition(option.value)}
               className={`px-4 py-2 rounded-lg border-2 transition-all text-sm ${
                 desktopPosition === option.value
-                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300'
-                  : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-primary-300'
+                  ? 'border-c-accent bg-c-accent-soft dark:bg-c-accent-soft text-c-accent'
+                  : 'border-c-border-subtle dark:border-navy-700 text-c-text-secondary hover:border-c-accent'
               }`}
             >
               {t(`settings.notifications.sounds.pos_${option.value}`, option.label)}
@@ -226,7 +226,7 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
 
       {/* Desktop Duration */}
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label className="block text-sm font-medium text-c-text-secondary">
           {t('settings.notifications.sounds.desktopDuration', 'Desktop Notification Duration')}
         </label>
         <div className="flex items-center gap-4">
@@ -239,7 +239,7 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
             onChange={(e) => setDesktopDuration(Number(e.target.value))}
             className="flex-1"
           />
-          <span className="text-sm text-slate-600 dark:text-slate-400 w-20 text-right">
+          <span className="text-sm text-c-text-secondary w-20 text-right">
             {desktopDuration / 1000}s
           </span>
         </div>
@@ -250,7 +250,7 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2 bg-c-accent hover:bg-c-accent text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaving ? (
             <>

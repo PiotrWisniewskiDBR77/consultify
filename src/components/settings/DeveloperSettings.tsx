@@ -233,12 +233,12 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
-                    <Terminal className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                    <Terminal className="w-4 h-4 text-c-text-muted" />
                     <span className="font-medium">
                       {t('settings.developer.mode', 'Developer Mode')}
                     </span>
                   </div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-c-text-muted">
                     {t(
                       'settings.developer.modeDesc',
                       'Enable developer tools and debugging features'
@@ -253,12 +253,12 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
-                    <Eye className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                    <Eye className="w-4 h-4 text-c-text-muted" />
                     <span className="font-medium">
                       {t('settings.developer.showDebug', 'Show Debug Info')}
                     </span>
                   </div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-c-text-muted">
                     {t(
                       'settings.developer.showDebugDesc',
                       'Display the debug information panel below'
@@ -295,7 +295,7 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="bg-slate-900 rounded-lg p-4 font-mono text-sm overflow-x-auto">
+                <div className="bg-c-surface rounded-lg p-4 font-mono text-sm overflow-x-auto">
                   <pre className="text-emerald-400">{JSON.stringify(debugInfo, null, 2)}</pre>
                 </div>
               </CardContent>
@@ -323,13 +323,13 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
 
           <Card>
             <CardContent className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-              <div className="p-3 rounded-full bg-slate-100 dark:bg-slate-800">
-                <Beaker className="w-6 h-6 text-slate-500 dark:text-slate-400" />
+              <div className="p-3 rounded-full bg-c-surface-raised">
+                <Beaker className="w-6 h-6 text-c-text-muted" />
               </div>
-              <h4 className="font-medium text-slate-900 dark:text-white">
+              <h4 className="font-medium text-c-text">
                 {t('settings.beta.emptyTitle', 'No beta features available right now')}
               </h4>
-              <p className="max-w-sm text-sm text-slate-500 dark:text-slate-400">
+              <p className="max-w-sm text-sm text-c-text-muted">
                 {t(
                   'settings.beta.emptyDesc',
                   'There are no opt-in beta features for your account at the moment. New experimental features will appear here when they become available.'
@@ -386,14 +386,14 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
                   {featureFlags.map((flag) => (
                     <div
                       key={flag.key}
-                      className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-800/50 rounded-lg"
+                      className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg"
                     >
                       <div>
-                        <code className="text-sm font-mono text-primary-600 dark:text-primary-400">
+                        <code className="text-sm font-mono text-c-accent">
                           {flag.key}
                         </code>
                         {flag.description && (
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          <p className="text-xs text-c-text-muted mt-0.5">
                             {getFeatureFlagDescription(flag)}
                           </p>
                         )}
@@ -406,10 +406,10 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
                           flag.value ? (
                             <ToggleRight className="w-5 h-5 text-emerald-500" />
                           ) : (
-                            <ToggleLeft className="w-5 h-5 text-slate-600 dark:text-slate-500" />
+                            <ToggleLeft className="w-5 h-5 text-c-text-secondary" />
                           )
                         ) : (
-                          <span className="text-sm font-mono text-slate-600 dark:text-slate-400">
+                          <span className="text-sm font-mono text-c-text-secondary">
                             {String(flag.value)}
                           </span>
                         )}

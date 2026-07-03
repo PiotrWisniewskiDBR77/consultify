@@ -113,11 +113,11 @@ export const NotificationDigestSettings: React.FC<NotificationDigestSettingsProp
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+        <h3 className="text-lg font-semibold text-c-text mb-2 flex items-center gap-2">
           <Mail size={20} />
           {t('settings.notifications.digest.title', 'Email Digest')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-c-text-muted">
           {t(
             'settings.notifications.digest.subtitle',
             'Configure how often you receive email summaries'
@@ -127,7 +127,7 @@ export const NotificationDigestSettings: React.FC<NotificationDigestSettingsProp
 
       {/* Frequency */}
       <div className="space-y-4">
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label className="block text-sm font-medium text-c-text-secondary">
           {t('settings.notifications.digest.frequency', 'Digest Frequency')}
         </label>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -137,20 +137,20 @@ export const NotificationDigestSettings: React.FC<NotificationDigestSettingsProp
               onClick={() => setFrequency(option.value)}
               className={`p-4 rounded-lg border-2 transition-all text-left ${
                 frequency === option.value
-                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/20'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
+                  ? 'border-c-accent bg-c-accent-soft dark:bg-c-accent-soft'
+                  : 'border-c-border-subtle dark:border-navy-700 hover:border-c-accent'
               }`}
             >
               <div
                 className={`text-sm font-medium ${
                   frequency === option.value
-                    ? 'text-primary-700 dark:text-primary-300'
-                    : 'text-slate-600 dark:text-slate-400'
+                    ? 'text-c-accent'
+                    : 'text-c-text-secondary'
                 }`}
               >
                 {t(`settings.notifications.digest.freq_${option.value}`, option.label)}
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <div className="text-xs text-c-text-muted mt-1">
                 {t(`settings.notifications.digest.freq_${option.value}_desc`, option.description)}
               </div>
             </button>
@@ -160,7 +160,7 @@ export const NotificationDigestSettings: React.FC<NotificationDigestSettingsProp
 
       {/* Content */}
       <div className="space-y-4">
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label className="block text-sm font-medium text-c-text-secondary">
           {t('settings.notifications.digest.content', 'Digest Content')}
         </label>
         <div className="grid grid-cols-2 gap-3">
@@ -170,20 +170,20 @@ export const NotificationDigestSettings: React.FC<NotificationDigestSettingsProp
               onClick={() => setContent(option.value)}
               className={`p-4 rounded-lg border-2 transition-all text-left ${
                 content === option.value
-                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/20'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
+                  ? 'border-c-accent bg-c-accent-soft dark:bg-c-accent-soft'
+                  : 'border-c-border-subtle dark:border-navy-700 hover:border-c-accent'
               }`}
             >
               <div
                 className={`text-sm font-medium ${
                   content === option.value
-                    ? 'text-primary-700 dark:text-primary-300'
-                    : 'text-slate-600 dark:text-slate-400'
+                    ? 'text-c-accent'
+                    : 'text-c-text-secondary'
                 }`}
               >
                 {t(`settings.notifications.digest.content_${option.value}`, option.label)}
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <div className="text-xs text-c-text-muted mt-1">
                 {t(
                   `settings.notifications.digest.content_${option.value}_desc`,
                   option.description
@@ -196,7 +196,7 @@ export const NotificationDigestSettings: React.FC<NotificationDigestSettingsProp
 
       {/* Format */}
       <div className="space-y-4">
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label className="block text-sm font-medium text-c-text-secondary">
           {t('settings.notifications.digest.format', 'Email Format')}
         </label>
         <div className="grid grid-cols-2 gap-3">
@@ -206,20 +206,20 @@ export const NotificationDigestSettings: React.FC<NotificationDigestSettingsProp
               onClick={() => setFormat(option.value)}
               className={`p-4 rounded-lg border-2 transition-all text-left ${
                 format === option.value
-                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/20'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
+                  ? 'border-c-accent bg-c-accent-soft dark:bg-c-accent-soft'
+                  : 'border-c-border-subtle dark:border-navy-700 hover:border-c-accent'
               }`}
             >
               <div
                 className={`text-sm font-medium ${
                   format === option.value
-                    ? 'text-primary-700 dark:text-primary-300'
-                    : 'text-slate-600 dark:text-slate-400'
+                    ? 'text-c-accent'
+                    : 'text-c-text-secondary'
                 }`}
               >
                 {t(`settings.notifications.digest.format_${option.value}`, option.label)}
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <div className="text-xs text-c-text-muted mt-1">
                 {t(`settings.notifications.digest.format_${option.value}_desc`, option.description)}
               </div>
             </button>
@@ -232,7 +232,7 @@ export const NotificationDigestSettings: React.FC<NotificationDigestSettingsProp
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2 bg-c-accent hover:bg-c-accent text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaving ? (
             <>

@@ -22,18 +22,18 @@ export const ResponseStyleSettings: React.FC<ResponseStyleSettingsProps> = ({ cl
   return (
     <div className={`space-y-6 ${className}`}>
       <div>
-        <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+        <h3 className="text-lg font-medium text-c-text flex items-center gap-2">
           <Sliders size={20} />
           {t('settings.ai.styleTitle', 'Response Style')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        <p className="text-sm text-c-text-muted mt-1">
           {t('settings.ai.styleDesc', 'Customize how the AI formats and delivers responses.')}
         </p>
       </div>
 
       {/* Response Length */}
       <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+        <label className="block text-sm font-medium text-c-text-secondary mb-3">
           {t('settings.ai.responseLength', 'Response Length')}
         </label>
         <div className="grid grid-cols-3 gap-3">
@@ -44,11 +44,11 @@ export const ResponseStyleSettings: React.FC<ResponseStyleSettingsProps> = ({ cl
               className={`p-3 rounded-lg border-2 transition-all ${
                 responseLength === length
                   ? 'border-brand bg-brand/5 dark:bg-brand/10'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-brand/50'
+                  : 'border-c-border-subtle dark:border-navy-700 hover:border-brand/50'
               }`}
             >
               <div className="flex items-center justify-between mb-1">
-                <span className="font-medium text-slate-900 dark:text-white capitalize">
+                <span className="font-medium text-c-text capitalize">
                   {t(`settings.ai.length.${length}`, length)}
                 </span>
                 {responseLength === length && <Check size={16} className="text-brand" />}
@@ -60,7 +60,7 @@ export const ResponseStyleSettings: React.FC<ResponseStyleSettingsProps> = ({ cl
 
       {/* Tone */}
       <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+        <label className="block text-sm font-medium text-c-text-secondary mb-3">
           {t('settings.ai.tone', 'Tone')}
         </label>
         <div className="grid grid-cols-3 gap-3">
@@ -71,11 +71,11 @@ export const ResponseStyleSettings: React.FC<ResponseStyleSettingsProps> = ({ cl
               className={`p-3 rounded-lg border-2 transition-all ${
                 tone === t_
                   ? 'border-brand bg-brand/5 dark:bg-brand/10'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-brand/50'
+                  : 'border-c-border-subtle dark:border-navy-700 hover:border-brand/50'
               }`}
             >
               <div className="flex items-center justify-between mb-1">
-                <span className="font-medium text-slate-900 dark:text-white capitalize">
+                <span className="font-medium text-c-text capitalize">
                   {t(`settings.ai.tone.${t_}`, t_)}
                 </span>
                 {tone === t_ && <Check size={16} className="text-brand" />}

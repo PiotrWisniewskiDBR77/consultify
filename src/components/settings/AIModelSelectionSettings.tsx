@@ -119,11 +119,11 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+        <h3 className="text-lg font-semibold text-c-text mb-2 flex items-center gap-2">
           <Brain size={20} />
           {t('settings.ai.modelSelection.title', 'AI Model Selection')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-c-text-muted">
           {t(
             'settings.ai.modelSelection.subtitle',
             'Choose which AI models are available and set your preferred model'
@@ -142,30 +142,30 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
               key={model.id}
               className={`p-4 rounded-lg border-2 transition-all ${
                 isEnabled
-                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/20'
-                  : 'border-slate-200 dark:border-navy-700'
+                  ? 'border-c-accent bg-c-accent-soft dark:bg-c-accent-soft'
+                  : 'border-c-border-subtle dark:border-navy-700'
               }`}
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-3 flex-1">
                   <button
                     onClick={() => toggleModel(model.id)}
-                    className={`mt-0.5 ${isEnabled ? 'text-primary-600' : 'text-slate-400 dark:text-slate-500'}`}
+                    className={`mt-0.5 ${isEnabled ? 'text-c-accent' : 'text-c-text-muted'}`}
                   >
                     {isEnabled ? <CheckCircle size={20} /> : <Circle size={20} />}
                   </button>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
+                      <h4 className="text-sm font-semibold text-c-text">
                         {model.name}
                       </h4>
                       {isPreferred && (
-                        <span className="px-2 py-0.5 bg-navy-900 text-white text-xs rounded-full dark:bg-white dark:text-navy-950">
+                        <span className="px-2 py-0.5 bg-navy-900 text-white text-xs rounded-full dark:bg-c-surface dark:text-navy-950">
                           {t('settings.ai.modelSelection.preferred', 'Preferred')}
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    <p className="text-xs text-c-text-muted mt-0.5">
                       {model.provider} • {model.description}
                     </p>
                   </div>
@@ -175,8 +175,8 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                     onClick={() => setPreferredModel(isPreferred ? '' : model.id)}
                     className={`px-3 py-1 text-xs rounded-lg transition-colors ${
                       isPreferred
-                        ? 'bg-navy-900 text-white dark:bg-white dark:text-navy-950'
-                        : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/20'
+                        ? 'bg-navy-900 text-white dark:bg-c-surface dark:text-navy-950'
+                        : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
                     }`}
                   >
                     {isPreferred

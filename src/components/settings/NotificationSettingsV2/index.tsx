@@ -281,10 +281,10 @@ export const NotificationSettingsV2: React.FC<NotificationSettingsV2Props> = ({
       {/* Header */}
       <div className="relative">
         <InfoButton cardId="settings-notifications-v2" position="top-right" />
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+        <h2 className="text-2xl font-bold text-c-text">
           {t('settings.notifications.title', 'Notifications')}
         </h2>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">
+        <p className="text-c-text-muted mt-1">
           {t(
             'settings.notifications.description',
             'Control how and when you receive notifications'
@@ -307,7 +307,7 @@ export const NotificationSettingsV2: React.FC<NotificationSettingsV2Props> = ({
       )}
 
       {/* Tab Navigation */}
-      <div className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-navy-700 pb-1">
+      <div className="flex flex-wrap gap-2 border-b border-c-border-subtle dark:border-navy-700 pb-1">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -319,7 +319,7 @@ export const NotificationSettingsV2: React.FC<NotificationSettingsV2Props> = ({
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 isActive
                   ? 'bg-navy-900 text-white'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
+                  : 'text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-800'
               }`}
             >
               <Icon size={16} />

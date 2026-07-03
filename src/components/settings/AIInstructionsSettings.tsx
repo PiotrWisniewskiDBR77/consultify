@@ -162,7 +162,7 @@ export const AIInstructionsSettings: React.FC<AIInstructionsSettingsProps> = ({
         <div className="space-y-6">
           {/* Quick Templates */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+            <label className="block text-sm font-medium text-c-text-secondary mb-3">
               {t('settings.ai.quickTemplates', 'Quick Templates')}
             </label>
             <div className="flex flex-wrap gap-2">
@@ -170,9 +170,9 @@ export const AIInstructionsSettings: React.FC<AIInstructionsSettingsProps> = ({
                 <button
                   key={template.id}
                   onClick={() => applyTemplate(template)}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-slate-200/50 dark:bg-navy-700/50 hover:bg-slate-200 dark:hover:bg-navy-700
-                                             border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-700 dark:text-slate-300
-                                             hover:text-slate-900 dark:hover:text-white transition-all duration-200"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-navy-700
+                                             border border-c-border-subtle rounded-lg text-sm text-c-text-secondary
+                                             hover:text-c-text dark:hover:text-white transition-all duration-200"
                 >
                   <Wand2 size={14} />
                   {t(`settings.ai.behaviorTemplates.${template.id}.name`, template.name)}
@@ -199,7 +199,7 @@ export const AIInstructionsSettings: React.FC<AIInstructionsSettingsProps> = ({
               rows={6}
             />
             <div className="flex justify-between items-center mt-2">
-              <span className="text-xs text-slate-500 dark:text-slate-400">
+              <span className="text-xs text-c-text-muted">
                 {preferences.systemPrompt.length}/2000 {t('common.characters', 'characters')}
               </span>
               {preferences.systemPrompt.length > 1800 && (
@@ -262,8 +262,8 @@ export const AIInstructionsSettings: React.FC<AIInstructionsSettingsProps> = ({
                       maxContextLength: parseInt(e.target.value),
                     })
                   }
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg
-                                             text-slate-900 dark:text-white transition-all duration-200
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg
+                                             text-c-text transition-all duration-200
                                              focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
                 >
                   {contextLengthOptions.map((opt) => (
@@ -277,14 +277,14 @@ export const AIInstructionsSettings: React.FC<AIInstructionsSettingsProps> = ({
           </div>
 
           {/* AI Tips */}
-          <div className="mt-6 p-4 bg-primary-600/5 border border-primary-500/20 rounded-lg">
+          <div className="mt-6 p-4 bg-c-accent-soft border border-c-accent rounded-lg">
             <div className="flex items-start gap-3">
-              <Sparkles size={18} className="text-primary-400 flex-shrink-0 mt-0.5" />
+              <Sparkles size={18} className="text-c-accent flex-shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-sm font-medium text-primary-300 mb-1">
+                <h4 className="text-sm font-medium text-c-accent mb-1">
                   {t('settings.ai.tips', 'Pro Tips')}
                 </h4>
-                <ul className="text-xs text-slate-400 dark:text-slate-500 space-y-1">
+                <ul className="text-xs text-c-text-muted space-y-1">
                   <li>• {t('settings.ai.tip1', 'Be specific about your role and expertise')}</li>
                   <li>
                     •{' '}

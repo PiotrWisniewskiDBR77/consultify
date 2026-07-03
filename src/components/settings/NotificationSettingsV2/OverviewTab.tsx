@@ -27,11 +27,11 @@ const Toggle: React.FC<{ checked: boolean; onChange: () => void; disabled?: bool
     onClick={onChange}
     disabled={disabled}
     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-      checked ? 'bg-navy-900' : 'bg-slate-200 dark:bg-navy-700'
+      checked ? 'bg-navy-900' : 'bg-c-surface-raised'
     }`}
   >
     <span
-      className={`${checked ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+      className={`${checked ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
     />
   </button>
 );
@@ -99,11 +99,11 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
       {/* Notification Preferences Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <Settings size={20} />
             {t('settings.notifications.preferencesTitle', 'Notification Preferences')}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-muted mt-1">
             {t(
               'settings.notifications.preferencesDesc',
               'Manage how and when you receive notifications across all channels.'
@@ -113,9 +113,9 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
       </div>
 
       {/* Main Table */}
-      <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+      <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 overflow-hidden">
         {/* Header */}
-        <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 dark:border-navy-700 text-sm font-medium text-slate-500 dark:text-slate-400">
+        <div className="grid grid-cols-12 gap-4 p-4 border-b border-c-border-subtle dark:border-navy-700 text-sm font-medium text-c-text-muted">
           <div className="col-span-4">{t('settings.notifications.activity', 'Activity')}</div>
           <div className="col-span-8 grid grid-cols-2 gap-4">
             <div className="text-center flex flex-col items-center gap-1">
@@ -130,7 +130,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
         </div>
 
         {/* Rows */}
-        <div className="divide-y divide-slate-200 dark:divide-white/5">
+        <div className="divide-y divide-c-border-subtle dark:divide-white/5">
           {notificationRows.map((row) => {
             const categoryPrefs =
               preferences.categories[row.category as keyof typeof preferences.categories];
@@ -138,13 +138,13 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
             return (
               <div
                 key={row.key}
-                className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-slate-50 dark:hover:bg-navy-700/50 transition-colors"
+                className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-c-surface-raised dark:hover:bg-navy-700/50 transition-colors"
               >
                 <div className="col-span-4">
-                  <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  <h4 className="text-sm font-semibold text-c-text">
                     {row.title}
                   </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{row.description}</p>
+                  <p className="text-xs text-c-text-muted">{row.description}</p>
                 </div>
                 <div className="col-span-8 grid grid-cols-2 gap-4">
                   <div className="flex justify-center">
@@ -170,7 +170,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 bg-slate-50 dark:bg-navy-900/50 border-t border-slate-200 dark:border-navy-700 flex justify-end">
+        <div className="px-6 py-4 bg-c-surface-raised border-t border-c-border-subtle dark:border-navy-700 flex justify-end">
           <button className="px-4 py-2 bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950 rounded-lg text-sm font-medium transition-colors">
             {t('settings.notifications.savePreferences', 'Save Preferences')}
           </button>

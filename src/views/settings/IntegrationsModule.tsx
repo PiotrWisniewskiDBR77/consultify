@@ -21,7 +21,7 @@ interface IntegrationsModuleProps {
 export const IntegrationsModule: React.FC<IntegrationsModuleProps> = () => {
   const { t } = useTranslation();
   return (
-    <div className="p-8 text-center text-slate-500 dark:text-slate-400">
+    <div className="p-8 text-center text-c-text-muted">
       <p className="text-sm">
         {t(
           'settings.integrations.deprecated',

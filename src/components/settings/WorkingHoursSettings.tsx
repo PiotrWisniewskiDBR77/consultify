@@ -198,9 +198,9 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
 
   // Styles
   const inputClass =
-    'px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none transition-all appearance-none cursor-pointer';
+    'px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none transition-all appearance-none cursor-pointer';
   const cardClass =
-    'bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6';
+    'bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6';
 
   if (loading) {
     return <LoadingState variant="spinner" />;
@@ -211,14 +211,14 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-500/20 flex items-center justify-center">
-            <Clock className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+          <div className="w-10 h-10 rounded-lg bg-c-accent-soft dark:bg-c-accent-soft flex items-center justify-center">
+            <Clock className="w-5 h-5 text-c-accent" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+            <h2 className="text-xl font-bold text-c-text">
               {t('settings.workingHours.title', 'Working Hours')}
             </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t(
                 'settings.workingHours.description',
                 'Set your availability for meetings and work'
@@ -250,10 +250,10 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                   <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-c-text-muted">
                     {t('settings.workingHours.workingDays', 'Working Days')}
                   </p>
-                  <p className="text-xl font-bold text-slate-900 dark:text-white">
+                  <p className="text-xl font-bold text-c-text">
                     {DAYS_OF_WEEK.filter((d) => schedule[d.key].enabled).length}
                   </p>
                 </div>
@@ -265,10 +265,10 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                   <Clock className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-c-text-muted">
                     {t('settings.workingHours.weeklyHours', 'Weekly Hours')}
                   </p>
-                  <p className="text-xl font-bold text-slate-900 dark:text-white">
+                  <p className="text-xl font-bold text-c-text">
                     {totalHours.toFixed(1)}h
                   </p>
                 </div>
@@ -280,10 +280,10 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                   <Globe className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-c-text-muted">
                     {t('settings.workingHours.timezone', 'Timezone')}
                   </p>
-                  <p className="text-sm font-medium text-slate-900 dark:text-white truncate max-w-[150px]">
+                  <p className="text-sm font-medium text-c-text truncate max-w-[150px]">
                     {timezone.replace('_', ' ')}
                   </p>
                 </div>
@@ -295,10 +295,10 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
           <div className={cardClass}>
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="font-semibold text-slate-900 dark:text-white">
+                <h3 className="font-semibold text-c-text">
                   {t('settings.workingHours.scheduleType', 'Schedule Type')}
                 </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-sm text-c-text-muted mt-1">
                   {t(
                     'settings.workingHours.scheduleTypeDescription',
                     'Choose how you want to set your working hours'
@@ -312,8 +312,8 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                 onClick={() => setSameEveryDay(true)}
                 className={`flex-1 p-4 rounded-xl border-2 transition-all ${
                   sameEveryDay
-                    ? 'border-[var(--c-info)] bg-slate-100 dark:bg-white/[0.08]'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
+                    ? 'border-[var(--c-info)] bg-c-surface-raised.08]'
+                    : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border dark:hover:border-white/20'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -321,16 +321,16 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                     className={`w-4 h-4 rounded-full border-2 ${
                       sameEveryDay
                         ? 'border-navy-900 bg-navy-900'
-                        : 'border-slate-300 dark:border-slate-600'
+                        : 'border-c-border'
                     }`}
                   >
                     {sameEveryDay && <CheckCircle className="w-3 h-3 text-white" />}
                   </div>
-                  <span className="font-medium text-slate-900 dark:text-white">
+                  <span className="font-medium text-c-text">
                     {t('settings.workingHours.sameEveryDay', 'Same every day')}
                   </span>
                 </div>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 text-left">
+                <p className="text-sm text-c-text-muted mt-1 text-left">
                   {t(
                     'settings.workingHours.sameEveryDayDescription',
                     'Use the same hours for all weekdays'
@@ -341,8 +341,8 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                 onClick={() => setSameEveryDay(false)}
                 className={`flex-1 p-4 rounded-xl border-2 transition-all ${
                   !sameEveryDay
-                    ? 'border-[var(--c-info)] bg-slate-100 dark:bg-white/[0.08]'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
+                    ? 'border-[var(--c-info)] bg-c-surface-raised.08]'
+                    : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border dark:hover:border-white/20'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -350,16 +350,16 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                     className={`w-4 h-4 rounded-full border-2 ${
                       !sameEveryDay
                         ? 'border-navy-900 bg-navy-900'
-                        : 'border-slate-300 dark:border-slate-600'
+                        : 'border-c-border'
                     }`}
                   >
                     {!sameEveryDay && <CheckCircle className="w-3 h-3 text-white" />}
                   </div>
-                  <span className="font-medium text-slate-900 dark:text-white">
+                  <span className="font-medium text-c-text">
                     {t('settings.workingHours.customPerDay', 'Custom per day')}
                   </span>
                 </div>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 text-left">
+                <p className="text-sm text-c-text-muted mt-1 text-left">
                   {t(
                     'settings.workingHours.customPerDayDescription',
                     'Set different hours for each day'
@@ -371,7 +371,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
 
           {/* Schedule */}
           <div className={cardClass}>
-            <h3 className="font-semibold text-slate-900 dark:text-white mb-6">
+            <h3 className="font-semibold text-c-text mb-6">
               {t('settings.workingHours.weeklySchedule', 'Weekly Schedule')}
             </h3>
 
@@ -386,19 +386,19 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                     key={day.key}
                     className={`flex items-center gap-4 p-4 rounded-lg transition-all ${
                       daySchedule.enabled
-                        ? 'bg-slate-50 dark:bg-navy-950/50'
-                        : 'bg-slate-100 dark:bg-white/5 opacity-60'
+                        ? 'bg-c-surface-raised'
+                        : 'bg-c-surface-raised opacity-60'
                     }`}
                   >
                     {/* Day Toggle */}
                     <button
                       onClick={() => handleDayToggle(day.key)}
                       className={`w-12 h-6 rounded-full transition-colors relative ${
-                        daySchedule.enabled ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
+                        daySchedule.enabled ? 'bg-navy-900' : 'bg-c-surface-raised'
                       }`}
                     >
                       <span
-                        className={`absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${
+                        className={`absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${
                           daySchedule.enabled ? 'left-7' : 'left-1'
                         }`}
                       />
@@ -408,7 +408,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                     <div className="w-28">
                       <span
                         className={`font-medium ${
-                          daySchedule.enabled ? 'text-slate-900 dark:text-white' : 'text-slate-600'
+                          daySchedule.enabled ? 'text-c-text' : 'text-c-text-secondary'
                         }`}
                       >
                         {t(`settings.workingHours.days.${day.key}.full`, day.label)}
@@ -430,7 +430,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                             </option>
                           ))}
                         </select>
-                        <span className="text-slate-500 dark:text-slate-400">
+                        <span className="text-c-text-muted">
                           {t('settings.workingHours.to', 'to')}
                         </span>
                         <select
@@ -447,7 +447,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                         </select>
 
                         {/* Hours display */}
-                        <span className="text-sm text-slate-500 dark:text-slate-400 ml-2">
+                        <span className="text-sm text-c-text-muted ml-2">
                           {(() => {
                             const start =
                               parseInt(daySchedule.startTime.split(':')[0]) * 60 +
@@ -460,7 +460,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                         </span>
                       </div>
                     ) : (
-                      <div className="flex-1 text-slate-600 dark:text-slate-500 text-sm">
+                      <div className="flex-1 text-c-text-secondary text-sm">
                         {t('settings.workingHours.notWorking', 'Not working')}
                       </div>
                     )}

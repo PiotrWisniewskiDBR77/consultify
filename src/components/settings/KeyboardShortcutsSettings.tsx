@@ -216,8 +216,8 @@ const KeyBadge = ({ keys }: { keys: string }) => (
   <div className="flex items-center gap-1">
     {keys.split('+').map((key, i) => (
       <React.Fragment key={i}>
-        {i > 0 && <span className="text-slate-500 text-xs">+</span>}
-        <kbd className="px-2 py-1 text-xs font-mono bg-slate-100 dark:bg-navy-900/80 border border-slate-200 dark:border-white/10 rounded text-slate-700 dark:text-slate-300">
+        {i > 0 && <span className="text-c-text-muted text-xs">+</span>}
+        <kbd className="px-2 py-1 text-xs font-mono bg-c-surface-raised border border-c-border-subtle rounded text-c-text-secondary">
           {key === 'Cmd' ? <Command size={12} className="inline" /> : key}
         </kbd>
       </React.Fragment>
@@ -361,7 +361,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
   const resetAction = (
     <button
       onClick={resetToDefault}
-      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-c-text-secondary hover:text-white bg-c-surface-raised hover:bg-c-surface-raised rounded-lg transition-colors"
     >
       <RotateCcw size={13} />
       {t('settings.shortcuts.reset', 'Reset')}
@@ -424,8 +424,8 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
 
               {/* Preset Selection */}
               <div>
-                <label className="block text-sm font-medium text-slate-600 mb-3">
-                  <Settings size={14} className="inline mr-1.5 text-primary-400" />
+                <label className="block text-sm font-medium text-c-text-secondary mb-3">
+                  <Settings size={14} className="inline mr-1.5 text-c-accent" />
                   {t('settings.shortcuts.preset', 'Shortcut Preset')}
                 </label>
                 <div className="grid grid-cols-5 gap-3">
@@ -438,19 +438,19 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                         className={cn(
                           'p-3 rounded-lg border-2 text-left transition-all duration-200',
                           isSelected
-                            ? 'border-slate-700 bg-slate-50 dark:border-white/30 dark:bg-white/[0.08]'
-                            : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                            ? 'border-c-border-strong bg-c-surface-raised.08]'
+                            : 'border-c-border-subtle hover:border-c-border dark:hover:border-white/20'
                         )}
                       >
                         <p
                           className={cn(
                             'text-sm font-medium',
-                            isSelected ? 'text-primary-400' : 'text-white'
+                            isSelected ? 'text-c-accent' : 'text-white'
                           )}
                         >
                           {t(`settings.shortcuts.presets.${preset.value}.label`, preset.label)}
                         </p>
-                        <p className="text-xs text-slate-500 mt-0.5">
+                        <p className="text-xs text-c-text-muted mt-0.5">
                           {t(
                             `settings.shortcuts.presets.${preset.value}.description`,
                             preset.description
@@ -470,12 +470,12 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
         <>
           {/* Search */}
           <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-muted" />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('settings.shortcuts.search', 'Search shortcuts...')}
-              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-navy-800/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent outline-none transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-xl text-c-text placeholder:text-c-text-muted dark:placeholder:text-c-text-muted focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent outline-none transition-all"
             />
           </div>
 
@@ -483,10 +483,10 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
           {Object.entries(groupedShortcuts).map(([category, categoryShortcuts]) => (
             <div
               key={category}
-              className="bg-white dark:bg-navy-800/50 border border-slate-200 dark:border-white/5 rounded-xl overflow-hidden"
+              className="bg-c-surface-raised border border-c-border-subtle rounded-xl overflow-hidden"
             >
               <div className="px-6 py-3 border-b border-white/5">
-                <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                <h4 className="text-xs font-bold text-c-text-secondary uppercase tracking-wider">
                   {t(
                     `settings.shortcuts.categories.${category}`,
                     CATEGORY_LABELS[category as ShortcutCategory]
@@ -504,14 +504,14 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                       key={shortcut.id}
                       className={cn(
                         'flex items-center justify-between px-6 py-3 transition-colors',
-                        isDisabled ? 'opacity-40' : 'hover:bg-white/[0.02]'
+                        isDisabled ? 'opacity-40' : 'hover:bg-c-surface/[0.02]'
                       )}
                     >
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-white">
                           {getShortcutName(shortcut)}
                         </p>
-                        <p className="text-xs text-slate-500">{getShortcutDescription(shortcut)}</p>
+                        <p className="text-xs text-c-text-muted">{getShortcutDescription(shortcut)}</p>
                       </div>
 
                       <div className="flex items-center gap-3 ml-4">
@@ -526,7 +526,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                                 'settings.shortcuts.pressKeysPlaceholder',
                                 'Press keys...'
                               )}
-                              className="w-32 px-2 py-1 text-sm bg-white dark:bg-navy-900 border border-primary-400 dark:border-primary-500 rounded text-slate-900 dark:text-white outline-none placeholder:text-slate-400 dark:placeholder:text-slate-600"
+                              className="w-32 px-2 py-1 text-sm bg-c-surface border border-c-accent dark:border-c-accent rounded text-c-text outline-none placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary"
                             />
                             <button
                               onClick={() => saveCustomShortcut(shortcut.id)}
@@ -539,7 +539,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                                 setEditingShortcut(null);
                                 setNewKeyBinding('');
                               }}
-                              className="p-1 text-slate-500 hover:bg-white/10 rounded transition-colors"
+                              className="p-1 text-c-text-muted hover:bg-c-surface-raised rounded transition-colors"
                             >
                               <X size={16} />
                             </button>
@@ -549,7 +549,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                             <KeyBadge keys={getShortcutKey(shortcut)} />
                             <button
                               onClick={() => setEditingShortcut(shortcut.id)}
-                              className="p-1 text-slate-500 hover:text-primary-400 hover:bg-primary-500/10 rounded transition-colors"
+                              className="p-1 text-c-text-muted hover:text-c-accent hover:bg-c-accent-soft rounded transition-colors"
                             >
                               <Edit2 size={14} />
                             </button>
@@ -557,12 +557,12 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                               onClick={() => toggleShortcut(shortcut.id)}
                               className={cn(
                                 'relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200',
-                                isDisabled ? 'bg-white/10' : 'bg-navy-900'
+                                isDisabled ? 'bg-c-surface-raised' : 'bg-navy-900'
                               )}
                             >
                               <span
                                 className={cn(
-                                  'inline-block h-3 w-3 transform rounded-full bg-white transition-transform duration-200',
+                                  'inline-block h-3 w-3 transform rounded-full bg-c-surface transition-transform duration-200',
                                   isDisabled ? 'translate-x-1' : 'translate-x-5'
                                 )}
                               />
@@ -578,13 +578,13 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
           ))}
 
           {/* Tip */}
-          <div className="flex items-start gap-3 p-4 bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl">
+          <div className="flex items-start gap-3 p-4 bg-c-surface-raised.03] border border-c-border-subtle rounded-xl">
             <Info size={16} className="text-[var(--c-info)] mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-sm font-medium text-slate-900 dark:text-white">
+              <p className="text-sm font-medium text-c-text">
                 {t('settings.shortcuts.tip', 'Tip')}
               </p>
-              <p className="text-sm text-slate-600 mt-0.5">
+              <p className="text-sm text-c-text-secondary mt-0.5">
                 {t(
                   'settings.shortcuts.tipText',
                   'Press "?" anywhere in the app to see available shortcuts. Sequences like "g h" mean press g, release, then press h.'

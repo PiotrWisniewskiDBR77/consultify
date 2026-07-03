@@ -106,10 +106,10 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+        <h3 className="text-lg font-semibold text-c-text mb-2">
           {t('settings.profile.social.title', 'Social Links & Visibility')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-c-text-muted">
           {t(
             'settings.profile.social.subtitle',
             'Add your social media profiles and control who can see your profile'
@@ -119,49 +119,49 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({
 
       {/* Social Links */}
       <div className="space-y-4">
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label className="block text-sm font-medium text-c-text-secondary">
           {t('settings.profile.social.socialLinks', 'Social Media Links')}
         </label>
 
         {/* Twitter */}
         <div className="space-y-1.5">
-          <label className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
+          <label className="text-xs text-c-text-muted flex items-center gap-2">
             <Twitter size={14} />
             Twitter
           </label>
           <div className="flex items-center gap-2">
-            <span className="text-slate-600 dark:text-slate-500">twitter.com/</span>
+            <span className="text-c-text-secondary">twitter.com/</span>
             <input
               type="text"
               value={twitter.replace('https://twitter.com/', '').replace('@', '')}
               onChange={(e) => setTwitter(e.target.value.replace('@', ''))}
               placeholder={t('settings.profile.social.twitterPlaceholder', 'username')}
-              className="flex-1 px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
+              className="flex-1 px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
             />
           </div>
         </div>
 
         {/* GitHub */}
         <div className="space-y-1.5">
-          <label className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
+          <label className="text-xs text-c-text-muted flex items-center gap-2">
             <Github size={14} />
             GitHub
           </label>
           <div className="flex items-center gap-2">
-            <span className="text-slate-600 dark:text-slate-500">github.com/</span>
+            <span className="text-c-text-secondary">github.com/</span>
             <input
               type="text"
               value={github.replace('https://github.com/', '')}
               onChange={(e) => setGithub(e.target.value)}
               placeholder={t('settings.profile.social.githubPlaceholder', 'username')}
-              className="flex-1 px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
+              className="flex-1 px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
             />
           </div>
         </div>
 
         {/* Website */}
         <div className="space-y-1.5">
-          <label className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
+          <label className="text-xs text-c-text-muted flex items-center gap-2">
             <Globe size={14} />
             {t('settings.profile.social.website', 'Website')}
           </label>
@@ -170,14 +170,14 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({
             value={website}
             onChange={(e) => setWebsite(e.target.value)}
             placeholder={t('settings.profile.social.websitePlaceholder', 'https://example.com')}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
+            className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
           />
         </div>
       </div>
 
       {/* Profile Visibility */}
       <div className="space-y-4">
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label className="block text-sm font-medium text-c-text-secondary">
           {t('settings.profile.social.profileVisibility', 'Profile Visibility')}
         </label>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -193,28 +193,28 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({
                                     flex flex-col items-start gap-2 p-4 rounded-lg border-2 transition-all text-left
                                     ${
                                       isSelected
-                                        ? 'border-slate-500 dark:border-white/40 bg-slate-100/60 dark:bg-white/[0.07]'
-                                        : 'border-slate-200 dark:border-navy-700 hover:border-slate-400'
+                                        ? 'border-c-border-strong bg-c-surface-raised.07]'
+                                        : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border-strong'
                                     }
                                 `}
               >
                 <Icon
                   size={20}
                   className={
-                    isSelected ? 'text-slate-700 dark:text-slate-200' : 'text-slate-600'
+                    isSelected ? 'text-c-text-secondary' : 'text-c-text-secondary'
                   }
                 />
                 <div>
                   <div
                     className={`text-sm font-medium ${
                       isSelected
-                        ? 'text-slate-900 dark:text-white'
-                        : 'text-slate-600 dark:text-slate-400'
+                        ? 'text-c-text'
+                        : 'text-c-text-secondary'
                     }`}
                   >
                     {option.label}
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  <div className="text-xs text-c-text-muted mt-0.5">
                     {option.description}
                   </div>
                 </div>

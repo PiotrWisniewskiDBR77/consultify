@@ -233,11 +233,11 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-lg font-medium text-c-text flex items-center gap-2">
             <BarChart3 size={20} />
             {t('settings.analytics.title', 'Integration Analytics')}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-muted mt-1">
             {t(
               'settings.analytics.description',
               'Monitor usage, performance, and errors for your integrations'
@@ -247,7 +247,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
         <div className="flex items-center gap-2">
           <button
             onClick={fetchAnalytics}
-            className="p-2 text-slate-600 dark:text-slate-500 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+            className="p-2 text-c-text-secondary hover:text-brand rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-700 transition-colors"
             title={t('common.refresh', 'Refresh')}
           >
             <RefreshCw size={18} />
@@ -256,7 +256,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
             <button
               onClick={handleExport}
               disabled={exporting}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-brand border border-slate-200 dark:border-navy-700 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-c-text-secondary hover:text-brand border border-c-border-subtle dark:border-navy-700 rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-700 transition-colors disabled:opacity-50"
             >
               {exporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
               {t('settings.analytics.export', 'Export CSV')}
@@ -268,13 +268,13 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
       {/* Integration Selector */}
       {integrations.length > 0 && (
         <div className="flex items-center gap-4">
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          <label className="text-sm font-medium text-c-text-secondary">
             {t('settings.analytics.integration', 'Integration')}:
           </label>
           <select
             value={selectedIntegration || ''}
             onChange={(e) => setSelectedIntegration(e.target.value)}
-            className="px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
+            className="px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
           >
             {integrations.map((int) => (
               <option key={int.id} value={int.id}>
@@ -283,13 +283,13 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
             ))}
           </select>
 
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 ml-4">
+          <label className="text-sm font-medium text-c-text-secondary ml-4">
             {t('settings.analytics.period', 'Period')}:
           </label>
           <select
             value={period}
             onChange={(e) => setPeriod(e.target.value as any)}
-            className="px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
+            className="px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
           >
             <option value="1d">{t('settings.analytics.periods.1d', 'Last 24 hours')}</option>
             <option value="7d">{t('settings.analytics.periods.7d', 'Last 7 days')}</option>
@@ -313,14 +313,14 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
         <>
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-4 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700">
+            <div className="p-4 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-slate-500 dark:text-slate-400">
+                <span className="text-sm text-c-text-muted">
                   {t('settings.analytics.totalRequests', 'Total Requests')}
                 </span>
                 <TrendingUp size={16} className="text-blue-500" />
               </div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">
+              <p className="text-2xl font-bold text-c-text">
                 {formatNumber(stats.total_requests)}
               </p>
               <p className="text-xs text-green-600 dark:text-green-400 mt-1">
@@ -328,45 +328,45 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
               </p>
             </div>
 
-            <div className="p-4 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700">
+            <div className="p-4 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-slate-500 dark:text-slate-400">
+                <span className="text-sm text-c-text-muted">
                   {t('settings.analytics.avgLatency', 'Avg Latency')}
                 </span>
-                <Clock size={16} className="text-primary-500" />
+                <Clock size={16} className="text-c-accent" />
               </div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">
+              <p className="text-2xl font-bold text-c-text">
                 {Math.round(stats.avg_response_time_ms)}ms
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-xs text-c-text-muted mt-1">
                 {t('settings.analytics.range', 'Range')}: {stats.min_response_time_ms}ms -{' '}
                 {stats.max_response_time_ms}ms
               </p>
             </div>
 
-            <div className="p-4 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700">
+            <div className="p-4 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-slate-500 dark:text-slate-400">
+                <span className="text-sm text-c-text-muted">
                   {t('settings.analytics.totalCost', 'Total Cost')}
                 </span>
                 <DollarSign size={16} className="text-green-500" />
               </div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">
+              <p className="text-2xl font-bold text-c-text">
                 {formatCurrency(stats.total_cost)}
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-xs text-c-text-muted mt-1">
                 {formatNumber(stats.total_tokens)} {t('settings.analytics.tokens', 'tokens')}
               </p>
             </div>
 
-            <div className="p-4 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700">
+            <div className="p-4 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-slate-500 dark:text-slate-400">
+                <span className="text-sm text-c-text-muted">
                   {t('settings.analytics.errors', 'Errors')}
                 </span>
                 <AlertCircle size={16} className="text-rose-500" />
               </div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">
+              <p className="text-2xl font-bold text-c-text">
                 {formatNumber(stats.failed_requests)}
               </p>
               <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
@@ -382,19 +382,19 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
           {metrics.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Requests Over Time */}
-              <div className="p-6 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700">
-                <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
+              <div className="p-6 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700">
+                <h4 className="text-sm font-semibold text-c-text mb-4">
                   {t('settings.analytics.requestsOverTime', 'Requests Over Time')}
                 </h4>
                 <ResponsiveContainer width="100%" height={250}>
                   <AreaChart data={metrics}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#64748b" />
-                    <YAxis tick={{ fontSize: 12 }} stroke="#64748b" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--c-border-subtle)" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="var(--c-text-muted)" />
+                    <YAxis tick={{ fontSize: 12 }} stroke="var(--c-text-muted)" />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                        border: '1px solid #e2e8f0',
+                        backgroundColor: 'var(--c-surface)',
+                        border: '1px solid var(--c-border-subtle)',
                         borderRadius: '8px',
                       }}
                     />
@@ -410,19 +410,19 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
               </div>
 
               {/* Latency Over Time */}
-              <div className="p-6 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700">
-                <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
+              <div className="p-6 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700">
+                <h4 className="text-sm font-semibold text-c-text mb-4">
                   {t('settings.analytics.latencyOverTime', 'Latency Over Time')}
                 </h4>
                 <ResponsiveContainer width="100%" height={250}>
                   <LineChart data={metrics}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#64748b" />
-                    <YAxis tick={{ fontSize: 12 }} stroke="#64748b" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--c-border-subtle)" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="var(--c-text-muted)" />
+                    <YAxis tick={{ fontSize: 12 }} stroke="var(--c-text-muted)" />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                        border: '1px solid #e2e8f0',
+                        backgroundColor: 'var(--c-surface)',
+                        border: '1px solid var(--c-border-subtle)',
                         borderRadius: '8px',
                       }}
                     />
@@ -445,19 +445,19 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
               </div>
 
               {/* Success vs Failures */}
-              <div className="p-6 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700 lg:col-span-2">
-                <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
+              <div className="p-6 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700 lg:col-span-2">
+                <h4 className="text-sm font-semibold text-c-text mb-4">
                   {t('settings.analytics.successVsFailures', 'Success vs Failures')}
                 </h4>
                 <ResponsiveContainer width="100%" height={250}>
                   <BarChart data={metrics}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#64748b" />
-                    <YAxis tick={{ fontSize: 12 }} stroke="#64748b" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--c-border-subtle)" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="var(--c-text-muted)" />
+                    <YAxis tick={{ fontSize: 12 }} stroke="var(--c-text-muted)" />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                        border: '1px solid #e2e8f0',
+                        backgroundColor: 'var(--c-surface)',
+                        border: '1px solid var(--c-border-subtle)',
                         borderRadius: '8px',
                       }}
                     />
@@ -479,13 +479,13 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
           )}
 
           {/* Logs Table */}
-          <div className="bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700">
-            <div className="p-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
-              <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
+          <div className="bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700">
+            <div className="p-4 border-b border-c-border-subtle dark:border-navy-700 flex items-center justify-between">
+              <h4 className="text-sm font-semibold text-c-text">
                 {t('settings.analytics.recentLogs', 'Recent Logs')}
               </h4>
               <div className="flex items-center gap-2">
-                <Filter size={14} className="text-slate-600 dark:text-slate-500" />
+                <Filter size={14} className="text-c-text-secondary" />
                 <select
                   value={logFilter}
                   onChange={(e) => {
@@ -495,7 +495,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                       fetchAnalytics();
                     }, 100);
                   }}
-                  className="text-xs px-2 py-1 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded text-slate-900 dark:text-white"
+                  className="text-xs px-2 py-1 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded text-c-text"
                 >
                   <option value="all">{t('settings.analytics.filterAll', 'All')}</option>
                   <option value="success">
@@ -507,55 +507,55 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-slate-50 dark:bg-navy-800/50">
+                <thead className="bg-c-surface-raised">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">
                       {t('settings.analytics.timestamp', 'Timestamp')}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">
                       {t('settings.analytics.endpoint', 'Endpoint')}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">
                       {t('settings.analytics.method', 'Method')}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">
                       {t('settings.analytics.status', 'Status')}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">
                       {t('settings.analytics.responseTime', 'Response Time')}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">
                       {t('settings.analytics.error', 'Error')}
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-white/5">
+                <tbody className="divide-y divide-c-border-subtle dark:divide-white/5">
                   {logs.length === 0 ? (
                     <tr>
                       <td
                         colSpan={6}
-                        className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400"
+                        className="px-4 py-8 text-center text-sm text-c-text-muted"
                       >
                         {t('settings.analytics.noLogs', 'No logs found')}
                       </td>
                     </tr>
                   ) : (
                     logs.map((log) => (
-                      <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/50">
-                        <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-400">
+                      <tr key={log.id} className="hover:bg-c-surface-raised dark:hover:bg-navy-800/50">
+                        <td className="px-4 py-3 text-xs text-c-text-secondary">
                           {new Date(log.created_at).toLocaleString()}
                         </td>
-                        <td className="px-4 py-3 text-xs font-mono text-slate-700 dark:text-slate-300">
+                        <td className="px-4 py-3 text-xs font-mono text-c-text-secondary">
                           {log.endpoint}
                         </td>
-                        <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-400">
+                        <td className="px-4 py-3 text-xs text-c-text-secondary">
                           <span
                             className={`px-2 py-0.5 rounded ${
                               log.method === 'GET'
                                 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
                                 : log.method === 'POST'
                                   ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                  : 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400'
+                                  : 'bg-c-accent-soft text-c-accent'
                             }`}
                           >
                             {log.method}
@@ -579,7 +579,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                             </span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-400">
+                        <td className="px-4 py-3 text-xs text-c-text-secondary">
                           {log.response_time_ms}ms
                         </td>
                         <td className="px-4 py-3 text-xs text-rose-600 dark:text-rose-400 max-w-xs truncate">

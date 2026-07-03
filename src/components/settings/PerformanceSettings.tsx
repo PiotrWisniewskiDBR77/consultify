@@ -115,16 +115,16 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
 
   // Styling
   const cardClass =
-    'bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-6';
+    'bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg p-6';
   const sectionTitleClass =
-    'text-sm font-bold text-navy-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2';
-  const labelClass = 'text-xs font-medium text-slate-500 dark:text-slate-400';
+    'text-sm font-bold text-navy-900 mb-4 uppercase tracking-wider flex items-center gap-2';
+  const labelClass = 'text-xs font-medium text-c-text-muted';
   const toggleClass = (enabled: boolean) =>
     `relative w-12 h-6 rounded-full transition-colors ${
-      enabled ? 'bg-primary-500' : 'bg-slate-300 dark:bg-slate-600'
+      enabled ? 'bg-c-accent' : 'bg-c-surface-raised'
     }`;
   const toggleKnobClass = (enabled: boolean) =>
-    `absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${enabled ? 'left-7' : 'left-1'}`;
+    `absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${enabled ? 'left-7' : 'left-1'}`;
 
   const ToggleSwitch = ({
     enabled,
@@ -137,10 +137,10 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
     label: string;
     description: string;
   }) => (
-    <div className="flex items-center justify-between py-3 border-b border-slate-200 dark:border-navy-700 last:border-0">
+    <div className="flex items-center justify-between py-3 border-b border-c-border-subtle dark:border-navy-700 last:border-0">
       <div className="flex-1 pr-4">
-        <p className="text-sm font-medium text-navy-900 dark:text-white">{label}</p>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{description}</p>
+        <p className="text-sm font-medium text-navy-900">{label}</p>
+        <p className="text-xs text-c-text-muted mt-0.5">{description}</p>
       </div>
       <button onClick={() => onChange(!enabled)} className={toggleClass(enabled)}>
         <span className={toggleKnobClass(enabled)} />
@@ -153,10 +153,10 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-bold text-navy-900 dark:text-white">
+          <h3 className="text-lg font-bold text-navy-900">
             {t('settings.performance.title', 'Performance & Data')}
           </h3>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             {t(
               'settings.performance.description',
               'Optimize app performance and manage data usage'
@@ -166,7 +166,7 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary-500/20"
+          className="flex items-center gap-2 px-4 py-2 bg-c-accent hover:bg-c-accent text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-c-accent"
         >
           {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {isSaving ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
@@ -225,7 +225,7 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
       {/* Image Quality */}
       <div className={cardClass}>
         <h4 className={sectionTitleClass}>
-          <Image size={16} className="text-primary-500" />
+          <Image size={16} className="text-c-accent" />
           {t('settings.performance.imageQuality', 'Image Quality')}
         </h4>
 
@@ -238,20 +238,20 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
               }
               className={`p-3 rounded-lg border-2 text-left transition-all ${
                 performance.imageQuality === option.value
-                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-slate-300'
+                  ? 'border-c-accent bg-c-accent-soft dark:bg-c-accent-soft'
+                  : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border'
               }`}
             >
               <p
                 className={`text-sm font-medium ${
                   performance.imageQuality === option.value
-                    ? 'text-primary-700 dark:text-primary-300'
-                    : 'text-navy-900 dark:text-white'
+                    ? 'text-c-accent'
+                    : 'text-navy-900'
                 }`}
               >
                 {option.label}
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{option.desc}</p>
+              <p className="text-xs text-c-text-muted mt-0.5">{option.desc}</p>
             </button>
           ))}
         </div>
@@ -272,7 +272,7 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
       {/* Video Quality */}
       <div className={cardClass}>
         <h4 className={sectionTitleClass}>
-          <Video size={16} className="text-primary-500" />
+          <Video size={16} className="text-c-accent" />
           {t('settings.performance.videoQuality', 'Video Quality')}
         </h4>
 
@@ -285,20 +285,20 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
               }
               className={`p-3 rounded-lg border-2 text-left transition-all ${
                 performance.videoQuality === option.value
-                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-slate-300'
+                  ? 'border-c-accent bg-c-accent-soft dark:bg-c-accent-soft'
+                  : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border'
               }`}
             >
               <p
                 className={`text-sm font-medium ${
                   performance.videoQuality === option.value
-                    ? 'text-primary-700 dark:text-primary-300'
-                    : 'text-navy-900 dark:text-white'
+                    ? 'text-c-accent'
+                    : 'text-navy-900'
                 }`}
               >
                 {option.label}
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{option.desc}</p>
+              <p className="text-xs text-c-text-muted mt-0.5">{option.desc}</p>
             </button>
           ))}
         </div>
@@ -319,7 +319,7 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
       {/* Cache & Offline */}
       <div className={cardClass}>
         <h4 className={sectionTitleClass}>
-          <HardDrive size={16} className="text-primary-500" />
+          <HardDrive size={16} className="text-c-accent" />
           {t('settings.performance.cacheOffline', 'Cache & Offline')}
         </h4>
 
@@ -337,8 +337,8 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
                   }
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     performance.cacheSizeMb === option.value
-                      ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 border-2 border-primary-500'
-                      : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 border-2 border-transparent hover:border-slate-300 dark:border-navy-700'
+                      ? 'bg-c-accent-soft dark:bg-c-accent-soft text-c-accent border-2 border-c-accent'
+                      : 'bg-c-surface-raised text-c-text-secondary border-2 border-transparent hover:border-c-border dark:border-navy-700'
                   }`}
                 >
                   {option.label}
@@ -347,7 +347,7 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
             </div>
           </div>
 
-          <div className="space-y-1 pt-4 border-t border-slate-200 dark:border-navy-700">
+          <div className="space-y-1 pt-4 border-t border-c-border-subtle dark:border-navy-700">
             <ToggleSwitch
               enabled={performance.offlineModeEnabled}
               onChange={(val) =>
@@ -386,7 +386,7 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
       {/* Animations */}
       <div className={cardClass}>
         <h4 className={sectionTitleClass}>
-          <Zap size={16} className="text-primary-500" />
+          <Zap size={16} className="text-c-accent" />
           {t('settings.performance.animations', 'Animations & Effects')}
         </h4>
 
@@ -413,14 +413,14 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
       </div>
 
       {/* Info */}
-      <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg p-4">
+      <div className="bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg p-4">
         <div className="flex items-start gap-3">
-          <Info size={18} className="text-slate-600 dark:text-slate-500 mt-0.5" />
+          <Info size={18} className="text-c-text-secondary mt-0.5" />
           <div>
-            <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            <h4 className="text-sm font-medium text-c-text-secondary">
               {t('settings.performance.tip', 'Performance Tip')}
             </h4>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-sm text-c-text-muted mt-1">
               {t(
                 'settings.performance.tipText',
                 'Lower quality settings and disabled animations can significantly improve performance on older devices or slow connections.'

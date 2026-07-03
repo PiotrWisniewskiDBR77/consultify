@@ -123,28 +123,28 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
 
   // Styling classes
   const inputClass =
-    'w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none transition-all';
-  const labelClass = 'text-xs font-medium text-slate-500 dark:text-slate-400';
+    'w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-md text-navy-900 focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none transition-all';
+  const labelClass = 'text-xs font-medium text-c-text-muted';
   const cardClass =
-    'bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-6';
+    'bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg p-6';
   const sectionTitleClass =
-    'text-sm font-bold text-navy-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2';
+    'text-sm font-bold text-navy-900 mb-4 uppercase tracking-wider flex items-center gap-2';
   const toggleClass = (enabled: boolean) =>
     `relative w-12 h-6 rounded-full transition-colors ${
-      enabled ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
+      enabled ? 'bg-navy-900' : 'bg-c-surface-raised'
     }`;
   const toggleKnobClass = (enabled: boolean) =>
-    `absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${enabled ? 'left-7' : 'left-1'}`;
+    `absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${enabled ? 'left-7' : 'left-1'}`;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-bold text-navy-900 dark:text-white">
+          <h3 className="text-lg font-bold text-navy-900">
             {t('settings.profile.email.title', 'Email & Communication')}
           </h3>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             {t(
               'settings.profile.email.description',
               'Manage your email signature, aliases, and notification preferences'
@@ -154,7 +154,7 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary-500/20"
+          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-c-accent"
         >
           {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {isSaving ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
@@ -164,7 +164,7 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
       {/* Email Signature */}
       <div className={cardClass}>
         <h4 className={sectionTitleClass}>
-          <FileSignature size={16} className="text-primary-500" />
+          <FileSignature size={16} className="text-c-accent" />
           {t('settings.profile.email.signature', 'Email Signature')}
         </h4>
 
@@ -185,7 +185,7 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
               rows={4}
               className={inputClass + ' resize-none mt-1.5'}
             />
-            <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
+            <p className="text-xs text-c-text-secondary mt-1">
               {t(
                 'settings.profile.email.signatureHint',
                 'This signature will be added to your outgoing emails'
@@ -198,16 +198,16 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
       {/* Email Aliases */}
       <div className={cardClass}>
         <h4 className={sectionTitleClass}>
-          <Mail size={16} className="text-primary-500" />
+          <Mail size={16} className="text-c-accent" />
           {t('settings.profile.email.aliases', 'Email Aliases')}
         </h4>
 
         {/* Primary email */}
-        <div className="mb-4 p-3 bg-slate-50 dark:bg-navy-950/50 rounded-lg">
+        <div className="mb-4 p-3 bg-c-surface-raised rounded-lg">
           <div className="flex items-center gap-2">
-            <Mail size={14} className="text-slate-600 dark:text-slate-500" />
-            <span className="text-sm text-navy-900 dark:text-white">{currentUser.email}</span>
-            <span className="ml-auto text-xs bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 px-2 py-0.5 rounded-full">
+            <Mail size={14} className="text-c-text-secondary" />
+            <span className="text-sm text-navy-900">{currentUser.email}</span>
+            <span className="ml-auto text-xs bg-c-accent-soft dark:bg-c-accent-soft text-c-accent px-2 py-0.5 rounded-full">
               Primary
             </span>
           </div>
@@ -219,13 +219,13 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
             {emailPrefs.aliases.map((alias: any) => (
               <div
                 key={alias}
-                className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-navy-950/50 rounded-lg"
+                className="flex items-center gap-2 p-3 bg-c-surface-raised rounded-lg"
               >
-                <Mail size={14} className="text-slate-600 dark:text-slate-500" />
-                <span className="text-sm text-navy-900 dark:text-white flex-1">{alias}</span>
+                <Mail size={14} className="text-c-text-secondary" />
+                <span className="text-sm text-navy-900 flex-1">{alias}</span>
                 <button
                   onClick={() => removeAlias(alias)}
-                  className="text-slate-600 dark:text-slate-500 hover:text-danger-500 transition-colors"
+                  className="text-c-text-secondary hover:text-danger-500 transition-colors"
                 >
                   <X size={14} />
                 </button>
@@ -246,7 +246,7 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
           <button
             onClick={addAlias}
             disabled={!newAlias}
-            className="px-4 py-2 bg-slate-100 dark:bg-navy-950 hover:bg-slate-200 dark:hover:bg-navy-800 text-slate-600 dark:text-slate-300 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-navy-800 text-c-text-secondary rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus size={18} />
           </button>
@@ -256,7 +256,7 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
       {/* Email Digest Frequency */}
       <div className={cardClass}>
         <h4 className={sectionTitleClass}>
-          <Clock size={16} className="text-primary-500" />
+          <Clock size={16} className="text-c-accent" />
           {t('settings.profile.email.digest', 'Email Digest Frequency')}
         </h4>
 
@@ -269,20 +269,20 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
               }
               className={`p-4 rounded-lg border-2 text-left transition-all ${
                 emailPrefs.digestFrequency === option.value
-                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
+                  ? 'border-c-accent bg-c-accent-soft dark:bg-c-accent-soft'
+                  : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border dark:hover:border-white/20'
               }`}
             >
               <p
                 className={`font-medium ${
                   emailPrefs.digestFrequency === option.value
-                    ? 'text-primary-700 dark:text-primary-300'
-                    : 'text-navy-900 dark:text-white'
+                    ? 'text-c-accent'
+                    : 'text-navy-900'
                 }`}
               >
                 {option.label}
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-xs text-c-text-muted mt-0.5">
                 {option.description}
               </p>
             </button>
@@ -293,17 +293,17 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
       {/* Out of Office */}
       <div className={cardClass}>
         <h4 className={sectionTitleClass}>
-          <Calendar size={16} className="text-primary-500" />
+          <Calendar size={16} className="text-c-accent" />
           {t('settings.profile.email.outOfOffice', 'Out of Office')}
         </h4>
 
         {/* Toggle */}
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-sm font-medium text-navy-900 dark:text-white">
+            <p className="text-sm font-medium text-navy-900">
               {t('settings.profile.email.enableOOO', 'Enable Out of Office')}
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-c-text-muted">
               {t('settings.profile.email.enableOOODesc', 'Automatically respond when you are away')}
             </p>
           </div>
@@ -321,7 +321,7 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
         </div>
 
         {emailPrefs.outOfOffice?.enabled && (
-          <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-navy-700">
+          <div className="space-y-4 pt-4 border-t border-c-border-subtle dark:border-navy-700">
             {/* Date Range */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -383,12 +383,12 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
             </div>
 
             {/* Auto-reply toggle */}
-            <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950/50 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg">
               <div>
-                <p className="text-sm font-medium text-navy-900 dark:text-white">
+                <p className="text-sm font-medium text-navy-900">
                   {t('settings.profile.email.autoReply', 'Send auto-reply')}
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-c-text-muted">
                   {t(
                     'settings.profile.email.autoReplyDesc',
                     'Automatically send the message above to people who email you'

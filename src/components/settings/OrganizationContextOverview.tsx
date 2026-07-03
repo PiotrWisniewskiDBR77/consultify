@@ -173,7 +173,7 @@ export const OrganizationContextOverview: React.FC<OrganizationContextOverviewPr
                 type="button"
                 onClick={handleRebuild}
                 disabled={rebuilding}
-                className="inline-flex items-center gap-2 rounded-lg border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/50 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-lg border border-c-border-subtle dark:border-navy-700/60 bg-c-surface-raised px-3 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-800 disabled:opacity-50"
               >
                 <RefreshCw size={12} className={rebuilding ? 'animate-spin' : ''} />
                 {isPolish ? 'Rebuild snapshot' : 'Rebuild snapshot'}
@@ -197,12 +197,12 @@ export const OrganizationContextOverview: React.FC<OrganizationContextOverviewPr
             ].map((item) => (
               <div
                 key={item.label}
-                className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 bg-slate-50/50 dark:bg-navy-900/30 px-3 py-2"
+                className="rounded-xl border border-c-border-subtle dark:border-navy-700/50 bg-c-surface-raised px-3 py-2"
               >
-                <div className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
+                <div className="text-[10px] uppercase tracking-wide text-c-text-secondary">
                   {item.label}
                 </div>
-                <div className="mt-1 text-lg font-semibold text-slate-700 dark:text-slate-200">
+                <div className="mt-1 text-lg font-semibold text-c-text-secondary">
                   {item.value}
                 </div>
               </div>
@@ -245,8 +245,8 @@ export const OrganizationContextOverview: React.FC<OrganizationContextOverviewPr
               header: isPolish ? 'Claim' : 'Claim',
               render: (row) => (
                 <div>
-                  <div className="text-sm text-slate-700 dark:text-slate-200">{row.claimPath}</div>
-                  <div className="text-xs text-slate-600 dark:text-slate-500">
+                  <div className="text-sm text-c-text-secondary">{row.claimPath}</div>
+                  <div className="text-xs text-c-text-secondary">
                     {row.sourceLabel || row.sourceType}
                   </div>
                 </div>
@@ -256,7 +256,7 @@ export const OrganizationContextOverview: React.FC<OrganizationContextOverviewPr
               key: 'valuePreview',
               header: isPolish ? 'Value' : 'Value',
               render: (row) => (
-                <span className="text-xs text-slate-600 dark:text-slate-300">
+                <span className="text-xs text-c-text-secondary">
                   {row.valuePreview}
                 </span>
               ),
@@ -294,8 +294,8 @@ export const OrganizationContextOverview: React.FC<OrganizationContextOverviewPr
               header: isPolish ? 'Source' : 'Source',
               render: (row) => (
                 <div>
-                  <div className="text-sm text-slate-700 dark:text-slate-200">{row.summary}</div>
-                  <div className="text-xs text-slate-600 dark:text-slate-500">{row.sourceType}</div>
+                  <div className="text-sm text-c-text-secondary">{row.summary}</div>
+                  <div className="text-xs text-c-text-secondary">{row.sourceType}</div>
                 </div>
               ),
             },
@@ -326,7 +326,7 @@ export const OrganizationContextOverview: React.FC<OrganizationContextOverviewPr
         icon={<GitBranch size={14} />}
         defaultOpen={false}
       >
-        <p className="text-sm text-slate-600 dark:text-slate-300">
+        <p className="text-sm text-c-text-secondary">
           {isPolish
             ? 'Każdy zapis do Context OS zachowuje źródło, kanał i explicitness, dzięki czemu AI może pracować na trwałym kontekście zamiast na pojedynczym prompt snapshot.'
             : 'Every Context OS write keeps source, channel, and explicitness so AI can work on durable context instead of a single prompt snapshot.'}

@@ -163,41 +163,41 @@ export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> =
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+        <h3 className="text-lg font-semibold text-c-text mb-2">
           {t('settings.profile.workHours.title', 'Working Hours & Availability')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-c-text-muted">
           {t('settings.profile.workHours.subtitle', 'Set your working hours and availability')}
         </p>
       </div>
 
       {/* Working Hours */}
       <div className="space-y-4">
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+        <label className="block text-sm font-medium text-c-text-secondary flex items-center gap-2">
           <Clock size={16} />
           {t('settings.profile.workHours.workingHours', 'Working Hours')}
         </label>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-xs text-slate-500 dark:text-slate-400">
+            <label className="text-xs text-c-text-muted">
               {t('settings.profile.workHours.startTime', 'Start Time')}
             </label>
             <input
               type="time"
               value={workHoursStart}
               onChange={(e) => setWorkHoursStart(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
+              className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs text-slate-500 dark:text-slate-400">
+            <label className="text-xs text-c-text-muted">
               {t('settings.profile.workHours.endTime', 'End Time')}
             </label>
             <input
               type="time"
               value={workHoursEnd}
               onChange={(e) => setWorkHoursEnd(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
+              className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
             />
           </div>
         </div>
@@ -205,7 +205,7 @@ export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> =
 
       {/* Working Days */}
       <div className="space-y-4">
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label className="block text-sm font-medium text-c-text-secondary">
           {t('settings.profile.workHours.workingDays', 'Working Days')}
         </label>
         <div className="flex flex-wrap gap-2">
@@ -219,8 +219,8 @@ export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> =
                                     px-4 py-2 rounded-lg border-2 transition-all text-sm font-medium
                                     ${
                                       isSelected
-                                        ? 'border-primary-500 bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300'
-                                        : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-primary-300'
+                                        ? 'border-c-accent bg-c-accent-soft dark:bg-c-accent-soft text-c-accent'
+                                        : 'border-c-border-subtle dark:border-navy-700 text-c-text-secondary hover:border-c-accent'
                                     }
                                 `}
               >
@@ -233,7 +233,7 @@ export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> =
 
       {/* Vacation/Out of Office */}
       <div className="space-y-4">
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+        <label className="block text-sm font-medium text-c-text-secondary flex items-center gap-2">
           <Plane size={16} />
           {t('settings.profile.workHours.vacation', 'Vacation / Out of Office')}
         </label>
@@ -244,27 +244,27 @@ export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> =
             id="outOfOffice"
             checked={outOfOffice}
             onChange={(e) => setOutOfOffice(e.target.checked)}
-            className="w-4 h-4 text-primary-600 rounded focus:ring-[color:var(--c-focus)]"
+            className="w-4 h-4 text-c-accent rounded focus:ring-[color:var(--c-focus)]"
           />
-          <label htmlFor="outOfOffice" className="text-sm text-slate-700 dark:text-slate-300">
+          <label htmlFor="outOfOffice" className="text-sm text-c-text-secondary">
             {t('settings.profile.workHours.markAsOutOfOffice', 'Mark as out of office')}
           </label>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-xs text-slate-500 dark:text-slate-400">
+            <label className="text-xs text-c-text-muted">
               {t('settings.profile.workHours.vacationStart', 'Start Date')}
             </label>
             <input
               type="date"
               value={vacationStart}
               onChange={(e) => setVacationStart(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
+              className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs text-slate-500 dark:text-slate-400">
+            <label className="text-xs text-c-text-muted">
               {t('settings.profile.workHours.vacationEnd', 'End Date')}
             </label>
             <input
@@ -272,7 +272,7 @@ export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> =
               value={vacationEnd}
               onChange={(e) => setVacationEnd(e.target.value)}
               min={vacationStart}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
+              className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
             />
           </div>
         </div>

@@ -109,8 +109,8 @@ const TabToggle: React.FC<{ active: Tab; onChange: (t: Tab) => void }> = ({ acti
           className={cn(
             'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200',
             active === tab.id
-              ? 'bg-primary-600 text-white shadow-sm'
-              : 'text-slate-600 hover:text-white hover:bg-white/5'
+              ? 'bg-c-accent text-white shadow-sm'
+              : 'text-c-text-secondary hover:text-white hover:bg-c-surface-raised'
           )}
         >
           <tab.icon size={13} />
@@ -242,7 +242,7 @@ export const SessionsActivitySettings: React.FC = () => {
           {tab === 'sessions' && (
             <button
               onClick={fetchSessions}
-              className="p-1.5 text-slate-500 hover:text-slate-300 transition-colors rounded-lg hover:bg-white/5"
+              className="p-1.5 text-c-text-muted hover:text-c-text-muted transition-colors rounded-lg hover:bg-c-surface-raised"
               title={t('common.refresh', 'Refresh')}
             >
               <RefreshCw size={14} className={sessionsLoading ? 'animate-spin' : ''} />
@@ -274,16 +274,16 @@ export const SessionsActivitySettings: React.FC = () => {
                     key={session.id}
                     className={cn(
                       'flex items-center gap-3 p-3 rounded-xl transition-colors',
-                      'bg-white/[0.02] border border-white/[0.04]',
-                      'hover:bg-white/[0.04]'
+                      'bg-c-surface/[0.02] border border-white/[0.04]',
+                      'hover:bg-c-surface/[0.04]'
                     )}
                   >
-                    <div className="p-2 rounded-lg bg-white/[0.05] flex-shrink-0">
-                      <DeviceIcon size={16} className="text-slate-600" />
+                    <div className="p-2 rounded-lg bg-c-surface/[0.05] flex-shrink-0">
+                      <DeviceIcon size={16} className="text-c-text-secondary" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-slate-200 truncate">
+                        <p className="text-sm font-medium text-c-text-muted truncate">
                           {session.deviceInfo || session.device || 'Unknown Device'}
                           {session.browser ? ` · ${session.browser}` : ''}
                         </p>
@@ -293,7 +293,7 @@ export const SessionsActivitySettings: React.FC = () => {
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-slate-500 mt-0.5 truncate">
+                      <p className="text-xs text-c-text-muted mt-0.5 truncate">
                         {session.location || session.ipAddress || 'Unknown'} ·{' '}
                         {session.lastActive || session.lastUsedAt || 'Recently'}
                       </p>
@@ -301,7 +301,7 @@ export const SessionsActivitySettings: React.FC = () => {
                     {!session.current && (
                       <button
                         onClick={() => terminateSession(session.id)}
-                        className="p-1.5 text-slate-600 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors flex-shrink-0"
+                        className="p-1.5 text-c-text-secondary hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors flex-shrink-0"
                         title={t('settings.security.terminate', 'Terminate session')}
                       >
                         <Trash2 size={14} />
@@ -348,22 +348,22 @@ export const SessionsActivitySettings: React.FC = () => {
                   key={event.id}
                   className={cn(
                     'flex items-center gap-3 p-3 rounded-xl',
-                    'bg-white/[0.02] border border-white/[0.04]'
+                    'bg-c-surface/[0.02] border border-white/[0.04]'
                   )}
                 >
                   <div className={cn('p-1.5 rounded-lg flex-shrink-0', cfg.bg)}>
                     <StatusIcon size={14} className={cfg.color} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-200 truncate">
+                    <p className="text-sm font-medium text-c-text-muted truncate">
                       {event.device || 'Unknown Device'}
                     </p>
-                    <p className="text-xs text-slate-500 mt-0.5 truncate">
+                    <p className="text-xs text-c-text-muted mt-0.5 truncate">
                       {event.location || 'Unknown'} · {event.ip || 'Unknown IP'}
                     </p>
                   </div>
                   <div className="flex flex-col items-end flex-shrink-0">
-                    <span className="text-[11px] text-slate-500">
+                    <span className="text-[11px] text-c-text-muted">
                       {formatDate(event.timestamp || new Date().toISOString())}
                     </span>
                     <span className={cn('text-[10px] font-medium mt-0.5', cfg.color)}>
@@ -386,7 +386,7 @@ export const SessionsActivitySettings: React.FC = () => {
 const LoadingSkeleton: React.FC<{ rows: number }> = ({ rows }) => (
   <div className="space-y-2 animate-pulse">
     {Array.from({ length: rows }).map((_, i) => (
-      <div key={i} className="h-14 bg-white/[0.03] rounded-xl" />
+      <div key={i} className="h-14 bg-c-surface/[0.03] rounded-xl" />
     ))}
   </div>
 );
@@ -396,10 +396,10 @@ const EmptyState: React.FC<{ icon: React.ElementType; message: string }> = ({
   message,
 }) => (
   <div className="flex flex-col items-center justify-center py-10 text-center">
-    <div className="p-3 rounded-xl bg-white/[0.03] mb-3">
-      <Icon size={24} className="text-slate-600" />
+    <div className="p-3 rounded-xl bg-c-surface/[0.03] mb-3">
+      <Icon size={24} className="text-c-text-secondary" />
     </div>
-    <p className="text-sm text-slate-500">{message}</p>
+    <p className="text-sm text-c-text-muted">{message}</p>
   </div>
 );
 

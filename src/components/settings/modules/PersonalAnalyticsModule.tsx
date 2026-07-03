@@ -99,7 +99,7 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
     icon: React.ElementType;
     color: string;
   }> = ({ label, value, change, icon: Icon, color }) => (
-    <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
+    <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
       <div className="flex items-center justify-between mb-4">
         <div className={`p-3 rounded-xl ${color}`}>
           <Icon size={24} className="text-white" />
@@ -111,8 +111,8 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
           {Math.abs(change)}%
         </div>
       </div>
-      <p className="text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
-      <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
+      <p className="text-2xl font-bold text-c-text">{value}</p>
+      <p className="text-sm text-c-text-muted">{label}</p>
     </div>
   );
 
@@ -133,7 +133,7 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
       if (score >= 80) return 'bg-emerald-400';
       if (score >= 70) return 'bg-emerald-300';
       if (score >= 60) return 'bg-emerald-200';
-      return 'bg-slate-100 dark:bg-slate-700';
+      return 'bg-c-surface-raised';
     };
 
     return (
@@ -164,11 +164,11 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
             <BarChart3 size={28} className="text-blue-500" />
             Personal Analytics
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             Track your productivity and performance
           </p>
         </div>
@@ -177,7 +177,7 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value as any)}
             disabled={!!loadError}
-            className="px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg"
+            className="px-4 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
           >
             <option value="week">This Week</option>
             <option value="month">This Month</option>
@@ -237,18 +237,18 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
 
       {/* Activity Heatmap */}
       {!loadError && (
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
             <Calendar size={20} className="text-emerald-500" />
             Activity Heatmap
           </h3>
           <div className="overflow-x-auto">
             <ActivityHeatmap data={dailyActivity} />
           </div>
-          <div className="flex items-center gap-2 mt-4 text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-2 mt-4 text-xs text-c-text-muted">
             <span>Less</span>
             <div className="flex gap-1">
-              <div className="w-3 h-3 rounded-sm bg-slate-100 dark:bg-slate-700" />
+              <div className="w-3 h-3 rounded-sm bg-c-surface-raised" />
               <div className="w-3 h-3 rounded-sm bg-emerald-200" />
               <div className="w-3 h-3 rounded-sm bg-emerald-300" />
               <div className="w-3 h-3 rounded-sm bg-emerald-400" />
@@ -260,30 +260,30 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
       )}
 
       {/* Weekly Breakdown */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-c-text mb-4">
           Daily Breakdown
         </h3>
         <div className="space-y-3">
           {dailyActivity.slice(-7).map((day, i) => (
             <div key={i} className="flex items-center gap-4">
-              <span className="text-sm text-slate-500 dark:text-slate-400 w-24">
+              <span className="text-sm text-c-text-muted w-24">
                 {new Date(day.date).toLocaleDateString('en-US', {
                   weekday: 'short',
                   month: 'short',
                   day: 'numeric',
                 })}
               </span>
-              <div className="flex-1 h-4 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
+              <div className="flex-1 h-4 bg-c-surface-raised rounded-full overflow-hidden">
                 <div
                   className="h-full bg-blue-500 rounded-full"
                   style={{ width: `${(day.hours / 8) * 100}%` }}
                 />
               </div>
-              <span className="text-sm text-slate-600 dark:text-slate-400 w-16 text-right">
+              <span className="text-sm text-c-text-secondary w-16 text-right">
                 {day.hours.toFixed(1)}h
               </span>
-              <span className="text-sm text-slate-600 dark:text-slate-400 w-16 text-right">
+              <span className="text-sm text-c-text-secondary w-16 text-right">
                 {day.tasks} tasks
               </span>
             </div>
@@ -292,8 +292,8 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
       </div>
 
       {/* Goals Progress */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Target size={20} className="text-amber-500" />
           Weekly Goals
         </h3>
@@ -305,18 +305,18 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
           ].map((goal, i) => (
             <div key={i}>
               <div className="flex items-center justify-between text-sm mb-1">
-                <span className="text-slate-600 dark:text-slate-400">{goal.label}</span>
+                <span className="text-c-text-secondary">{goal.label}</span>
                 <span
                   className={
                     goal.current >= goal.target
                       ? 'text-green-600'
-                      : 'text-slate-900 dark:text-white'
+                      : 'text-c-text'
                   }
                 >
                   {goal.current} / {goal.target}
                 </span>
               </div>
-              <div className="h-2 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
+              <div className="h-2 bg-c-surface-raised rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full ${
                     goal.current >= goal.target ? 'bg-green-500' : 'bg-amber-500'

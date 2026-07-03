@@ -43,16 +43,16 @@ const AccountManagementSettings: React.FC<{ className?: string }> = ({ className
   return (
     <div className={`space-y-8 ${className}`}>
       {/* Export Data */}
-      <div className="p-6 border border-slate-200 dark:border-navy-700 rounded-xl">
+      <div className="p-6 border border-c-border-subtle dark:border-navy-700 rounded-xl">
         <div className="flex items-start gap-4">
           <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
             <Download className="text-blue-600 dark:text-blue-400" size={24} />
           </div>
           <div className="flex-1">
-            <h3 className="text-lg font-medium text-slate-900 dark:text-white">
+            <h3 className="text-lg font-medium text-c-text">
               {t('settings.account.exportTitle', 'Export Your Data')}
             </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-sm text-c-text-muted mt-1">
               {t(
                 'settings.account.exportDesc',
                 'Download a copy of all your data including projects, assessments, and settings.'
@@ -98,14 +98,14 @@ const AccountManagementSettings: React.FC<{ className?: string }> = ({ className
                 {t('settings.account.delete', 'Delete Account')}
               </button>
             ) : (
-              <div className="mt-4 p-4 bg-white dark:bg-navy-800 rounded-lg border border-rose-200 dark:border-rose-800">
+              <div className="mt-4 p-4 bg-c-surface rounded-lg border border-rose-200 dark:border-rose-800">
                 <div className="flex items-center gap-2 text-rose-600 mb-3">
                   <AlertTriangle size={18} />
                   <span className="font-medium">
                     {t('settings.account.confirmTitle', 'Are you sure?')}
                   </span>
                 </div>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+                <p className="text-sm text-c-text-secondary mb-3">
                   {t('settings.account.confirmDesc', 'Type DELETE to confirm account deletion:')}
                 </p>
                 <input
@@ -113,7 +113,7 @@ const AccountManagementSettings: React.FC<{ className?: string }> = ({ className
                   value={deleteConfirmText}
                   onChange={(e) => setDeleteConfirmText(e.target.value)}
                   placeholder="DELETE"
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg mb-3"
+                  className="w-full px-3 py-2 border border-c-border dark:border-navy-600 rounded-lg mb-3"
                 />
                 <div className="flex gap-2">
                   <button
@@ -128,7 +128,7 @@ const AccountManagementSettings: React.FC<{ className?: string }> = ({ className
                       setShowDeleteConfirm(false);
                       setDeleteConfirmText('');
                     }}
-                    className="px-4 py-2 border border-slate-300 dark:border-navy-600 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700"
+                    className="px-4 py-2 border border-c-border dark:border-navy-600 rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-700"
                   >
                     {t('common.cancel', 'Cancel')}
                   </button>
