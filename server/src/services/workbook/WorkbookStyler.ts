@@ -48,6 +48,20 @@ export const HEADER_NAVY_HEX = '0C447C';
 export const ZEBRA_HEX = 'F3F7FB';
 
 // ---------------------------------------------------------------------------
+// Typography — one consistent sans across the whole workbook
+// ---------------------------------------------------------------------------
+
+/**
+ * The single font family used everywhere (header, body, Info sheet). Calibri is
+ * the Office default and renders identically on the reviewer's machine — a
+ * consultant workbook that mixes fonts reads as a "raw grid". Body 10.5pt /
+ * header 11pt gives the calm, uniform typographic scale a designed sheet has.
+ */
+export const FONT_FAMILY = 'Calibri';
+export const FONT_SIZE_BODY = 10.5;
+export const FONT_SIZE_HEADER = 11;
+
+// ---------------------------------------------------------------------------
 // Number-format defaults by column type (locale-aware currency)
 // ---------------------------------------------------------------------------
 
@@ -307,26 +321,28 @@ export function addInfoSheet(wb: ExcelJS.Workbook, opts: InfoSheetOptions): void
     views: [{ showGridLines: false }],
   });
 
-  ws.getColumn(1).width = 24;
-  ws.getColumn(2).width = 64;
+  ws.getColumn(1).width = 26;
+  ws.getColumn(2).width = 70;
 
   // Branding band.
   ws.mergeCells('A1:B1');
   const titleCell = ws.getCell('A1');
   titleCell.value = opts.title;
   titleCell.fill = fillOf(PALETTE.navy);
-  titleCell.font = { bold: true, size: 15, color: { argb: PALETTE.white }, name: 'Calibri' };
+  titleCell.font = { bold: true, size: 15, color: { argb: PALETTE.white }, name: FONT_FAMILY };
   titleCell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
-  ws.getRow(1).height = 28;
+  ws.getRow(1).height = 30;
 
   ws.mergeCells('A2:B2');
   const subCell = ws.getCell('A2');
   subCell.value = 'Consultify · konsultingowy arkusz roboczy';
   subCell.fill = fillOf(PALETTE.navySoft);
-  subCell.font = { size: 10, color: { argb: PALETTE.white }, name: 'Calibri' };
+  subCell.font = { size: 10, color: { argb: PALETTE.white }, name: FONT_FAMILY };
   subCell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
   ws.getRow(2).height = 18;
 
+  // Metadata rows. The sheet inventory is rendered below as a clickable Table
+  // of Contents, so we no longer duplicate it here as a flat CSV.
   const rows: Array<[string, string | undefined]> = [
     ['', undefined],
     ['Opis / Description', opts.description],
@@ -334,7 +350,6 @@ export function addInfoSheet(wb: ExcelJS.Workbook, opts: InfoSheetOptions): void
     ['Źródło / Source', opts.source],
     ['Wygenerowano / Generated', opts.generatedAt],
     ['Autor / Author', opts.author],
-    ['Arkusze / Sheets', opts.sheetNames.join(', ')],
   ];
   for (const [k, v] of Object.entries(opts.extra ?? {})) {
     rows.push([k, v]);
@@ -348,14 +363,54 @@ export function addInfoSheet(wb: ExcelJS.Workbook, opts: InfoSheetOptions): void
     }
     const labelCell = ws.getCell(`A${r}`);
     labelCell.value = label;
-    labelCell.font = { bold: true, size: 10, color: { argb: PALETTE.muted }, name: 'Calibri' };
+    labelCell.font = { bold: true, size: 10, color: { argb: PALETTE.muted }, name: FONT_FAMILY };
     labelCell.alignment = { vertical: 'top', horizontal: 'left' };
 
     const valueCell = ws.getCell(`B${r}`);
     valueCell.value = value;
-    valueCell.font = { size: 10, color: { argb: PALETTE.ink }, name: 'Calibri' };
+    valueCell.font = { size: 10, color: { argb: PALETTE.ink }, name: FONT_FAMILY };
     valueCell.alignment = { vertical: 'top', horizontal: 'left', wrapText: true };
     r++;
+  }
+
+  // Table of Contents — a clickable index into every data sheet. Only worth a
+  // section when there is more than one sheet; a single-sheet workbook needs no
+  // navigation. Each row hyperlinks (internal ref) to that sheet's A1.
+  const tocSheets = opts.sheetNames.filter((n) => n && n !== NAME);
+  if (tocSheets.length > 1) {
+    r += 1; // one blank spacer row
+    ws.mergeCells(`A${r}:B${r}`);
+    const tocHead = ws.getCell(`A${r}`);
+    tocHead.value = 'Spis arkuszy / Table of contents';
+    tocHead.fill = fillOf(PALETTE.summary);
+    tocHead.font = { bold: true, size: 11, color: { argb: PALETTE.navy }, name: FONT_FAMILY };
+    tocHead.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+    ws.getRow(r).height = 20;
+    r++;
+
+    tocSheets.forEach((name, i) => {
+      const idxCell = ws.getCell(`A${r}`);
+      idxCell.value = String(i + 1).padStart(2, '0');
+      idxCell.font = { bold: true, size: 10, color: { argb: PALETTE.muted }, name: FONT_FAMILY };
+      idxCell.alignment = { vertical: 'middle', horizontal: 'center' };
+
+      const linkCell = ws.getCell(`B${r}`);
+      // ExcelJS internal hyperlink: quote the sheet name so names with spaces
+      // resolve. A1 is a stable anchor on every sheet.
+      const safeName = name.replace(/'/g, "''");
+      linkCell.value = {
+        text: name,
+        hyperlink: `#'${safeName}'!A1`,
+      } as ExcelJS.CellHyperlinkValue;
+      linkCell.font = {
+        size: 10,
+        color: { argb: PALETTE.navySoft },
+        underline: true,
+        name: FONT_FAMILY,
+      };
+      linkCell.alignment = { vertical: 'middle', horizontal: 'left' };
+      r++;
+    });
   }
   // Note: tab position is determined by creation order in ExcelJS — callers
   // should create the Info sheet first if they want it as the leading tab.
@@ -380,4 +435,73 @@ export function inferCurrency(schema: WorkbookSchema): CurrencyHint {
     }
   }
   return 'pln'; // Consultify default market = PL
+}
+
+// ---------------------------------------------------------------------------
+// Autofilter — turn a header row into a filterable table header
+// ---------------------------------------------------------------------------
+
+/**
+ * Adds an Excel autofilter over the header row + data range so a reviewer can
+ * sort/filter every column — the affordance a real "table" has and a raw dump
+ * lacks. Header on row 1, data rows 2..(1+rowCount). No-op for empty sheets or
+ * single-column sheets (autofilter on one column is noise). Fail-soft.
+ */
+export function addAutoFilter(
+  ws: ExcelJS.Worksheet,
+  columnCount: number,
+  rowCount: number
+): void {
+  if (columnCount < 2 || rowCount < 1) return;
+  const lastCol = colLetter(columnCount);
+  try {
+    ws.autoFilter = {
+      from: { row: 1, column: 1 },
+      to: { row: rowCount + 1, column: columnCount },
+    };
+  } catch {
+    // Fallback to A1-string form if the object form is rejected.
+    try {
+      ws.autoFilter = `A1:${lastCol}${rowCount + 1}`;
+    } catch {
+      /* autofilter is cosmetic — never fail the build over it */
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Print / page setup — a deliverable that survives Ctrl+P
+// ---------------------------------------------------------------------------
+
+/**
+ * Applies consultant-grade print setup to a data sheet: landscape, fit-all-
+ * columns-to-one-page-wide, repeat the header row on every printed page, thin
+ * margins, and a footer carrying the sheet name + page numbers. Fail-soft.
+ */
+export function applyPrintSetup(ws: ExcelJS.Worksheet, sheetName: string): void {
+  try {
+    ws.pageSetup = {
+      ...(ws.pageSetup ?? {}),
+      orientation: 'landscape',
+      fitToPage: true,
+      fitToWidth: 1,
+      fitToHeight: 0,
+      horizontalCentered: false,
+      margins: {
+        left: 0.4,
+        right: 0.4,
+        top: 0.5,
+        bottom: 0.55,
+        header: 0.3,
+        footer: 0.3,
+      },
+      printTitlesRow: '1:1',
+    };
+    ws.headerFooter = {
+      ...(ws.headerFooter ?? {}),
+      oddFooter: `&L&"Calibri"&8&K64748B${sheetName}&C&"Calibri"&8&K64748BConsultify&R&"Calibri"&8&K64748BStrona &P z &N`,
+    };
+  } catch {
+    /* print setup is cosmetic — never fail the build over it */
+  }
 }
