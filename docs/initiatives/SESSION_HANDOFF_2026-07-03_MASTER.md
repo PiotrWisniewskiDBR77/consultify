@@ -32,10 +32,16 @@ Kluczowe fixy (wszystkie na demo, commity na `feat/deliverables-w1`):
 - **Railway demo env vary ustawione:** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (prawdziwe), `GOOGLE_CALLBACK_URL=https://demo.consultify.ai/api/auth/google/callback`, **`FRONTEND_URL=https://demo.consultify.ai`** (było `stage.consultinity.ai` — psuło redirect po logowaniu!).
 - E2E przetestowane: przycisk→zgoda Google→callback→JWT→sesja→`/chat` zalogowany jako Piotr.
 
-### LinkedIn — SKONFIGUROWANE, zweryfikowane do bramki hasła
+### LinkedIn — 100% GOTOWE + PRZETESTOWANE (E2E domknięte 2026-07-03 09:12 UTC)
 - Aplikacja LinkedIn **„Consultify"** (app_id `256781426`), strona **DBR77**, produkt **„Sign In with LinkedIn using OpenID Connect"** (provisioned instant), redirect `https://demo.consultify.ai/api/auth/linkedin/callback`.
 - **Railway:** `LINKEDIN_CLIENT_ID=86jcfcnstl4cvu`, `LINKEDIN_CLIENT_SECRET` (ustawione), `LINKEDIN_CALLBACK_URL` ok.
-- Zweryfikowane: `/api/auth/linkedin`→LinkedIn zaakceptował (app_id+scope+redirect ok, ekran logowania). Pełna pętla wymaga wpisania hasła LinkedIn Piotra (agent NIE wpisuje haseł). Opcjonalnie: weryfikacja strony DBR77 przez admina (Settings→Verify) jeśli KAŻDY user LinkedIn ma się logować.
+- **E2E PRZESZŁO**: Piotr dokończył logowanie LinkedIn rano 07-03 → wiersz `oauth_links` (`linkedin sRaIO1sdc7 piotr.wisniewski@dbr77.com → user d2b6a316`, display „Piotr Wiśniewski Ph.D.", linked_at 09:12:18Z). Zalinkowany po mailu do ISTNIEJĄCEGO usera — zero duplikatu. Opcjonalne (nie blokuje): weryfikacja strony DBR77 przez admina (Settings→Verify) jeśli KAŻDY user LinkedIn ma się logować.
+
+### Re-test finalny 2026-07-03 ~09:38 UTC (wszystkie 3 metody na @538298a4e3)
+- **Email/hasło**: `POST /api/auth/login` → 200 + JWT (piotr.wisniewski@dbr77.com). ✅
+- **Google**: pełne E2E w przeglądarce (logout → /auth → przycisk Google → chooser → „signing back in" Continue → `/oauth/callback?token=…` → `/chat` zalogowany); `oauth_links.last_login_at` google podbił się na 09:38 = fast-path po `provider_user_id` przy powtórnym logowaniu działa. ✅
+- **LinkedIn**: wiersz w DB jw. (pętla domknięta 09:12). ✅
+- **Duplikaty**: `users` z tym mailem = dokładnie 1 (d2b6a316); nowi userzy 24h = tylko persony seedu Atelier. ✅
 
 ### Meczowanie z bazą (wymóg Piotra) — DZIAŁA, zweryfikowane
 `oauthService.findOrCreateUser`: (1) po `oauth_links(provider,provider_user_id)` fast-path; (2) **po `LOWER(email)` → LINKUJE do istniejącego usera** (bez duplikatu); (3) nowy mail → nowy user+org (role CEO, plan free). Google Piotra zalinkował się do istniejącego konta (`oauth_links` row: `google piotr.wisniewski@dbr77.com→user d2b6a316`, org demo). Tabela `oauth_links` istnieje na trolley.
