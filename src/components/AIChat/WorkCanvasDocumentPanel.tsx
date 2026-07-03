@@ -2713,7 +2713,7 @@ function WorkCanvasMarkdownDocumentPanel({
       >
         {isLoading ? <RefreshCw size={15} className="animate-spin" /> : <Icon size={15} />}
         {availability.status === 'coming_soon' ? (
-          <span className="sr-only">Coming soon</span>
+          <span className="sr-only">{t('canvas.panel.comingSoon', 'Coming soon')}</span>
         ) : null}
       </button>
     );
@@ -3471,7 +3471,7 @@ function WorkCanvasMarkdownDocumentPanel({
                         onClick={() => setPendingDataset(null)}
                         className="rounded-full px-3 py-1.5 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                       >
-                        Dismiss
+                        {t('canvas.panel.dismiss', 'Dismiss')}
                       </button>
                     </div>
                   </div>
@@ -3479,7 +3479,7 @@ function WorkCanvasMarkdownDocumentPanel({
 
                 <div className="space-y-1.5">
                   <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                    Markdown actions
+                    {t('canvas.panel.markdownActions', 'Markdown actions')}
                   </div>
                   <button
                     type="button"
@@ -3513,7 +3513,7 @@ function WorkCanvasMarkdownDocumentPanel({
                     className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
                   >
                     <Table2 size={14} />
-                    <span>Download CSV</span>
+                    <span>{t('canvas.panel.downloadCsv', 'Download CSV')}</span>
                   </button>
                   <button
                     type="button"
@@ -3521,7 +3521,7 @@ function WorkCanvasMarkdownDocumentPanel({
                     className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
                   >
                     <Copy size={14} />
-                    <span>Copy Markdown</span>
+                    <span>{t('canvas.panel.copyMarkdown', 'Copy Markdown')}</span>
                   </button>
                   <button
                     type="button"
@@ -3529,7 +3529,7 @@ function WorkCanvasMarkdownDocumentPanel({
                     className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
                   >
                     <Download size={14} />
-                    <span>Download PDF</span>
+                    <span>{t('canvas.panel.downloadPdf', 'Download PDF')}</span>
                   </button>
                   {/* L-1 — Document Studio bridge. Calls the same
                       materializeDocumentArtifact pipeline DocumentStudio's own
@@ -3545,8 +3545,8 @@ function WorkCanvasMarkdownDocumentPanel({
                     <Sparkles size={14} />
                     <span>
                       {isSendingToDocumentStudio
-                        ? 'Sending to Document Studio…'
-                        : 'Send to Document Studio'}
+                        ? t('canvas.panel.sendingToDocumentStudio', 'Sending to Document Studio…')
+                        : t('canvas.panel.sendToDocumentStudio', 'Send to Document Studio')}
                     </span>
                   </button>
                   {/* L-2 — Table Studio bridge. Disabled for non-table drafts
@@ -3558,14 +3558,19 @@ function WorkCanvasMarkdownDocumentPanel({
                     disabled={isSendingToTableStudio || documentState.kind !== 'table'}
                     title={
                       documentState.kind === 'table'
-                        ? 'Send the current table to Table Studio'
-                        : 'Table Studio handoff requires a Canvas with kind=table.'
+                        ? t('canvas.panel.sendToTableStudioTitle', 'Send the current table to Table Studio')
+                        : t(
+                            'canvas.panel.sendToTableStudioDisabledTitle',
+                            'Table Studio handoff requires a Canvas with kind=table.'
+                          )
                     }
                     className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:text-slate-200 dark:hover:bg-white/10"
                   >
                     <Table2 size={14} />
                     <span>
-                      {isSendingToTableStudio ? 'Sending to Table Studio…' : 'Send to Table Studio'}
+                      {isSendingToTableStudio
+                        ? t('canvas.panel.sendingToTableStudio', 'Sending to Table Studio…')
+                        : t('canvas.panel.sendToTableStudio', 'Send to Table Studio')}
                     </span>
                   </button>
                   {/* C4.4 — exposes the existing backend exporters (exportDocxBuffer
@@ -3590,13 +3595,16 @@ function WorkCanvasMarkdownDocumentPanel({
                     disabled={documentState.kind !== 'table'}
                     title={
                       documentState.kind === 'table'
-                        ? 'Download as Excel spreadsheet'
-                        : 'Excel export is available only for Canvas tables (kind=table).'
+                        ? t('canvas.panel.downloadExcelTitle', 'Download as Excel spreadsheet')
+                        : t(
+                            'canvas.panel.downloadExcelDisabledTitle',
+                            'Excel export is available only for Canvas tables (kind=table).'
+                          )
                     }
                     className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent dark:text-slate-200 dark:hover:bg-white/10 dark:disabled:hover:bg-transparent"
                   >
                     <Download size={14} />
-                    <span>Download Excel (.xlsx)</span>
+                    <span>{t('canvas.panel.downloadExcel', 'Download Excel (.xlsx)')}</span>
                   </button>
                   <button
                     type="button"
@@ -3604,9 +3612,7 @@ function WorkCanvasMarkdownDocumentPanel({
                     className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
                   >
                     <Download size={14} />
-                    <span>
-                      {t('canvas.panel.export.downloadPowerPoint', 'Download PowerPoint (.pptx)')}
-                    </span>
+                    <span>{t('canvas.panel.downloadPowerpoint', 'Download PowerPoint (.pptx)')}</span>
                   </button>
                   <button
                     type="button"
@@ -3614,7 +3620,7 @@ function WorkCanvasMarkdownDocumentPanel({
                     className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
                   >
                     <Download size={14} />
-                    <span>Export metadata</span>
+                    <span>{t('canvas.panel.exportMetadata', 'Export metadata')}</span>
                   </button>
                   <button
                     type="button"
@@ -3622,7 +3628,7 @@ function WorkCanvasMarkdownDocumentPanel({
                     className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
                   >
                     <Download size={14} />
-                    <span>Upload dataset</span>
+                    <span>{t('canvas.panel.uploadDataset', 'Upload dataset')}</span>
                   </button>
                 </div>
 
@@ -3641,11 +3647,13 @@ function WorkCanvasMarkdownDocumentPanel({
                   {isMdPropertiesOpen ? (
                     <div className="mt-2 space-y-2 rounded-xl bg-slate-100/80 p-2.5 text-slate-700 dark:bg-white/10 dark:text-slate-200">
                       <div className="flex items-center justify-between gap-3">
-                        <span>Format</span>
-                        <strong className="font-semibold">Markdown canonical</strong>
+                        <span>{t('canvas.panel.diagnostics.format', 'Format')}</span>
+                        <strong className="font-semibold">
+                          {t('canvas.panel.diagnostics.markdownCanonical', 'Markdown canonical')}
+                        </strong>
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <span>{t('canvas.panel.save', 'Save')}</span>
+                        <span>{t('canvas.panel.diagnostics.save', 'Save')}</span>
                         <strong
                           className="font-semibold"
                           data-testid="canvas-diagnostics-save-state"
@@ -3654,7 +3662,7 @@ function WorkCanvasMarkdownDocumentPanel({
                         </strong>
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <span>Projection</span>
+                        <span>{t('canvas.panel.diagnostics.projection', 'Projection')}</span>
                         <strong className="font-semibold" data-testid="canvas-projection-status">
                           {isProjectionRefreshing
                             ? t('canvas.panel.projection.refreshing', 'Projection refreshing')
@@ -3662,18 +3670,20 @@ function WorkCanvasMarkdownDocumentPanel({
                         </strong>
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <span>Lifecycle</span>
+                        <span>{t('canvas.panel.diagnostics.lifecycle', 'Lifecycle')}</span>
                         <strong className="font-semibold">
                           {lifecycleLabel(documentState.lifecycleState, t)}
                         </strong>
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <span>Action</span>
+                        <span>{t('canvas.panel.diagnostics.action', 'Action')}</span>
                         <strong
                           className="font-semibold"
                           data-testid="canvas-diagnostics-action-state"
                         >
-                          {activeActionId ? 'Running' : 'Idle'}
+                          {activeActionId
+                            ? t('canvas.panel.diagnostics.running', 'Running')
+                            : t('canvas.panel.diagnostics.idle', 'Idle')}
                         </strong>
                       </div>
                     </div>
@@ -3685,7 +3695,7 @@ function WorkCanvasMarkdownDocumentPanel({
                     {t('canvas.panel.capabilities.title', 'Capabilities and workflow')}
                   </div>
                   <div className="flex items-start justify-between gap-3 px-2.5">
-                    <span>Capability</span>
+                    <span>{t('canvas.panel.diagnostics.capability', 'Capability')}</span>
                     <div className="min-w-0 text-right">
                       {renderCapabilityBadge(activeTemplate.capability, 'canvas-capability-status')}
                       <div
@@ -3698,7 +3708,7 @@ function WorkCanvasMarkdownDocumentPanel({
                   </div>
                   {documentState.researchSessionId ? (
                     <div className="flex items-center justify-between gap-3 px-2.5">
-                      <span>ResearchSession</span>
+                      <span>{t('canvas.panel.diagnostics.researchSession', 'ResearchSession')}</span>
                       <strong
                         className="max-w-[180px] truncate font-semibold text-primary-700 dark:text-primary-300"
                         data-testid="canvas-research-session-id"
@@ -3710,13 +3720,15 @@ function WorkCanvasMarkdownDocumentPanel({
                   ) : null}
                   <div className="flex flex-wrap items-center gap-2 px-2.5">
                     <label className="inline-flex items-center gap-1 text-slate-500 dark:text-slate-300">
-                      <span className="sr-only">Workflow template</span>
+                      <span className="sr-only">
+                        {t('canvas.panel.workflowTemplate', 'Workflow template')}
+                      </span>
                       <select
                         value={selectedWorkflowTemplate}
                         onChange={(event) =>
                           setSelectedWorkflowTemplate(event.target.value as CanvasWorkflowTemplate)
                         }
-                        aria-label="Workflow template"
+                        aria-label={t('canvas.panel.workflowTemplate', 'Workflow template')}
                         className="max-w-[190px] rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 outline-none hover:bg-slate-50 dark:border-white/10 dark:bg-white/10 dark:text-slate-200"
                       >
                         {workflowTemplateOptions.map((template) => (
