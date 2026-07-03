@@ -11,6 +11,7 @@
 
 import { Archive, CheckCircle2, Loader2, Plus, ShieldAlert } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   FilterableTable,
@@ -53,6 +54,7 @@ interface DocumentStudioTemplateArchitectViewProps {
 export const DocumentStudioTemplateArchitectView: React.FC<
   DocumentStudioTemplateArchitectViewProps
 > = ({ onTemplateApproved }) => {
+  const { t } = useTranslation();
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [loadingList, setLoadingList] = useState(false);
   const [drafting, setDrafting] = useState(false);
@@ -234,7 +236,10 @@ export const DocumentStudioTemplateArchitectView: React.FC<
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Quarterly Board Memo template"
+              placeholder={t(
+                'documentStudio.templateArchitect.namePlaceholder',
+                'e.g., Quarterly Board Memo template'
+              )}
               className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-950"
             />
           </label>
@@ -274,7 +279,10 @@ export const DocumentStudioTemplateArchitectView: React.FC<
               type="text"
               value={audience}
               onChange={(e) => setAudience(e.target.value)}
-              placeholder="e.g., Board, CEO, CFO"
+              placeholder={t(
+                'documentStudio.templateArchitect.audiencePlaceholder',
+                'e.g., Board, CEO, CFO'
+              )}
               className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-950"
             />
           </label>

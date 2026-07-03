@@ -46,6 +46,7 @@ import ReactFlow, {
   type NodeChange,
   type NodeProps,
   ReactFlowProvider,
+  useUpdateNodeInternals,
 } from 'reactflow';
 
 import { Api } from '@/services/api';
@@ -129,6 +130,7 @@ import { useProcessFlowDegraded } from './processflow/useProcessFlowDegraded';
 import { useProcessFlowExport } from './processflow/useProcessFlowExport';
 import { useProcessFlowNodes } from './processflow/useProcessFlowNodes';
 import { useConfirmDialog } from './shared/ConfirmDialog';
+import { useCanvasKeyboard } from './canvas/useIdeasToolKeyboard';
 import { useProcessFlowQuickActions } from './processflow/useProcessFlowQuickActions';
 import { useProcessFlowReadback } from './processflow/useProcessFlowReadback';
 import { useProcessFlowUndoRedo } from './processflow/useProcessFlowUndoRedo';
@@ -206,6 +208,36 @@ const baseNodeTypes: RFNodeTypes = {
 const edgeTypes: RFEdgeTypes = {
   flowEdge: FlowEdgeComponent,
   messageFlow: MessageFlowEdge,
+};
+
+/**
+ * After the graph hydrates (nodes + edges set together on load), ReactFlow can
+ * fail to render edges because the freshly-added nodes' handle bounds aren't yet
+ * registered in its internal store — so persisted edges were invisible after a
+ * reload even though they were in state. Force a handle-bounds recompute for each
+ * node whenever the node-id set changes; this re-evaluates and draws the edges.
+ * Must live inside <ReactFlowProvider>. (M07 live-debug 2026-06-20)
+ */
+const EdgeRehydrateFix: React.FC<{ nodeIdsKey: string; nodeIds: string[] }> = ({
+  nodeIdsKey,
+  nodeIds,
+}) => {
+  const updateNodeInternals = useUpdateNodeInternals();
+  const idsRef = useRef(nodeIds);
+  idsRef.current = nodeIds;
+  useEffect(() => {
+    if (!idsRef.current.length) return;
+    // Re-measure after the nodes are actually laid out in the DOM. A single rAF
+    // fires too early (dimensions not yet recorded → edges stay hidden), so retry
+    // across a few frames/timeouts until ReactFlow has measured them.
+    const timers = [60, 250, 600, 1200].map((ms) =>
+      window.setTimeout(() => idsRef.current.forEach((id) => updateNodeInternals(id)), ms)
+    );
+    return () => timers.forEach((t) => window.clearTimeout(t));
+    // Keyed on the node-id set so it fires on hydrate / structural changes, not every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodeIdsKey]);
+  return null;
 };
 
 // ── Validation ───────────────────────────────────────────────────────────────
@@ -467,7 +499,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const isDarkFlow = useIsDark();
   const { dialog: bulkDeleteDialog, confirm: confirmBulkDelete } = useConfirmDialog();
 
-  const [loading, setLoading] = useState(false);
+  // Start loading=true so the autosave effect (gated on !loading) cannot fire with
+  // the initial empty state before hydrate runs. With the old default (false), a
+  // slow hydrate (>2.5s autosave debounce) let an EMPTY payload flush first, which
+  // overwrote the idea's saved nodes/edges and 409'd the real save. (M07 2026-06-20)
+  const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -887,7 +923,26 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     setLoading(true);
     setLoadError(null);
     try {
-      const res = await Api.getMyIdeaMap(ideaId, { language: i18n.language });
+      // M07 reload-race fix (2026-06-24): retry the map GET on transient failure.
+      // The nodes ARE on the server (the autosave already landed — useIdeaMapSync is
+      // single-flight + 409-self-healing), so a reload that lands during caboose
+      // latency / cold-start must NOT blank the canvas to [] on the first timeout
+      // (that was the "0 nodes after reload" symptom). Fetch-with-backoff, then hydrate.
+      let res: any = null;
+      let lastErr: any = null;
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        try {
+          res = await Api.getMyIdeaMap(ideaId, { language: i18n.language });
+          lastErr = null;
+          break;
+        } catch (e) {
+          lastErr = e;
+          if (attempt < 2) {
+            await new Promise((resolve) => setTimeout(resolve, 600 * (attempt + 1)));
+          }
+        }
+      }
+      if (lastErr) throw lastErr;
       const hydration = resolveIdeaMapHydration(ideaId, res?.map || {});
       const map = hydration.map || {};
       primeServerVersion(Number(map?.version || 1));
@@ -928,6 +983,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             id: nid,
             type: normalizedNode?.type || 'flowNode',
             position: normalizedNode?.position || { x: 100, y: 100 },
+            // Preserve persisted dimensions. ReactFlow only draws an edge once BOTH
+            // endpoint nodes have width/height in its store; on hydrate it does not
+            // re-measure reliably, so dropping these left reloaded edges invisible.
+            ...(Number.isFinite(normalizedNode?.width) ? { width: normalizedNode.width } : {}),
+            ...(Number.isFinite(normalizedNode?.height) ? { height: normalizedNode.height } : {}),
             data: {
               ...(normalizedNode?.data || { label: '', shape: 'action' }),
               locked,
@@ -960,19 +1020,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
       resetUndo();
 
-      if (!didPersistRef.current) {
-        didPersistRef.current = true;
-        const preferred = map?.preferredTool ? String(map.preferredTool) : null;
-        if (preferred !== 'process_flow') {
-          Api.syncMyIdeaMap(ideaId, {
-            nodes: rawNodes as any,
-            edges: rawEdges as any,
-            baseVersion: Number(map?.version || 1),
-            preferredTool: 'process_flow',
-            extensions: rawExt,
-          }).catch(() => undefined);
-        }
-      }
+      // NOTE (M07 fix 2026-06-21): the old eager preferredTool stamp here did a SECOND,
+      // independent `Api.syncMyIdeaMap` on hydrate — carrying the just-loaded (often empty)
+      // graph with its own baseVersion. It raced the user's first autosave on the same
+      // baseVersion → one 200, the other 409, and the user's freshly-added nodes were dropped
+      // (data loss after reload). Removed: the autosave already stamps
+      // `preferredTool: 'process_flow'` (buildPersistPayload) on the first edit, so the only
+      // cost is that an idea OPENED-but-not-edited won't persist process_flow as its default —
+      // and the /workspace/process_flow URL already forces the tool on open. One sync path = no race.
+      didPersistRef.current = true;
     } catch (err: any) {
       const nextError = err?.message || (isPl ? 'Nie udało się wczytać' : 'Failed to load');
       toast.error(nextError);
@@ -1627,98 +1683,97 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
   // ── Keyboard shortcuts ─────────────────────────────────────────────────
 
+  // P3: shared grammar (Tab/Enter/F2/Delete/Escape/Ctrl+Z/S/D/L/0)
+  useCanvasKeyboard({
+    toolType: 'processflow',
+    enabled: open,
+    locked: locked || false,
+    callbacks: {
+      onSave: handleSave,
+      onUndo: undo,
+      onRedo: redo,
+      onDuplicate: duplicateSelected,
+      onAutoLayout: handleAutoLayout,
+      onFitView: () => reactFlowInstanceRef.current?.fitView({ padding: 0.15, duration: 300 }),
+      onEditSelected: () => setShowPropertiesPanel(true),
+      onDeleteSelected: deleteSelected,
+      onDeselect: () => {
+        setNodes((nds) => nds.map((n) => ({ ...n, selected: false })));
+        setEdges((eds) => eds.map((e) => ({ ...e, selected: false })));
+        onSelectionChange?.(EMPTY_SELECTION);
+      },
+      onAddSibling: () => {
+        const shape: FlowShape =
+          flowMode === 'automation'
+            ? 'auto_trigger'
+            : flowMode === 'vsm'
+              ? 'vsm_process'
+              : 'action';
+        addNode(shape);
+      },
+    },
+  });
+
+  // PF-specific shortcuts + typing-safe fallbacks for Ctrl+S/Z/D
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
+      if (e.defaultPrevented) return;
       const isInput =
         (e.target as HTMLElement)?.tagName === 'INPUT' ||
         (e.target as HTMLElement)?.tagName === 'TEXTAREA' ||
         (e.target as HTMLElement)?.isContentEditable;
 
-      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+      // Normalize single-character keys: when Shift is held the browser reports the UPPERCASE
+      // letter (e.key === 'V'/'Z'), so `e.key === 'v'` style checks silently never match —
+      // Ctrl+Shift+V (validation) and Ctrl+Shift+Z (redo) were dead shortcuts. Compare lowercased.
+      const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+
+      // Typing-safe fallbacks: fire even when focus is in an input
+      if ((e.metaKey || e.ctrlKey) && k === 's') {
         e.preventDefault();
         handleSave();
         return;
       }
-
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'z') {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && k === 'z') {
         e.preventDefault();
         redo();
         return;
       }
-
-      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+      if ((e.metaKey || e.ctrlKey) && k === 'z') {
         e.preventDefault();
         undo();
         return;
       }
-
-      if ((e.metaKey || e.ctrlKey) && e.key === 'd') {
+      if ((e.metaKey || e.ctrlKey) && k === 'd') {
         e.preventDefault();
         duplicateSelected();
         return;
       }
 
-      if ((e.metaKey || e.ctrlKey) && e.key === 'e') {
+      // PF-specific
+      if ((e.metaKey || e.ctrlKey) && k === 'e') {
         e.preventDefault();
         setShowExportDialog(true);
         return;
       }
-
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'v') {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && k === 'v') {
         e.preventDefault();
         runBackendValidation();
         setShowValidationPanel(true);
         return;
       }
 
-      if ((e.metaKey || e.ctrlKey) && e.key === 'l') {
-        e.preventDefault();
-        handleAutoLayout();
-        return;
-      }
-
-      if ((e.metaKey || e.ctrlKey) && e.key === '0') {
-        e.preventDefault();
-        reactFlowInstanceRef.current?.fitView({ padding: 0.15, duration: 300 });
-        return;
-      }
-
       if (isInput) return;
 
-      // A6: Shift+1 = zoom to fit (shared cross-tool shortcut). e.code is
-      // layout-independent (Shift+1 yields "!" on most layouts).
+      // A6: Shift+1 = zoom to fit (layout-independent via e.code)
       if (e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey && e.code === 'Digit1') {
         e.preventDefault();
         reactFlowInstanceRef.current?.fitView({ padding: 0.15, duration: 300 });
         return;
       }
 
-      if (e.key === 'F2') {
-        e.preventDefault();
-        setShowPropertiesPanel(true);
-        return;
-      }
-
-      if (e.key === 'Escape') {
-        setNodes((nds) => nds.map((n) => ({ ...n, selected: false })));
-        setEdges((eds) => eds.map((e) => ({ ...e, selected: false })));
-        onSelectionChange?.(EMPTY_SELECTION);
-        return;
-      }
-
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        const defaultShape: FlowShape =
-          flowMode === 'automation'
-            ? 'auto_trigger'
-            : flowMode === 'vsm'
-              ? 'vsm_process'
-              : 'action';
-        addNode(defaultShape);
-        return;
-      }
-
+      // Shift+Enter: add alt-shape node (PF-specific; plain Enter is handled by useCanvasKeyboard)
       if (e.key === 'Enter' && e.shiftKey) {
         e.preventDefault();
         const altShape: FlowShape =
@@ -1737,9 +1792,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     addNode,
     duplicateSelected,
     flowMode,
-    handleAutoLayout,
     handleSave,
-    onSelectionChange,
     open,
     redo,
     runBackendValidation,
@@ -1932,6 +1985,13 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         guidance={FLOW_MODE_GUIDANCE[flowMode]}
         onOpenChat={onOpenChat ? handleOpenChatWithContext : undefined}
         onConvert={onQuickAction ? handleConvert : undefined}
+        onAIProposal={() => setShowAIPanel(true)}
+        onReadback={() => {
+          setShowReadbackPanel(true);
+          // Readback reads the existing graph (no user prompt needed) — fetch on open
+          // so the panel shows content immediately instead of an empty "fetch" prompt.
+          fetchReadback();
+        }}
       />
       </div>
 
@@ -2053,8 +2113,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       )}
 
       {processBriefData && (
-        <div className="mx-3 mb-2 rounded-xl border border-primary-200/60 dark:border-primary-800/40 bg-primary-50/50 dark:bg-primary-950/20 p-3">
-          <div className="text-[11px] font-bold text-primary-700 dark:text-primary-300">
+        <div className="mx-3 mb-2 rounded-xl border border-slate-200/60 dark:border-navy-700/40 bg-slate-50/50 dark:bg-navy-900/20 p-3">
+          <div className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
             {isPl ? 'Structured brief' : 'Structured brief'}
           </div>
           <div className="mt-1 text-[10px] text-slate-700 dark:text-slate-300">
@@ -2273,6 +2333,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           )}
 
           <ReactFlowProvider>
+            <EdgeRehydrateFix
+              nodeIdsKey={nodes.map((n) => n.id).join(',')}
+              nodeIds={nodes.map((n) => n.id)}
+            />
             <ReactFlow
               nodes={[
                 ...filteredNodes,
@@ -2288,8 +2352,12 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               onConnect={onConnect}
               nodeTypes={nodeTypes}
               edgeTypes={edgeTypes}
-              edgesReconnectable={!locked}
-              onReconnect={(oldEdge: Edge, newConnection: Connection) => {
+              // react-flow v11 prop names (v12 renamed these to edgesReconnectable/onReconnect).
+              // Using the v12 names on v11 left edgesReconnectable unrecognized → leaked to the
+              // DOM (React "does not recognize prop" warning) AND onReconnect never fired
+              // (edge-reconnect was silently dead). Correct v11 API = edgesUpdatable/onEdgeUpdate.
+              edgesUpdatable={!locked}
+              onEdgeUpdate={(oldEdge: Edge, newConnection: Connection) => {
                 if (locked) return;
                 pushUndo();
                 setEdges((prev) => {
@@ -2557,20 +2625,32 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   isPl: !!isPl,
                   locked,
                   onEditLabel: () => {
-                    const node = nodes.find((n) => n.id === contextMenu.nodeId);
-                    if (node?.data?.onLabelChange) {
-                      setNodes((prev) =>
-                        prev.map((n) =>
-                          n.id === contextMenu.nodeId ? { ...n, selected: true } : n
-                        )
-                      );
-                    }
+                    // Bump editSignal on the node → FlowNodeComponent starts inline edit
+                    // (fixes U8: previously this only selected, never opened the editor).
+                    setNodes((prev) =>
+                      prev.map((n) =>
+                        n.id === contextMenu.nodeId
+                          ? {
+                              ...n,
+                              selected: true,
+                              data: {
+                                ...n.data,
+                                editSignal: (Number(n.data?.editSignal) || 0) + 1,
+                              },
+                            }
+                          : n
+                      )
+                    );
                   },
                   onDuplicate: () => duplicateSelected(),
                   onDelete: () => deleteSelected(),
                   onOpenProperties: () => {
                     setShowPropertiesPanel(true);
                   },
+                  onAutoLayout: () => handleAutoLayout(),
+                  onConvertInitiative: onQuickAction
+                    ? () => handleConvert('pf_convert_initiative')
+                    : undefined,
                 })
               : getCanvasContextActions({
                   isPl: !!isPl,
@@ -2700,7 +2780,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               <button
                 type="button"
                 onClick={handleSaveMetrics}
-                className="rounded-xl bg-primary-500 px-3 py-2 text-xs font-semibold text-white hover:bg-primary-600"
+                className="rounded-xl bg-slate-900 dark:bg-white px-3 py-2 text-xs font-semibold text-white dark:text-navy-900 hover:bg-slate-800 dark:hover:bg-slate-100"
               >
                 {isPl ? 'Zapisz metryki' : 'Save metrics'}
               </button>

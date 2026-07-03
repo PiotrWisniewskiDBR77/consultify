@@ -13,6 +13,9 @@ import { useTranslation } from 'react-i18next';
 
 import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
 
+import { CardBlockRenderer } from '../cards/CardBlockRenderer';
+import { buildScopeCardSpec } from '../cards/cardSpecBuilders';
+
 import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps } from './types';
@@ -88,6 +91,24 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
     setOutScope((prev) => toStringArray(prev).filter((_, i) => i !== idx));
   const removeKill = (idx: number) =>
     setKillCriteria((prev) => toStringArray(prev).filter((_, i) => i !== idx));
+
+  // F3 (D11) display layer — generic CardBlockRenderer preview built from the
+  // live edit state. ADDITIVE: a read-only "as it reads" view, shown only once
+  // there is content. Blank filtering is handled by the builder.
+  const hasScope =
+    inScope.filter((s) => s && s.trim()).length +
+      outScope.filter((s) => s && s.trim()).length +
+      killCriteria.filter((s) => s && s.trim()).length >
+    0;
+  const scopeCardSpec = buildScopeCardSpec(
+    { inScope, outScope, killCriteria },
+    {
+      title: t('initiatives.scopeSection.scopeAndKillCriteria'),
+      inScopeHeading: t('initiatives.scopeSection.inScope'),
+      outScopeHeading: t('initiatives.scopeSection.outOfScope'),
+      killCriteriaHeading: t('initiatives.scopeSection.killCriteriaLabel'),
+    }
+  );
 
   const renderScopeItem = (
     item: string,
@@ -324,6 +345,18 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
             )}
           </div>
         </div>
+
+        {/* F3 (D11) display layer — generic CardBlockRenderer preview.
+            ADDITIVE: a read-only "as it reads" view built from the same data,
+            shown only once there is content. Does not replace the edit fields. */}
+        {hasScope && (
+          <div className="pt-3 border-t border-slate-200 dark:border-navy-700">
+            <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">
+              {t('initiatives.scopeSection.scopeAndKillCriteria')}
+            </div>
+            <CardBlockRenderer spec={scopeCardSpec} showTitle={false} />
+          </div>
+        )}
       </div>
     </CollapsibleSection>
   );

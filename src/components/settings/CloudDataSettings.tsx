@@ -185,7 +185,7 @@ export const CloudDataSettings: React.FC = () => {
         <button
           onClick={() => setShowAddForm(!showAddForm)}
           disabled={!!loadError}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white dark:text-navy-950 bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-brand hover:bg-brand-dark rounded-lg transition-colors"
         >
           <Plus size={14} />
           {t('cloud.addSource', 'Add source')}
@@ -240,7 +240,7 @@ export const CloudDataSettings: React.FC = () => {
             <button
               onClick={handleAdd}
               disabled={!newName.trim()}
-              className="px-3 py-1.5 text-sm font-medium text-white dark:text-navy-950 bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] dark:hover:bg-[#DDE5EF] disabled:bg-slate-300 rounded-lg"
+              className="px-3 py-1.5 text-sm font-medium text-white bg-brand hover:bg-brand-dark disabled:bg-slate-300 rounded-lg"
             >
               {t('cloud.connect', 'Connect')}
             </button>
@@ -275,7 +275,7 @@ export const CloudDataSettings: React.FC = () => {
                         source.status === 'active'
                           ? 'text-green-500'
                           : source.status === 'error'
-                            ? 'text-danger-500'
+                            ? 'text-rose-500'
                             : 'text-slate-600'
                       }
                     >
@@ -302,7 +302,7 @@ export const CloudDataSettings: React.FC = () => {
                 </button>
                 <button
                   onClick={() => handleDelete(source.id)}
-                  className="p-1.5 text-slate-600 hover:text-danger-500 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-900/20"
+                  className="p-1.5 text-slate-600 hover:text-rose-500 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20"
                   title={t('cloud.disconnect', 'Disconnect')}
                 >
                   <Trash2 size={14} />

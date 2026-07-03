@@ -203,12 +203,18 @@ router.get(
   '/alerts',
   verifySuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
-    await ensureAlertsTable();
-    const { all: dbAll } = await import('../utils/DbPromise.js');
-    const rows = await dbAll('SELECT * FROM system_health_alerts ORDER BY created_at DESC', [], {
-      fallback: true,
-    });
-    res.json(rows.map(alertRowToJson));
+    // Fail-soft: lazy DDL must not surface as a bare 500 on a read.
+    try {
+      await ensureAlertsTable();
+      const { all: dbAll } = await import('../utils/DbPromise.js');
+      const rows = await dbAll('SELECT * FROM system_health_alerts ORDER BY created_at DESC', [], {
+        fallback: true,
+      });
+      res.json(rows.map(alertRowToJson));
+    } catch (err) {
+      console.error('[systemHealth] GET /alerts failed (fail-soft, returning empty):', err);
+      res.json([]);
+    }
   })
 );
 

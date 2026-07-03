@@ -131,7 +131,7 @@ docs/ui-standards/
 ### Warstwy szczegółu
 - **`00-foundation/`** — `color-system.md` · `visual-language.md` · `light-mode-readability.md` · `canvas-mode.md` · `artifact-identity-map.md`
 - **`01-shell-layout/`** — `presentation-modes.md` (tryby D/N/C) · `n-mode-card-standard.md` · `shared-nmode-sections-standard.md` · `artifact-shell.md` · `artifact-shell-future-standard.md` · `app-topbar-standard-v3.md`
-- **`02-components/`** — `shared-sections.md` · `decision-panel.md` · `task-panel.md` · `notification-panel.md` · `building-blocks.md` · `help-*` · `workspace-3-tools-strip.md` …
+- **`02-components/`** — `shared-sections.md` · `decision-panel.md` · `task-panel.md` · `notification-panel.md` · `building-blocks.md` · `help-*` · `workspace-3-tools-strip.md` · `navigation-permissions-canon.md` (nawigacja cross-tool + bramki uprawnień, ref sweepu L1) …
 - **`03-modules/`** — `TABLE_AND_PREVIEW_CANON.md` · `BLOCK_TYPES_CANON.md` · `INSIGHT_CANON.md` · `INITIATIVE_CANON.md` · `TIMELINE_CALENDAR_CANON.md` · `module-hub-standard.md` · `interactive-board-standard.md` · `tools-library-detail-standard.md`
 
 ### Aneks
@@ -151,6 +151,7 @@ Każdy agent (Claude, Cursor) **musi przeczytać ten kanon przed pracą nad UI**
 
 | Data | Wersja | Zmiana |
 |---|---|---|
+| 2026-06-29 | v3.0 | **Dodano warstwę** `02-components/navigation-permissions-canon.md` (T2.1 sweep L1) — konsoliduje nawigację cross-tool (hamburger-wzorzec Notatnika, jeden Command Row, wspólny rail Ideas + prefiksy) + bramki uprawnień (beta/pilot/role/flagi) jako referencję dla sweepu L1 z macierzy 4 poziomów. Addytywne (referuje CANON §4.5 + workspace-3-tools-strip + TABLE canon; zero złamanych linków). |
 | 2026-06-14 | v3.0 | **Faza 1** — Konsolidacja autorytetu: `CANON.md` jako jedyny front; scalone README (indeks) + Golden (treść→warstwy) + Operating (governance §3–5,8) + Canon V3 (legacy). Dodany doc↔kod binding (§6). Hierarchia prawdy rozstrzygnięta (§2). |
 | 2026-06-14 | v3.0 | **Faza 2** — Rozdział prawo/historia: 9 plików procesu + `evidence/`/`automation/`/`migration-backlog/` → `_archive/` (git mv). `.cursorrules` punkt wejścia → CANON. Repoint referencji, zero-dangling zweryfikowane w całym `docs/`. |
 | 2026-06-14 | v3.0 | **Faza 3** — (a) `light-mode-readability.md` promowany do v3.2 (490 lin.), usunięty gorszy duplikat ` 2.md`. (b) `shared-nmode-sections-standard.md` + `artifact-shell-future-standard.md` przeniesione root → `01-shell-layout/` (repoint, zero-dangling). (c) 5 przywróconych docs potwierdzone jako warstwa `03-modules` (NIE archiwizować). Root = czysta powierzchnia autorytetu. |

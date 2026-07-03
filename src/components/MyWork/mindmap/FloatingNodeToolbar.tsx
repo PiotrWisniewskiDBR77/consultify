@@ -134,7 +134,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
   const btnClass = (active: boolean) =>
     `flex h-9 w-9 items-center justify-center rounded-hig-lg transition-all duration-150 ${
       active
-        ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+        ? 'bg-slate-200/70 dark:bg-navy-800 text-slate-900 dark:text-slate-100'
         : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/[0.04]'
     }`;
 
@@ -155,7 +155,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
           disabled={disabled}
           title={isPl ? 'Dodaj gałąź (Tab)' : 'Add child (Tab)'}
           aria-label={isPl ? 'Dodaj gałąź (Tab)' : 'Add child (Tab)'}
-          className={`flex h-9 items-center gap-1 px-1.5 rounded-hig-lg transition-all duration-150 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 ${disabled ? 'opacity-40 pointer-events-none' : ''}`}
+          className={`flex h-9 items-center gap-1 px-1.5 rounded-hig-lg transition-all duration-150 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 ${disabled ? 'opacity-40 pointer-events-none' : ''}`}
         >
           <Plus size={14} strokeWidth={2.5} />
           <span className="text-[10px] font-semibold">{isPl ? 'Gałąź' : 'Child'}</span>

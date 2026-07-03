@@ -153,7 +153,7 @@ function renderNodesWithCitations(
           parts.push(
             <span
               key={`${path}-cite-${i}`}
-              className="inline-flex items-center justify-center w-4 h-4 text-[9px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-500 rounded align-super mx-0.5"
+              className="inline-flex items-center justify-center w-4 h-4 text-[9px] font-semibold bg-c-surface-raised text-c-text-muted rounded align-super mx-0.5"
               title="Citation reference (source not available)"
             >
               {num}
@@ -521,7 +521,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         {/* Author name for team messages */}
         {msg.role === 'user' && msg.authorName && (
           <span
-            className={`text-[10px] text-slate-500 dark:text-slate-400 mb-0.5 pr-1 font-medium ${
+            className={`text-[10px] text-c-text-muted mb-0.5 pr-1 font-medium ${
               isRtlChatLanguage ? 'text-right' : 'text-left'
             }`}
           >
@@ -532,15 +532,16 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
           className={`relative ${isCompact ? 'text-xs' : 'text-sm'} leading-relaxed ${
             msg.role === 'user'
               ? // User: subtle rounded bubble (the one place where a bubble is
-                // still useful — it says "this is what *you* said"). Crimson
-                // tint + soft border, fully rounded (ChatGPT/Claude/Gemini).
-                'rounded-2xl px-4 py-2.5 shadow-sm bg-primary-50 text-primary-900 border border-primary-100 dark:bg-primary-900/25 dark:text-primary-50 dark:border-primary-800/40'
+                // still useful — it says "this is what *you* said"). Neutral
+                // surface + soft border, fully rounded (ChatGPT/Claude/Gemini).
+                // NON-crimson per SPEC-K §16 (walkthrough: "red AI bubbles").
+                'rounded-2xl px-4 py-2.5 shadow-sm bg-c-surface-raised text-c-text border border-c-border'
               : // Teresa: NO bubble — answer flows as document-style text on
                 // the page background. This is how ChatGPT, Claude, Grok and
                 // Gemini all render the assistant turn. No bg, no border, no
                 // shadow — only typography. Keeps `relative` so any
                 // absolutely-positioned children inside still anchor here.
-                'text-slate-700 dark:text-slate-200'
+                'text-c-text'
           } ${isRtlChatLanguage ? 'text-right' : 'text-left'}`}
           dir={isRtlChatLanguage ? 'rtl' : 'ltr'}
         >
@@ -594,11 +595,11 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               )}
 
               {!isPolicyRefusal && policyNoSourcesNotice && !hasCitations && (
-                <div className="not-prose mb-3 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-900/30">
-                  <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                <div className="not-prose mb-3 p-3 rounded-lg border border-c-border bg-c-surface-raised">
+                  <div className="text-xs font-semibold text-c-text">
                     {t('policy.noSources.title', 'No sources found')}
                   </div>
-                  <div className="mt-1 text-[11px] text-slate-600 dark:text-slate-300">
+                  <div className="mt-1 text-[11px] text-c-text-secondary">
                     {String(
                       policyNoSourcesNotice?.message ||
                         t(
@@ -616,7 +617,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               {/* Deep Thinking: Research progress (SSE events) */}
               {isDeepSearchAnswer && (msg as any).metadata?.researchVisibility?.items && (
                 <div className={`${isCompact ? 'mb-2' : 'mb-3'} not-prose`}>
-                  <div className="mb-2 text-[11px] font-medium text-slate-600 dark:text-slate-300">
+                  <div className="mb-2 text-[11px] font-medium text-c-text-secondary">
                     Research & Sources (planned)
                   </div>
                   <div className="space-y-1">
@@ -625,19 +626,19 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                       .map((it: any) => (
                         <div
                           key={it.id}
-                          className="flex items-start justify-between gap-2 text-[11px] bg-slate-100 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700 rounded-md px-2 py-1"
+                          className="flex items-start justify-between gap-2 text-[11px] bg-c-surface-raised border border-c-border rounded-md px-2 py-1"
                         >
                           <div className="min-w-0">
-                            <div className="text-slate-700 dark:text-slate-200 truncate">
+                            <div className="text-c-text-secondary truncate">
                               {it.label}
                             </div>
                             {it.rationale ? (
-                              <div className="text-slate-600 dark:text-slate-500 truncate">
+                              <div className="text-c-text-muted truncate">
                                 {it.rationale}
                               </div>
                             ) : null}
                           </div>
-                          <div className="flex-shrink-0 text-slate-500 dark:text-slate-400">
+                          <div className="flex-shrink-0 text-c-text-muted">
                             {String(it.status || 'planned')}
                           </div>
                         </div>
@@ -700,10 +701,10 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 </div>
               ) : isDeepThinkingConfirm ? (
                 <div className="space-y-3">
-                  <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  <div className="text-xs font-semibold text-c-text-secondary">
                     Confirm Understanding (Deep Thinking)
                   </div>
-                  <div className="text-xs text-slate-600 dark:text-slate-300 space-y-1">
+                  <div className="text-xs text-c-text-secondary space-y-1">
                     <div className="font-medium">My understanding of your task</div>
                     <ul className="list-disc pl-4 space-y-0.5">
                       <li>
@@ -740,7 +741,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
 
                   {Array.isArray(confirmPayload?.missingInfoQuestions) &&
                   confirmPayload.missingInfoQuestions.length ? (
-                    <div className="text-xs text-slate-600 dark:text-slate-300">
+                    <div className="text-xs text-c-text-secondary">
                       <div className="font-medium mb-1">Assumptions & gaps (optional)</div>
                       <ol className="list-decimal pl-4 space-y-0.5">
                         {confirmPayload.missingInfoQuestions.slice(0, 3).map((q: any) => (
@@ -754,12 +755,12 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   {dtPendingConfirm?.messageId === msg.id &&
                   Array.isArray(dtPendingConfirm.agentAudit?.suggested?.agents) &&
                   dtPendingConfirm.agentAudit!.suggested.agents.length ? (
-                    <div className="text-xs text-slate-600 dark:text-slate-300">
+                    <div className="text-xs text-c-text-secondary">
                       <div className="font-medium mb-2">
                         Suggested reviewers (Agent Audit Layer)
                       </div>
                       <div className="flex flex-wrap items-center gap-2 mb-2">
-                        <label className="text-[11px] text-slate-500 dark:text-slate-400">
+                        <label className="text-[11px] text-c-text-muted">
                           Intent
                         </label>
                         <select
@@ -779,14 +780,14 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                             );
                             void refreshAgentAuditSuggestionsOnly({ userIntent: next });
                           }}
-                          className="text-[11px] bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-md px-2 py-1"
+                          className="text-[11px] bg-c-surface border border-c-border rounded-md px-2 py-1"
                         >
                           <option value="validate">Validate</option>
                           <option value="stress_test">Stress-test</option>
                           <option value="approve">Approve</option>
                         </select>
 
-                        <label className="text-[11px] text-slate-500 dark:text-slate-400 ml-2">
+                        <label className="text-[11px] text-c-text-muted ml-2">
                           Max agents
                         </label>
                         <select
@@ -803,7 +804,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                             );
                             void refreshAgentAuditSuggestionsOnly({ maxAgents: next });
                           }}
-                          className="text-[11px] bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-md px-2 py-1"
+                          className="text-[11px] bg-c-surface border border-c-border rounded-md px-2 py-1"
                         >
                           <option value={2}>2</option>
                           <option value={3}>3</option>
@@ -825,7 +826,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                           return (
                             <label
                               key={id}
-                              className="flex items-start gap-2 bg-slate-100 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700 rounded-md px-2 py-1"
+                              className="flex items-start gap-2 bg-c-surface-raised border border-c-border rounded-md px-2 py-1"
                             >
                               <input
                                 type="checkbox"
@@ -849,11 +850,11 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                 }}
                               />
                               <div className="min-w-0">
-                                <div className="text-slate-700 dark:text-slate-200 truncate">
+                                <div className="text-c-text-secondary truncate">
                                   {label}
                                 </div>
                                 {why ? (
-                                  <div className="text-slate-600 dark:text-slate-500 truncate">
+                                  <div className="text-c-text-muted truncate">
                                     {why}
                                   </div>
                                 ) : null}
@@ -862,7 +863,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                           );
                         })}
                       </div>
-                      <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+                      <div className="mt-2 text-[11px] text-c-text-muted">
                         Selected: {dtPendingConfirm.agentAudit?.selectedAgentIds?.length || 0}{' '}
                         reviewer(s) · They will audit the final report (no interference with DT).
                       </div>
@@ -872,7 +873,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   {/* Adjust */}
                   {dtPendingConfirm?.messageId === msg.id && (
                     <div className="space-y-2">
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                      <div className="text-[11px] text-c-text-muted">
                         If this is not correct, adjust the task and re-run confirm.
                       </div>
                       <textarea
@@ -883,7 +884,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                           )
                         }
                         rows={3}
-                        className="w-full text-xs bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-2 outline-none focus:ring-2 focus:ring-blue-500/40"
+                        className="w-full text-xs bg-c-surface border border-c-border rounded-lg p-2 outline-none focus:ring-2 focus:ring-c-focus"
                       />
                       <div className="flex flex-wrap gap-2">
                         <button
@@ -895,14 +896,14 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                               dtPendingConfirm.agentAudit?.suggested?.agents?.length > 0 &&
                               (dtPendingConfirm.agentAudit?.selectedAgentIds?.length || 0) === 0)
                           }
-                          className="px-3 py-1.5 text-xs font-medium rounded-lg bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-3 py-1.5 text-xs font-medium rounded-lg bg-c-accent hover:bg-c-accent text-white disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Confirm & proceed
                         </button>
                         <button
                           onClick={handleDeepThinkingReconfirm}
                           disabled={dtConfirmBusy || isDisabled}
-                          className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-3 py-1.5 text-xs font-medium rounded-lg bg-c-surface border border-c-border text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {dtConfirmBusy ? 'Reconfirming…' : 'Adjust & reconfirm'}
                         </button>
@@ -979,7 +980,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                             code: ({ inline, className: codeClassName, children }: any) => {
                               if (inline) {
                                 return (
-                                  <code className="px-1 py-0.5 bg-slate-200 dark:bg-navy-700 rounded text-primary-600 dark:text-primary-400 text-xs font-mono">
+                                  <code className="px-1 py-0.5 bg-c-surface-raised border border-c-border rounded text-c-text text-xs font-mono">
                                     {children}
                                   </code>
                                 );
@@ -996,7 +997,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                 href={href}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-primary-600 hover:text-primary-700 underline"
+                                className="text-c-accent hover:opacity-80 underline underline-offset-2"
                               >
                                 {children}
                               </a>
@@ -1034,7 +1035,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                   <div className="text-xs font-semibold text-amber-700 dark:text-amber-400">
                                     {hint.title}
                                   </div>
-                                  <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
+                                  <div className="text-[11px] text-c-text-secondary mt-0.5">
                                     {hint.description}
                                   </div>
                                 </div>
@@ -1062,7 +1063,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   {msg.role === 'ai' &&
                     !msg.isStreaming &&
                     (msg as any).metadata?.agentAudit?.kind === 'verdict' && (
-                      <div className="mt-3 p-3 bg-slate-50 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700 rounded-lg">
+                      <div className="mt-3 p-3 bg-c-surface border border-c-border rounded-lg">
                         {(() => {
                           const audit = (msg as any).metadata?.agentAudit || {};
                           const verdict = audit?.verdict || {};
@@ -1088,7 +1089,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                               return (
                                 <div
                                   key={`${s.type}-${idx}`}
-                                  className="text-[11px] text-slate-600 dark:text-slate-300"
+                                  className="text-[11px] text-c-text-secondary"
                                 >
                                   <span className="font-medium">DT</span>
                                   {s.quote ? `: "${String(s.quote).slice(0, 180)}"` : ''}
@@ -1106,14 +1107,14 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                               return (
                                 <div
                                   key={`${s.type}-${idx}`}
-                                  className="text-[11px] text-slate-600 dark:text-slate-300"
+                                  className="text-[11px] text-c-text-secondary"
                                 >
                                   <div>
                                     <span className="font-medium">KB</span>
                                     {meta ? `: ${meta}` : ''}
                                   </div>
                                   {s.snippet ? (
-                                    <div className="mt-1 px-2 py-1 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded text-[10px] leading-snug">
+                                    <div className="mt-1 px-2 py-1 bg-c-surface border border-c-border rounded text-[10px] leading-snug">
                                       {String(s.snippet).slice(0, 220)}
                                     </div>
                                   ) : null}
@@ -1126,7 +1127,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                               const label = String(s.title || s.domain || url);
                               return (
                                 <div key={`${s.type}-${idx}`} className="text-[11px]">
-                                  <span className="font-medium text-slate-600 dark:text-slate-300">
+                                  <span className="font-medium text-c-text-secondary">
                                     Web
                                   </span>
                                   {': '}
@@ -1147,10 +1148,10 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                           return (
                             <>
                               <div className="flex flex-wrap items-center justify-between gap-2">
-                                <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                                <div className="text-xs font-semibold text-c-text-secondary">
                                   Agent Audit — details
                                 </div>
-                                <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                                <div className="text-[11px] text-c-text-muted">
                                   Status:{' '}
                                   <span className="font-medium">
                                     {String(verdict?.qualityStatus || '—')}
@@ -1161,14 +1162,14 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
 
                               {gateExplanations.length ? (
                                 <div className="mt-2">
-                                  <div className="text-[11px] font-medium text-slate-600 dark:text-slate-300 mb-1">
+                                  <div className="text-[11px] font-medium text-c-text-secondary mb-1">
                                     Gate reasons
                                   </div>
                                   <ul className="space-y-0.5">
                                     {gateExplanations.slice(0, 6).map((g: any, i: number) => (
                                       <li
                                         key={`${String(g?.gate || '')}-${i}`}
-                                        className="text-[11px] text-slate-600 dark:text-slate-300"
+                                        className="text-[11px] text-c-text-secondary"
                                       >
                                         <span className="font-semibold">{String(g.gate)}</span>
                                         {': '}
@@ -1185,11 +1186,11 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                   <button
                                     onClick={() => handleAgentAuditAccept(audit, msg.id)}
                                     disabled={isDisabled || agentAuditBusy}
-                                    className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-700 hover:bg-slate-800 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="px-3 py-1.5 text-xs font-medium rounded-lg bg-c-accent hover:bg-c-accent text-white disabled:opacity-50 disabled:cursor-not-allowed"
                                   >
                                     Accept risk & proceed
                                   </button>
-                                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                                  <div className="text-[11px] text-c-text-muted">
                                     This is recorded in the audit trail.
                                   </div>
                                 </div>
@@ -1217,7 +1218,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                           className={`px-2.5 py-1 text-[11px] rounded-full border transition-colors ${
                                             isActive
                                               ? 'bg-primary-100 dark:bg-primary-900/30 border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300'
-                                              : 'bg-white dark:bg-navy-950 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                                              : 'bg-c-surface border-c-border text-c-text-secondary hover:bg-c-surface-raised'
                                           }`}
                                         >
                                           {String(label)}
@@ -1231,7 +1232,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
 
                                   {activeReview ? (
                                     <div className="mt-3">
-                                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                                      <div className="text-[11px] text-c-text-muted">
                                         Verdict:{' '}
                                         <span className="font-medium">
                                           {String(activeReview.verdict || '—')}
@@ -1244,7 +1245,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                       {Array.isArray(activeReview.findings) &&
                                       activeReview.findings.length ? (
                                         <div className="mt-2">
-                                          <div className="text-[11px] font-medium text-slate-600 dark:text-slate-300 mb-1">
+                                          <div className="text-[11px] font-medium text-c-text-secondary mb-1">
                                             Findings
                                           </div>
                                           <div className="space-y-2">
@@ -1253,9 +1254,9 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                               .map((f: any, i: number) => (
                                                 <div
                                                   key={`${String(f?.area || 'other')}-${i}`}
-                                                  className="p-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-md"
+                                                  className="p-2 bg-c-surface border border-c-border rounded-md"
                                                 >
-                                                  <div className="text-[11px] text-slate-700 dark:text-slate-200">
+                                                  <div className="text-[11px] text-c-text-secondary">
                                                     <span className="font-semibold">
                                                       {String(f.severity || '').toUpperCase()}
                                                     </span>
@@ -1272,7 +1273,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
 
                                                   {Array.isArray(f.missingDataQuestions) &&
                                                   f.missingDataQuestions.length ? (
-                                                    <div className="mt-1 text-[11px] text-slate-600 dark:text-slate-300">
+                                                    <div className="mt-1 text-[11px] text-c-text-secondary">
                                                       <div className="font-medium">
                                                         Missing data
                                                       </div>
@@ -1294,10 +1295,10 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                       {Array.isArray(activeReview.conflicts) &&
                                       activeReview.conflicts.length ? (
                                         <div className="mt-2">
-                                          <div className="text-[11px] font-medium text-slate-600 dark:text-slate-300 mb-1">
+                                          <div className="text-[11px] font-medium text-c-text-secondary mb-1">
                                             Conflicts
                                           </div>
-                                          <ul className="list-disc pl-4 text-[11px] text-slate-600 dark:text-slate-300">
+                                          <ul className="list-disc pl-4 text-[11px] text-c-text-secondary">
                                             {activeReview.conflicts
                                               .slice(0, 6)
                                               .map((c: any, ci: number) => (
@@ -1333,20 +1334,20 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     value={editingText}
                     onChange={(e) => setEditingText(e.target.value)}
                     rows={3}
-                    className="w-full text-sm bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-2 outline-none focus:ring-2 focus:ring-blue-500/40 text-slate-900 dark:text-slate-100"
+                    className="w-full text-sm bg-c-surface border border-c-border rounded-lg p-2 outline-none focus:ring-2 focus:ring-c-focus text-c-text"
                   />
                   <div className="flex items-center justify-end gap-2">
                     <button
                       onClick={handleCancelEditMessage}
                       disabled={editBusy}
-                      className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 disabled:opacity-50"
+                      className="px-3 py-1.5 text-xs font-medium rounded-lg bg-c-surface border border-c-border text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-50"
                     >
                       {t('common.cancel', 'Cancel')}
                     </button>
                     <button
                       onClick={handleCommitEditMessage}
                       disabled={editBusy || !editingText.trim()}
-                      className="px-3 py-1.5 text-xs font-medium rounded-lg bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50"
+                      className="px-3 py-1.5 text-xs font-medium rounded-lg bg-c-accent hover:bg-c-accent text-white disabled:opacity-50"
                     >
                       {editBusy ? t('common.saving', 'Saving…') : t('common.save', 'Save')}
                     </button>
@@ -1449,7 +1450,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               {/* Cost-per-analysis estimate badge */}
               {userVisibleContent && userVisibleContent.length > 50 && (
                 <span
-                  className="text-slate-600 dark:text-slate-500"
+                  className="text-c-text-muted"
                   title={t(
                     'stream.costEstimateTooltip',
                     'Estimated AI cost for this response based on token usage'
@@ -1468,7 +1469,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
 
           {/* Abort feedback — transparent cancellation acknowledgement */}
           {!msg.isStreaming && isLastMessage && abortFeedback && (
-            <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 transition-opacity duration-500">
+            <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-c-text-muted transition-opacity duration-500">
               {abortFeedback === 'partial' ? (
                 <span>
                   {t('stream.stoppedPartial', 'Response stopped. Partial answer shown above.')}
@@ -1486,7 +1487,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             agentAuditState.state !== 'error' && (
               <div className="mt-3 p-2.5 bg-primary-50/50 dark:bg-primary-900/10 border border-primary-200 dark:border-primary-800 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 rounded-full bg-navy-900 animate-pulse" />
+                  <div className="w-2 h-2 rounded-full bg-c-accent animate-pulse" />
                   <span className="text-xs font-medium text-primary-700 dark:text-primary-300">
                     {agentAuditState.state === 'reviewing'
                       ? t('agentAudit.streaming.reviewing', 'Multi-Agent Review in Progress')
@@ -1526,8 +1527,8 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                 : isError
                                   ? 'bg-danger-50 dark:bg-danger-900/20 border-danger-200 dark:border-danger-800 text-danger-700 dark:text-danger-300'
                                   : isActive
-                                    ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'
-                                    : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                                    ? 'bg-c-info/10 border-c-info/30 text-c-info'
+                                    : 'bg-c-surface-raised border-c-border text-c-text-secondary'
                             }`}
                           >
                             {isDone ? (
@@ -1535,9 +1536,9 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                             ) : isError ? (
                               <span className="w-1.5 h-1.5 rounded-full bg-danger-500" />
                             ) : isActive ? (
-                              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                              <span className="w-1.5 h-1.5 rounded-full bg-c-accent animate-pulse" />
                             ) : (
-                              <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                              <span className="w-1.5 h-1.5 rounded-full bg-c-text-muted" />
                             )}
                             <span className="truncate max-w-[100px]">{agentName}</span>
                             {isDone && sourceCount > 0 && (
@@ -1591,7 +1592,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             {/* Copy */}
             <button
               onClick={() => handleCopyMessage(userVisibleContent, msg.id)}
-              className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800"
+              className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised"
               title={t('chat.actions.copy', 'Copy')}
             >
               {isCopied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
@@ -1600,7 +1601,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             {/* Edit (user only) */}
             <button
               onClick={() => handleStartEditMessage(msg.id)}
-              className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800"
+              className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised"
               title={t('chat.actions.edit', 'Edit')}
             >
               <Pencil size={12} />
@@ -1610,7 +1611,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               <button
                 onClick={() => handleSaveToContext(msg.id, userVisibleContent, contextSaveRole)}
                 disabled={isContextSaveBusy || isContextSaved}
-                className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised disabled:opacity-50 disabled:cursor-not-allowed"
                 title={
                   isContextSaved
                     ? t('chat.actions.savedToContext', 'Saved to Context OS')
@@ -1632,7 +1633,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             {handleBranchFromMessage && !String(msg.id || '').startsWith('local-') && (
               <button
                 onClick={() => handleBranchFromMessage(msg.id)}
-                className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800"
+                className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised"
                 title={t('chat.actions.branch', 'Branch from here')}
               >
                 <GitBranch size={12} />
@@ -1686,11 +1687,11 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             <button
               type="button"
               onClick={() => onEmitArtifactFromMessage(content, decision.title)}
-              className="group inline-flex max-w-full items-center gap-2 rounded-xl border border-navy-200 dark:border-navy-700/40 bg-navy-50/60 dark:bg-navy-800/30 px-3 py-1.5 text-left transition-colors hover:border-primary-200 hover:bg-primary-50/70 dark:hover:border-primary-700/50 dark:hover:bg-primary-900/20"
+              className="group inline-flex max-w-full items-center gap-2 rounded-xl border border-c-border bg-c-surface-raised px-3 py-1.5 text-left transition-colors hover:border-primary-200 hover:bg-primary-50/70 dark:hover:border-primary-700/50 dark:hover:bg-primary-900/20"
               title={t('chat.message.emitDocumentTooltip', 'Create a document from this answer')}
             >
-              <FilePlus2 size={14} className="shrink-0 text-navy-500 group-hover:text-primary-500" />
-              <span className="truncate text-xs font-medium text-navy-600 dark:text-navy-300 group-hover:text-primary-600">
+              <FilePlus2 size={14} className="shrink-0 text-c-text-muted group-hover:text-primary-500" />
+              <span className="truncate text-xs font-medium text-c-text-secondary group-hover:text-primary-600">
                 {t('chat.message.openAsDocument', 'Open as document')}
               </span>
             </button>
@@ -1786,7 +1787,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             {/* Copy — always visible */}
             <button
               onClick={() => handleCopyMessage(userVisibleContent, msg.id)}
-              className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+              className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors"
               title={t('chat.actions.copy', 'Copy')}
               aria-label={t('chat.actions.copy', 'Copy')}
             >
@@ -1801,7 +1802,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               className={`p-1 rounded-md transition-colors ${
                 voiceState.isSpeaking
                   ? 'text-danger-500'
-                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10'
+                  : 'text-c-text-muted hover:text-c-text hover:bg-c-surface-raised'
               }`}
               title={
                 voiceState.isSpeaking
@@ -1821,7 +1822,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   return next;
                 })
               }
-              className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-slate-300/50 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/5 transition-colors"
+              className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-c-border text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors"
               title={t('chat.actions.toggleResponseActions', 'More actions')}
               aria-label={t('chat.actions.toggleResponseActions', 'More actions')}
             >
@@ -1829,7 +1830,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             </button>
 
             {showCompactActions && (
-              <div className="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-slate-50/70 dark:bg-navy-900/40">
+              <div className="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-xl border border-c-border bg-c-surface-raised">
                 <InlineResponseFeedback
                   messageId={msg.id}
                   conversationId={activeConversationId || undefined}
@@ -1841,7 +1842,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 {handleBranchFromMessage && !String(msg.id || '').startsWith('local-') && (
                   <button
                     onClick={() => handleBranchFromMessage(msg.id)}
-                    className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                    className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors"
                     title={t('chat.actions.branch', 'Branch from here')}
                     aria-label={t('chat.actions.branch', 'Branch from here')}
                   >
@@ -1850,7 +1851,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 )}
                 <button
                   onClick={() => handleSaveAsNote(msg.id, userVisibleContent)}
-                  className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                  className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors"
                   title={t('myWork.notebook.saveAsNote', 'Save as note')}
                   aria-label={t('myWork.notebook.saveAsNote', 'Save as note')}
                 >
@@ -1858,7 +1859,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 </button>
                 <button
                   onClick={() => handleSaveAsIdea(msg.id, userVisibleContent)}
-                  className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                  className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors"
                   title={t('myWork.ideas.saveAsIdea', 'Save as idea')}
                   aria-label={t('myWork.ideas.saveAsIdea', 'Save as idea')}
                 >
@@ -1868,7 +1869,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   <button
                     onClick={() => handleSaveToContext(msg.id, userVisibleContent, contextSaveRole)}
                     disabled={isContextSaveBusy || isContextSaved}
-                    className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     title={
                       isContextSaved
                         ? t('chat.actions.savedToContext', 'Saved to Context OS')
@@ -1890,14 +1891,14 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   className={`p-1 rounded-md transition-colors ${
                     showSourcesDetails
                       ? 'text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/25'
-                      : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10'
+                      : 'text-c-text-muted hover:text-c-text hover:bg-c-surface-raised'
                   }`}
                   title={t('chat.sources.details', 'Sources details')}
                   aria-label={t('chat.sources.details', 'Sources details')}
                 >
                   <ShieldCheck size={12} />
                 </button>
-                <span className="mx-0.5 h-3 w-px bg-slate-200 dark:bg-navy-700" />
+                <span className="mx-0.5 h-3 w-px bg-c-border" />
               </div>
             )}
           </div>
@@ -1932,7 +1933,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   </button>
                   <button
                     onClick={() => setDtHintDismissed(true)}
-                    className="px-3 py-1 text-xs font-medium rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                    className="px-3 py-1 text-xs font-medium rounded-lg bg-c-surface border border-c-border text-c-text-secondary hover:bg-c-surface-raised transition-colors"
                   >
                     {t('deepThinking.dismissHint', 'Not now')}
                   </button>
@@ -1958,7 +1959,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               <button
                 onClick={() => handleSaveAsDecision(msg.id, userVisibleContent)}
                 disabled={dtSavingDecision === msg.id}
-                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 transition-colors flex items-center gap-1"
+                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-c-accent hover:bg-c-accent text-white disabled:opacity-50 transition-colors flex items-center gap-1"
               >
                 <Bookmark size={12} />
                 {dtSavingDecision === msg.id
@@ -1968,7 +1969,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               <button
                 onClick={() => handleSaveAsDecision(msg.id, userVisibleContent)}
                 disabled={dtSavingDecision === msg.id}
-                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white dark:bg-navy-900 border border-primary-200 dark:border-primary-700 text-primary-700 dark:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 disabled:opacity-50 transition-colors flex items-center gap-1"
+                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-c-surface border border-primary-200 dark:border-primary-700 text-primary-700 dark:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 disabled:opacity-50 transition-colors flex items-center gap-1"
               >
                 <Zap size={12} />
                 {t('deepThinking.convertInitiative', 'Convert to Initiative')}
@@ -1996,7 +1997,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   link.click();
                   URL.revokeObjectURL(url);
                 }}
-                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors flex items-center gap-1"
+                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-c-surface border border-c-border text-c-text-secondary hover:bg-c-surface-raised transition-colors flex items-center gap-1"
               >
                 <Download size={12} />
                 {t('deepThinking.exportReport', 'Export Report')}
@@ -2010,7 +2011,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   const reportTitle = `${reportType} Report — ${dateStr}`;
                   handleSaveAsNote(msg.id, `# ${reportTitle}\n\n${userVisibleContent}`);
                 }}
-                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors flex items-center gap-1"
+                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-c-surface border border-c-border text-c-text-secondary hover:bg-c-surface-raised transition-colors flex items-center gap-1"
               >
                 <Bookmark size={12} />
                 {t('deepThinking.saveToNotebook', 'Save to Notebook')}
@@ -2021,7 +2022,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   const brief = formatExecutiveBrief(userVisibleContent, 'en');
                   speak(brief);
                 }}
-                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors flex items-center gap-1"
+                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-c-surface border border-c-border text-c-text-secondary hover:bg-c-surface-raised transition-colors flex items-center gap-1"
               >
                 <Volume2 size={12} />
                 {t('deepThinking.listenBrief', 'Listen to Brief')}
@@ -2068,13 +2069,13 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 onClick={() =>
                   handleSendMessage(t('deepThinking.narrowFocus', 'Narrow focus on the first path'))
                 }
-                className="px-3 py-1 text-xs font-medium rounded-lg bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors"
+                className="px-3 py-1 text-xs font-medium rounded-lg bg-c-accent hover:bg-c-accent text-white transition-colors"
               >
                 {t('deepThinking.narrowFocusBtn', 'Narrow focus')}
               </button>
               <button
                 onClick={() => handleSendMessage(t('deepThinking.goDeeper', 'Go deeper'))}
-                className="px-3 py-1 text-xs font-medium rounded-lg bg-white dark:bg-navy-900 border border-primary-200 dark:border-primary-700 text-primary-700 dark:text-primary-300 hover:bg-primary-50 transition-colors"
+                className="px-3 py-1 text-xs font-medium rounded-lg bg-c-surface border border-primary-200 dark:border-primary-700 text-primary-700 dark:text-primary-300 hover:bg-primary-50 transition-colors"
               >
                 {t('deepThinking.continueDeeper', 'Continue to full report')}
               </button>
@@ -2101,7 +2102,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             >
               {agentAuditBusy ? 'Running audit…' : 'Run directed deepening'}
             </button>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400 self-center">
+            <div className="text-[11px] text-c-text-muted self-center">
               Iterations: {String((msg as any).metadata?.agentAudit?.loopIteration || 1)}/2
             </div>
           </div>
@@ -2122,7 +2123,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                       className={`px-3 py-1.5 text-xs rounded-full border transition-all flex items-center gap-1.5 ${
                         isSelected
                           ? 'bg-primary-100 dark:bg-primary-900/30 border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300'
-                          : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                          : 'bg-c-surface border-c-border text-c-text-secondary hover:bg-c-surface-raised'
                       }`}
                     >
                       {option.label}
@@ -2134,7 +2135,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               {isLastMessage && selectedMultiOptions.length > 0 && (
                 <button
                   onClick={handleMultiSelectConfirm}
-                  className="self-start px-4 py-1.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-xs font-medium rounded-lg transition-colors shadow-sm"
+                  className="self-start px-4 py-1.5 bg-c-accent hover:bg-c-accent text-white text-xs font-medium rounded-lg transition-colors shadow-sm"
                 >
                   {t('chat.confirmSelection', 'Confirm Selection')}
                 </button>
@@ -2147,7 +2148,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 onClick={() =>
                   onOptionSelect ? onOptionSelect(option) : handleSendMessage(option.label)
                 }
-                className="px-3 py-1.5 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 text-xs rounded-full hover:bg-primary-50 dark:hover:bg-primary-900/10 hover:border-primary-300 dark:hover:border-primary-700 hover:text-primary-700 dark:hover:text-primary-300 transition-all"
+                className="px-3 py-1.5 bg-c-surface border border-c-border text-c-text-secondary text-xs rounded-full hover:bg-primary-50 dark:hover:bg-primary-900/10 hover:border-primary-300 dark:hover:border-primary-700 hover:text-primary-700 dark:hover:text-primary-300 transition-all"
               >
                 {option.label}
               </button>

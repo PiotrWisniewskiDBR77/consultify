@@ -6,6 +6,56 @@ import path from 'path';
 import logger from '../../utils/Logger.js';
 import { llmConfigService } from './llmConfigService.js';
 
+/**
+ * Env var names the STT path can use, in priority order.
+ * Exported so health probes / startup logs can report WHICH keys are required
+ * without duplicating the resolution logic (SSOT).
+ */
+export const STT_ENV_KEYS = [
+  'OPENAI_API_KEY',
+  'GROQ_API_KEY',
+  'GEMINI_API_KEY',
+  'GOOGLE_AI_API_KEY',
+  'GOOGLE_API_KEY',
+] as const;
+
+export interface SttProviderAvailability {
+  available: boolean;
+  provider: 'openai' | 'groq' | 'gemini' | null;
+  /** Env var names that would enable STT (for diagnostics; never the values). */
+  requiredEnv: readonly string[];
+}
+
+/**
+ * Cheap, synchronous env-only check of whether the server STT path has ANY
+ * usable provider key. Does NOT consult llmConfigService (DB) — it answers the
+ * question "is STT wired via env on this deploy?" for health probes / startup logs.
+ *
+ * A key that is an OpenRouter/test placeholder (sk-or-…/sk-test…) is treated as
+ * NOT a valid OpenAI Whisper key, mirroring getClient() below.
+ */
+export function detectSttProviderFromEnv(
+  env: NodeJS.ProcessEnv = process.env
+): SttProviderAvailability {
+  const openaiKey = (env.OPENAI_API_KEY || '').trim();
+  if (openaiKey && !openaiKey.startsWith('sk-or-') && !openaiKey.startsWith('sk-test')) {
+    return { available: true, provider: 'openai', requiredEnv: STT_ENV_KEYS };
+  }
+  if ((env.GROQ_API_KEY || '').trim()) {
+    return { available: true, provider: 'groq', requiredEnv: STT_ENV_KEYS };
+  }
+  const geminiKey = (
+    env.GEMINI_API_KEY ||
+    env.GOOGLE_AI_API_KEY ||
+    (env as Record<string, string | undefined>).GOOGLE_API_KEY ||
+    ''
+  ).trim();
+  if (geminiKey && geminiKey !== 'YOUR_GEMINI_API_KEY_HERE') {
+    return { available: true, provider: 'gemini', requiredEnv: STT_ENV_KEYS };
+  }
+  return { available: false, provider: null, requiredEnv: STT_ENV_KEYS };
+}
+
 export class VoiceService {
   private static instance: VoiceService;
   private openai: OpenAI | null = null;

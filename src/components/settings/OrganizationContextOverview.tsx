@@ -173,7 +173,7 @@ export const OrganizationContextOverview: React.FC<OrganizationContextOverviewPr
                 type="button"
                 onClick={handleRebuild}
                 disabled={rebuilding}
-                className="inline-flex items-center gap-2 rounded-lg border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900 dark:bg-[#F4F7FB]/50 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/50 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
               >
                 <RefreshCw size={12} className={rebuilding ? 'animate-spin' : ''} />
                 {isPolish ? 'Rebuild snapshot' : 'Rebuild snapshot'}

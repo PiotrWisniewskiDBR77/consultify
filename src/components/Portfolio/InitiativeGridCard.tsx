@@ -152,9 +152,9 @@ export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({
       onDoubleClick={() => onOpenFull?.(initiative)}
       className={[
         'group relative cursor-pointer rounded-xl p-4',
-        'border border-slate-200/60 dark:border-white/[0.06]',
+        'border border-c-border-subtle',
         // canon §8.1 — neutral card surface; status color lives in the badge, not the card
-        'bg-white dark:bg-navy-900',
+        'bg-c-surface',
         'hover:shadow-md hover:-translate-y-px transition-all duration-150',
         terminal ? 'opacity-60' : '',
       ].join(' ')}
@@ -167,7 +167,7 @@ export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({
             label={STATUS_METADATA[initiative.status as InitiativeStatus]?.label}
           />
           {priorityLevel && <PriorityChip level={priorityLevel} label={initiative.priority} />}
-          <span className="inline-flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+          <span className="inline-flex items-center gap-1.5 text-[11px] text-c-text-muted">
             <span className={`w-1.5 h-1.5 rounded-full ${health.dotClass}`} />
             {health.label}
           </span>
@@ -183,7 +183,7 @@ export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({
 
       {/* Zone 2 — Title */}
       <h4
-        className="font-semibold text-sm text-slate-900 dark:text-slate-100 line-clamp-2 leading-snug"
+        className="font-semibold text-sm text-c-text line-clamp-2 leading-snug"
         title={initiative.name}
       >
         {initiative.name}
@@ -191,7 +191,7 @@ export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({
 
       {/* Zone 3 — Description (when available) */}
       {description && (
-        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+        <p className="mt-1 text-xs text-c-text-muted line-clamp-2">
           {description}
         </p>
       )}
@@ -200,34 +200,34 @@ export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({
       <div className="flex items-center gap-3 mt-3">
         {owner ? (
           <div className="flex items-center gap-1.5">
-            <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-white/[0.06] flex items-center justify-center text-[9px] font-medium text-slate-600 dark:text-slate-300 overflow-hidden flex-shrink-0">
+            <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-white/[0.06] flex items-center justify-center text-[9px] font-medium text-c-text-secondary overflow-hidden flex-shrink-0">
               {owner.avatarUrl ? (
                 <img src={owner.avatarUrl} alt="" className="w-full h-full object-cover" />
               ) : (
                 `${owner.firstName?.[0] || '?'}${owner.lastName?.[0] || ''}`
               )}
             </div>
-            <span className="text-[11px] text-slate-600 dark:text-slate-400 truncate">
+            <span className="text-[11px] text-c-text-secondary truncate">
               {owner.firstName} {owner.lastName?.[0]}.
             </span>
           </div>
         ) : (
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-1.5 text-[11px] text-c-text-muted">
             <User size={12} /> {isPolish ? 'Nieprzypisane' : 'Unassigned'}
           </div>
         )}
         {sponsor && (
           <>
-            <span className="text-slate-400 dark:text-slate-500 text-[10px]">/</span>
+            <span className="text-c-text-muted text-[10px]">/</span>
             <div className="flex items-center gap-1.5">
-              <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-white/[0.06] flex items-center justify-center text-[9px] font-medium text-slate-600 dark:text-slate-300 overflow-hidden flex-shrink-0">
+              <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-white/[0.06] flex items-center justify-center text-[9px] font-medium text-c-text-secondary overflow-hidden flex-shrink-0">
                 {sponsor.avatarUrl ? (
                   <img src={sponsor.avatarUrl} alt="" className="w-full h-full object-cover" />
                 ) : (
                   `${sponsor.firstName?.[0] || '?'}${sponsor.lastName?.[0] || ''}`
                 )}
               </div>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+              <span className="text-[11px] text-c-text-muted truncate">
                 {sponsor.firstName} {sponsor.lastName?.[0]}.
               </span>
             </div>
@@ -236,14 +236,14 @@ export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({
       </div>
 
       {/* Zone 4 — Stats footer: next step · due (3 values) */}
-      <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-white/[0.05] mt-3 pt-3">
+      <div className="flex items-center justify-between gap-2 text-[11px] text-c-text-muted border-t border-c-border-subtle mt-3 pt-3">
         <span className="truncate" title={nextStep?.label}>
           {nextStep ? (
             <>
-              <span className="text-slate-400 dark:text-slate-500">
+              <span className="text-c-text-muted">
                 {t('initiatives.card.nextStep', 'Next step')}:{' '}
               </span>
-              <span className="text-slate-700 dark:text-slate-300 font-medium">
+              <span className="text-c-text-secondary font-medium">
                 {nextStep.label}
               </span>
             </>
@@ -258,7 +258,7 @@ export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({
             showIcon
           />
         ) : (
-          <span className="text-slate-400 dark:text-slate-500 shrink-0">—</span>
+          <span className="text-c-text-muted shrink-0">—</span>
         )}
       </div>
     </div>

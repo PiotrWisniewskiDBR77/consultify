@@ -42,7 +42,9 @@ export function HeatmapLayout(
       axes: c.axes,
       scaleMax: c.scale_max,
       overallScore: c.overall_score,
-      position: { x: g.contentX, y: g.contentY + 0.2, w: g.contentW, h: g.contentH - 0.3 },
+      // Use the full usable region — the composite reserves space for its own
+      // Overall badge below the table, so no top gap is needed (W7).
+      position: { x: g.contentX, y: g.contentY, w: g.contentW, h: g.contentH },
     },
     tokens
   );

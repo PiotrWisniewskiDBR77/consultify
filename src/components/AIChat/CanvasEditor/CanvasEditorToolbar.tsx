@@ -24,6 +24,7 @@ import {
   Undo,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface CanvasEditorToolbarProps {
   editor: Editor | null;
@@ -57,6 +58,7 @@ const Btn: React.FC<{
 const Divider: React.FC = () => <div className="w-px h-5 bg-slate-200 dark:bg-white/10 mx-0.5" />;
 
 export const CanvasEditorToolbar: React.FC<CanvasEditorToolbarProps> = ({ editor }) => {
+  const { t } = useTranslation();
   if (!editor) return null;
 
   return (
@@ -182,7 +184,7 @@ export const CanvasEditorToolbar: React.FC<CanvasEditorToolbarProps> = ({ editor
         onClick={() =>
           editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
         }
-        title="Insert table"
+        title={t('canvas.editor.toolbar.insertTable', 'Insert table')}
       >
         <Table size={16} />
       </Btn>
@@ -192,7 +194,7 @@ export const CanvasEditorToolbar: React.FC<CanvasEditorToolbarProps> = ({ editor
           if (url) editor.chain().focus().setLink({ href: url }).run();
         }}
         active={editor.isActive('link')}
-        title="Insert link"
+        title={t('canvas.editor.toolbar.insertLink', 'Insert link')}
       >
         <Link size={16} />
       </Btn>

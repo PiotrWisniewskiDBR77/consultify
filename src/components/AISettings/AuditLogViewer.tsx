@@ -67,7 +67,30 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
       if (!response.ok) throw new Error('Failed to fetch audit log');
 
       const data = await response.json();
-      setEntries(data);
+      // The endpoint returns an array of entries, but tolerate the legacy
+      // { entries: [...] } / { rows: [...] } envelope too. Normalize snake_case
+      // DB columns into the camelCase shape the table renders.
+      const rawList: any[] = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.entries)
+          ? data.entries
+          : Array.isArray(data?.rows)
+            ? data.rows
+            : [];
+      const normalized: AISettingsAuditEntry[] = rawList.map((row: any) => ({
+        id: row.id,
+        timestamp: row.timestamp ?? row.created_at ?? '',
+        level: row.level,
+        actorId: row.actorId ?? row.actor_id ?? '',
+        actorRole: row.actorRole ?? row.actor_role ?? '',
+        targetId: row.targetId ?? row.target_id ?? '',
+        settingKey: row.settingKey ?? row.setting_key ?? '',
+        oldValue: row.oldValue ?? row.old_value ?? null,
+        newValue: row.newValue ?? row.new_value ?? null,
+        ipAddress: row.ipAddress ?? row.ip_address ?? null,
+        userAgent: row.userAgent ?? row.user_agent ?? null,
+      }));
+      setEntries(normalized);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {

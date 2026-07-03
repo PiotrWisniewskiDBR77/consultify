@@ -399,7 +399,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
   };
 
   const sectionLabel =
-    'text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 mb-4';
+    'text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4';
   const cardClass = 'bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-white/5 rounded-lg p-5';
 
   return (
@@ -431,7 +431,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                 <p className="text-sm font-medium text-primary-300">
                   {t('settings.data.gdprTitle', 'GDPR Compliant')}
                 </p>
-                <p className="text-xs text-slate-600 mt-0.5">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                   {t(
                     'settings.data.gdprDesc',
                     'We comply with GDPR regulations. You have full control over your personal data, including the right to access, export, and delete it.'
@@ -446,7 +446,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                 <Shield size={14} className="text-primary-400" />
                 {t('settings.data.consentsTitle', 'Consent Management')}
               </h4>
-              <p className="text-xs text-slate-500 mb-4">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
                 {t('settings.data.consentsDesc', 'Choose how we can use your data')}
               </p>
               <div className="space-y-3">
@@ -503,14 +503,14 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                       'px-4 py-2.5 rounded-lg text-sm font-medium transition-all border',
                       retention.period === option.value
                         ? 'bg-navy-900 text-white border-navy-900 shadow-sm dark:bg-primary-600/20 dark:text-primary-300 dark:border-primary-500'
-                        : 'bg-white dark:bg-navy-800/50 text-slate-600 border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20'
+                        : 'bg-white dark:bg-navy-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20'
                     )}
                   >
                     {t(option.labelKey, option.labelDefault)}
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-slate-500 mt-3 flex items-center gap-1.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-3 flex items-center gap-1.5">
                 <Info size={12} />
                 {t(
                   'settings.data.retentionNote',
@@ -533,7 +533,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                     <p className="text-sm font-medium text-white">
                       {t('settings.data.exportData', 'Export Your Data')}
                     </p>
-                    <p className="text-xs text-slate-600 mt-1">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                       {t(
                         'settings.data.exportDataDesc',
                         'Download a copy of all your personal data including profile, settings, activity history, and documents. Processing typically takes 24-48 hours.'
@@ -577,7 +577,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                     <p className="text-sm font-medium text-danger-300">
                       {t('settings.data.deleteAccount', 'Delete Account & Data')}
                     </p>
-                    <p className="text-xs text-slate-600 mt-1">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                       {t(
                         'settings.data.deleteAccountDesc',
                         'Permanently delete your account and all associated data. This action cannot be undone. A 30-day grace period applies before final deletion.'
@@ -603,13 +603,13 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                         {t('settings.data.deleteConfirmTitle', 'Are you absolutely sure?')}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-600 mb-3">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
                       {t(
                         'settings.data.deleteConfirmDesc',
                         'This action cannot be undone. All your data, including projects, settings, and history will be permanently deleted after a 30-day grace period.'
                       )}
                     </p>
-                    <label className="text-xs font-medium text-slate-600 mb-1.5 block">
+                    <label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5 block">
                       {t('settings.data.deleteConfirmType', 'Type "{{phrase}}" to confirm:', {
                         phrase: deleteConfirmationPhrase,
                       })}
@@ -621,7 +621,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                       className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-danger-300 dark:border-danger-500/30 rounded-lg text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-danger-500/50 outline-none transition-all mb-3"
                       placeholder={deleteConfirmationPhrase}
                     />
-                    <label className="text-xs font-medium text-slate-600 mb-1.5 block">
+                    <label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5 block">
                       {t('settings.data.deletePasswordLabel', 'Enter your password to confirm:')}
                     </label>
                     <input
@@ -726,16 +726,16 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                     >
                       <Icon
                         size={14}
-                        className="text-slate-500 group-hover:text-primary-400 mt-0.5 flex-shrink-0"
+                        className="text-slate-500 dark:text-slate-400 group-hover:text-primary-400 mt-0.5 flex-shrink-0"
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1">
-                          <span className="text-xs font-medium text-slate-600 group-hover:text-primary-300">
+                          <span className="text-xs font-medium text-slate-600 dark:text-slate-400 group-hover:text-primary-300">
                             {t(doc.titleKey, doc.titleDefault)}
                           </span>
-                          <ExternalLink size={10} className="text-slate-600" />
+                          <ExternalLink size={10} className="text-slate-600 dark:text-slate-400" />
                         </div>
-                        <span className="text-[11px] text-slate-500">
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400">
                           {t(doc.descKey, doc.desc)}
                         </span>
                       </div>

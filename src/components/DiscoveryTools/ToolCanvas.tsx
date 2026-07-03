@@ -42,6 +42,36 @@ import {
   MarketForcesOutputsPhase,
 } from './tools/MarketForces/MarketForcesPhases';
 import {
+  AmbitionDecomposerBuildPhase,
+  AmbitionDecomposerInputPhase,
+  AmbitionDecomposerInsightsPhase,
+  AmbitionDecomposerOutputsPhase,
+} from './tools/AmbitionDecomposer';
+import {
+  CapabilityMapperBuildPhase,
+  CapabilityMapperInputPhase,
+  CapabilityMapperInsightsPhase,
+  CapabilityMapperOutputsPhase,
+} from './tools/CapabilityMapper';
+import {
+  FocusTradeoffBuildPhase,
+  FocusTradeoffInputPhase,
+  FocusTradeoffInsightsPhase,
+  FocusTradeoffOutputsPhase,
+} from './tools/FocusTradeoff';
+import {
+  NarrativeEngineBuildPhase,
+  NarrativeEngineInputPhase,
+  NarrativeEngineInsightsPhase,
+  NarrativeEngineOutputsPhase,
+} from './tools/NarrativeEngine';
+import {
+  ValueChainBuildPhase,
+  ValueChainInputPhase,
+  ValueChainInsightsPhase,
+  ValueChainOutputsPhase,
+} from './tools/ValueChain/ValueChainPhases';
+import {
   A3CountermeasuresStep,
   A3ProblemStep,
   A3RootCauseStep,
@@ -119,7 +149,7 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
   const renderStepContent = () => {
     if (!stepDefinition) {
       return (
-        <div className="flex items-center justify-center h-full text-slate-600">
+        <div className="flex items-center justify-center h-full text-c-text-secondary">
           Loading step...
         </div>
       );
@@ -204,7 +234,15 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
 
     // Context step (first step for all tools)
     if (stepDefinition.id === 'context') {
-      return <ContextStep toolType={toolType} session={session} isPolish={isPolish} />;
+      return (
+        <ContextStep
+          toolType={toolType}
+          session={session}
+          isPolish={isPolish}
+          onGenerateFullSession={onGenerateFullSession}
+          sessionGenerationStatus={sessionGenerationStatus}
+        />
+      );
     }
 
     // Summary step (last step for all tools)
@@ -334,6 +372,366 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
         return (
           <div className="space-y-6">
             <MarketForcesOutputsPhase
+              session={session}
+              isPolish={isPolish}
+              onAcceptCard={onAcceptCard}
+              onRejectCard={onRejectCard}
+              onRethinkCard={onRethinkCard}
+            />
+            <InitiativesStep
+              toolType={toolType}
+              session={session}
+              isPolish={isPolish}
+              generatedInitiatives={generatedInitiatives}
+              onOpenInitiatives={onOpenInitiatives}
+              onOpenChat={onOpenChat}
+            />
+          </div>
+        );
+      }
+    }
+
+    if (toolType === 'value-chain') {
+      if (stepDefinition.id === 'mission') {
+        return (
+          <ContextStep
+            toolType={toolType}
+            session={session}
+            isPolish={isPolish}
+            onGenerateFullSession={onGenerateFullSession}
+            sessionGenerationStatus={sessionGenerationStatus}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'input') {
+        return (
+          <ValueChainInputPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'activities') {
+        return (
+          <ValueChainBuildPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'insights') {
+        return (
+          <ValueChainInsightsPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'outputs') {
+        return (
+          <div className="space-y-6">
+            <ValueChainOutputsPhase
+              session={session}
+              isPolish={isPolish}
+              onAcceptCard={onAcceptCard}
+              onRejectCard={onRejectCard}
+              onRethinkCard={onRethinkCard}
+            />
+            <InitiativesStep
+              toolType={toolType}
+              session={session}
+              isPolish={isPolish}
+              generatedInitiatives={generatedInitiatives}
+              onOpenInitiatives={onOpenInitiatives}
+              onOpenChat={onOpenChat}
+            />
+          </div>
+        );
+      }
+    }
+
+    if (toolType === 'capability-mapper') {
+      if (stepDefinition.id === 'mission') {
+        return (
+          <ContextStep
+            toolType={toolType}
+            session={session}
+            isPolish={isPolish}
+            onGenerateFullSession={onGenerateFullSession}
+            sessionGenerationStatus={sessionGenerationStatus}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'input') {
+        return (
+          <CapabilityMapperInputPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'capabilities') {
+        return (
+          <CapabilityMapperBuildPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'insights') {
+        return (
+          <CapabilityMapperInsightsPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'outputs') {
+        return (
+          <div className="space-y-6">
+            <CapabilityMapperOutputsPhase
+              session={session}
+              isPolish={isPolish}
+              onAcceptCard={onAcceptCard}
+              onRejectCard={onRejectCard}
+              onRethinkCard={onRethinkCard}
+            />
+            <InitiativesStep
+              toolType={toolType}
+              session={session}
+              isPolish={isPolish}
+              generatedInitiatives={generatedInitiatives}
+              onOpenInitiatives={onOpenInitiatives}
+              onOpenChat={onOpenChat}
+            />
+          </div>
+        );
+      }
+    }
+
+    if (toolType === 'ambition-decomposer') {
+      if (stepDefinition.id === 'mission') {
+        return (
+          <ContextStep
+            toolType={toolType}
+            session={session}
+            isPolish={isPolish}
+            onGenerateFullSession={onGenerateFullSession}
+            sessionGenerationStatus={sessionGenerationStatus}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'input') {
+        return (
+          <AmbitionDecomposerInputPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'themes') {
+        return (
+          <AmbitionDecomposerBuildPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'insights') {
+        return (
+          <AmbitionDecomposerInsightsPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'outputs') {
+        return (
+          <div className="space-y-6">
+            <AmbitionDecomposerOutputsPhase
+              session={session}
+              isPolish={isPolish}
+              onAcceptCard={onAcceptCard}
+              onRejectCard={onRejectCard}
+              onRethinkCard={onRethinkCard}
+            />
+            <InitiativesStep
+              toolType={toolType}
+              session={session}
+              isPolish={isPolish}
+              generatedInitiatives={generatedInitiatives}
+              onOpenInitiatives={onOpenInitiatives}
+              onOpenChat={onOpenChat}
+            />
+          </div>
+        );
+      }
+    }
+
+    if (toolType === 'focus-tradeoff') {
+      if (stepDefinition.id === 'mission') {
+        return (
+          <ContextStep
+            toolType={toolType}
+            session={session}
+            isPolish={isPolish}
+            onGenerateFullSession={onGenerateFullSession}
+            sessionGenerationStatus={sessionGenerationStatus}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'input') {
+        return (
+          <FocusTradeoffInputPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'priorities') {
+        return (
+          <FocusTradeoffBuildPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'insights') {
+        return (
+          <FocusTradeoffInsightsPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'outputs') {
+        return (
+          <div className="space-y-6">
+            <FocusTradeoffOutputsPhase
+              session={session}
+              isPolish={isPolish}
+              onAcceptCard={onAcceptCard}
+              onRejectCard={onRejectCard}
+              onRethinkCard={onRethinkCard}
+            />
+            <InitiativesStep
+              toolType={toolType}
+              session={session}
+              isPolish={isPolish}
+              generatedInitiatives={generatedInitiatives}
+              onOpenInitiatives={onOpenInitiatives}
+              onOpenChat={onOpenChat}
+            />
+          </div>
+        );
+      }
+    }
+
+    if (toolType === 'narrative-engine') {
+      if (stepDefinition.id === 'mission') {
+        return (
+          <ContextStep
+            toolType={toolType}
+            session={session}
+            isPolish={isPolish}
+            onGenerateFullSession={onGenerateFullSession}
+            sessionGenerationStatus={sessionGenerationStatus}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'input') {
+        return (
+          <NarrativeEngineInputPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'pillars') {
+        return (
+          <NarrativeEngineBuildPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'insights') {
+        return (
+          <NarrativeEngineInsightsPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'outputs') {
+        return (
+          <div className="space-y-6">
+            <NarrativeEngineOutputsPhase
               session={session}
               isPolish={isPolish}
               onAcceptCard={onAcceptCard}
@@ -667,11 +1065,11 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
     // We still render a graceful, on-brand panel rather than a blank/error.
     return (
       <div className="flex h-full items-center justify-center p-8">
-        <div className="max-w-md rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center dark:border-white/[0.08] dark:bg-white/[0.04]">
-          <p className="text-base font-medium text-slate-700 dark:text-slate-200">
+        <div className="max-w-md rounded-2xl border border-dashed border-c-border-subtle bg-c-surface-raised p-8 text-center">
+          <p className="text-base font-medium text-c-text-secondary">
             {isPolish ? 'Ten krok jest w przygotowaniu' : 'This step is being prepared'}
           </p>
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-sm text-c-text-muted">
             {isPolish
               ? 'Wróć do podsumowania, aby kontynuować i wygenerować inicjatywy.'
               : 'Head back to the summary to continue and generate initiatives.'}

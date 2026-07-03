@@ -1,57 +1,34 @@
 /**
  * ChatHistorySettings - Chat history management
+ *
+ * HONEST-UI NOTE (Harvard R2 #8, 2026-07-02):
+ * There is no server backend for bulk chat-history export/clear. The client
+ * `Api.clearChatHistory()` was a no-op and `Api.exportChatHistory()` returned an
+ * empty stub, so the Export/Clear buttons rendered but did nothing (silent
+ * facade). Per the navigation-permissions canon (Honest UI, §4.1) a control that
+ * does nothing must not masquerade as a function. Until a real
+ * export-all / clear-all conversation endpoint exists (today only per-conversation
+ * DELETE /api/conversations/:id is available), the actions are surfaced as an
+ * explicit "coming soon" state instead of dead buttons.
  */
 
-import { Download, History, Trash2 } from 'lucide-react';
+import { Clock, Download, History, Trash2 } from 'lucide-react';
 import React from 'react';
-import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-
-import { Api } from '../../services/api';
 
 interface ChatHistorySettingsProps {
   className?: string;
 }
 
-const extractErrorCode = (error: unknown): string | null => {
-  const maybe = error as { data?: { code?: string } };
-  return typeof maybe?.data?.code === 'string' ? maybe.data.code : null;
-};
+/**
+ * When a real bulk export/clear endpoint ships, flip this to `false` and restore
+ * the wired handlers (Api.exportChatHistory / Api.clearChatHistory) — the current
+ * client methods are stubs and must be replaced first.
+ */
+const CHAT_HISTORY_ACTIONS_COMING_SOON = true;
 
 export const ChatHistorySettings: React.FC<ChatHistorySettingsProps> = ({ className = '' }) => {
   const { t } = useTranslation();
-
-  const handleClearHistory = async () => {
-    if (
-      !confirm(t('settings.chat.clearConfirm', 'Are you sure you want to clear all chat history?'))
-    )
-      return;
-
-    try {
-      await Api.clearChatHistory();
-      toast.success(t('settings.chat.cleared', 'Chat history cleared'));
-    } catch (error) {
-      const fallback = t('settings.chat.clearError', 'Failed to clear history');
-      const code = extractErrorCode(error);
-      toast.error(code ? `${fallback} (${code})` : fallback);
-    }
-  };
-
-  const handleExportHistory = async () => {
-    try {
-      const blob = await Api.exportChatHistory();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'chat-history.json';
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      const fallback = t('settings.chat.exportError', 'Failed to export history');
-      const code = extractErrorCode(error);
-      toast.error(code ? `${fallback} (${code})` : fallback);
-    }
-  };
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -65,23 +42,48 @@ export const ChatHistorySettings: React.FC<ChatHistorySettingsProps> = ({ classN
         </p>
       </div>
 
-      {/* Actions */}
-      <div className="flex gap-3">
-        <button
-          onClick={handleExportHistory}
-          className="flex items-center gap-2 px-4 py-2 border border-slate-300 dark:border-navy-600 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors"
-        >
-          <Download size={16} />
-          {t('settings.chat.export', 'Export History')}
-        </button>
-        <button
-          onClick={handleClearHistory}
-          className="flex items-center gap-2 px-4 py-2 border border-danger-300 dark:border-danger-800 text-danger-600 dark:text-danger-400 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors"
-        >
-          <Trash2 size={16} />
-          {t('settings.chat.clear', 'Clear All History')}
-        </button>
-      </div>
+      {CHAT_HISTORY_ACTIONS_COMING_SOON ? (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
+          <div className="flex items-start gap-3">
+            <Clock size={18} className="text-amber-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                {t('settings.chat.comingSoonTitle', 'Coming soon')}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                {t(
+                  'settings.chat.comingSoonDesc',
+                  'Exporting and clearing your full conversation history is not available yet. You can delete individual conversations from the chat itself in the meantime.'
+                )}
+              </p>
+            </div>
+          </div>
+
+          {/* Disabled affordances so the intent stays visible but honestly inert. */}
+          <div className="flex gap-3 mt-4">
+            <button
+              type="button"
+              disabled
+              aria-disabled="true"
+              title={t('settings.chat.comingSoonTitle', 'Coming soon')}
+              className="flex items-center gap-2 px-4 py-2 border border-slate-300 dark:border-navy-600 rounded-lg opacity-50 cursor-not-allowed"
+            >
+              <Download size={16} />
+              {t('settings.chat.export', 'Export History')}
+            </button>
+            <button
+              type="button"
+              disabled
+              aria-disabled="true"
+              title={t('settings.chat.comingSoonTitle', 'Coming soon')}
+              className="flex items-center gap-2 px-4 py-2 border border-danger-300 dark:border-danger-800 text-danger-600 dark:text-danger-400 rounded-lg opacity-50 cursor-not-allowed"
+            >
+              <Trash2 size={16} />
+              {t('settings.chat.clear', 'Clear All History')}
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

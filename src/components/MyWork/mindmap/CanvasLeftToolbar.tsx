@@ -58,6 +58,14 @@ interface CanvasLeftToolbarProps {
   onOpenChat: () => void;
   onApplyTemplate: (templateId: string) => void;
   onOpenTemplateGallery: () => void;
+  /**
+   * UI-L1 (Editor Shell Canon §2 LEWA): the rail must float on the *canvas* edge,
+   * not the viewport edge. The toolbar is portaled to `document.body` for z-index
+   * safety, so a bare `fixed left-3` lands on top of the app sidebar and clips its
+   * nav labels. We anchor the rail to this container's left edge instead, so it
+   * behaves like Miro/Figma (tools belong to the canvas, not the app chrome).
+   */
+  canvasContainerRef?: React.RefObject<HTMLElement | null>;
 }
 
 type IconComponent = React.ComponentType<{ size?: number; className?: string }>;
@@ -158,7 +166,8 @@ const PF_CONTEXT_SLOTS: ToolSlot[] = [
     action: 'pf_add_decision',
   },
   { id: 'lane', icon: Plus, labelPl: 'Lane', labelEn: 'Lane', action: 'pf_add_lane' },
-  { id: 'frame', icon: Frame, labelPl: 'Ramka', labelEn: 'Frame', action: 'wb_add_frame' },
+  // Frame removed: Process Flow has no frame concept (lanes group instead).
+  // It emitted dead `wb_add_frame` (no PF handler) = no-op copy-paste from whiteboard.
 ];
 
 const TBL_CONTEXT_SLOTS: ToolSlot[] = [
@@ -198,7 +207,7 @@ const UNDO_REDO_PREFIX: Record<CanvasToolType, string> = {
   mindmap: 'mm',
   whiteboard: 'wb',
   process_flow: 'pf',
-  table: 'mm',
+  table: 'tbl',
 };
 
 function getUndoRedoSlots(activeTool: CanvasToolType): ToolSlot[] {
@@ -220,11 +229,36 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   onOpenChat,
   onApplyTemplate,
   onOpenTemplateGallery,
+  canvasContainerRef,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [openPopover, setOpenPopover] = useState<PopoverId>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
+
+  // UI-L1: track the canvas container's left edge so the portaled rail floats on the
+  // canvas — not on the app sidebar. Falls back to viewport edge when no ref is given.
+  const [railLeftPx, setRailLeftPx] = useState<number | null>(null);
+  useEffect(() => {
+    const el = canvasContainerRef?.current;
+    if (!el || typeof window === 'undefined') {
+      setRailLeftPx(null);
+      return;
+    }
+    const measure = () => {
+      const rect = el.getBoundingClientRect();
+      // +12px inset (Tailwind left-3) from the canvas's own left edge.
+      setRailLeftPx(rect.left + 12);
+    };
+    measure();
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+    if (ro) ro.observe(el);
+    window.addEventListener('resize', measure);
+    return () => {
+      if (ro) ro.disconnect();
+      window.removeEventListener('resize', measure);
+    };
+  }, [canvasContainerRef]);
 
   const contextSlots = CONTEXT_SLOTS[activeTool] || MM_CONTEXT_SLOTS;
 
@@ -279,12 +313,12 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
             onClick={handlePointerToggle}
             title={pointerTooltip}
             aria-label={pointerTooltip}
-            className="flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 bg-primary-500/10 text-primary-600 dark:text-primary-400"
+            className="flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 bg-slate-200/70 dark:bg-navy-800 text-slate-900 dark:text-slate-100"
           >
             <PointerIcon size={15} />
           </button>
           <div className="absolute left-[calc(100%+6px)] top-1/2 -translate-y-1/2 pointer-events-none">
-            <span className="px-1.5 py-0.5 rounded text-[8px] font-semibold uppercase tracking-wider whitespace-nowrap bg-primary-500/10 text-primary-500 dark:text-primary-400">
+            <span className="px-1.5 py-0.5 rounded text-[8px] font-semibold uppercase tracking-wider whitespace-nowrap bg-slate-200/70 dark:bg-navy-800 text-slate-700 dark:text-slate-200">
               {interactionMode === 'pan'
                 ? 'PAN'
                 : interactionMode === 'connect'
@@ -329,7 +363,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
           aria-label={slotTitle}
           className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 ${
             isActive
-              ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+              ? 'bg-slate-200/70 dark:bg-navy-800 text-slate-900 dark:text-slate-100'
               : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/[0.04]'
           }`}
         >
@@ -390,7 +424,10 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   const toolbarNode = (
     <div
       ref={toolbarRef}
-      className="fixed left-3 top-1/2 -translate-y-1/2 z-[9999] pointer-events-auto flex flex-col items-center gap-0.5 rounded-hig-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm border border-slate-200/60 dark:border-navy-700/60 shadow-hig-xl px-1 py-1.5 canvas-left-toolbar-enter"
+      className={`fixed top-1/2 -translate-y-1/2 z-[9999] pointer-events-auto flex flex-col items-center gap-0.5 rounded-hig-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm border border-slate-200/60 dark:border-navy-700/60 shadow-hig-xl px-1 py-1.5 canvas-left-toolbar-enter${
+        railLeftPx == null ? ' left-3' : ''
+      }`}
+      style={railLeftPx == null ? undefined : { left: `${railLeftPx}px` }}
     >
       {SHARED_TOP.map(renderSlot)}
 

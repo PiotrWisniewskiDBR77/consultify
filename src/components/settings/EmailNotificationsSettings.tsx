@@ -62,7 +62,7 @@ export const EmailNotificationsSettings: React.FC<EmailNotificationsSettingsProp
               onClick={() => toggleSetting(key)}
               className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${
                 settings[key]
-                  ? 'bg-navy-900 border-brand text-white'
+                  ? 'bg-brand border-brand text-white'
                   : 'border-slate-300 dark:border-navy-600'
               }`}
             >

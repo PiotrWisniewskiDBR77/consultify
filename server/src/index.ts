@@ -922,10 +922,20 @@ app.use(correlationMiddleware);
 // Since `express.json()` consumes the stream, we conditionally route body parsing.
 const jsonParser = express.json({ limit: '10mb' });
 const stripeRawParser = express.raw({ type: 'application/json' });
+// Slack (Slack Command Center, F2) signs the *exact* raw request body
+// (`v0:{timestamp}:{rawBody}` HMAC-SHA256). Re-serializing a JSON-parsed body
+// would break the signature, so — like Stripe — we hand these endpoints the
+// untouched bytes as a Buffer and parse them ourselves inside the route.
+// `type: '*/*'` because interactions arrive as x-www-form-urlencoded and the
+// Events API as application/json.
+const slackRawParser = express.raw({ type: '*/*', limit: '1mb' });
 app.use((req: Request, res: Response, next: NextFunction) => {
   const path = req.path;
   if (path === '/api/webhooks/stripe' || path === '/api/token-billing/webhook') {
     return stripeRawParser(req, res, next);
+  }
+  if (path === '/api/slack/events' || path === '/api/slack/interactions') {
+    return slackRawParser(req, res, next);
   }
   return jsonParser(req, res, next);
 });
@@ -1801,7 +1811,49 @@ function startHttpListener(): void {
     logger.info('✅ Server running on http://0.0.0.0:' + PORT);
     logger.info('✅ WebSocket available at ws://0.0.0.0:' + PORT + '/ws');
     logger.info(`[Server] ✅ Server started on port ${PORT}`);
+    void announceDeploy();
   });
+}
+
+/**
+ * Slack Command Center — announce a completed deploy on #cf-progress ("🚀
+ * Wdrożenie"). Gives the real-time "what shipped, when" visibility that was
+ * missing (deploys previously had no Slack signal at all). Dedup'd by
+ * env+gitSha (router's 30-min window) so a crash-loop restart on the SAME
+ * commit doesn't spam; a genuinely new deploy always gets a fresh sha. No-op
+ * fail-soft when gitSha/Slack env aren't configured (e.g. local dev).
+ */
+async function announceDeploy(): Promise<void> {
+  if (isTest) return;
+  try {
+    const gitSha =
+      process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GITHUB_SHA || process.env.GIT_SHA;
+    if (!gitSha) return; // local dev / unconfigured — nothing to announce
+    const shortSha = gitSha.slice(0, 10);
+    const env = process.env.APP_ENV || process.env.NODE_ENV || 'development';
+    const branch =
+      process.env.RAILWAY_GIT_BRANCH || process.env.GITHUB_REF_NAME || process.env.GIT_BRANCH;
+    const commitMsg = (
+      process.env.RAILWAY_GIT_COMMIT_MESSAGE ||
+      process.env.GITHUB_HEAD_COMMIT_MESSAGE ||
+      ''
+    )
+      .split('\n')[0]
+      .slice(0, 200);
+    const { routeToSlack } = await import('./services/slack/slackRouter.js');
+    await routeToSlack({
+      channel: 'progress',
+      severity: 'INFO',
+      category: 'Wdrożenie',
+      title: `${env}${branch ? ` (${branch})` : ''} — ${shortSha}`,
+      text: commitMsg || 'Nowa wersja wdrożona.',
+      dedupeKey: `deploy:${env}:${shortSha}`,
+    });
+  } catch (err) {
+    logger.warn('[Server] announceDeploy failed (non-fatal):', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 }
 
 if (startServer && shouldStartHttpServer) {
@@ -1827,6 +1879,16 @@ if (startServer && shouldStartHttpServer) {
       startFeedbackDigestCron();
     } catch (err: any) {
       logger.warn('[Server] Feedback digest cron not started:', err?.message);
+    }
+
+    // Slack Command Center progress feed (Filar 4 / F3): batched #cf-progress
+    // flush every 15 min. Fail-soft; sends nothing when the buffer is empty or
+    // Slack is unconfigured.
+    try {
+      const { startProgressFeed } = await import('./services/slack/progressFeed.js');
+      startProgressFeed();
+    } catch (err: any) {
+      logger.warn('[Server] Slack progress feed not started:', err?.message);
     }
 
     // V4-IDEA-02: Idea collab WebSocket /ws/collab/:ideaId (native ws for CollaborationOverlay)

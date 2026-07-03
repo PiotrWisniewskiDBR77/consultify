@@ -80,13 +80,13 @@ export const AssessmentModuleLayout: React.FC<AssessmentModuleLayoutProps> = ({
                                         flex items-center gap-2 px-4 py-4 border-b-2 transition-all
                                         ${
                                           isActive
-                                            ? 'border-navy-900 dark:border-white/70 text-slate-900 dark:text-white'
+                                            ? 'border-primary-600 text-primary-600 dark:text-primary-400'
                                             : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-300 dark:border-navy-700 dark:hover:border-slate-600'
                                         }
                                     `}
                   title={tab.description}
                 >
-                  <span className={isActive ? 'text-slate-900 dark:text-white' : ''}>
+                  <span className={isActive ? 'text-primary-600 dark:text-primary-400' : ''}>
                     {tab.icon}
                   </span>
                   <span className="font-medium text-sm">{tab.label}</span>

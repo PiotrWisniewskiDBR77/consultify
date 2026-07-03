@@ -73,7 +73,7 @@ const statusConfig = {
     bg: 'bg-emerald-500/10',
     label: 'Success',
   },
-  failed: { icon: XCircle, color: 'text-danger-400', bg: 'bg-danger-500/10', label: 'Failed' },
+  failed: { icon: XCircle, color: 'text-rose-400', bg: 'bg-rose-500/10', label: 'Failed' },
   suspicious: {
     icon: AlertTriangle,
     color: 'text-amber-400',
@@ -90,7 +90,7 @@ type Tab = 'sessions' | 'history';
 const TabToggle: React.FC<{ active: Tab; onChange: (t: Tab) => void }> = ({ active, onChange }) => {
   const { t } = useTranslation();
   return (
-    <div className="inline-flex rounded-lg bg-slate-100 dark:bg-navy-900/50 p-0.5">
+    <div className="inline-flex rounded-lg bg-navy-900/50 p-0.5">
       {[
         {
           id: 'sessions' as Tab,
@@ -109,7 +109,7 @@ const TabToggle: React.FC<{ active: Tab; onChange: (t: Tab) => void }> = ({ acti
           className={cn(
             'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200',
             active === tab.id
-              ? 'bg-navy-900 text-white shadow-sm dark:bg-white dark:text-navy-950'
+              ? 'bg-primary-600 text-white shadow-sm'
               : 'text-slate-600 hover:text-white hover:bg-white/5'
           )}
         >
@@ -301,7 +301,7 @@ export const SessionsActivitySettings: React.FC = () => {
                     {!session.current && (
                       <button
                         onClick={() => terminateSession(session.id)}
-                        className="p-1.5 text-slate-600 hover:text-danger-400 hover:bg-danger-500/10 rounded-lg transition-colors flex-shrink-0"
+                        className="p-1.5 text-slate-600 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors flex-shrink-0"
                         title={t('settings.security.terminate', 'Terminate session')}
                       >
                         <Trash2 size={14} />
@@ -317,7 +317,7 @@ export const SessionsActivitySettings: React.FC = () => {
                   <div className="flex justify-end">
                     <button
                       onClick={revokeAll}
-                      className="text-xs font-medium text-danger-400/80 hover:text-danger-400 transition-colors"
+                      className="text-xs font-medium text-rose-400/80 hover:text-rose-400 transition-colors"
                     >
                       {t('settings.security.signOutAll', 'Sign Out All Other Devices')}
                     </button>

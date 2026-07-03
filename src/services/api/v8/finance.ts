@@ -509,6 +509,12 @@ export const V8FinanceApi = {
     v8Post<V8FinanceModelComputeResult>(`/finance/models/${modelId}/compute`, {}),
   approveModel: (modelId: string) =>
     v8Post<V8FinanceModelApproveResult>(`/finance/models/${modelId}/approve`, {}),
+  refreshModelSource: (modelId: string) =>
+    v8Post<{
+      success: boolean;
+      seededFrom: 'statement' | 'statement_pack';
+      missingBaselineLines: string[];
+    }>(`/finance/models/${modelId}/refresh-source`, {}),
   addModelEvent: (modelId: string, body: V8FinanceModelEventCreatePayload) =>
     v8Post<{ success: boolean; id: string }>(`/finance/models/${modelId}/events`, body),
   deleteModelEvent: (eventId: string) =>
@@ -635,4 +641,10 @@ export const V8FinanceApi = {
     v8Get<{ data: FinanceVersionSnapshot[] }>('/finance/versions', {
       ...(versionType ? { versionType } : {}),
     }),
+
+  // M16/6.5 — Model version history + diff
+  getModelVersions: (modelId: string) =>
+    v8Get<{ data: { versions: unknown[]; count: number } }>(`/finance/models/${encodeURIComponent(modelId)}/versions`),
+  getModelVersionDiff: (modelId: string, from: string, to: string) =>
+    v8Get<{ data: { diff: unknown } }>(`/finance/models/${encodeURIComponent(modelId)}/versions/diff`, { from, to }),
 };

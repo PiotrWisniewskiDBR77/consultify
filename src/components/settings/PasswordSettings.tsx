@@ -147,7 +147,7 @@ export const PasswordSettings: React.FC<PasswordSettingsProps> = ({ className = 
             className="w-full px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand focus:border-transparent"
           />
           {confirmPassword && !passwordsMatch && (
-            <p className="text-sm text-danger-500 mt-1">
+            <p className="text-sm text-rose-500 mt-1">
               {t('settings.password.mismatch', 'Passwords do not match')}
             </p>
           )}
@@ -156,7 +156,7 @@ export const PasswordSettings: React.FC<PasswordSettingsProps> = ({ className = 
         <button
           type="submit"
           disabled={!allRequirementsMet || !passwordsMatch || loading}
-          className="px-4 py-2 bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 rounded-lg hover:bg-navy-800 dark:hover:bg-[#DDE5EF] dark:hover:bg-[#DDE5EF] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {loading
             ? t('common.saving', 'Saving...')

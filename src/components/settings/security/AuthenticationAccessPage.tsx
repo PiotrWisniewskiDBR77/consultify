@@ -336,12 +336,12 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
       case 'suspicious':
         return <AlertTriangle size={14} className="text-amber-500" />;
       default:
-        return <CheckCircle size={14} className="text-slate-600" />;
+        return <CheckCircle size={14} className="text-slate-600 dark:text-slate-400" />;
     }
   };
 
   const sectionLabel =
-    'text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 mb-4';
+    'text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4';
 
   return (
     <SettingsSection
@@ -375,7 +375,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                   <p className="text-sm font-medium text-white">
                     {t('settings.authAccess.changePassword', 'Change Password')}
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     {t(
                       'settings.authAccess.changePasswordDesc',
                       'Update your password to keep your account secure'
@@ -386,7 +386,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
               <ChevronDown
                 size={16}
                 className={cn(
-                  'text-slate-500 transition-transform duration-200',
+                  'text-slate-500 dark:text-slate-400 transition-transform duration-200',
                   expandedPanel === 'password' && 'rotate-180'
                 )}
               />
@@ -396,7 +396,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
               <div className="px-4 pb-4 border-t border-white/5">
                 <form onSubmit={handlePasswordSubmit} className="space-y-4 pt-4 max-w-md">
                   <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
                       {t('settings.password.current', 'Current Password')}
                     </label>
                     <div className="relative">
@@ -410,7 +410,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
                       {t('settings.password.new', 'New Password')}
                     </label>
                     <div className="relative">
@@ -423,7 +423,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                       <button
                         type="button"
                         onClick={() => setShowPasswords(!showPasswords)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-300 transition-colors"
                       >
                         {showPasswords ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
@@ -437,7 +437,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                           key={i}
                           className={cn(
                             'flex items-center gap-1.5 text-xs',
-                            req.met ? 'text-emerald-400' : 'text-slate-500'
+                            req.met ? 'text-emerald-400' : 'text-slate-500 dark:text-slate-400'
                           )}
                         >
                           {req.met ? <Check size={12} /> : <X size={12} />}
@@ -448,7 +448,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                   )}
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
                       {t('settings.password.confirm', 'Confirm New Password')}
                     </label>
                     <input
@@ -528,7 +528,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                         : t('settings.authAccess.off', 'OFF')}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     {currentUser?.mfaEnabled
                       ? t('settings.authAccess.mfaActiveDesc', 'Your account is protected with 2FA')
                       : t(
@@ -541,7 +541,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
               <ChevronDown
                 size={16}
                 className={cn(
-                  'text-slate-500 transition-transform duration-200',
+                  'text-slate-500 dark:text-slate-400 transition-transform duration-200',
                   expandedPanel === 'mfa' && 'rotate-180'
                 )}
               />
@@ -570,7 +570,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
             <div className="flex items-center gap-2">
               <button
                 onClick={refreshSessions}
-                className="p-1.5 text-slate-500 hover:text-primary-400 transition-colors rounded-md hover:bg-white/5"
+                className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-primary-400 transition-colors rounded-md hover:bg-white/5"
               >
                 <RefreshCw size={14} className={loadingSessions ? 'animate-spin' : ''} />
               </button>
@@ -595,7 +595,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                 >
                   <div className="flex items-center gap-3">
                     <div className="p-1.5 bg-white/5 rounded-lg">
-                      <DeviceIcon size={16} className="text-slate-600" />
+                      <DeviceIcon size={16} className="text-slate-600 dark:text-slate-400" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
@@ -609,7 +609,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
                         {session.location || session.ipAddress || 'Unknown'} ·{' '}
                         {session.lastActive || session.lastUsedAt || 'Recently'}
                       </p>
@@ -634,8 +634,8 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
 
             {!sessionsLoadError && sessions.length === 0 && (
               <div className="flex flex-col items-center justify-center py-6 text-center">
-                <Monitor size={20} className="text-slate-600 mb-2" />
-                <p className="text-xs text-slate-500">
+                <Monitor size={20} className="text-slate-600 dark:text-slate-400 mb-2" />
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   {t('settings.authAccess.noSessions', 'No active sessions found')}
                 </p>
               </div>
@@ -665,12 +665,12 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                     {getStatusIcon(event.status)}
                     <div>
                       <p className="text-sm text-white">{event.device || 'Unknown Device'}</p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
                         {event.location || 'Unknown'} · {event.ip || ''}
                       </p>
                     </div>
                   </div>
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
                     {event.timestamp ? new Date(event.timestamp).toLocaleString() : ''}
                   </span>
                 </div>
@@ -678,8 +678,8 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-6 text-center">
-              <History size={20} className="text-slate-600 mb-2" />
-              <p className="text-xs text-slate-500">
+              <History size={20} className="text-slate-600 dark:text-slate-400 mb-2" />
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 {t('settings.authAccess.noHistory', 'No login history available')}
               </p>
             </div>
@@ -713,7 +713,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                           {t('settings.authAccess.recoveryEmail', 'Recovery Email')}
                         </p>
                         {editingRecovery !== 'email' && (
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
                             {recoveryEmail
                               ? maskEmail(recoveryEmail)
                               : t('settings.authAccess.notConfigured', 'Not configured')}
@@ -782,7 +782,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                           {t('settings.authAccess.recoveryPhone', 'Recovery Phone')}
                         </p>
                         {editingRecovery !== 'phone' && (
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
                             {recoveryPhone
                               ? maskPhone(recoveryPhone)
                               : t('settings.authAccess.notConfigured', 'Not configured')}
@@ -847,7 +847,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                         <p className="text-sm font-medium text-white">
                           {t('settings.authAccess.backupCodes', 'Backup Codes')}
                         </p>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
                           {backupCodesCount > 0
                             ? t('settings.authAccess.codesRemaining', '{{count}} codes remaining', {
                                 count: backupCodesCount,

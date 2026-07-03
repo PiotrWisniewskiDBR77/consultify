@@ -129,3 +129,12 @@ export async function persistSnapshot(
     return { ok: false };
   }
 }
+
+/** @internal Test-only reset — best-effort DELETE of the snapshot table. */
+export async function __resetSnapshotRegistryDaoForTests(): Promise<void> {
+  try {
+    await dbRun('DELETE FROM document_version_snapshots', []);
+  } catch {
+    /* best-effort: table may not exist in a unit-test sandbox */
+  }
+}

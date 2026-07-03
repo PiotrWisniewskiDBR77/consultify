@@ -23,6 +23,29 @@ export default {
       desktop: '1024px', // Desktop and up
     },
     extend: {
+      // ========================================
+      // CANONICAL Z-INDEX SCALE (overlay layering)
+      // Single source of truth for portal/overlay stacking.
+      // Rule (editor-shell-canon §3): app-chrome > overlay-menu > canvas-nodes > canvas-bg.
+      // Context menu is portaled to <body> and sits ABOVE everything.
+      // Usage: z-dropdown, z-modal, z-toast, z-context-menu (never raw z-[9999]).
+      //   canvas         (10)  — canvas nodes / in-flow raised content
+      //   sticky         (20)  — sticky headers, command rows, chrome bars
+      //   dropdown       (40)  — dropdowns, popovers, selects, tooltips (menus over chrome)
+      //   overlay        (50)  — modal/drawer backdrop scrim
+      //   modal          (60)  — dialog / drawer / sheet panels (above scrim)
+      //   toast         (100)  — toast notifications (above modals)
+      //   context-menu  (120)  — context menus portaled to body (above all)
+      // ========================================
+      zIndex: {
+        canvas: '10',
+        sticky: '20',
+        dropdown: '40',
+        overlay: '50',
+        modal: '60',
+        toast: '100',
+        'context-menu': '120',
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
@@ -56,6 +79,20 @@ export default {
           warning: 'var(--c-warning)',
           danger: 'var(--c-danger)',
           info: 'var(--c-info)',
+          // Identity palette (12) — kolory DANYCH/kategorii/serii (NIGDY crimson jako dana).
+          // Vars zdefiniowane w src/index.css (:root light + .dark). Reguła §15.1: ≤5 serii widocznych.
+          'tag-1': 'var(--c-tag-1)',
+          'tag-2': 'var(--c-tag-2)',
+          'tag-3': 'var(--c-tag-3)',
+          'tag-4': 'var(--c-tag-4)',
+          'tag-5': 'var(--c-tag-5)',
+          'tag-6': 'var(--c-tag-6)',
+          'tag-7': 'var(--c-tag-7)',
+          'tag-8': 'var(--c-tag-8)',
+          'tag-9': 'var(--c-tag-9)',
+          'tag-10': 'var(--c-tag-10)',
+          'tag-11': 'var(--c-tag-11)',
+          'tag-12': 'var(--c-tag-12)',
         },
         // ========================================
         // DBR77 COLOR SYSTEM STANDARD

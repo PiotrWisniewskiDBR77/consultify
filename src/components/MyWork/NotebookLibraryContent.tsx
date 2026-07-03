@@ -8,12 +8,23 @@
  * See docs/product/NOTEBOOK_STRUCTURE_SSOT.md.
  */
 
-import { Archive, BookOpen, ChevronRight, Globe, Lock, Pencil, Trash2, Users } from 'lucide-react';
+import {
+  Archive,
+  BookOpen,
+  ChevronRight,
+  Globe,
+  Lock,
+  Pencil,
+  Plus,
+  Trash2,
+  Users,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import { EmptyState as SharedEmptyState } from '@/components/shared/states';
 import {
   type ColumnDef,
   type ColumnWidths,
@@ -302,7 +313,7 @@ export const NotebookLibraryContent: React.FC<NotebookLibraryContentProps> = ({
   );
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950">
+    <div className="flex flex-col h-full bg-c-bg">
       <div className="flex-1 min-h-0 overflow-y-auto px-3 py-2">
         {loading ? (
           <ResizableTable
@@ -313,59 +324,68 @@ export const NotebookLibraryContent: React.FC<NotebookLibraryContentProps> = ({
             onColumnWidthChange={(id, w) => setColumnWidths((prev) => ({ ...prev, [id]: w }))}
           >
             {Array.from({ length: 6 }).map((_, i) => (
-              <tr
-                key={`sk-${i}`}
-                className="border-b border-slate-200 dark:border-white/[0.06]"
-                aria-hidden="true"
-              >
+              <tr key={`sk-${i}`} className="border-b border-c-border-subtle" aria-hidden="true">
                 <td style={{ width: columnWidths.title }} className="px-3 py-3">
                   <div className="flex items-center gap-2">
-                    <span className="h-5 w-5 shrink-0 rounded-md bg-slate-200/70 dark:bg-white/[0.06] animate-pulse" />
-                    <span className="h-3.5 w-40 rounded bg-slate-200/70 dark:bg-white/[0.06] animate-pulse" />
+                    <span className="h-5 w-5 shrink-0 rounded-md bg-c-border-subtle animate-pulse" />
+                    <span className="h-3.5 w-40 rounded bg-c-border-subtle animate-pulse" />
                   </div>
                 </td>
                 <td style={{ width: columnWidths.scope }} className="px-3 py-3">
-                  <span className="block h-4 w-16 rounded-full bg-slate-200/70 dark:bg-white/[0.06] animate-pulse" />
+                  <span className="block h-4 w-16 rounded-full bg-c-border-subtle animate-pulse" />
                 </td>
                 <td style={{ width: columnWidths.context }} className="px-3 py-3">
-                  <span className="block h-4 w-20 rounded-full bg-slate-200/70 dark:bg-white/[0.06] animate-pulse" />
+                  <span className="block h-4 w-20 rounded-full bg-c-border-subtle animate-pulse" />
                 </td>
                 <td style={{ width: columnWidths.notes }} className="px-3 py-3 text-right">
-                  <span className="ml-auto block h-3.5 w-8 rounded bg-slate-200/70 dark:bg-white/[0.06] animate-pulse" />
+                  <span className="ml-auto block h-3.5 w-8 rounded bg-c-border-subtle animate-pulse" />
                 </td>
                 <td style={{ width: columnWidths.date }} className="px-3 py-3 text-right">
-                  <span className="ml-auto block h-3.5 w-16 rounded bg-slate-200/70 dark:bg-white/[0.06] animate-pulse" />
+                  <span className="ml-auto block h-3.5 w-16 rounded bg-c-border-subtle animate-pulse" />
                 </td>
                 <td style={{ width: columnWidths.actions }} className="px-3 py-3" />
               </tr>
             ))}
           </ResizableTable>
         ) : error ? (
-          <div className="text-center py-16">
-            <p className="text-slate-500 dark:text-slate-400 mb-3">
-              {pl ? 'Nie udało się wczytać notatników.' : 'Failed to load notebooks.'}
-            </p>
-            <button
-              type="button"
-              onClick={() => void load()}
-              className="text-sm text-primary-600 hover:underline"
-            >
-              {pl ? 'Spróbuj ponownie' : 'Retry'}
-            </button>
-          </div>
+          <SharedEmptyState
+            variant="error"
+            title={pl ? 'Nie udało się wczytać notatników' : 'Failed to load notebooks'}
+            description={
+              pl
+                ? 'Sprawdź połączenie i spróbuj ponownie.'
+                : 'Check your connection and try again.'
+            }
+            onRetry={() => void load()}
+          />
         ) : rows.length === 0 ? (
-          <div className="text-center py-16">
-            <BookOpen size={40} className="mx-auto text-slate-600 dark:text-navy-700 mb-3" />
-            <p className="text-slate-600 dark:text-slate-300 font-medium">
-              {searchQuery || scopeFilter !== 'all' || Object.keys(tableFilters).length
-                ? pl
-                  ? 'Brak notatników pasujących do filtrów'
-                  : 'No notebooks match your filters'
-                : pl
-                  ? 'Nie masz jeszcze żadnego notatnika'
-                  : 'No notebooks yet'}
-            </p>
-          </div>
+          searchQuery || scopeFilter !== 'all' || Object.keys(tableFilters).length ? (
+            <SharedEmptyState
+              variant="filter"
+              title={pl ? 'Brak notatników pasujących do filtrów' : 'No notebooks match your filters'}
+              description={
+                pl
+                  ? 'Zmień frazę wyszukiwania lub zakres, aby zobaczyć więcej.'
+                  : 'Try a different search or scope to see more.'
+              }
+            />
+          ) : (
+            <SharedEmptyState
+              variant="new"
+              icon={BookOpen}
+              title={pl ? 'Nie masz jeszcze żadnego notatnika' : 'No notebooks yet'}
+              description={
+                pl
+                  ? 'Utwórz pierwszy notatnik, aby zbierać notatki, wiedzę i ustalenia zespołu.'
+                  : 'Create your first notebook to collect notes, knowledge and team decisions.'
+              }
+              primaryAction={{
+                label: pl ? 'Nowy notatnik' : 'New notebook',
+                onClick: () => setModal({ mode: 'create' }),
+                icon: Plus,
+              }}
+            />
+          )
         ) : (
           <ResizableTable
             columns={columns}
@@ -382,24 +402,38 @@ export const NotebookLibraryContent: React.FC<NotebookLibraryContentProps> = ({
                   if (e.key === 'Enter') onOpenNotebook(nb);
                 }}
                 tabIndex={0}
-                className="group border-b border-slate-200 dark:border-white/[0.06] hover:bg-slate-50 dark:hover:bg-white/[0.03] cursor-pointer transition-colors outline-none"
+                className="group cursor-pointer border-b border-c-border-subtle outline-none transition-colors hover:bg-slate-100/80 hover:shadow-[inset_0_0_0_1px_rgba(148,163,184,0.22)] dark:hover:bg-white/[0.04] dark:hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.10)]"
               >
+                {/* S1-U2a: Ideas-row anatomy — neutral icon tile + L2 title +
+                    L5 meta subtitle (no oversized emoji as identity). */}
                 <td style={{ width: columnWidths.title }} className="px-3 py-2.5">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-lg leading-none shrink-0">{nb.icon || '📓'}</span>
-                    <span className="font-medium text-slate-800 dark:text-slate-100 truncate">
-                      {nb.title}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-c-border-subtle bg-c-surface-raised">
+                      {nb.icon && /\p{Emoji}/u.test(nb.icon) ? (
+                        <span className="text-sm leading-none">{nb.icon}</span>
+                      ) : (
+                        <BookOpen size={14} className="text-c-text-muted" />
+                      )}
                     </span>
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                        {nb.title}
+                      </div>
+                      <div className="truncate text-[11px] leading-4 text-c-text-muted">
+                        {nb.pageCount} {pl ? 'notatek' : 'notes'} ·{' '}
+                        {formatRelative(nb.updatedAt, pl)}
+                      </div>
+                    </div>
                   </div>
                 </td>
                 <td style={{ width: columnWidths.scope }} className="px-3 py-2.5 text-left">
                   {nb.scope === 'team' ? (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 dark:bg-navy-800 dark:text-slate-300">
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium bg-c-surface-raised text-c-text-secondary">
                       <Users size={11} />
                       {pl ? 'Zespół' : 'Team'}
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 dark:bg-navy-800 dark:text-slate-300">
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium bg-c-surface-raised text-c-text-secondary">
                       <Lock size={11} />
                       {pl ? 'Osobisty' : 'Personal'}
                     </span>
@@ -407,23 +441,23 @@ export const NotebookLibraryContent: React.FC<NotebookLibraryContentProps> = ({
                 </td>
                 <td style={{ width: columnWidths.context }} className="px-3 py-2.5 text-left">
                   {nb.contextSharing === 'org_context' ? (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 dark:bg-navy-800 dark:text-slate-300">
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium bg-c-surface-raised text-c-text-secondary">
                       <Globe size={11} />
                       {pl ? 'Kontekst org' : 'Org context'}
                     </span>
                   ) : (
-                    <span className="text-slate-600 dark:text-navy-600">—</span>
+                    <span className="text-c-text-muted">—</span>
                   )}
                 </td>
                 <td
                   style={{ width: columnWidths.notes }}
-                  className="px-3 py-2.5 text-right text-sm text-slate-500 dark:text-slate-400"
+                  className="px-3 py-2.5 text-right text-sm text-c-text-muted"
                 >
                   {nb.pageCount}
                 </td>
                 <td
                   style={{ width: columnWidths.date }}
-                  className="px-3 py-2.5 text-left text-xs text-slate-600 dark:text-slate-500"
+                  className="px-3 py-2.5 text-left text-xs text-c-text-muted"
                 >
                   {formatRelative(nb.updatedAt, pl)}
                 </td>
@@ -509,16 +543,25 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
         ? await Api.updateNotebook(editing!.id, payload)
         : await Api.createNotebook(payload);
       onSaved(nb as Notebook, isEdit ? 'edit' : 'create');
-    } catch {
-      toast.error(
-        isEdit
-          ? pl
-            ? 'Nie udało się zapisać notatnika'
-            : 'Failed to save notebook'
-          : pl
-            ? 'Nie udało się utworzyć notatnika'
-            : 'Failed to create notebook'
-      );
+    } catch (e: any) {
+      // Surface the real server reason (e.g. "Only the owner can modify this
+      // notebook", "Not a team member", HTTP 5xx) instead of swallowing it —
+      // a bare catch made every failure read as an opaque "Failed to save".
+      const fallback = isEdit
+        ? pl
+          ? 'Nie udało się zapisać notatnika'
+          : 'Failed to save notebook'
+        : pl
+          ? 'Nie udało się utworzyć notatnika'
+          : 'Failed to create notebook';
+      const serverMessage = typeof e?.message === 'string' ? e.message.trim() : '';
+      // Hide useless generic JS errors ("Failed to fetch", "Request failed") —
+      // only append a message that actually tells the user what went wrong.
+      const isUseful =
+        serverMessage &&
+        !/^failed to (fetch|save|create|update)/i.test(serverMessage) &&
+        !/^request failed/i.test(serverMessage);
+      toast.error(isUseful ? `${fallback}: ${serverMessage}` : fallback);
       setSaving(false);
     }
   }, [canSave, title, scope, teamId, contextSharing, isEdit, editing, onSaved, pl]);
@@ -529,10 +572,10 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-2xl bg-white dark:bg-navy-900 shadow-xl p-6"
+        className="w-full max-w-md rounded-2xl bg-c-surface shadow-xl p-6"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">
+        <h3 className="text-lg font-semibold text-c-text mb-4">
           {isEdit
             ? pl
               ? 'Edytuj notatnik'
@@ -542,7 +585,7 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
               : 'New notebook'}
         </h3>
 
-        <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
+        <label className="block text-sm font-medium text-c-text-secondary mb-1">
           {pl ? 'Nazwa' : 'Title'}
         </label>
         <input
@@ -553,10 +596,10 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
             if (e.key === 'Enter' && canSave) void handleSave();
           }}
           placeholder={pl ? 'np. Strategia 2026' : 'e.g. Strategy 2026'}
-          className="w-full px-3 py-2 mb-4 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-100 text-sm outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
+          className="w-full px-3 py-2 mb-4 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-100 text-sm outline-none focus:ring-2 focus:ring-slate-500/30 focus:border-slate-500"
         />
 
-        <span className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1.5">
+        <span className="block text-sm font-medium text-c-text-secondary mb-1.5">
           {pl ? 'Typ' : 'Type'}
         </span>
         <div className="grid grid-cols-2 gap-2 mb-4">
@@ -565,7 +608,7 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
             onClick={() => setScope('personal')}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
               scope === 'personal'
-                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                ? 'border-slate-500 bg-slate-50 dark:bg-slate-900/20 text-slate-700 dark:text-slate-300'
                 : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300'
             }`}
           >
@@ -577,7 +620,7 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
             onClick={() => setScope('team')}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
               scope === 'team'
-                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                ? 'border-slate-500 bg-slate-50 dark:bg-slate-900/20 text-slate-700 dark:text-slate-300'
                 : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300'
             }`}
           >
@@ -588,14 +631,14 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
 
         {scope === 'team' && (
           <div className="mb-4">
-            <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">
               {pl ? 'Zespół' : 'Team'}
             </label>
             {teams.length ? (
               <select
                 value={teamId}
                 onChange={(e) => setTeamId(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-100 text-sm outline-none focus:ring-2 focus:ring-primary-500/30"
+                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-100 text-sm outline-none focus:ring-2 focus:ring-slate-500/30"
               >
                 {teams.map((t) => (
                   <option key={t.id} value={t.id}>
@@ -604,7 +647,7 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
                 ))}
               </select>
             ) : (
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-c-text-muted">
                 {pl ? 'Brak dostępnych zespołów' : 'No teams available'}
               </p>
             )}
@@ -618,11 +661,11 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
             onChange={(e) => setContextSharing(e.target.checked ? 'org_context' : 'private')}
             className="mt-0.5"
           />
-          <span className="text-sm text-slate-600 dark:text-slate-300">
+          <span className="text-sm text-c-text-secondary">
             {pl
               ? 'Udostępnij treść do kontekstu AI organizacji'
               : 'Share content with organization AI context'}
-            <span className="block text-xs text-slate-600">
+            <span className="block text-xs text-c-text-muted">
               {pl
                 ? 'Domyślnie wyłączone. Treść może zasilać pamięć/AI org po zatwierdzeniu.'
                 : 'Off by default. Content may feed org memory/AI after approval.'}
@@ -634,7 +677,7 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
+            className="px-4 py-2 rounded-lg text-sm text-c-text-secondary hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
           >
             {pl ? 'Anuluj' : 'Cancel'}
           </button>
@@ -642,7 +685,7 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
             type="button"
             disabled={!canSave}
             onClick={() => void handleSave()}
-            className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 rounded-lg text-sm font-medium text-c-surface bg-c-text hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving
               ? pl

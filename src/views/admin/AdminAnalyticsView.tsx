@@ -12,7 +12,6 @@ import {
   DollarSign,
   Eye,
   Lightbulb,
-  Loader2,
   MessageSquare,
   RefreshCw,
   Target,
@@ -41,6 +40,7 @@ import {
   YAxis,
 } from 'recharts';
 
+import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 import { Api } from '../../services/api';
 
 // Removed mock data generators - using real API data only
@@ -138,8 +138,8 @@ export const AdminAnalyticsView: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+      <div className="space-y-6">
+        <SharedLoadingState template="card" count={4} />
       </div>
     );
   }

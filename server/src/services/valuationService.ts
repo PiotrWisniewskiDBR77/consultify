@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import * as audit from './auditService.js';
+import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
 import { normalizeCanonicalLineCode } from './financeCanonicalResolver.js';
 import {
   computeModel,
@@ -26,6 +27,34 @@ export interface WaccBreakdown {
   taxRate: number;
   debtWeight: number;
   equityWeight: number;
+}
+
+/**
+ * M16/F1.1 — WACC from CAPM (single source of truth for the discount rate).
+ * Cost of equity ke = rf + β·ERP; after-tax cost of debt kd = costOfDebt·(1−tax);
+ * WACC = wE·ke + wD·kd. Weights are normalized so they need not sum to 100.
+ * All inputs/outputs in percent. Replaces the flat hard-coded WACC (audit P0).
+ */
+export function computeWaccFromBreakdown(b: WaccBreakdown): number {
+  const rf = Number(b?.riskFreeRate) || 0;
+  const erp = Number(b?.equityRiskPremium) || 0;
+  const beta = Number(b?.beta) || 0;
+  const kd = Number(b?.costOfDebt) || 0;
+  const tax = Math.min(100, Math.max(0, Number(b?.taxRate) || 0)) / 100;
+  let wE = Number(b?.equityWeight) || 0;
+  let wD = Number(b?.debtWeight) || 0;
+  const total = wE + wD;
+  if (total > 0) {
+    wE /= total;
+    wD /= total;
+  } else {
+    wE = 1;
+    wD = 0;
+  }
+  const ke = rf + beta * erp;
+  const kdAfterTax = kd * (1 - tax);
+  const wacc = wE * ke + wD * kdAfterTax;
+  return Math.round(wacc * 100) / 100;
 }
 
 export interface ValuationAssumptions {
@@ -185,19 +214,21 @@ export function defaultAssumptions(
   horizonYears: number = 5,
   orgWacc?: number
 ): ValuationAssumptions {
-  const wacc = orgWacc ?? 12;
+  const breakdown: WaccBreakdown = {
+    riskFreeRate: 4,
+    equityRiskPremium: 5,
+    beta: 1.2,
+    costOfDebt: 8,
+    taxRate: 19,
+    debtWeight: 30,
+    equityWeight: 70,
+  };
+  // M16/F1.1 — derive WACC from CAPM breakdown (not a flat default); orgWacc overrides.
+  const wacc = orgWacc ?? computeWaccFromBreakdown(breakdown);
   return {
     horizonYears,
     waccPercent: wacc,
-    waccBreakdown: {
-      riskFreeRate: 4,
-      equityRiskPremium: 5,
-      beta: 1.2,
-      costOfDebt: 8,
-      taxRate: 19,
-      debtWeight: 30,
-      equityWeight: 70,
-    },
+    waccBreakdown: breakdown,
     terminalMethod: 'gordon',
     terminalGrowthPercent: 3,
     exitMultiple: 8,
@@ -320,10 +351,22 @@ export async function updateAssumptions(
     current.assumptions,
     defaultAssumptions(current.horizon_years)
   );
+  const mergedBreakdown: WaccBreakdown = {
+    ...prev.waccBreakdown,
+    ...(patch.waccBreakdown || {}),
+  };
   const next: ValuationAssumptions = {
     ...prev,
     ...patch,
-    waccBreakdown: { ...prev.waccBreakdown, ...(patch.waccBreakdown || {}) },
+    waccBreakdown: mergedBreakdown,
+    // M16/F1.1 — recompute WACC from CAPM when the breakdown changes, unless the
+    // caller explicitly overrides waccPercent in the same patch.
+    waccPercent:
+      patch.waccPercent != null
+        ? patch.waccPercent
+        : patch.waccBreakdown
+          ? computeWaccFromBreakdown(mergedBreakdown)
+          : prev.waccPercent,
     manualForecast: patch.manualForecast
       ? { years: patch.manualForecast.years || [] }
       : prev.manualForecast,
@@ -663,7 +706,16 @@ function loadForecastFromManual(
     .map((y, idx) => ({ ...y, year: idx + 1 }));
 
   if (yearsSorted.length < 1) throw new Error('Manual forecast missing');
-  return { years: yearsSorted, sourceQuality: { sourceType: 'manual' } };
+  // BUG-FIX (comps zero na manual): pozostałe loadery (model/analysis/budget) ustawiają
+  // companyMetric z ostatniego roku — manual to pomijał, przez co computeComps liczyło
+  // impliedEnterpriseValue = 0 (brak bazy ebitda/revenue) i pasmo comps na football-field
+  // zapadało się do zera mimo ustawionych peers. Mirror tej samej derywacji co inne loadery.
+  const last = yearsSorted[yearsSorted.length - 1];
+  return {
+    years: yearsSorted,
+    sourceQuality: { sourceType: 'manual' },
+    companyMetric: { revenueLastYear: last?.revenue, ebitdaLastYear: last?.ebitda },
+  };
 }
 
 export interface DcfResult {
@@ -788,7 +840,11 @@ function computeSensitivityWaccVsG(
     }
     table.push({ g, values: row });
   }
-  return { waccGrid, gGrid, table };
+  // M16/F1.3 — flat matrix [{wacc,g,ev}] the cockpit heatmap binds to (contract fix).
+  const matrix = table.flatMap((r) =>
+    waccGrid.map((w, i) => ({ wacc: w, g: r.g, ev: r.values[i] }))
+  );
+  return { waccGrid, gGrid, table, matrix };
 }
 
 function computeSensitivityWaccVsExitMultiple(
@@ -822,7 +878,12 @@ function computeSensitivityWaccVsExitMultiple(
     }
     table.push({ multiple: m, values: row });
   }
-  return { waccGrid, multipleGrid, table };
+  // M16/F1.3 — flat matrix the cockpit heatmap binds to; second axis (exit multiple)
+  // exposed both as `multiple` and as `g` so the shared heatmap renderer works.
+  const matrix = table.flatMap((r) =>
+    waccGrid.map((w, i) => ({ wacc: w, g: r.multiple, multiple: r.multiple, ev: r.values[i] }))
+  );
+  return { waccGrid, multipleGrid, table, matrix };
 }
 
 function computeTornado(
@@ -1559,23 +1620,41 @@ export async function convertAdvisoryRecommendationToInitiative(
   const rec = (advisory?.recommendations || []).find((r: any) => r.id === recommendationId);
   if (!rec) throw new Error('Recommendation not found');
 
-  const initiativeId = uuidv4();
-  const now = new Date().toISOString();
-  await dbRun(
-    `INSERT INTO initiatives (id, organization_id, project_id, name, summary, hypothesis, status, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      initiativeId,
+  // Uspójnienie F1.9 — przez kanoniczny lejek (DRAFT + name/title + lineage).
+  let initiativeId: string;
+  if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+    const __r = await funnelCreateInitiative(
       orgId,
-      val.project_id || null,
-      String(rec.title || 'Valuation improvement initiative'),
-      String(rec.mechanism || rec.hypothesis || ''),
-      String(rec.hypothesis || ''),
-      'draft',
-      now,
-      now,
-    ]
-  );
+      {
+        title: String(rec.title || 'Valuation improvement initiative'),
+        projectId: val.project_id || null,
+        summary: String(rec.mechanism || rec.hypothesis || ''),
+        hypothesis: String(rec.hypothesis || ''),
+        sourceType: 'valuation',
+        sourceId: valuationId,
+      },
+      { validate: false, actor: { id: userId } }
+    );
+    initiativeId = __r.id;
+  } else {
+    initiativeId = uuidv4();
+    const now = new Date().toISOString();
+    await dbRun(
+      `INSERT INTO initiatives (id, organization_id, project_id, name, summary, hypothesis, status, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        initiativeId,
+        orgId,
+        val.project_id || null,
+        String(rec.title || 'Valuation improvement initiative'),
+        String(rec.mechanism || rec.hypothesis || ''),
+        String(rec.hypothesis || ''),
+        'draft',
+        now,
+        now,
+      ]
+    );
+  }
 
   try {
     await audit.log({

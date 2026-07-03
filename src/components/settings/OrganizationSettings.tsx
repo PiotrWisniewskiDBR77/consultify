@@ -200,7 +200,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
           </p>
           <button
             onClick={() => setIsCreateOrgModalOpen(true)}
-            className="bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] px-4 py-2 rounded-lg font-medium transition-colors"
+            className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
           >
             Create Organization
           </button>
@@ -247,7 +247,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                   <button
                     onClick={handleCreateOrganization}
                     disabled={creatingOrg || !newOrgName.trim()}
-                    className="px-6 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     {creatingOrg && <Loader2 size={16} className="animate-spin" />}
                     {creatingOrg ? 'Creating...' : 'Create Organization'}
@@ -373,7 +373,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                         <div
                           className={`h-2.5 rounded-full transition-all ${
                             remaining < lowThreshold
-                              ? 'bg-danger-500'
+                              ? 'bg-rose-500'
                               : remaining < medThreshold
                                 ? 'bg-amber-500'
                                 : 'bg-green-500'
@@ -382,7 +382,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                         />
                       </div>
                       {remaining < lowThreshold && (
-                        <p className="text-xs text-danger-600 dark:text-danger-400 mt-2 text-center">
+                        <p className="text-xs text-rose-600 dark:text-rose-400 mt-2 text-center">
                           ⚠️ Low balance! Upgrade to continue using AI features.
                         </p>
                       )}
@@ -416,7 +416,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
               No token activity yet.
             </div>
           ) : (
-            <table /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */  className="w-full text-sm">
+            <table className="w-full text-sm">
               <thead className="bg-slate-50 dark:bg-navy-950 sticky top-0">
                 <tr>
                   <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
@@ -441,7 +441,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                         className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                           entry.type === 'CREDIT'
                             ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                            : 'bg-danger-100 text-danger-800 dark:bg-danger-900/30 dark:text-danger-400'
+                            : 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400'
                         }`}
                       >
                         {entry.type}
@@ -531,7 +531,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
           <button
             onClick={handleSaveFinanceSettings}
             disabled={savingFinance}
-            className="flex items-center gap-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
           >
             {savingFinance ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
             {savingFinance ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
@@ -548,7 +548,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
           </h3>
           <button
             onClick={() => setIsAddMemberOpen(!isAddMemberOpen)}
-            className="flex items-center gap-1.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-1.5 bg-primary-600 hover:bg-primary-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
           >
             <Plus size={16} />
             Add Member

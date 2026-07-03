@@ -28,6 +28,7 @@
 import { ExternalLink, FileText, Loader2, Presentation, RefreshCw, Send } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import {
   convertTable,
@@ -116,6 +117,7 @@ export const TabeleSharePanel: React.FC<TabeleSharePanelProps> = ({
   testInitialPacks,
   testInitialConversions,
 }) => {
+  const { t } = useTranslation();
   const [target, setTarget] = useState<TableConversionTarget>('document');
   const [sourcePackId, setSourcePackId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
@@ -181,7 +183,12 @@ export const TabeleSharePanel: React.FC<TabeleSharePanelProps> = ({
         title: title.trim() || undefined,
       });
       if (result.status === 'failed') {
-        toast.error('Conversion failed. See recent conversions for details.');
+        toast.error(
+          t(
+            'tabele.rightRail.share.conversionFailed',
+            'Conversion failed. See recent conversions for details.'
+          )
+        );
       } else if (result.status === 'succeeded') {
         toast.success(`Converted to ${target}`);
       } else {
@@ -205,7 +212,7 @@ export const TabeleSharePanel: React.FC<TabeleSharePanelProps> = ({
     <section
       className="flex h-full flex-col gap-3 p-3"
       data-testid="tabele-share-panel"
-      aria-label="Tabele share and conversions"
+      aria-label={t('tabele.rightRail.share.panelAria', 'Tabele share and conversions')}
     >
       <header className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Share</h3>

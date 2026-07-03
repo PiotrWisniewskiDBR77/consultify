@@ -74,6 +74,12 @@ export interface NarrativeEngineInput {
   section_title: string;
   aiPurpose?: string;
   previous_sections_summaries?: Array<{ key: string; summary: string }>;
+  /**
+   * R4 — Free-text per-slide rewrite directive. When present, it is injected
+   * into the LLM system + user prompt as an explicit author instruction
+   * ("rewrite this slide so that…"). Optional; absence = default behaviour.
+   */
+  user_instruction?: string;
 }
 
 export interface NarrativeEngineOutput {

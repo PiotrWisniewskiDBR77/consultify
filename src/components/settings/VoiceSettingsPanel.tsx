@@ -287,12 +287,12 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
         <div className="flex gap-4 p-3 bg-slate-50 dark:bg-white/5 rounded-lg">
           <div className="flex items-center gap-2">
             {testResults.stt === true && <CheckCircle size={16} className="text-green-500" />}
-            {testResults.stt === false && <XCircle size={16} className="text-danger-500" />}
+            {testResults.stt === false && <XCircle size={16} className="text-rose-500" />}
             <span className="text-sm text-slate-600 dark:text-slate-400">STT</span>
           </div>
           <div className="flex items-center gap-2">
             {testResults.tts === true && <CheckCircle size={16} className="text-green-500" />}
-            {testResults.tts === false && <XCircle size={16} className="text-danger-500" />}
+            {testResults.tts === false && <XCircle size={16} className="text-rose-500" />}
             <span className="text-sm text-slate-600 dark:text-slate-400">TTS</span>
           </div>
         </div>
@@ -301,7 +301,7 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
       {!loadError && testError && (
         <div
           role="alert"
-          className="p-3 bg-danger-50 dark:bg-danger-500/10 border border-danger-200 dark:border-danger-500/30 rounded-lg text-sm text-danger-700 dark:text-danger-300"
+          className="p-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-lg text-sm text-rose-700 dark:text-rose-300"
         >
           {testError}
         </div>
@@ -425,7 +425,7 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
                 onClick={() => updateSetting('autoSpeakResponses', !settings.autoSpeakResponses)}
                 className={`
                             relative w-11 h-6 rounded-full transition-colors
-                            ${settings.autoSpeakResponses ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'}
+                            ${settings.autoSpeakResponses ? 'bg-primary-500' : 'bg-slate-300 dark:bg-slate-600'}
                         `}
               >
                 <span
@@ -446,7 +446,7 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
                 onClick={() => updateSetting('showLiveTranscript', !settings.showLiveTranscript)}
                 className={`
                             relative w-11 h-6 rounded-full transition-colors
-                            ${settings.showLiveTranscript ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'}
+                            ${settings.showLiveTranscript ? 'bg-primary-500' : 'bg-slate-300 dark:bg-slate-600'}
                         `}
               >
                 <span
@@ -464,7 +464,7 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
             {saveError && (
               <div
                 role="alert"
-                className="mb-3 p-3 bg-danger-50 dark:bg-danger-500/10 border border-danger-200 dark:border-danger-500/30 rounded-lg text-sm text-danger-700 dark:text-danger-300"
+                className="mb-3 p-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-lg text-sm text-rose-700 dark:text-rose-300"
               >
                 {saveError}
               </div>
@@ -472,7 +472,7 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
             <button
               onClick={saveSettings}
               disabled={isSaving}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium transition-colors disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
             >
               {isSaving ? (
                 <Loader2 size={16} className="animate-spin" />

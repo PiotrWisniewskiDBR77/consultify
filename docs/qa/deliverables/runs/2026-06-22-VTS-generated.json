@@ -1,0 +1,1094 @@
+{
+  "ranAt": "2026-06-23T16:33:12.010Z",
+  "model": "anthropic/claude-sonnet-4-6",
+  "deck": {
+    "tierUsed": "PREMIUM",
+    "fallbackUsed": false,
+    "plans": [
+      {
+        "slideIndex": 0,
+        "layoutIntent": "cover",
+        "paletteId": "midnight",
+        "imageBrief": "Abstract neural network grid overlaid on a modern industrial facility, dark blue tones, suggesting technology meeting manufacturing",
+        "reasoning": "Slide 0 is explicitly a cover slide. Midnight palette suits a board-level, professional Polish corporate deck with gravitas. The image sets an AI-in-industry tone.",
+        "source": "llm",
+        "title": "Diagnoza gotowości na AI — VTS Group S.A.",
+        "keyMessage": "Wyniki ankiety wave 2: 131 pracowników, 8 działów, droga do skalowania AI"
+      },
+      {
+        "slideIndex": 1,
+        "layoutIntent": "executive_summary",
+        "paletteId": "midnight",
+        "imageBrief": null,
+        "reasoning": "Executive summary layout is the natural fit for a 'Streszczenie wykonawcze' slide presenting top-line readiness index and ROI headline for a board audience.",
+        "source": "llm",
+        "title": "Streszczenie wykonawcze",
+        "keyMessage": "Średni indeks gotowości 58/100 — fundament jest, brakuje kompetencji i danych; 7 inicjatyw zwróci się w 24 mies."
+      },
+      {
+        "slideIndex": 2,
+        "layoutIntent": "key_messages",
+        "paletteId": "midnight",
+        "imageBrief": null,
+        "reasoning": "'Trzy wnioski dla zarządu' is a classic three-point key messages slide. This layout presents each finding as a distinct, scannable message for board members.",
+        "source": "llm",
+        "title": "Trzy wnioski dla zarządu",
+        "keyMessage": "Apetyt na AI wysoki; dane rozproszone i niespójne; luka kompetencyjna w produkcji i logistyce"
+      },
+      {
+        "slideIndex": 3,
+        "layoutIntent": "assessment",
+        "paletteId": "midnight",
+        "imageBrief": "Clean infographic of a survey form with five dimension icons and a response rate meter at 87%, minimal style",
+        "reasoning": "Methodology slide describes the survey design and scoring framework — assessment layout best communicates the structured evaluation approach and criteria.",
+        "source": "llm",
+        "title": "Metodyka badania",
+        "keyMessage": "Ankieta 2-blokowa PL/EN, 131 zaproszeń, 87% zwrotu, indeks gotowości w 5 wymiarach"
+      },
+      {
+        "slideIndex": 4,
+        "layoutIntent": "performance_overview",
+        "paletteId": "midnight",
+        "imageBrief": "Radar or spider chart showing five AI readiness dimensions with scores, dark background, accent color highlights on weak dimensions",
+        "reasoning": "Five-dimension readiness scores (41–71) are classic performance data requiring a dashboard/overview layout with visual scoring across multiple metrics.",
+        "source": "llm",
+        "title": "Indeks gotowości — obraz całościowy",
+        "keyMessage": "58/100 średnio; dane 41, kompetencje 49, procesy 62, kultura 71, technologia 67"
+      },
+      {
+        "slideIndex": 5,
+        "layoutIntent": "comparison",
+        "paletteId": "midnight",
+        "imageBrief": "Horizontal bar chart comparing eight departments' AI readiness scores, with R&D and IT highlighted high, Production and Logistics flagged low",
+        "reasoning": "Department-by-department readiness scores are inherently comparative. Comparison layout clearly contrasts high performers (R&D 74, IT 71) vs. laggards (Production 44).",
+        "source": "llm",
+        "title": "Gotowość wg działów",
+        "keyMessage": "R&D (74) i IT (71) ciągną w górę; Produkcja (44) i Logistyka (46) wymagają wsparcia"
+      },
+      {
+        "slideIndex": 6,
+        "layoutIntent": "root_cause",
+        "paletteId": "midnight",
+        "imageBrief": "Fishbone or tree diagram illustrating three root barriers: fragmented data, skills gap, unclear AI ownership, dark industrial aesthetic",
+        "reasoning": "Barriers analysis maps directly to root cause layout — it explains *why* readiness is low, not just what the symptoms are, matching the fishbone/causal structure.",
+        "source": "llm",
+        "title": "Główne bariery wdrożenia",
+        "keyMessage": "Brak spójnych danych (63% wskazań), luka kompetencyjna, niejasny właściciel AI"
+      },
+      {
+        "slideIndex": 7,
+        "layoutIntent": "initiative_portfolio",
+        "paletteId": "midnight",
+        "imageBrief": null,
+        "reasoning": "Seven initiatives across three waves is a portfolio of initiatives. initiative_portfolio layout organises them by wave/phase with consistent card-style presentation for board review.",
+        "source": "llm",
+        "title": "Rekomendowany portfel inicjatyw",
+        "keyMessage": "7 inicjatyw w 3 falach: szybkie wygrane, enablery, skalowanie"
+      },
+      {
+        "slideIndex": 8,
+        "layoutIntent": "roadmap",
+        "paletteId": "midnight",
+        "imageBrief": "24-month horizontal timeline with five labelled phases (audit, pilots, competencies, scaling, governance), milestone markers, clean dark style",
+        "reasoning": "A 5-stage 24-month plan is a textbook roadmap slide. The roadmap layout renders sequential phases with timing, dependencies, and milestones clearly.",
+        "source": "llm",
+        "title": "Roadmapa 24 mies. — model 5-etapowy",
+        "keyMessage": "Audyt danych → pilotaże → kompetencje → skalowanie → governance"
+      },
+      {
+        "slideIndex": 9,
+        "layoutIntent": "risk_management",
+        "paletteId": "midnight",
+        "imageBrief": "Risk matrix grid with five risks plotted by likelihood and impact, red/amber/green colour coding, professional board style",
+        "reasoning": "Five identified risks with mitigations fit precisely into risk_management layout, which structures each risk with likelihood, impact, and mitigation action.",
+        "source": "llm",
+        "title": "Ryzyka i mitygacje",
+        "keyMessage": "5 ryzyk: jakość danych, adopcja, AI Act, dług technologiczny, brak ownera"
+      },
+      {
+        "slideIndex": 10,
+        "layoutIntent": "next_steps",
+        "paletteId": "midnight",
+        "imageBrief": "30-day sprint calendar with three highlighted action items — budget decision, AI Owner appointment, data audit kickoff — bold and actionable",
+        "reasoning": "Three concrete 30-day actions (budget, owner, audit) are the closing call-to-action for the board — next_steps layout drives urgency and accountability.",
+        "source": "llm",
+        "title": "Następne kroki",
+        "keyMessage": "Decyzja o budżecie Etapu 1, powołanie AI Owner, start audytu danych w 30 dni"
+      }
+    ]
+  },
+  "doc": {
+    "structureTier": "PREMIUM",
+    "structureFallback": false,
+    "sections": [
+      {
+        "sectionId": "sec-0",
+        "heading": "Streszczenie wykonawcze",
+        "blocks": [
+          {
+            "blockId": "b-0-0",
+            "type": "heading",
+            "content": {
+              "text": "Streszczenie wykonawcze — główne ustalenia badania gotowości na AI dla VTS Group S.A. (Wave 2)"
+            }
+          },
+          {
+            "blockId": "b-0-1",
+            "type": "kpi",
+            "content": {
+              "items": [
+                {
+                  "label": "Zwrot ankiet",
+                  "value": "87%",
+                  "delta": "+6 pp vs Wave 1"
+                },
+                {
+                  "label": "Średni indeks gotowości",
+                  "value": "58 / 100",
+                  "delta": "+5 pkt vs Wave 1"
+                },
+                {
+                  "label": "Zidentyfikowane inicjatywy AI",
+                  "value": "7",
+                  "delta": "+3 vs Wave 1"
+                },
+                {
+                  "label": "Rekomendowany horyzont transformacji",
+                  "value": "24 miesiące",
+                  "delta": "0"
+                }
+              ]
+            }
+          },
+          {
+            "blockId": "b-0-2",
+            "type": "text",
+            "content": {
+              "text": "VTS Group S.A. osiąga umiarkowany poziom gotowości na AI (58/100), co plasuje organizację powyżej mediany sektora przemysłowego, lecz poniżej progu operacyjnego wdrożenia. Najsilniejsze wymiary to świadomość i kultura, najsłabsze — jakość danych i integracja systemów. Wysoki zwrot ankiet (87%) potwierdza zaangażowanie pracowników i wiarygodność wyników."
+            }
+          },
+          {
+            "blockId": "b-0-3",
+            "type": "text",
+            "content": {
+              "text": "W kontekście ekspansji na rynek USA i budowy Data Centers, organizacja stoi przed oknem strategicznym do przyspieszenia dojrzałości AI. 7 zidentyfikowanych inicjatyw tworzy spójny portfel o zróżnicowanym stopniu trudności i zwrotu. Zarząd otrzymuje niniejszy raport jako podstawę do podjęcia decyzji o alokacji zasobów i powołaniu struktury governance AI w horyzoncie 24 miesięcy."
+            }
+          }
+        ]
+      },
+      {
+        "sectionId": "sec-1",
+        "heading": "Kontekst i cele diagnozy",
+        "blocks": [
+          {
+            "blockId": "b-1-0",
+            "type": "heading",
+            "content": {
+              "text": "Kontekst strategiczny i cele diagnozy AI Readiness Wave 2"
+            }
+          },
+          {
+            "blockId": "b-1-1",
+            "type": "text",
+            "content": {
+              "text": "VTS Group S.A. znajduje się w przełomowym momencie swojego rozwoju. Równoległa realizacja dwóch strategicznych priorytetów — ekspansji na rynek północnoamerykański oraz budowy nowoczesnej infrastruktury Data Centers — tworzy bezprecedensową presję na całą organizację. Wejście na rynek USA wymaga nie tylko dostosowania modelu operacyjnego do wymogów regulacyjnych i oczekiwań klientów w Ameryce Północnej, lecz przede wszystkim zdolności do skalowania operacji bez proporcjonalnego wzrostu kosztów. Infrastruktura Data Centers natomiast generuje rosnące wolumeny danych operacyjnych i środowiskowych, które — aby przynosić wartość biznesową — muszą być przetwarzane, analizowane i monetyzowane w czasie rzeczywistym.\n\nW tym kontekście sztuczna inteligencja przestaje być opcją technologiczną, a staje się warunkiem koniecznym dla utrzymania konkurencyjności. Automatyzacja procesów back-office, predykcyjne utrzymanie ruchu w centrach danych, inteligentne zarządzanie energią czy wspomagane AI zarządzanie łańcuchem dostaw — to obszary, w których organizacja musi podjąć świadome, oparte na danych decyzje inwestycyjne. Aby jednak inwestycje te były trafne i sekwencjonowane właściwie, konieczna jest rzetelna, aktualna diagnoza stanu gotowości organizacji.\n\nPierwsza fala badania (Wave 1) dostarczyła bazowego obrazu dojrzałości AI w VTS Group S.A. Wave 2, realizowana w zmienionym kontekście strategicznym, ma na celu uchwycenie dynamiki zmian, zidentyfikowanie obszarów, w których nastąpił postęp, oraz tych, które wciąż stanowią bariery dla wdrożeń AI na skalę przemysłową. Diagnoza stanowi bezpośredni wkład analityczny do decyzji inwestycyjnych planowanych na drugą połowę roku."
+            }
+          },
+          {
+            "blockId": "b-1-2",
+            "type": "text",
+            "content": {
+              "text": "Zarząd VTS Group S.A. sformułował wobec niniejszej diagnozy trzy precyzyjne oczekiwania, które wyznaczają zarówno zakres prac, jak i standard jakości dostarczanych wyników.\n\nPo pierwsze, ocena bazowa dojrzałości AI — zarząd oczekuje przekrojowego, porównywalnego z Wave 1 obrazu stanu gotowości organizacyjnej i technologicznej w poszczególnych działach. Wyniki muszą być wyrażone w ujednoliconej skali, umożliwiającej benchmarking wewnętrzny oraz identyfikację działów będących zarówno liderami, jak i obszarami wymagającymi pilnej interwencji.\n\nPo drugie, priorytetyzacja inicjatyw według potencjału ROI — diagnoza ma dostarczyć uszeregowanej listy możliwości wdrożeń AI, ocenionych przez pryzmat realnego potencjału zwrotu z inwestycji, wykonalności technicznej i organizacyjnej oraz strategicznego dopasowania do celów ekspansji i rozwoju infrastruktury. Priorytetyzacja ma umożliwić zarządowi alokację zasobów tam, gdzie wartość zostanie wygenerowana najszybciej i najpewniej.\n\nPo trzecie, rekomendacje roadmapy z przypisanymi właścicielami i kamieniami milowymi — oczekiwanym produktem jest konkretny, realizowalny plan działania na horyzont 12–24 miesięcy, zawierający przypisanie odpowiedzialności do konkretnych funkcji organizacyjnych oraz mierzalne punkty kontrolne. Roadmapa ma posłużyć jako dokument roboczy podczas sesji strategicznej Q3 oraz jako materiał negocjacyjny w rozmowach z potencjalnymi partnerami technologicznymi i dostawcami rozwiązań AI."
+            }
+          },
+          {
+            "blockId": "b-1-3",
+            "type": "callout",
+            "content": {
+              "text": "📋 Zakres diagnozy — co JEST, a co NIE JEST jej przedmiotem\n\n✅ JEST celem diagnozy:\n• Ocena gotowości organizacyjnej i technologicznej VTS Group S.A. do wdrożeń AI\n• Identyfikacja kluczowych barier strukturalnych, kompetencyjnych i kulturowych\n• Priorytetyzacja inicjatyw AI według potencjału wartości i wykonalności\n• Rekomendacje roadmapy transformacji z właścicielami i kamieniami milowymi\n\n🚫 NIE JEST celem diagnozy:\n• Selekcja ani rekomendacja konkretnych narzędzi lub platform AI\n• Wycena projektów IT ani przygotowanie business case'ów finansowych\n• Audyt bezpieczeństwa danych lub zgodności z regulacjami (GDPR, NIS2)\n• Ocena indywidualnych pracowników ani ich kompetencji personalnych",
+              "tone": "info"
+            }
+          }
+        ]
+      },
+      {
+        "sectionId": "sec-2",
+        "heading": "Metodyka badania",
+        "blocks": [
+          {
+            "blockId": "b-2-0",
+            "type": "heading",
+            "content": {
+              "text": "Metodyka badania — struktura, próba i wymiary pomiaru"
+            }
+          },
+          {
+            "blockId": "b-2-1",
+            "type": "text",
+            "content": {
+              "text": "Badanie przeprowadzono przy użyciu dwublokowej ankiety online dostępnej w wersjach językowych PL i EN. Blok pierwszy (General) obejmował pytania o świadomość AI, postawy i kulturę organizacyjną, dostarczając przekrojowego obrazu dojrzałości miękkiej organizacji. Blok drugi (Process) koncentrował się na procesach, danych i infrastrukturze technicznej, pozwalając ocenić operacyjną gotowość do wdrożeń AI. Dystrybucja odbyła się przez indywidualne linki magic-link, co zapewniło unikalność odpowiedzi, wyeliminowało ryzyko duplikatów oraz umożliwiło granularną analizę na poziomie działu. Próba liczyła 131 respondentów reprezentujących 8 działów VTS Group S.A., co zapewnia statystyczną reprezentatywność wyników na poziomie całej organizacji."
+            }
+          },
+          {
+            "blockId": "b-2-2",
+            "type": "bulletList",
+            "content": {
+              "items": [
+                "Świadomość i kultura AI — postrzeganie roli AI w organizacji, gotowość do zmiany, zaangażowanie przywództwa oraz klimat innowacji.",
+                "Jakość i dostępność danych — kompletność i spójność zbiorów danych, procesy data governance oraz stopień standaryzacji źródeł danych.",
+                "Infrastruktura i narzędzia technologiczne — dojrzałość systemów IT, poziom integracji między systemami, wykorzystanie chmury i gotowość środowisk obliczeniowych.",
+                "Kompetencje i talent — umiejętności analityczne pracowników, dostępność wewnętrznych specjalistów AI/ML oraz luki kompetencyjne wymagające zaadresowania.",
+                "Procesy i governance — standaryzacja procesów biznesowych, struktury decyzyjne wspierające AI, definiowanie i monitorowanie KPI."
+              ]
+            }
+          },
+          {
+            "blockId": "b-2-3",
+            "type": "callout",
+            "content": {
+              "text": "Limitacja metodologiczna: Wyniki oparte są na samoocenie respondentów, co może prowadzić do systematycznego przeszacowania gotowości — szczególnie w wymiarach trudno mierzalnych, takich jak kultura organizacyjna i kompetencje. Przed finalną priorytetyzacją inicjatyw AI rekomenduje się uzupełnienie niniejszych wyników o niezależną weryfikację techniczną obejmującą data audit oraz technology assessment.",
+              "tone": "warning"
+            }
+          }
+        ]
+      },
+      {
+        "sectionId": "sec-3",
+        "heading": "Kluczowe wyniki — indeks gotowości",
+        "blocks": [
+          {
+            "blockId": "b-3-0",
+            "type": "heading",
+            "content": {
+              "text": "Kluczowe wyniki — indeks gotowości AI według 5 wymiarów"
+            }
+          },
+          {
+            "blockId": "b-3-1",
+            "type": "chart",
+            "content": {
+              "kind": "bar",
+              "title": "Indeks gotowości AI według wymiarów (wave 2) — próg operacyjny: 65/100",
+              "xAxisLabel": "Indeks gotowości (0–100)",
+              "yAxisLabel": "Wymiar",
+              "series": [
+                {
+                  "label": "Świadomość i kultura AI",
+                  "values": [
+                    68
+                  ],
+                  "color": "#2563EB"
+                },
+                {
+                  "label": "Jakość i dostępność danych",
+                  "values": [
+                    44
+                  ],
+                  "color": "#0D9488"
+                },
+                {
+                  "label": "Infrastruktura i narzędzia",
+                  "values": [
+                    52
+                  ],
+                  "color": "#7C3AED"
+                },
+                {
+                  "label": "Kompetencje i talent",
+                  "values": [
+                    55
+                  ],
+                  "color": "#DC2626"
+                },
+                {
+                  "label": "Procesy i governance",
+                  "values": [
+                    51
+                  ],
+                  "color": "#EA580C"
+                },
+                {
+                  "label": "Próg operacyjny wdrożenia",
+                  "values": [
+                    65
+                  ],
+                  "color": "#0891B2"
+                }
+              ]
+            }
+          },
+          {
+            "blockId": "b-3-2",
+            "type": "text",
+            "content": {
+              "text": "Rozkład indeksów ujawnia wyraźną asymetrię w profilu gotowości VTS Group S.A. Jedynie wymiar Świadomości i kultury AI (68/100) przekracza próg operacyjny wdrożenia (65/100), co wskazuje na podatny grunt organizacyjny dla transformacji — pracownicy rozumieją potencjał AI i deklarują otwartość na zmianę. To istotny kapitał, który należy aktywnie wykorzystać jako dźwignię programu zmiany.\n\nNajpoważniejszym wąskim gardłem pozostaje Jakość i dostępność danych (44/100) — wynik o 21 punktów poniżej progu operacyjnego. Bez gruntownej poprawy zarządzania danymi, ich spójności i dostępności żaden z planowanych projektów ML/AI nie osiągnie produkcyjnej skalowalności. Deficyt ten ma charakter fundamentalny: blokuje wartość ze wszystkich pozostałych inwestycji w AI, niezależnie od postępów w innych wymiarach.\n\nWymiary Infrastruktury i narzędzi (52/100), Kompetencji i talentu (55/100) oraz Procesów i governance (51/100) koncentrują się w przedziale 51–55 punktów — spójnie poniżej progu operacyjnego. Ta grupowa luka nie jest przypadkowa: odzwierciedla brak skoordynowanego programu budowania zdolności, w którym inwestycje technologiczne, talentowe i procesowe wzmacniają się wzajemnie. Rekomendowane podejście to zintegrowany roadmap zdolności adresujący wszystkie trzy wymiary równolegle, zamiast kolejnych inicjatyw punktowych."
+            }
+          }
+        ]
+      },
+      {
+        "sectionId": "sec-4",
+        "heading": "Gotowość wg działów",
+        "blocks": [
+          {
+            "blockId": "b-4-0",
+            "type": "heading",
+            "content": {
+              "text": "Gotowość na AI według działów — analiza porównawcza"
+            }
+          },
+          {
+            "blockId": "b-4-1",
+            "type": "table",
+            "content": {
+              "rows": [
+                {
+                  "cells": {
+                    "Dział": {
+                      "value": "IT/Digital"
+                    },
+                    "Liczba respondentów": {
+                      "value": "18"
+                    },
+                    "Indeks gotowości (0–100)": {
+                      "value": "72"
+                    },
+                    "Najsłabszy wymiar": {
+                      "value": "Governance"
+                    }
+                  }
+                },
+                {
+                  "cells": {
+                    "Dział": {
+                      "value": "R&D"
+                    },
+                    "Liczba respondentów": {
+                      "value": "14"
+                    },
+                    "Indeks gotowości (0–100)": {
+                      "value": "67"
+                    },
+                    "Najsłabszy wymiar": {
+                      "value": "Dane"
+                    }
+                  }
+                },
+                {
+                  "cells": {
+                    "Dział": {
+                      "value": "Sprzedaż i Marketing"
+                    },
+                    "Liczba respondentów": {
+                      "value": "17"
+                    },
+                    "Indeks gotowości (0–100)": {
+                      "value": "61"
+                    },
+                    "Najsłabszy wymiar": {
+                      "value": "Infrastruktura"
+                    }
+                  }
+                },
+                {
+                  "cells": {
+                    "Dział": {
+                      "value": "Finanse"
+                    },
+                    "Liczba respondentów": {
+                      "value": "16"
+                    },
+                    "Indeks gotowości (0–100)": {
+                      "value": "57"
+                    },
+                    "Najsłabszy wymiar": {
+                      "value": "Kompetencje"
+                    }
+                  }
+                },
+                {
+                  "cells": {
+                    "Dział": {
+                      "value": "Operacje i Produkcja",
+                      "style": {
+                        "bgColor": "#DC2626"
+                      }
+                    },
+                    "Liczba respondentów": {
+                      "value": "22",
+                      "style": {
+                        "bgColor": "#DC2626"
+                      }
+                    },
+                    "Indeks gotowości (0–100)": {
+                      "value": "51",
+                      "style": {
+                        "bgColor": "#DC2626"
+                      }
+                    },
+                    "Najsłabszy wymiar": {
+                      "value": "Dane",
+                      "style": {
+                        "bgColor": "#DC2626"
+                      }
+                    }
+                  }
+                },
+                {
+                  "cells": {
+                    "Dział": {
+                      "value": "HR",
+                      "style": {
+                        "bgColor": "#DC2626"
+                      }
+                    },
+                    "Liczba respondentów": {
+                      "value": "12",
+                      "style": {
+                        "bgColor": "#DC2626"
+                      }
+                    },
+                    "Indeks gotowości (0–100)": {
+                      "value": "49",
+                      "style": {
+                        "bgColor": "#DC2626"
+                      }
+                    },
+                    "Najsłabszy wymiar": {
+                      "value": "Infrastruktura",
+                      "style": {
+                        "bgColor": "#DC2626"
+                      }
+                    }
+                  }
+                },
+                {
+                  "cells": {
+                    "Dział": {
+                      "value": "Łańcuch dostaw",
+                      "style": {
+                        "bgColor": "#DC2626"
+                      }
+                    },
+                    "Liczba respondentów": {
+                      "value": "15",
+                      "style": {
+                        "bgColor": "#DC2626"
+                      }
+                    },
+                    "Indeks gotowości (0–100)": {
+                      "value": "46",
+                      "style": {
+                        "bgColor": "#DC2626"
+                      }
+                    },
+                    "Najsłabszy wymiar": {
+                      "value": "Dane",
+                      "style": {
+                        "bgColor": "#DC2626"
+                      }
+                    }
+                  }
+                },
+                {
+                  "cells": {
+                    "Dział": {
+                      "value": "Obsługa klienta",
+                      "style": {
+                        "bgColor": "#DC2626"
+                      }
+                    },
+                    "Liczba respondentów": {
+                      "value": "17",
+                      "style": {
+                        "bgColor": "#DC2626"
+                      }
+                    },
+                    "Indeks gotowości (0–100)": {
+                      "value": "43",
+                      "style": {
+                        "bgColor": "#DC2626"
+                      }
+                    },
+                    "Najsłabszy wymiar": {
+                      "value": "Kompetencje",
+                      "style": {
+                        "bgColor": "#DC2626"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "blockId": "b-4-2",
+            "type": "text",
+            "content": {
+              "text": "Analiza rozwarstwienia: Wyniki ujawniają 29-punktową rozpiętość indeksów między najlepszym (IT/Digital: 72) a najsłabszym działem (Obsługa klienta: 43), co świadczy o głębokiej niejednorodności gotowości wewnątrzorganizacyjnej. Trzy działy operacyjne — Operacje i Produkcja, Łańcuch dostaw oraz Obsługa klienta — skupiają się poniżej progu 50/100, tworząc 'dolinę gotowości', która może zablokować wdrożenia end-to-end. Szczególnie niepokojące jest, że jakość danych jest najsłabszym wymiarem aż w 4 z 8 działów, co potwierdza systemowy charakter tej bariery."
+            }
+          }
+        ]
+      },
+      {
+        "sectionId": "sec-5",
+        "heading": "Główne bariery wdrożenia",
+        "blocks": [
+          {
+            "blockId": "b-5-0",
+            "type": "heading",
+            "content": {
+              "text": "Główne bariery wdrożenia AI w VTS Group S.A."
+            }
+          },
+          {
+            "blockId": "b-5-1",
+            "type": "text",
+            "content": {
+              "text": "Analiza odpowiedzi otwartych i wyników ilościowych pozwoliła zidentyfikować pięć głównych kategorii barier: (1) jakość i fragmentacja danych, (2) brak kompetencji i świadomości AI wśród menedżerów średniego szczebla, (3) niewystarczająca integracja systemów legacy z nowymi platformami, (4) brak jasnej odpowiedzialności za inicjatywy AI (governance gap), (5) obawy pracownicze dotyczące zastąpienia przez automatyzację. Bariery te wzajemnie się wzmacniają — słabe governance utrudnia poprawę jakości danych, co z kolei blokuje demonstrację wartości i podtrzymuje sceptycyzm."
+            }
+          },
+          {
+            "blockId": "b-5-2",
+            "type": "callout",
+            "content": {
+              "text": "OSTRZEŻENIE — Bariera #1: Jakość danych. 61% respondentów wskazało, że ich procesy operacyjne generują dane w formatach niestrukturyzowanych lub niekompletnych. Bez dedykowanego programu Data Quality żaden projekt AI nie osiągnie poziomu produkcyjnego — ryzyko 'AI washing' (wdrożenia pozorowane bez realnego ROI) jest w tej chwili wysokie. Rekomendowane natychmiastowe działanie: powołanie Data Stewardów w działach operacyjnych przed startem jakiegokolwiek pilotu ML.",
+              "tone": "warning"
+            }
+          }
+        ]
+      },
+      {
+        "sectionId": "sec-6",
+        "heading": "Rekomendacje",
+        "blocks": [
+          {
+            "blockId": "b-6-0",
+            "type": "heading",
+            "content": {
+              "text": "Rekomendacje strategiczne i operacyjne — 7 priorytetów"
+            }
+          },
+          {
+            "blockId": "b-6-1",
+            "type": "bulletList",
+            "content": {
+              "items": [
+                "[KRYTYCZNY] Uruchomienie programu Data Quality & Governance — powołanie Data Stewardów w 4 działach operacyjnych | Właściciel: CTO + CDO | Horyzont: 0–3 mies.",
+                "[WYSOKI] Powołanie AI Steering Committee z udziałem C-suite — struktura decyzyjna i budżet dedykowany | Właściciel: CEO | Horyzont: 0–3 mies.",
+                "[WYSOKI] Uruchomienie programu AI Literacy dla menedżerów średniego szczebla (min. 80% pokrycia) | Właściciel: CHRO | Horyzont: 3–6 mies.",
+                "[WYSOKI] Pilotaż 2 inicjatyw AI o najwyższym ROI (predykcja popytu + automatyzacja obsługi klienta) | Właściciel: CDO + COO | Horyzont: 3–9 mies.",
+                "[ŚREDNI] Audyt i modernizacja integracji systemów legacy (ERP/CRM) pod kątem gotowości API-first | Właściciel: CTO | Horyzont: 6–12 mies.",
+                "[ŚREDNI] Wdrożenie programu zarządzania zmianą i komunikacji wewnętrznej nt. AI (przeciwdziałanie obawom pracowniczym) | Właściciel: CHRO + Komunikacja | Horyzont: 3–12 mies.",
+                "[PLANOWY] Skalowanie sprawdzonych pilotów na wszystkie działy i rynki (w tym USA) z pełnym monitoringiem KPI | Właściciel: CDO + Regional Leads | Horyzont: 12–24 mies."
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "sectionId": "sec-7",
+        "heading": "Roadmapa i ryzyka",
+        "blocks": [
+          {
+            "blockId": "b-7-0",
+            "type": "heading",
+            "content": {
+              "text": "Roadmapa transformacji AI — 5 etapów i rejestr ryzyk"
+            }
+          },
+          {
+            "blockId": "b-7-1",
+            "type": "text",
+            "content": {
+              "text": "Transformacja AI w VTS Group S.A. przebiega zgodnie z ustrukturyzowaną, pięcioetapową roadmapą zaprojektowaną tak, aby budować zdolności organizacyjne sekwencyjnie — od fundamentów po pełną dojrzałość operacyjną.\n\nEtap 1 — Fundament (0–3 miesiące): Punkt startowy transformacji koncentruje się na stworzeniu solidnych podstaw organizacyjnych i danych. W tym oknie powołany zostaje formalny model governance AI, wyznaczani są Data Stewardzi odpowiedzialni za domeny danych, a całościowa inwentaryzacja zasobów danych ujawnia luki jakościowe i silosy wymagające eliminacji. Bez tego fundamentu żaden kolejny etap nie może przynieść trwałych rezultatów.\n\nEtap 2 — Budowanie zdolności (3–6 miesięcy): Organizacja inwestuje w kapitał ludzki. Uruchamiany jest ogólnofirmowy program AI Literacy obejmujący kadrę zarządzającą, analityków i operatorów procesów. Równolegle prowadzone są rekrutacje na kluczowe role AI/ML (ML Engineer, AI Product Manager, Data Architect), a pipeline'y danych zostają zunifikowane według przyjętych standardów jakości i integracji.\n\nEtap 3 — Pilotaże (6–9 miesięcy): Na bazie zbudowanych zdolności uruchamiane są dwa priorytetowe piloty — wybrane na podstawie potencjału wartości i wykonalności technicznej. Każdy pilot mierzony jest według zdefiniowanych KPI, a wnioski z iteracji zasilają centralną bazę wiedzy. Ten etap weryfikuje realność założeń biznesowych i technicznych przed szerokim rolloutem.\n\nEtap 4 — Skalowanie (9–18 miesięcy): Sprawdzone w pilotach rozwiązania są systematycznie wdrażane w kolejnych działach i jednostkach biznesowych. Kluczowym wyzwaniem tego etapu jest integracja z infrastrukturą Data Centers oraz zsynchronizowanie operacji z rynkiem USA — co wymaga szczególnej uwagi na spójność architektoniczną i zarządzanie zmianą na dużą skalę.\n\nEtap 5 — Optymalizacja i innowacja (18–24 miesiące): W horyzoncie docelowym VTS Group S.A. przechodzi od wdrażania AI do jej ciągłego doskonalenia. Modele są regularnie retrainowane i monitorowane pod kątem dryfu, portfel inicjatyw AI jest aktywnie rozszerzany o nowe przypadki użycia, a AI zostaje wbudowana w narrację przewagi konkurencyjnej firmy na rynkach globalnych — stanowiąc wyróżnik oferty i motor efektywności operacyjnej."
+            }
+          },
+          {
+            "blockId": "b-7-2",
+            "type": "table",
+            "content": {
+              "rows": [
+                {
+                  "cells": {
+                    "Ryzyko": {
+                      "value": "Ryzyko"
+                    },
+                    "Prawdopodobieństwo": {
+                      "value": "Prawdopodobieństwo (W/Ś/N)"
+                    },
+                    "Wpływ": {
+                      "value": "Wpływ (W/Ś/N)"
+                    },
+                    "Mitygacja": {
+                      "value": "Mitygacja"
+                    },
+                    "Właściciel": {
+                      "value": "Właściciel"
+                    }
+                  }
+                },
+                {
+                  "cells": {
+                    "Ryzyko": {
+                      "value": "Niska jakość danych blokuje pilotaże"
+                    },
+                    "Prawdopodobieństwo": {
+                      "value": "Wysokie",
+                      "style": {
+                        "bgColor": "#DC2626"
+                      }
+                    },
+                    "Wpływ": {
+                      "value": "Wysokie",
+                      "style": {
+                        "bgColor": "#DC2626"
+                      }
+                    },
+                    "Mitygacja": {
+                      "value": "Program Data Quality, Data Stewardzi"
+                    },
+                    "Właściciel": {
+                      "value": "CDO"
+                    }
+                  }
+                },
+                {
+                  "cells": {
+                    "Ryzyko": {
+                      "value": "Odejście kluczowych ekspertów AI/ML"
+                    },
+                    "Prawdopodobieństwo": {
+                      "value": "Średnie",
+                      "style": {
+                        "bgColor": "#D97706"
+                      }
+                    },
+                    "Wpływ": {
+                      "value": "Wysokie",
+                      "style": {
+                        "bgColor": "#DC2626"
+                      }
+                    },
+                    "Mitygacja": {
+                      "value": "Retention plan, partnerstwa z firmami zewnętrznymi"
+                    },
+                    "Właściciel": {
+                      "value": "CHRO"
+                    }
+                  }
+                },
+                {
+                  "cells": {
+                    "Ryzyko": {
+                      "value": "Opór pracowniczy wobec automatyzacji"
+                    },
+                    "Prawdopodobieństwo": {
+                      "value": "Wysokie",
+                      "style": {
+                        "bgColor": "#DC2626"
+                      }
+                    },
+                    "Wpływ": {
+                      "value": "Średnie",
+                      "style": {
+                        "bgColor": "#D97706"
+                      }
+                    },
+                    "Mitygacja": {
+                      "value": "Program zarządzania zmianą, transparentna komunikacja"
+                    },
+                    "Właściciel": {
+                      "value": "CHRO"
+                    }
+                  }
+                },
+                {
+                  "cells": {
+                    "Ryzyko": {
+                      "value": "Przekroczenie budżetu pilotów"
+                    },
+                    "Prawdopodobieństwo": {
+                      "value": "Średnie",
+                      "style": {
+                        "bgColor": "#D97706"
+                      }
+                    },
+                    "Wpływ": {
+                      "value": "Średnie",
+                      "style": {
+                        "bgColor": "#D97706"
+                      }
+                    },
+                    "Mitygacja": {
+                      "value": "Agile budgeting, gate reviews co 6 tygodni"
+                    },
+                    "Właściciel": {
+                      "value": "CFO"
+                    }
+                  }
+                },
+                {
+                  "cells": {
+                    "Ryzyko": {
+                      "value": "Niespójność regulacyjna (AI Act UE)"
+                    },
+                    "Prawdopodobieństwo": {
+                      "value": "Średnie",
+                      "style": {
+                        "bgColor": "#D97706"
+                      }
+                    },
+                    "Wpływ": {
+                      "value": "Wysokie",
+                      "style": {
+                        "bgColor": "#DC2626"
+                      }
+                    },
+                    "Mitygacja": {
+                      "value": "Monitoring regulacyjny, Legal AI taskforce"
+                    },
+                    "Właściciel": {
+                      "value": "CLO + CTO"
+                    }
+                  }
+                },
+                {
+                  "cells": {
+                    "Ryzyko": {
+                      "value": "Opóźnienia integracji systemów legacy"
+                    },
+                    "Prawdopodobieństwo": {
+                      "value": "Wysokie",
+                      "style": {
+                        "bgColor": "#DC2626"
+                      }
+                    },
+                    "Wpływ": {
+                      "value": "Średnie",
+                      "style": {
+                        "bgColor": "#D97706"
+                      }
+                    },
+                    "Mitygacja": {
+                      "value": "Równoległy track API modernization, vendor SLA"
+                    },
+                    "Właściciel": {
+                      "value": "CTO"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "table": {
+    "tierUsed": "PREMIUM",
+    "fallbackUsed": false,
+    "fields": [
+      {
+        "key": "dzial",
+        "header": "Dział",
+        "type": "singleSelect",
+        "options": [
+          {
+            "label": "Produkcja",
+            "color": "#B45309"
+          },
+          {
+            "label": "R&D",
+            "color": "#7C3AED"
+          },
+          {
+            "label": "Sprzedaż",
+            "color": "#0369A1"
+          },
+          {
+            "label": "Marketing",
+            "color": "#DB2777"
+          },
+          {
+            "label": "IT",
+            "color": "#0891B2"
+          },
+          {
+            "label": "Finanse",
+            "color": "#16A34A"
+          },
+          {
+            "label": "HR",
+            "color": "#D97706"
+          },
+          {
+            "label": "Logistyka",
+            "color": "#6D28D9"
+          }
+        ]
+      },
+      {
+        "key": "liczba_respondentow",
+        "header": "Liczba respondentów",
+        "type": "number"
+      },
+      {
+        "key": "frekwencja",
+        "header": "Frekwencja",
+        "type": "percent"
+      },
+      {
+        "key": "indeks_gotowosci",
+        "header": "Indeks gotowości (0–100)",
+        "type": "number"
+      },
+      {
+        "key": "najslabszy_wymiar",
+        "header": "Najsłabszy wymiar",
+        "type": "singleSelect",
+        "options": [
+          {
+            "label": "Kompetencje cyfrowe",
+            "color": "#DC2626"
+          },
+          {
+            "label": "Kultura danych",
+            "color": "#D97706"
+          },
+          {
+            "label": "Infrastruktura",
+            "color": "#B45309"
+          },
+          {
+            "label": "Zarządzanie zmianą",
+            "color": "#7C3AED"
+          },
+          {
+            "label": "Przywództwo AI",
+            "color": "#0369A1"
+          },
+          {
+            "label": "Jakość danych",
+            "color": "#DC2626"
+          },
+          {
+            "label": "Procesy decyzyjne",
+            "color": "#D97706"
+          }
+        ]
+      },
+      {
+        "key": "glowna_bariera",
+        "header": "Główna bariera",
+        "type": "longText"
+      },
+      {
+        "key": "priorytet",
+        "header": "Priorytet",
+        "type": "singleSelect",
+        "options": [
+          {
+            "label": "Critical",
+            "color": "#DC2626"
+          },
+          {
+            "label": "High",
+            "color": "#D97706"
+          },
+          {
+            "label": "Medium",
+            "color": "#F59E0B"
+          },
+          {
+            "label": "Low",
+            "color": "#16A34A"
+          }
+        ]
+      },
+      {
+        "key": "wlasciciel",
+        "header": "Właściciel",
+        "type": "singleLineText"
+      },
+      {
+        "key": "termin_docelowy",
+        "header": "Termin docelowy",
+        "type": "date"
+      },
+      {
+        "key": "pewnosc",
+        "header": "Pewność oceny",
+        "type": "rating"
+      },
+      {
+        "key": "status",
+        "header": "Status",
+        "type": "singleSelect",
+        "options": [
+          {
+            "label": "To Do",
+            "color": "#6B7280"
+          },
+          {
+            "label": "In Progress",
+            "color": "#D97706"
+          },
+          {
+            "label": "Done",
+            "color": "#16A34A"
+          }
+        ]
+      }
+    ],
+    "seedRows": [
+      {
+        "dzial": "Produkcja",
+        "liczba_respondentow": 42,
+        "frekwencja": 0.76,
+        "indeks_gotowosci": 38,
+        "najslabszy_wymiar": "Kompetencje cyfrowe",
+        "glowna_bariera": "Niski poziom umiejętności cyfrowych wśród pracowników linii produkcyjnej; opór wobec automatyzacji procesów.",
+        "priorytet": "Critical",
+        "wlasciciel": "Marek Kowalski",
+        "termin_docelowy": "2025-03-31",
+        "pewnosc": 4,
+        "status": "In Progress"
+      },
+      {
+        "dzial": "R&D",
+        "liczba_respondentow": 18,
+        "frekwencja": 0.89,
+        "indeks_gotowosci": 71,
+        "najslabszy_wymiar": "Jakość danych",
+        "glowna_bariera": "Fragmentacja danych eksperymentalnych między laboratoriami; brak ujednoliconego repozytorium.",
+        "priorytet": "Medium",
+        "wlasciciel": "Anna Wiśniewska",
+        "termin_docelowy": "2025-06-30",
+        "pewnosc": 5,
+        "status": "In Progress"
+      },
+      {
+        "dzial": "Sprzedaż",
+        "liczba_respondentow": 35,
+        "frekwencja": 0.71,
+        "indeks_gotowosci": 55,
+        "najslabszy_wymiar": "Kultura danych",
+        "glowna_bariera": "Handlowcy nie ufają rekomendacjom algorytmicznym; preferują intuicję nad analityką predyktywną.",
+        "priorytet": "High",
+        "wlasciciel": "Piotr Nowak",
+        "termin_docelowy": "2025-04-30",
+        "pewnosc": 3,
+        "status": "In Progress"
+      },
+      {
+        "dzial": "Marketing",
+        "liczba_respondentow": 22,
+        "frekwencja": 0.82,
+        "indeks_gotowosci": 63,
+        "najslabszy_wymiar": "Procesy decyzyjne",
+        "glowna_bariera": "Decyzje kampanijne nadal podejmowane intuicyjnie; brak procesów walidacji modeli A/B opartych na AI.",
+        "priorytet": "Medium",
+        "wlasciciel": "Karolina Zając",
+        "termin_docelowy": "2025-05-31",
+        "pewnosc": 4,
+        "status": "To Do"
+      },
+      {
+        "dzial": "IT",
+        "liczba_respondentow": 28,
+        "frekwencja": 0.93,
+        "indeks_gotowosci": 82,
+        "najslabszy_wymiar": "Zarządzanie zmianą",
+        "glowna_bariera": "Wysoka gotowość techniczna, lecz trudności we wdrażaniu AI-ready governance i change management w skali org.",
+        "priorytet": "Low",
+        "wlasciciel": "Tomasz Lewandowski",
+        "termin_docelowy": "2025-07-31",
+        "pewnosc": 5,
+        "status": "In Progress"
+      },
+      {
+        "dzial": "Finanse",
+        "liczba_respondentow": 19,
+        "frekwencja": 0.84,
+        "indeks_gotowosci": 59,
+        "najslabszy_wymiar": "Przywództwo AI",
+        "glowna_bariera": "Brak sponsora strategicznego dla AI w dziale; CFO sceptyczny wobec ROI inicjatyw AI w krótkim terminie.",
+        "priorytet": "High",
+        "wlasciciel": "Monika Dąbrowska",
+        "termin_docelowy": "2025-04-15",
+        "pewnosc": 3,
+        "status": "To Do"
+      },
+      {
+        "dzial": "HR",
+        "liczba_respondentow": 14,
+        "frekwencja": 0.78,
+        "indeks_gotowosci": 47,
+        "najslabszy_wymiar": "Infrastruktura",
+        "glowna_bariera": "Przestarzały HRIS uniemożliwia integrację z narzędziami ML; dane pracownicze w silosach i niezharmonizowane.",
+        "priorytet": "High",
+        "wlasciciel": "Ewa Krupa",
+        "termin_docelowy": "2025-05-15",
+        "pewnosc": 4,
+        "status": "To Do"
+      },
+      {
+        "dzial": "Logistyka",
+        "liczba_respondentow": 31,
+        "frekwencja": 0.68,
+        "indeks_gotowosci": 44,
+        "najslabszy_wymiar": "Kultura danych",
+        "glowna_bariera": "Niespójne dane o dostawcach i trasach; brak standardu MDM; managerowie nie korzystają z dashboardów.",
+        "priorytet": "Critical",
+        "wlasciciel": "Rafał Szymański",
+        "termin_docelowy": "2025-03-15",
+        "pewnosc": 3,
+        "status": "In Progress"
+      }
+    ],
+    "conditionalFormatting": [
+      {
+        "ref": "D2:D9",
+        "rules": [
+          {
+            "type": "colorScale",
+            "colors": [
+              "#DC2626",
+              "#F59E0B",
+              "#16A34A"
+            ]
+          }
+        ]
+      },
+      {
+        "ref": "C2:C9",
+        "rules": [
+          {
+            "type": "dataBar",
+            "color": "#0369A1"
+          }
+        ]
+      },
+      {
+        "ref": "J2:J9",
+        "rules": [
+          {
+            "type": "iconSet",
+            "iconSet": "3TrafficLights1"
+          }
+        ]
+      },
+      {
+        "ref": "B2:B9",
+        "rules": [
+          {
+            "type": "dataBar",
+            "color": "#7C3AED"
+          }
+        ]
+      }
+    ],
+    "hasFormulas": false
+  }
+}

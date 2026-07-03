@@ -52,6 +52,7 @@ import {
 import { useModuleOpenDocuments } from '../../shared/ModuleHub/useModuleOpenDocuments';
 import { type RowAction } from '../../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../../shared/TableWithPreviewLayout';
+import { ErrorState } from '../../ui/primitives/ErrorState';
 import { EntityStatusChip, MetaChip } from '../../ui/primitives/chips';
 import { PortfolioHealthReport } from './PortfolioHealthReport';
 import { RaidReport } from './RaidReport';
@@ -161,34 +162,39 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
   const [templates, setTemplates] = useState<ReportTemplate[]>([]);
   const [schedules, setSchedules] = useState<ReportSchedule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [showGeneratorDrawer, setShowGeneratorDrawer] = useState(false);
   const [currentReport, setCurrentReport] = useState<ManagementReport | null>(null);
   // Side preview pane selection (canon §7 — single-click selects + opens preview)
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // Fetch data
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        const [reportsRes, templatesRes, schedulesRes] = await Promise.all([
-          Api.get('/api/management-reports/history?limit=50'),
-          Api.get('/api/management-reports/templates'),
-          Api.get('/api/management-reports/schedules'),
-        ]);
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    setLoadError(null);
+    try {
+      const [reportsRes, templatesRes, schedulesRes] = await Promise.all([
+        Api.get('/api/management-reports/history?limit=50'),
+        Api.get('/api/management-reports/templates'),
+        Api.get('/api/management-reports/schedules'),
+      ]);
 
-        setReports(reportsRes.data?.reports || []);
-        setTemplates(templatesRes.data?.templates || []);
-        setSchedules(schedulesRes.data?.schedules || []);
-      } catch (err) {
-        console.error('[ReportsHub] Failed to load:', err);
-        toast.error(t('reports.toast.loadError', 'Nie udało się załadować danych'));
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      setReports(reportsRes.data?.reports || []);
+      setTemplates(templatesRes.data?.templates || []);
+      setSchedules(schedulesRes.data?.schedules || []);
+    } catch (err) {
+      console.error('[ReportsHub] Failed to load:', err);
+      const msg = t('reports.toast.loadError', 'Nie udało się załadować danych');
+      toast.error(msg);
+      setLoadError(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [t]);
+
+  useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
   // Calculate stats
   const stats = useMemo(
@@ -723,6 +729,14 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
       return (
         <div className="flex items-center justify-center h-full">
           <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+        </div>
+      );
+    }
+
+    if (loadError) {
+      return (
+        <div className="flex items-center justify-center h-full">
+          <ErrorState message={loadError} retry={loadData} />
         </div>
       );
     }

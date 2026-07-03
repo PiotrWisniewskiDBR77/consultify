@@ -57,7 +57,7 @@ const ScheduleSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
           <button
             onClick={() => setQuietHoursEnabled(!quietHoursEnabled)}
             className={`w-12 h-6 rounded-full transition-colors ${
-              quietHoursEnabled ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
+              quietHoursEnabled ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
             }`}
           >
             <div
@@ -110,7 +110,7 @@ const ScheduleSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
               {t('settings.schedule.weekendsDesc', 'Receive notifications on weekends')}
             </p>
           </div>
-          <button className={`w-12 h-6 rounded-full transition-colors bg-navy-900`}>
+          <button className={`w-12 h-6 rounded-full transition-colors bg-primary-600`}>
             <div
               className={`w-5 h-5 bg-white dark:bg-navy-900 rounded-full transform transition-transform translate-x-6`}
             />

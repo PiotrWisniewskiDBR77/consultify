@@ -111,7 +111,7 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
             onClick={showUnavailableNotice}
             disabled
             title={t('settings.recovery.unavailable', recoveryUnavailableReason)}
-            className="px-4 py-2.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
           >
             <Check className="w-4 h-4" />
             {t('common.verify', 'Verify')}
@@ -147,7 +147,7 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
             onClick={showUnavailableNotice}
             disabled
             title={t('settings.recovery.unavailable', recoveryUnavailableReason)}
-            className="px-4 py-2.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
           >
             <Check className="w-4 h-4" />
             {t('common.verify', 'Verify')}

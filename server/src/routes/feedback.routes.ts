@@ -48,6 +48,7 @@ import {
   inferPriorityForPipeline as inferFeedbackPriority,
 } from '../services/feedbackTriage.js';
 import NotificationService from '../services/notificationService.js';
+import { routeToSlack } from '../services/slack/slackRouter.js';
 import slackService from '../services/slackService.js';
 import WhatsAppService from '../services/WhatsAppService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -62,6 +63,105 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-
 
 function isUuidLike(value: unknown): value is string {
   return typeof value === 'string' && UUID_RE.test(value.trim());
+}
+
+/**
+ * Slack Command Center (Filar 3 / F3): reply the lifecycle of a feedback ticket
+ * into its originating Slack thread. A ticket carries `slack_thread_ts` (and
+ * `slack_channel_id`) in metadata_json only when it was reported from Slack
+ * (see slackInbound.routes.ts `anchorSlackThread`). For app-reported tickets
+ * there is no thread → this is a silent no-op.
+ *
+ * Fire-and-forget + fail-soft: it re-reads metadata_json from a row snapshot or
+ * fetches it, and NEVER throws to the HTTP handler.
+ *
+ * `feedbackRowOrMeta` may be a row with `metadata_json`, an already-parsed
+ * metadata object, or a feedback id string (in which case we fetch the row).
+ */
+export async function notifySlackThread(
+  feedbackRowOrMeta:
+    | { metadata_json?: string | Record<string, unknown> | null }
+    | Record<string, unknown>
+    | string
+    | null
+    | undefined,
+  text: string
+): Promise<void> {
+  try {
+    if (!text || !text.trim()) return;
+
+    let meta: Record<string, unknown> | null = null;
+
+    if (typeof feedbackRowOrMeta === 'string') {
+      const row = await dbGet<{ metadata_json?: string | null }>(
+        `SELECT metadata_json FROM feedback_items WHERE id = ?`,
+        [feedbackRowOrMeta]
+      );
+      meta = safeJsonParse<Record<string, unknown>>(row?.metadata_json ?? null, {});
+    } else if (feedbackRowOrMeta && typeof feedbackRowOrMeta === 'object') {
+      const rawMeta = (feedbackRowOrMeta as { metadata_json?: unknown }).metadata_json;
+      if (rawMeta !== undefined) {
+        meta =
+          typeof rawMeta === 'string'
+            ? safeJsonParse<Record<string, unknown>>(rawMeta, {})
+            : ((rawMeta as Record<string, unknown>) ?? {});
+      } else {
+        // Assume the object itself is the parsed metadata.
+        meta = feedbackRowOrMeta as Record<string, unknown>;
+      }
+    }
+
+    const threadTs =
+      meta && typeof meta.slack_thread_ts === 'string' ? meta.slack_thread_ts : null;
+    if (!threadTs) return; // not a Slack-sourced ticket → nothing to do
+
+    await routeToSlack({
+      channel: 'feedback',
+      severity: 'INFO',
+      title: 'Aktualizacja zgłoszenia',
+      text,
+      threadTs,
+    });
+  } catch (err) {
+    logger.warn('[Feedback] notifySlackThread failed (non-fatal):', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
+/**
+ * Human-friendly label for the actor behind a triage action, for Slack thread
+ * replies. Prefers the JWT's name/email; if only an id is present (e.g. a token
+ * without profile claims), resolves name/email from the users table so the
+ * thread never shows a raw UUID. Fail-soft → 'zespół'.
+ */
+async function resolveActorLabel(reqUser: unknown): Promise<string> {
+  const u = (reqUser || {}) as { email?: string; name?: string; id?: string };
+  if (u.name && u.name.trim()) return u.name.trim();
+  if (u.email && u.email.trim()) return u.email.trim();
+  if (u.id) {
+    try {
+      // users has display_name / first_name / last_name / email (NO `name` column).
+      const row = await dbGet<{
+        display_name?: string;
+        first_name?: string;
+        last_name?: string;
+        email?: string;
+      }>(`SELECT display_name, first_name, last_name, email FROM users WHERE id = ?`, [u.id]);
+      const dn = String(row?.display_name || '').trim();
+      if (dn) return dn;
+      const full = [row?.first_name, row?.last_name]
+        .map((s) => String(s || '').trim())
+        .filter(Boolean)
+        .join(' ')
+        .trim();
+      if (full) return full;
+      if (row?.email && String(row.email).trim()) return String(row.email).trim();
+    } catch {
+      /* fall through */
+    }
+  }
+  return 'zespół';
 }
 
 type TicketStatus = 'NEW' | 'PENDING' | 'IN_PROGRESS' | 'REVIEWED' | 'RESOLVED' | 'ARCHIVED';
@@ -299,6 +399,50 @@ async function updateFeedbackMetadata(
     ...updateVals,
     feedbackId,
   ]);
+}
+
+/**
+ * Atomically set ONE key inside metadata_json (Postgres jsonb_set) without a
+ * read-modify-write of the whole object. Critical for concurrency: the async
+ * escalation persist ('alertDispatch') and the Slack thread anchor
+ * ('slack_thread_ts', written later by the inbound handler for source=slack)
+ * would otherwise clobber each other — a whole-object writer using a stale
+ * snapshot erases the other's key. Per-key jsonb_set makes both writes commute.
+ * Falls back to read-modify-write on engines without jsonb (mock-DB/sqlite).
+ */
+async function updateFeedbackMetadataKey(
+  feedbackId: string,
+  key: string,
+  value: unknown
+): Promise<void> {
+  const feedbackCols = await getTableColumns('feedback_items');
+  if (!feedbackCols.has('metadata_json')) return;
+  const touchUpdated = feedbackCols.has('updated_at') ? ', updated_at = CURRENT_TIMESTAMP' : '';
+  try {
+    await dbRun(
+      `UPDATE feedback_items
+       SET metadata_json = jsonb_set(COALESCE(metadata_json, '{}')::jsonb, ARRAY[?]::text[], ?::jsonb, true)::text${touchUpdated}
+       WHERE id = ?`,
+      [key, JSON.stringify(value ?? null), feedbackId]
+    );
+    return;
+  } catch {
+    // Non-jsonb engine (mock-DB / sqlite): fall back to read-modify-write.
+    try {
+      const row = await dbGet<{ metadata_json?: string | null }>(
+        `SELECT metadata_json FROM feedback_items WHERE id = ?`,
+        [feedbackId]
+      );
+      const meta = safeJsonParse<Record<string, unknown>>(row?.metadata_json ?? null, {});
+      meta[key] = value;
+      await updateFeedbackMetadata(feedbackId, meta);
+    } catch (err) {
+      logger.warn('[Feedback] updateFeedbackMetadataKey fallback failed', {
+        key,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
 }
 
 function stripJsonFences(raw: string): string {
@@ -654,7 +798,18 @@ async function dispatchFeedbackEscalation(input: {
     }
   }
 
-  if (uniqueChannels.includes('slack')) {
+  // Slack-sourced feedback is already posted to #cf-feedback by the inbound
+  // handler via slackRouter (with thread anchoring). Posting again here through
+  // the legacy webhook path would duplicate the message → skip for source=slack.
+  const isSlackSourced =
+    (input.metadata as { source?: unknown } | undefined)?.source === 'slack';
+  if (uniqueChannels.includes('slack') && isSlackSourced) {
+    dispatchSummary.results.slack = {
+      status: 'skipped',
+      attemptedAt: new Date().toISOString(),
+      detail: 'source=slack — posted via slackRouter (inbound), avoiding duplicate',
+    };
+  } else if (uniqueChannels.includes('slack')) {
     try {
       await slackService.sendNewFeedbackAlert({
         type: input.feedbackType === 'PULSE' ? 'IDEA' : input.feedbackType,
@@ -985,53 +1140,83 @@ async function createTaskForFeedback(params: {
   return id;
 }
 
-/**
- * POST /api/feedback
- * Submit new feedback
- */
-router.post(
-  '/',
-  optionalVerifyToken,
-  apiAuthRateLimiter,
-  feedbackRateLimiter,
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    await ensureFeedbackSchema();
-    const parsed = reportFeedbackSchema.safeParse(req.body || {});
-    if (!parsed.success) {
-      return res.status(400).json({
-        error: 'Invalid feedback payload',
-        details: parsed.error.flatten(),
-      });
-    }
-    const {
-      userId,
-      userEmail,
-      userName,
-      type,
-      message,
-      severity,
-      metadata,
-      title: parsedTitle,
-      description: parsedDescription,
-      routePath,
-      deviceType,
-      screenSize,
-      uiLanguage,
-      uiTheme,
-      workspaceContext,
-      clientEnv,
-      signatureHash,
-      appContext,
-      consoleLogs,
-      networkErrors,
-      breadcrumbs,
-      lastUncaughtError,
-      screenshot,
-    } = parsed.data;
+/** Validated feedback payload (mirror of `reportFeedbackSchema` output). */
+export type FeedbackIntakeInput = z.infer<typeof reportFeedbackSchema>;
 
-    const appEnv = getAppEnv();
-    const { actualUserId, actualUserEmail, actualUserName } = resolveFeedbackActor({
-      reqUser: req.user,
+/**
+ * Actor / request context for a feedback intake. When the caller has a JWT
+ * (in-app widget), `reqUser` carries the resolved actor. Slack (F2) has no JWT,
+ * so it passes an already-resolved actor via `userId`/`userEmail`/`userName`
+ * inside the payload and leaves `reqUser` undefined.
+ */
+export interface FeedbackIntakeContext {
+  reqUser?: AuthRequest['user'];
+}
+
+export interface FeedbackIntakeResult {
+  feedbackId: string;
+  taskId: string | null;
+  priority: TicketPriority;
+  metadataJson: Record<string, unknown>;
+  appEnv: string;
+  organizationId: string | null;
+  /**
+   * Best-effort notification fan-out (Slack/email/WhatsApp) runs detached so
+   * the HTTP response is not blocked. Awaitable for tests / callers that need
+   * to be sure the dispatch metadata was persisted before continuing.
+   */
+  escalationPromise: Promise<void>;
+}
+
+/**
+ * Core feedback intake — the SINGLE source of truth for turning a validated
+ * feedback payload into a `feedback_items` row + auto-task + escalation.
+ *
+ * Extracted from the `POST /api/feedback` handler so that the Slack Command
+ * Center inbound (F2, `slackInbound.routes.ts`) reuses EXACTLY the same
+ * pipeline (feedback_items -> createTaskForFeedback -> dispatchFeedbackEscalation)
+ * instead of copy-pasting ~300 lines or calling the HTTP endpoint on itself.
+ * The HTTP route below is now a thin wrapper: validate -> call -> respond, so
+ * its externally observable behaviour is unchanged.
+ */
+export async function createFeedbackInternal(
+  data: FeedbackIntakeInput,
+  ctx: FeedbackIntakeContext = {}
+): Promise<FeedbackIntakeResult> {
+  await ensureFeedbackSchema();
+  const {
+    userId,
+    userEmail,
+    userName,
+    type,
+    message,
+    severity,
+    metadata,
+    title: parsedTitle,
+    description: parsedDescription,
+    routePath,
+    deviceType,
+    screenSize,
+    uiLanguage,
+    uiTheme,
+    workspaceContext,
+    clientEnv,
+    signatureHash,
+    appContext,
+    consoleLogs,
+    networkErrors,
+    breadcrumbs,
+    lastUncaughtError,
+    screenshot,
+  } = data;
+  const reqUser = ctx.reqUser;
+  // Fix (F2 extraction): appEnv was resolved in the old route handler scope and
+  // the reference survived the createFeedbackInternal extraction without its
+  // definition → ReferenceError "appEnv is not defined" on every intake.
+  const appEnv = getAppEnv();
+
+  const { actualUserId, actualUserEmail, actualUserName } = resolveFeedbackActor({
+      reqUser,
       userId,
       userEmail,
       userName,
@@ -1040,8 +1225,8 @@ router.post(
     // Resolve organizationId when possible
     let organizationId: string | null = null;
     try {
-      if ((req as any).user?.organizationId) {
-        organizationId = String((req as any).user.organizationId);
+      if ((reqUser as any)?.organizationId) {
+        organizationId = String((reqUser as any).organizationId);
       } else if (actualUserId) {
         const userRow = await dbGet<{ organization_id?: string }>(
           `SELECT organization_id FROM users WHERE id = ?`,
@@ -1324,8 +1509,9 @@ router.post(
           taskId: escalationSnapshot.linkedTaskId,
           metadata: escalationSnapshot.metadata,
         });
-        const persisted = { ...escalationSnapshot.metadata, alertDispatch };
-        await updateFeedbackMetadata(feedbackId, persisted);
+        // Atomic per-key write — must NOT clobber slack_thread_ts/source that a
+        // concurrent Slack anchor may have written after this snapshot was taken.
+        await updateFeedbackMetadataKey(feedbackId, 'alertDispatch', alertDispatch);
       } catch (dispatchErr) {
         logger.error('[Feedback] Failed to dispatch escalation:', dispatchErr);
       }
@@ -1335,7 +1521,38 @@ router.post(
     // `logger.error`.
     escalationPromise.catch(() => {});
 
-    return res.json({ success: true, id: feedbackId, taskId: linkedTaskId });
+    return {
+      feedbackId,
+      taskId: linkedTaskId,
+      priority,
+      metadataJson,
+      appEnv,
+      organizationId,
+      escalationPromise,
+    };
+}
+
+/**
+ * POST /api/feedback
+ * Submit new feedback
+ */
+router.post(
+  '/',
+  optionalVerifyToken,
+  apiAuthRateLimiter,
+  feedbackRateLimiter,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const parsed = reportFeedbackSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid feedback payload',
+        details: parsed.error.flatten(),
+      });
+    }
+
+    const result = await createFeedbackInternal(parsed.data, { reqUser: req.user });
+
+    return res.json({ success: true, id: result.feedbackId, taskId: result.taskId });
   })
 );
 
@@ -1468,8 +1685,8 @@ router.patch(
         );
     }
 
-    const current = await dbGet<{ status: string }>(
-      `SELECT status FROM feedback_items WHERE id = ?`,
+    const current = await dbGet<{ status: string; metadata_json?: string | null }>(
+      `SELECT status, metadata_json FROM feedback_items WHERE id = ?`,
       [id]
     );
     const fromStatus = current?.status || null;
@@ -1501,6 +1718,21 @@ router.patch(
       );
     } catch {
       /* History table may not exist yet */
+    }
+
+    // F3: reply the status change into the ticket's Slack thread (Slack-sourced
+    // tickets only). Fire-and-forget, fail-soft.
+    {
+      const from = (fromStatus || 'NEW').toUpperCase();
+      const to = status.toUpperCase();
+      const metaSnapshot = current?.metadata_json ?? null;
+      void (async () => {
+        const actor = await resolveActorLabel((req as any).user);
+        await notifySlackThread(
+          { metadata_json: metaSnapshot },
+          `🔧 Status: ${from} → ${to} · zmienił(a): ${actor}${note ? `\n_${String(note).slice(0, 200)}_` : ''}`
+        );
+      })();
     }
 
     return res.json({ success: true });
@@ -1708,6 +1940,25 @@ router.patch(
         );
     }
 
+    // F3: reply the meaningful workflow changes into the Slack thread. Only the
+    // fields Piotr tracks in the command center, and only when they changed.
+    {
+      const parts: string[] = [];
+      if (owner !== undefined && nextWorkflow.owner) parts.push(`owner: ${nextWorkflow.owner}`);
+      if (branch !== undefined && nextWorkflow.branch) parts.push(`branch: ${nextWorkflow.branch}`);
+      if (prUrl !== undefined && nextWorkflow.prUrl) parts.push(`PR: ${nextWorkflow.prUrl}`);
+      if (deployStatus !== undefined && nextWorkflow.deployStatus)
+        parts.push(`deploy: ${nextWorkflow.deployStatus}`);
+      if (resolution !== undefined && nextResolution.summary)
+        parts.push(`rozwiązanie: ${String(nextResolution.summary).slice(0, 200)}`);
+      if (parts.length > 0) {
+        void notifySlackThread(
+          { metadata_json: row.metadata_json },
+          `⚙️ Workflow: ${parts.join(' · ')}`
+        );
+      }
+    }
+
     return res.json({
       success: true,
       workflow: nextWorkflow,
@@ -1823,6 +2074,15 @@ router.post(
       } catch (noteErr) {
         logger.error('Failed to create response notification:', noteErr);
       }
+    }
+
+    // F3: mirror the team's reply into the Slack thread (Slack-sourced tickets).
+    if (feedback) {
+      const summary = String(response).slice(0, 200);
+      void notifySlackThread(
+        { metadata_json: feedback.metadata_json },
+        `💬 Odpowiedź zespołu: ${summary}${String(response).length > 200 ? '…' : ''}`
+      );
     }
 
     return res.json({ success: true });

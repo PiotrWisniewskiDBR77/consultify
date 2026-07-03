@@ -583,10 +583,75 @@ const LAYOUT_TEMPLATES: LayoutTemplate[] = [
 ];
 
 /**
+ * STEP 1b — map B1's composition archetype ids → existing LAYOUT_TEMPLATES.
+ *
+ * B1 emits one of 14 archetype ids (see COMPOSITION_LAYOUT_VARIANTS in
+ * presentationLayoutDirectorService). The renderer honours that choice by
+ * resolving the archetype to a concrete template. Many archetypes map 1:1 to
+ * an existing template id; the rest are APPROXIMATED to the closest template by
+ * topology/tags. When an archetype is unknown, the caller falls back to the
+ * heuristic (back-compat).
+ *
+ * Mapping honesty (1:1 vs approximated) is documented per entry below.
+ */
+const ARCHETYPE_TO_TEMPLATE: Record<string, string> = {
+  // ── 1:1 / very close ──────────────────────────────────────
+  centered: 'cover_centered', // 1:1 — full-bleed centered hero
+  left_image: 'cover_left_image', // 1:1 — image | content split
+  bottom_strip: 'cover_bottom_strip', // 1:1 — main + bottom metric strip
+  two_column: 'content_left_right', // 1:1 — symmetric L/R columns
+  kpi_grid_2x2: 'kpi_grid_4', // 1:1 — 2×2 KPI dashboard
+  split_lr: 'content_left_right', // ~1:1 — generic left/right split
+  timeline_strip: 'timeline_full', // 1:1 — heading + timeline
+  numbered_stack: 'next_steps_checklist', // ~ — ordered list + sidebar (closest ordered layout)
+  // ── approximated (no exact template; closest by tags/topology) ──
+  stacked: 'content_full', // approx — single stacked column (full width)
+  chart_left_text_right: 'exec_left_bullets', // approx — left text + right chart/KPI (mirror of L-bullets/R-data)
+  big_number: 'quote_centered', // approx — single dramatic metric, centered (no dedicated big-number template)
+  table: 'comparison_two_col', // approx — tabular/2-col compare (no generic table template)
+  smart_diagram: 'process_top_steps_bottom_detail', // approx — diagram-led process (smart_diagram preferred region)
+  icon_row_grid: 'smart_header_three_col', // approx — heading + N columns (icon row grid)
+};
+
+/**
+ * STEP 1b — resolve an explicit layout choice (from card.layout_id or
+ * card.composition.layoutVariantId) to a concrete template. Tries, in order:
+ *   1. a direct LAYOUT_TEMPLATES id match (exact),
+ *   2. an archetype → template mapping (1:1 or approximated).
+ * Returns undefined when nothing maps → caller keeps the heuristic.
+ */
+export function resolveExplicitLayout(card: DeckCard): LayoutTemplate | undefined {
+  const candidates: string[] = [];
+  const layoutId = (card.layout_id || '').trim();
+  if (layoutId && layoutId !== 'auto') candidates.push(layoutId);
+  const variantId = card.composition?.layoutVariantId?.trim();
+  if (variantId && !candidates.includes(variantId)) candidates.push(variantId);
+
+  for (const id of candidates) {
+    const direct = LAYOUT_TEMPLATES.find((l) => l.id === id);
+    if (direct) return direct;
+    const mappedId = ARCHETYPE_TO_TEMPLATE[id];
+    if (mappedId) {
+      const mapped = LAYOUT_TEMPLATES.find((l) => l.id === mappedId);
+      if (mapped) return mapped;
+    }
+  }
+  return undefined;
+}
+
+/**
  * Select the best layout for a given card.
+ *
+ * STEP 1b — when the card carries an explicit, mappable layout choice
+ * (`layout_id` or `composition.layoutVariantId` from B1), HONOUR it and skip
+ * the heuristic. Otherwise (absent/unknown/'auto') fall back to the existing
+ * intent + block-count + variety heuristic — byte-identical to today.
  * Considers intent, block count, visual variety (avoiding repeats).
  */
 export function selectLayout(card: DeckCard, recentLayoutIds: string[] = []): LayoutTemplate {
+  const explicit = resolveExplicitLayout(card);
+  if (explicit) return explicit;
+
   const candidates = LAYOUT_TEMPLATES.filter((l) => l.intents.includes(card.intent));
 
   if (candidates.length === 0) {
@@ -622,15 +687,44 @@ export function selectLayout(card: DeckCard, recentLayoutIds: string[] = []): La
   return scored[0].layout;
 }
 
+/** STEP 1b — minimal shape of the per-card composition the assigner honours. */
+export interface AssignableComposition {
+  regions?: { area: string; blockTypes?: string[] }[];
+}
+
 /**
  * Assign blocks to layout regions based on block type preferences.
+ *
+ * STEP 1b — when `composition.regions` is present (B1's AI plan), PREFER the
+ * AI's area→blockType assignment: a block whose type is named in a region the
+ * layout also exposes is routed there first. Anything not covered by the AI
+ * plan (or when no composition is given) falls back to the existing
+ * preferred-block-type heuristic — byte-identical to today when composition is
+ * absent. The layout's regions remain the authority on which areas exist, so a
+ * malformed/mismatched composition cannot break the grid.
  */
-export function assignBlocksToRegions(
-  blocks: { type: string; position: { area: string } }[],
-  layout: LayoutTemplate
-): Map<string, typeof blocks> {
-  const regionMap = new Map<string, typeof blocks>();
+export function assignBlocksToRegions<T extends { type: string; position: { area: string } }>(
+  blocks: T[],
+  layout: LayoutTemplate,
+  composition?: AssignableComposition | null
+): Map<string, T[]> {
+  const regionMap = new Map<string, T[]>();
   layout.regions.forEach((r) => regionMap.set(r.area, []));
+
+  // Build AI block-type → area hints, but only for areas the layout actually
+  // exposes (guards malformed composition from poisoning the grid).
+  const layoutAreas = new Set(layout.regions.map((r) => r.area));
+  const aiTypeToArea = new Map<string, string>();
+  if (composition?.regions?.length) {
+    for (const reg of composition.regions) {
+      if (!reg || typeof reg.area !== 'string' || !layoutAreas.has(reg.area)) continue;
+      for (const bt of reg.blockTypes || []) {
+        if (typeof bt === 'string' && bt && !aiTypeToArea.has(bt)) {
+          aiTypeToArea.set(bt, reg.area);
+        }
+      }
+    }
+  }
 
   const sorted = [...blocks].sort((a, b) => {
     const aOrder = a.type === 'heading' ? 0 : a.type === 'metric_strip' ? 1 : 2;
@@ -639,6 +733,19 @@ export function assignBlocksToRegions(
   });
 
   for (const block of sorted) {
+    // (1) AI's area assignment wins when it names this block type AND the
+    //     target region still has capacity.
+    const aiArea = aiTypeToArea.get(block.type);
+    if (aiArea) {
+      const region = layout.regions.find((r) => r.area === aiArea);
+      const current = region ? regionMap.get(region.area)! : undefined;
+      if (region && current && !(region.maxBlocks && current.length >= region.maxBlocks)) {
+        current.push(block);
+        continue;
+      }
+    }
+
+    // (2) Fallback — existing preferred-block-type heuristic (unchanged).
     let bestRegion = layout.regions[0];
     let bestScore = -1;
 
@@ -672,4 +779,4 @@ export function getLayoutsForIntent(intent: CardIntent): LayoutTemplate[] {
   return LAYOUT_TEMPLATES.filter((l) => l.intents.includes(intent));
 }
 
-export { LAYOUT_TEMPLATES };
+export { ARCHETYPE_TO_TEMPLATE, LAYOUT_TEMPLATES };

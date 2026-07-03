@@ -186,6 +186,65 @@ describe('getReconciliationOverview', () => {
     expect((params as unknown[])[0]).toBe(ORG_B);
   });
 
+  it('H2.5: suppresses monetary variance for a percentage KPI (OEE) but keeps projected', async () => {
+    // Regression: OEE target 85(%) vs summed €138,000 realized produced a
+    // nonsensical +162252% variance. A non-monetary unit must not fabricate one.
+    mockDbAll.mockResolvedValueOnce([
+      {
+        reconciliation_id: 'rec-oee',
+        kpi_id: KPI_1,
+        finance_ref: 'finance:GL-OEE',
+        reconciliation_status: 'pending',
+        initiated_by: 'finance',
+        created_at: '2026-03-31T00:00:00.000Z',
+        updated_at: '2026-03-31T00:00:00.000Z',
+        kpi_name: 'OEE',
+        initiative_id: 'init-oee',
+        unit: '%',
+        projected_value: 85,
+        realized_value: 138000,
+      },
+    ]);
+
+    const overview = await getReconciliationOverview(ORG_A);
+    const rec = overview.items[0];
+    expect(rec.unit).toBe('%');
+    expect(rec.projectedValue).toBe(85); // projected still surfaced
+    expect(rec.realizedValue).toBeNull(); // €-sum not comparable to a % target
+    expect(rec.varianceAbsolute).toBeNull();
+    expect(rec.variancePercent).toBeNull();
+    expect(rec.hasMismatch).toBe(false);
+    expect(overview.summary.mismatchCount).toBe(0);
+  });
+
+  it('H2.5: still computes variance for a monetary unit (€)', async () => {
+    mockDbAll.mockResolvedValueOnce([
+      {
+        reconciliation_id: 'rec-eur',
+        kpi_id: KPI_2,
+        finance_ref: 'finance:GL-EUR',
+        reconciliation_status: 'disputed',
+        initiated_by: 'finance',
+        created_at: '2026-03-31T00:00:00.000Z',
+        updated_at: '2026-03-31T00:00:00.000Z',
+        kpi_name: 'Annual Savings',
+        initiative_id: 'init-eur',
+        unit: '€',
+        projected_value: 100000,
+        realized_value: 80000,
+      },
+    ]);
+
+    const overview = await getReconciliationOverview(ORG_A);
+    const rec = overview.items[0];
+    expect(rec.unit).toBe('€');
+    expect(rec.realizedValue).toBe(80000);
+    expect(rec.varianceAbsolute).toBe(-20000);
+    expect(rec.variancePercent).toBe(-20);
+    expect(rec.hasMismatch).toBe(true);
+    expect(overview.summary.mismatchCount).toBe(1);
+  });
+
   it('forwards initiativeId and kpiId filters as bound parameters', async () => {
     mockDbAll.mockResolvedValueOnce([]);
     await getReconciliationOverview(ORG_A, { initiativeId: 'init-9', kpiId: KPI_1 });

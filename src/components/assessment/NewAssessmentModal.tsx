@@ -8,6 +8,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { Api } from '@/services/api';
+import { isFrameworkComingSoon } from '@/services/frameworkRegistry';
 import { useAppStore } from '@/store/useAppStore';
 
 // Types
@@ -26,8 +27,10 @@ interface NewAssessmentModalProps {
   onSuccess?: (assessment: NewAssessmentData) => void;
 }
 
-// Framework metadata
-const FRAMEWORKS: {
+// Framework metadata. `comingSoon` is NOT hardcoded here — it is derived from
+// the framework registry (src/services/frameworkRegistry.ts) so this picker can
+// never drift from / lie about what is actually startable (decision D-B).
+type FrameworkCardMeta = {
   value: AssessmentFramework;
   name: string;
   shortName: string;
@@ -36,12 +39,17 @@ const FRAMEWORKS: {
   gradient: string;
   border: string;
   textColor: string;
-}[] = [
+  comingSoon?: boolean;
+};
+
+const FRAMEWORKS: FrameworkCardMeta[] = (
+  [
   {
     value: 'DRD',
     name: 'Digital Readiness Diagnosis',
     shortName: 'DRD',
-    description: 'Comprehensive digital maturity assessment across 8 key dimensions',
+    description:
+      'Comprehensive digital maturity diagnosis across 7 transformation axes (39 areas)',
     icon: <Activity size={20} />,
     gradient: 'from-primary-500/20 to-primary-600/10',
     border: 'border-primary-500/30 hover:border-primary-500/60',
@@ -88,7 +96,8 @@ const FRAMEWORKS: {
     border: 'border-green-500/30 hover:border-green-500/60',
     textColor: 'text-green-400',
   },
-];
+] as FrameworkCardMeta[]
+).map((f) => ({ ...f, comingSoon: isFrameworkComingSoon(f.value) }));
 
 export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
   isOpen,
@@ -150,6 +159,12 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
 
   // Handle framework selection
   const handleFrameworkSelect = useCallback((framework: AssessmentFramework) => {
+    // Honest gate (decision D-B): coming-soon frameworks (CMMI/LEAN) never start
+    // a session, even if the disabled card is bypassed.
+    if (isFrameworkComingSoon(framework)) {
+      toast('This framework is coming soon.', { icon: '🔜' });
+      return;
+    }
     setSelectedFramework(framework);
     // Auto-generate a default name
     const frameworkData = FRAMEWORKS.find((f) => f.value === framework);
@@ -176,6 +191,13 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
 
       if (!selectedFramework) {
         setError('Please select a framework');
+        return;
+      }
+
+      // Honest gate (decision D-B): never create a session for a coming-soon
+      // framework, even if selection state was set out-of-band.
+      if (isFrameworkComingSoon(selectedFramework)) {
+        setError('This framework is coming soon and cannot be started yet.');
         return;
       }
 
@@ -267,13 +289,22 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
               {FRAMEWORKS.map((framework) => (
                 <button
                   key={framework.value}
-                  onClick={() => handleFrameworkSelect(framework.value)}
+                  onClick={
+                    framework.comingSoon
+                      ? undefined
+                      : () => handleFrameworkSelect(framework.value)
+                  }
+                  disabled={framework.comingSoon}
                   className={`
                     flex items-start gap-4 w-full p-4 rounded-xl text-left
                     bg-gradient-to-br ${framework.gradient}
                     border ${framework.border}
                     transition-all duration-200
-                    hover:shadow-lg hover:-translate-y-0.5
+                    ${
+                      framework.comingSoon
+                        ? 'opacity-60 cursor-not-allowed'
+                        : 'hover:shadow-lg hover:-translate-y-0.5'
+                    }
                   `}
                 >
                   <div
@@ -290,6 +321,11 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                         {framework.shortName}
                       </span>
                       <span className="text-white font-medium">{framework.name}</span>
+                      {framework.comingSoon && (
+                        <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-navy-800/70 text-slate-300 border border-slate-500/30">
+                          Coming soon
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm text-slate-600 mt-1 line-clamp-2">
                       {framework.description}

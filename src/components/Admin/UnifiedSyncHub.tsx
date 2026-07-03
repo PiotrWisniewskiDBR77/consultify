@@ -288,14 +288,14 @@ const STATUS_CONFIG: Record<
   },
   disconnected: {
     label: 'Disconnected',
-    color: 'text-slate-400',
+    color: 'text-slate-400 dark:text-slate-500',
     bg: 'bg-slate-500/10',
     icon: <Link2Off size={14} />,
   },
   error: {
     label: 'Error',
-    color: 'text-danger-400',
-    bg: 'bg-danger-500/10',
+    color: 'text-rose-400',
+    bg: 'bg-rose-500/10',
     icon: <XCircle size={14} />,
   },
   pending: {
@@ -315,7 +315,7 @@ const STATUS_CONFIG: Record<
 const HEALTH_CONFIG: Record<HealthStatus, { label: string; color: string; dot: string }> = {
   healthy: { label: 'Healthy', color: 'text-emerald-400', dot: 'bg-emerald-400' },
   degraded: { label: 'Degraded', color: 'text-amber-400', dot: 'bg-amber-400' },
-  unhealthy: { label: 'Unhealthy', color: 'text-danger-400', dot: 'bg-danger-400' },
+  unhealthy: { label: 'Unhealthy', color: 'text-rose-400', dot: 'bg-rose-400' },
 };
 
 const CONNECTOR_PROVIDER_FAMILY_MAP: Partial<Record<string, V8SyncProviderFamily>> = {
@@ -1663,14 +1663,14 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
             return (
               <div key={cat}>
-                <div className="text-xs text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                <div className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
                   <span>{CATEGORY_ICONS[cat]}</span>
                   {CATEGORY_LABELS[cat] || cat}
                 </div>
                 <div className="rounded-xl border border-navy-700/50 overflow-hidden bg-navy-800/20">
                   <div className="overflow-x-auto">
-                    <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full text-sm">
-                      <thead className="bg-navy-900/40 text-slate-400">
+                    <table className="w-full text-sm">
+                      <thead className="bg-navy-900/40 text-slate-400 dark:text-slate-500">
                         <tr className="text-left text-xs">
                           <th className="px-3 py-2 w-10" />
                           <th className="px-3 py-2">
@@ -1708,7 +1708,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               </td>
                               <td className="px-3 py-2.5">
                                 <div className="text-sm text-white">{conn.name}</div>
-                                <div className="text-[11px] text-slate-500">{conn.id}</div>
+                                <div className="text-[11px] text-slate-500 dark:text-slate-400">{conn.id}</div>
                               </td>
                               <td className="px-3 py-2.5 hidden md:table-cell">
                                 <div className="flex flex-wrap gap-1">
@@ -1721,7 +1721,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                                     </span>
                                   ))}
                                   {(conn.capabilities || []).length > 4 && (
-                                    <span className="px-1.5 py-0.5 rounded-full bg-navy-700/30 text-[10px] text-slate-400 border border-navy-700">
+                                    <span className="px-1.5 py-0.5 rounded-full bg-navy-700/30 text-[10px] text-slate-400 dark:text-slate-500 border border-navy-700">
                                       +{(conn.capabilities || []).length - 4}
                                     </span>
                                   )}
@@ -1738,7 +1738,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                                     </span>
                                   ))}
                                   {(conn.configFields || []).length > 4 && (
-                                    <span className="px-1.5 py-0.5 rounded-full bg-navy-700/30 text-[10px] text-slate-400 border border-navy-700">
+                                    <span className="px-1.5 py-0.5 rounded-full bg-navy-700/30 text-[10px] text-slate-400 dark:text-slate-500 border border-navy-700">
                                       +{(conn.configFields || []).length - 4}
                                     </span>
                                   )}
@@ -1746,20 +1746,20 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               </td>
                               <td className="px-3 py-2.5">
                                 {status === 'connected' ? (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400">
-                                    <CheckCircle2 size={10} />{' '}
+                                  <span className="inline-flex items-center gap-1 text-xs text-emerald-400">
+                                    <CheckCircle2 size={12} />{' '}
                                     {t('integrations.syncHub.alreadyConnected', 'Connected')}
                                   </span>
                                 ) : status === 'coming_soon' ? (
-                                  <span className="text-xs text-slate-500 italic">
+                                  <span className="text-xs text-slate-500 dark:text-slate-400 italic">
                                     {t('integrations.syncHub.comingSoon', 'Coming soon')}
                                   </span>
                                 ) : status === 'not_ready' ? (
-                                  <span className="text-xs text-slate-500 italic">
+                                  <span className="text-xs text-slate-500 dark:text-slate-400 italic">
                                     {t('integrations.syncHub.notReady', 'Not available')}
                                   </span>
                                 ) : (
-                                  <span className="text-xs text-slate-400">
+                                  <span className="text-xs text-slate-400 dark:text-slate-500">
                                     {t('integrations.syncHub.ready', 'Ready')}
                                   </span>
                                 )}
@@ -1768,12 +1768,12 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                                 {isConnected ? null : connectable ? (
                                   <button
                                     onClick={() => handleConnect(conn.id)}
-                                    className="px-3 py-1 text-xs bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
+                                    className="px-3 py-1 text-xs bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors"
                                   >
                                     {t('integrations.syncHub.connect', 'Connect')}
                                   </button>
                                 ) : (
-                                  <span className="text-xs text-slate-600">—</span>
+                                  <span className="text-xs text-slate-600 dark:text-slate-400">—</span>
                                 )}
                               </td>
                             </tr>
@@ -2144,7 +2144,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               {renderStatusChip(int.status)}
             </div>
             <div className="flex items-center gap-3 mt-0.5">
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-slate-500 dark:text-slate-400">
                 {CATEGORY_LABELS[int.category] || int.category}
               </span>
               {renderHealthDot(int.health)}
@@ -2153,7 +2153,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
           {/* Last sync */}
           <div className="hidden md:block text-right shrink-0 w-28">
-            <div className="text-xs text-slate-400">
+            <div className="text-xs text-slate-400 dark:text-slate-500">
               {t('integrations.syncHub.lastSync', 'Last sync')}
             </div>
             <div className="text-xs text-slate-300">{timeAgo(int.lastSyncAt)}</div>
@@ -2163,11 +2163,11 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           <div className="hidden lg:block text-right shrink-0 w-24">
             {int.lastRun && (
               <>
-                <div className="text-xs text-slate-400">
+                <div className="text-xs text-slate-400 dark:text-slate-500">
                   {t('integrations.syncHub.lastResult', 'Last result')}
                 </div>
                 <div
-                  className={`text-xs ${int.lastRun.status === 'completed' ? 'text-emerald-400' : int.lastRun.status === 'failed' ? 'text-danger-400' : 'text-amber-400'}`}
+                  className={`text-xs ${int.lastRun.status === 'completed' ? 'text-emerald-400' : int.lastRun.status === 'failed' ? 'text-rose-400' : 'text-amber-400'}`}
                 >
                   {int.lastRun.status} · {formatDuration(int.lastRun.duration_ms)}
                 </div>
@@ -2183,7 +2183,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 handleSync(int.id);
               }}
               disabled={isSyncing || !canRunSync}
-              className="p-1.5 rounded-md text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 disabled:opacity-30 transition-colors"
+              className="p-1.5 rounded-md text-slate-400 dark:text-slate-500 hover:text-blue-400 hover:bg-blue-500/10 disabled:opacity-30 transition-colors"
               title={t('integrations.syncHub.runNow', 'Run now')}
             >
               {isSyncing ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />}
@@ -2194,15 +2194,15 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 handlePause(int.id);
               }}
               disabled={!canPause}
-              className="p-1.5 rounded-md text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 transition-colors"
+              className="p-1.5 rounded-md text-slate-400 dark:text-slate-500 hover:text-amber-400 hover:bg-amber-500/10 transition-colors"
               title={t('integrations.syncHub.pause', 'Pause')}
             >
               <Pause size={15} />
             </button>
             {isExpanded ? (
-              <ChevronDown size={16} className="text-slate-500" />
+              <ChevronDown size={16} className="text-slate-500 dark:text-slate-400" />
             ) : (
-              <ChevronRight size={16} className="text-slate-500" />
+              <ChevronRight size={16} className="text-slate-500 dark:text-slate-400" />
             )}
           </div>
         </div>
@@ -2219,13 +2219,13 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               <div className="px-4 pb-4 pt-1 border-t border-navy-700/50 space-y-3">
                 {/* Error banner */}
                 {int.status === 'error' && int.lastError && (
-                  <div className="flex items-start gap-2 p-2.5 rounded-lg bg-danger-500/10 text-danger-400 text-xs">
+                  <div className="flex items-start gap-2 p-2.5 rounded-lg bg-rose-500/10 text-rose-400 text-xs">
                     <AlertTriangle size={14} className="shrink-0 mt-0.5" />
                     <div>
                       <div className="font-medium">
                         {t('integrations.syncHub.errorOccurred', 'Error occurred')}
                       </div>
-                      <div className="text-danger-300/70 mt-0.5">{int.lastError}</div>
+                      <div className="text-rose-300/70 mt-0.5">{int.lastError}</div>
                     </div>
                   </div>
                 )}
@@ -2411,7 +2411,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                       <div className="text-xs font-medium text-white">
                         {t('integrations.syncHub.lifecycleShell', 'Lifecycle shell')}
                       </div>
-                      <div className="mt-1 text-[11px] text-slate-400">
+                      <div className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
                         {t(
                           'integrations.syncHub.lifecycleShellDesc',
                           'One governed lane for connect, complete, recover, and operate.'
@@ -2482,14 +2482,14 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 {/* Capabilities / Scopes */}
                 {int.connector?.capabilities && (
                   <div>
-                    <div className="text-xs text-slate-500 mb-1">
+                    <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">
                       {t('integrations.syncHub.scopes', 'Permissions & Scopes')}
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {int.connector.capabilities.map((cap) => (
                         <span
                           key={cap}
-                          className="px-2 py-0.5 rounded-full bg-navy-800 text-xs text-slate-400 border border-navy-700"
+                          className="px-2 py-0.5 rounded-full bg-navy-800 text-xs text-slate-400 dark:text-slate-500 border border-navy-700"
                         >
                           read:{cap}
                         </span>
@@ -2914,13 +2914,13 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 {int.lastRun && (
                   <div className="flex items-center gap-6 text-xs">
                     <div>
-                      <span className="text-slate-500">
+                      <span className="text-slate-500 dark:text-slate-400">
                         {t('integrations.syncHub.itemsProcessed', 'Items processed')}:
                       </span>{' '}
                       <span className="text-slate-300">{int.lastRun.items_processed}</span>
                     </div>
                     <div>
-                      <span className="text-slate-500">
+                      <span className="text-slate-500 dark:text-slate-400">
                         {t('integrations.syncHub.duration', 'Duration')}:
                       </span>{' '}
                       <span className="text-slate-300">
@@ -2928,11 +2928,11 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                       </span>
                     </div>
                     <div>
-                      <span className="text-slate-500">
+                      <span className="text-slate-500 dark:text-slate-400">
                         {t('integrations.syncHub.errorRateLabel', 'Error rate')}:
                       </span>{' '}
                       <span
-                        className={`${int.errorRate > 20 ? 'text-danger-400' : 'text-slate-300'}`}
+                        className={`${int.errorRate > 20 ? 'text-rose-400' : 'text-slate-300'}`}
                       >
                         {int.errorRate}%
                       </span>
@@ -3009,7 +3009,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   )}
                   <button
                     onClick={() => handleDisconnect(int.id)}
-                    className="px-3 py-1.5 text-xs bg-danger-500/10 text-danger-400 hover:bg-danger-500/20 rounded-lg transition-colors flex items-center gap-1.5 ml-auto"
+                    className="px-3 py-1.5 text-xs bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 rounded-lg transition-colors flex items-center gap-1.5 ml-auto"
                   >
                     <Unplug size={13} />
                     {t('integrations.syncHub.disconnect', 'Disconnect')}
@@ -3030,7 +3030,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       {/* Top bar */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
           <input
             type="text"
             value={searchQuery}
@@ -3041,7 +3041,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         </div>
         <button
           onClick={() => window.location.assign('/settings/integrations')}
-          className="h-9 px-4 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm rounded-lg flex items-center gap-2 transition-colors shrink-0"
+          className="h-9 px-4 bg-primary-600 hover:bg-primary-500 text-white text-sm rounded-lg flex items-center gap-2 transition-colors shrink-0"
         >
           <Plus size={16} />
           {t('integrations.syncHub.manageInSettings', 'Manage in Settings')}
@@ -3052,14 +3052,14 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       {loading ? (
         <div className="flex items-center justify-center py-16">
           <Loader2 className="animate-spin text-primary-400" size={24} />
-          <span className="ml-3 text-slate-400 text-sm">
+          <span className="ml-3 text-slate-400 dark:text-slate-500 text-sm">
             {t('integrations.syncHub.loading', 'Loading integrations…')}
           </span>
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16">
-          <Zap className="mx-auto text-slate-600 mb-3" size={36} />
-          <p className="text-slate-400 text-sm">
+          <Zap className="mx-auto text-slate-600 dark:text-slate-400 mb-3" size={36} />
+          <p className="text-slate-400 dark:text-slate-500 text-sm">
             {t('integrations.syncHub.noIntegrations', 'No integrations connected')}
           </p>
           <button
@@ -3075,7 +3075,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   <div className="text-sm font-medium text-white">
                     {t('integrations.syncHub.availableConnectors', 'Available connectors')}
                   </div>
-                  <div className="text-xs text-slate-500 mt-1">
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     {t(
                       'integrations.syncHub.availableConnectorsHint',
                       'Browse what can be connected for this tenant.'
@@ -3089,7 +3089,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                     className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${
                       !showComingSoonCatalog
                         ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
-                        : 'text-slate-400 hover:text-white border border-navy-700'
+                        : 'text-slate-400 dark:text-slate-500 hover:text-white border border-navy-700'
                     }`}
                   >
                     {t('integrations.syncHub.readyOnly', 'Ready')}
@@ -3100,7 +3100,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                     className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${
                       showComingSoonCatalog
                         ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
-                        : 'text-slate-400 hover:text-white border border-navy-700'
+                        : 'text-slate-400 dark:text-slate-500 hover:text-white border border-navy-700'
                     }`}
                   >
                     {t('integrations.syncHub.showAll', 'All')}
@@ -3128,7 +3128,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             <div className="text-sm font-medium text-white">
               {t('integrations.syncHub.healthEmptyTitle', 'No integrations connected yet')}
             </div>
-            <div className="text-xs text-slate-400 mt-1">
+            <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">
               {t(
                 'integrations.syncHub.healthEmptyBody',
                 'Connect your first integration to unlock sync health, auth escalations, and governed conflict visibility.'
@@ -3141,7 +3141,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               setActiveTab('apps');
               window.location.assign('/settings/integrations');
             }}
-            className="shrink-0 inline-flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors"
+            className="shrink-0 inline-flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg bg-primary-600 hover:bg-primary-500 text-white transition-colors"
           >
             <Plus size={14} />
             {t('integrations.syncHub.manageInSettings', 'Manage in Settings')}
@@ -3171,7 +3171,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             {
               label: t('integrations.syncHub.unhealthy', 'Unhealthy'),
               value: healthSummary.unhealthy,
-              color: 'text-danger-400',
+              color: 'text-rose-400',
             },
           ].map((card) => (
             <div
@@ -3179,7 +3179,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               className="p-3 rounded-lg bg-navy-800/60 border border-navy-700/50"
             >
               <div className={`text-2xl font-semibold ${card.color}`}>{card.value}</div>
-              <div className="text-xs text-slate-500 mt-1">{card.label}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{card.label}</div>
             </div>
           ))}
         </div>
@@ -3211,7 +3211,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               {
                 label: t('integrations.syncHub.v8EscalatedCredentials', 'Escalated'),
                 value: v8AuthHealthSummary.escalated,
-                color: 'text-danger-400',
+                color: 'text-rose-400',
               },
             ].map((card) => (
               <div
@@ -3219,7 +3219,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 className="p-3 rounded-lg bg-blue-500/5 border border-blue-500/20"
               >
                 <div className={`text-2xl font-semibold ${card.color}`}>{card.value}</div>
-                <div className="text-xs text-slate-500 mt-1">{card.label}</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{card.label}</div>
               </div>
             ))}
           </div>
@@ -3237,7 +3237,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           )}
         </h3>
         {v8AuthEscalations.length === 0 ? (
-          <div className="text-center py-6 text-slate-500 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
+          <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
             {t('integrations.syncHub.v8NoEscalations', 'No governed auth escalations are open.')}
           </div>
         ) : (
@@ -3265,11 +3265,11 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                         {t('integrations.syncHub.v8Escalated', 'escalated')}
                       </span>
                     </div>
-                    <div className="text-xs text-slate-400 mt-0.5">
+                    <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
                       {escalation.reason ||
                         t('integrations.syncHub.v8NoEscalationReason', 'Auth health degraded')}
                     </div>
-                    <div className="text-xs text-slate-600 mt-1">
+                    <div className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                       {timeAgo(escalation.escalatedAt)}
                     </div>
                     {recoveryTarget ? (
@@ -3336,7 +3336,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           )}
         </h3>
         {v8ConnectorHealthLoading ? (
-          <div className="flex items-center justify-center py-6 text-slate-500 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
+          <div className="flex items-center justify-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
             <Loader2 size={14} className="animate-spin mr-2" />
             {t(
               'integrations.syncHub.v8ConnectorHealthLoading',
@@ -3344,7 +3344,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             )}
           </div>
         ) : v8ConnectorHealthTargets.length === 0 ? (
-          <div className="text-center py-6 text-slate-500 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
+          <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
             {t(
               'integrations.syncHub.v8NoConnectorTargets',
               'No governed connector targets are available for this workspace yet.'
@@ -3371,7 +3371,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 : health.healthy
                   ? 'border-emerald-500/20 bg-emerald-500/5'
                   : ['error', 'dead_letter', 'conflict'].includes(health.syncStatus)
-                    ? 'border-danger-500/20 bg-danger-500/5'
+                    ? 'border-rose-500/20 bg-rose-500/5'
                     : 'border-amber-500/20 bg-amber-500/5';
 
               return (
@@ -3380,18 +3380,18 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-medium text-slate-200">{target.name}</span>
-                        <span className="px-1.5 py-0.5 text-[11px] bg-navy-800 text-slate-400 rounded">
+                        <span className="px-1.5 py-0.5 text-[11px] bg-navy-800 text-slate-400 dark:text-slate-500 rounded">
                           {target.connectorId}
                         </span>
                       </div>
-                      <div className="text-xs text-slate-500 mt-0.5">
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                         {CATEGORY_LABELS[target.category] || target.category}
                       </div>
                     </div>
                     <span
                       className={`px-1.5 py-0.5 text-[11px] rounded ${
                         !health
-                          ? 'bg-slate-500/10 text-slate-400'
+                          ? 'bg-slate-500/10 text-slate-400 dark:text-slate-500'
                           : health.healthy
                             ? 'bg-emerald-500/10 text-emerald-400'
                             : 'bg-amber-500/10 text-amber-400'
@@ -3408,25 +3408,25 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                     <>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 text-xs">
                         <div>
-                          <div className="text-slate-500">
+                          <div className="text-slate-500 dark:text-slate-400">
                             {t('integrations.syncHub.v8AuthState', 'Auth state')}
                           </div>
                           <div className="text-slate-300 mt-1">{health.authState}</div>
                         </div>
                         <div>
-                          <div className="text-slate-500">
+                          <div className="text-slate-500 dark:text-slate-400">
                             {t('integrations.syncHub.v8SyncStatus', 'Sync status')}
                           </div>
                           <div className="text-slate-300 mt-1">{health.syncStatus}</div>
                         </div>
                         <div>
-                          <div className="text-slate-500">
+                          <div className="text-slate-500 dark:text-slate-400">
                             {t('integrations.syncHub.v8OpenConflicts', 'Open conflicts')}
                           </div>
                           <div className="text-slate-300 mt-1">{health.conflictCount}</div>
                         </div>
                         <div>
-                          <div className="text-slate-500">
+                          <div className="text-slate-500 dark:text-slate-400">
                             {t('integrations.syncHub.v8LastGovernedSync', 'Last governed sync')}
                           </div>
                           <div className="text-slate-300 mt-1">{timeAgo(health.lastSyncAt)}</div>
@@ -3480,7 +3480,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                     </>
                   ) : (
                     <>
-                      <div className="text-xs text-slate-500 mt-3">
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-3">
                         {t(
                           'integrations.syncHub.v8ConnectorHealthUnavailable',
                           'Governed connector health is not available for this connector yet.'
@@ -3516,16 +3516,16 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
       <div>
         <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
-          <AlertTriangle size={14} className="text-danger-400" />
+          <AlertTriangle size={14} className="text-rose-400" />
           {t('integrations.syncHub.v8Conflicts', 'V8 Unresolved Sync Conflicts')}
           {v8Conflicts.length > 0 && (
-            <span className="px-1.5 py-0.5 text-xs bg-danger-500/10 text-danger-400 rounded">
+            <span className="px-1.5 py-0.5 text-xs bg-rose-500/10 text-rose-400 rounded">
               {v8Conflicts.length}
             </span>
           )}
         </h3>
         {v8Conflicts.length === 0 ? (
-          <div className="text-center py-6 text-slate-500 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
+          <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
             {t('integrations.syncHub.v8NoConflicts', 'No governed sync conflicts are open.')}
           </div>
         ) : (
@@ -3533,23 +3533,23 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             {v8Conflicts.slice(0, 5).map((conflict) => (
               <div
                 key={conflict.conflictId}
-                className="flex items-start gap-3 p-3 rounded-lg bg-danger-500/5 border border-danger-500/20"
+                className="flex items-start gap-3 p-3 rounded-lg bg-rose-500/5 border border-rose-500/20"
               >
-                <AlertTriangle size={14} className="text-danger-400 shrink-0 mt-0.5" />
+                <AlertTriangle size={14} className="text-rose-400 shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-medium text-slate-200">
                       {conflict.conflictClass}
                     </span>
-                    <span className="px-1.5 py-0.5 text-[11px] bg-danger-500/10 text-danger-300 rounded uppercase">
+                    <span className="px-1.5 py-0.5 text-[11px] bg-rose-500/10 text-rose-300 rounded uppercase">
                       {conflict.severity}
                     </span>
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5">
+                  <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
                     {conflict.resolutionPath ||
                       t('integrations.syncHub.v8ResolutionPending', 'Resolution pending')}
                   </div>
-                  <div className="text-xs text-slate-600 mt-1">{timeAgo(conflict.createdAt)}</div>
+                  <div className="text-xs text-slate-600 dark:text-slate-400 mt-1">{timeAgo(conflict.createdAt)}</div>
                 </div>
                 <button
                   type="button"
@@ -3604,7 +3604,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 className="p-3 rounded-lg bg-fuchsia-500/5 border border-fuchsia-500/20"
               >
                 <div className={`text-base font-semibold ${card.color}`}>{card.value}</div>
-                <div className="text-xs text-slate-500 mt-1">{card.label}</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{card.label}</div>
               </div>
             ))}
           </div>
@@ -3622,13 +3622,13 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           )}
         </h3>
         {v8WorkspaceBinding ? (
-          <div className="mb-3 text-xs text-slate-500">
+          <div className="mb-3 text-xs text-slate-500 dark:text-slate-400">
             {t('integrations.syncHub.v8WorkspaceRoom', 'Workspace room')}:{' '}
             {v8WorkspaceBinding.roomResourceId}
           </div>
         ) : null}
         {v8WorkspacePresence.length === 0 ? (
-          <div className="text-center py-6 text-slate-500 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
+          <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
             {v8WorkspacePresenceFailed
               ? t(
                   'integrations.syncHub.v8WorkspacePresenceFailed',
@@ -3659,8 +3659,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                       {presence.activeSurface}
                     </span>
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5">{presence.presenceType}</div>
-                  <div className="text-xs text-slate-600 mt-1">
+                  <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{presence.presenceType}</div>
+                  <div className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                     {timeAgo(presence.lastHeartbeat)}
                   </div>
                 </div>
@@ -3681,7 +3681,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           )}
         </h3>
         {v8WorkspaceLocks.length === 0 ? (
-          <div className="text-center py-6 text-slate-500 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
+          <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
             {t('integrations.syncHub.v8NoLocks', 'No governed workspace locks are active.')}
           </div>
         ) : (
@@ -3699,8 +3699,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                       {lock.lockScope}
                     </span>
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5">{lock.holderId}</div>
-                  <div className="text-xs text-slate-600 mt-1">{timeAgo(lock.acquiredAt)}</div>
+                  <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{lock.holderId}</div>
+                  <div className="text-xs text-slate-600 dark:text-slate-400 mt-1">{timeAgo(lock.acquiredAt)}</div>
                 </div>
               </div>
             ))}
@@ -3714,13 +3714,13 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           <AlertTriangle size={14} className="text-amber-400" />
           {t('integrations.syncHub.unresolvedErrors', 'Unresolved Errors')}
           {errors.length > 0 && (
-            <span className="px-1.5 py-0.5 text-xs bg-danger-500/10 text-danger-400 rounded">
+            <span className="px-1.5 py-0.5 text-xs bg-rose-500/10 text-rose-400 rounded">
               {errors.length}
             </span>
           )}
         </h3>
         {errors.length === 0 ? (
-          <div className="text-center py-8 text-slate-500 text-sm">
+          <div className="text-center py-8 text-slate-500 dark:text-slate-400 text-sm">
             <CheckCircle2 className="mx-auto mb-2 text-emerald-500/50" size={24} />
             {t('integrations.syncHub.noErrors', 'All systems operational')}
           </div>
@@ -3731,7 +3731,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 key={err.id}
                 className="flex items-start gap-3 p-3 rounded-lg bg-navy-900/40 border border-navy-700/50"
               >
-                <XCircle size={14} className="text-danger-400 shrink-0 mt-0.5" />
+                <XCircle size={14} className="text-rose-400 shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-medium text-slate-300">{err.errorType}</span>
@@ -3740,12 +3740,12 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                         retryable
                       </span>
                     )}
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
                       {err.retryCount}/{err.maxRetries} retries
                     </span>
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5 truncate">{err.errorMessage}</div>
-                  <div className="text-xs text-slate-600 mt-1">{timeAgo(err.createdAt)}</div>
+                  <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 truncate">{err.errorMessage}</div>
+                  <div className="text-xs text-slate-600 dark:text-slate-400 mt-1">{timeAgo(err.createdAt)}</div>
                 </div>
                 <button
                   onClick={() => handleResolveError(err.id)}
@@ -3788,7 +3788,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
           <input
             type="text"
             value={usersSearchQuery}
@@ -3808,7 +3808,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       </div>
 
       {ownershipError && (
-        <div className="p-3 rounded-lg bg-danger-500/10 border border-danger-500/20 text-danger-300 text-sm">
+        <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-sm">
           {ownershipError}
         </div>
       )}
@@ -3816,7 +3816,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       <div className="rounded-xl border border-navy-700/50 bg-navy-900/20 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-navy-900/40 text-slate-500">
+            <thead className="bg-navy-900/40 text-slate-500 dark:text-slate-400">
               <tr className="text-left text-xs">
                 <th className="px-3 py-2">{t('integrations.syncHub.user', 'User')}</th>
                 <th className="px-3 py-2">{t('integrations.syncHub.connector', 'Connector')}</th>
@@ -3830,14 +3830,14 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             <tbody className="divide-y divide-navy-700/40">
               {ownershipLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-3 py-10 text-center text-slate-500">
+                  <td colSpan={5} className="px-3 py-10 text-center text-slate-500 dark:text-slate-400">
                     <Loader2 className="inline-block mr-2 animate-spin" size={16} />
                     {t('integrations.syncHub.loading', 'Loading integrations…')}
                   </td>
                 </tr>
               ) : filteredOwnershipItems.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-3 py-10 text-center text-slate-500">
+                  <td colSpan={5} className="px-3 py-10 text-center text-slate-500 dark:text-slate-400">
                     {t('integrations.syncHub.noOwnership', 'No user integrations tracked yet')}
                   </td>
                 </tr>
@@ -3852,7 +3852,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                       <td className="px-3 py-2.5">
                         <div className="text-sm font-medium text-white">{userLabel}</div>
                         {item.email && (
-                          <div className="text-xs text-slate-500 mt-0.5">{item.email}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{item.email}</div>
                         )}
                       </td>
                       <td className="px-3 py-2.5">
@@ -3862,12 +3862,12 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                       </td>
                       <td className="px-3 py-2.5">
                         <div className="text-sm text-slate-100">{item.integrationName}</div>
-                        <div className="text-xs text-slate-600 mt-0.5">{item.integrationId}</div>
+                        <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">{item.integrationId}</div>
                       </td>
                       <td className="px-3 py-2.5">
                         {renderStatusChip(item.status as IntegrationStatus)}
                       </td>
-                      <td className="px-3 py-2.5 text-slate-500 text-xs">
+                      <td className="px-3 py-2.5 text-slate-500 dark:text-slate-400 text-xs">
                         {item.updatedAt ? timeAgo(item.updatedAt) : '—'}
                       </td>
                     </tr>
@@ -3887,7 +3887,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-slate-500 dark:text-slate-400">
             {t('integrations.syncHub.filter', 'Filter')}
           </span>
           <select
@@ -3931,7 +3931,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       </div>
 
       {connectionLogError && (
-        <div className="p-3 rounded-lg bg-danger-500/10 border border-danger-500/20 text-danger-300 text-sm">
+        <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-sm">
           {connectionLogError}
         </div>
       )}
@@ -3939,7 +3939,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       <div className="rounded-xl border border-navy-700/50 bg-navy-900/20 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-navy-900/40 text-slate-500">
+            <thead className="bg-navy-900/40 text-slate-500 dark:text-slate-400">
               <tr className="text-left text-xs">
                 <th className="px-3 py-2">{t('integrations.syncHub.time', 'Time')}</th>
                 <th className="px-3 py-2">{t('integrations.syncHub.connector', 'Connector')}</th>
@@ -3953,23 +3953,23 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             <tbody className="divide-y divide-navy-700/40">
               {connectionLogLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-3 py-10 text-center text-slate-500">
+                  <td colSpan={5} className="px-3 py-10 text-center text-slate-500 dark:text-slate-400">
                     <Loader2 className="inline-block mr-2 animate-spin" size={16} />
                     {t('integrations.syncHub.loading', 'Loading integrations…')}
                   </td>
                 </tr>
               ) : connectionLogItems.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-3 py-10 text-center text-slate-500">
+                  <td colSpan={5} className="px-3 py-10 text-center text-slate-500 dark:text-slate-400">
                     {t('integrations.syncHub.noLogs', 'No connection events recorded yet')}
                   </td>
                 </tr>
               ) : (
                 connectionLogItems.map((row) => (
                   <tr key={row.id} className="text-slate-200">
-                    <td className="px-3 py-2.5 text-xs text-slate-500">
+                    <td className="px-3 py-2.5 text-xs text-slate-500 dark:text-slate-400">
                       {timeAgo(row.createdAt)}
-                      <div className="text-[11px] text-slate-600 mt-0.5">
+                      <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
                         {new Date(row.createdAt).toLocaleString()}
                       </div>
                     </td>
@@ -3981,13 +3981,13 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                     <td className="px-3 py-2.5">
                       <div className="text-sm font-medium text-white">{row.eventType}</div>
                       {row.metadata && (
-                        <div className="text-[11px] text-slate-600 mt-0.5 truncate max-w-[520px]">
+                        <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 truncate max-w-[520px]">
                           {JSON.stringify(row.metadata)}
                         </div>
                       )}
                     </td>
-                    <td className="px-3 py-2.5 text-xs text-slate-500">{row.integrationId}</td>
-                    <td className="px-3 py-2.5 text-xs text-slate-500">{row.userId || '—'}</td>
+                    <td className="px-3 py-2.5 text-xs text-slate-500 dark:text-slate-400">{row.integrationId}</td>
+                    <td className="px-3 py-2.5 text-xs text-slate-500 dark:text-slate-400">{row.userId || '—'}</td>
                   </tr>
                 ))
               )}
@@ -3996,7 +3996,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         </div>
       </div>
 
-      <div className="flex items-center justify-between text-xs text-slate-500">
+      <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
         <div>
           {t('integrations.syncHub.showing', 'Showing')} {connectionLogItems.length} /{' '}
           {connectionLogTotal}
@@ -4037,8 +4037,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     if (v8Workflows.length === 0) {
       return (
         <div className="text-center py-12">
-          <Activity className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-          <p className="text-sm text-slate-500">
+          <Activity className="w-8 h-8 text-slate-400 dark:text-slate-500 mx-auto mb-2" />
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             {t('integrations.syncHub.noWorkflows', 'No workflows configured yet.')}
           </p>
         </div>
@@ -4048,8 +4048,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     const stateColor = (s: string) => {
       if (s === 'connected' || s === 'recovered') return 'text-green-500';
       if (s === 'degraded' || s === 'requires_action') return 'text-amber-500';
-      if (s === 'blocked') return 'text-danger-500';
-      return 'text-slate-400';
+      if (s === 'blocked') return 'text-rose-500';
+      return 'text-slate-400 dark:text-slate-500';
     };
 
     return (
@@ -4057,7 +4057,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-xs text-slate-500 uppercase tracking-wider border-b border-white/10">
+              <tr className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-white/10">
                 <th className="text-left pb-2 pr-4">{t('integrations.syncHub.wfName', 'Name')}</th>
                 <th className="text-left pb-2 pr-4">
                   {t('integrations.syncHub.wfConnector', 'Connector')}
@@ -4078,13 +4078,13 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               {v8Workflows.map((wf) => (
                 <tr key={wf.workflowId} className="border-b border-white/5">
                   <td className="py-2 pr-4 font-medium">{wf.name || wf.connectorId}</td>
-                  <td className="py-2 pr-4 text-slate-400">{wf.connectorId}</td>
+                  <td className="py-2 pr-4 text-slate-400 dark:text-slate-500">{wf.connectorId}</td>
                   <td className="py-2 pr-4">
                     <span className={`font-medium ${stateColor(wf.lifecycleState)}`}>
                       {wf.lifecycleState}
                     </span>
                   </td>
-                  <td className="py-2 pr-4 text-slate-400">{wf.mode}</td>
+                  <td className="py-2 pr-4 text-slate-400 dark:text-slate-500">{wf.mode}</td>
                   <td className="py-2 pr-4">
                     {wf.isPaused ? (
                       <span className="text-amber-400">Yes</span>
@@ -4092,7 +4092,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                       <span className="text-green-400">No</span>
                     )}
                   </td>
-                  <td className="py-2 text-slate-500">
+                  <td className="py-2 text-slate-500 dark:text-slate-400">
                     {wf.lastSyncAt ? new Date(wf.lastSyncAt).toLocaleString() : '—'}
                   </td>
                 </tr>
@@ -4108,7 +4108,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
   const renderScopesTab = () => (
     <div className="space-y-4">
-      <p className="text-sm text-slate-400">
+      <p className="text-sm text-slate-400 dark:text-slate-500">
         {t(
           'integrations.syncHub.scopesDesc',
           'Review what each integration can read and write in your workspace.'
@@ -4140,10 +4140,10 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                             {target.connectorId}
                           </span>
                         </div>
-                        <div className="text-xs text-slate-500 mt-0.5">
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                           {target.integrationName}
                         </div>
-                        <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-400">
+                        <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-400 dark:text-slate-500">
                           <span className="px-2 py-0.5 rounded-full bg-navy-800 border border-navy-700">
                             lifetime {policy?.typicalTokenLifetimeMinutes ?? 'none'}m
                           </span>
@@ -4178,7 +4178,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         </div>
       )}
       {integrations.length === 0 ? (
-        <div className="text-center py-8 text-slate-500 text-sm">
+        <div className="text-center py-8 text-slate-500 dark:text-slate-400 text-sm">
           {t('integrations.syncHub.noScopesData', 'No integrations connected yet.')}
         </div>
       ) : (
@@ -4189,7 +4189,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 <span className="text-lg">{CATEGORY_ICONS[int.category] || '🔌'}</span>
                 <div>
                   <div className="text-sm font-medium text-white">{int.name}</div>
-                  <div className="text-xs text-slate-500">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
                     {int.connector?.authType || 'oauth2'}
                   </div>
                 </div>
@@ -4199,7 +4199,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 {(int.connector?.capabilities || []).map((cap) => (
                   <span
                     key={cap}
-                    className="px-2 py-0.5 rounded-full bg-navy-800 text-xs text-slate-400 border border-navy-700"
+                    className="px-2 py-0.5 rounded-full bg-navy-800 text-xs text-slate-400 dark:text-slate-500 border border-navy-700"
                   >
                     read:{cap}
                   </span>
@@ -4218,7 +4218,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     const statusColors: Record<string, string> = {
       running: 'text-blue-400 bg-blue-500/10',
       completed: 'text-emerald-400 bg-emerald-500/10',
-      failed: 'text-danger-400 bg-danger-500/10',
+      failed: 'text-rose-400 bg-rose-500/10',
     };
 
     const formatDuration = (ms: number | null) => {
@@ -4264,24 +4264,24 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             </option>
             <option value="failed">{t('integrations.syncHub.runsFailed', 'Failed')}</option>
           </select>
-          <div className="ml-auto text-xs text-slate-500">
+          <div className="ml-auto text-xs text-slate-500 dark:text-slate-400">
             {t('integrations.syncHub.runsTotal', '{{count}} total', { count: v8RunsTotal })}
           </div>
         </div>
 
         {v8RunsLoading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="animate-spin text-slate-500" size={24} />
+            <Loader2 className="animate-spin text-slate-500 dark:text-slate-400" size={24} />
           </div>
         ) : v8Runs.length === 0 ? (
-          <div className="text-center py-12 text-slate-500 text-sm">
+          <div className="text-center py-12 text-slate-500 dark:text-slate-400 text-sm">
             {t('integrations.syncHub.noRuns', 'No sync runs recorded yet')}
           </div>
         ) : (
           <div className="border border-navy-700/50 rounded-lg overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-navy-800/60 text-xs text-slate-500 uppercase tracking-wider">
+                <tr className="bg-navy-800/60 text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   <th className="text-left px-4 py-2">
                     {t('integrations.syncHub.runsStatus', 'Status')}
                   </th>
@@ -4316,34 +4316,34 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   const lifecycleColors: Record<string, string> = {
                     connected: 'text-emerald-400',
                     degraded: 'text-amber-400',
-                    requires_action: 'text-danger-400',
-                    draft: 'text-slate-400',
+                    requires_action: 'text-rose-400',
+                    draft: 'text-slate-400 dark:text-slate-500',
                   };
                   return (
                     <React.Fragment key={run.id}>
                       <tr className="border-t border-navy-700/30 hover:bg-navy-800/30">
                         <td className="px-4 py-2">
                           <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[run.status] || 'text-slate-400 bg-slate-500/10'}`}
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[run.status] || 'text-slate-400 dark:text-slate-500 bg-slate-500/10'}`}
                           >
                             {run.status}
                           </span>
                         </td>
                         <td className="px-4 py-2 text-slate-300">{run.provider || '—'}</td>
-                        <td className="px-4 py-2 text-slate-400">{run.direction || '—'}</td>
+                        <td className="px-4 py-2 text-slate-400 dark:text-slate-500">{run.direction || '—'}</td>
                         <td className="px-4 py-2 text-right text-slate-300">
                           {run.itemsProcessed ?? '—'}
                         </td>
-                        <td className="px-4 py-2 text-right text-slate-400">
+                        <td className="px-4 py-2 text-right text-slate-400 dark:text-slate-500">
                           {formatDuration(run.durationMs)}
                         </td>
-                        <td className="px-4 py-2 text-slate-400">{run.triggeredBy || '—'}</td>
-                        <td className="px-4 py-2 text-slate-500">
+                        <td className="px-4 py-2 text-slate-400 dark:text-slate-500">{run.triggeredBy || '—'}</td>
+                        <td className="px-4 py-2 text-slate-500 dark:text-slate-400">
                           {run.startedAt ? new Date(run.startedAt).toLocaleString() : '—'}
                         </td>
                         <td className="px-4 py-2">
                           <span
-                            className={`text-xs font-medium ${lifecycleColors[run.lifecycleState] || 'text-slate-400'}`}
+                            className={`text-xs font-medium ${lifecycleColors[run.lifecycleState] || 'text-slate-400 dark:text-slate-500'}`}
                           >
                             {run.lifecycleState}
                           </span>
@@ -4377,9 +4377,9 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                         </td>
                       </tr>
                       {run.errorSummary && (
-                        <tr className="bg-danger-500/5">
-                          <td colSpan={9} className="px-4 py-1.5 text-xs text-danger-400/80">
-                            <span className="text-slate-500 mr-2">
+                        <tr className="bg-rose-500/5">
+                          <td colSpan={9} className="px-4 py-1.5 text-xs text-rose-400/80">
+                            <span className="text-slate-500 dark:text-slate-400 mr-2">
                               {t('integrations.syncHub.traceId', 'Trace:')} {run.id}
                             </span>
                             {run.errorSummary}
@@ -4402,14 +4402,14 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   const renderAuditTab = () => (
     <div className="space-y-3">
       {auditLog.length === 0 ? (
-        <div className="text-center py-12 text-slate-500 text-sm">
+        <div className="text-center py-12 text-slate-500 dark:text-slate-400 text-sm">
           {t('integrations.syncHub.noAuditData', 'No audit events yet')}
         </div>
       ) : (
         <div className="border border-navy-700/50 rounded-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-navy-800/60 text-xs text-slate-500 uppercase tracking-wider">
+              <tr className="bg-navy-800/60 text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 <th className="text-left px-4 py-2">
                   {t('integrations.syncHub.auditAction', 'Action')}
                 </th>
@@ -4433,19 +4433,19 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                         entry.action.includes('connected')
                           ? 'text-emerald-400'
                           : entry.action.includes('disconnected')
-                            ? 'text-danger-400'
+                            ? 'text-rose-400'
                             : entry.action.includes('reauth')
                               ? 'text-amber-400'
                               : entry.action.includes('sync')
                                 ? 'text-blue-400'
-                                : 'text-slate-400'
+                                : 'text-slate-400 dark:text-slate-500'
                       }`}
                     >
                       {entry.action}
                     </span>
                   </td>
-                  <td className="px-4 py-2.5 text-xs text-slate-400">{entry.actor_name}</td>
-                  <td className="px-4 py-2.5 text-xs text-slate-500">
+                  <td className="px-4 py-2.5 text-xs text-slate-400 dark:text-slate-500">{entry.actor_name}</td>
+                  <td className="px-4 py-2.5 text-xs text-slate-500 dark:text-slate-400">
                     {timeAgo(entry.created_at)}
                   </td>
                 </tr>
@@ -4479,7 +4479,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             </h3>
             <button
               onClick={() => setShowConnectModal(false)}
-              className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-navy-800"
+              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-white rounded-lg hover:bg-navy-800"
             >
               <X size={18} />
             </button>
@@ -4492,7 +4492,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${
                 !selectedCategory
                   ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
-                  : 'text-slate-400 hover:text-white border border-navy-700'
+                  : 'text-slate-400 dark:text-slate-500 hover:text-white border border-navy-700'
               }`}
             >
               {t('common.all', 'All')}
@@ -4506,7 +4506,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${
                     selectedCategory === cat
                       ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
-                      : 'text-slate-400 hover:text-white border border-navy-700'
+                      : 'text-slate-400 dark:text-slate-500 hover:text-white border border-navy-700'
                   }`}
                 >
                   {CATEGORY_LABELS[cat] || cat}
@@ -4515,7 +4515,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           </div>
 
           <div className="flex items-center justify-between gap-3 px-4 pb-3">
-            <div className="text-xs text-slate-500">
+            <div className="text-xs text-slate-500 dark:text-slate-400">
               {t('integrations.syncHub.catalogHint', 'Pick an app to connect for this tenant.')}
             </div>
             <div className="flex items-center gap-2">
@@ -4525,7 +4525,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${
                   !showComingSoonCatalog
                     ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
-                    : 'text-slate-400 hover:text-white border border-navy-700'
+                    : 'text-slate-400 dark:text-slate-500 hover:text-white border border-navy-700'
                 }`}
               >
                 {t('integrations.syncHub.readyOnly', 'Ready')}
@@ -4536,7 +4536,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${
                   showComingSoonCatalog
                     ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
-                    : 'text-slate-400 hover:text-white border border-navy-700'
+                    : 'text-slate-400 dark:text-slate-500 hover:text-white border border-navy-700'
                 }`}
               >
                 {t('integrations.syncHub.showAll', 'All')}
@@ -4560,7 +4560,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           <h2 className="text-xl font-semibold text-white">
             {t('integrations.syncHub.title', 'Integrations Hub')}
           </h2>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
             {t(
               'integrations.syncHub.subtitle',
               'Connect, monitor, and manage all your external integrations'
@@ -4570,7 +4570,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         <button
           onClick={loadAll}
           disabled={loading}
-          className="p-2 text-slate-400 hover:text-primary-400 hover:bg-primary-500/10 rounded-lg transition-colors disabled:opacity-50"
+          className="p-2 text-slate-400 dark:text-slate-500 hover:text-primary-400 hover:bg-primary-500/10 rounded-lg transition-colors disabled:opacity-50"
           title={t('common.refresh', 'Refresh')}
         >
           <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
@@ -4586,7 +4586,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
               activeTab === tab.id
                 ? 'border-primary-500 text-primary-400'
-                : 'border-transparent text-slate-500 hover:text-slate-300'
+                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-300'
             }`}
           >
             {tab.icon}

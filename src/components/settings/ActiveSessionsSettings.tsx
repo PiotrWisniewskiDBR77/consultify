@@ -134,7 +134,7 @@ export const ActiveSessionsSettings: React.FC<ActiveSessionsSettingsProps> = ({
               {!session.current && (
                 <button
                   onClick={() => terminateSession(session.id)}
-                  className="p-2 text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors"
+                  className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
                   title={t('settings.security.terminate', 'Terminate session')}
                 >
                   <Trash2 size={18} />
@@ -149,7 +149,7 @@ export const ActiveSessionsSettings: React.FC<ActiveSessionsSettingsProps> = ({
         <div className="flex justify-end pt-4 border-t border-slate-200 dark:border-navy-700">
           <button
             onClick={handleRevokeAll}
-            className="px-4 py-2 text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors text-sm font-medium"
+            className="px-4 py-2 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors text-sm font-medium"
           >
             {t('settings.security.signOutAll', 'Sign Out All Devices')}
           </button>

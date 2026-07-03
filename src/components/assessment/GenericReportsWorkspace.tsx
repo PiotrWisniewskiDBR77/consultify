@@ -311,7 +311,7 @@ export const GenericReportsWorkspace: React.FC<GenericReportsWorkspaceProps> = (
                     e.stopPropagation();
                     handleDelete(report.id);
                   }}
-                  className="p-1 text-danger-500 hover:bg-danger-50 rounded"
+                  className="p-1 text-rose-500 hover:bg-rose-50 rounded"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

@@ -16,6 +16,7 @@ import {
   X,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
@@ -617,6 +618,7 @@ function CanvasRenderer({
 }
 
 export function WorkCanvasShell() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const activeConversationId = useConversationStore((state) => state.activeConversationId);
@@ -945,7 +947,7 @@ export function WorkCanvasShell() {
         <UnifiedChatPanel
           mode="split"
           workspaceContext={workspaceContext}
-          title="Company AI Chat"
+          title={t('canvas.panel.companyAiChat', 'Company AI Chat')}
           showModeToggle={false}
           showHistoryTrigger={true}
           showFocusMode={true}

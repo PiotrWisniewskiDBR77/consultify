@@ -114,14 +114,14 @@ export const NotebookTodayView: React.FC<NotebookTodayViewProps> = ({
       className="group flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.04]"
     >
       <span className="text-base leading-none">{page.icon || '📝'}</span>
-      <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-700 dark:text-slate-200 group-hover:text-primary-600 dark:group-hover:text-primary-300">
+      <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-700 dark:text-slate-200 group-hover:text-slate-600 dark:group-hover:text-slate-300">
         {page.title || (isPl ? 'Bez tytułu' : 'Untitled')}
       </span>
       {page.verificationStatus === 'disputed' && (
         <AlertTriangle size={12} className="shrink-0 text-amber-500" />
       )}
       {page.captureSource && (
-        <Sparkles size={11} className="shrink-0 text-primary-400" />
+        <Sparkles size={11} className="shrink-0 text-slate-400" />
       )}
       {page.updatedAt && (
         <span className="shrink-0 text-[11px] text-slate-400">

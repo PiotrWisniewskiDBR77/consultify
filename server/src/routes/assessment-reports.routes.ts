@@ -956,6 +956,90 @@ router.get('/:reportId/full', async (req: AuthRequest, res: Response) => {
 });
 
 // =============================================================================
+// PUBLISHING-GRADE DRD CLIENT REPORT (HTML → print → PDF), AI narration live
+// =============================================================================
+/**
+ * GET /api/assessment-reports/:reportId/drd-report
+ * Generate the standalone, print-CSS DRD client report as HTML. The executive
+ * summary + chapter/gap narratives are authored by the fail-safe LLM narrator
+ * (`llmService` injected server-side); numbers stay engine-exact. On any LLM
+ * failure the narrator falls back to the deterministic stub — the report always
+ * renders. Returns `text/html` by default (open in a window and print → PDF);
+ * pass `?format=json` to get `{ html, narrative }`.
+ */
+router.get('/:reportId/drd-report', async (req: AuthRequest, res: Response) => {
+  try {
+    await ensureAssessmentReportsSchema();
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
+    const { reportId } = req.params;
+    const format = String((req.query.format as string) || 'html').toLowerCase();
+
+    const reportRow = await get<any>(
+      `SELECT r.*, a.name as assessmentName, a.assessment_type as assessmentType
+       FROM assessment_reports r
+       LEFT JOIN assessments a ON a.id = r.assessment_id
+       WHERE r.id = ? AND r.organization_id = ?`,
+      [reportId, organizationId]
+    );
+    if (!reportRow) return res.status(404).json({ error: 'Report not found' });
+
+    const axisData = safeJsonParse<Record<string, { actual?: number; target?: number }>>(
+      reportRow.axis_data,
+      {}
+    );
+
+    // Resolve the client/organization name for the report cover.
+    let organizationName = 'Organizacja';
+    try {
+      const orgRow = await get<any>(`SELECT name FROM organizations WHERE id = ?`, [organizationId]);
+      if (orgRow?.name) organizationName = orgRow.name;
+    } catch {
+      /* non-fatal — fall back to default label */
+    }
+
+    const language: 'pl' | 'en' =
+      String((req.query.lang as string) || reportRow.language || 'pl').toLowerCase() === 'en'
+        ? 'en'
+        : 'pl';
+
+    // Wire the real LLM narrator (fail-safe). If the service is unavailable the
+    // narrator is simply omitted and the deterministic stub authors the prose.
+    let llm: any = null;
+    try {
+      const mod = await import('../services/ai/llmService.js');
+      llm = mod.llmService || mod.default || null;
+    } catch {
+      logger.warn('[AssessmentReports] LLM service unavailable for DRD report — using deterministic narrator');
+    }
+
+    const { buildDrdReportHtmlServer } = await import('../services/report/drdReportService.js');
+    const { html, narrative } = await buildDrdReportHtmlServer({
+      axisData,
+      meta: {
+        organizationName,
+        language,
+        assessmentName: reportRow.assessmentName || undefined,
+        reportDate: reportRow.created_at || undefined,
+      },
+      llm: llm || undefined,
+      logger: {
+        warn: (msg: string, meta?: unknown) => logger.warn(`[DRDReport] ${msg}`, meta),
+      },
+    });
+
+    if (format === 'json') {
+      return res.json({ html, narrative });
+    }
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.send(html);
+  } catch (err: any) {
+    logger.error('[AssessmentReports] Error generating DRD report:', err);
+    return res.status(500).json({ error: 'Failed to generate DRD report', message: err?.message });
+  }
+});
+
+// =============================================================================
 // GENERATE / REGENERATE REPORT SECTIONS FROM TEMPLATE
 // =============================================================================
 router.post('/:reportId/generate', async (req: AuthRequest, res: Response) => {

@@ -17,6 +17,11 @@ import {
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import {
+  EmptyState as SharedEmptyState,
+  LoadingState as SharedLoadingState,
+} from '@/components/shared/states';
+
 import { AppView } from '../../types';
 import { SplitLayout } from '../layout/SplitLayout';
 import { RapidLeanWorkspace } from './RapidLeanWorkspace';
@@ -76,8 +81,12 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
         title={t('licensedTools.hubTitle', 'Licensed Tools Hub')}
         currentView={AppView.ASSESSMENT_OVERVIEW}
       >
-        <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500 dark:text-gray-400">Loading assessment overview...</div>
+        <div className="p-6">
+          <SharedLoadingState
+            template="card"
+            count={4}
+            label={t('assessment.overview.loading', 'Loading assessment overview…')}
+          />
         </div>
       </SplitLayout>
     );
@@ -110,7 +119,15 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
         currentView={AppView.ASSESSMENT_OVERVIEW}
       >
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500 dark:text-gray-400">No assessment data available</div>
+          <SharedEmptyState
+            variant="error"
+            title={t('assessment.overview.emptyTitle', 'No assessment data yet')}
+            description={t(
+              'assessment.overview.emptyDesc',
+              'We could not load the assessment overview. Refresh to try again.'
+            )}
+            onRetry={() => void fetchOverview()}
+          />
         </div>
       </SplitLayout>
     );
@@ -260,7 +277,7 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
 
           {/* Weakest Areas */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h3 className="text-xl font-bold flex items-center gap-2 mb-4 text-danger-600">
+            <h3 className="text-xl font-bold flex items-center gap-2 mb-4 text-rose-600">
               <AlertCircle className="w-6 h-6" />
               Priority Gaps
             </h3>
@@ -271,7 +288,7 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
                     key={index}
                     className="flex items-center gap-2 text-gray-700 dark:text-gray-300"
                   >
-                    <div className="w-2 h-2 bg-danger-500 rounded-full" />
+                    <div className="w-2 h-2 bg-rose-500 rounded-full" />
                     {area}
                   </li>
                 ))}

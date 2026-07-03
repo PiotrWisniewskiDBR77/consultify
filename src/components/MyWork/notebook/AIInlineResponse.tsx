@@ -135,12 +135,12 @@ export const AIInlineResponse: React.FC<AIInlineResponseProps> = ({
 
   return (
     <div className="mx-auto max-w-5xl px-6 pb-3">
-      <div className="rounded-xl border border-primary-200 dark:border-primary-800/40 bg-gradient-to-br from-primary-50 to-blue-50 dark:from-primary-950/30 dark:to-blue-950/20 overflow-hidden shadow-sm">
-        <div className="flex items-center justify-between px-4 py-2 border-b border-primary-200/60 dark:border-primary-800/30">
-          <div className="flex items-center gap-2 text-xs font-medium text-primary-700 dark:text-primary-300">
+      <div className="rounded-xl border border-slate-200 dark:border-slate-800/40 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-950/30 dark:to-blue-950/20 overflow-hidden shadow-sm">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-slate-200/60 dark:border-slate-800/30">
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300">
             <Sparkles size={14} />
             <span>{label}</span>
-            {isStreaming && <Loader2 size={12} className="animate-spin text-primary-500" />}
+            {isStreaming && <Loader2 size={12} className="animate-spin text-slate-500" />}
           </div>
           <button
             onClick={() => {
@@ -167,7 +167,7 @@ export const AIInlineResponse: React.FC<AIInlineResponseProps> = ({
         </div>
 
         {!isStreaming && response && !error && (
-          <div className="flex items-center gap-2 px-4 py-2 border-t border-primary-200/60 dark:border-primary-800/30">
+          <div className="flex items-center gap-2 px-4 py-2 border-t border-slate-200/60 dark:border-slate-800/30">
             <button
               onClick={() => onInsert(response)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-xs font-medium transition-colors"

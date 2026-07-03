@@ -100,23 +100,27 @@ const generateMonths = (startYear: number, numMonths: number) => {
 };
 
 // Axis colors
+// Kolory DANYCH (kategoryczne, per oś transformacji) → paleta c-tag-* (§15.1).
+// Przypisanie po STABILNYM indeksie (kolejność w mapie). NIGDY crimson jako dana.
+// UWAGA §15.1: 7 osi > 5 serii widocznych — łamie limit czytelności; do decyzji Piotra
+// o grupowaniu osi (zalogowane w RAPORCIE Fala 4).
 const AXIS_COLORS: Record<string, string> = {
-  processes: 'bg-blue-500',
-  digitalProducts: 'bg-sky-500',
-  dataManagement: 'bg-blue-500',
-  culture: 'bg-amber-500',
-  aiMaturity: 'bg-emerald-500',
-  businessModels: 'bg-indigo-500',
-  cybersecurity: 'bg-danger-500',
+  processes: 'bg-c-tag-1',
+  digitalProducts: 'bg-c-tag-2',
+  dataManagement: 'bg-c-tag-3',
+  culture: 'bg-c-tag-4',
+  aiMaturity: 'bg-c-tag-5',
+  businessModels: 'bg-c-tag-6',
+  cybersecurity: 'bg-c-tag-7',
 };
 
 // Status colors
 const STATUS_COLORS: Record<string, string> = {
   approved: 'border-l-4 border-l-green-500',
-  active: 'border-l-4 border-l-primary-500',
+  active: 'border-l-4 border-l-c-focus-solid',
   on_hold: 'border-l-4 border-l-danger-500 animate-pulse',
   APPROVED: 'border-l-4 border-l-green-500',
-  EXECUTING: 'border-l-4 border-l-primary-500',
+  EXECUTING: 'border-l-4 border-l-c-focus-solid',
   BLOCKED: 'border-l-4 border-l-danger-500 animate-pulse',
 };
 
@@ -604,18 +608,18 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
 
   return (
     <div
-      className={`flex flex-col bg-white dark:bg-navy-950 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden shadow-sm ${
+      className={`flex flex-col bg-c-bg rounded-xl border border-c-border overflow-hidden shadow-sm ${
         isFullscreen ? 'fixed inset-4 z-50' : 'h-full'
       }`}
     >
       {/* ============================
           D4.2: CLEAN TOOLBAR
           ============================ */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-2 bg-slate-50 dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
+      <div className="shrink-0 flex items-center justify-between px-4 py-2 bg-c-surface border-b border-c-border">
         {/* Left: Title & count */}
         <div className="flex items-center gap-3">
-          <h3 className="font-semibold text-navy-900 dark:text-white">Strategic Roadmap</h3>
-          <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
+          <h3 className="font-semibold text-c-text">Strategic Roadmap</h3>
+          <span className="text-xs text-c-text-muted bg-c-surface-raised px-2 py-0.5 rounded-full">
             {initiatives.length} initiatives
           </span>
           {dependencyWarnings.length > 0 && showWarnings && (
@@ -633,13 +637,13 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
         {/* Right: Controls — clearly separated groups */}
         <div className="flex items-center gap-3">
           {/* Group 1: Zoom */}
-          <div className="flex items-center bg-white dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-navy-700 p-0.5">
+          <div className="flex items-center bg-c-surface rounded-lg border border-c-border p-0.5">
             <button
               onClick={() => setZoomLevel('month')}
               className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
                 zoomLevel === 'month'
-                  ? 'bg-navy-900 text-white shadow-sm dark:bg-white dark:text-navy-950'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                  ? 'bg-c-text text-c-bg shadow-sm'
+                  : 'text-c-text-muted hover:text-c-text'
               }`}
             >
               Month
@@ -648,8 +652,8 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
               onClick={() => setZoomLevel('quarter')}
               className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
                 zoomLevel === 'quarter'
-                  ? 'bg-navy-900 text-white shadow-sm dark:bg-white dark:text-navy-950'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                  ? 'bg-c-text text-c-bg shadow-sm'
+                  : 'text-c-text-muted hover:text-c-text'
               }`}
             >
               Quarter
@@ -657,20 +661,20 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
           </div>
 
           {/* Separator */}
-          <div className="w-px h-5 bg-slate-200 dark:bg-navy-700" />
+          <div className="w-px h-5 bg-c-border" />
 
           {/* Group 2: Navigation */}
           <div className="flex items-center gap-0.5">
             <button
               onClick={scrollLeft}
-              className="p-1.5 text-slate-600 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+              className="p-1.5 text-c-text-muted hover:text-c-text hover:bg-c-surface-raised rounded-lg transition-colors"
               title="Scroll left"
             >
               <ChevronLeft size={16} />
             </button>
             <button
               onClick={scrollRight}
-              className="p-1.5 text-slate-600 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+              className="p-1.5 text-c-text-muted hover:text-c-text hover:bg-c-surface-raised rounded-lg transition-colors"
               title="Scroll right"
             >
               <ChevronRight size={16} />
@@ -678,7 +682,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
           </div>
 
           {/* Separator */}
-          <div className="w-px h-5 bg-slate-200 dark:bg-navy-700" />
+          <div className="w-px h-5 bg-c-border" />
 
           {/* Group 3: View toggles */}
           <div className="flex items-center gap-0.5">
@@ -687,7 +691,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
               className={`p-1.5 rounded-lg transition-colors ${
                 showCriticalPath
                   ? 'bg-danger-100 dark:bg-danger-900/30 text-danger-600 dark:text-danger-400'
-                  : 'text-slate-600 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10'
+                  : 'text-c-text-muted hover:text-c-text hover:bg-c-surface-raised'
               }`}
               title={showCriticalPath ? 'Hide critical path' : 'Show critical path'}
             >
@@ -695,7 +699,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
             </button>
             <button
               onClick={toggleFullscreen}
-              className="p-1.5 text-slate-600 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+              className="p-1.5 text-c-text-muted hover:text-c-text hover:bg-c-surface-raised rounded-lg transition-colors"
               title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
             >
               {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
@@ -737,8 +741,8 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
       )}
 
       {/* Header Row */}
-      <div className="flex border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900">
-        <div className="w-72 min-w-[288px] p-3 font-bold text-xs uppercase text-slate-500 dark:text-slate-400 border-r border-slate-200 dark:border-navy-700 shrink-0">
+      <div className="flex border-b border-c-border bg-c-surface">
+        <div className="w-72 min-w-[288px] p-3 font-bold text-xs uppercase text-c-text-muted border-r border-c-border shrink-0">
           Initiative
         </div>
         <div
@@ -749,10 +753,10 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
             {timelineGroups.map((group: any, idx) => (
               <div
                 key={idx}
-                className="border-r border-slate-200 dark:border-navy-700 last:border-r-0 p-2 text-center"
+                className="border-r border-c-border last:border-r-0 p-2 text-center"
                 style={{ width: cellWidth }}
               >
-                <span className="font-bold text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                <span className="font-bold text-xs text-c-text-muted whitespace-nowrap">
                   {group.fullLabel || group.label}
                 </span>
               </div>
@@ -764,7 +768,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
       {/* Body */}
       <div className="flex-1 overflow-y-auto relative">
         {initiatives.length === 0 ? (
-          <div className="flex items-center justify-center h-48 text-slate-600 dark:text-slate-500">
+          <div className="flex items-center justify-center h-48 text-c-text-muted">
             <div className="text-center">
               <Calendar className="w-10 h-10 mx-auto mb-2 opacity-50" />
               <p>No approved initiatives on roadmap</p>
@@ -792,7 +796,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                   refY="3"
                   orient="auto"
                 >
-                  <polygon points="0 0, 8 3, 0 6" fill="#94a3b8" />
+                  <polygon points="0 0, 8 3, 0 6" fill="var(--c-border-strong)" />
                 </marker>
                 <marker
                   id="arrowhead-warning"
@@ -802,7 +806,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                   refY="3"
                   orient="auto"
                 >
-                  <polygon points="0 0, 8 3, 0 6" fill="#f59e0b" />
+                  <polygon points="0 0, 8 3, 0 6" fill="var(--c-warning)" />
                 </marker>
                 <marker
                   id="arrowhead-critical"
@@ -812,7 +816,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                   refY="3"
                   orient="auto"
                 >
-                  <polygon points="0 0, 8 3, 0 6" fill="#f43f5e" />
+                  <polygon points="0 0, 8 3, 0 6" fill="var(--c-danger)" />
                 </marker>
               </defs>
               {dependencyLines.map((line, idx) => {
@@ -821,10 +825,10 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                 const curveOffset = isSameRow ? 0 : (line.y2 - line.y1) * 0.3;
 
                 const stroke = line.isCritical
-                  ? '#f43f5e'
+                  ? 'var(--c-danger)'
                   : line.isConflict
-                    ? '#f59e0b'
-                    : '#94a3b8';
+                    ? 'var(--c-warning)'
+                    : 'var(--c-border-strong)';
                 const marker = line.isCritical
                   ? 'url(#arrowhead-critical)'
                   : line.isConflict
@@ -851,7 +855,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
             {/* Initiative rows */}
             {initiatives.map((init: GanttInitiative) => {
               const position = getInitiativePosition(init);
-              const barColor = AXIS_COLORS[init.axis] || 'bg-slate-500';
+              const barColor = AXIS_COLORS[init.axis] || 'bg-c-text-muted';
               const statusBorder = STATUS_COLORS[init.status || ''] || '';
               const isActive = activeDrag === init.id || hoveredInitiative === init.id;
               const isLinking = linkingFrom === init.id;
@@ -862,13 +866,13 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
               return (
                 <div
                   key={init.id}
-                  className={`flex border-b border-slate-200 dark:border-navy-700 group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${
-                    isLinking ? 'bg-primary-50 dark:bg-primary-900/10' : ''
+                  className={`flex border-b border-c-border group hover:bg-c-surface-raised transition-colors ${
+                    isLinking ? 'bg-c-accent-soft' : ''
                   } ${isCritical ? 'bg-danger-50/50 dark:bg-danger-900/5' : ''}`}
                 >
                   {/* Info Column */}
                   <div
-                    className="w-72 min-w-[288px] p-3 text-sm border-r border-slate-200 dark:border-navy-700 z-10 bg-inherit relative shrink-0 cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5"
+                    className="w-72 min-w-[288px] p-3 text-sm border-r border-c-border z-10 bg-inherit relative shrink-0 cursor-pointer hover:bg-c-surface-raised"
                     onClick={() => onInitiativeClick?.(init as FullInitiative)}
                   >
                     <div className="flex items-center gap-2">
@@ -893,7 +897,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                         </div>
                       )}
                       <div
-                        className="font-semibold text-navy-900 dark:text-white truncate flex-1"
+                        className="font-semibold text-c-text truncate flex-1"
                         title={init.name}
                       >
                         {init.name}
@@ -906,8 +910,8 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                           }}
                           className={`p-1 rounded transition-colors shrink-0 ${
                             isLinking
-                              ? 'bg-navy-900 text-white dark:bg-white dark:text-navy-950'
-                              : 'text-slate-600 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10'
+                              ? 'bg-c-text text-c-bg'
+                              : 'text-c-text-muted hover:text-c-text hover:bg-c-surface-raised'
                           }`}
                           title="Create dependency"
                         >
@@ -921,7 +925,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                             e.stopPropagation();
                             onPMPerspectiveCheck(init.id);
                           }}
-                          className="p-1 rounded text-slate-600 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors shrink-0 opacity-0 group-hover:opacity-100"
+                          className="p-1 rounded text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors shrink-0 opacity-0 group-hover:opacity-100"
                           title="PM Perspective Check"
                         >
                           <Eye size={12} />
@@ -934,21 +938,21 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                             e.stopPropagation();
                             onOpenScheduleChat(init.id);
                           }}
-                          className="p-1 rounded text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors shrink-0 opacity-0 group-hover:opacity-100"
+                          className="p-1 rounded text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors shrink-0 opacity-0 group-hover:opacity-100"
                           title="Chat about this initiative"
                         >
                           <MessageSquare size={12} />
                         </button>
                       )}
                     </div>
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
+                    <div className="text-[10px] text-c-text-muted mt-1 flex items-center gap-2">
                       <span className="capitalize">{init.axis}</span>
                       <span>•</span>
                       <span
                         className={`px-1.5 py-0.5 rounded ${
                           init.priority === 'high' || init.priority === 'critical'
                             ? 'bg-danger-100 text-danger-600 dark:bg-danger-900/30 dark:text-danger-400'
-                            : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                            : 'bg-c-surface-raised text-c-text-muted'
                         }`}
                       >
                         {init.priority}
@@ -1005,7 +1009,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                       {timelineGroups.map((_: any, idx: number) => (
                         <div
                           key={idx}
-                          className="border-r border-slate-200 dark:border-navy-700 last:border-r-0"
+                          className="border-r border-c-border-subtle last:border-r-0"
                           style={{ width: cellWidth }}
                         />
                       ))}
@@ -1093,7 +1097,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
       </div>
 
       {/* Footer with legend */}
-      <div className="shrink-0 px-4 py-2 bg-slate-50 dark:bg-navy-900 border-t border-slate-200 dark:border-navy-700 flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
+      <div className="shrink-0 px-4 py-2 bg-c-surface border-t border-c-border flex items-center gap-4 text-xs text-c-text-muted flex-wrap">
         <span className="font-medium">Legend:</span>
         {Object.entries(AXIS_COLORS)
           .slice(0, 5)
@@ -1105,7 +1109,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
           ))}
         {showCriticalPath && (
           <>
-            <div className="w-px h-3 bg-slate-300 dark:bg-navy-600" />
+            <div className="w-px h-3 bg-c-border-strong" />
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded ring-2 ring-danger-500 bg-danger-500/20" />
               <span>Critical Path</span>
@@ -1114,7 +1118,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
         )}
         {dependencyWarnings.length > 0 && (
           <>
-            <div className="w-px h-3 bg-slate-300 dark:bg-navy-600" />
+            <div className="w-px h-3 bg-c-border-strong" />
             <div className="flex items-center gap-1.5">
               <AlertTriangle size={12} className="text-amber-500" />
               <span>Schedule Warning</span>

@@ -102,10 +102,11 @@ function getFallbackLibraryContent(toolType: string, lang: 'en' | 'pl') {
           steps: [
             'Ustal mission brief: decyzję, zakres, success signal, horyzont i ograniczenia',
             'Zbierz evidence i sygnały z wnętrza firmy, materiałów oraz z rynku',
-            'Przepisz sygnały na selektywną macierz mocnych stron, słabości, szans i zagrożeń',
-            'Połącz karty w napięcia strategiczne typu attack, repair, defend lub protect',
-            'Sformułuj ruchy, które realnie zawężają pole decyzji i porządkują kolejność działań',
-            'Zamknij sesję source summary gotowym do raportu, decka, inicjatyw lub dalszej eksploracji',
+            'Przejdź drabinkowy wywiad per kwadrant: pytania poziomowane z rozgałęzieniami odróżniają siłę niszową od core competency i wymuszają dowód albo jawną deklarację',
+            'Każdy element macierzy niesie drabinę wniosku: fakt z sesji, interpretacja biznesowa i implikacja dla decyzji; tezy parasolowe (np. „brak zwinności") są dekomponowane na procesy, narzędzia, kompetencje i bodźce',
+            'Napięcia SO/WO/ST/WT liczone są z zaakceptowanych elementów — attack, repair, defend, protect z jawnymi powiązaniami',
+            'Każdy rekomendowany ruch ma rationale, obowiązkowy trade-off (co odkładamy i kosztem czego) oraz odrzucony wariant z powodem',
+            'Zamknij sesję werdyktem answer-first i source summary gotowym do raportu, decka i inicjatyw',
           ],
           outputs: [
             'Executive summary sytuacji, pytania decyzyjnego i logiki wyboru',
@@ -116,7 +117,9 @@ function getFallbackLibraryContent(toolType: string, lang: 'en' | 'pl') {
           commonMistakes: [
             'Wpisywanie ogólników zamiast krótkich, konkretnych sygnałów',
             'Mieszanie faktów, obserwacji i hipotez bez oznaczenia jakości evidence',
+            'Sprzedawanie siły niszowej jako core competency — bez testu zasięgu i kopiowalności',
             'Traktowanie macierzy SWOT jako końca pracy zamiast etapu przejścia do napięć i ruchów',
+            'Rekomendacje bez trade-offu i odrzuconego wariantu — lista życzeń zamiast decyzji',
             'Proponowanie inwestycji lub CAPEX-u zanim wiadomo, gdzie naprawdę leży problem',
           ],
           example:
@@ -146,10 +149,11 @@ function getFallbackLibraryContent(toolType: string, lang: 'en' | 'pl') {
           steps: [
             'Define the mission brief: decision, scope, success signal, time horizon, and constraints',
             'Collect evidence and signals from inside the company, from materials, and from the market',
-            'Translate the signals into a selective matrix of strengths, weaknesses, opportunities, and threats',
-            'Connect the cards into attack, repair, defend, or protect strategic tensions',
-            'Formulate moves that genuinely narrow the decision space and sequence the response',
-            'Close with a source summary ready for reports, decks, initiatives, or further exploration',
+            'Run the laddered interview per quadrant: leveled, branching questions separate a niche strength from a core competency and force proof or an explicit "declared, unconfirmed"',
+            'Every matrix element carries an insight staircase: session fact, business interpretation, and decision implication; umbrella claims (e.g. "lack of agility") are decomposed into process, tools, skills, and incentives',
+            'SO/WO/ST/WT tensions are computed from accepted elements — attack, repair, defend, protect with explicit item links',
+            'Every recommended move carries a rationale, a mandatory trade-off (what we defer and at what cost), and a rejected alternative with a reason',
+            'Close with an answer-first verdict and a source summary ready for reports, decks, and initiatives',
           ],
           outputs: [
             'An executive summary of the situation, the decision question, and the choice logic',
@@ -160,7 +164,9 @@ function getFallbackLibraryContent(toolType: string, lang: 'en' | 'pl') {
           commonMistakes: [
             'Writing generic statements instead of short evidence-backed signals',
             'Mixing facts, observations, and hypotheses without marking evidence quality',
+            'Selling a niche strength as a core competency — without testing scope and imitability',
             'Treating the SWOT matrix as the finish line instead of a bridge to tensions and moves',
+            'Recommendations without a trade-off and a rejected alternative — a wish list, not a decision',
             'Jumping to investments or CAPEX before understanding the real problem',
           ],
           example:
@@ -197,9 +203,14 @@ type SeedKnownTool = {
 // Everything NOT in this set is rendered as "Coming soon" (isComingSoon: true)
 // in the Library and is blocked from starting a session.
 export const ACTIVE_KNOWN_TOOL_TYPES = new Set<string>([
-  // 6 fully-worked strategic + automation
+  // 11 fully-worked strategic + automation
   'dynamic-swot',
   'market-forces',
+  'value-chain',
+  'capability-mapper',
+  'ambition-decomposer',
+  'focus-tradeoff',
+  'narrative-engine',
   'growth-paths',
   'portfolio-priority',
   'risk-uncertainty',
@@ -289,7 +300,7 @@ export const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     tags: ['strategy', 'value-chain', 'operating-model'],
     icon: 'Map',
     sortOrder: 104,
-    isComingSoon: true,
+    isComingSoon: false,
   },
   {
     id: 'tool-known-portfolio-priority',
@@ -338,7 +349,7 @@ export const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     tags: ['strategy', 'capabilities', 'roadmap'],
     icon: 'Users',
     sortOrder: 107,
-    isComingSoon: true,
+    isComingSoon: false,
   },
   {
     id: 'tool-known-ambition-decomposer',
@@ -352,7 +363,7 @@ export const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     tags: ['strategy', 'targets', 'roadmap'],
     icon: 'Target',
     sortOrder: 108,
-    isComingSoon: true,
+    isComingSoon: false,
   },
   {
     id: 'tool-known-focus-tradeoff',
@@ -366,7 +377,7 @@ export const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     tags: ['strategy', 'tradeoffs', 'focus'],
     icon: 'GitBranch',
     sortOrder: 109,
-    isComingSoon: true,
+    isComingSoon: false,
   },
   {
     id: 'tool-known-narrative-engine',
@@ -380,7 +391,7 @@ export const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     tags: ['strategy', 'narrative', 'alignment'],
     icon: 'FileText',
     sortOrder: 110,
-    isComingSoon: true,
+    isComingSoon: false,
   },
   {
     id: 'tool-known-sop-builder',

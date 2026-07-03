@@ -31,8 +31,8 @@ export const DocumentStudioOutlinePanel: React.FC<DocumentStudioOutlinePanelProp
     <div className="flex h-full min-h-0 flex-col overflow-y-auto p-6">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-navy-900 dark:text-white">{outline.title}</h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <h2 className="text-lg font-semibold text-c-text">{outline.title}</h2>
+          <p className="mt-1 text-sm text-c-text-muted">
             Type: <span className="font-medium">{outline.documentType}</span> · Density:{' '}
             <span className="font-medium">{outline.recommendedDensity}</span> · Register:{' '}
             <span className="font-medium">{outline.recommendedRegister}</span> · Style:{' '}
@@ -51,17 +51,17 @@ export const DocumentStudioOutlinePanel: React.FC<DocumentStudioOutlinePanelProp
         {outline.sections.map((section, idx) => (
           <li
             key={`${section.title}-${idx}`}
-            className="rounded-lg border border-slate-200 bg-white p-3 text-sm dark:border-navy-700 dark:bg-navy-900"
+            className="rounded-lg border border-c-border bg-c-surface p-3 text-sm"
           >
             <div className="flex items-baseline justify-between gap-2">
-              <span className="font-medium text-navy-900 dark:text-white">
+              <span className="font-medium text-c-text">
                 {idx + 1}. {section.title}
               </span>
-              <span className="text-xs uppercase tracking-wide text-slate-600">
+              <span className="text-xs uppercase tracking-wide text-c-text-secondary">
                 {section.expectedLengthHint}
               </span>
             </div>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{section.purpose}</p>
+            <p className="mt-1 text-xs text-c-text-muted">{section.purpose}</p>
           </li>
         ))}
       </ol>

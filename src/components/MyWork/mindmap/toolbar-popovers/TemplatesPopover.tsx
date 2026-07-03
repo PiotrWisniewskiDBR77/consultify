@@ -109,7 +109,7 @@ export const TemplatesPopover: React.FC<TemplatesPopoverProps> = ({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={isPl ? 'Szukaj…' : 'Search…'}
-            className="w-full pl-7 pr-2 py-1.5 text-[11px] rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200/40 dark:border-white/[0.04] text-slate-700 dark:text-slate-200 placeholder:text-slate-400 outline-none focus:ring-1 focus:ring-primary-500/30"
+            className="w-full pl-7 pr-2 py-1.5 text-[11px] rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200/40 dark:border-white/[0.04] text-slate-700 dark:text-slate-200 placeholder:text-slate-400 outline-none focus:ring-1 focus:ring-slate-400/30"
             autoFocus
           />
         </div>
@@ -118,16 +118,16 @@ export const TemplatesPopover: React.FC<TemplatesPopoverProps> = ({
       {/* Starting points (Popular Starts) */}
       {filteredStarts.length > 0 && (
         <div className="px-1 pb-1">
-          <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-primary-500/70">
+          <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-500/70">
             {isPl ? 'Punkty startowe' : 'Starting points'}
           </div>
           {filteredStarts.map((s) => (
             <button
               key={s.id}
               onClick={() => handleIntentClick(s.id)}
-              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-primary-50 dark:hover:bg-primary-500/[0.06] transition-colors"
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
             >
-              <Compass size={12} className="text-primary-400 shrink-0" />
+              <Compass size={12} className="text-slate-500 shrink-0" />
               {isPl ? s.labelPl : s.labelEn}
             </button>
           ))}
@@ -169,7 +169,7 @@ export const TemplatesPopover: React.FC<TemplatesPopoverProps> = ({
             onOpenGallery();
             onClose();
           }}
-          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-500/5 transition-colors"
+          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
         >
           <ChevronRight size={12} />
           {isPl ? 'Zobacz więcej' : 'See more'}

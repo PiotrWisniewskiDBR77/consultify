@@ -305,7 +305,8 @@ export const DeckBuilder: React.FC = () => {
   const [themeSwitcherOpen, setThemeSwitcherOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [versionHistoryOpen, setVersionHistoryOpen] = useState(false);
-  const [animationsEnabled, setAnimationsEnabled] = useState(true);
+  // R4 — animations toggle UI removed; deck animations stay on by default.
+  const [animationsEnabled] = useState(true);
   const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false);
   const [qualityGatesOpen, setQualityGatesOpen] = useState(false);
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
@@ -859,27 +860,33 @@ export const DeckBuilder: React.FC = () => {
     [deck, handleAiPrompt]
   );
 
-  const handleRegenerateCard = useCallback(
-    async (cardIndex: number) => {
+  // R4 — Free-text per-slide rewrite. Uses the returned rebuilt `card` to
+  // update the card in place (OPTION B) so Undo/Redo keeps working — NOT
+  // setDeckReloadKey which wipes the undo stack.
+  const handleRewriteCard = useCallback(
+    async (cardIndex: number, instruction?: string) => {
       if (!deckId) return;
+      const card = deck?.cards[cardIndex];
+      if (!card) return;
       try {
-        await PresentationStudioApi.regenerateSlide(deckId, cardIndex);
+        // studioPostTyped unwraps the envelope, so `res` is `{ slide, card }`.
+        const res = await PresentationStudioApi.regenerateSlide(deckId, cardIndex, instruction);
+        const rebuilt = res?.card;
+        if (rebuilt && typeof rebuilt === 'object') {
+          // Preserve the stable client card_id; merge server-rebuilt content.
+          const { card_id: _ignored, ...rest } = rebuilt as Record<string, unknown>;
+          updateCard(card.card_id, rest as Partial<typeof card>);
+        } else {
+          // Fallback: server returned no card (AI off / no context pack) —
+          // reload deck so the persisted state is reflected.
+          setDeckReloadKey((k) => k + 1);
+        }
         toast.success(t('presentations.slideRegenerated'), { duration: 2000 });
-        setDeckReloadKey((k) => k + 1);
       } catch (err) {
         toast.error(t('presentations.failedToRegenerateSlide'));
       }
     },
-    [deckId]
-  );
-
-  const handleChangeLayout = useCallback(
-    (cardIndex: number, layoutId: string) => {
-      const card = deck?.cards[cardIndex];
-      if (!card) return;
-      updateCard(card.card_id, { layout_id: layoutId });
-    },
-    [deck, updateCard]
+    [deckId, deck, updateCard, t]
   );
 
   if (loadingDeck || !deck) {
@@ -1000,8 +1007,7 @@ export const DeckBuilder: React.FC = () => {
               onSelectCard={setActiveCardIndex}
               onBlockClick={() => {}}
               onAddCard={handleAddBlankCard}
-              onRegenerateCard={handleRegenerateCard}
-              onChangeLayout={handleChangeLayout}
+              onRewriteCard={handleRewriteCard}
               speakerNotes={activeCard?.speaker_notes}
               showNotes={showNotes}
               animationsEnabled={animationsEnabled}
@@ -1117,6 +1123,7 @@ export const DeckBuilder: React.FC = () => {
                 onToggleAgent={() => setTeresaOpen((v) => !v)}
                 onOpenTheme={() => setThemeSwitcherOpen(true)}
                 onAddCard={() => handleAddBlankCard()}
+                onShare={() => setShareModalOpen(true)}
               />
             </>
           }
@@ -1148,8 +1155,6 @@ export const DeckBuilder: React.FC = () => {
             onTheme={() => setThemeSwitcherOpen(true)}
             onShare={() => setShareModalOpen(true)}
             onVersionHistory={() => setVersionHistoryOpen((v) => !v)}
-            onToggleAnimations={() => setAnimationsEnabled((v) => !v)}
-            animationsEnabled={animationsEnabled}
             onQualityGates={() => setQualityGatesOpen((v) => !v)}
             onAnalytics={() => setAnalyticsOpen((v) => !v)}
             onAuditLog={() => setAuditLogOpen(true)}
@@ -1279,8 +1284,7 @@ export const DeckBuilder: React.FC = () => {
             onSelectCard={setActiveCardIndex}
             onBlockClick={() => {}}
             onAddCard={handleAddBlankCard}
-            onRegenerateCard={handleRegenerateCard}
-            onChangeLayout={handleChangeLayout}
+            onRewriteCard={handleRewriteCard}
             speakerNotes={activeCard?.speaker_notes}
             showNotes={showNotes}
             animationsEnabled={animationsEnabled}
@@ -1382,6 +1386,7 @@ export const DeckBuilder: React.FC = () => {
           onToggleAgent={() => setTeresaOpen((v) => !v)}
           onOpenTheme={() => setThemeSwitcherOpen(true)}
           onAddCard={() => handleAddBlankCard()}
+          onShare={() => setShareModalOpen(true)}
         />
       </div>
     </DeckThemeProvider>

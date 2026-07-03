@@ -34,6 +34,7 @@ import {
   Link2,
   Loader2,
   Mic,
+  MoreHorizontal,
   Network,
   Paintbrush,
   Palette,
@@ -100,7 +101,7 @@ function ToolbarIconButton({
       disabled={disabled}
       className={`p-1.5 rounded-lg transition-colors ${
         active
-          ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10'
+          ? 'text-slate-700 dark:text-slate-300 bg-slate-500/10'
           : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'
       } ${disabled ? 'opacity-30 cursor-not-allowed' : ''} ${className ?? ''}`}
       title={title}
@@ -243,6 +244,10 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
   const [showColorPalette, setShowColorPalette] = useState(false);
   const [showBulkConvertMenu, setShowBulkConvertMenu] = useState(false);
   const [showToolsMenu, setShowToolsMenu] = useState(false);
+  // Editor Shell Canon §2 GÓRNA: the desktop secondary tools collapse under a
+  // single overflow "…" (MoreHorizontal) button instead of a flat 15-icon row.
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
   const [aiSchemaSheetOpen, setAiSchemaSheetOpen] = useState(false);
   const [aiProposal, setAiProposal] = useState<TableProposal | null>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
@@ -275,6 +280,18 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
       uiDispatch({ type: 'SET_PANEL', panel: 'showFilters', value: false });
     }
   }, [ui.showFilters, uiDispatch]);
+
+  /** Overflow "…" menu closes on outside click. */
+  useEffect(() => {
+    if (!showMoreMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
+        setShowMoreMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showMoreMenu]);
 
   const onProposalApproved = useCallback(
     async (accepted: { columns?: ColumnDef[]; views?: SavedView[]; rows?: TableNode[] }) => {
@@ -387,7 +404,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                 }}
                 className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${
                   activeViewId === v.id
-                    ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+                    ? 'bg-slate-500/10 text-slate-700 dark:text-slate-300'
                     : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'
                 }`}
               >
@@ -402,7 +419,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
               setSaveViewName('');
               setShowSaveViewDialog(true);
             }}
-            className="p-1 rounded-lg text-slate-600 hover:text-primary-500 hover:bg-primary-500/10 transition-colors"
+            className="p-1 rounded-lg text-slate-600 hover:text-slate-500 hover:bg-slate-500/10 transition-colors"
             title={isPl ? 'Zapisz widok' : 'Save view'}
           >
             <Plus size={12} />
@@ -534,7 +551,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
           onClick={() => setShowFilterPanel(!showFilterPanel)}
           className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
             filters.rules.length > 0
-              ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+              ? 'bg-slate-500/10 text-slate-700 dark:text-slate-300'
               : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
           }`}
         >
@@ -587,7 +604,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         onClick={() => setGroupBy(groupBy ? null : 'status')}
         className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
           groupBy
-            ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+            ? 'bg-slate-500/10 text-slate-700 dark:text-slate-300'
             : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
         }`}
         title={isPl ? 'Grupuj' : 'Group'}
@@ -602,7 +619,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
           <button
             key={v.id}
             onClick={() => setViewLayout(v.id)}
-            className={`relative p-1.5 transition-colors ${viewLayout === v.id ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
+            className={`relative p-1.5 transition-colors ${viewLayout === v.id ? 'bg-slate-500/10 text-slate-700 dark:text-slate-300' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
             title={v.label}
           >
             <v.icon size={12} />
@@ -641,144 +658,173 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         />
       )}
 
-      {/* Desktop secondary actions */}
+      {/* Heatmap + Color palette anchors (panels stay wired; triggers moved to overflow) */}
+      <HeatmapControlsComponent
+        open={props.showHeatmap}
+        onClose={props.onToggleHeatmap}
+        columns={columns}
+        enabledColumns={props.heatmapColumns}
+        onToggleColumn={props.onToggleHeatmapColumn}
+        palette={props.heatmapPalette}
+        onPaletteChange={props.onHeatmapPaletteChange}
+      />
+      <div className="relative">
+        <ColorPaletteComponent
+          open={showColorPalette}
+          onClose={() => setShowColorPalette(false)}
+          activePalette={props.activePalette}
+          onPaletteChange={(id: string) => {
+            props.onPaletteChange(id);
+            setShowColorPalette(false);
+          }}
+          onAutoAssign={props.onAutoAssignColors}
+        />
+      </div>
+
+      {/*
+       * Editor Shell Canon §2 GÓRNA — secondary tools collapse under a single
+       * overflow "…" button (was a flat ~15-icon `hidden md:contents` row =
+       * the "three flat layers" the canon forbids). Primary actions (Add row /
+       * Convert / Save) stay visible below; this menu holds the rest.
+       */}
+      <div className="hidden md:block relative" ref={moreMenuRef}>
+        <ToolbarIconButton
+          onClick={() => setShowMoreMenu((p) => !p)}
+          active={showMoreMenu}
+          title={isPl ? 'Więcej' : 'More'}
+          className="!px-2"
+        >
+          <MoreHorizontal size={14} />
+        </ToolbarIconButton>
+        {showMoreMenu && (
+          <div
+            data-testid="table-toolbar-overflow-menu"
+            className="absolute right-0 top-full mt-1 z-50 w-56 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1 max-h-[70vh] overflow-y-auto"
+            role="menu"
+          >
+            {(() => {
+              type MoreItem = {
+                icon: React.ComponentType<{ size?: number; className?: string }>;
+                label: string;
+                onClick: () => void;
+                show?: boolean;
+                active?: boolean;
+              };
+              const items: MoreItem[] = [
+                {
+                  icon: Layers,
+                  label: isPl ? 'AI Kategoryzacja' : 'AI Categorize',
+                  onClick: props.onShowAICategorize,
+                  show: !locked,
+                },
+                {
+                  icon: Trophy,
+                  label: isPl ? 'Model scoringowy' : 'Scoring Model',
+                  onClick: props.onShowScoringModel,
+                },
+                {
+                  icon: Presentation,
+                  label: isPl ? 'Eksport do prezentacji' : 'Export to Presentation',
+                  onClick: props.onShowExportPresentation,
+                },
+                {
+                  icon: Rocket,
+                  label: isPl ? 'Pipeline pomysłów' : 'Idea Pipeline',
+                  onClick: props.onShowPipeline,
+                },
+                { icon: Brain, label: 'AI Copilot', onClick: props.onShowCopilot },
+                {
+                  icon: Mic,
+                  label: isPl ? 'Głos / Obraz' : 'Voice / Image',
+                  onClick: props.onShowVoiceInput,
+                },
+                {
+                  icon: Network,
+                  label: isPl ? 'Relacje między tabelami' : 'Cross-table Relations',
+                  onClick: props.onShowCrossRelations,
+                },
+                {
+                  icon: Flame,
+                  label: isPl ? 'Heatmapa' : 'Heatmap',
+                  onClick: props.onToggleHeatmap,
+                  active: props.heatmapColumns.size > 0,
+                },
+                {
+                  icon: History,
+                  label: isPl ? 'Historia zmian' : 'History',
+                  onClick: () => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showAuditTrail' }),
+                  active: ui.showAuditTrail,
+                },
+                {
+                  icon: Activity,
+                  label: isPl ? 'Aktywność' : 'Activity',
+                  onClick: () => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showActivityFeed' }),
+                  active: ui.showActivityFeed,
+                },
+                {
+                  icon: Keyboard,
+                  label: isPl ? 'Skróty klawiszowe (?)' : 'Keyboard shortcuts (?)',
+                  onClick: props.onShowKeyboardShortcuts,
+                },
+                {
+                  icon: LayoutTemplate,
+                  label: isPl ? 'Szablony' : 'Templates',
+                  onClick: () => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showTemplateGallery' }),
+                  show: !locked,
+                },
+                {
+                  icon: Send,
+                  label: isPl ? 'Dystrybucja' : 'Distribute',
+                  onClick: () => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showDistribution' }),
+                  show: !locked,
+                },
+                {
+                  icon: LayoutGrid,
+                  label: isPl ? 'Generator frameworków' : 'Framework Generator',
+                  onClick: props.onShowFrameworkGen,
+                  show: !locked,
+                },
+                {
+                  icon: Paintbrush,
+                  label: isPl ? 'Formatowanie warunkowe' : 'Conditional Formatting',
+                  onClick: props.onShowConditionalFmt,
+                  active: props.formatRules.length > 0,
+                },
+                {
+                  icon: Palette,
+                  label: isPl ? 'Paleta kolorów' : 'Color Palette',
+                  onClick: () => setShowColorPalette(true),
+                },
+              ];
+              return items
+                .filter((it) => it.show !== false)
+                .map((it, i) => {
+                  const Icon = it.icon;
+                  return (
+                    <button
+                      key={i}
+                      role="menuitem"
+                      onClick={() => {
+                        it.onClick();
+                        setShowMoreMenu(false);
+                      }}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-colors ${
+                        it.active
+                          ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10'
+                          : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                      }`}
+                    >
+                      <Icon size={14} /> {it.label}
+                    </button>
+                  );
+                });
+            })()}
+          </div>
+        )}
+      </div>
+
+      {/* Desktop platform-only secondary actions */}
       <div className="hidden md:contents">
-        {!locked && (
-          <ToolbarIconButton
-            onClick={props.onShowAICategorize}
-            title={isPl ? 'AI Kategoryzacja' : 'AI Categorize'}
-          >
-            <Layers size={12} />
-          </ToolbarIconButton>
-        )}
-        <ToolbarIconButton
-          onClick={props.onShowScoringModel}
-          title={isPl ? 'Model scoringowy' : 'Scoring Model'}
-        >
-          <Trophy size={12} />
-        </ToolbarIconButton>
-        <ToolbarIconButton
-          onClick={props.onShowExportPresentation}
-          title={isPl ? 'Eksport do prezentacji' : 'Export to Presentation'}
-        >
-          <Presentation size={12} />
-        </ToolbarIconButton>
-        <ToolbarIconButton
-          onClick={props.onShowPipeline}
-          title={isPl ? 'Pipeline pomysłów' : 'Idea Pipeline'}
-        >
-          <Rocket size={12} />
-        </ToolbarIconButton>
-        <ToolbarIconButton onClick={props.onShowCopilot} title="AI Copilot">
-          <Brain size={12} />
-        </ToolbarIconButton>
-        <ToolbarIconButton
-          onClick={props.onShowVoiceInput}
-          title={isPl ? 'Głos / Obraz' : 'Voice / Image'}
-        >
-          <Mic size={12} />
-        </ToolbarIconButton>
-        <ToolbarIconButton
-          onClick={props.onShowCrossRelations}
-          title={isPl ? 'Relacje między tabelami' : 'Cross-table Relations'}
-        >
-          <Network size={12} />
-        </ToolbarIconButton>
-
-        {/* Heatmap */}
-        <div className="relative">
-          <ToolbarIconButton
-            onClick={props.onToggleHeatmap}
-            active={props.heatmapColumns.size > 0}
-            title={isPl ? 'Heatmapa' : 'Heatmap'}
-          >
-            <Flame size={12} />
-          </ToolbarIconButton>
-          <HeatmapControlsComponent
-            open={props.showHeatmap}
-            onClose={props.onToggleHeatmap}
-            columns={columns}
-            enabledColumns={props.heatmapColumns}
-            onToggleColumn={props.onToggleHeatmapColumn}
-            palette={props.heatmapPalette}
-            onPaletteChange={props.onHeatmapPaletteChange}
-          />
-        </div>
-
-        <ToolbarIconButton
-          onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showAuditTrail' })}
-          active={ui.showAuditTrail}
-          title={isPl ? 'Historia zmian' : 'History'}
-        >
-          <History size={12} />
-        </ToolbarIconButton>
-        <ToolbarIconButton
-          onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showActivityFeed' })}
-          active={ui.showActivityFeed}
-          title={isPl ? 'Aktywność' : 'Activity'}
-        >
-          <Activity size={12} />
-        </ToolbarIconButton>
-        <ToolbarIconButton
-          onClick={props.onShowKeyboardShortcuts}
-          title={isPl ? 'Skróty klawiszowe (?)' : 'Keyboard shortcuts (?)'}
-        >
-          <Keyboard size={12} />
-        </ToolbarIconButton>
-
-        {!locked && (
-          <ToolbarIconButton
-            onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showTemplateGallery' })}
-            title={isPl ? 'Szablony' : 'Templates'}
-          >
-            <LayoutTemplate size={12} />
-          </ToolbarIconButton>
-        )}
-        {!locked && (
-          <ToolbarIconButton
-            onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showDistribution' })}
-            title={isPl ? 'Dystrybucja' : 'Distribute'}
-          >
-            <Send size={12} />
-          </ToolbarIconButton>
-        )}
-        {!locked && (
-          <ToolbarIconButton
-            onClick={props.onShowFrameworkGen}
-            title={isPl ? 'Generator frameworków' : 'Framework Generator'}
-          >
-            <LayoutGrid size={12} />
-          </ToolbarIconButton>
-        )}
-        <ToolbarIconButton
-          onClick={props.onShowConditionalFmt}
-          active={props.formatRules.length > 0}
-          title={isPl ? 'Formatowanie warunkowe' : 'Conditional Formatting'}
-        >
-          <Paintbrush size={12} />
-        </ToolbarIconButton>
-
-        {/* Color palette */}
-        <div className="relative">
-          <ToolbarIconButton
-            onClick={() => setShowColorPalette(!showColorPalette)}
-            active={showColorPalette}
-            title={isPl ? 'Paleta kolorów' : 'Color Palette'}
-          >
-            <Palette size={12} />
-          </ToolbarIconButton>
-          <ColorPaletteComponent
-            open={showColorPalette}
-            onClose={() => setShowColorPalette(false)}
-            activePalette={props.activePalette}
-            onPaletteChange={(id: string) => {
-              props.onPaletteChange(id);
-              setShowColorPalette(false);
-            }}
-            onAutoAssign={props.onAutoAssignColors}
-          />
-        </div>
-
         {/* Platform tab switcher */}
         {usePlatform && (
           <div className="flex items-center rounded-lg bg-slate-100 dark:bg-navy-800 p-0.5">
@@ -1109,7 +1155,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                 className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
               >
                 {col.visible ? (
-                  <Eye size={12} className="text-primary-500" />
+                  <Eye size={12} className="text-slate-500" />
                 ) : (
                   <EyeOff size={12} className="text-slate-600" />
                 )}
@@ -1123,7 +1169,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                   setShowColumnConfig(false);
                   uiDispatch({ type: 'SET_PANEL', panel: 'showAddColumn', value: true });
                 }}
-                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
+                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-500/10 transition-colors"
               >
                 <Plus size={12} /> {isPl ? 'Nowa kolumna' : 'New column'}
               </button>
@@ -1169,7 +1215,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
       {/* Bulk actions */}
       {selectedRowIds.size > 0 && (
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] font-bold text-primary-600 dark:text-primary-400 bg-primary-500/10 px-2 py-0.5 rounded-lg">
+          <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 bg-slate-500/10 px-2 py-0.5 rounded-lg">
             {selectedRowIds.size} {isPl ? 'zaznaczonych' : 'selected'}
           </span>
           {!locked && (
@@ -1219,6 +1265,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         <div className="flex items-center rounded-lg border border-slate-200/60 dark:border-navy-700/60 overflow-hidden">
           <button
             onClick={handleAddRow}
+            data-testid="table-add-row"
             className="inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
             title={isPl ? 'Dodaj pusty wiersz' : 'Add blank row'}
           >

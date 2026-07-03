@@ -206,7 +206,19 @@ server/exports/
 _backup/
 /backups/
 /data/
-/tests/
+# USPOJNIENIE F3 — `/tests/*` (nie `/tests/`) by git mógł zejść w głąb i
+# RE-INCLUDE'ować zatwierdzone suity inicjatyw, tak by NOWE spec-y tam nie były
+# po cichu pomijane przez `git add` (wcześniej cały /tests/ ginął → 150 testów
+# nigdy nie trafiło do repo). Pliki już-śledzone są nietykalne; każdy nowy test
+# POZA tymi ścieżkami nadal wymaga `git add -f` (finding_tests_dir_gitignored_force_add).
+/tests/*
+!/tests/e2e/
+/tests/e2e/*
+!/tests/e2e/uspojnienie/
+!/tests/unit/
+/tests/unit/*
+!/tests/unit/initiative/
+!/tests/unit/initiatives/
 # dist/ already ignored above
 
 # Personal tooling

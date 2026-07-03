@@ -6,16 +6,15 @@ import {
   History,
   MessageSquare,
   Monitor,
+  MoreHorizontal,
   Palette,
-  Pause,
-  Play,
   Redo2,
   Share2,
   Shield,
   ShieldCheck,
   Undo2,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -32,8 +31,6 @@ interface DeckBuilderTopBarProps {
   onTheme?: () => void;
   onShare?: () => void;
   onVersionHistory?: () => void;
-  onToggleAnimations?: () => void;
-  animationsEnabled?: boolean;
   onQualityGates?: () => void;
   onAnalytics?: () => void;
   onAuditLog?: () => void;
@@ -79,7 +76,7 @@ const ConfidentialityBadge: React.FC<{
 
   return (
     <div
-      className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300"
+      className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium text-c-text-secondary"
       title={titleParts.join(' · ')}
     >
       <Shield size={14} className={color} />
@@ -104,8 +101,6 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
   onTheme,
   onShare,
   onVersionHistory,
-  onToggleAnimations,
-  animationsEnabled = true,
   onQualityGates,
   onAnalytics,
   onAuditLog,
@@ -117,15 +112,72 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
 
   const goToPresentations = () => navigate('/presentations');
 
+  // R4 — close the "⋯" overflow menu on outside click.
+  useEffect(() => {
+    if (!moreOpen) return;
+    const onClick = (e: MouseEvent) => {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
+        setMoreOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, [moreOpen]);
+
+  // R4 — secondary/governance actions consolidated into the overflow menu.
+  const overflowItems = [
+    onVersionHistory && {
+      key: 'history',
+      icon: <Clock size={14} />,
+      label: t('presentations.builder.versionHistory.title', 'Version History'),
+      onClick: onVersionHistory,
+    },
+    onQualityGates && {
+      key: 'qa',
+      icon: <Shield size={14} />,
+      label: t('presentations.builder.topBar.qualityGates', 'Quality Gates'),
+      onClick: onQualityGates,
+    },
+    onGovernance && {
+      key: 'governance',
+      icon: <ShieldCheck size={14} />,
+      label: t('presentations.builder.topBar.governance', 'Governance'),
+      onClick: onGovernance,
+      dot: governanceVerdict
+        ? GOVERNANCE_DOT_CLASS[governanceVerdict] || 'bg-slate-400'
+        : undefined,
+    },
+    onAnalytics && {
+      key: 'analytics',
+      icon: <BarChart3 size={14} />,
+      label: t('presentations.builder.topBar.analytics', 'Share Analytics'),
+      onClick: onAnalytics,
+    },
+    onAuditLog && {
+      key: 'audit',
+      icon: <History size={14} />,
+      label: t('presentations.builder.topBar.auditLog', 'Audit log'),
+      onClick: onAuditLog,
+    },
+  ].filter(Boolean) as Array<{
+    key: string;
+    icon: React.ReactNode;
+    label: string;
+    onClick: () => void;
+    dot?: string;
+  }>;
+
   return (
-    <div className="h-12 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 flex items-center px-4 gap-3 flex-shrink-0">
+    <div className="h-12 border-b border-c-border bg-c-surface flex items-center px-4 gap-3 flex-shrink-0">
       {/* Back / Exit */}
       <button
         onClick={goToPresentations}
-        className="flex-shrink-0 p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+        className="flex-shrink-0 p-1.5 rounded-lg text-c-text-muted hover:bg-c-surface-raised hover:text-c-text transition-colors"
         title={t('presentations.builder.exit', 'Exit to Presentations')}
         aria-label={t('presentations.builder.exit', 'Exit to Presentations')}
       >
@@ -133,10 +185,10 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
       </button>
 
       {/* Breadcrumb */}
-      <div className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 min-w-0 flex-1">
+      <div className="flex items-center gap-1.5 text-sm text-c-text-muted min-w-0 flex-1">
         <button
           onClick={goToPresentations}
-          className="flex-shrink-0 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+          className="flex-shrink-0 hover:text-c-text transition-colors"
         >
           {t('presentations.builder.title', 'Deck Builder')}
         </button>
@@ -148,24 +200,24 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
             onChange={(e) => onTitleChange(e.target.value)}
             onBlur={() => setEditing(false)}
             onKeyDown={(e) => e.key === 'Enter' && setEditing(false)}
-            className="bg-transparent border-b border-primary-500 text-slate-900 dark:text-white text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500/30 min-w-[200px]"
+            className="bg-transparent border-b border-c-focus-solid text-c-text text-sm font-medium outline-none focus:ring-2 focus:ring-c-focus min-w-[200px]"
           />
         ) : (
           <button
             onClick={() => setEditing(true)}
-            className="text-slate-900 dark:text-white font-medium truncate hover:text-primary-600 dark:hover:text-primary-400"
+            className="text-c-text font-medium truncate hover:text-c-text-secondary"
           >
             {title || t('presentations.builder.untitled', 'Untitled Deck')}
           </button>
         )}
       </div>
 
-      {/* Undo / Redo + Animation toggle */}
+      {/* Undo / Redo */}
       <div className="flex items-center gap-1 border-r border-slate-200 dark:border-navy-700 pr-3 mr-1">
         <button
           onClick={onUndo}
           disabled={!canUndo}
-          className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 disabled:opacity-30 text-slate-500"
+          className="p-1.5 rounded-lg hover:bg-c-surface-raised disabled:opacity-30 text-c-text-muted"
           title={`${t('presentations.builder.topBar.undo', 'Undo')} (⌘Z)`}
         >
           <Undo2 size={16} />
@@ -173,29 +225,11 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
         <button
           onClick={onRedo}
           disabled={!canRedo}
-          className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 disabled:opacity-30 text-slate-500"
+          className="p-1.5 rounded-lg hover:bg-c-surface-raised disabled:opacity-30 text-c-text-muted"
           title={`${t('presentations.builder.topBar.redo', 'Redo')} (⇧⌘Z)`}
         >
           <Redo2 size={16} />
         </button>
-        {onToggleAnimations && (
-          <button
-            onClick={onToggleAnimations}
-            className={`p-1.5 rounded-lg transition-colors ${
-              animationsEnabled
-                ? 'text-primary-500 bg-primary-50 dark:bg-primary-500/10'
-                : 'text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800'
-            }`}
-            title={t(
-              animationsEnabled
-                ? 'presentations.builder.animations.enabled'
-                : 'presentations.builder.animations.disabled',
-              animationsEnabled ? 'Animations On' : 'Animations Off'
-            )}
-          >
-            {animationsEnabled ? <Play size={14} /> : <Pause size={14} />}
-          </button>
-        )}
       </div>
 
       {/* Action buttons */}
@@ -208,77 +242,62 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
 
       <button
         onClick={onTheme}
+        data-testid="deck-theme-btn"
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
       >
         <Palette size={14} />
         <span className="hidden md:inline">{t('presentations.builder.topBar.theme', 'Theme')}</span>
       </button>
 
-      {onVersionHistory && (
-        <button
-          onClick={onVersionHistory}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
-          title={t('presentations.builder.versionHistory.title', 'Version History')}
-        >
-          <Clock size={14} />
-          <span className="hidden lg:inline">History</span>
-        </button>
-      )}
-
-      {onQualityGates && (
-        <button
-          onClick={onQualityGates}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
-          title={t('presentations.builder.topBar.qualityGates', 'Quality Gates')}
-        >
-          <Shield size={14} />
-          <span className="hidden lg:inline">QA</span>
-        </button>
-      )}
-
-      {onGovernance && (
-        <button
-          onClick={onGovernance}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
-          title={t('presentations.builder.topBar.governance', 'Governance')}
-          aria-label={t('presentations.builder.topBar.governance', 'Governance')}
-        >
-          <ShieldCheck size={14} />
-          <span className="hidden lg:inline">Governance</span>
-          {governanceVerdict && (
-            <span
-              aria-hidden="true"
-              className={`ml-0.5 w-1.5 h-1.5 rounded-full ${GOVERNANCE_DOT_CLASS[governanceVerdict] || 'bg-slate-400'}`}
-            />
+      {/* R4 — overflow menu: QA / Governance / Analytics / Audit / History */}
+      {overflowItems.length > 0 && (
+        <div className="relative" ref={moreRef}>
+          <button
+            onClick={() => setMoreOpen((v) => !v)}
+            className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
+            title={t('presentations.builder.topBar.more', 'More')}
+            aria-label={t('presentations.builder.topBar.more', 'More')}
+            aria-haspopup="menu"
+            aria-expanded={moreOpen}
+          >
+            <MoreHorizontal size={16} />
+            {governanceVerdict && (
+              <span
+                aria-hidden="true"
+                className={`w-1.5 h-1.5 rounded-full ${GOVERNANCE_DOT_CLASS[governanceVerdict] || 'bg-slate-400'}`}
+              />
+            )}
+          </button>
+          {moreOpen && (
+            <div
+              role="menu"
+              className="absolute top-full right-0 mt-1 min-w-[12rem] bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg shadow-xl p-1 z-50"
+            >
+              {overflowItems.map((item) => (
+                <button
+                  key={item.key}
+                  role="menuitem"
+                  onClick={() => {
+                    setMoreOpen(false);
+                    item.onClick();
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700"
+                >
+                  {item.icon}
+                  <span className="flex-1 text-left">{item.label}</span>
+                  {item.dot && (
+                    <span aria-hidden="true" className={`w-1.5 h-1.5 rounded-full ${item.dot}`} />
+                  )}
+                </button>
+              ))}
+            </div>
           )}
-        </button>
-      )}
-
-      {onAnalytics && (
-        <button
-          onClick={onAnalytics}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
-          title={t('presentations.builder.topBar.analytics', 'Share Analytics')}
-        >
-          <BarChart3 size={14} />
-          <span className="hidden lg:inline">Analytics</span>
-        </button>
-      )}
-
-      {onAuditLog && (
-        <button
-          onClick={onAuditLog}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
-          title={t('presentations.builder.topBar.auditLog', 'Audit log')}
-          aria-label={t('presentations.builder.topBar.auditLog', 'Audit log')}
-        >
-          <History size={14} />
-          <span className="hidden lg:inline">Audit</span>
-        </button>
+        </div>
       )}
 
       <button
         onClick={onShare}
+        data-testid="deck-share-btn"
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
       >
         <Share2 size={14} />
@@ -289,8 +308,8 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
         onClick={onToggleAgent}
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
           agentOpen
-            ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
-            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+            ? 'bg-c-accent-soft text-c-text'
+            : 'text-c-text-secondary hover:bg-c-surface-raised'
         }`}
       >
         <MessageSquare size={14} />
@@ -301,6 +320,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
 
       <button
         onClick={onPresent}
+        data-testid="deck-present-btn"
         className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 hover:bg-navy-800"
       >
         <Monitor size={14} />

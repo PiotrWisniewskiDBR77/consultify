@@ -194,13 +194,13 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-emerald-500';
     if (score >= 60) return 'text-amber-500';
-    return 'text-danger-500';
+    return 'text-rose-500';
   };
 
   const getScoreBgColor = (score: number) => {
     if (score >= 80) return 'from-emerald-500 to-blue-600';
     if (score >= 60) return 'from-amber-500 to-amber-600';
-    return 'from-danger-500 to-danger-600';
+    return 'from-rose-500 to-rose-600';
   };
 
   const getScoreLabel = (score: number) => {
@@ -232,7 +232,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
   const getSeverityIcon = (severity: string) => {
     switch (severity) {
       case 'critical':
-        return <XCircle className="w-4 h-4 text-danger-500" />;
+        return <XCircle className="w-4 h-4 text-rose-500" />;
       case 'warning':
         return <AlertTriangle className="w-4 h-4 text-amber-500" />;
       default:
@@ -318,7 +318,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                     ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400'
                     : score.total >= 60
                       ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400'
-                      : 'bg-danger-100 dark:bg-danger-500/20 text-danger-700 dark:text-danger-400'
+                      : 'bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400'
                 }`}
               >
                 {getScoreLabel(score.total)}
@@ -337,10 +337,10 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
               {/* MFA */}
               <div className="flex items-center gap-4">
                 <div
-                  className={`p-2 rounded-lg ${score.breakdown.mfa.enabled ? 'bg-emerald-100 dark:bg-emerald-500/20' : 'bg-danger-100 dark:bg-danger-500/20'}`}
+                  className={`p-2 rounded-lg ${score.breakdown.mfa.enabled ? 'bg-emerald-100 dark:bg-emerald-500/20' : 'bg-rose-100 dark:bg-rose-500/20'}`}
                 >
                   <Fingerprint
-                    className={`w-5 h-5 ${score.breakdown.mfa.enabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-danger-600 dark:text-danger-400'}`}
+                    className={`w-5 h-5 ${score.breakdown.mfa.enabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}
                   />
                 </div>
                 <div className="flex-1">
@@ -354,7 +354,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                   </div>
                   <div className="h-2 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all ${score.breakdown.mfa.enabled ? 'bg-emerald-500' : 'bg-danger-500'}`}
+                      className={`h-full rounded-full transition-all ${score.breakdown.mfa.enabled ? 'bg-emerald-500' : 'bg-rose-500'}`}
                       style={{
                         width: `${(score.breakdown.mfa.score / score.breakdown.mfa.max) * 100}%`,
                       }}
@@ -405,7 +405,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                   </div>
                   <div className="h-2 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-navy-900 rounded-full transition-all dark:bg-slate-300"
+                      className="h-full bg-primary-500 rounded-full transition-all"
                       style={{
                         width: `${(score.breakdown.recentActivity.score / score.breakdown.recentActivity.max) * 100}%`,
                       }}
@@ -649,7 +649,7 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
     success: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400',
     warning: 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400',
     info: 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400',
-    error: 'bg-danger-100 dark:bg-danger-500/20 text-danger-600 dark:text-danger-400',
+    error: 'bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400',
   };
 
   return (

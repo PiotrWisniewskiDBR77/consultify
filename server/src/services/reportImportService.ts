@@ -3,6 +3,8 @@ import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 import DbPromise from '../utils/DbPromise.js';
+import PDFParserService from './pdfParserService.js';
+import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
 import logger from '../utils/Logger.js';
 
 /**
@@ -1158,13 +1160,10 @@ Extract and return JSON:
 
     if (format === 'pdf') {
       try {
-        const pdfParse = (await import('pdf-parse')).default;
         const buffer = fs.readFileSync(filePath);
-        const pdfData = await pdfParse(buffer);
-        logger.info(
-          `[ReportImport] PDF parsed: ${pdfData.numpages} pages, ${pdfData.text.length} chars`
-        );
-        return pdfData.text;
+        const text = await PDFParserService.extractTextFromBuffer(buffer);
+        logger.info(`[ReportImport] PDF parsed: ${text.length} chars`);
+        return text;
       } catch (err: any) {
         logger.warn(`[ReportImport] pdf-parse failed: ${err.message}, falling back to raw read`);
         // Fallback: try to read as text
@@ -1519,8 +1518,44 @@ Respond in JSON format:
     const initiativeIds: string[] = [];
 
     for (const init of initiatives) {
-      const initiativeId = uuidv4();
-      const sql = `
+      try {
+        // Uspójnienie F1.6 — przez kanoniczny lejek. PENDING_REVIEW jest świadomym
+        // statusem importu (ważny w cyklu) → przekazany jawnie; extra kolumny
+        // (source_report_id/tags/created_from) ustawiane post-create.
+        if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+          const __r = await funnelCreateInitiative(
+            organizationId,
+            {
+              title: init.title,
+              projectId: projectId || importRecord.projectId || null,
+              summary: init.description || '',
+              description: init.description || '',
+              priority: init.priority || 'medium',
+              status: 'PENDING_REVIEW',
+              sourceType: 'pdf_import',
+              sourceId: importId,
+            },
+            { validate: false, actor: { id: userId } }
+          );
+          try {
+            await DbPromise.run(
+              `UPDATE initiatives SET source_report_id = ?, created_from = 'assessment', tags = ?, created_by = ?
+               WHERE id = ? AND organization_id = ?`,
+              [
+                importId,
+                JSON.stringify([init.category || 'imported', 'pdf-import']),
+                userId,
+                __r.id,
+                organizationId,
+              ]
+            );
+          } catch {
+            /* extra columns best-effort */
+          }
+          initiativeIds.push(__r.id);
+        } else {
+          const initiativeId = uuidv4();
+          const sql = `
         INSERT INTO initiatives (
           id, organization_id, project_id,
           title, name, summary, hypothesis, description,
@@ -1530,24 +1565,23 @@ Respond in JSON format:
           created_by, created_at, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING_REVIEW', 'pdf_import', ?, ?, 'assessment', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       `;
-
-      try {
-        await DbPromise.run(sql, [
-          initiativeId,
-          organizationId,
-          projectId || importRecord.projectId || null,
-          init.title,
-          init.title,
-          init.description || '',
-          init.description || '',
-          init.description || '',
-          init.priority || 'medium',
-          importId,
-          importId,
-          JSON.stringify([init.category || 'imported', 'pdf-import']),
-          userId,
-        ]);
-        initiativeIds.push(initiativeId);
+          await DbPromise.run(sql, [
+            initiativeId,
+            organizationId,
+            projectId || importRecord.projectId || null,
+            init.title,
+            init.title,
+            init.description || '',
+            init.description || '',
+            init.description || '',
+            init.priority || 'medium',
+            importId,
+            importId,
+            JSON.stringify([init.category || 'imported', 'pdf-import']),
+            userId,
+          ]);
+          initiativeIds.push(initiativeId);
+        }
       } catch (error: any) {
         logger.warn(`[ReportImport] Failed to create initiative "${init.title}":`, error.message);
       }

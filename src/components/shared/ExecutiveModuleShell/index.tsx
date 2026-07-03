@@ -223,9 +223,11 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
 export {
   MELS_CHIP_ORDER,
   type MelsChipId,
+  resolveChipGroup,
   sortChipsByMelsOrder,
   type TopBarChipDescriptor,
   type TopBarChipDotTone,
+  type TopBarChipGroup,
   type TopBarChipKind,
 } from './ChipDescriptor';
 export { LeftRail } from './LeftRail';

@@ -55,10 +55,10 @@ const DropdownMenuContent = React.forwardRef<
 
   return (
     <>
-      <div className="fixed inset-0 z-50" onClick={() => context.setOpen(false)} />
+      <div className="fixed inset-0 z-dropdown" onClick={() => context.setOpen(false)} />
       <div
         ref={ref}
-        className={`absolute z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95 ${alignClass} ${className || ''}`}
+        className={`absolute z-dropdown min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95 ${alignClass} ${className || ''}`}
         style={{ marginTop: sideOffset }}
         {...props}
       >
@@ -168,7 +168,7 @@ const DropdownMenuSubContent = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={`z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg ${className || ''}`}
+    className={`z-dropdown min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg ${className || ''}`}
     {...props}
   />
 ));

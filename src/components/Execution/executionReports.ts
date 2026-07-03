@@ -352,18 +352,160 @@ export function buildReportMarkdown(report: ReportDef, rag: string): string {
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
-   PDF export (browser-side, simplified)
+   PDF export (browser-side, print-CSS)
+
+   Real PDF output via the same technique as the DRD report
+   (src/services/report/drdReportHtml.ts): render a publishing-grade HTML
+   document with an A4 print stylesheet, open it in a new window, and let the
+   browser's native "Save as PDF" print target produce the file. No external
+   library is required and the output is a true paginated PDF — not Markdown.
    ──────────────────────────────────────────────────────────────────────────── */
 
-export function exportReportPDF(report: ReportDef, rag: string): void {
-  const md = buildReportMarkdown(report, rag);
-  const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${report.title.replace(/[^a-zA-Z0-9_-]/g, '_')}_${new Date().toISOString().slice(0, 10)}.md`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+/** HTML-escape a value for safe interpolation into the report document. */
+function escHtml(value: string | number): string {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
+ * Build a complete, self-contained HTML document for the execution report,
+ * styled for A4 print-to-PDF. Content mirrors {@link buildReportMarkdown} so
+ * the PDF and the copyable Markdown stay in lock-step.
+ */
+export function buildReportHtml(report: ReportDef, rag: string): string {
+  const ragLabel = RAG_CONFIG[rag]?.label ?? rag;
+  const generatedAt = new Date().toISOString().slice(0, 10);
+
+  const section = (title: string, body: string): string =>
+    body ? `<section class="block"><h2>${escHtml(title)}</h2>${body}</section>` : '';
+
+  const readout =
+    (report.aiExecutiveReadout ?? []).length > 0
+      ? section(
+          'AI Executive Readout',
+          `<ul>${report.aiExecutiveReadout.map((l) => `<li>${escHtml(l)}</li>`).join('')}</ul>`
+        )
+      : '';
+
+  const metrics =
+    (report.highlights ?? []).length > 0
+      ? section(
+          'Key Metrics',
+          `<table class="tbl"><thead><tr><th>Metric</th><th class="num">Value</th></tr></thead><tbody>${report.highlights
+            .map((h) => `<tr><td>${escHtml(h.label)}</td><td class="num">${escHtml(h.value)}</td></tr>`)
+            .join('')}</tbody></table>`
+        )
+      : '';
+
+  const sections = section(
+    'Sections',
+    `<ol>${report.sections.map((s) => `<li>${escHtml(s)}</li>`).join('')}</ol>`
+  );
+
+  const dataSources = section(
+    'Data Sources',
+    `<ul>${report.dataSources.map((ds) => `<li>${escHtml(ds)}</li>`).join('')}</ul>`
+  );
+
+  const ragLogic = section('RAG / Confidence Logic', `<p>${escHtml(report.ragLogic)}</p>`);
+
+  const followUps =
+    (report.followUpActions ?? []).length > 0
+      ? section(
+          'Follow-Up Actions',
+          `<ul class="checks">${report.followUpActions
+            .map((a) => `<li>${escHtml(a)}</li>`)
+            .join('')}</ul>`
+        )
+      : '';
+
+  const flags =
+    (report.degradedFlags ?? []).length > 0
+      ? section(
+          'Data Quality Flags',
+          `<ul class="flags">${report.degradedFlags
+            .map((f) => `<li>${escHtml(f)}</li>`)
+            .join('')}</ul>`
+        )
+      : '';
+
+  const css = `
+    :root { --ink:#0f172a; --muted:#64748b; --accent:#1d4ed8; --grid:#e2e8f0; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body { font-family: -apple-system, "Segoe UI", Inter, Roboto, Arial, sans-serif; color: var(--ink); font-size: 13px; line-height: 1.55; background: #f8fafc; }
+    .page { background:#fff; width: 210mm; min-height: 297mm; margin: 12px auto; padding: 22mm 20mm; box-shadow: 0 1px 6px rgba(15,23,42,.08); }
+    h1 { font-size: 28px; margin: 0 0 6px; letter-spacing: -.02em; }
+    h2 { font-size: 18px; margin: 0 0 12px; padding-bottom: 6px; border-bottom: 2px solid var(--accent); }
+    .meta { color: var(--muted); margin: 0 0 4px; }
+    .status { display:inline-block; margin: 4px 0 18px; padding: 3px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; background:#eff6ff; color: var(--accent); }
+    .block { break-inside: avoid; margin-bottom: 20px; }
+    ul, ol { margin: 0 0 6px; padding-left: 20px; }
+    li { margin: 2px 0; }
+    ul.checks li::marker { content: '\\2610  '; }
+    ul.flags li { color:#92400e; }
+    p { margin: 0 0 10px; }
+    .tbl { width:100%; border-collapse: collapse; margin: 4px 0 10px; font-size: 12px; }
+    .tbl th { text-align:left; background:#f1f5f9; padding: 7px 9px; border-bottom: 1px solid var(--grid); font-weight:600; }
+    .tbl td { padding: 6px 9px; border-bottom: 1px solid #eef2f7; }
+    .tbl .num { text-align:right; font-variant-numeric: tabular-nums; }
+    .foot { margin-top: 28px; padding-top: 8px; border-top:1px solid var(--grid); font-size: 10px; color: var(--muted); display:flex; justify-content: space-between; }
+    @page { size: A4; margin: 16mm; @bottom-center { content: counter(page); } }
+    @media print {
+      body { background:#fff; }
+      .page { box-shadow:none; margin: 0; width: auto; min-height: auto; padding: 0; }
+    }
+  `;
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>${escHtml(report.title)}</title>
+<style>${css}</style>
+</head>
+<body>
+<div class="page">
+  <h1>${escHtml(report.title)}</h1>
+  <div class="status">${escHtml(String(ragLabel).toUpperCase())}</div>
+  <p class="meta"><strong>Audience:</strong> ${escHtml(report.audience)}</p>
+  <p class="meta"><strong>Cadence:</strong> ${escHtml(report.cadence)}</p>
+  <p class="meta"><strong>Scope:</strong> ${escHtml(report.scope)}</p>
+  ${readout}
+  ${metrics}
+  ${sections}
+  ${dataSources}
+  ${ragLogic}
+  ${followUps}
+  ${flags}
+  <div class="foot"><span>${escHtml(report.title)}</span><span>${escHtml(generatedAt)}</span></div>
+</div>
+</body>
+</html>`;
+}
+
+/**
+ * Export the execution report as a real PDF.
+ *
+ * Opens the print-CSS HTML document in a new window and triggers the browser's
+ * print dialog (whose "Save as PDF" target yields a true PDF). Returns the
+ * generated HTML so callers/tests can assert on the output without relying on a
+ * live browser print pipeline.
+ */
+export function exportReportPDF(report: ReportDef, rag: string): string {
+  const html = buildReportHtml(report, rag);
+  const win = typeof window !== 'undefined' ? window.open('', '_blank') : null;
+  if (win) {
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+    // Give the browser a tick to lay out before invoking the print dialog.
+    win.setTimeout(() => win.print(), 400);
+  }
+  return html;
 }

@@ -78,6 +78,8 @@ interface ModuleNavBarProps {
   // For Assessment: single "New Assessment" button
   onNewItem?: () => void;
   newItemLabel?: string;
+  // Optional stable test id for the primary "New item" CTA button.
+  newItemTestId?: string;
   // Optional: custom Primary CTA node (keeps canonical slot in topbar)
   primaryCta?: React.ReactNode;
   // For Discovery Tools: 4 category buttons
@@ -112,26 +114,28 @@ interface ModuleNavBarProps {
 }
 
 /**
- * VISUAL_STANDARD.md §5.5 — main tabs use the ONE app-wide underline pattern:
- * active = text-primary + 2px bottom bar in the text color (neutral, NOT
- * crimson — red budget §2.3); inactive = muted text, transparent underline,
- * hover only brightens the text. No pill background, no border, no tint.
+ * Menu 2 (ModuleTabs) — PILL pattern (decyzja Piotra 2026-07-02: „ramki
+ * półokrągłe jak w My Work, tak ma być"). Zastępuje wcześniejszy underline
+ * (VISUAL_STANDARD §5.5) — spójne z My Work MENU_2_TAB_* i ARTIFACT_ANATOMY §9.2③.
+ * active = wypełniony pill z ramką (neutral, NIE crimson); inactive = przezroczysty,
+ * hover rozjaśnia tło. Zgodne z red-budget (zero crimson).
  */
 const TAB_BASE = `
-  inline-flex items-center gap-2 h-9 px-3.5 text-sm font-medium
-  border-b-2 transition-colors duration-150
+  inline-flex items-center gap-2 h-9 px-3.5 rounded-full text-sm font-medium
+  transition-colors duration-150
 `;
 
 const TAB_INACTIVE = `
   ${TAB_BASE}
-  border-transparent
+  border border-transparent
   text-c-text-muted
-  hover:text-c-text
+  hover:text-c-text hover:bg-c-surface-raised
 `;
 
 const TAB_ACTIVE = `
   ${TAB_BASE}
-  border-navy-900 dark:border-white/80
+  border border-c-border
+  bg-c-surface-raised
   text-c-text
 `;
 
@@ -172,6 +176,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   commandRowRightContent,
   onNewItem,
   newItemLabel = 'New Item',
+  newItemTestId,
   primaryCta,
   categoryButtons,
   statusFilters,
@@ -494,6 +499,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
             <button
               type="button"
               onClick={onNewItem}
+              data-testid={newItemTestId}
               className="
                 inline-flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium
                 bg-navy-900 text-white hover:bg-navy-800

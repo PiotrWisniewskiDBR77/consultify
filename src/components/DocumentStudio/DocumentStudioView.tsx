@@ -12,6 +12,7 @@
 
 import { Layers, Sparkles } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { TopBar, type TopBarChipDescriptor } from '@/components/shared/ExecutiveModuleShell';
@@ -34,6 +35,7 @@ type Phase = 'intake' | 'outline' | 'document';
 type Tab = 'generate' | 'templates';
 
 export const DocumentStudioView: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { artifactId: artifactIdFromUrl } = useParams<{ artifactId?: string }>();
 
@@ -206,33 +208,40 @@ export const DocumentStudioView: React.FC = () => {
         label: 'Generate',
         icon: Sparkles,
         kind: 'toggle',
+        // Mode switch — secondary tier (editor-shell-canon § 2 STREFA GÓRNA);
+        // these are the doc-studio segmented modes, not the run action.
+        group: 'secondary',
         active: activeTab === 'generate',
         onClick: () => setActiveTab('generate'),
-        tooltip: 'Mode 1 / Mode 3 — intake → outline → document.',
+        tooltip: 'Generuj dokument',
       },
       {
         id: 'templates',
         label: 'Plan template',
         icon: Layers,
         kind: 'toggle',
+        group: 'secondary',
         active: activeTab === 'templates',
         onClick: () => setActiveTab('templates'),
-        tooltip: 'Mode 2 — Document Template Architect.',
+        tooltip: 'Szablon dokumentu',
       },
     ],
     [activeTab]
   );
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-slate-50 dark:bg-navy-950">
+    <div
+      data-testid="document-studio-view"
+      className="flex h-full min-h-0 flex-col bg-slate-50 dark:bg-navy-950"
+    >
       {showDocumentShell ? null : (
         <TopBar
           moduleLabel="Document Studio"
-          title="Consultify Document Studio"
+          title={t('documentStudio.view.title', 'Consultify Document Studio')}
           chips={tabChips}
           respectMelsOrder={false}
           presenceSlot={
-            <span className="hidden text-[11px] text-slate-500 dark:text-slate-400 lg:inline">
+            <span className="hidden text-[11px] text-c-text-muted lg:inline">
               Modes 1, 2, 3 · Word/PDF artifact runtime
             </span>
           }
@@ -272,7 +281,7 @@ export const DocumentStudioView: React.FC = () => {
             onSchemaUpdated={setSchema}
           />
         ) : (
-          <div className="flex flex-1 items-center justify-center text-sm text-slate-500">
+          <div className="flex flex-1 items-center justify-center text-sm text-c-text-muted">
             {error ?? 'No document loaded.'}
           </div>
         )}

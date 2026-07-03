@@ -24,6 +24,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import {
+  EmptyState as SharedEmptyState,
+  LoadingState as SharedLoadingState,
+} from '@/components/shared/states';
 import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { useAppStore } from '../../store/useAppStore';
@@ -197,8 +201,8 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-primary-400 animate-spin" />
+      <div className={`space-y-6 ${className}`}>
+        <SharedLoadingState template="list" rows={6} />
       </div>
     );
   }
@@ -275,10 +279,36 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
           <DegradedState title="Billing history unavailable" description={loadError} />
         </div>
       ) : filteredInvoices.length === 0 ? (
-        <div className="p-12 text-center bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
-          <FileText className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-slate-900 dark:text-white">No Invoices</h3>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">No invoices match your filters</p>
+        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+          {searchTerm || statusFilter !== 'all' || dateRange !== 'all' ? (
+            <SharedEmptyState
+              variant="filter"
+              icon={FileText}
+              title={t('admin.billing.noInvoicesMatch', 'No invoices match your filters')}
+              description={t(
+                'admin.billing.noInvoicesMatchDesc',
+                'Try a wider date range or clear the filters to see your full billing history.'
+              )}
+              primaryAction={{
+                label: t('common.clearFilters', 'Clear filters'),
+                onClick: () => {
+                  setSearchTerm('');
+                  setStatusFilter('all');
+                  setDateRange('all');
+                },
+              }}
+            />
+          ) : (
+            <SharedEmptyState
+              variant="new"
+              icon={FileText}
+              title={t('admin.billing.noInvoices', 'No invoices yet')}
+              description={t(
+                'admin.billing.noInvoicesDesc',
+                'Invoices will appear here once your organization has billing activity.'
+              )}
+            />
+          )}
         </div>
       ) : (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">

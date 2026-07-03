@@ -97,7 +97,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
               >
                 {row.reportType}
               </span>
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
+              <span className="text-sm font-medium text-c-text truncate">
                 {row.title}
               </span>
             </div>
@@ -119,7 +119,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
         render: (row: ReportItem) => {
           const meta = REPORT_TYPE_META[row.reportType] || REPORT_TYPE_META.custom;
           return (
-            <span className={`text-xs font-medium ${meta.color}`}>
+            <span className="text-xs font-medium text-c-text-secondary">
               {isPolish ? meta.labelPl : meta.label}
             </span>
           );
@@ -159,7 +159,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
         label: t('rap.columns.period', 'Okres'),
         width: '160px',
         render: (row: ReportItem) => {
-          if (!row.periodFrom) return <span className="text-sm text-slate-600">—</span>;
+          if (!row.periodFrom) return <span className="text-sm text-c-text-muted">—</span>;
           const from = new Date(row.periodFrom).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
             day: 'numeric',
             month: 'short',
@@ -172,7 +172,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
               })
             : '...';
           return (
-            <span className="text-sm text-slate-600 dark:text-slate-300">
+            <span className="text-sm text-c-text-secondary">
               {from} — {to}
             </span>
           );
@@ -186,7 +186,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
         render: (row: ReportItem) => {
           const d = new Date(row.createdAt);
           return (
-            <span className="text-sm text-slate-500 dark:text-slate-400">
+            <span className="text-sm text-c-text-muted">
               {d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
                 day: 'numeric',
                 month: 'short',
@@ -201,13 +201,13 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
         label: t('rap.columns.exports', 'Eksporty'),
         width: '140px',
         render: (row: ReportItem) => {
-          if (!row.exportFormats?.length) return <span className="text-sm text-slate-600">—</span>;
+          if (!row.exportFormats?.length) return <span className="text-sm text-c-text-muted">—</span>;
           return (
             <div className="flex items-center gap-1">
               {row.exportFormats.map((fmt) => (
                 <span
                   key={fmt}
-                  className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300"
+                  className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-c-surface-raised text-c-text-secondary"
                 >
                   {fmt}
                 </span>
@@ -327,11 +327,11 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
     return (
       <div className="flex items-center justify-center h-full p-6">
         <div className="w-full max-w-3xl rounded-2xl border border-amber-200/70 dark:border-amber-400/20 bg-amber-50/80 dark:bg-amber-500/10 p-6">
-          <div className="text-lg font-semibold text-slate-900 dark:text-white">
+          <div className="text-lg font-semibold text-c-text">
             {t('rap.errors.realReportsTitle', 'Real reports source needs attention')}
           </div>
-          <div className="mt-2 text-sm text-slate-700 dark:text-slate-200">{error}</div>
-          <div className="mt-4 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <div className="mt-2 text-sm text-c-text-secondary">{error}</div>
+          <div className="mt-4 text-xs uppercase tracking-wide text-c-text-muted">
             {t(
               'rap.errors.realSourceHint',
               'No synthetic demo fallback was injected. Verify active DB, organization scope, and data-context before retrying.'
@@ -352,16 +352,16 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
 
     return (
       <div className="flex items-center justify-center h-full p-6">
-        <div className="w-full max-w-4xl rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] p-6">
+        <div className="w-full max-w-4xl rounded-2xl border border-c-border-subtle bg-c-surface p-6">
           <div className="flex items-start gap-4">
             <div className="mt-0.5 flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-300">
               <FileText size={20} />
             </div>
             <div className="min-w-0">
-              <div className="text-lg font-semibold text-slate-900 dark:text-white">
+              <div className="text-lg font-semibold text-c-text">
                 {t('rap.empty.reportsTitle', 'Canonical management reports')}
               </div>
-              <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+              <div className="mt-1 text-sm text-c-text-secondary">
                 {t(
                   'rap.empty.reportsBody',
                   'This library is organized around the V3 report canon. Start from one of the four sponsor-ready report types below.'
@@ -374,19 +374,19 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
             {canon.map(([code, label]) => (
               <div
                 key={code}
-                className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/80 dark:bg-white/[0.03] p-4"
+                className="rounded-xl border border-c-border-subtle bg-c-bg p-4"
               >
-                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                <div className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
                   {code}
                 </div>
-                <div className="mt-1 text-sm font-medium text-slate-900 dark:text-white">
+                <div className="mt-1 text-sm font-medium text-c-text">
                   {label}
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="mt-5 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <div className="mt-5 text-xs uppercase tracking-wide text-c-text-muted">
             {t(
               'rap.empty.reportsHint',
               'Use the topbar quick chips or create a new report to enter R1, R2, R3, or R4 flow.'

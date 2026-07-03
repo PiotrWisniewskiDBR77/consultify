@@ -13,6 +13,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 
@@ -61,13 +62,7 @@ export const AdminMetricsDashboardView: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-96 text-slate-400 dark:text-slate-500">
-        <RefreshCw className="animate-spin mb-4" size={32} />
-        <p className="text-lg font-medium">Crunching your organization's data...</p>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 italic">
-          Generating conversion intelligence insights.
-        </p>
-      </div>
+      <SharedLoadingState variant="progress" label="Crunching your organization's data…" />
     );
   }
 

@@ -14,6 +14,7 @@ import {
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import type { ActionContext, ChatActionPayload } from '@/types/domain/chatActions';
 import { getArtifactPath } from '@/utils/artifactLinks';
+import { initiativeDocumentPath } from '@/utils/initiativeLinks';
 
 import { validateActionPayload } from './chatActionRegistry';
 
@@ -148,13 +149,19 @@ export async function handleChatAction(
         if (!title) {
           return { success: false, error: 'Initiative title is required' };
         }
-        await Api.post('/initiatives', {
+        const created = (await Api.post('/initiatives', {
           title,
           description: String(params.description || ''),
           templateId: params.templateId || undefined,
           projectId: deps.context.projectId,
-        });
-        return { success: true };
+        })) as { id?: string; initiative?: { id?: string } } | undefined;
+        // M13 flow redesign: chat-created initiative lands the user straight
+        // in its DOCUMENT (canonical deep link), not in a list/staging view.
+        const createdId = String(created?.id || created?.initiative?.id || '').trim();
+        if (createdId) {
+          deps.navigate(initiativeDocumentPath(createdId));
+        }
+        return { success: true, data: createdId ? { createdId } : undefined };
       }
 
       case 'GENERATE_REPORT': {

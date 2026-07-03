@@ -9,16 +9,22 @@
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import { isAiGate } from '../constants/initiativeGateAi.js';
 import {
   GATE_PERMISSIONS,
   GateType,
   getGateForTransition,
+  isScheduledOnward,
   isValidTransition,
   VALID_TRANSITIONS,
 } from '../constants/initiativeStatuses.js';
 import activityService from '../services/ActivityService.js';
 import auditEventsService from '../services/AuditEventsService.js';
+import { getGateReadiness } from '../services/initiative/gateAiReadinessService.js';
+import { recordGateAiEvent } from '../services/initiative/gateAiTelemetryService.js';
+import { getTimelineFlags } from '../services/initiative/gateTimelineService.js';
 import { resolveInitiativeAccessContext } from '../services/initiative/initiativeAccessResolver.js';
+import { isInitiativeGateAiEnabled } from '../services/initiative/initiativeGateAiConfig.js';
 import { getBlockingReadinessItems } from '../services/initiative/initiativeGateReadinessService.js';
 import {
   evaluateInitiativeGateAccess,
@@ -34,6 +40,14 @@ import {
   coerceInitiativeStatusForWrite,
   normalizeInitiativeDbStatusForRead,
 } from '../services/initiative/initiativeLifecycleCanon.js';
+import { validateCardContent } from '../services/initiative/initiativeCardValidators.js';
+import {
+  addLinkedItem,
+  listLinkedItems,
+  removeLinkedItem,
+} from '../services/initiative/initiativeLinkedItemsService.js';
+import { findSimilarInitiatives } from '../services/initiative/initiativeSimilarityService.js';
+import { handoffFromClosure } from '../services/executionResultsBridge.js';
 import notificationService from '../services/notificationService.js';
 import {
   calculateRiskScore,
@@ -46,11 +60,14 @@ import {
   getInitiativeTaskDependenciesRead,
   getPortfolioRead,
 } from '../services/v8/planningPortfolioReadService.js';
+import { gateAiSoftBlocks } from '../types/gateAi.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 import { flagOn } from '../utils/pgFlags.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
+import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
+import { recordHandoff as recordStageHandoff } from '../services/initiative/stageHandoffService.js';
 import type {
   CreateInitiativeRequest,
   UpdateInitiativeRequest,
@@ -424,6 +441,19 @@ export class InitiativeController {
       }
       sql += ` ORDER BY i.created_at DESC`;
 
+      const limitRaw = Number((req.query as any)?.limit);
+      const offsetRaw = Number((req.query as any)?.offset);
+      const pageLimit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 1000) : null;
+      const pageOffset = Number.isFinite(offsetRaw) && offsetRaw > 0 ? offsetRaw : 0;
+      if (pageLimit !== null) {
+        sql += ` LIMIT ?`;
+        params.push(pageLimit);
+        if (pageOffset > 0) {
+          sql += ` OFFSET ?`;
+          params.push(pageOffset);
+        }
+      }
+
       let rows: Record<string, unknown>[] = [];
       try {
         if (typeof qh.queryAll !== 'function') {
@@ -558,6 +588,29 @@ export class InitiativeController {
         return;
       }
 
+      // Uspójnienie F1 — single creation funnel (flag-gated rollout). When enabled,
+      // creation flows through createInitiativeService (one contract, DRAFT default,
+      // name+title). Route already ran validateBody(CreateInitiativeSchema) → validate:false.
+      if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+        try {
+          const result = await funnelCreateInitiative(orgId, req.body as Record<string, unknown>, {
+            validate: false,
+            actor: {
+              id: req.user?.id,
+              ip: (req as { ip?: string }).ip,
+              userAgent: (req as { get?: (h: string) => string }).get?.('user-agent'),
+            },
+          });
+          res.json({ id: result.id, name: result.name, message: 'Initiative created' });
+        } catch (e) {
+          const err = e as { statusCode?: number; message?: string };
+          res
+            .status(err?.statusCode || 400)
+            .json({ error: err?.message || 'Failed to create initiative' });
+        }
+        return;
+      }
+
       const {
         projectId,
         title,
@@ -616,7 +669,7 @@ export class InitiativeController {
 
       const sql = `
             INSERT INTO initiatives (
-                id, organization_id, project_id, program_id, title, category, priority, impact, effort,
+                id, organization_id, project_id, program_id, title, name, category, priority, impact, effort,
                 axis, area, summary, hypothesis, status,
                 business_value, cost_capex, cost_opex, expected_roi,
                 value_driver, confidence_level, value_timing,
@@ -624,8 +677,8 @@ export class InitiativeController {
                 owner_business_id, owner_execution_id,
                 problem_statement, deliverables, success_criteria, scope_in, scope_out, key_risks,
                 source_type, source_id, action_contract_json, source_pack_json, evidence_refs_json,
-                created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                created_by, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
       try {
@@ -635,6 +688,7 @@ export class InitiativeController {
           projectId ?? null,
           programId ?? null,
           title,
+          title, // name mirrors title (legacy column, NOT NULL in older schemas)
           category ?? null,
           priority ?? 'medium',
           impact ?? 'medium',
@@ -668,6 +722,7 @@ export class InitiativeController {
           ),
           JSON.stringify(sourcePack && typeof sourcePack === 'object' ? sourcePack : {}),
           JSON.stringify(Array.isArray(evidenceRefs) ? evidenceRefs : []),
+          req.user?.id ?? null, // created_by
           now,
           now,
         ]);
@@ -680,8 +735,8 @@ export class InitiativeController {
                   owner_business_id, owner_execution_id,
                   problem_statement, deliverables, success_criteria, scope_in, scope_out, key_risks,
                   source_type, source_id,
-                  created_at, updated_at
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                  created_by, created_at, updated_at
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `;
         await queryHelpers.queryRun(legacySql, [
           id,
@@ -709,6 +764,7 @@ export class InitiativeController {
           JSON.stringify(keyRisks || []),
           normalizedSourceType,
           normalizedSourceId || null,
+          req.user?.id ?? null, // created_by
           now,
           now,
         ]);
@@ -922,6 +978,16 @@ export class InitiativeController {
           updates.push(`${dbCol} = ?`);
           params.push(newVal ?? null);
         }
+      }
+
+      // Mirror name ↔ title: the funnel writes name=title on CREATE, so keep the
+      // two columns in lockstep on UPDATE too. The UI only ever edits `title`, and
+      // without this a rename would write `title` while leaving the canonical
+      // read-compat `name` column stale (name<>title drift). Only when a separate
+      // `name` column exists and `title` is the column actually being written.
+      if (body.title !== undefined && titleCol === 'title' && existingCols.has('name')) {
+        updates.push('name = ?');
+        params.push(body.title ?? null);
       }
 
       // Process JSON array fields
@@ -1221,7 +1287,11 @@ export class InitiativeController {
       // RBAC + gate enforcement (enterprise governance)
       // - Consultant can only SUBMIT_FOR_REVIEW for initiatives they authored (created_by)
       // - PM/Lead/PMO gate approvals move initiatives to global visibility (REVIEW)
-      const gate = getGateForTransition(currentStatus as any, nextStatus as any);
+      // CANCELLED is a lifecycle escape hatch — no gate, no AI soft-block, no readiness check.
+      const gate =
+        nextStatus === 'CANCELLED'
+          ? null
+          : getGateForTransition(currentStatus as any, nextStatus as any);
       if (gate) {
         const accessCtx = await resolveInitiativeAccessContext(orgId, id, actorId, req.user?.role);
         const isAdmin = accessCtx.effectiveRoles.includes('ADMIN');
@@ -1278,8 +1348,71 @@ export class InitiativeController {
         }
       }
 
-      // V4-INIT-01: Gate readiness blocking — block transition if blocking items exist
-      const blockingItems = await getBlockingReadinessItems(orgId, id);
+      // M13 Depth · Fala 1 — AI gate soft-block (advisory, per-org flag, fail-open).
+      // Forward-progress gates only; flag OFF or any error → zero behavior change.
+      // Below-threshold readiness OR a blocking timeline flag requires an explicit
+      // `overrideReason` to proceed; every decision is recorded to telemetry.
+      if (gate && isAiGate(gate)) {
+        try {
+          if (await isInitiativeGateAiEnabled(orgId)) {
+            const overrideReason = (req.body as any)?.overrideReason
+              ? String((req.body as any).overrideReason).trim()
+              : '';
+            const [aiReadiness, timeline] = await Promise.all([
+              getGateReadiness(id, gate, orgId),
+              getTimelineFlags(id, gate, orgId),
+            ]);
+            const timelineBlock = !!timeline?.flags?.some((f: any) => f.severity === 'block');
+            const softBlocks = gateAiSoftBlocks({
+              enabled: true,
+              gate,
+              aiReadiness,
+              timeline,
+            } as any);
+            if (softBlocks && !overrideReason) {
+              await recordGateAiEvent({
+                organizationId: orgId,
+                initiativeId: id,
+                gate,
+                score: aiReadiness?.score ?? null,
+                timelineBlock,
+                blocked: true,
+                overridden: false,
+                userId: actorId,
+              });
+              res.status(422).json({
+                error:
+                  'Gate readiness is below threshold. Provide an overrideReason to proceed anyway.',
+                code: 'INITIATIVE_GATE_AI_SOFT_BLOCK',
+                gate,
+                from: currentStatus,
+                to: nextStatus,
+                aiReadiness,
+                timeline,
+              });
+              return;
+            }
+            await recordGateAiEvent({
+              organizationId: orgId,
+              initiativeId: id,
+              gate,
+              score: aiReadiness?.score ?? null,
+              timelineBlock,
+              blocked: false,
+              overridden: softBlocks,
+              overrideReason: softBlocks ? overrideReason : null,
+              userId: actorId,
+            });
+          }
+        } catch (e: any) {
+          logger.warn('[initiatives] gate-ai soft-block skipped (fail-open):', e?.message);
+        }
+      }
+
+      // V4-INIT-01: Gate readiness blocking — block transition if blocking items exist.
+      // CANCELLED bypasses readiness (same as gate bypass above).
+      const blockingItems =
+        nextStatus === 'CANCELLED' ? [] : await getBlockingReadinessItems(orgId, id);
       if (blockingItems.length > 0) {
         try {
           const recipients = await getInitiativeNotificationRecipients(orgId, id);
@@ -1627,6 +1760,17 @@ export class InitiativeController {
         }
       }
 
+      // DEF-1 hardening (parytet z kanonicznym validateTransition): BLOCKED wymaga
+      // powodu. Wcześniej handler zapisywał blocked_reason=null bez walidacji — co
+      // rozjeżdżało się z modelem stanów. Dotyczy tylko PATCH /:id/status.
+      if (nextStatus === 'BLOCKED' && !String(reason ?? '').trim()) {
+        res.status(400).json({
+          error: 'Blocked status requires a reason',
+          rule: 'BLOCKED_REASON_REQUIRED',
+        });
+        return;
+      }
+
       if (
         ['EXECUTING', 'BLOCKED'].includes(currentStatus) &&
         nextStatus === 'DONE' &&
@@ -1869,6 +2013,17 @@ export class InitiativeController {
       const sql = `UPDATE initiatives SET ${lifecycleUpdates.join(', ')} WHERE id = ? AND organization_id = ?`;
       await queryHelpers.queryRun(sql, lifecycleParams);
 
+      // Uspójnienie F2.2–2.5/2.7 — record the stage-boundary handoff (event + lineage)
+      // on every successful status transition. Fail-safe (never throws/blocks).
+      void recordStageHandoff(orgId, String(req.params.id), currentStatus, nextStatus, req.user?.id);
+
+      // M13 Depth · Seria R (M13d) — the status-change notification to
+      // watchers/owners is emitted by the canonical block below ("Emit
+      // notifications", type `initiative.status_changed`). A → BLOCKED
+      // transition is escalated there to CRITICAL severity carrying the reason.
+      // (Earlier a separate emitter here duplicated that notification — removed
+      // 2026-06-22 to fix the dubel; see finding_initiative_status_notification_dubel.)
+
       // Benefits tracking window defaults (best-effort; older schemas may not have these columns).
       if (currentStatus === 'DONE' && nextStatus === 'TRACKING') {
         const trackingStart = now;
@@ -1967,6 +2122,22 @@ export class InitiativeController {
         // best-effort
       }
 
+      // M14 → M15 closure handoff (Decision B1b): on close (→ DONE), materialize
+      // the initiative's planned KPIs into the M15-readable benefits register.
+      // Fail-safe: a handoff error must NEVER block the status change (log + go).
+      // Idempotent inside the service, so a repeat DONE (or DONE→revert→DONE)
+      // does not create duplicate benefits.
+      if (currentStatus !== 'DONE' && nextStatus === 'DONE') {
+        try {
+          await handoffFromClosure(orgId, id, actorId || null);
+        } catch (handoffErr) {
+          logger.warn(
+            `[Initiative] M14→M15 closure handoff failed for ${id} — status change not blocked`,
+            handoffErr
+          );
+        }
+      }
+
       // Emit notifications (best-effort)
       try {
         const recipients = await getInitiativeNotificationRecipients(orgId, id);
@@ -1975,7 +2146,17 @@ export class InitiativeController {
           (currentStatus === 'SCHEDULED' && nextStatus === 'EXECUTING') ||
           (currentStatus === 'DONE' && nextStatus === 'TRACKING');
 
-        // 1. General status change notification to all stakeholders
+        // 1. General status change notification to all stakeholders.
+        // M13/R4: this is the SINGLE canonical status-change notification.
+        // A → BLOCKED transition is escalated to CRITICAL and carries the
+        // blocker reason (replaces the removed dedicated R4 emitter).
+        const statusSeverity: 'INFO' | 'WARNING' | 'CRITICAL' =
+          nextStatus === 'BLOCKED' ? 'CRITICAL' : nextStatus === 'CANCELLED' ? 'WARNING' : 'INFO';
+        const statusTitle = isModuleChange
+          ? 'Initiative moved to new module'
+          : nextStatus === 'BLOCKED'
+            ? 'Initiative blocked'
+            : 'Initiative status changed';
         await Promise.allSettled(
           recipients
             .filter((uid) => uid && uid !== actorId)
@@ -1984,15 +2165,14 @@ export class InitiativeController {
                 userId,
                 organizationId: orgId,
                 type: isModuleChange ? 'initiative.module_changed' : 'initiative.status_changed',
-                title: isModuleChange
-                  ? 'Initiative moved to new module'
-                  : 'Initiative status changed',
+                title: statusTitle,
                 body: `${initiativeName}: ${currentStatus} → ${nextStatus}${reason ? ` (${reason})` : ''}`,
                 entityType: 'initiative',
                 entityId: id,
                 actionUrl: '/initiatives',
                 actorId,
                 actorName,
+                severity: statusSeverity,
                 priority:
                   nextStatus === 'BLOCKED' || nextStatus === 'CANCELLED' ? 'high' : 'normal',
                 metadata: { from: currentStatus, to: nextStatus, reason, gate },
@@ -3359,12 +3539,13 @@ export class InitiativeController {
       // is an indistinguishable 404 (no existence leak).
       const existing = await queryHelpers.queryOne<{
         id: string;
+        status: string | null;
         owner_business_id: string | null;
         owner_execution_id: string | null;
         sponsor_id: string | null;
         created_by: string | null;
       }>(
-        `SELECT id, owner_business_id, owner_execution_id, sponsor_id, created_by
+        `SELECT id, status, owner_business_id, owner_execution_id, sponsor_id, created_by
            FROM initiatives WHERE id = ? AND organization_id = ?`,
         [initiativeId, orgId]
       );
@@ -3383,13 +3564,30 @@ export class InitiativeController {
         .filter(Boolean)
         .map((v) => String(v));
       const isOwner = !!userId && ownerIds.includes(String(userId));
-      const isAdmin = String(role || '')
-        .toUpperCase()
-        .includes('ADMIN');
+      // Privileged roles: any *ADMIN* variant plus the organization OWNER —
+      // OWNER outranks ADMIN but does not contain the substring, so a plain
+      // `.includes('ADMIN')` locked org owners out of deleting initiatives.
+      const upperRole = String(role || '').toUpperCase();
+      const isAdmin = upperRole.includes('ADMIN') || upperRole === 'OWNER';
       if (!isOwner && !isAdmin) {
         res.status(403).json({
           error: 'Only the initiative owner or an organization admin can delete it',
           code: 'INITIATIVE_DELETE_FORBIDDEN',
+        });
+        return;
+      }
+
+      // Hard-delete is only allowed for not-yet-active initiatives. An active
+      // initiative (PLANNING…TRACKING) is linked into M14/15/16 (deployment,
+      // results, finance) and must be CANCELLED first so those rows unwind
+      // through the lifecycle rather than being orphaned by a raw delete.
+      const DELETABLE_STATUSES = new Set(['DRAFT', 'CANCELLED']);
+      const currentStatus = String(existing.status || 'DRAFT').toUpperCase();
+      if (!DELETABLE_STATUSES.has(currentStatus)) {
+        res.status(409).json({
+          error: 'Only DRAFT or CANCELLED initiatives can be deleted. Cancel the initiative first.',
+          code: 'INITIATIVE_DELETE_INVALID_STATE',
+          status: currentStatus,
         });
         return;
       }
@@ -5509,6 +5707,156 @@ export class InitiativeController {
   );
 
   /**
+   * Linked items (M13 Depth · Seria K · K3) — durable artifact correlation.
+   * GET/POST /initiatives/:id/linked-items · DELETE /:id/linked-items/:linkId
+   */
+  static getLinkedItems = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const items = await listLinkedItems(orgId, req.params.id);
+      res.json({ items });
+    }
+  );
+
+  static addLinkedItem = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const { targetType, targetId, label } = (req.body as any) || {};
+      const item = await addLinkedItem(orgId, req.params.id, {
+        targetType: String(targetType || ''),
+        targetId: String(targetId || ''),
+        label: label != null ? String(label) : null,
+        createdBy: req.user?.id,
+      });
+      if (!item) {
+        res.status(400).json({ error: 'Could not add link', code: 'LINKED_ITEM_INVALID' });
+        return;
+      }
+      res.json({ item });
+    }
+  );
+
+  static removeLinkedItem = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      await removeLinkedItem(orgId, req.params.id, req.params.linkId);
+      res.json({ success: true });
+    }
+  );
+
+  /**
+   * POST /initiatives/validate-card  (M13 Depth · Seria K · K1)
+   * Deterministic §B3 card-quality validators (advisory, never blocks).
+   */
+  static validateCard = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const { text, rules } = (req.body as any) || {};
+      const issues = validateCardContent(
+        String(text || ''),
+        Array.isArray(rules) ? rules : undefined
+      );
+      res.json({ issues });
+    }
+  );
+
+  /**
+   * POST /initiatives/similar-check  (M13 Depth · Seria C · C1)
+   * Portfolio-aware duplicate detection: given a candidate {name, summary},
+   * return existing org initiatives that look similar (advisory, never blocks).
+   */
+  static checkSimilarInitiatives = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const { name, summary, excludeId } = (req.body as any) || {};
+      const similar = await findSimilarInitiatives(
+        orgId,
+        { name: name ? String(name) : '', summary: summary ? String(summary) : '' },
+        { excludeId: excludeId ? String(excludeId) : undefined }
+      );
+      res.json({ similar });
+    }
+  );
+
+  /**
+   * POST /initiatives/:id/gate-ai-check  (M13 Depth · Fala 1)
+   * Lazy AI readiness for a specific gate (substantive rollup + timeline).
+   * `enabled:false` when the per-org flag is OFF, the gate is non-AI, or AI
+   * failed open — the caller must NOT soft-block in that case.
+   */
+  static getGateAiCheck = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const { id } = req.params;
+      const gateRaw = String((req.body as any)?.gate || '')
+        .trim()
+        .toUpperCase();
+      const targetStatusRaw = String((req.body as any)?.targetStatus || '')
+        .trim()
+        .toUpperCase();
+
+      // Org-scoped existence (cross-org id → indistinguishable 404).
+      const existing = await queryHelpers.queryOne(
+        `SELECT id, status FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+      );
+      if (!existing) {
+        res.status(404).json({ error: 'Initiative not found' });
+        return;
+      }
+
+      // Prefer an explicit `gate`; otherwise derive it from `targetStatus` using
+      // the current status (so the FE can pass the transition it's attempting).
+      let gate: string | null = (Object.values(GateType) as string[]).includes(gateRaw)
+        ? gateRaw
+        : null;
+      if (!gate && targetStatusRaw) {
+        const current = normalizeInitiativeDbStatusForRead((existing as any).status);
+        gate = getGateForTransition(current as any, targetStatusRaw as any) || null;
+      }
+      if (!gate) {
+        res.status(400).json({ error: 'Unknown gate', code: 'GATE_AI_UNKNOWN_GATE' });
+        return;
+      }
+
+      const enabled = (await isInitiativeGateAiEnabled(orgId)) && isAiGate(gate as any);
+      if (!enabled) {
+        res.json({ enabled: false, gate, aiReadiness: null, timeline: null });
+        return;
+      }
+      const [aiReadiness, timeline] = await Promise.all([
+        getGateReadiness(id, gate as any, orgId),
+        getTimelineFlags(id, gate as any, orgId),
+      ]);
+      res.json({ enabled: true, gate, aiReadiness, timeline });
+    }
+  );
+
+  /**
    * GET /initiatives/:id/gate-readiness-check
    * Comprehensive gate readiness check for the current status.
    * Returns: which gates are available, who can approve, what's blocking.
@@ -5744,7 +6092,7 @@ export class InitiativeController {
           );
         }
       }
-      if (['SCHEDULED', 'EXECUTING', 'BLOCKED', 'DONE', 'TRACKING'].includes(currentStatus)) {
+      if (isScheduledOnward(currentStatus)) {
         const start = ini.planned_start_date || ini.start_date || null;
         const end = ini.planned_end_date || ini.end_date || null;
         addCheck(

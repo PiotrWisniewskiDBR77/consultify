@@ -23,6 +23,7 @@
 import { Loader2, Sparkles } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import {
   type AiBudgetSnapshot,
@@ -75,6 +76,7 @@ export const TabeleAiEditorPanel: React.FC<TabeleAiEditorPanelProps> = ({
   testInitialBudget,
   onAfterApply,
 }) => {
+  const { t } = useTranslation();
   const [level, setLevel] = useState<AiEditorLevel>(initialLevel);
   const [prompt, setPrompt] = useState<string>(initialPrompt);
   const [proposing, setProposing] = useState(false);
@@ -104,7 +106,7 @@ export const TabeleAiEditorPanel: React.FC<TabeleAiEditorPanelProps> = ({
 
   const propose = useCallback(async () => {
     if (!tableId || !prompt.trim()) {
-      toast.error('Prompt is required');
+      toast.error(t('tabele.rightRail.aiEditor.promptRequired', 'Prompt is required'));
       return;
     }
     setProposing(true);
@@ -160,7 +162,7 @@ export const TabeleAiEditorPanel: React.FC<TabeleAiEditorPanelProps> = ({
     setBusyReject(true);
     try {
       await rejectAiProposal(active.proposalId, workspaceId);
-      toast.success('Proposal rejected');
+      toast.success(t('tabele.rightRail.aiEditor.proposalRejected', 'Proposal rejected'));
       setActive(null);
     } catch (e) {
       toast.error(`Reject failed: ${(e as Error)?.message ?? 'unknown error'}`);
@@ -173,7 +175,7 @@ export const TabeleAiEditorPanel: React.FC<TabeleAiEditorPanelProps> = ({
     <section
       className="flex h-full flex-col gap-3 p-3"
       data-testid="tabele-ai-editor-panel"
-      aria-label="Tabele AI Editor"
+      aria-label={t('tabele.rightRail.aiEditor.panelAria', 'Tabele AI Editor')}
     >
       <header className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">AI Editor</h3>

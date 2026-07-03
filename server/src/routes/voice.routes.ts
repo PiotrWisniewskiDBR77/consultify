@@ -10,6 +10,7 @@ import { fileURLToPath } from 'url';
 
 import { voiceController } from '../controllers/voice.controller.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { detectSttProviderFromEnv, STT_ENV_KEYS } from '../services/ai/VoiceService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
@@ -64,25 +65,31 @@ router.post('/tts', verifyToken, asyncHandler(voiceController.handleTTS.bind(voi
 router.get(
   '/health',
   asyncHandler(async (_req, res) => {
-    const checks: Record<string, { status: string; detail?: string }> = {};
+    const checks: Record<string, { status: string; detail?: string; requiredEnv?: string[] }> = {};
 
-    // Check STT availability (OpenAI Whisper)
-    const openaiKey = process.env.OPENAI_API_KEY;
+    // Check STT availability. STT works with ANY of Whisper (OpenAI/Groq) OR
+    // Gemini (the same Google key that powers Teresa's voice) — so we must NOT
+    // report "unavailable" just because OPENAI_API_KEY is missing.
+    const stt = detectSttProviderFromEnv();
     checks.stt = {
-      status: openaiKey && openaiKey.trim().length > 0 ? 'ok' : 'unavailable',
-      detail:
-        openaiKey && openaiKey.trim().length > 0
-          ? 'Whisper API key configured'
-          : 'OPENAI_API_KEY not set — STT disabled',
+      status: stt.available ? 'ok' : 'unavailable',
+      detail: stt.available
+        ? `STT provider configured: ${stt.provider}`
+        : `No STT provider key set. Set one of: ${STT_ENV_KEYS.join(', ')}. ` +
+          'Voice answers still save via the browser transcript fallback, but server transcription is disabled.',
+      requiredEnv: [...STT_ENV_KEYS],
     };
 
-    // Check TTS availability (OpenAI TTS)
+    // Check TTS availability (OpenAI TTS — needs a native OpenAI key specifically).
+    const openaiKey = (process.env.OPENAI_API_KEY || '').trim();
+    const openaiTtsReady =
+      openaiKey.length > 0 && !openaiKey.startsWith('sk-or-') && !openaiKey.startsWith('sk-test');
     checks.tts = {
-      status: openaiKey && openaiKey.trim().length > 0 ? 'ok' : 'unavailable',
-      detail:
-        openaiKey && openaiKey.trim().length > 0
-          ? 'OpenAI TTS key configured'
-          : 'OPENAI_API_KEY not set — TTS disabled',
+      status: openaiTtsReady ? 'ok' : 'unavailable',
+      detail: openaiTtsReady
+        ? 'OpenAI TTS key configured'
+        : 'OPENAI_API_KEY (native OpenAI) not set — server TTS disabled',
+      requiredEnv: ['OPENAI_API_KEY'],
     };
 
     // Check upload directory

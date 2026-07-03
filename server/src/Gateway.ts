@@ -15,6 +15,7 @@ import effectiveAccessRoutes from './routes/access.routes.js';
 import accessControlRoutes from './routes/access-control.routes.js';
 import accessCodeRoutes from './routes/accessCodes.routes.js';
 import aiObservabilityAdminRoutes from './routes/admin/ai-observability.routes.js';
+import healthPanelAdminRoutes from './routes/admin/health-panel.routes.js';
 import adminAIQualityRoutes from './routes/admin/ai-quality.routes.js';
 import adminBackupRoutes from './routes/admin/backup.routes.js';
 import adminBulkRoutes from './routes/admin-bulk.routes.js';
@@ -97,6 +98,7 @@ import dailyBriefRoutes from './routes/daily-brief.routes.js';
 import dataCollectionRoutes from './routes/data-collection.routes.js';
 import dataExportRoutes from './routes/dataExport.routes.js';
 import deliverablesGenerationsRoutes from './routes/deliverablesGenerations.routes.js';
+import deliverableTemplatesRoutes from './routes/deliverableTemplates.routes.js';
 import demoRoutes from './routes/demo.routes.js';
 import discoveryRoutes from './routes/discovery.routes.js';
 import documentStudioRoutes, {
@@ -196,6 +198,10 @@ import decisionsRoutes from './routes/pmo/decisions.routes.js';
 import executionRoutes from './routes/pmo/execution.routes.js';
 import governanceRoutes from './routes/pmo/governance.routes.js';
 import initiativesRoutes from './routes/pmo/initiatives.routes.js';
+import initiativeCandidatesRouter from './routes/initiativeCandidates.routes.js';
+import initiativeMaterializeRoutes from './routes/initiativeMaterialize.routes.js';
+import initiativeBackboneRoutes from './routes/initiativeBackbone.routes.js';
+import initiativeGeneratorBrainRoutes from './routes/initiativeGeneratorBrain.routes.js';
 import pmoRoutes from './routes/pmo/pmo.routes.js';
 import pmoAnalysisRoutes from './routes/pmo/pmo-analysis.routes.js';
 import pmoContextRoutes from './routes/pmo/pmo-context.routes.js';
@@ -234,8 +240,18 @@ import researchRoutes from './routes/research.routes.js';
 import resourceManagementRoutes from './routes/resourceManagement.routes.js';
 import resultsEnterpriseRoutes from './routes/results-enterprise.routes.js';
 import resultsKpiReportsRoutes from './routes/results-kpi-reports.routes.js';
+import resultsValueIntelligenceRoutes from './routes/resultsValueIntelligence.routes.js';
+import resultsStrategicRoutes from './routes/resultsStrategic.routes.js';
+import resultsDriverTreeRoutes from './routes/resultsDriverTree.routes.js';
+import resultsExtendedRoutes from './routes/resultsExtended.routes.js';
 import revenueRoutes from './routes/revenue.routes.js';
 import rolloutRoutes from './routes/rollout.routes.js';
+// M14 wiring — service route surfaces (mounted below)
+import rolloutExtensionsRoutes from './routes/rolloutExtensions.routes.js';
+import executionAnalyticsRoutes from './routes/executionAnalytics.routes.js';
+import benefitsRegisterRoutes from './routes/benefitsRegister.routes.js';
+import raidGovernanceRoutes from './routes/raidGovernance.routes.js';
+import reportPdfRoutes from './routes/reportPdf.routes.js';
 import scenariosRoutes from './routes/scenarios.routes.js';
 import scheduledReportsRoutes from './routes/scheduled-reports.routes.js';
 import securityRoutes from './routes/security.routes.js';
@@ -296,14 +312,17 @@ import wave8AgentsRoutes from './routes/wave8-agents.routes.js';
 import wave9OutcomesRoutes from './routes/wave9-outcomes.routes.js';
 import webauthnRoutes from './routes/webauthn.routes.js';
 import sellixInboundWebhookRoutes from './routes/webhooks/sellix.routes.js';
+import slackInboundRoutes from './routes/slack/slackInbound.routes.js';
 import v8SyncInboundWebhookRoutes from './routes/webhooks/v8-sync-inbound.routes.js';
 import workCanvasRoutes from './routes/work-canvas.routes.js';
 import workbookRoutes from './routes/workbook.routes.js';
 import workModeRoutes from './routes/workMode.routes.js';
 import workqueueRoutes from './routes/workqueue.routes.js';
 import workspaceDefaultsRoutes from './routes/workspace-defaults.routes.js';
+import referralsRoutes from './routes/referrals.routes.js';
 import { initializeLayoutCapacityPersistence } from './services/presentationStudioLayoutCapacityPersistenceService.js';
 import logger from './utils/Logger.js';
+import { safeFetchHtml, SsrfBlockedError } from './utils/ssrfGuard.js';
 
 const gatewayVerifyToken = verifyToken as unknown as RequestHandler;
 const orgMembershipGuard = validateOrgMembership as unknown as RequestHandler;
@@ -456,7 +475,16 @@ export class ApiGateway {
       // Core routes
       app.use('/api/sessions', sessionsRoutes);
       app.use('/api/teams', teamsRoutes);
+      // F2/F0/F4 — kandydaci + from-audit + portfolio-health. MUSZĄ być PRZED initiativesRoutes:
+      // GET /candidates, GET /portfolio-health łapią się inaczej na GET /:id; POST /from-audit
+      // na POST /:id (status-alias). Konkretne ścieżki przed parametrycznymi.
+      app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativeCandidatesRouter);
+      app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativeBackboneRoutes);
+      // F1 — mózg generatora: POST /propose-cards (przed POST /:id), POST /:id/generate-full.
+      app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativeGeneratorBrainRoutes);
       app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativesRoutes);
+      // F5 — „Zrób materiał": /:id/materialize + /portfolio/materialize (additive POST sub-paths, po głównym OK).
+      app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativeMaterializeRoutes);
       // Additive initiative slices (suggested-changes CRUD + propose engine). Mounted
       // on the same base path AFTER the main router so it only serves the new paths
       // (/:id/suggested-changes, /suggested-changes/:id, /propose) the main router
@@ -538,6 +566,7 @@ export class ApiGateway {
       app.use('/api/superadmin', superAdminRoutes);
       app.use('/api/superadmin', resourceManagementRoutes);
       app.use('/api/admin/ai-observability', aiObservabilityAdminRoutes);
+      app.use('/api/admin/health-panel', healthPanelAdminRoutes);
 
       // Test support (hard-gated: NODE_ENV=test + ENABLE_TEST_SUPPORT=true + secret key)
       app.use('/api/test-support', testSupportRoutes);
@@ -568,19 +597,27 @@ export class ApiGateway {
       });
       app.use('/api/backups', backupRoutes);
 
-      // Link preview (og:meta fetcher for whiteboard LinkNodes)
+      // Link preview (og:meta fetcher for whiteboard LinkNodes + notebook bookmarks)
       app.get('/api/link-preview', async (req, res) => {
         const url = String(req.query.url || '');
-        if (!url || !url.startsWith('http')) return res.status(400).json({ error: 'Invalid URL' });
+        // Presence only — the http(s) protocol allowlist is enforced
+        // authoritatively inside safeFetchHtml (a `startsWith('http')` prefix
+        // gate is misleading: it passes httpx:// etc.).
+        if (!url) return res.status(400).json({ error: 'Invalid URL' });
         try {
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 5000);
-          const resp = await fetch(url, {
-            signal: controller.signal,
-            headers: { 'User-Agent': 'Consultify-LinkPreview/1.0' },
-          });
-          clearTimeout(timeout);
-          const html = await resp.text();
+          // SSRF-guarded fetch: http(s) only, DNS-validated against private/
+          // loopback/link-local/metadata ranges, redirects re-validated per hop,
+          // body size-capped. Prevents the fetcher being aimed at internal infra
+          // or the cloud metadata endpoint (169.254.169.254).
+          let html: string;
+          try {
+            ({ html } = await safeFetchHtml(url, { timeoutMs: 5000 }));
+          } catch (e) {
+            if (e instanceof SsrfBlockedError) {
+              return res.status(400).json({ error: 'URL not allowed' });
+            }
+            throw e;
+          }
           const getMetaContent = (name: string) => {
             const re = new RegExp(
               `<meta[^>]*(?:property|name)=["']${name}["'][^>]*content=["']([^"']*)["']`,
@@ -650,6 +687,11 @@ export class ApiGateway {
       app.use('/api/access', effectiveAccessRoutes);
       mountStub('/api/permission-requests', permissionRequestsRoutes, 'permissionRequestsRoutes');
       app.use('/api/admin/integrations', adminIntegrationsRoutes);
+
+      // Slack Command Center inbound (F2) — signature-verified, no JWT
+      // (Slack carries no bearer token; the route verifies SLACK_SIGNING_SECRET).
+      // Mounted against the raw-body parser configured in index.ts.
+      app.use('/api/slack', slackInboundRoutes);
 
       // Webhook routes (stripe webhook is handled by webhookRoutes)
       app.use('/api/webhooks', sellixInboundWebhookRoutes);
@@ -821,6 +863,12 @@ export class ApiGateway {
       app.use('/api/roadmap', gatewayVerifyToken, trialEntryGuard, roadmapRoutes);
       app.use('/api/execution', executionRoutes);
       app.use('/api/rollout', rolloutRoutes);
+      // M14 wiring — new service surfaces
+      app.use('/api/rollout-ext', rolloutExtensionsRoutes);
+      app.use('/api/execution-analytics', executionAnalyticsRoutes);
+      app.use('/api/benefits-register', benefitsRegisterRoutes);
+      app.use('/api/raid-governance', raidGovernanceRoutes);
+      app.use('/api/report-pdf', reportPdfRoutes);
       mountStub('/api/stabilization', stabilizationRoutes, 'stabilizationRoutes');
       app.use('/api/decisions', decisionsRoutes);
       app.use('/api/stage-gates', stageGatesRoutes);
@@ -879,6 +927,8 @@ export class ApiGateway {
       app.use('/api/presentations-v4', presentationEnterpriseRoutes);
       // Deliverables light runtime — flag-gated inside the router (404 when ENABLE_DELIVERABLES_LIGHT is off)
       app.use('/api/deliverables/generations', deliverablesGenerationsRoutes);
+      // Unified template catalogue (T1) — zawsze dostępne po auth
+      app.use('/api/deliverables', deliverableTemplatesRoutes);
       // Sprint S18 — restore persisted layout-capacity overrides BEFORE
       // mounting Studio routes so the first GET /admin/layout-capacity
       // already sees the restored state. A missing file is silent; a
@@ -901,6 +951,10 @@ export class ApiGateway {
       app.use('/api/presentation-studio', betaGate, presentationStudioRoutes);
       app.use('/api/results', resultsKpiReportsRoutes);
       app.use('/api/results-v4', resultsEnterpriseRoutes);
+      app.use('/api/results-value', resultsValueIntelligenceRoutes);
+      app.use('/api/results-strategic', resultsStrategicRoutes);
+      app.use('/api/results-driver-tree', resultsDriverTreeRoutes);
+      app.use('/api/results-extended', resultsExtendedRoutes);
       app.use('/api/realtime-v4', realtimePlatformRoutes);
       app.use('/api/inbox-v4', inboxEnterpriseRoutes);
       app.use('/api/assessments-v4', assessmentEnterpriseRoutes);
@@ -1001,6 +1055,7 @@ export class ApiGateway {
       app.use('/api/financial-modeling', gatewayVerifyToken, betaGate, financialModelingRoutes);
       app.use('/api/finance-v4', deprecationHeader('/api/v8/finance'), financeEnterpriseRoutes);
       app.use('/api/content', contentRoutes);
+      app.use('/api/referrals', referralsRoutes);
 
       // V8 API namespace — feature-gated
       logger.info('[ApiGateway] Mounting /api/v8');

@@ -163,7 +163,7 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
         <button
           onClick={() => setSoundEnabled(!soundEnabled)}
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-            soundEnabled ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
+            soundEnabled ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
           }`}
         >
           <span
@@ -250,7 +250,7 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaving ? (
             <>
@@ -274,7 +274,7 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
         </div>
       )}
       {saveStatus === 'error' && (
-        <div className="flex items-center gap-2 text-danger-600 dark:text-danger-400 text-sm">
+        <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm">
           <AlertCircle size={16} />
           {t('settings.notifications.sounds.error', 'Failed to save sound preferences')}
         </div>

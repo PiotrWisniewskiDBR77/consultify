@@ -200,7 +200,7 @@ export const ExternalDigitalWorkspace: React.FC<ExternalDigitalWorkspaceProps> =
                       </div>
                     )}
                     {assessment.processing_status === 'error' && (
-                      <AlertTriangle className="w-6 h-6 text-danger-500" />
+                      <AlertTriangle className="w-6 h-6 text-rose-500" />
                     )}
                   </div>
                 </div>

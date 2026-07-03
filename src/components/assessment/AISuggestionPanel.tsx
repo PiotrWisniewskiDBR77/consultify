@@ -152,7 +152,6 @@ const LevelSuggestionCard: React.FC<{
   onApply?: () => void;
   isPolish: boolean;
 }> = ({ suggestion, onApply, isPolish }) => {
-  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -173,7 +172,7 @@ const LevelSuggestionCard: React.FC<{
                 {suggestion.suggestedLevel}
               </span>
               <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded">
-                {suggestion.confidence}% {t('assessment.aiSuggestions.confidence', 'confidence')}
+                {suggestion.confidence}% {isPolish ? 'pewności' : 'confidence'}
               </span>
             </div>
           </div>
@@ -184,7 +183,7 @@ const LevelSuggestionCard: React.FC<{
               onClick={onApply}
               className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
             >
-              {t('assessment.aiSuggestions.apply', 'Apply')}
+              {isPolish ? 'Zastosuj' : 'Apply'}
             </button>
           )}
           <button
@@ -207,7 +206,7 @@ const LevelSuggestionCard: React.FC<{
             <div className="flex gap-4 text-sm">
               <div>
                 <span className="text-slate-500 dark:text-slate-400">
-                  {t('assessment.aiSuggestions.industryAvg', 'Industry avg:')}
+                  {isPolish ? 'Średnia branżowa:' : 'Industry avg:'}
                 </span>
                 <span className="ml-1 font-medium text-navy-900 dark:text-white">
                   {suggestion.benchmarkComparison.industryAverage}
@@ -215,7 +214,7 @@ const LevelSuggestionCard: React.FC<{
               </div>
               <div>
                 <span className="text-slate-500 dark:text-slate-400">
-                  {'Top performers:'}
+                  {isPolish ? 'Top performers:' : 'Top performers:'}
                 </span>
                 <span className="ml-1 font-medium text-navy-900 dark:text-white">
                   {suggestion.benchmarkComparison.topPerformers}
@@ -254,7 +253,6 @@ const TechnologyCard: React.FC<{
   onSelect?: () => void;
   isPolish: boolean;
 }> = ({ technology, onSelect, isPolish }) => {
-  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -271,7 +269,7 @@ const TechnologyCard: React.FC<{
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded">
-            +{technology.maturityImpact} {t('assessment.aiSuggestions.maturity', 'maturity')}
+            +{technology.maturityImpact} {isPolish ? 'dojrzałości' : 'maturity'}
           </span>
           <button
             onClick={() => setExpanded(!expanded)}
@@ -294,16 +292,16 @@ const TechnologyCard: React.FC<{
               ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
               : technology.implementationComplexity === 'medium'
                 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
-                : 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300'
+                : 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'
           }`}
         >
-          {t('assessment.aiSuggestions.complexity', 'Complexity:')}{' '}
+          {isPolish ? 'Złożoność:' : 'Complexity:'}{' '}
           {isPolish
             ? COMPLEXITY_LABELS[technology.implementationComplexity].pl
             : COMPLEXITY_LABELS[technology.implementationComplexity].en}
         </span>
         <span className="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400">
-          {t('assessment.aiSuggestions.cost', 'Cost:')}{' '}
+          {isPolish ? 'Koszt:' : 'Cost:'}{' '}
           {isPolish
             ? COST_LABELS[technology.estimatedCost].pl
             : COST_LABELS[technology.estimatedCost].en}
@@ -318,7 +316,7 @@ const TechnologyCard: React.FC<{
           {technology.alternatives && technology.alternatives.length > 0 && (
             <div>
               <h5 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-1">
-                {t('assessment.aiSuggestions.alternatives', 'Alternatives')}
+                {isPolish ? 'Alternatywy' : 'Alternatives'}
               </h5>
               <div className="flex flex-wrap gap-1">
                 {technology.alternatives.map((alt, i) => (
@@ -336,7 +334,7 @@ const TechnologyCard: React.FC<{
           {technology.prerequisites && technology.prerequisites.length > 0 && (
             <div>
               <h5 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-1">
-                {t('assessment.aiSuggestions.prerequisites', 'Prerequisites')}
+                {isPolish ? 'Wymagania' : 'Prerequisites'}
               </h5>
               <ul className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
                 {technology.prerequisites.map((prereq, i) => (
@@ -354,7 +352,7 @@ const TechnologyCard: React.FC<{
               onClick={onSelect}
               className="w-full mt-2 px-3 py-2 bg-primary-500 text-white text-sm rounded-lg hover:bg-primary-600 transition-colors"
             >
-              {t('assessment.aiSuggestions.addToPlan', 'Add to plan')}
+              {isPolish ? 'Dodaj do planu' : 'Add to plan'}
             </button>
           )}
         </div>
@@ -370,7 +368,6 @@ const GapAnalysisCard: React.FC<{
   gap: GapAnalysis;
   isPolish: boolean;
 }> = ({ gap, isPolish }) => {
-  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const priorityColor = PRIORITY_COLORS[gap.priority];
 
@@ -388,7 +385,7 @@ const GapAnalysisCard: React.FC<{
               <span
                 className={`text-${priorityColor}-600 dark:text-${priorityColor}-400 font-medium`}
               >
-                ({t('assessment.aiSuggestions.gap', 'gap')}: {gap.gap})
+                ({isPolish ? 'luka' : 'gap'}: {gap.gap})
               </span>
             </div>
           </div>
@@ -410,7 +407,7 @@ const GapAnalysisCard: React.FC<{
             <div>
               <h5 className="text-xs font-medium text-green-600 dark:text-green-400 uppercase mb-2 flex items-center gap-1">
                 <Zap size={12} />
-                {'Quick Wins'}
+                {isPolish ? 'Quick Wins' : 'Quick Wins'}
               </h5>
               <ul className="space-y-1">
                 {gap.quickWins.map((win, i) => (
@@ -430,7 +427,7 @@ const GapAnalysisCard: React.FC<{
             <div>
               <h5 className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase mb-2 flex items-center gap-1">
                 <Lightbulb size={12} />
-                {t('assessment.aiSuggestions.recommendations', 'Recommendations')}
+                {isPolish ? 'Rekomendacje' : 'Recommendations'}
               </h5>
               <ul className="space-y-1">
                 {gap.recommendations.map((rec, i) => (
@@ -450,7 +447,7 @@ const GapAnalysisCard: React.FC<{
             <div>
               <h5 className="text-xs font-medium text-primary-600 dark:text-primary-400 uppercase mb-2 flex items-center gap-1">
                 <Target size={12} />
-                {t('assessment.aiSuggestions.longTermActions', 'Long-term Actions')}
+                {isPolish ? 'Działania długoterminowe' : 'Long-term Actions'}
               </h5>
               <ul className="space-y-1">
                 {gap.longTermActions.map((action, i) => (
@@ -478,7 +475,6 @@ const RoadmapPhaseCard: React.FC<{
   phase: RoadmapPhase;
   isPolish: boolean;
 }> = ({ phase, isPolish }) => {
-  const { t } = useTranslation();
   return (
     <div className="bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg p-4">
       <div className="flex items-center gap-3 mb-3">
@@ -496,7 +492,7 @@ const RoadmapPhaseCard: React.FC<{
       <div className="space-y-2">
         <div>
           <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-            {t('assessment.aiSuggestions.focusAreas', 'Focus Areas')}
+            {isPolish ? 'Obszary fokusowe' : 'Focus Areas'}
           </span>
           <div className="flex flex-wrap gap-1 mt-1">
             {phase.focus.map((f, i) => (
@@ -512,15 +508,15 @@ const RoadmapPhaseCard: React.FC<{
 
         <div>
           <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-            {t('assessment.aiSuggestions.technologies', 'Technologies')}
+            {isPolish ? 'Technologie' : 'Technologies'}
           </span>
           <div className="flex flex-wrap gap-1 mt-1">
-            {phase.technologies.map((tech, i) => (
+            {phase.technologies.map((t, i) => (
               <span
                 key={i}
                 className="text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 px-2 py-0.5 rounded"
               >
-                {tech}
+                {t}
               </span>
             ))}
           </div>
@@ -543,7 +539,7 @@ export const AISuggestionPanel: React.FC<Props> = ({
   onSelectTechnology,
   compact = false,
 }) => {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   const [activeTab, setActiveTab] = useState<'levels' | 'technologies' | 'gaps' | 'roadmap'>(
@@ -589,7 +585,7 @@ export const AISuggestionPanel: React.FC<Props> = ({
           <div className="flex items-center gap-2">
             <Brain className="w-5 h-5 text-blue-500" />
             <span className="font-medium text-navy-900 dark:text-white">
-              {t('assessment.aiSuggestions.title', 'AI Suggestions')}
+              {isPolish ? 'Sugestie AI' : 'AI Suggestions'}
             </span>
           </div>
           <button
@@ -608,11 +604,11 @@ export const AISuggestionPanel: React.FC<Props> = ({
             </p>
             <div className="flex gap-2 text-xs">
               <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded">
-                {suggestions.levelSuggestions.length} {t('assessment.aiSuggestions.suggestionsCount', 'suggestions')}
+                {suggestions.levelSuggestions.length} {isPolish ? 'sugestii' : 'suggestions'}
               </span>
               <span className="bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 px-2 py-0.5 rounded">
                 {suggestions.technologySuggestions.length}{' '}
-                {t('assessment.aiSuggestions.technologiesCount', 'technologies')}
+                {isPolish ? 'technologii' : 'technologies'}
               </span>
             </div>
           </div>
@@ -632,10 +628,12 @@ export const AISuggestionPanel: React.FC<Props> = ({
             </div>
             <div>
               <h3 className="text-lg font-bold text-white">
-                {t('assessment.aiSuggestions.title', 'AI Suggestions')}
+                {isPolish ? 'Sugestie AI' : 'AI Suggestions'}
               </h3>
               <p className="text-sm text-white/80">
-                {t('assessment.aiSuggestions.subtitle', 'Recommendations based on industry benchmarks')}
+                {isPolish
+                  ? 'Rekomendacje oparte na benchmarkach branżowych'
+                  : 'Recommendations based on industry benchmarks'}
               </p>
             </div>
           </div>
@@ -645,7 +643,7 @@ export const AISuggestionPanel: React.FC<Props> = ({
             className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors flex items-center gap-2"
           >
             <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
-            {t('assessment.aiSuggestions.refresh', 'Refresh')}
+            {isPolish ? 'Odśwież' : 'Refresh'}
           </button>
         </div>
       </div>
@@ -653,10 +651,10 @@ export const AISuggestionPanel: React.FC<Props> = ({
       {/* Tabs */}
       <div className="flex border-b border-slate-200 dark:border-navy-700">
         {[
-          { id: 'levels', label: t('assessment.aiSuggestions.tabs.levels', 'Levels'), icon: Target },
-          { id: 'technologies', label: t('assessment.aiSuggestions.tabs.technologies', 'Technologies'), icon: Cpu },
-          { id: 'gaps', label: t('assessment.aiSuggestions.tabs.gaps', 'Gap Analysis'), icon: BarChart3 },
-          { id: 'roadmap', label: t('assessment.aiSuggestions.tabs.roadmap', 'Roadmap'), icon: TrendingUp },
+          { id: 'levels', label: isPolish ? 'Poziomy' : 'Levels', icon: Target },
+          { id: 'technologies', label: isPolish ? 'Technologie' : 'Technologies', icon: Cpu },
+          { id: 'gaps', label: isPolish ? 'Analiza luk' : 'Gap Analysis', icon: BarChart3 },
+          { id: 'roadmap', label: isPolish ? 'Roadmapa' : 'Roadmap', icon: TrendingUp },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -680,15 +678,15 @@ export const AISuggestionPanel: React.FC<Props> = ({
             <div className="text-center">
               <RefreshCw size={32} className="animate-spin text-blue-500 mx-auto mb-3" />
               <p className="text-slate-500 dark:text-slate-400">
-                {t('assessment.aiSuggestions.generating', 'Generating suggestions...')}
+                {isPolish ? 'Generowanie sugestii...' : 'Generating suggestions...'}
               </p>
             </div>
           </div>
         )}
 
         {error && (
-          <div className="bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-500/30 rounded-lg p-4">
-            <div className="flex items-center gap-2 text-danger-600 dark:text-danger-400">
+          <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 rounded-lg p-4">
+            <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
               <AlertTriangle size={18} />
               <span>{error}</span>
             </div>
@@ -724,7 +722,9 @@ export const AISuggestionPanel: React.FC<Props> = ({
                 ))}
                 {suggestions.levelSuggestions.length === 0 && (
                   <p className="text-center text-slate-500 dark:text-slate-400 py-8">
-                    {t('assessment.aiSuggestions.noLevelSuggestions', 'No level suggestions to display')}
+                    {isPolish
+                      ? 'Brak sugestii poziomów do wyświetlenia'
+                      : 'No level suggestions to display'}
                   </p>
                 )}
               </div>
@@ -742,7 +742,9 @@ export const AISuggestionPanel: React.FC<Props> = ({
                 ))}
                 {suggestions.technologySuggestions.length === 0 && (
                   <p className="text-center text-slate-500 dark:text-slate-400 py-8">
-                    {t('assessment.aiSuggestions.noTechSuggestions', 'No technology suggestions to display')}
+                    {isPolish
+                      ? 'Brak sugestii technologii do wyświetlenia'
+                      : 'No technology suggestions to display'}
                   </p>
                 )}
               </div>
@@ -755,7 +757,7 @@ export const AISuggestionPanel: React.FC<Props> = ({
                 ))}
                 {suggestions.gapAnalysis.length === 0 && (
                   <p className="text-center text-slate-500 dark:text-slate-400 py-8">
-                    {t('assessment.aiSuggestions.noGaps', 'No gaps to display')}
+                    {isPolish ? 'Brak luk do wyświetlenia' : 'No gaps to display'}
                   </p>
                 )}
               </div>

@@ -58,7 +58,13 @@ test.describe('M06 §27 — Regresja', () => {
       return;
     }
     expect(resp.status(), '§27.2: POST /map/sync returns 200').toBe(200);
-    const body = await resp.request().postDataJSON().catch(() => null);
+    // postDataJSON() is synchronous (object|null), not a promise — no await/.catch.
+    let body: { baseVersion?: unknown } | null = null;
+    try {
+      body = resp.request().postDataJSON();
+    } catch {
+      body = null;
+    }
     if (body !== null) {
       expect(typeof body.baseVersion, '§27.2: POST /map/sync body has numeric baseVersion').toBe('number');
     }

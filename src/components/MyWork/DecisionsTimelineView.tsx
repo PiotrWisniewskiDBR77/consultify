@@ -17,7 +17,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { LoadingState } from '@/components/ui/primitives';
+import { ErrorState, LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -377,6 +377,7 @@ export const DecisionsTimelineContainer: React.FC<DecisionsTimelineContainerProp
   const { currentUser } = useAppStore();
   const [decisions, setDecisions] = useState<DecisionTimelineItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [zoomLevel, setZoomLevel] = useState<TimelineZoomLevel>('week');
   const [priorityFilter, setPriorityFilter] = useState<string[]>([]);
@@ -384,6 +385,7 @@ export const DecisionsTimelineContainer: React.FC<DecisionsTimelineContainerProp
   const fetchDecisions = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const data = await Api.getDecisions();
       const raw = Array.isArray(data) ? data : [];
       const mapped: DecisionTimelineItem[] = raw.map((d: any) => ({
@@ -400,7 +402,9 @@ export const DecisionsTimelineContainer: React.FC<DecisionsTimelineContainerProp
       setDecisions(mapped);
     } catch (e) {
       console.error('Failed to fetch decisions:', e);
-      toast.error(t('myWork.decisions.fetchFailed', 'Failed to load decisions'));
+      const msg = t('myWork.decisions.fetchFailed', 'Failed to load decisions');
+      toast.error(msg);
+      setLoadError(msg);
       setDecisions([]);
     } finally {
       setLoading(false);
@@ -453,6 +457,14 @@ export const DecisionsTimelineContainer: React.FC<DecisionsTimelineContainerProp
     return (
       <div className="flex flex-1 items-center justify-center h-64 bg-navy-950">
         <LoadingState variant="spinner" />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex flex-1 items-center justify-center h-full bg-navy-950">
+        <ErrorState message={loadError} retry={fetchDecisions} />
       </div>
     );
   }

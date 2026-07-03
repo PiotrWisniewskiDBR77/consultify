@@ -127,7 +127,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
       {typeof window !== 'undefined' &&
         createPortal(
           <div
-            className={`fixed z-[9999] flex flex-col gap-2 pointer-events-none ${positionClasses[position]}`}
+            className={`fixed z-toast flex flex-col gap-2 pointer-events-none ${positionClasses[position]}`}
             style={{ maxWidth: 'min(420px, calc(100vw - 2rem))' }}
           >
             <AnimatePresence initial={false}>
