@@ -14,6 +14,11 @@ import {
   type CompositeScoresSummary,
   computeAllCompositeScores,
 } from './financeCompositeScores.js';
+import {
+  type BenchmarkRatioCode,
+  describeRatioAgainstBenchmark,
+  getRatioBenchmark,
+} from './financeIndustryBenchmarks.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -56,6 +61,18 @@ export interface ComputedRatio {
     targetMin?: number;
     targetMax?: number;
     source?: string;
+    /** 'org' = organization-entered benchmark (financial_ratio_benchmarks row);
+     *  'industry' = static per-industry fallback (financeIndustryBenchmarks). */
+    origin?: 'org' | 'industry';
+    /** Only set when origin === 'industry'. */
+    industry?: string;
+    industryLabelPl?: string;
+    industryLabelEn?: string;
+    asOf?: string;
+    confidence?: 'sourced' | 'expert-estimate';
+    /** Bilingual "your X vs industry median Y–Z" citation sentence (O6.2/O6.3). */
+    narrativePl?: string;
+    narrativeEn?: string;
   };
 }
 
@@ -97,6 +114,20 @@ function deriveStatementReadiness(row: {
     return 'recoverable';
   }
   return 'pending';
+}
+
+/** Best-effort org industry lookup — never throws (schema drift / missing org → undefined). */
+async function loadOrganizationIndustry(organizationId: string): Promise<string | undefined> {
+  try {
+    const row = await dbGet<any>(`SELECT industry FROM organizations WHERE id = ?`, [
+      organizationId,
+    ]);
+    const industry = String(row?.industry || '').trim();
+    return industry.length > 0 ? industry : undefined;
+  } catch (err) {
+    logger.warn(`[RatioAnalysisService] Could not load organization industry: ${err}`);
+    return undefined;
+  }
 }
 
 async function assertReadyStatement(statementId: string, organizationId: string): Promise<any> {
@@ -730,6 +761,95 @@ export const RATIO_CATALOG: RatioDefinition[] = [
 
 // Growth ratios are computed separately (require two periods)
 
+/**
+ * RATIO_CATALOG codes that have a matching band in the static per-industry
+ * benchmark module (O6.2/O6.3). Not every ratio in the catalog has an
+ * industry band yet — those simply keep whatever org-entered benchmark (or
+ * none) they already had.
+ */
+const CATALOG_TO_BENCHMARK_CODE: Partial<Record<string, BenchmarkRatioCode>> = {
+  GROSS_MARGIN: 'GROSS_MARGIN',
+  OPERATING_MARGIN: 'OPERATING_MARGIN',
+  EBITDA_MARGIN: 'EBITDA_MARGIN',
+  NET_MARGIN: 'NET_MARGIN',
+  ROE: 'ROE',
+  ROA: 'ROA',
+  CURRENT_RATIO: 'CURRENT_RATIO',
+  QUICK_RATIO: 'QUICK_RATIO',
+  DEBT_TO_EQUITY: 'DEBT_TO_EQUITY',
+  INVENTORY_TURNOVER: 'INVENTORY_TURNOVER',
+  DSO: 'DSO',
+  DIO: 'DIO',
+};
+
+/**
+ * Resolve the benchmark to attach to a computed ratio: an organization-
+ * entered row (financial_ratio_benchmarks) always wins; otherwise fall back
+ * to the static per-industry quartile band for the org's industry, if the
+ * ratio has one. Returns undefined when neither is available (caller then
+ * relies purely on the universal warn/critical threshold, unchanged).
+ */
+export function buildRatioBenchmark(
+  ratioCode: string,
+  orgBenchmarkRow: any,
+  orgIndustry: string | undefined,
+  computedValue: number | null
+): ComputedRatio['benchmark'] | undefined {
+  if (orgBenchmarkRow) {
+    return {
+      p25: orgBenchmarkRow.p25,
+      median: orgBenchmarkRow.median,
+      p75: orgBenchmarkRow.p75,
+      targetMin: orgBenchmarkRow.target_min,
+      targetMax: orgBenchmarkRow.target_max,
+      source: orgBenchmarkRow.source_label,
+      origin: 'org',
+    };
+  }
+
+  const benchmarkCode = CATALOG_TO_BENCHMARK_CODE[ratioCode];
+  if (!benchmarkCode) return undefined;
+
+  const def = RATIO_CATALOG.find((r) => r.code === ratioCode);
+  const higherIsBetter = def?.thresholds.direction !== 'lower_better';
+
+  const result = getRatioBenchmark(orgIndustry, benchmarkCode);
+  if (!result) return undefined;
+
+  const { band, industry, industryLabel } = result;
+  const lowBound = Math.min(band.p25, band.p75);
+  const highBound = Math.max(band.p25, band.p75);
+
+  let narrativePl: string | undefined;
+  let narrativeEn: string | undefined;
+  if (computedValue !== null && def) {
+    const described = describeRatioAgainstBenchmark({
+      industrySegment: orgIndustry,
+      ratioCode: benchmarkCode,
+      ratioLabel: { pl: def.namePl, en: def.name },
+      value: computedValue,
+      higherIsBetter,
+    });
+    narrativePl = described.sentence.pl;
+    narrativeEn = described.sentence.en;
+  }
+
+  return {
+    p25: higherIsBetter ? lowBound : highBound,
+    median: band.median,
+    p75: higherIsBetter ? highBound : lowBound,
+    source: band.source,
+    origin: 'industry',
+    industry,
+    industryLabelPl: industryLabel.pl,
+    industryLabelEn: industryLabel.en,
+    asOf: band.asOf,
+    confidence: band.confidence,
+    narrativePl,
+    narrativeEn,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Compute ratios for a single statement
 // ---------------------------------------------------------------------------
@@ -757,7 +877,7 @@ export async function computeRatios(
   }
   const resolvedValues = deriveComputedValues(withCanonicalAliases(values));
 
-  // Load benchmarks
+  // Load benchmarks — organization-entered rows win when present.
   const benchmarkRows = (await dbAll(
     `SELECT * FROM financial_ratio_benchmarks WHERE organization_id = ?`,
     [organizationId]
@@ -766,6 +886,11 @@ export async function computeRatios(
   for (const b of benchmarkRows) {
     benchmarkMap[b.ratio_code] = b;
   }
+
+  // No org-entered benchmark for a ratio → fall back to the static
+  // per-industry quartile bands (financeIndustryBenchmarks, O6.2/O6.3)
+  // instead of leaving the ratio without any comparison context.
+  const orgIndustry = await loadOrganizationIndustry(organizationId);
 
   const ratios: ComputedRatio[] = [];
 
@@ -807,18 +932,7 @@ export async function computeRatios(
       unit: def.unit,
       coveragePct,
       missingLines,
-      ...(bm
-        ? {
-            benchmark: {
-              p25: bm.p25,
-              median: bm.median,
-              p75: bm.p75,
-              targetMin: bm.target_min,
-              targetMax: bm.target_max,
-              source: bm.source_label,
-            },
-          }
-        : {}),
+      benchmark: buildRatioBenchmark(def.code, bm, orgIndustry, computedValue),
     });
   }
 
