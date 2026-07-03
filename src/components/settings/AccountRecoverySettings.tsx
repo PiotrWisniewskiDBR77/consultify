@@ -63,11 +63,11 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+        <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Shield className="w-5 h-5 text-emerald-500" />
           {t('settings.recovery.title', 'Account Recovery')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        <p className="text-sm text-c-text-muted mt-1">
           {t(
             'settings.recovery.description',
             'Set up backup options to recover your account if you lose access'
@@ -81,16 +81,16 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
       />
 
       {/* Backup Email */}
-      <div className="p-4 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-navy-700 space-y-4">
+      <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 space-y-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center">
             <Mail className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           </div>
           <div className="flex-1">
-            <h4 className="font-medium text-slate-900 dark:text-white">
+            <h4 className="font-medium text-c-text">
               {t('settings.recovery.backupEmail', 'Backup Email')}
             </h4>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t(
                 'settings.recovery.backupEmailDesc',
                 'Use to recover your account if you lose access'
@@ -105,13 +105,13 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
             value=""
             disabled
             placeholder={t('settings.recovery.enterBackupEmail', 'Enter backup email address')}
-            className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-400 placeholder-slate-400 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-2.5 rounded-lg border border-c-border-subtle dark:border-navy-700 bg-c-surface-raised text-c-text-muted placeholder-c-text-muted disabled:cursor-not-allowed"
           />
           <button
             onClick={showUnavailableNotice}
             disabled
             title={t('settings.recovery.unavailable', recoveryUnavailableReason)}
-            className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-2.5 bg-c-accent hover:bg-c-accent text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
           >
             <Check className="w-4 h-4" />
             {t('common.verify', 'Verify')}
@@ -120,16 +120,16 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
       </div>
 
       {/* Phone Number */}
-      <div className="p-4 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-navy-700 space-y-4">
+      <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 space-y-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-500/20 flex items-center justify-center">
             <Phone className="w-5 h-5 text-green-600 dark:text-green-400" />
           </div>
           <div className="flex-1">
-            <h4 className="font-medium text-slate-900 dark:text-white">
+            <h4 className="font-medium text-c-text">
               {t('settings.recovery.phone', 'Phone Number')}
             </h4>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t('settings.recovery.phoneDesc', 'Receive SMS codes for account recovery')}
             </p>
           </div>
@@ -141,13 +141,13 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
             value=""
             disabled
             placeholder={t('settings.recovery.enterPhone', '+1 (555) 123-4567')}
-            className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-400 placeholder-slate-400 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-2.5 rounded-lg border border-c-border-subtle dark:border-navy-700 bg-c-surface-raised text-c-text-muted placeholder-c-text-muted disabled:cursor-not-allowed"
           />
           <button
             onClick={showUnavailableNotice}
             disabled
             title={t('settings.recovery.unavailable', recoveryUnavailableReason)}
-            className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-2.5 bg-c-accent hover:bg-c-accent text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
           >
             <Check className="w-4 h-4" />
             {t('common.verify', 'Verify')}
@@ -156,17 +156,17 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
       </div>
 
       {/* Recovery Codes */}
-      <div className="p-4 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-navy-700 space-y-4">
+      <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center">
               <Key className="w-5 h-5 text-amber-600 dark:text-amber-400" />
             </div>
             <div>
-              <h4 className="font-medium text-slate-900 dark:text-white">
+              <h4 className="font-medium text-c-text">
                 {t('settings.recovery.recoveryCodes', 'Recovery Codes')}
               </h4>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t(
                   'settings.recovery.recoveryCodesDesc',
                   'One-time use codes for emergency access'
@@ -185,8 +185,8 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
           </button>
         </div>
 
-        <div className="mt-4 p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
-          <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+        <div className="mt-4 p-4 bg-c-surface-raised rounded-lg">
+          <div className="flex items-center gap-2 text-sm text-c-text-muted">
             <Copy className="w-4 h-4" />
             {t(
               'settings.recovery.codesUnavailable',
@@ -197,16 +197,16 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
       </div>
 
       {/* Trusted Devices */}
-      <div className="p-4 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-navy-700 space-y-4">
+      <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 space-y-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-500/20 flex items-center justify-center">
-            <Smartphone className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+          <div className="w-10 h-10 rounded-lg bg-c-accent-soft dark:bg-c-accent-soft flex items-center justify-center">
+            <Smartphone className="w-5 h-5 text-c-accent" />
           </div>
           <div>
-            <h4 className="font-medium text-slate-900 dark:text-white">
+            <h4 className="font-medium text-c-text">
               {t('settings.recovery.trustedDevices', 'Trusted Devices')}
             </h4>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t(
                 'settings.recovery.trustedDevicesDesc',
                 'Devices that can access your account without additional verification'
@@ -219,13 +219,13 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
           {trustedDevices.map((device) => (
             <div
               key={device.id}
-              className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg"
+              className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg"
             >
               <div className="flex items-center gap-3">
-                <Smartphone className="w-5 h-5 text-slate-600 dark:text-slate-500" />
+                <Smartphone className="w-5 h-5 text-c-text-secondary" />
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="font-medium text-slate-900 dark:text-white">{device.name}</p>
+                    <p className="font-medium text-c-text">{device.name}</p>
                     {device.is_current && (
                       <StatusChip
                         tone="success"
@@ -233,7 +233,7 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
                       />
                     )}
                   </div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-c-text-muted">
                     {device.browser} • {device.last_used}
                   </p>
                 </div>
@@ -242,7 +242,7 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
                 <button
                   disabled
                   title={t('settings.recovery.unavailable', recoveryUnavailableReason)}
-                  className="p-2 text-slate-600 dark:text-slate-400 rounded-lg disabled:cursor-not-allowed"
+                  className="p-2 text-c-text-secondary rounded-lg disabled:cursor-not-allowed"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

@@ -95,11 +95,11 @@ export const AIParametersSettings: React.FC<AIParametersSettingsProps> = ({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+        <h3 className="text-lg font-semibold text-c-text mb-2 flex items-center gap-2">
           <Sliders size={20} />
           {t('settings.ai.parameters.title', 'AI Parameters')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-c-text-muted">
           {t(
             'settings.ai.parameters.subtitle',
             'Fine-tune AI behavior and response characteristics'
@@ -110,10 +110,10 @@ export const AIParametersSettings: React.FC<AIParametersSettingsProps> = ({
       {/* Temperature */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          <label className="text-sm font-medium text-c-text-secondary">
             {t('settings.ai.parameters.temperature', 'Temperature')}
           </label>
-          <span className="text-sm text-slate-500 dark:text-slate-400">
+          <span className="text-sm text-c-text-muted">
             {temperature.toFixed(1)}
           </span>
         </div>
@@ -127,12 +127,12 @@ export const AIParametersSettings: React.FC<AIParametersSettingsProps> = ({
             onChange={(e) => setTemperature(Number(e.target.value))}
             className="w-full"
           />
-          <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex justify-between text-xs text-c-text-muted">
             <span>{t('settings.ai.parameters.focused', 'Focused')}</span>
             <span>{t('settings.ai.parameters.creative', 'Creative')}</span>
           </div>
         </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-c-text-muted">
           {t(
             'settings.ai.parameters.temperatureDesc',
             'Lower values make responses more focused, higher values more creative'
@@ -143,10 +143,10 @@ export const AIParametersSettings: React.FC<AIParametersSettingsProps> = ({
       {/* Max Tokens */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          <label className="text-sm font-medium text-c-text-secondary">
             {t('settings.ai.parameters.maxTokens', 'Max Tokens per Response')}
           </label>
-          <span className="text-sm text-slate-500 dark:text-slate-400">
+          <span className="text-sm text-c-text-muted">
             {maxTokens.toLocaleString()}
           </span>
         </div>
@@ -157,24 +157,24 @@ export const AIParametersSettings: React.FC<AIParametersSettingsProps> = ({
           step="100"
           value={maxTokens}
           onChange={(e) => setMaxTokens(Number(e.target.value))}
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
+          className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
         />
       </div>
 
       {/* Context Window */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          <label className="text-sm font-medium text-c-text-secondary">
             {t('settings.ai.parameters.contextWindow', 'Context Window Size')}
           </label>
-          <span className="text-sm text-slate-500 dark:text-slate-400">
+          <span className="text-sm text-c-text-muted">
             {contextWindowSize.toLocaleString()}
           </span>
         </div>
         <select
           value={contextWindowSize}
           onChange={(e) => setContextWindowSize(Number(e.target.value))}
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
+          className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
         >
           <option value="2000">2,000 tokens</option>
           <option value="4000">4,000 tokens</option>
@@ -186,7 +186,7 @@ export const AIParametersSettings: React.FC<AIParametersSettingsProps> = ({
 
       {/* Response Speed */}
       <div className="space-y-4">
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label className="block text-sm font-medium text-c-text-secondary">
           {t('settings.ai.parameters.responseSpeed', 'Response Speed')}
         </label>
         <div className="grid grid-cols-3 gap-3">
@@ -196,20 +196,20 @@ export const AIParametersSettings: React.FC<AIParametersSettingsProps> = ({
               onClick={() => setResponseSpeed(option.value)}
               className={`p-4 rounded-lg border-2 transition-all text-left ${
                 responseSpeed === option.value
-                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/20'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
+                  ? 'border-c-accent bg-c-accent-soft dark:bg-c-accent-soft'
+                  : 'border-c-border-subtle dark:border-navy-700 hover:border-c-accent'
               }`}
             >
               <div
                 className={`text-sm font-medium ${
                   responseSpeed === option.value
-                    ? 'text-primary-700 dark:text-primary-300'
-                    : 'text-slate-600 dark:text-slate-400'
+                    ? 'text-c-accent'
+                    : 'text-c-text-secondary'
                 }`}
               >
                 {option.label}
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <div className="text-xs text-c-text-muted mt-1">
                 {option.description}
               </div>
             </button>
@@ -222,7 +222,7 @@ export const AIParametersSettings: React.FC<AIParametersSettingsProps> = ({
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2 bg-c-accent hover:bg-c-accent text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaving ? (
             <>
