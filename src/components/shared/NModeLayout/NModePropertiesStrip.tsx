@@ -42,7 +42,7 @@ export const NModePropertiesStrip: React.FC<NModePropertiesStripProps> = ({
   const gridClass = `grid grid-cols-2 sm:grid-cols-3 ${lgCols} gap-3`;
 
   return (
-    <div className="mb-4 p-4 rounded-2xl bg-slate-50/90 dark:bg-navy-900/50 backdrop-blur-xl">
+    <div className="mb-3 px-4 py-2.5 rounded-2xl bg-slate-50/90 dark:bg-navy-900/50 backdrop-blur-xl">
       <div className={gridClass}>
         {fields.map((field) => {
           // Tailwind needs static class names — map colSpan to known utilities
@@ -73,7 +73,7 @@ export const NModePropertiesStrip: React.FC<NModePropertiesStripProps> = ({
               {field.type === 'custom' && field.render ? (
                 field.render()
               ) : isReadOnlyValue ? (
-                <div className="flex h-8 items-center text-sm font-medium text-slate-800 dark:text-slate-200">
+                <div className="flex h-7 items-center text-sm font-medium text-slate-800 dark:text-slate-200">
                   <span className="truncate">{readOnlyDisplay || '—'}</span>
                 </div>
               ) : /* Select field */

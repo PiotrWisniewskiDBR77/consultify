@@ -125,11 +125,16 @@ const TAB_BASE = `
   transition-colors duration-150
 `;
 
+// UI-T6/T9: inactive tabs carry a visible pill frame, matching the My Work
+// canon (MENU_2_TAB_INACTIVE in ModuleMenu3.tsx). Piotr Session 3: Tools /
+// Assessment / Initiatives / Materiały tabs looked like bare labels because
+// the inactive border was transparent — every tab now reads as a real pill.
 const TAB_INACTIVE = `
   ${TAB_BASE}
-  border border-transparent
+  border border-slate-200/70 dark:border-white/[0.06]
+  bg-white/70 dark:bg-white/[0.04]
   text-c-text-muted
-  hover:text-c-text hover:bg-c-surface-raised
+  hover:text-c-text hover:bg-slate-100/70 dark:hover:bg-white/[0.06]
 `;
 
 const TAB_ACTIVE = `
@@ -144,14 +149,19 @@ const BUTTON_BASE = `
   transition-colors duration-150
 `;
 
+// UI-T6/T9: second-row buttons also read as bare labels — give them the same
+// visible pill frame as the tab row (My Work MENU_2_TAB_INACTIVE canon).
 const BUTTON_INACTIVE = `
   ${BUTTON_BASE}
+  border border-slate-200/70 dark:border-white/[0.06]
+  bg-white/70 dark:bg-white/[0.04]
   text-slate-700 dark:text-slate-300
-  hover:bg-slate-100/70 dark:hover:bg-white/[0.05]
+  hover:bg-slate-100/70 dark:hover:bg-white/[0.06]
 `;
 
 const BUTTON_ACTIVE = `
   ${BUTTON_BASE}
+  border border-c-border
   bg-slate-900/[0.07] text-slate-900 dark:bg-white/10 dark:text-slate-100
 `;
 
