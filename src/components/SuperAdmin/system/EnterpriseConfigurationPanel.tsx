@@ -31,6 +31,7 @@ import { toast } from 'react-hot-toast';
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState } from '../../Admin/AdminState';
+import { LoadingState } from '../../shared/states';
 
 interface ConfigItem {
   id: string;
@@ -395,10 +396,10 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+          <h2 className="text-2xl font-bold text-c-text">
             Configuration Management
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 text-sm">
+          <p className="text-c-text-secondary text-sm">
             Manage system settings and environment configurations
           </p>
         </div>
@@ -406,7 +407,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
           <button
             onClick={handleExportConfig}
             disabled={!!loadError}
-            className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-navy-950/20 hover:bg-slate-50 dark:hover:bg-navy-800/40 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-2 bg-c-surface hover:bg-c-surface-raised border border-c-border text-c-text-secondary rounded-lg transition-colors"
           >
             <Download className="w-4 h-4" />
             Export
@@ -423,7 +424,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
       </div>
 
       {/* Environment Selector */}
-      <div className="flex items-center gap-2 p-2 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 w-fit">
+      <div className="flex items-center gap-2 p-2 bg-c-surface-raised rounded-xl border border-c-border w-fit">
         {ENVIRONMENTS.map((env) => (
           <button
             key={env}
@@ -432,11 +433,11 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               selectedEnvironment === env
                 ? env === 'production'
-                  ? 'bg-danger-500/20 text-danger-400 border border-danger-500/30'
+                  ? 'bg-c-danger/20 text-c-danger border border-c-danger/30'
                   : env === 'staging'
-                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                    : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800/20'
+                    ? 'bg-c-warning/20 text-c-warning border border-c-warning/30'
+                    : 'bg-c-success/20 text-c-success border border-c-success/30'
+                : 'text-c-text-secondary hover:bg-c-surface-raised'
             }`}
           >
             {env.charAt(0).toUpperCase() + env.slice(1)}
@@ -448,7 +449,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
       <div className="flex items-center gap-4">
         <div className="flex-1 relative">
           <Search
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 dark:text-slate-400"
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-c-text-muted"
             size={16}
           />
           <input
@@ -457,10 +458,10 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             disabled={!!loadError}
-            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+            className="w-full pl-10 pr-4 py-2 bg-c-surface border border-c-border rounded-lg text-c-text placeholder:text-c-text-muted"
           />
         </div>
-        <div className="flex gap-1 p-1 bg-slate-50 dark:bg-white/5 rounded-lg">
+        <div className="flex gap-1 p-1 bg-c-surface-raised rounded-lg">
           {CATEGORIES.map((cat) => (
             <button
               key={cat.id}
@@ -469,7 +470,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
               className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                 selectedCategory === cat.id
                   ? 'bg-navy-900 text-white'
-                  : 'text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/20'
+                  : 'text-c-text-secondary hover:bg-c-surface-raised'
               }`}
             >
               {cat.icon} {cat.label}
@@ -482,39 +483,39 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-danger-500/30 bg-danger-500/5 p-4 text-sm text-danger-600 dark:text-danger-300"
+          className="rounded-xl border border-c-danger/30 bg-c-danger/5 p-4 text-sm text-c-danger"
         >
           {actionError}
         </div>
       )}
 
       {loadError ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+        <div className="rounded-xl border border-c-border bg-c-surface p-6">
           <DegradedState title="Configuration overview unavailable" description={loadError} />
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-            <div className="text-sm text-slate-600 dark:text-slate-400">Total Configs</div>
-            <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+          <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+            <div className="text-sm text-c-text-secondary">Total Configs</div>
+            <div className="text-2xl font-bold text-c-text">
               {configs.length}
             </div>
           </div>
-          <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30">
-            <div className="text-sm text-slate-600 dark:text-slate-400">Sensitive</div>
-            <div className="text-2xl font-bold text-amber-400">
+          <div className="p-4 bg-c-warning/10 rounded-xl border border-c-warning/30">
+            <div className="text-sm text-c-text-secondary">Sensitive</div>
+            <div className="text-2xl font-bold text-c-warning">
               {configs.filter((c) => c.is_sensitive).length}
             </div>
           </div>
-          <div className="p-4 bg-primary-600/10 rounded-xl border border-primary-500/30">
-            <div className="text-sm text-slate-600 dark:text-slate-400">Categories</div>
-            <div className="text-2xl font-bold text-primary-700 dark:text-primary-300">
+          <div className="p-4 bg-c-accent-soft rounded-xl border border-c-accent/30">
+            <div className="text-sm text-c-text-secondary">Categories</div>
+            <div className="text-2xl font-bold text-c-accent">
               {new Set(configs.map((c) => c.category)).size}
             </div>
           </div>
-          <div className="p-4 bg-primary-500/10 rounded-xl border border-primary-500/30">
-            <div className="text-sm text-slate-600 dark:text-slate-400">Unsaved Changes</div>
-            <div className="text-2xl font-bold text-primary-400">
+          <div className="p-4 bg-c-accent-soft rounded-xl border border-c-accent/30">
+            <div className="text-sm text-c-text-secondary">Unsaved Changes</div>
+            <div className="text-2xl font-bold text-c-accent">
               {Object.keys(unsavedChanges).length}
             </div>
           </div>
@@ -522,11 +523,9 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
       )}
 
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-slate-600 dark:text-slate-500 animate-spin" />
-        </div>
+        <LoadingState template="list" />
       ) : loadError ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+        <div className="rounded-xl border border-c-border bg-c-surface p-6">
           <DegradedState title="System configuration unavailable" description={loadError} />
         </div>
       ) : (
@@ -541,30 +540,30 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
             return (
               <div
                 key={category}
-                className="bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden"
+                className="bg-c-surface-raised rounded-xl border border-c-border overflow-hidden"
               >
                 <button
                   onClick={() => toggleCategory(category)}
-                  className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
+                  className="w-full flex items-center justify-between p-4 hover:bg-c-surface-raised transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-xl">{catInfo.icon}</span>
-                    <span className="font-medium text-slate-900 dark:text-slate-100">
+                    <span className="font-medium text-c-text">
                       {catInfo.label}
                     </span>
-                    <span className="px-2 py-0.5 text-xs bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded">
+                    <span className="px-2 py-0.5 text-xs bg-c-surface-raised text-c-text-secondary rounded">
                       {items.length}
                     </span>
                   </div>
                   {isExpanded ? (
-                    <ChevronDown className="w-5 h-5 text-slate-600 dark:text-slate-500" />
+                    <ChevronDown className="w-5 h-5 text-c-text-secondary" />
                   ) : (
-                    <ChevronRight className="w-5 h-5 text-slate-600 dark:text-slate-500" />
+                    <ChevronRight className="w-5 h-5 text-c-text-secondary" />
                   )}
                 </button>
 
                 {isExpanded && (
-                  <div className="border-t border-slate-200 dark:border-white/10">
+                  <div className="border-t border-c-border-subtle">
                     {items.map((config) => (
                       <ConfigRow
                         key={config.id}
@@ -633,29 +632,29 @@ const ConfigRow: React.FC<{
   const displayValue = config.is_sensitive && !isRevealed ? '••••••••••••••••' : config.value;
 
   return (
-    <div className="flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors border-b border-slate-200 dark:border-white/5 last:border-b-0">
+    <div className="flex items-center justify-between p-4 hover:bg-c-surface-raised transition-colors border-b border-c-border-subtle last:border-b-0">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <code className="text-sm text-primary-600 dark:text-primary-400 font-mono">
+          <code className="text-sm text-c-accent font-mono">
             {config.key}
           </code>
-          <span className="text-xs text-slate-500 dark:text-slate-400">
+          <span className="text-xs text-c-text-muted">
             {TYPE_ICONS[config.type]}
           </span>
-          {config.is_sensitive && <Lock className="w-3 h-3 text-amber-400" />}
-          {config.is_locked && <Lock className="w-3 h-3 text-slate-500 dark:text-slate-400" />}
+          {config.is_sensitive && <Lock className="w-3 h-3 text-c-warning" />}
+          {config.is_locked && <Lock className="w-3 h-3 text-c-text-muted" />}
         </div>
         {config.description && (
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{config.description}</p>
+          <p className="text-xs text-c-text-muted mt-1">{config.description}</p>
         )}
         <div className="mt-1 flex items-center gap-2">
           <code
             className={`text-sm ${
               config.type === 'boolean'
                 ? config.value === 'true'
-                  ? 'text-emerald-400'
-                  : 'text-danger-400'
-                : 'text-slate-700 dark:text-slate-300'
+                  ? 'text-c-success'
+                  : 'text-c-danger'
+                : 'text-c-text-secondary'
             } font-mono truncate max-w-md`}
           >
             {displayValue}
@@ -666,38 +665,38 @@ const ConfigRow: React.FC<{
         {config.is_sensitive && (
           <button
             onClick={onToggleReveal}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
+            className="p-2 hover:bg-c-surface-raised rounded-lg transition-colors"
             title={isRevealed ? 'Hide' : 'Reveal'}
           >
             {isRevealed ? (
-              <EyeOff className="w-4 h-4 text-slate-600 dark:text-slate-500" />
+              <EyeOff className="w-4 h-4 text-c-text-secondary" />
             ) : (
-              <Eye className="w-4 h-4 text-slate-600 dark:text-slate-500" />
+              <Eye className="w-4 h-4 text-c-text-secondary" />
             )}
           </button>
         )}
         <button
           onClick={onHistory}
-          className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
+          className="p-2 hover:bg-c-surface-raised rounded-lg transition-colors"
           title="History"
         >
-          <History className="w-4 h-4 text-slate-600 dark:text-slate-500" />
+          <History className="w-4 h-4 text-c-text-secondary" />
         </button>
         <button
           onClick={onEdit}
-          className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
+          className="p-2 hover:bg-c-surface-raised rounded-lg transition-colors"
           title="Edit"
           disabled={config.is_locked}
         >
-          <Edit className="w-4 h-4 text-slate-600 dark:text-slate-500" />
+          <Edit className="w-4 h-4 text-c-text-secondary" />
         </button>
         <button
           onClick={onDelete}
-          className="p-2 hover:bg-danger-500/20 rounded-lg transition-colors"
+          className="p-2 hover:bg-c-danger/20 rounded-lg transition-colors"
           title="Delete"
           disabled={config.is_locked}
         >
-          <Trash2 className="w-4 h-4 text-danger-400" />
+          <Trash2 className="w-4 h-4 text-c-danger" />
         </button>
       </div>
     </div>
@@ -729,14 +728,14 @@ const ConfigEditModal: React.FC<{
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
-      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-lg">
+      <div className="bg-c-surface rounded-xl border border-c-border p-6 w-full max-w-lg">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white">Edit Configuration</h3>
+          <h3 className="text-xl font-bold text-c-text">Edit Configuration</h3>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+            className="p-2 hover:bg-c-surface-raised rounded-lg"
           >
-            <X className="w-5 h-5 text-slate-600 dark:text-slate-500" />
+            <X className="w-5 h-5 text-c-text-secondary" />
           </button>
         </div>
 
@@ -744,30 +743,30 @@ const ConfigEditModal: React.FC<{
           {saveError && (
             <div
               role="alert"
-              className="rounded-lg border border-danger-500/30 bg-danger-500/5 p-3 text-sm text-danger-600 dark:text-danger-300"
+              className="rounded-lg border border-c-danger/30 bg-c-danger/5 p-3 text-sm text-c-danger"
             >
               {saveError}
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">
               Key
             </label>
-            <code className="block w-full px-3 py-2 bg-slate-200 dark:bg-slate-800 text-blue-400 rounded-lg font-mono">
+            <code className="block w-full px-3 py-2 bg-c-surface-raised text-c-info rounded-lg font-mono">
               {config.key}
             </code>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">
               Value ({config.type})
             </label>
             {config.type === 'boolean' ? (
               <select
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
+                className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
               >
                 <option value="true">True</option>
                 <option value="false">False</option>
@@ -777,7 +776,7 @@ const ConfigEditModal: React.FC<{
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 rows={6}
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white font-mono text-sm"
+                className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text font-mono text-sm"
               />
             ) : (
               <input
@@ -791,14 +790,14 @@ const ConfigEditModal: React.FC<{
                 value={value}
                 aria-label="Configuration Value"
                 onChange={(e) => setValue(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
+                className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
               />
             )}
           </div>
 
           {config.description && (
-            <div className="p-3 bg-slate-100 dark:bg-slate-800/50 rounded-lg">
-              <p className="text-sm text-slate-600 dark:text-slate-500">{config.description}</p>
+            <div className="p-3 bg-c-surface-raised rounded-lg">
+              <p className="text-sm text-c-text-secondary">{config.description}</p>
             </div>
           )}
 
@@ -806,7 +805,7 @@ const ConfigEditModal: React.FC<{
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"
+              className="px-4 py-2 text-c-text-secondary hover:text-c-text"
             >
               Cancel
             </button>

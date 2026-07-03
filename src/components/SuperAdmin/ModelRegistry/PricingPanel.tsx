@@ -6,7 +6,6 @@ import {
   DollarSign,
   Edit,
   History,
-  Loader2,
   Plus,
   RefreshCw,
   Save,
@@ -17,6 +16,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState, LoadingState } from '@/components/shared/states';
+
 import type { PriceSnapshot, PriceSource } from './types';
 
 const authHeaders = () => ({
@@ -25,9 +26,9 @@ const authHeaders = () => ({
 });
 
 const SOURCE_BADGE_STYLES: Record<PriceSource, { bg: string; text: string }> = {
-  api_sync: { bg: 'bg-blue-500/10', text: 'text-blue-400' },
-  manual: { bg: 'bg-amber-500/10', text: 'text-amber-400' },
-  contract: { bg: 'bg-emerald-500/10', text: 'text-emerald-400' },
+  api_sync: { bg: 'bg-c-info/10', text: 'text-c-info' },
+  manual: { bg: 'bg-c-warning/10', text: 'text-c-warning' },
+  contract: { bg: 'bg-c-success/10', text: 'text-c-success' },
 };
 
 function SourceBadge({ source }: { source: PriceSource }) {
@@ -181,8 +182,8 @@ export const PricingPanel: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+      <div className="p-6">
+        <LoadingState template="list" />
       </div>
     );
   }
@@ -192,11 +193,11 @@ export const PricingPanel: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <DollarSign size={24} className="text-indigo-500" />
+          <h2 className="text-xl font-bold text-c-text flex items-center gap-2">
+            <DollarSign size={24} className="text-c-info" />
             {t('modelRegistry.pricing.title', 'Model Pricing')}
           </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-muted mt-1">
             {t(
               'modelRegistry.pricing.description',
               'View and manage model pricing with versioned snapshots'
@@ -206,13 +207,13 @@ export const PricingPanel: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={loadSnapshots}
-            className="p-2 text-slate-600 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
+            className="p-2 text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised rounded-lg transition-colors"
           >
             <RefreshCw size={18} />
           </button>
           <button
             onClick={() => setShowAddForm(!showAddForm)}
-            className="flex items-center gap-2 px-4 h-9 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-4 h-9 bg-c-accent hover:brightness-95 text-white rounded-full text-sm font-medium transition-colors"
           >
             <Plus size={16} />
             Add Price Snapshot
@@ -222,20 +223,20 @@ export const PricingPanel: React.FC = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-          <div className="text-sm text-slate-500 dark:text-slate-400">Total Snapshots</div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-white">
+        <div className="bg-c-surface rounded-xl border border-c-border p-4">
+          <div className="text-sm text-c-text-muted">Total Snapshots</div>
+          <div className="text-2xl font-bold text-c-text">
             {snapshots.length}
           </div>
         </div>
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-          <div className="text-sm text-slate-500 dark:text-slate-400">Models Priced</div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-white">
+        <div className="bg-c-surface rounded-xl border border-c-border p-4">
+          <div className="text-sm text-c-text-muted">Models Priced</div>
+          <div className="text-2xl font-bold text-c-text">
             {new Set(snapshots.map((s) => s.modelId)).size}
           </div>
         </div>
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-          <div className="text-sm text-slate-500 dark:text-slate-400">Sources</div>
+        <div className="bg-c-surface rounded-xl border border-c-border p-4">
+          <div className="text-sm text-c-text-muted">Sources</div>
           <div className="flex items-center gap-2 mt-1">
             {(['api_sync', 'manual', 'contract'] as PriceSource[]).map((s) => {
               const count = snapshots.filter((snap) => snap.source === s).length;
@@ -248,14 +249,14 @@ export const PricingPanel: React.FC = () => {
 
       {/* Add form */}
       {showAddForm && (
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6 space-y-4">
+        <div className="bg-c-surface rounded-xl border border-c-border p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+            <h3 className="text-sm font-semibold text-c-text">
               New Price Snapshot
             </h3>
             <button
               onClick={handleCreateSnapshot}
-              className="flex items-center gap-2 px-4 h-9 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium transition-colors"
+              className="flex items-center gap-2 px-4 h-9 bg-c-success hover:brightness-95 text-white rounded-lg text-sm font-medium transition-colors"
             >
               <Save size={16} />
               Create
@@ -263,35 +264,35 @@ export const PricingPanel: React.FC = () => {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+              <label className="block text-xs text-c-text-muted mb-1">
                 Provider
               </label>
               <input
                 value={form.provider}
                 onChange={(e) => setForm((p) => ({ ...p, provider: e.target.value }))}
                 placeholder="openrouter"
-                className="w-full h-9 px-3 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm"
+                className="w-full h-9 px-3 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
               />
             </div>
             <div>
-              <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+              <label className="block text-xs text-c-text-muted mb-1">
                 Model ID
               </label>
               <input
                 value={form.modelId}
                 onChange={(e) => setForm((p) => ({ ...p, modelId: e.target.value }))}
                 placeholder="openai/gpt-4o"
-                className="w-full h-9 px-3 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm"
+                className="w-full h-9 px-3 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
               />
             </div>
             <div>
-              <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+              <label className="block text-xs text-c-text-muted mb-1">
                 Source
               </label>
               <select
                 value={form.source}
                 onChange={(e) => setForm((p) => ({ ...p, source: e.target.value as PriceSource }))}
-                className="w-full h-9 px-3 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm"
+                className="w-full h-9 px-3 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
               >
                 <option value="manual">Manual</option>
                 <option value="api_sync">API Sync</option>
@@ -299,20 +300,20 @@ export const PricingPanel: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+              <label className="block text-xs text-c-text-muted mb-1">
                 Effective From
               </label>
               <input
                 type="date"
                 value={form.effectiveFrom}
                 onChange={(e) => setForm((p) => ({ ...p, effectiveFrom: e.target.value }))}
-                className="w-full h-9 px-3 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm"
+                className="w-full h-9 px-3 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
               />
             </div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+              <label className="block text-xs text-c-text-muted mb-1">
                 Input / 1M tokens ($)
               </label>
               <input
@@ -321,11 +322,11 @@ export const PricingPanel: React.FC = () => {
                 value={form.inputPer1MTokens}
                 onChange={(e) => setForm((p) => ({ ...p, inputPer1MTokens: e.target.value }))}
                 placeholder="0.00"
-                className="w-full h-9 px-3 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm"
+                className="w-full h-9 px-3 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
               />
             </div>
             <div>
-              <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+              <label className="block text-xs text-c-text-muted mb-1">
                 Output / 1M tokens ($)
               </label>
               <input
@@ -334,11 +335,11 @@ export const PricingPanel: React.FC = () => {
                 value={form.outputPer1MTokens}
                 onChange={(e) => setForm((p) => ({ ...p, outputPer1MTokens: e.target.value }))}
                 placeholder="0.00"
-                className="w-full h-9 px-3 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm"
+                className="w-full h-9 px-3 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
               />
             </div>
             <div>
-              <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+              <label className="block text-xs text-c-text-muted mb-1">
                 Per Image ($)
               </label>
               <input
@@ -347,11 +348,11 @@ export const PricingPanel: React.FC = () => {
                 value={form.perImage}
                 onChange={(e) => setForm((p) => ({ ...p, perImage: e.target.value }))}
                 placeholder="0.000"
-                className="w-full h-9 px-3 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm"
+                className="w-full h-9 px-3 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
               />
             </div>
             <div>
-              <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+              <label className="block text-xs text-c-text-muted mb-1">
                 Per Request ($)
               </label>
               <input
@@ -360,17 +361,17 @@ export const PricingPanel: React.FC = () => {
                 value={form.perRequest}
                 onChange={(e) => setForm((p) => ({ ...p, perRequest: e.target.value }))}
                 placeholder="0.0000"
-                className="w-full h-9 px-3 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm"
+                className="w-full h-9 px-3 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
               />
             </div>
           </div>
           <div>
-            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Notes</label>
+            <label className="block text-xs text-c-text-muted mb-1">Notes</label>
             <input
               value={form.notes}
               onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
               placeholder="Optional notes about this price entry"
-              className="w-full h-9 px-3 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm"
+              className="w-full h-9 px-3 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
             />
           </div>
         </div>
@@ -378,81 +379,81 @@ export const PricingPanel: React.FC = () => {
 
       {/* Search */}
       <div className="relative max-w-md">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-secondary" />
         <input
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Search by model or provider..."
-          className="w-full pl-10 pr-4 h-9 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder-slate-400"
+          className="w-full pl-10 pr-4 h-9 bg-c-surface border border-c-border rounded-lg text-c-text text-sm placeholder-c-text-muted"
         />
       </div>
 
       {/* Pricing table grouped by model */}
-      <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+      <div className="bg-c-surface rounded-xl border border-c-border overflow-hidden">
         <table /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */  className="w-full">
           <thead>
-            <tr className="border-b border-slate-200 dark:border-navy-700">
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+            <tr className="border-b border-c-border">
+              <th className="text-left px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
                 Model
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+              <th className="text-left px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
                 Provider
               </th>
-              <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+              <th className="text-right px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
                 Input/1M
               </th>
-              <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+              <th className="text-right px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
                 Output/1M
               </th>
-              <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+              <th className="text-right px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
                 Per Image
               </th>
-              <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+              <th className="text-right px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
                 Per Request
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+              <th className="text-left px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
                 Source
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+              <th className="text-left px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
                 Effective
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-navy-700">
+          <tbody className="divide-y divide-c-border">
             {filteredSnapshots.map((snap) => (
               <tr
                 key={snap.id}
-                className="hover:bg-slate-50 dark:hover:bg-navy-900/50 transition-colors cursor-pointer"
+                className="hover:bg-c-surface-raised transition-colors cursor-pointer"
                 onClick={() => setExpandedId(expandedId === snap.id ? null : snap.id)}
               >
                 <td className="px-4 py-3">
-                  <span className="text-sm font-mono text-slate-900 dark:text-white">
+                  <span className="text-sm font-mono text-c-text">
                     {snap.modelId}
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  <span className="text-sm text-slate-700 dark:text-slate-300">
+                  <span className="text-sm text-c-text-secondary">
                     {snap.provider}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <span className="text-sm text-slate-700 dark:text-slate-300">
+                  <span className="text-sm text-c-text-secondary">
                     {formatPrice(snap.inputPer1MTokens)}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <span className="text-sm text-slate-700 dark:text-slate-300">
+                  <span className="text-sm text-c-text-secondary">
                     {formatPrice(snap.outputPer1MTokens)}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <span className="text-sm text-slate-700 dark:text-slate-300">
+                  <span className="text-sm text-c-text-secondary">
                     {formatPrice(snap.perImage)}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <span className="text-sm text-slate-700 dark:text-slate-300">
+                  <span className="text-sm text-c-text-secondary">
                     {formatPrice(snap.perRequest)}
                   </span>
                 </td>
@@ -460,7 +461,7 @@ export const PricingPanel: React.FC = () => {
                   <SourceBadge source={snap.source} />
                 </td>
                 <td className="px-4 py-3">
-                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                  <span className="text-xs text-c-text-muted">
                     {snap.effectiveFrom || '—'}
                   </span>
                 </td>
@@ -468,12 +469,14 @@ export const PricingPanel: React.FC = () => {
             ))}
             {filteredSnapshots.length === 0 && (
               <tr>
-                <td
-                  colSpan={8}
-                  className="px-4 py-12 text-center text-slate-500 dark:text-slate-400"
-                >
-                  <DollarSign size={32} className="mx-auto mb-3 opacity-40" />
-                  <p>No pricing snapshots found</p>
+                <td colSpan={8} className="px-4 py-2">
+                  <EmptyState
+                    variant="new"
+                    icon={DollarSign}
+                    title="No pricing snapshots found"
+                    description="Add a price snapshot to start tracking model costs."
+                    compact
+                  />
                 </td>
               </tr>
             )}

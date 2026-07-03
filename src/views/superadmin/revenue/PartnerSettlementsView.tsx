@@ -37,10 +37,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState, LoadingState } from '@/components/shared/states';
 import { Api } from '@/services/api';
 import { cn } from '@/utils/cn';
-
-import { LoadingState } from '../../../components/ui/primitives';
 
 interface SettlementsSummary {
   totalPendingCommissions: number;
@@ -355,7 +354,7 @@ export const PartnerSettlementsView: React.FC = () => {
   };
 
   if (loading) {
-    return <LoadingState variant="spinner" className="py-12" />;
+    return <LoadingState template="list" className="py-12" />;
   }
 
   return (
@@ -363,16 +362,16 @@ export const PartnerSettlementsView: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-c-text">
             {t('superadmin.settlements.title', 'Partner Settlements')}
           </h1>
-          <p className="text-slate-600 dark:text-slate-400">
+          <p className="text-c-text-secondary">
             {t('superadmin.settlements.subtitle', 'Manage partner commissions and payouts')}
           </p>
         </div>
         <button
           onClick={() => window.location.reload()}
-          className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-sm text-c-text-secondary hover:text-c-text transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
           Refresh
@@ -381,58 +380,58 @@ export const PartnerSettlementsView: React.FC = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/5 p-4">
+        <div className="bg-c-surface rounded-xl border border-c-border p-4">
           <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 rounded-lg bg-amber-500/20">
-              <Clock className="w-5 h-5 text-amber-400" />
+            <div className="p-2 rounded-lg bg-c-warning/20">
+              <Clock className="w-5 h-5 text-c-warning" />
             </div>
-            <span className="text-sm text-slate-600 dark:text-slate-400">Pending Commissions</span>
+            <span className="text-sm text-c-text-secondary">Pending Commissions</span>
           </div>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">
+          <p className="text-2xl font-bold text-c-text">
             {summary?.totalPendingCommissions}
           </p>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-muted mt-1">
             €{summary?.pendingCommissionAmount.toLocaleString()} total
           </p>
         </div>
 
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/5 p-4">
+        <div className="bg-c-surface rounded-xl border border-c-border p-4">
           <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 rounded-lg bg-blue-500/20">
-              <Banknote className="w-5 h-5 text-blue-400" />
+            <div className="p-2 rounded-lg bg-c-info/20">
+              <Banknote className="w-5 h-5 text-c-info" />
             </div>
-            <span className="text-sm text-slate-600 dark:text-slate-400">Pending Payouts</span>
+            <span className="text-sm text-c-text-secondary">Pending Payouts</span>
           </div>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">
+          <p className="text-2xl font-bold text-c-text">
             {summary?.totalPendingPayouts}
           </p>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-muted mt-1">
             €{summary?.pendingPayoutAmount.toLocaleString()} total
           </p>
         </div>
 
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/5 p-4">
+        <div className="bg-c-surface rounded-xl border border-c-border p-4">
           <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 rounded-lg bg-emerald-500/20">
-              <TrendingUp className="w-5 h-5 text-emerald-400" />
+            <div className="p-2 rounded-lg bg-c-success/20">
+              <TrendingUp className="w-5 h-5 text-c-success" />
             </div>
-            <span className="text-sm text-slate-600 dark:text-slate-400">
+            <span className="text-sm text-c-text-secondary">
               This Month Commissions
             </span>
           </div>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">
+          <p className="text-2xl font-bold text-c-text">
             €{summary?.thisMonthCommissions.toLocaleString()}
           </p>
         </div>
 
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/5 p-4">
+        <div className="bg-c-surface rounded-xl border border-c-border p-4">
           <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 rounded-lg bg-primary-500/20">
-              <DollarSign className="w-5 h-5 text-primary-400" />
+            <div className="p-2 rounded-lg bg-c-accent/20">
+              <DollarSign className="w-5 h-5 text-c-accent" />
             </div>
-            <span className="text-sm text-slate-600 dark:text-slate-400">This Month Payouts</span>
+            <span className="text-sm text-c-text-secondary">This Month Payouts</span>
           </div>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">
+          <p className="text-2xl font-bold text-c-text">
             €{summary?.thisMonthPayouts.toLocaleString()}
           </p>
         </div>
@@ -445,8 +444,8 @@ export const PartnerSettlementsView: React.FC = () => {
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors',
             activeTab === 'commissions'
-              ? 'bg-navy-900 text-white'
-              : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              ? 'bg-c-accent text-white'
+              : 'text-c-text-secondary hover:text-c-text'
           )}
         >
           Pending Commissions
@@ -456,8 +455,8 @@ export const PartnerSettlementsView: React.FC = () => {
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors',
             activeTab === 'payouts'
-              ? 'bg-navy-900 text-white'
-              : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              ? 'bg-c-accent text-white'
+              : 'text-c-text-secondary hover:text-c-text'
           )}
         >
           Pending Payouts
@@ -467,8 +466,8 @@ export const PartnerSettlementsView: React.FC = () => {
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors',
             activeTab === 'attribution'
-              ? 'bg-navy-900 text-white'
-              : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              ? 'bg-c-accent text-white'
+              : 'text-c-text-secondary hover:text-c-text'
           )}
         >
           Attribution Manager
@@ -478,8 +477,8 @@ export const PartnerSettlementsView: React.FC = () => {
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2',
             activeTab === 'expiring'
-              ? 'bg-navy-900 text-white'
-              : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              ? 'bg-c-accent text-white'
+              : 'text-c-text-secondary hover:text-c-text'
           )}
         >
           <AlertTriangle className="w-4 h-4" />
@@ -495,8 +494,8 @@ export const PartnerSettlementsView: React.FC = () => {
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2',
             activeTab === 'analytics'
-              ? 'bg-navy-900 text-white'
-              : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              ? 'bg-c-accent text-white'
+              : 'text-c-text-secondary hover:text-c-text'
           )}
         >
           <BarChart3 className="w-4 h-4" />
