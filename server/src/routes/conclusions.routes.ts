@@ -35,6 +35,82 @@ router.get(
   })
 );
 
+/**
+ * POST /api/conclusions — push-based CONCLUSION_LAYER ingest.
+ * Used by generation flows whose conclusion models live client-side
+ * (SIRI/ADMA report W1 layers) to persist their verdicts as Conclusion
+ * candidates. Idempotent per (sourceModule, sourceRefs) — regeneration
+ * updates the existing conclusion instead of duplicating it.
+ */
+router.post(
+  '/',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const { organizationId, userId } = getAuthContext(req);
+    const body = (req.body || {}) as Record<string, unknown>;
+
+    const title = typeof body.title === 'string' ? body.title.trim().slice(0, 180) : '';
+    const statement =
+      typeof body.statement === 'string' ? body.statement.trim().slice(0, 4000) : '';
+    const sourceModule =
+      typeof body.sourceModule === 'string' ? body.sourceModule.trim().slice(0, 60) : '';
+    const sourceRefs = Array.isArray(body.sourceRefs)
+      ? (body.sourceRefs as any[])
+          .filter((ref) => ref && typeof ref === 'object' && ref.type && ref.id)
+          .map((ref) => ({
+            type: String(ref.type).slice(0, 60),
+            id: String(ref.id).slice(0, 120),
+            title: ref.title ? String(ref.title).slice(0, 180) : null,
+            url: ref.url ? String(ref.url).slice(0, 500) : null,
+          }))
+      : [];
+
+    if (!title || !statement || !sourceModule || sourceRefs.length === 0) {
+      return res
+        .status(400)
+        .json({ error: 'title, statement, sourceModule and sourceRefs are required' });
+    }
+
+    const evidenceRefs = Array.isArray(body.evidenceRefs)
+      ? (body.evidenceRefs as any[])
+          .filter((ref) => ref && typeof ref === 'object' && ref.type && ref.ref)
+          .map((ref) => ({
+            type: String(ref.type).slice(0, 60),
+            ref: String(ref.ref).slice(0, 200),
+            excerpt: ref.excerpt ? String(ref.excerpt).slice(0, 300) : null,
+          }))
+      : [];
+
+    const allowedStatuses = ['candidate', 'needs_evidence', 'needs_review'];
+    const status = allowedStatuses.includes(String(body.status || ''))
+      ? (String(body.status) as 'candidate' | 'needs_evidence' | 'needs_review')
+      : 'candidate';
+
+    await conclusionService.createConclusion({
+      organizationId,
+      projectId: body.projectId ? String(body.projectId) : null,
+      title,
+      statement,
+      sourceModule,
+      sourceRefs,
+      confidenceLevel: String(body.confidenceLevel || 'insufficient'),
+      limits:
+        typeof body.limits === 'string' && body.limits.trim()
+          ? body.limits.trim().slice(0, 1000)
+          : 'No limits provided.',
+      evidenceRefs,
+      recommendedNextAction: body.recommendedNextAction
+        ? String(body.recommendedNextAction).slice(0, 500)
+        : null,
+      status,
+      createdBy: userId,
+      contextSummary:
+        typeof body.contextSummary === 'string' ? body.contextSummary.slice(0, 2000) : statement,
+    });
+
+    res.status(201).json({ ok: true });
+  })
+);
+
 router.get(
   '/readouts',
   asyncHandler(async (req: AuthRequest, res) => {

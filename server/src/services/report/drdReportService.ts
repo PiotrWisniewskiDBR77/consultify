@@ -17,7 +17,7 @@
 import DRD_STRUCTURE, { DRD_KEY_TO_AXIS_MAP } from '../../data/drdStructure.js';
 import { generateDrdReport } from './drdReportGenerator.js';
 import type { LlmLike } from './drdLlmNarrator.js';
-import type { AreaScores, DrdReportMeta } from './drdReportModel.js';
+import type { AreaScores, DrdReportMeta, DrdReportModel } from './drdReportModel.js';
 
 /**
  * Derive area-level scores from per-AXIS aggregates (the report editor's
@@ -65,11 +65,11 @@ export interface BuildDrdReportServerParams {
  */
 export async function buildDrdReportHtmlServer(
   params: BuildDrdReportServerParams
-): Promise<{ html: string; narrative: 'llm' | 'deterministic' }> {
+): Promise<{ html: string; narrative: 'llm' | 'deterministic'; model: DrdReportModel }> {
   const areaScores = params.areaScores ?? areaScoresFromAxisData(params.axisData || {});
   const { html, model } = await generateDrdReport(areaScores, params.meta, {
     llm: params.llm,
     llmOptions: params.logger ? { logger: params.logger } : undefined,
   });
-  return { html, narrative: model.executiveSummary.narrative };
+  return { html, narrative: model.executiveSummary.narrative, model };
 }

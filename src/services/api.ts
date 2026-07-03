@@ -6657,6 +6657,32 @@ export const Api = {
     return handleResponse(res, 'Failed to update tool session');
   },
 
+  /**
+   * CONCLUSION_LAYER push ingest: persist a client-side generated conclusion
+   * (SIRI/ADMA report W1 models, ...) as a Conclusion candidate. Idempotent
+   * per (sourceModule, sourceRefs) on the server.
+   */
+  createConclusion: async (payload: {
+    title: string;
+    statement: string;
+    sourceModule: string;
+    sourceRefs: Array<{ type: string; id: string; title?: string | null; url?: string | null }>;
+    confidenceLevel?: string;
+    limits?: string;
+    evidenceRefs?: Array<{ type: string; ref: string; excerpt?: string | null }>;
+    recommendedNextAction?: string | null;
+    status?: string;
+    projectId?: string | null;
+    contextSummary?: string;
+  }): Promise<{ ok: boolean }> => {
+    const res = await fetch(`${API_URL}/conclusions`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to create conclusion');
+  },
+
   requestToolReview: async (
     toolId: string,
     payload?: { decisionOwnerId?: string; dueDate?: string; priority?: string }

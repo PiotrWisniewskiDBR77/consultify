@@ -1014,7 +1014,7 @@ router.get('/:reportId/drd-report', async (req: AuthRequest, res: Response) => {
     }
 
     const { buildDrdReportHtmlServer } = await import('../services/report/drdReportService.js');
-    const { html, narrative } = await buildDrdReportHtmlServer({
+    const { html, narrative, model } = await buildDrdReportHtmlServer({
       axisData,
       meta: {
         organizationName,
@@ -1027,6 +1027,30 @@ router.get('/:reportId/drd-report', async (req: AuthRequest, res: Response) => {
         warn: (msg: string, meta?: unknown) => logger.warn(`[DRDReport] ${msg}`, meta),
       },
     });
+
+    // CONCLUSION_LAYER bridge: persist the report's executive conclusion as a
+    // Conclusion candidate. Fire-and-forget + fail-safe — a Conclusions-layer
+    // failure must never break report generation.
+    try {
+      const { safePersistDrdReportConclusion } = await import(
+        '../services/conclusions/reportConclusionBridge.js'
+      );
+      void safePersistDrdReportConclusion(
+        {
+          organizationId,
+          actorUserId: String(req.user?.id || 'system'),
+          model,
+          source: {
+            reportId: String(reportId),
+            reportTitle: reportRow.name || reportRow.assessmentName || null,
+            projectId: reportRow.project_id || null,
+          },
+        },
+        { logger: { warn: (msg: string, meta?: unknown) => logger.warn(msg, meta) } }
+      );
+    } catch {
+      /* bridge module unavailable — report generation continues */
+    }
 
     if (format === 'json') {
       return res.json({ html, narrative });
