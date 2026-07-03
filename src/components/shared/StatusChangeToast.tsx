@@ -73,7 +73,7 @@ export const StatusChangeToast: React.FC<StatusChangeToastProps> = ({
                 className="flex items-center gap-1.5 mt-2 text-xs text-blue-400 hover:text-blue-300 transition-colors"
               >
                 View in {moduleConfig.name}
-                <ArrowRight size={12} />
+                <ArrowRight size={14} />
               </button>
             )}
           </div>
