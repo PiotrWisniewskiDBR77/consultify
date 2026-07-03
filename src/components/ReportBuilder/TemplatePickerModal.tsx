@@ -72,10 +72,10 @@ const CATEGORY_COLORS: Record<string, string> = {
   strategic: 'from-blue-500 to-indigo-600',
   portfolio: 'from-emerald-500 to-blue-600',
   finance: 'from-amber-500 to-amber-600',
-  steering: 'from-primary-500 to-primary-600',
+  steering: 'bg-c-accent',
   workshop: 'from-blue-500 to-blue-600',
   assessment: 'from-pink-500 to-danger-600',
-  general: 'from-slate-500 to-slate-600',
+  general: 'bg-c-surface-raised',
 };
 
 const TemplateCard: FC<{
@@ -96,8 +96,8 @@ const TemplateCard: FC<{
         relative w-full text-left rounded-xl border-2 transition-all overflow-hidden
         ${
           isSelected
-            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-            : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 hover:border-primary-300 dark:hover:border-primary-700'
+            ? 'border-c-accent bg-c-accent-soft'
+            : 'border-c-border-subtle bg-c-surface hover:border-c-accent'
         }
       `}
     >
@@ -105,7 +105,7 @@ const TemplateCard: FC<{
         {/* Selected indicator */}
         {isSelected && (
           <div className="absolute top-3 right-3">
-            <CheckCircle2 className="w-5 h-5 text-primary-500" />
+            <CheckCircle2 className="w-5 h-5 text-c-accent" />
           </div>
         )}
 
@@ -113,13 +113,13 @@ const TemplateCard: FC<{
         <div className="flex items-start gap-3 mb-2">
           <div className={`p-2 rounded-lg bg-gradient-to-br ${gradient}`}>
             {template.isSystem ? (
-              <Package className="w-4 h-4 text-white" />
+              <Package className="w-4 h-4 text-c-text" />
             ) : (
-              <Building2 className="w-4 h-4 text-white" />
+              <Building2 className="w-4 h-4 text-c-text" />
             )}
           </div>
           <div className="flex-1 min-w-0 pr-6">
-            <h4 className="font-semibold text-sm text-slate-900 dark:text-white truncate">
+            <h4 className="font-semibold text-sm text-c-text truncate">
               {template.name}
             </h4>
             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
@@ -136,7 +136,7 @@ const TemplateCard: FC<{
                 </span>
               )}
               {template.expectedLength && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400 rounded">
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium bg-c-surface-raised text-c-text-secondary rounded">
                   <BookOpen size={9} />
                   {template.expectedLength}
                 </span>
@@ -147,30 +147,30 @@ const TemplateCard: FC<{
 
         {/* Description */}
         {template.description && (
-          <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mb-2">
+          <p className="text-xs text-c-text-secondary line-clamp-2 mb-2">
             {template.description}
           </p>
         )}
 
         {/* Use case tag */}
         {template.useCase && (
-          <p className="text-[11px] text-slate-500 dark:text-slate-500 italic mb-2">
+          <p className="text-[11px] text-c-text-secondary italic mb-2">
             {template.useCase}
           </p>
         )}
 
         {/* Footer */}
-        <div className="flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400">
+        <div className="flex items-center gap-3 text-[11px] text-c-text-secondary">
           <div className="flex items-center gap-1">
             <FileText size={12} />
             <span>{sectionsCount} sections</span>
           </div>
           {template.reportType && (
-            <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-navy-700 rounded text-[10px] font-medium">
+            <span className="px-1.5 py-0.5 bg-c-surface-raised rounded text-[10px] font-medium">
               {template.reportType.replace('ASSESSMENT_', '')}
             </span>
           )}
-          <span className="text-[10px] text-slate-500 dark:text-slate-400">
+          <span className="text-[10px] text-c-text-secondary">
             {template.isSystem ? 'System' : 'Organization'}
           </span>
         </div>
@@ -178,13 +178,13 @@ const TemplateCard: FC<{
 
       {/* Expandable outline preview */}
       {template.sections && template.sections.length > 0 && (
-        <div className="border-t border-slate-200 dark:border-navy-700">
+        <div className="border-t border-c-border-subtle">
           <button
             onClick={(e) => {
               e.stopPropagation();
               setShowOutline(!showOutline);
             }}
-            className="w-full flex items-center gap-1.5 px-4 py-1.5 text-[10px] text-slate-500 dark:text-slate-400 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
+            className="w-full flex items-center gap-1.5 px-4 py-1.5 text-[10px] text-c-text-secondary hover:text-c-accent transition-colors"
           >
             {showOutline ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
             Preview outline
@@ -193,16 +193,16 @@ const TemplateCard: FC<{
             <div className="px-4 pb-3 space-y-0.5">
               {template.sections.map((s, i) => (
                 <div key={s.key || i} className="flex items-center gap-2 text-[10px]">
-                  <span className="text-slate-500 dark:text-slate-400 w-4 text-right">
+                  <span className="text-c-text-secondary w-4 text-right">
                     {i + 1}.
                   </span>
                   <span
-                    className={`${s.required ? 'text-slate-800 dark:text-slate-300 font-medium' : 'text-slate-600 dark:text-slate-400'}`}
+                    className={`${s.required ? 'text-c-text font-medium' : 'text-c-text-secondary'}`}
                   >
                     {s.title}
                   </span>
                   {s.required && (
-                    <span className="text-[8px] text-primary-500 font-semibold">REQ</span>
+                    <span className="text-[8px] text-c-accent font-semibold">REQ</span>
                   )}
                 </div>
               ))}
@@ -328,26 +328,26 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-3xl max-h-[90vh] bg-white dark:bg-navy-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+          className="w-full max-w-3xl max-h-[90vh] bg-c-surface rounded-2xl shadow-2xl overflow-hidden flex flex-col"
         >
           {/* Header */}
-          <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
+          <div className="px-6 py-4 border-b border-c-border-subtle flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-primary-500 to-blue-600 text-white rounded-lg">
+              <div className="p-2 bg-gradient-to-br bg-c-accent to-blue-600 text-c-text rounded-lg">
                 <FileText size={20} />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                <h2 className="text-lg font-semibold text-c-text">
                   Select Report Template
                 </h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-c-text-secondary">
                   Choose a template to create your report
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 transition-colors"
+              className="p-2 rounded-lg hover:opacity-90 text-c-text-secondary transition-colors"
             >
               <X size={20} />
             </button>
@@ -357,7 +357,7 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+                <Loader2 className="w-8 h-8 text-c-accent animate-spin" />
               </div>
             ) : (
               <>
@@ -370,8 +370,8 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                         onClick={() => setCategoryFilter(cat)}
                         className={`px-2.5 py-1 text-[11px] font-medium rounded-full border transition-all ${
                           categoryFilter === cat
-                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
-                            : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-primary-300 dark:hover:border-primary-700'
+                            ? 'border-c-accent bg-c-accent-soft text-c-accent'
+                            : 'border-c-border-subtle text-c-text-secondary hover:border-c-accent'
                         }`}
                       >
                         {cat === 'all' ? 'All' : cat.charAt(0).toUpperCase() + cat.slice(1)}
@@ -385,10 +385,10 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                   <div>
                     <div className="flex items-center gap-2 mb-3">
                       <Package size={16} className="text-blue-500" />
-                      <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      <h3 className="text-sm font-semibold text-c-text">
                         Application Templates
                       </h3>
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                      <span className="text-xs text-c-text-secondary">
                         ({systemTemplates.length})
                       </span>
                     </div>
@@ -409,11 +409,11 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                 {orgTemplates.length > 0 && (
                   <div>
                     <div className="flex items-center gap-2 mb-3">
-                      <Building2 size={16} className="text-primary-500" />
-                      <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      <Building2 size={16} className="text-c-accent" />
+                      <h3 className="text-sm font-semibold text-c-text">
                         Organization Templates
                       </h3>
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                      <span className="text-xs text-c-text-secondary">
                         ({orgTemplates.length})
                       </span>
                     </div>
@@ -433,33 +433,33 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                 {/* Empty state */}
                 {systemTemplates.length === 0 && orgTemplates.length === 0 && (
                   <div className="text-center py-12">
-                    <div className="p-4 rounded-full bg-slate-100 dark:bg-navy-800 inline-block mb-3">
-                      <FileText size={32} className="text-slate-600" />
+                    <div className="p-4 rounded-full bg-c-surface-raised inline-block mb-3">
+                      <FileText size={32} className="text-c-text-secondary" />
                     </div>
-                    <p className="text-sm font-medium text-slate-900 dark:text-white">
+                    <p className="text-sm font-medium text-c-text">
                       No templates available
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    <p className="text-xs text-c-text-secondary mt-1">
                       Create a custom template using "Add Clean" option
                     </p>
                   </div>
                 )}
 
                 {/* "Dodaj czysty" option */}
-                <div className="border-t border-slate-200 dark:border-navy-700 pt-6">
+                <div className="border-t border-c-border-subtle pt-6">
                   <button
                     onClick={handleCreateClean}
-                    className="w-full p-4 rounded-xl border-2 border-dashed border-slate-300 dark:border-navy-600 hover:border-primary-400 dark:hover:border-primary-600 hover:bg-primary-50/50 dark:hover:bg-primary-900/10 transition-all group"
+                    className="w-full p-4 rounded-xl border-2 border-dashed border-c-border hover:border-c-accent hover:bg-c-accent-soft transition-all group"
                   >
                     <div className="flex items-center justify-center gap-3">
-                      <div className="p-2 bg-slate-100 dark:bg-navy-700 rounded-lg group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 transition-colors">
-                        <Plus className="w-5 h-5 text-slate-500 group-hover:text-primary-600 dark:group-hover:text-primary-400" />
+                      <div className="p-2 bg-c-surface-raised rounded-lg group-hover:bg-c-accent-soft dark:group-hover:bg-c-accent-soft transition-colors">
+                        <Plus className="w-5 h-5 text-c-text-secondary group-hover:text-c-accent dark:group-hover:text-c-accent" />
                       </div>
                       <div className="text-left">
-                        <span className="block text-sm font-semibold text-slate-700 dark:text-slate-300 group-hover:text-primary-700 dark:group-hover:text-primary-400">
+                        <span className="block text-sm font-semibold text-c-text group-hover:text-c-accent dark:group-hover:text-c-accent">
                           Add Clean
                         </span>
-                        <span className="block text-xs text-slate-500 dark:text-slate-400">
+                        <span className="block text-xs text-c-text-secondary">
                           Create a new custom template for your organization
                         </span>
                       </div>
@@ -471,10 +471,10 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/50 flex items-center justify-end gap-3">
+          <div className="px-6 py-4 border-t border-c-border-subtle bg-c-surface-raised flex items-center justify-end gap-3">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-c-text hover:opacity-90 rounded-lg transition-colors"
             >
               Cancel
             </button>
@@ -485,8 +485,8 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                 flex items-center gap-2 px-5 py-2 text-sm font-semibold rounded-lg transition-colors
                 ${
                   selectedTemplateId && !creating
-                    ? 'bg-primary-500 hover:bg-primary-600 text-white'
-                    : 'bg-slate-200 dark:bg-navy-700 text-slate-600 cursor-not-allowed'
+                    ? 'bg-c-accent-soft0 hover:bg-c-accent-soft text-c-text'
+                    : 'bg-c-border-subtle text-c-text-secondary cursor-not-allowed'
                 }
               `}
             >
@@ -520,21 +520,21 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 10 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-xl bg-white dark:bg-navy-900 rounded-2xl shadow-2xl overflow-hidden"
+            className="w-full max-w-xl bg-c-surface rounded-2xl shadow-2xl overflow-hidden"
           >
-            <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
+            <div className="px-6 py-4 border-b border-c-border-subtle flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                <h3 className="text-lg font-semibold text-c-text">
                   New template
                 </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-c-text-secondary">
                   Provide basic metadata, then open the generator.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsNewTemplateMetaOpen(false)}
-                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 transition-colors"
+                className="p-2 rounded-lg hover:opacity-90 text-c-text-secondary transition-colors"
               >
                 <X size={20} />
               </button>
@@ -542,32 +542,32 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
 
             <div className="px-6 py-5 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-c-text mb-1">
                   Name
                 </label>
                 <input
                   value={newTemplateName}
                   onChange={(e) => setNewTemplateName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                  className="w-full px-3 py-2 rounded-lg border border-c-border-subtle bg-c-text text-c-bg"
                   placeholder="e.g. DRD Board Summary"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-c-text mb-1">
                   Description (optional)
                 </label>
                 <textarea
                   value={newTemplateDescription}
                   onChange={(e) => setNewTemplateDescription(e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white resize-none"
+                  className="w-full px-3 py-2 rounded-lg border border-c-border-subtle bg-c-text text-c-bg resize-none"
                   placeholder="What is this template used for?"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-c-text mb-1">
                   Recipient (optional)
                 </label>
                 <select
@@ -575,7 +575,7 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                   onChange={(e) =>
                     setNewTemplateRecipient(e.target.value as '' | 'board' | 'bank' | 'team')
                   }
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                  className="w-full px-3 py-2 rounded-lg border border-c-border-subtle bg-c-text text-c-bg"
                 >
                   <option value="">—</option>
                   <option value="board">Board</option>
@@ -585,11 +585,11 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
               </div>
             </div>
 
-            <div className="px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/50 flex items-center justify-end gap-2">
+            <div className="px-6 py-4 border-t border-c-border-subtle bg-c-surface-raised flex items-center justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setIsNewTemplateMetaOpen(false)}
-                className="px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                className="px-4 py-2 rounded-lg border border-c-border-subtle bg-c-text text-c-bg hover:opacity-90 transition-colors"
               >
                 Cancel
               </button>
@@ -599,7 +599,7 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                   setIsNewTemplateMetaOpen(false);
                   setIsTemplateBuilderOpen(true);
                 }}
-                className="px-4 py-2 rounded-lg bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white font-medium transition-colors"
+                className="px-4 py-2 rounded-lg bg-c-surface hover:opacity-90 disabled:opacity-50 text-c-text font-medium transition-colors"
               >
                 Open generator
               </button>

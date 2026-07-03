@@ -208,19 +208,19 @@ const QuickPreviewBar: React.FC<QuickPreviewBarProps> = ({ intent, styling, isPl
   const langLabel = REPORT_LANGUAGES.find((l) => l.value === intent.language)?.flag || '🌐';
 
   return (
-    <div className="px-3 py-1.5 bg-slate-800/30 border-b border-slate-800/40">
+    <div className="px-3 py-1.5 bg-c-surface border-b border-c-border">
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-slate-800/80 text-slate-600 rounded border border-slate-700/40">
+        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-c-surface text-c-text-secondary rounded border border-c-border">
           {audienceLabels[intent.audience] || intent.audience}
         </span>
-        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-slate-800/80 text-slate-600 rounded border border-slate-700/40">
+        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-c-surface text-c-text-secondary rounded border border-c-border">
           {orientationLabel}
         </span>
-        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-slate-800/80 text-slate-600 rounded border border-slate-700/40">
+        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-c-surface text-c-text-secondary rounded border border-c-border">
           {langLabel} {intent.language?.toUpperCase()}
         </span>
         <span
-          className="w-3.5 h-3.5 rounded-full border border-slate-600/50"
+          className="w-3.5 h-3.5 rounded-full border border-c-border-strong"
           style={{ backgroundColor: styling.primaryColor }}
           title={isPl ? 'Kolor główny' : 'Primary color'}
         />
@@ -255,14 +255,14 @@ const SectionCard: React.FC<SectionCardProps> = ({
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-800/40 transition-colors cursor-pointer select-none"
+        className="w-full flex items-center gap-2 px-3 py-2 hover:bg-c-surface transition-colors cursor-pointer select-none"
       >
-        {icon && <span className="text-slate-500">{icon}</span>}
-        <h3 className="text-[10px] font-bold text-slate-500 dark:text-slate-500 uppercase tracking-wider flex-1 text-left">
+        {icon && <span className="text-c-text-secondary">{icon}</span>}
+        <h3 className="text-[10px] font-bold text-c-text-secondary uppercase tracking-wider flex-1 text-left">
           {title}
         </h3>
         <ChevronDown
-          className={`w-3 h-3 text-slate-600 transition-transform duration-200 ${
+          className={`w-3 h-3 text-c-text-secondary transition-transform duration-200 ${
             isOpen ? 'rotate-0' : '-rotate-90'
           }`}
         />
@@ -324,24 +324,24 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
   return (
     <div className="p-3 space-y-3">
       {/* --- Status bar --- */}
-      <div className="flex items-center justify-between p-2 rounded-lg bg-slate-800/50 border border-slate-700/40">
+      <div className="flex items-center justify-between p-2 rounded-lg bg-c-surface border border-c-border">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-md bg-indigo-600/30 flex items-center justify-center">
             <GitBranch className="w-3 h-3 text-indigo-400" />
           </div>
           <div>
-            <span className="text-[11px] font-bold text-slate-200 font-mono">
+            <span className="text-[11px] font-bold text-c-text font-mono">
               v{currentVersion || versions.length}
             </span>
             {reportStatus && (
-              <span className="ml-1.5 text-[8px] px-1.5 py-0.5 rounded bg-slate-700/60 text-slate-600 uppercase font-bold tracking-wider">
+              <span className="ml-1.5 text-[8px] px-1.5 py-0.5 rounded bg-c-surface-raised text-c-text-secondary uppercase font-bold tracking-wider">
                 {reportStatus}
               </span>
             )}
           </div>
         </div>
         {lastSavedAt && (
-          <span className="text-[9px] text-slate-500 flex items-center gap-1">
+          <span className="text-[9px] text-c-text-secondary flex items-center gap-1">
             <Clock className="w-2.5 h-2.5" />
             {formatRelativeTime(lastSavedAt)}
           </span>
@@ -361,7 +361,7 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
             </button>
           ) : (
             <div className="p-3 space-y-2">
-              <label className="block text-[10px] font-semibold text-slate-600 uppercase tracking-wider">
+              <label className="block text-[10px] font-semibold text-c-text-secondary uppercase tracking-wider">
                 {isPl ? 'Opis zmian (opcjonalnie)' : 'Change summary (optional)'}
               </label>
               <textarea
@@ -370,7 +370,7 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
                 placeholder={
                   isPl ? 'Co zmieniłeś w tej wersji...' : 'What changed in this version...'
                 }
-                className="w-full px-2.5 py-2 text-[11px] bg-slate-800/60 border border-slate-700/50 rounded-lg resize-none h-14 focus:ring-1 focus:ring-indigo-500 text-slate-600 placeholder:text-slate-600 leading-relaxed"
+                className="w-full px-2.5 py-2 text-[11px] bg-c-surface border border-c-border rounded-lg resize-none h-14 focus:ring-1 focus:ring-indigo-500 text-c-text-secondary placeholder:text-c-text-secondary leading-relaxed"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSaveVersion();
@@ -379,7 +379,7 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={handleSaveVersion}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-[10px] font-semibold transition-colors"
+                  className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-c-text rounded-lg text-[10px] font-semibold transition-colors"
                 >
                   <Save className="w-3 h-3" />
                   {isPl ? 'Zapisz' : 'Save'}
@@ -389,7 +389,7 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
                     setShowSaveForm(false);
                     setSaveSummary('');
                   }}
-                  className="px-3 py-1.5 text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 rounded-lg text-[10px] font-medium transition-colors"
+                  className="px-3 py-1.5 text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface rounded-lg text-[10px] font-medium transition-colors"
                 >
                   {isPl ? 'Anuluj' : 'Cancel'}
                 </button>
@@ -402,21 +402,21 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
       {/* --- Stats --- */}
       {versions.length > 0 && (
         <div className="grid grid-cols-3 gap-1.5">
-          <div className="text-center py-1.5 px-1 rounded-md bg-slate-800/40 border border-slate-700/30">
+          <div className="text-center py-1.5 px-1 rounded-md bg-c-surface border border-c-border">
             <div className="text-[13px] font-bold text-blue-400 font-mono">{manualCount}</div>
-            <div className="text-[8px] text-slate-500 uppercase tracking-wider font-semibold">
+            <div className="text-[8px] text-c-text-secondary uppercase tracking-wider font-semibold">
               {isPl ? 'Ręcznych' : 'Manual'}
             </div>
           </div>
-          <div className="text-center py-1.5 px-1 rounded-md bg-slate-800/40 border border-slate-700/30">
-            <div className="text-[13px] font-bold text-slate-600 font-mono">{autoCount}</div>
-            <div className="text-[8px] text-slate-500 uppercase tracking-wider font-semibold">
+          <div className="text-center py-1.5 px-1 rounded-md bg-c-surface border border-c-border">
+            <div className="text-[13px] font-bold text-c-text-secondary font-mono">{autoCount}</div>
+            <div className="text-[8px] text-c-text-secondary uppercase tracking-wider font-semibold">
               Auto
             </div>
           </div>
-          <div className="text-center py-1.5 px-1 rounded-md bg-slate-800/40 border border-slate-700/30">
+          <div className="text-center py-1.5 px-1 rounded-md bg-c-surface border border-c-border">
             <div className="text-[13px] font-bold text-amber-400 font-mono">{rollbackCount}</div>
-            <div className="text-[8px] text-slate-500 uppercase tracking-wider font-semibold">
+            <div className="text-[8px] text-c-text-secondary uppercase tracking-wider font-semibold">
               {isPl ? 'Cofnięć' : 'Rollback'}
             </div>
           </div>
@@ -426,21 +426,21 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
       {/* --- Timeline --- */}
       {isLoadingVersions ? (
         <div className="flex items-center justify-center py-10">
-          <Loader2 className="w-5 h-5 animate-spin text-slate-500" />
+          <Loader2 className="w-5 h-5 animate-spin text-c-text-secondary" />
         </div>
       ) : versions.length === 0 ? (
         <div className="text-center py-8">
-          <Shield className="w-7 h-7 text-slate-600/40 mx-auto mb-2" />
-          <p className="text-[11px] text-slate-500 leading-relaxed">
+          <Shield className="w-7 h-7 text-c-text-secondary mx-auto mb-2" />
+          <p className="text-[11px] text-c-text-secondary leading-relaxed">
             {isPl ? 'Brak zapisanych wersji' : 'No saved versions'}
           </p>
-          <p className="text-[9px] text-slate-600 mt-0.5">
+          <p className="text-[9px] text-c-text-secondary mt-0.5">
             {isPl ? 'Zapisz pierwszą wersję raportu' : 'Save the first version of your report'}
           </p>
         </div>
       ) : (
         <div className="space-y-0">
-          <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
+          <div className="text-[10px] font-semibold text-c-text-secondary uppercase tracking-wider mb-2">
             {isPl ? 'Historia' : 'History'} ({versions.length})
           </div>
           {versions.map((v, idx) => {
@@ -458,10 +458,10 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
                           ? 'border-blue-500/60 bg-blue-500/30'
                           : v.changeType === 'rollback'
                             ? 'border-amber-500/60 bg-amber-500/30'
-                            : 'border-slate-600 bg-slate-700'
+                            : 'border-c-border-strong bg-c-surface-raised'
                     }`}
                   />
-                  {!isLast && <div className="w-px flex-1 bg-slate-700/50 min-h-[24px]" />}
+                  {!isLast && <div className="w-px flex-1 bg-c-surface-raised min-h-[24px]" />}
                 </div>
 
                 {/* Version card */}
@@ -470,13 +470,13 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
                     className={`p-2 rounded-lg transition-all ${
                       isLatest
                         ? 'bg-indigo-900/15 border border-indigo-500/25'
-                        : 'hover:bg-slate-800/40'
+                        : 'hover:bg-c-surface'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-0.5">
                       <div className="flex items-center gap-1.5">
                         <span
-                          className={`text-[11px] font-bold font-mono ${isLatest ? 'text-indigo-300' : 'text-slate-600'}`}
+                          className={`text-[11px] font-bold font-mono ${isLatest ? 'text-indigo-300' : 'text-c-text-secondary'}`}
                         >
                           v{v.versionNumber}
                         </span>
@@ -491,7 +491,7 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
                               ? 'bg-blue-900/40 text-blue-400'
                               : v.changeType === 'rollback'
                                 ? 'bg-amber-900/40 text-amber-400'
-                                : 'bg-slate-700/60 text-slate-500'
+                                : 'bg-c-surface-raised text-c-text-secondary'
                           }`}
                         >
                           {v.changeType === 'manual'
@@ -529,7 +529,7 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
 
                     {/* Summary */}
                     {v.changeSummary && (
-                      <p className="text-[10px] text-slate-600 mb-1 line-clamp-2 leading-snug">
+                      <p className="text-[10px] text-c-text-secondary mb-1 line-clamp-2 leading-snug">
                         {v.changeSummary}
                       </p>
                     )}
@@ -537,18 +537,18 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
                     {/* Status change */}
                     {v.previousStatus && v.newStatus && v.previousStatus !== v.newStatus && (
                       <div className="flex items-center gap-1 mb-1">
-                        <span className="text-[8px] px-1 py-0.5 bg-slate-700/50 text-slate-500 rounded">
+                        <span className="text-[8px] px-1 py-0.5 bg-c-surface-raised text-c-text-secondary rounded">
                           {v.previousStatus}
                         </span>
-                        <span className="text-[8px] text-slate-600">&rarr;</span>
-                        <span className="text-[8px] px-1 py-0.5 bg-slate-700/50 text-slate-500 rounded">
+                        <span className="text-[8px] text-c-text-secondary">&rarr;</span>
+                        <span className="text-[8px] px-1 py-0.5 bg-c-surface-raised text-c-text-secondary rounded">
                           {v.newStatus}
                         </span>
                       </div>
                     )}
 
                     {/* Meta */}
-                    <div className="flex items-center gap-1.5 text-[9px] text-slate-600">
+                    <div className="flex items-center gap-1.5 text-[9px] text-c-text-secondary">
                       <User className="w-2.5 h-2.5" />
                       <span>{v.createdByName || 'System'}</span>
                       <span>·</span>
@@ -653,12 +653,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         className={`relative w-9 h-9 flex items-center justify-center rounded-lg transition-all duration-150 ${
           active
             ? 'bg-blue-600/15 text-blue-400 shadow-[inset_0_0_0_1px_rgba(59,130,246,0.25)]'
-            : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/60'
+            : 'text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface'
         }`}
       >
         {icon}
         {badge && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 px-0.5 bg-indigo-500 text-white text-[7px] font-bold rounded-full flex items-center justify-center shadow-sm">
+          <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 px-0.5 bg-indigo-500 text-c-text text-[7px] font-bold rounded-full flex items-center justify-center shadow-sm">
             {badge}
           </span>
         )}
@@ -667,11 +667,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
     return (
       <aside className="relative flex-shrink-0">
-        <div className="w-11 h-full bg-slate-900/80 border-l border-slate-800/60 flex flex-col items-center py-3 gap-1">
+        <div className="w-11 h-full bg-c-bg border-l border-c-border flex flex-col items-center py-3 gap-1">
           {/* Expand */}
           <button
             onClick={onToggleCollapse}
-            className="w-7 h-7 flex items-center justify-center text-slate-600 hover:text-slate-300 hover:bg-slate-800 rounded-md transition-colors mb-2"
+            className="w-7 h-7 flex items-center justify-center text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface rounded-md transition-colors mb-2"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -692,7 +692,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           )}
 
           {/* Divider */}
-          <div className="w-5 border-t border-slate-700/50 my-0.5" />
+          <div className="w-5 border-t border-c-border my-0.5" />
 
           {/* Content */}
           <SideIcon
@@ -734,11 +734,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   }
 
   return (
-    <aside className="w-80 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden flex-shrink-0">
+    <aside className="w-80 bg-c-surface border-l border-c-border-subtle flex flex-col overflow-hidden flex-shrink-0">
       {/* Header — segmented toggle */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-slate-700/40 bg-slate-800/50">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-c-border bg-c-surface">
         {/* Segmented control */}
-        <div className="flex items-center bg-slate-800/80 rounded-lg p-0.5 border border-slate-700/40">
+        <div className="flex items-center bg-c-surface rounded-lg p-0.5 border border-c-border">
           {/* Settings pill */}
           <button
             onClick={() => {
@@ -746,8 +746,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             }}
             className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all duration-200 ${
               activeSection !== 'versions'
-                ? 'bg-slate-700/80 text-slate-100 shadow-sm shadow-black/20'
-                : 'text-slate-500 hover:text-slate-300'
+                ? 'bg-c-surface-raised text-c-text shadow-sm shadow-black/20'
+                : 'text-c-text-secondary hover:text-c-text-secondary'
             }`}
           >
             <Layers className="w-3 h-3" />
@@ -763,8 +763,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               }}
               className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all duration-200 ${
                 activeSection === 'versions'
-                  ? 'bg-indigo-600/80 text-white shadow-sm shadow-indigo-900/30'
-                  : 'text-slate-500 hover:text-slate-300'
+                  ? 'bg-indigo-600/80 text-c-text shadow-sm shadow-indigo-900/30'
+                  : 'text-c-text-secondary hover:text-c-text-secondary'
               }`}
             >
               <History className="w-3 h-3" />
@@ -776,7 +776,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         {/* Collapse */}
         <button
           onClick={onToggleCollapse}
-          className="p-1 text-slate-600 hover:text-slate-300 hover:bg-slate-700/50 rounded-md transition-colors"
+          className="p-1 text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised rounded-md transition-colors"
         >
           <ChevronRight className="w-4 h-4" />
         </button>
@@ -789,7 +789,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
       {/* Tabs — hide on versions */}
       {activeSection !== 'versions' && (
-        <div className="flex border-b border-slate-200 dark:border-slate-800/60 bg-slate-800/20">
+        <div className="flex border-b border-c-border-subtle bg-c-surface">
           {[
             { key: 'intent' as const, en: 'Content', pl: 'Treść' },
             { key: 'styling' as const, en: 'Design', pl: 'Wygląd' },
@@ -801,7 +801,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               className={`flex-1 py-2 text-[11px] font-semibold tracking-wide uppercase transition-all ${
                 activeSection === tab.key
                   ? 'text-blue-400 border-b-2 border-blue-500 bg-blue-950/20'
-                  : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/40 border-b-2 border-transparent'
+                  : 'text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface border-b-2 border-transparent'
               }`}
             >
               {isPl ? tab.pl : tab.en}
@@ -814,7 +814,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       <div className="flex-1 overflow-y-auto">
         {/* ========== CONTENT TAB ========== */}
         {activeSection === 'intent' && (
-          <div className="divide-y divide-slate-200 dark:divide-slate-800">
+          <div className="divide-y divide-c-border-subtle">
             {/* Template Info (only in template mode) */}
             {isTemplateMode && templateMeta && onTemplateMetaChange && (
               <SectionCard
@@ -824,7 +824,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 <div className="space-y-3">
                   {/* Module selection */}
                   <div>
-                    <label className="block text-xs text-slate-500 mb-1">
+                    <label className="block text-xs text-c-text-secondary mb-1">
                       {isPl ? 'Moduł' : 'Module'}
                     </label>
                     <select
@@ -837,7 +837,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                           reportType: MODULE_TOOLS[newSourceType]?.[0]?.value || '',
                         });
                       }}
-                      className="w-full px-2 py-1.5 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
+                      className="w-full px-2 py-1.5 text-sm bg-c-surface border border-c-border-subtle rounded-lg"
                     >
                       <option value="ASSESSMENT">📊 Assessment</option>
                       <option value="TOOL">🛠️ Tool</option>
@@ -848,13 +848,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
                   {/* Tool/Framework selection - dynamic based on module */}
                   <div>
-                    <label className="block text-xs text-slate-500 mb-1">
+                    <label className="block text-xs text-c-text-secondary mb-1">
                       {isPl ? 'Narzędzie / Framework' : 'Tool / Framework'}
                     </label>
                     <select
                       value={templateMeta.reportType || ''}
                       onChange={(e) => onTemplateMetaChange?.({ reportType: e.target.value })}
-                      className="w-full px-2 py-1.5 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
+                      className="w-full px-2 py-1.5 text-sm bg-c-surface border border-c-border-subtle rounded-lg"
                     >
                       <option value="">— {isPl ? 'Wybierz' : 'Select'} —</option>
                       {MODULE_TOOLS[templateMeta.sourceType || 'ASSESSMENT']?.map((tool) => (
@@ -865,7 +865,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     </select>
                     {/* Show description of selected tool */}
                     {templateMeta.reportType && (
-                      <div className="mt-1 text-[10px] text-slate-600">
+                      <div className="mt-1 text-[10px] text-c-text-secondary">
                         {
                           MODULE_TOOLS[templateMeta.sourceType || 'ASSESSMENT']?.find(
                             (t) => t.value === templateMeta.reportType
@@ -877,14 +877,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
                   {/* Author */}
                   <div>
-                    <label className="block text-xs text-slate-500 mb-1">
+                    <label className="block text-xs text-c-text-secondary mb-1">
                       {isPl ? 'Autor' : 'Author'}
                     </label>
                     <input
                       value={templateMeta.author || ''}
                       onChange={(e) => onTemplateMetaChange?.({ author: e.target.value })}
                       placeholder={isPl ? 'Imię i nazwisko...' : 'Name...'}
-                      className="w-full px-2 py-1.5 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
+                      className="w-full px-2 py-1.5 text-sm bg-c-surface border border-c-border-subtle rounded-lg"
                     />
                   </div>
 
@@ -894,7 +894,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     onChange={(e) => onTemplateMetaChange?.({ description: e.target.value })}
                     placeholder={isPl ? 'Opis szablonu...' : 'Template description...'}
                     rows={2}
-                    className="w-full px-2 py-1.5 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg resize-none"
+                    className="w-full px-2 py-1.5 text-sm bg-c-surface border border-c-border-subtle rounded-lg resize-none"
                   />
                 </div>
               </SectionCard>
@@ -915,7 +915,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     <button
                       key={preset.id}
                       onClick={() => onApplyPreset(preset.id as any)}
-                      className="flex-1 py-2 px-2 text-xs font-medium bg-gradient-to-b from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-primary-400 hover:shadow-sm transition-all"
+                      className="flex-1 py-2 px-2 text-xs font-medium bg-gradient-to-b from-c-surface  border border-c-border-subtle rounded-lg hover:border-c-accent hover:shadow-sm transition-all"
                     >
                       <span className="block text-base mb-0.5">{preset.emoji}</span>
                       {preset.label}
@@ -933,13 +933,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-xs text-slate-500 mb-1">
+                    <label className="block text-xs text-c-text-secondary mb-1">
                       {isPl ? 'Odbiorca' : 'Audience'}
                     </label>
                     <select
                       value={intent.audience}
                       onChange={(e) => onIntentChange({ audience: e.target.value as any })}
-                      className="w-full px-2 py-1.5 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
+                      className="w-full px-2 py-1.5 text-sm bg-c-surface border border-c-border-subtle rounded-lg"
                     >
                       <option value="executive">{isPl ? 'Zarząd' : 'Executive'}</option>
                       <option value="board">{isPl ? 'Rada' : 'Board'}</option>
@@ -949,13 +949,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-500 mb-1">
+                    <label className="block text-xs text-c-text-secondary mb-1">
                       {isPl ? 'Cel' : 'Goal'}
                     </label>
                     <select
                       value={intent.goal}
                       onChange={(e) => onIntentChange({ goal: e.target.value as any })}
-                      className="w-full px-2 py-1.5 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
+                      className="w-full px-2 py-1.5 text-sm bg-c-surface border border-c-border-subtle rounded-lg"
                     >
                       <option value="diagnosis">{isPl ? 'Diagnoza' : 'Diagnosis'}</option>
                       <option value="roadmap">{isPl ? 'Roadmap' : 'Roadmap'}</option>
@@ -968,7 +968,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1">
+                  <label className="block text-xs text-c-text-secondary mb-1">
                     {isPl ? 'Ton' : 'Tone'}
                   </label>
                   <div className="flex gap-1">
@@ -983,7 +983,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                         className={`flex-1 py-1.5 text-xs rounded-lg transition-all ${
                           intent.tone === t.value
                             ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                            : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-border-subtle'
                         }`}
                       >
                         {t.label}
@@ -1013,7 +1013,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       className={`flex-1 py-2 text-xs rounded-lg transition-all ${
                         intent.scope === s.value
                           ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium ring-2 ring-blue-500'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                          : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-border-subtle'
                       }`}
                     >
                       {s.label}
@@ -1022,13 +1022,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-xs text-slate-500 mb-1">
+                    <label className="block text-xs text-c-text-secondary mb-1">
                       {isPl ? 'Długość' : 'Length'}
                     </label>
                     <select
                       value={intent.targetLength || 'standard'}
                       onChange={(e) => onIntentChange({ targetLength: e.target.value as any })}
-                      className="w-full px-2 py-1.5 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
+                      className="w-full px-2 py-1.5 text-sm bg-c-surface border border-c-border-subtle rounded-lg"
                     >
                       <option value="short">{isPl ? 'Krótki' : 'Short'}</option>
                       <option value="standard">Standard</option>
@@ -1036,7 +1036,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-500 mb-1">
+                    <label className="block text-xs text-c-text-secondary mb-1">
                       {isPl ? 'Preset' : 'Preset'}
                     </label>
                     <select
@@ -1044,7 +1044,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       onChange={(e) =>
                         onIntentChange({ requiredSectionsPreset: e.target.value as any })
                       }
-                      className="w-full px-2 py-1.5 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
+                      className="w-full px-2 py-1.5 text-sm bg-c-surface border border-c-border-subtle rounded-lg"
                     >
                       <option value="assessment_full">Assessment</option>
                       <option value="board_pack">Board Pack</option>
@@ -1064,7 +1064,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             >
               <div className="space-y-3">
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1">
+                  <label className="block text-xs text-c-text-secondary mb-1">
                     {isPl ? 'Główna teza raportu' : 'Narrative Thread'}
                   </label>
                   <textarea
@@ -1075,16 +1075,16 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                         ? 'Np. "Organizacja potrzebuje fundamentalnej zmiany w podejściu do danych..."'
                         : 'E.g., "The organization needs a fundamental shift in data strategy..."'
                     }
-                    className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg resize-none h-16"
+                    className="w-full px-3 py-2 text-xs bg-c-surface border border-c-border-subtle rounded-lg resize-none h-16"
                   />
-                  <p className="text-[10px] text-slate-600 mt-1">
+                  <p className="text-[10px] text-c-text-secondary mt-1">
                     {isPl
                       ? 'Ten wątek będzie podkreślany w każdej sekcji raportu'
                       : 'This thread will be emphasized across all report sections'}
                   </p>
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1">
+                  <label className="block text-xs text-c-text-secondary mb-1">
                     {isPl ? 'Kluczowe terminy / Słownik' : 'Key Terms / Glossary'}
                   </label>
                   <textarea
@@ -1095,9 +1095,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                         ? 'Np. "DRD = Digital Readiness Diagnosis; transformacja cyfrowa; Industry 4.0"'
                         : 'E.g., "DRD = Digital Readiness Diagnosis; digital transformation; Industry 4.0"'
                     }
-                    className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg resize-none h-16"
+                    className="w-full px-3 py-2 text-xs bg-c-surface border border-c-border-subtle rounded-lg resize-none h-16"
                   />
-                  <p className="text-[10px] text-slate-600 mt-1">
+                  <p className="text-[10px] text-c-text-secondary mt-1">
                     {isPl
                       ? 'AI będzie konsekwentnie używać tych terminów'
                       : 'AI will consistently use these terms throughout'}
@@ -1120,7 +1120,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     className={`py-2 px-2 text-xs rounded-lg transition-all flex flex-col items-center gap-1 ${
                       intent.language === lang.value
                         ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 ring-2 ring-blue-500 font-medium'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                        : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-border-subtle'
                     }`}
                   >
                     <span className="text-base">{lang.flag}</span>
@@ -1143,12 +1143,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   { key: 'icons', label: isPl ? 'Ikony' : 'Icons' },
                 ].map((v) => (
                   <label key={v.key} className="flex items-center justify-between cursor-pointer">
-                    <span className="text-sm text-slate-600 dark:text-slate-300">{v.label}</span>
+                    <span className="text-sm text-c-text-secondary">{v.label}</span>
                     <div
                       className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer ${
                         ((intent.visuals as any)?.[v.key] ?? true)
                           ? 'bg-blue-600'
-                          : 'bg-slate-300 dark:bg-slate-600'
+                          : 'bg-c-border'
                       }`}
                       onClick={() =>
                         onIntentChange({
@@ -1160,7 +1160,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       }
                     >
                       <div
-                        className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                        className={`absolute top-0.5 w-4 h-4 bg-c-surface rounded-full shadow transition-transform ${
                           ((intent.visuals as any)?.[v.key] ?? true) ? 'left-4' : 'left-0.5'
                         }`}
                       />
@@ -1174,7 +1174,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
         {/* ========== DESIGN TAB ========== */}
         {activeSection === 'styling' && (
-          <div className="divide-y divide-slate-200 dark:divide-slate-800">
+          <div className="divide-y divide-c-border-subtle">
             {/* Layout */}
             <SectionCard
               title={isPl ? 'Układ' : 'Layout'}
@@ -1187,13 +1187,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
                       styling.layoutOrientation === 'vertical'
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                        : 'border-c-border-subtle hover:border-c-border'
                     }`}
                   >
-                    <Smartphone className="w-8 h-8 text-slate-500" />
+                    <Smartphone className="w-8 h-8 text-c-text-secondary" />
                     <div className="text-center">
                       <div className="text-sm font-medium">{isPl ? 'Pionowy' : 'Portrait'}</div>
-                      <div className="text-[10px] text-slate-600">A4 / Letter</div>
+                      <div className="text-[10px] text-c-text-secondary">A4 / Letter</div>
                     </div>
                   </button>
                   <button
@@ -1201,24 +1201,24 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
                       styling.layoutOrientation === 'horizontal'
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                        : 'border-c-border-subtle hover:border-c-border'
                     }`}
                   >
-                    <Monitor className="w-8 h-8 text-slate-500" />
+                    <Monitor className="w-8 h-8 text-c-text-secondary" />
                     <div className="text-center">
                       <div className="text-sm font-medium">{isPl ? 'Poziomy' : 'Landscape'}</div>
-                      <div className="text-[10px] text-slate-600">16:9 / Slides</div>
+                      <div className="text-[10px] text-c-text-secondary">16:9 / Slides</div>
                     </div>
                   </button>
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1">
+                  <label className="block text-xs text-c-text-secondary mb-1">
                     {isPl ? 'Stopka' : 'Footer'}
                   </label>
                   <select
                     value={styling.footerMode || 'minimal'}
                     onChange={(e) => onStylingChange({ footerMode: e.target.value as any })}
-                    className="w-full px-2 py-1.5 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
+                    className="w-full px-2 py-1.5 text-sm bg-c-surface border border-c-border-subtle rounded-lg"
                   >
                     <option value="none">{isPl ? 'Brak' : 'None'}</option>
                     <option value="minimal">{isPl ? 'Minimalna' : 'Minimal'}</option>
@@ -1248,7 +1248,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       className={`py-2.5 px-3 rounded-lg text-xs font-medium transition-all ${
                         styling.theme === theme.value
                           ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 ring-2 ring-blue-500'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                          : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-border-subtle'
                       }`}
                     >
                       {theme.label}
@@ -1257,13 +1257,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-xs text-slate-500 mb-1">
+                    <label className="block text-xs text-c-text-secondary mb-1">
                       {isPl ? 'Font' : 'Font'}
                     </label>
                     <select
                       value={styling.fontFamily || 'inter'}
                       onChange={(e) => onStylingChange({ fontFamily: e.target.value as any })}
-                      className="w-full px-2 py-1.5 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
+                      className="w-full px-2 py-1.5 text-sm bg-c-surface border border-c-border-subtle rounded-lg"
                     >
                       <option value="inter">Inter</option>
                       <option value="roboto">Roboto</option>
@@ -1272,13 +1272,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-500 mb-1">
+                    <label className="block text-xs text-c-text-secondary mb-1">
                       {isPl ? 'Rozmiar' : 'Size'}
                     </label>
                     <select
                       value={styling.fontSize || 'medium'}
                       onChange={(e) => onStylingChange({ fontSize: e.target.value as any })}
-                      className="w-full px-2 py-1.5 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
+                      className="w-full px-2 py-1.5 text-sm bg-c-surface border border-c-border-subtle rounded-lg"
                     >
                       <option value="small">{isPl ? 'Mały' : 'Small'}</option>
                       <option value="medium">{isPl ? 'Średni' : 'Medium'}</option>
@@ -1287,7 +1287,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   </div>
                 </div>
                 {/* Font size preview hint */}
-                <div className="text-[10px] text-slate-600 bg-slate-50 dark:bg-slate-800/50 rounded-lg p-2">
+                <div className="text-[10px] text-c-text-secondary bg-c-surface-raised rounded-lg p-2">
                   {styling.fontSize === 'small' && (
                     <span>H1: 24px • H2: 18px • H3: 14px • Body: 12px</span>
                   )}
@@ -1318,8 +1318,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       className="w-8 h-8 rounded cursor-pointer border-0"
                     />
                     <div>
-                      <div className="text-xs text-slate-500">{isPl ? 'Główny' : 'Primary'}</div>
-                      <div className="text-[10px] font-mono text-slate-600">
+                      <div className="text-xs text-c-text-secondary">{isPl ? 'Główny' : 'Primary'}</div>
+                      <div className="text-[10px] font-mono text-c-text-secondary">
                         {styling.primaryColor}
                       </div>
                     </div>
@@ -1332,8 +1332,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       className="w-8 h-8 rounded cursor-pointer border-0"
                     />
                     <div>
-                      <div className="text-xs text-slate-500">{isPl ? 'Akcent' : 'Accent'}</div>
-                      <div className="text-[10px] font-mono text-slate-600">
+                      <div className="text-xs text-c-text-secondary">{isPl ? 'Akcent' : 'Accent'}</div>
+                      <div className="text-[10px] font-mono text-c-text-secondary">
                         {styling.accentColor}
                       </div>
                     </div>
@@ -1341,18 +1341,18 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 </div>
 
                 {/* Custom palette */}
-                <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
-                  <div className="text-xs text-slate-500 mb-2">{isPl ? 'Paleta' : 'Palette'}</div>
+                <div className="pt-2 border-t border-c-border-subtle">
+                  <div className="text-xs text-c-text-secondary mb-2">{isPl ? 'Paleta' : 'Palette'}</div>
                   <div className="flex flex-wrap gap-2">
                     {(styling.customColors || []).map((color) => (
                       <div key={color} className="relative group">
                         <div
-                          className="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-600 shadow-sm"
+                          className="w-7 h-7 rounded-lg border border-c-border-subtle shadow-sm"
                           style={{ backgroundColor: color }}
                         />
                         <button
                           onClick={() => removeCustomColor(color)}
-                          className="absolute -top-1 -right-1 w-4 h-4 bg-danger-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                          className="absolute -top-1 -right-1 w-4 h-4 bg-danger-500 text-c-text rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
                         >
                           <X className="w-3 h-3" />
                         </button>
@@ -1368,9 +1368,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                         />
                         <button
                           onClick={addCustomColor}
-                          className="w-7 h-7 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200"
+                          className="w-7 h-7 flex items-center justify-center bg-c-surface-raised rounded-lg hover:bg-c-border-subtle"
                         >
-                          <Plus className="w-4 h-4 text-slate-500" />
+                          <Plus className="w-4 h-4 text-c-text-secondary" />
                         </button>
                       </div>
                     )}
@@ -1384,7 +1384,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               <div className="space-y-4">
                 {/* Logo upload */}
                 <div>
-                  <div className="text-xs text-slate-500 mb-2">
+                  <div className="text-xs text-c-text-secondary mb-2">
                     {isPl ? 'Logo klienta' : 'Client Logo'}
                   </div>
                   {styling.clientLogoUrl ? (
@@ -1392,13 +1392,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       <img
                         src={styling.clientLogoUrl}
                         alt="Logo"
-                        className="max-h-12 rounded-lg border border-slate-200 dark:border-slate-700"
+                        className="max-h-12 rounded-lg border border-c-border-subtle"
                       />
                       <button
                         onClick={() =>
                           onStylingChange({ clientLogoUrl: undefined, showLogo: false })
                         }
-                        className="absolute -top-2 -right-2 w-5 h-5 bg-danger-500 text-white rounded-full flex items-center justify-center"
+                        className="absolute -top-2 -right-2 w-5 h-5 bg-danger-500 text-c-text rounded-full flex items-center justify-center"
                       >
                         <Trash2 className="w-3 h-3" />
                       </button>
@@ -1406,7 +1406,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   ) : (
                     <button
                       onClick={() => fileInputRef.current?.click()}
-                      className="w-full flex items-center justify-center gap-2 px-3 py-2.5 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg text-slate-500 hover:border-blue-400 hover:text-blue-500 transition-all text-sm"
+                      className="w-full flex items-center justify-center gap-2 px-3 py-2.5 border-2 border-dashed border-c-border rounded-lg text-c-text-secondary hover:border-blue-400 hover:text-blue-500 transition-all text-sm"
                     >
                       <Upload className="w-4 h-4" />
                       {isPl ? 'Wgraj logo' : 'Upload logo'}
@@ -1422,24 +1422,24 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 </div>
 
                 {/* Consultify branding */}
-                <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
+                <div className="pt-3 border-t border-c-border-subtle">
                   <label className="flex items-center justify-between cursor-pointer">
                     <div>
-                      <div className="text-sm text-slate-700 dark:text-slate-300">
+                      <div className="text-sm text-c-text">
                         {isPl ? '"Stworzono w Consultify"' : '"Created in Consultify"'}
                       </div>
-                      <div className="text-xs text-slate-600">
+                      <div className="text-xs text-c-text-secondary">
                         {isPl ? 'Automatyczny napis w stopce' : 'Auto footer text'}
                       </div>
                     </div>
                     <div
                       className={`relative w-10 h-6 rounded-full transition-colors ${
-                        styling.showBranding ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-600'
+                        styling.showBranding ? 'bg-blue-600' : 'bg-c-border'
                       }`}
                       onClick={() => onStylingChange({ showBranding: !styling.showBranding })}
                     >
                       <div
-                        className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                        className={`absolute top-1 w-4 h-4 bg-c-surface rounded-full shadow transition-transform ${
                           styling.showBranding ? 'left-5' : 'left-1'
                         }`}
                       />

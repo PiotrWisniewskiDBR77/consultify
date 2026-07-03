@@ -30,22 +30,22 @@ export const NarrativeEngineMetadata: React.FC<NarrativeEngineMetadataProps> = (
 
   return (
     <div
-      className={`flex items-center gap-3 px-2.5 py-1.5 rounded-lg bg-primary-500/5 border border-primary-500/10 text-[10px] ${className}`}
+      className={`flex items-center gap-3 px-2.5 py-1.5 rounded-lg bg-c-accent-soft0 border border-c-accent text-[10px] ${className}`}
     >
-      <span className="flex items-center gap-1 text-primary-400/80">
+      <span className="flex items-center gap-1 text-c-accent">
         <Lightbulb size={10} />
         V3 Engine
       </span>
 
       {factsUsed != null && (
-        <span className="flex items-center gap-1 text-slate-600">
+        <span className="flex items-center gap-1 text-c-text-secondary">
           <Database size={9} />
           {factsUsed} {t('reports.narrative.facts', 'facts')}
         </span>
       )}
 
       {observationsUsed != null && (
-        <span className="flex items-center gap-1 text-slate-600">
+        <span className="flex items-center gap-1 text-c-text-secondary">
           <Eye size={9} />
           {observationsUsed} {t('reports.narrative.observations', 'observations')}
         </span>
