@@ -340,8 +340,8 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
       },
       slate: {
         bg: 'bg-slate-500',
-        text: 'text-slate-500 dark:text-slate-400',
-        light: 'bg-slate-100 dark:bg-slate-900/30',
+        text: 'text-c-text-muted',
+        light: 'bg-c-surface-raised/30',
       },
       cyan: { bg: 'bg-blue-500', text: 'text-blue-500', light: 'bg-blue-100 dark:bg-blue-900/30' },
     };
@@ -376,24 +376,24 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <h2 className="text-xl font-semibold text-c-text flex items-center gap-2">
             <Key size={24} />
             {t('admin.roles.title', 'Roles & Permissions')}
           </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-muted mt-1">
             Manage account types and project role permissions
           </p>
         </div>
       </div>
 
       {/* Section Tabs */}
-      <div className="flex gap-2 border-b border-slate-200 dark:border-navy-700">
+      <div className="flex gap-2 border-b border-c-border-subtle">
         <button
           onClick={() => setActiveSection('account')}
           className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
             activeSection === 'account'
               ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-              : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300'
+              : 'border-transparent text-c-text-muted hover:text-c-text-secondary dark:hover:text-slate-300'
           }`}
         >
           <div className="flex items-center gap-2">
@@ -406,7 +406,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
           className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
             activeSection === 'project'
               ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-              : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300'
+              : 'border-transparent text-c-text-muted hover:text-c-text-secondary dark:hover:text-slate-300'
           }`}
         >
           <div className="flex items-center gap-2">
@@ -441,7 +441,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
               return (
                 <div
                   key={type.id}
-                  className="p-5 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700"
+                  className="p-5 bg-c-surface rounded-xl border border-c-border-subtle"
                 >
                   <div className="flex items-start gap-3 mb-4">
                     <div className={`p-2.5 rounded-lg ${colors.light}`}>
@@ -449,27 +449,27 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="font-semibold text-slate-900 dark:text-white">
+                        <h4 className="font-semibold text-c-text">
                           {type.name}
                         </h4>
-                        <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-navy-700 text-slate-500 dark:text-slate-400 text-[10px] rounded">
+                        <span className="px-1.5 py-0.5 bg-c-surface-raised text-c-text-muted text-[10px] rounded">
                           SYSTEM
                         </span>
                       </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      <p className="text-xs text-c-text-muted mt-1">
                         {type.description}
                       </p>
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <p className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    <p className="text-xs font-medium text-c-text-muted uppercase tracking-wider">
                       Capabilities
                     </p>
                     <ul className="space-y-1.5">
                       {type.capabilities.map((cap, i) => (
                         <li
                           key={i}
-                          className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-400"
+                          className="flex items-start gap-2 text-xs text-c-text-secondary"
                         >
                           <Check size={12} className="text-green-500 mt-0.5 flex-shrink-0" />
                           {cap}
@@ -523,7 +523,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
 
             return (
               <div key={level} className="space-y-3">
-                <h3 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                <h3 className="text-xs font-semibold text-c-text-muted uppercase tracking-wider flex items-center gap-2">
                   <span className="w-5 h-5 rounded bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-[10px] font-bold">
                     {level}
                   </span>
@@ -539,10 +539,10 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                       <div
                         key={role.id}
                         onClick={() => setSelectedRole(isSelected ? null : role.id)}
-                        className={`p-4 bg-white dark:bg-navy-800 rounded-xl border cursor-pointer transition-all ${
+                        className={`p-4 bg-c-surface rounded-xl border cursor-pointer transition-all ${
                           isSelected
                             ? 'border-primary-500 ring-2 ring-primary-500/20'
-                            : 'border-slate-200 dark:border-navy-700 hover:border-slate-300'
+                            : 'border-c-border-subtle hover:border-c-border'
                         }`}
                       >
                         <div className="flex items-start justify-between">
@@ -552,11 +552,11 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                             </div>
                             <div>
                               <div className="flex items-center gap-2">
-                                <h4 className="font-medium text-slate-900 dark:text-white text-sm">
+                                <h4 className="font-medium text-c-text text-sm">
                                   {role.name}
                                 </h4>
                                 {role.isSystem ? (
-                                  <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-navy-700 text-slate-500 dark:text-slate-400 text-[10px] rounded">
+                                  <span className="px-1.5 py-0.5 bg-c-surface-raised text-c-text-muted text-[10px] rounded">
                                     STANDARD
                                   </span>
                                 ) : (
@@ -565,11 +565,11 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                                   </span>
                                 )}
                               </div>
-                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                              <p className="text-xs text-c-text-muted mt-0.5">
                                 {role.description}
                               </p>
                               <div className="flex items-center gap-2 mt-2">
-                                <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                                <span className="text-[10px] text-c-text-muted">
                                   {role.defaultPermissions?.length || 0} permissions
                                 </span>
                               </div>
@@ -583,7 +583,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                                   openEditModal(role);
                                 }}
                                 disabled
-                                className="p-1.5 hover:bg-slate-100 dark:hover:bg-navy-700 rounded text-slate-400 hover:text-slate-600 dark:text-slate-400"
+                                className="p-1.5 hover:bg-c-surface-raised rounded text-c-text-muted hover:text-c-text-secondary"
                               >
                                 <Edit size={14} />
                               </button>
@@ -593,7 +593,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                                   handleDeleteRole(role.id);
                                 }}
                                 disabled
-                                className="p-1.5 hover:bg-danger-100 dark:hover:bg-danger-900/30 rounded text-slate-400 dark:text-slate-500 hover:text-danger-600"
+                                className="p-1.5 hover:bg-danger-100 dark:hover:bg-danger-900/30 rounded text-c-text-muted hover:text-danger-600"
                               >
                                 <Trash2 size={14} />
                               </button>
@@ -610,9 +610,9 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
 
           {/* Permission Matrix when role selected */}
           {selectedRole && (
-            <div className="p-5 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+            <div className="p-5 bg-c-surface rounded-xl border border-c-border-subtle">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                <h3 className="text-base font-semibold text-c-text">
                   {allProjectRoles.find((r) => r.id === selectedRole)?.name} - Permissions
                 </h3>
                 {!allProjectRoles.find((r) => r.id === selectedRole)?.isSystem && (
@@ -630,7 +630,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {PROJECT_PERMISSIONS.map((category) => (
                   <div key={category.category}>
-                    <p className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+                    <p className="text-xs font-medium text-c-text-muted uppercase tracking-wider mb-2">
                       {category.category}
                     </p>
                     <div className="space-y-1.5">
@@ -643,7 +643,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                               className={`w-5 h-5 rounded flex items-center justify-center ${
                                 hasPermission
                                   ? 'bg-green-500 text-white'
-                                  : 'bg-slate-200 dark:bg-navy-700 text-slate-400 dark:text-slate-500'
+                                  : 'bg-slate-200 dark:bg-navy-700 text-c-text-muted'
                               }`}
                             >
                               {hasPermission ? <Check size={12} /> : <X size={12} />}
@@ -651,8 +651,8 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                             <span
                               className={
                                 hasPermission
-                                  ? 'text-slate-900 dark:text-white'
-                                  : 'text-slate-400 dark:text-slate-500'
+                                  ? 'text-c-text'
+                                  : 'text-c-text-muted'
                               }
                             >
                               {perm.label}
@@ -682,20 +682,20 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white dark:bg-navy-800 rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden"
+              className="bg-c-surface rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden"
             >
-              <div className="p-6 border-b border-slate-200 dark:border-navy-700">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+              <div className="p-6 border-b border-c-border-subtle">
+                <h3 className="text-lg font-semibold text-c-text">
                   {editingRole ? 'Edit Project Role' : 'Create Custom Project Role'}
                 </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-sm text-c-text-muted mt-1">
                   Define a custom role with specific permissions for project team members
                 </p>
               </div>
               <div className="p-6 space-y-4 overflow-y-auto max-h-[60vh]">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-sm font-medium text-c-text-secondary mb-1">
                       Role Name *
                     </label>
                     <input
@@ -703,11 +703,11 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder="e.g., Senior Developer"
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
+                      className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-sm font-medium text-c-text-secondary mb-1">
                       Level
                     </label>
                     <select
@@ -715,7 +715,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                       onChange={(e) =>
                         setFormData({ ...formData, level: parseInt(e.target.value) })
                       }
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
+                      className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text"
                     >
                       <option value={1}>Level 1 - Manager</option>
                       <option value={2}>Level 2 - Lead</option>
@@ -726,7 +726,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-1">
                     Description
                   </label>
                   <input
@@ -734,18 +734,18 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     placeholder="Brief description of this role's responsibilities"
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
+                    className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-2">
                     Permissions
                   </label>
-                  <div className="space-y-4 max-h-64 overflow-y-auto p-3 bg-slate-50 dark:bg-navy-900 rounded-lg">
+                  <div className="space-y-4 max-h-64 overflow-y-auto p-3 bg-c-surface-raised rounded-lg">
                     {PROJECT_PERMISSIONS.map((category) => (
                       <div key={category.category}>
-                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">
+                        <p className="text-xs font-semibold text-c-text-muted mb-2 uppercase tracking-wider">
                           {category.category}
                         </p>
                         <div className="flex flex-wrap gap-2">
@@ -757,7 +757,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                                 formData.permissions.includes(perm.id)
                                   ? 'bg-navy-900 text-white'
-                                  : 'bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-600 hover:border-primary-300'
+                                  : 'bg-c-surface text-c-text-secondary border border-c-border-subtle hover:border-primary-300'
                               }`}
                             >
                               {perm.label}
@@ -769,10 +769,10 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                   </div>
                 </div>
               </div>
-              <div className="p-6 border-t border-slate-200 dark:border-navy-700 flex justify-end gap-3">
+              <div className="p-6 border-t border-c-border-subtle flex justify-end gap-3">
                 <button
                   onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg"
+                  className="px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised rounded-lg"
                 >
                   Cancel
                 </button>
