@@ -40,7 +40,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
   ) => {
     const sizeClasses = {
       sm: 'h-8 text-xs px-2 py-1',
-      md: 'h-10 text-sm px-3 py-2',
+      md: 'h-9 text-sm px-3 py-2',
       lg: 'h-12 text-base px-4 py-3',
     } as const;
 
@@ -54,12 +54,10 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           onChange={(e) => onChange?.(e.target.value)}
           disabled={disabled}
           className={cn(
-            'flex w-full items-center justify-between rounded-lg border border-slate-200 bg-white',
-            'ring-offset-background placeholder:text-slate-500',
-            'focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid',
+            'flex w-full items-center justify-between rounded-lg border border-c-border bg-c-surface-raised text-c-text',
+            'transition-colors placeholder:text-c-text-muted',
+            'focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] focus-visible:border-c-accent',
             'disabled:cursor-not-allowed disabled:opacity-50',
-            'dark:border-navy-600 dark:bg-navy-800 dark:text-white dark:placeholder:text-slate-400',
-            'dark:focus:ring-c-focus',
             'appearance-none cursor-pointer',
             sizeClasses[size],
             fullWidth && 'w-full',
@@ -77,7 +75,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             </option>
           ))}
         </select>
-        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600 pointer-events-none" />
+        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-c-text-muted pointer-events-none" />
       </div>
     );
   }
@@ -95,11 +93,10 @@ const SelectTrigger = React.forwardRef<HTMLButtonElement, SelectTriggerProps>(
     <button
       ref={ref}
       className={cn(
-        'flex h-10 w-full items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm',
-        'ring-offset-background placeholder:text-slate-500',
-        'focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid',
+        'flex h-9 w-full items-center justify-between rounded-lg border border-c-border bg-c-surface-raised px-3 py-2 text-sm text-c-text',
+        'transition-colors placeholder:text-c-text-muted',
+        'focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] focus-visible:border-c-accent',
         'disabled:cursor-not-allowed disabled:opacity-50',
-        'dark:border-navy-600 dark:bg-navy-800 dark:text-white',
         className
       )}
       {...props}
@@ -113,7 +110,7 @@ const SelectTrigger = React.forwardRef<HTMLButtonElement, SelectTriggerProps>(
 SelectTrigger.displayName = 'SelectTrigger';
 
 const SelectValue = ({ placeholder }: { placeholder?: string }) => (
-  <span className="text-slate-500 dark:text-slate-400">{placeholder}</span>
+  <span className="text-c-text-muted">{placeholder}</span>
 );
 
 const SelectContent = ({
@@ -125,8 +122,7 @@ const SelectContent = ({
 }) => (
   <div
     className={cn(
-      'relative z-dropdown min-w-[8rem] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-md',
-      'dark:border-navy-600 dark:bg-navy-800',
+      'relative z-dropdown min-w-[8rem] overflow-hidden rounded-lg border border-c-border bg-c-surface shadow-md',
       className
     )}
   >
@@ -144,9 +140,8 @@ const SelectItem = React.forwardRef<HTMLDivElement, SelectItemProps>(
     <div
       ref={ref}
       className={cn(
-        'relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 px-3 text-sm outline-none',
-        'hover:bg-slate-100 focus:bg-slate-100',
-        'dark:hover:bg-navy-700 dark:focus:bg-navy-700',
+        'relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 px-3 text-sm text-c-text outline-none',
+        'hover:bg-c-surface-raised focus:bg-c-surface-raised',
         className
       )}
       {...props}
