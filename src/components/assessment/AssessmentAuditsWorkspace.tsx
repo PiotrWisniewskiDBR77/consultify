@@ -104,7 +104,7 @@ export const AssessmentAuditsWorkspace: React.FC<AssessmentAuditsWorkspaceProps>
               <input
                 type="text"
                 placeholder="Audit Name (e.g. ADMA 2024)"
-                className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded px-3 py-2 text-sm text-navy-900 dark:text-white focus:outline-none focus:border-primary-500"
+                className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded px-3 py-2 text-sm text-navy-900 dark:text-white focus:outline-none focus:border-c-accent"
                 value={newAudit.name || ''}
                 onChange={(e) => setNewAudit({ ...newAudit, name: e.target.value })}
               />

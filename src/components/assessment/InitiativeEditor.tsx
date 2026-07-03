@@ -167,7 +167,7 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
                                 ${
                                   errors.name
                                     ? 'border-danger-300 dark:border-danger-500/50 focus:ring-danger-500'
-                                    : 'border-slate-200 dark:border-navy-700 focus:ring-primary-500'
+                                    : 'border-slate-200 dark:border-navy-700 focus:ring-[color:var(--c-focus)]'
                                 }
                             `}
               placeholder={t('initiatives.form.namePlaceholder')}
@@ -189,7 +189,7 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
                                 ${
                                   errors.description
                                     ? 'border-danger-300 dark:border-danger-500/50 focus:ring-danger-500'
-                                    : 'border-slate-200 dark:border-navy-700 focus:ring-primary-500'
+                                    : 'border-slate-200 dark:border-navy-700 focus:ring-[color:var(--c-focus)]'
                                 }
                             `}
               placeholder={t('initiatives.form.descriptionPlaceholder')}

@@ -336,7 +336,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   disabled={isReadOnly}
-                  className="text-xl font-bold text-navy-900 dark:text-white bg-transparent border-none outline-none focus:ring-2 focus:ring-primary-500 rounded px-1 -ml-1"
+                  className="text-xl font-bold text-navy-900 dark:text-white bg-transparent border-none outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] rounded px-1 -ml-1"
                 />
                 <span
                   className={`px-2 py-0.5 text-xs font-medium rounded-full ${
@@ -486,7 +486,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
               disabled={isReadOnly}
               placeholder="Podsumowanie wykonawcze raportu..."
               rows={6}
-              className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
             />
           </div>
 
@@ -599,7 +599,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
               disabled={isReadOnly}
               placeholder="Dodatkowe uwagi i notatki..."
               rows={4}
-              className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
             />
           </div>
         </div>

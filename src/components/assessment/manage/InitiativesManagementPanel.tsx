@@ -375,7 +375,7 @@ const GenerateInitiativesModal: FC<{
               type="checkbox"
               checked={includeChatContext}
               onChange={(e) => setIncludeChatContext(e.target.checked)}
-              className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+              className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-[color:var(--c-focus)]"
             />
             <div>
               <div className="text-sm font-medium text-slate-900 dark:text-white">
@@ -1163,7 +1163,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                                 type="checkbox"
                                 checked={checked}
                                 readOnly
-                                className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                                className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-[color:var(--c-focus)]"
                               />
                               <Icon
                                 size={14}
@@ -1217,7 +1217,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search initiatives..."
-              className="w-full h-10 pl-10 pr-4 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors"
+              className="w-full h-10 pl-10 pr-4 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-c-accent transition-colors"
             />
           </div>
         </div>

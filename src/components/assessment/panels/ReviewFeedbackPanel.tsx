@@ -317,7 +317,7 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
                     onChange={(e) => setComments(e.target.value)}
                     placeholder="Twoje uwagi do całego assessmentu..."
                     rows={4}
-                    className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
                   />
                 </div>
 
@@ -346,7 +346,7 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
                             onChange={(e) => handleAxisCommentChange(axisId, e.target.value)}
                             placeholder={`Komentarz do ${label}...`}
                             rows={2}
-                            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
                           />
                         </div>
                       ))}

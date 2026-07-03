@@ -1353,7 +1353,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                                       [role]: e.target.value,
                                     }))
                                   }
-                                  className="w-full px-3 py-1.5 rounded-xl text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500/50 transition-all"
+                                  className="w-full px-3 py-1.5 rounded-xl text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-c-accent transition-all"
                                 >
                                   <option value="">
                                     {t('initiatives.initiativeGatesWorkflowTable.notAssignedDash')}
@@ -1385,7 +1385,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                         onChange={(e) =>
                           setDueDateDraft((prev) => ({ ...prev, [editGateKey]: e.target.value }))
                         }
-                        className="w-full px-3 py-2 rounded-xl text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500/50 transition-all"
+                        className="w-full px-3 py-2 rounded-xl text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-c-accent transition-all"
                       />
                     </div>
 
@@ -1401,7 +1401,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                         }
                         rows={3}
                         placeholder={t('initiatives.initiativeGatesWorkflowTable.addGateContext')}
-                        className="w-full px-3 py-2 rounded-xl text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500/50 transition-all resize-none"
+                        className="w-full px-3 py-2 rounded-xl text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-c-accent transition-all resize-none"
                       />
                     </div>
 
