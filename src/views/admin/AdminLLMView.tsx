@@ -276,7 +276,7 @@ export const AdminLLMView: React.FC = () => {
       case 'unhealthy':
         return 'text-danger-400 bg-danger-500/10 border-danger-500/20';
       default:
-        return 'text-c-text-secondary bg-c-surface-raised/300/10 border-slate-500/20';
+        return 'text-c-text-secondary bg-c-surface-raised border-slate-500/20';
     }
   };
 

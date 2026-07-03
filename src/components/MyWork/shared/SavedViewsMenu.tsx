@@ -168,7 +168,7 @@ export const SavedViewsMenu: React.FC<SavedViewsMenuProps> = ({ currentState, on
                   <button
                     onClick={handleSave}
                     disabled={!newName.trim()}
-                    className="h-7 px-2 rounded-lg text-xs font-medium bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="h-7 px-2 rounded-lg text-xs font-medium bg-c-text text-c-bg hover:bg-c-text-secondary disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Check size={12} />
                   </button>

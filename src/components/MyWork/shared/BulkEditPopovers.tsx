@@ -254,7 +254,7 @@ export const BulkDatePicker: React.FC<BulkDatePickerProps> = ({
                 <button
                   onClick={handleCustomSubmit}
                   disabled={!customDate || !/^\d{4}-\d{2}-\d{2}$/.test(customDate)}
-                  className="h-8 px-2.5 rounded-lg text-xs font-medium bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="h-8 px-2.5 rounded-lg text-xs font-medium bg-c-text text-c-bg hover:bg-c-text-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   OK
                 </button>

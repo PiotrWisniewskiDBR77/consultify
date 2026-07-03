@@ -433,7 +433,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                           <button
                             onClick={handleAddExternalLink}
                             disabled={!externalUrl.trim() || !externalTitle.trim()}
-                            className="flex-1 px-3 py-2 rounded-lg text-sm font-medium bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="flex-1 px-3 py-2 rounded-lg text-sm font-medium bg-c-text text-c-bg hover:bg-c-text-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           >
                             {isPolish ? 'Dodaj link' : 'Add Link'}
                           </button>

@@ -162,7 +162,7 @@ export const ConvertToDialog: React.FC<ConvertToDialogProps> = ({
           <button
             onClick={handleConfirm}
             disabled={creating || !sources?.length}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-primary-500 text-white text-xs font-semibold hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-c-text text-c-bg text-xs font-semibold hover:bg-c-text-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             {creating && <Loader2 size={12} className="animate-spin" />}
             {t('traceability.convertTo.confirm', 'Confirm & create')}

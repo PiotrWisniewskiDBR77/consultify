@@ -432,7 +432,7 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                     </p>
                     <button
                       onClick={() => window.open(previewAttachment.url, '_blank')}
-                      className="mt-4 px-4 py-2 rounded-lg bg-primary-500 text-white hover:bg-primary-600 transition-colors"
+                      className="mt-4 px-4 py-2 rounded-lg bg-c-text text-c-bg hover:bg-c-text-secondary transition-colors"
                     >
                       {isPolish ? 'Pobierz plik' : 'Download file'}
                     </button>
