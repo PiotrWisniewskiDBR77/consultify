@@ -133,7 +133,8 @@
     "none": "brak",
     "runNow": "Uruchom teraz",
     "organization": "Organizacja",
-    "loadMore": "Załaduj więcej"
+    "loadMore": "Załaduj więcej",
+    "export": "Eksportuj"
   },
   "superadmin": {
     "confirm": {
@@ -5189,7 +5190,9 @@
       "version": "wersja",
       "author": "Autor",
       "period": "Okres",
-      "immutable": "Wersja niezmienna"
+      "immutable": "Wersja niezmienna",
+      "startReview": "Rozpocznij przegląd",
+      "customType": "Niestandardowy"
     },
     "toast": {
       "chatOpened": "Czat otwarty",

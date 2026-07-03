@@ -1448,7 +1448,8 @@
     "none": "none",
     "runNow": "Run now",
     "organization": "Organization",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "export": "Export"
   },
   "superadmin": {
     "confirm": {
@@ -5979,7 +5980,9 @@
       "version": "version",
       "author": "Author",
       "period": "Period",
-      "immutable": "Immutable version"
+      "immutable": "Immutable version",
+      "startReview": "Start review",
+      "customType": "Custom"
     },
     "toast": {
       "chatOpened": "Chat opened",
