@@ -52,15 +52,15 @@ interface SettingsSectionProps {
 export const SettingsSectionSkeleton: React.FC<{ rows?: number }> = ({ rows = 3 }) => (
   <div className="space-y-6 animate-pulse p-6">
     <div className="flex items-start gap-4">
-      <div className="w-10 h-10 bg-slate-200 dark:bg-navy-700 rounded-lg" />
+      <div className="w-10 h-10 bg-c-surface-raised rounded-lg" />
       <div className="flex-1 space-y-2">
-        <div className="h-5 bg-slate-200 dark:bg-navy-700 rounded w-1/3" />
-        <div className="h-4 bg-slate-200 dark:bg-navy-700 rounded w-2/3" />
+        <div className="h-5 bg-c-surface-raised rounded w-1/3" />
+        <div className="h-4 bg-c-surface-raised rounded w-2/3" />
       </div>
     </div>
     <div className="space-y-4">
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="h-12 bg-slate-200 dark:bg-navy-700 rounded-lg" />
+        <div key={i} className="h-12 bg-c-surface-raised rounded-lg" />
       ))}
     </div>
   </div>
@@ -87,8 +87,8 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
     return (
       <div
         className={cn(
-          'bg-white dark:bg-navy-800/50 rounded-xl overflow-hidden',
-          bordered && 'border border-slate-200 dark:border-white/5',
+          'bg-c-surface-raised rounded-xl overflow-hidden',
+          bordered && 'border border-c-border-subtle',
           className
         )}
       >
@@ -103,8 +103,8 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
   return (
     <div
       className={cn(
-        'bg-white dark:bg-navy-800/50 rounded-xl overflow-hidden transition-all duration-200',
-        bordered && 'border border-slate-200 dark:border-white/5',
+        'bg-c-surface-raised rounded-xl overflow-hidden transition-all duration-200',
+        bordered && 'border border-c-border-subtle',
         isDirty && 'ring-2 ring-amber-500/20',
         className
       )}
@@ -114,16 +114,16 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
         className={cn(
           'flex items-start justify-between',
           headerPadding,
-          onSave && 'border-b border-slate-200 dark:border-white/5'
+          onSave && 'border-b border-c-border-subtle'
         )}
       >
         <div className="flex items-start gap-4">
-          <div className="p-2.5 bg-primary-100 dark:bg-primary-600/10 rounded-lg flex-shrink-0">
-            <Icon size={20} className="text-primary-600 dark:text-primary-400" />
+          <div className="p-2.5 bg-c-accent-soft rounded-lg flex-shrink-0">
+            <Icon size={20} className="text-c-accent" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white leading-tight">{title}</h3>
-            <p className="text-sm text-slate-600 dark:text-slate-500 mt-1 leading-relaxed">
+            <h3 className="text-lg font-semibold text-c-text leading-tight">{title}</h3>
+            <p className="text-sm text-c-text-secondary mt-1 leading-relaxed">
               {description}
             </p>
           </div>
@@ -139,7 +139,7 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
 
       {/* Footer with Save (if onSave provided) */}
       {onSave && (
-        <div className="flex items-center justify-between px-6 py-4 bg-slate-50 dark:bg-navy-900/50 border-t border-slate-200 dark:border-white/5">
+        <div className="flex items-center justify-between px-6 py-4 bg-c-surface-raised border-t border-c-border-subtle">
           <div className="flex items-center gap-2 text-sm">
             {isDirty ? (
               <>
@@ -149,7 +149,7 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
                 </span>
               </>
             ) : (
-              <span className="text-slate-500 dark:text-slate-400">
+              <span className="text-c-text-muted">
                 {t('settings.allChangesSaved', 'All changes saved')}
               </span>
             )}
@@ -162,7 +162,7 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
               'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:ring-offset-2 focus:ring-offset-navy-900',
               isDirty
                 ? 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]'
-                : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                : 'bg-c-surface-raised text-c-text-muted cursor-not-allowed'
             )}
           >
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
@@ -195,12 +195,12 @@ export const SettingsFormRow: React.FC<SettingsFormRowProps> = ({
   className,
 }) => (
   <div className={cn('space-y-2', className)}>
-    <label htmlFor={htmlFor} className="block text-sm font-medium text-slate-600">
+    <label htmlFor={htmlFor} className="block text-sm font-medium text-c-text-secondary">
       {label}
       {required && <span className="text-c-danger ml-1">*</span>}
     </label>
     {children}
-    {description && <p className="text-xs text-slate-500 dark:text-slate-400">{description}</p>}
+    {description && <p className="text-xs text-c-text-muted">{description}</p>}
   </div>
 );
 
@@ -228,12 +228,12 @@ export const SettingsInput: React.FC<SettingsInputProps> = ({
         aria-invalid={error ? true : undefined}
         aria-describedby={errorId}
         className={cn(
-          'w-full px-4 py-2.5 bg-white dark:bg-navy-800 border rounded-lg text-slate-900 dark:text-white',
-          'placeholder:text-slate-400 transition-all duration-200',
+          'w-full px-4 py-2.5 bg-c-surface border rounded-lg text-c-text',
+          'placeholder:text-c-text-muted transition-all duration-200',
           'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent',
           error
-            ? 'border-c-danger focus:ring-c-danger/35'
-            : 'border-slate-300 dark:border-white/10 hover:border-slate-400 dark:hover:border-white/20',
+            ? 'border-c-danger focus:ring-c-danger'
+            : 'border-c-border hover:border-c-border-strong dark:hover:border-white/20',
           className
         )}
       />
@@ -270,12 +270,12 @@ export const SettingsTextarea: React.FC<SettingsTextareaProps> = ({
         aria-invalid={error ? true : undefined}
         aria-describedby={errorId}
         className={cn(
-          'w-full px-4 py-3 bg-white dark:bg-navy-800 border rounded-lg text-slate-900 dark:text-white resize-none',
-          'placeholder:text-slate-400 transition-all duration-200',
+          'w-full px-4 py-3 bg-c-surface border rounded-lg text-c-text resize-none',
+          'placeholder:text-c-text-muted transition-all duration-200',
           'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent',
           error
-            ? 'border-c-danger focus:ring-c-danger/35'
-            : 'border-slate-300 dark:border-white/10 hover:border-slate-400 dark:hover:border-white/20',
+            ? 'border-c-danger focus:ring-c-danger'
+            : 'border-c-border hover:border-c-border-strong dark:hover:border-white/20',
           className
         )}
       />
@@ -314,12 +314,12 @@ export const SettingsSelect: React.FC<SettingsSelectProps> = ({
         aria-invalid={error ? true : undefined}
         aria-describedby={errorId}
         className={cn(
-          'w-full px-4 py-2.5 bg-white dark:bg-navy-800 border rounded-lg text-slate-900 dark:text-white',
+          'w-full px-4 py-2.5 bg-c-surface border rounded-lg text-c-text',
           'transition-all duration-200 cursor-pointer',
           'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent',
           error
-            ? 'border-c-danger focus:ring-c-danger/35'
-            : 'border-slate-300 dark:border-white/10 hover:border-slate-400 dark:hover:border-white/20',
+            ? 'border-c-danger focus:ring-c-danger'
+            : 'border-c-border hover:border-c-border-strong dark:hover:border-white/20',
           className
         )}
       >
@@ -358,9 +358,9 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
 }) => (
   <div className="flex items-start justify-between gap-4">
     <div className="flex-1">
-      <span className="text-sm font-medium text-slate-900 dark:text-white">{label}</span>
+      <span className="text-sm font-medium text-c-text">{label}</span>
       {description && (
-        <p className="text-xs text-slate-600 dark:text-slate-500 mt-0.5">{description}</p>
+        <p className="text-xs text-c-text-secondary mt-0.5">{description}</p>
       )}
     </div>
     <button
@@ -371,13 +371,13 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
       className={cn(
         'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200',
         'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:ring-offset-2 focus:ring-offset-navy-900',
-        checked ? 'bg-navy-900' : 'bg-slate-200 dark:bg-white/10',
+        checked ? 'bg-navy-900' : 'bg-c-surface-raised',
         disabled && 'opacity-50 cursor-not-allowed'
       )}
     >
       <span
         className={cn(
-          'inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform duration-200',
+          'inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform duration-200',
           checked ? 'translate-x-6' : 'translate-x-1'
         )}
       />
@@ -389,7 +389,7 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
  * Settings divider - visual separator
  */
 export const SettingsDivider: React.FC<{ className?: string }> = ({ className }) => (
-  <div className={cn('border-t border-slate-200 dark:border-white/5 my-6', className)} />
+  <div className={cn('border-t border-c-border-subtle my-6', className)} />
 );
 
 /**
@@ -415,7 +415,7 @@ export const SettingsButtonGroup: React.FC<SettingsButtonGroupProps> = ({
   };
 
   return (
-    <div className="inline-flex rounded-lg bg-slate-100 dark:bg-navy-900/50 p-1">
+    <div className="inline-flex rounded-lg bg-c-surface-raised p-1">
       {options.map((option) => {
         const isActive = value === option.value;
         const Icon = option.icon;
@@ -428,7 +428,7 @@ export const SettingsButtonGroup: React.FC<SettingsButtonGroupProps> = ({
               sizeClasses[size],
               isActive
                 ? 'bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 shadow-sm'
-                : 'text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-navy-800/20'
+                : 'text-c-text-secondary hover:text-c-text dark:hover:text-white hover:bg-c-surface dark:hover:bg-navy-800/20'
             )}
           >
             {Icon && <Icon size={size === 'sm' ? 14 : size === 'md' ? 16 : 18} />}
