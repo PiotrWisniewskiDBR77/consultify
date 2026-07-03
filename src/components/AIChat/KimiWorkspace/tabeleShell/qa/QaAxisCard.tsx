@@ -6,6 +6,7 @@
 
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { QaAxisDetail, QaAxisName, QaBand } from '@/services/api/tablePlatform.api';
 
@@ -23,6 +24,14 @@ const AXIS_LABEL: Record<QaAxisName, string> = {
   formulaConsistency: 'Formula consistency',
 };
 
+const AXIS_LABEL_KEY: Record<QaAxisName, string> = {
+  completeness: 'kimi.tabeleShell.qa.axis.completeness',
+  freshness: 'kimi.tabeleShell.qa.axis.freshness',
+  sourceCoverage: 'kimi.tabeleShell.qa.axis.sourceCoverage',
+  methodology: 'kimi.tabeleShell.qa.axis.methodology',
+  formulaConsistency: 'kimi.tabeleShell.qa.axis.formulaConsistency',
+};
+
 export interface QaAxisCardProps {
   axisName: QaAxisName;
   detail: QaAxisDetail;
@@ -36,8 +45,9 @@ export const QaAxisCard: React.FC<QaAxisCardProps> = ({
   defaultExpanded = false,
   labelOverride,
 }) => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(defaultExpanded);
-  const label = labelOverride ?? AXIS_LABEL[axisName];
+  const label = labelOverride ?? t(AXIS_LABEL_KEY[axisName], AXIS_LABEL[axisName]);
   const pct = Math.round(detail.score * 100);
   return (
     <div

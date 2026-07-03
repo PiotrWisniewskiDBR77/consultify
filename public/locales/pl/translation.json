@@ -14086,6 +14086,238 @@
       "filter": {
         "ariaLabel": "Filtr statusu szablonów"
       }
+    },
+    "tabeleShell": {
+      "aiEditor": {
+        "ariaLabel": "Edytor AI dla Tabele",
+        "title": "Edytor AI",
+        "budgetLabel": "{{used}} / {{total}} tokenów",
+        "levelRadioGroup": "Poziom Edytora AI",
+        "requiresSuperAdmin": "{{label}} wymaga roli super-administratora",
+        "levelTitle": "{{label}} — {{description}}",
+        "promptLabel": "Polecenie: {{label}}",
+        "disclaimer": "AI nigdy nie wykonuje zmian samodzielnie. Zawsze przeglądasz i zatwierdzasz diff.",
+        "propose": "Zaproponuj",
+        "promptRequired": "Polecenie jest wymagane",
+        "softWarnBudget": "Ostrzeżenie: budżet AI na poziomie 70%.",
+        "proposeFailed": "Nie udało się utworzyć propozycji: {{reason}}",
+        "applied": "Zastosowano: {{reason}}",
+        "ok": "ok",
+        "applyFailed": "Zastosowanie nie powiodło się: {{reason}}",
+        "rejected": "Propozycja odrzucona",
+        "rejectFailed": "Odrzucenie nie powiodło się: {{reason}}",
+        "unknownError": "nieznany błąd",
+        "handlerLive": "aktywny",
+        "handlerStub": "zaślepka",
+        "softWarnDetail": "Budżet tokenów AI zbliża się do dziennego limitu (ostrzeżenie).",
+        "promptSection": "Polecenie",
+        "proposedOperations": "Proponowane operacje",
+        "noOperationsPreview": "Podgląd operacji niedostępny. Użyj dziennika audytu przestrzeni roboczej, aby zobaczyć pełny diff.",
+        "opFallback": "operacja",
+        "moreOperations": "+{{count}} więcej",
+        "reject": "Odrzuć",
+        "apply": "Zastosuj",
+        "level": {
+          "cell": {
+            "label": "Komórka",
+            "description": "Dopracuj wartość pojedynczej komórki."
+          },
+          "record": {
+            "label": "Rekord",
+            "description": "Uzupełnij brakujące pola jednego rekordu."
+          },
+          "column": {
+            "label": "Kolumna",
+            "description": "Masowo uzupełnij jedną kolumnę w widocznych rekordach."
+          },
+          "structure": {
+            "label": "Struktura",
+            "description": "Dodaj, zmień nazwę, typ lub usuń pola."
+          },
+          "view": {
+            "label": "Widok",
+            "description": "Utwórz lub zaktualizuj zapisaną konfigurację widoku."
+          },
+          "relational": {
+            "label": "Relacje",
+            "description": "Zaproponuj nowe relacje między rekordami."
+          },
+          "methodological": {
+            "label": "Metodologia",
+            "description": "Oznacz odstępstwa od zasad governance."
+          },
+          "source": {
+            "label": "Źródła",
+            "description": "Zaproponuj źródła dla rekordów, którym ich brakuje."
+          }
+        }
+      },
+      "leftRail": {
+        "ariaLabel": "Konspekt Tabele",
+        "empty": "Brak sekcji do wyświetlenia.",
+        "countAriaLabel": "{{label}} — liczba",
+        "cover": "Okładka",
+        "kpi": "KPI",
+        "schema": "Schemat",
+        "records": "Rekordy",
+        "relations": "Relacje",
+        "rationale": "Uzasadnienie"
+      },
+      "qa": {
+        "ariaLabel": "Raport QA dla Tabele",
+        "title": "Raport QA",
+        "recomputeAriaLabel": "Przelicz ponownie raport QA",
+        "recompute": "Przelicz ponownie",
+        "suggestions": "Sugestie",
+        "loadFailed": "Nie udało się wczytać raportu QA: {{reason}}",
+        "unknownError": "nieznany błąd",
+        "refreshed": "Raport QA odświeżony",
+        "recomputeFailed": "Nie udało się przeliczyć: {{reason}}",
+        "dismissed": "Sugestia oznaczona jako nieadekwatna",
+        "dismissFailed": "Nie udało się odrzucić: {{reason}}",
+        "health": "Kondycja",
+        "noReportYet": "Brak raportu QA — uruchom przeliczenie.",
+        "overallScoreAriaLabel": "Ogólny wynik QA: {{pct}} procent",
+        "axis": {
+          "completeness": "Kompletność",
+          "freshness": "Aktualność",
+          "sourceCoverage": "Pokrycie źródłami",
+          "methodology": "Metodologia",
+          "formulaConsistency": "Spójność formuł"
+        },
+        "band": {
+          "green": "zielony",
+          "amber": "pomarańczowy",
+          "red": "czerwony"
+        },
+        "noSuggestions": "Brak sugestii do działania. Tabela jest w świetnym stanie.",
+        "severityAriaLabel": "istotność {{severity}}",
+        "severity": {
+          "high": "wysoka",
+          "medium": "średnia",
+          "low": "niska"
+        },
+        "axisShort": {
+          "completeness": "kompletność",
+          "freshness": "aktualność",
+          "sourceCoverage": "źródła",
+          "methodology": "metodologia",
+          "formulaConsistency": "formuła"
+        },
+        "level": {
+          "cell": "komórka",
+          "record": "rekord",
+          "column": "kolumna",
+          "structure": "struktura",
+          "view": "widok",
+          "relational": "relacje",
+          "methodological": "metodologia",
+          "source": "źródła"
+        },
+        "openInAiEditor": "Otwórz w Edytorze AI",
+        "markNotApplicable": "Oznacz jako nieadekwatne"
+      },
+      "share": {
+        "ariaLabel": "Udostępnianie i konwersje Tabele",
+        "title": "Udostępnij",
+        "refreshAriaLabel": "Odśwież panel udostępniania",
+        "refresh": "Odśwież",
+        "convertTo": "Konwertuj do",
+        "conversionTargetAriaLabel": "Cel konwersji",
+        "targetDocument": "Dokument",
+        "targetDocumentDescription": "Otwórz w Wordy z konspektem sekcji",
+        "targetPresentation": "Prezentacja",
+        "targetPresentationDescription": "Otwórz w Prezentacjach z konspektem slajdów",
+        "statusDone": "Gotowe",
+        "statusFailed": "Niepowodzenie",
+        "statusRunning": "W toku",
+        "statusQueued": "W kolejce",
+        "statusCancelled": "Anulowano",
+        "listPacksFailed": "Nie udało się pobrać listy paczek: {{reason}}",
+        "listConversionsFailed": "Nie udało się pobrać listy konwersji: {{reason}}",
+        "unknownError": "nieznany",
+        "titleTooLong": "Tytuł musi mieć co najwyżej {{max}} znaków",
+        "conversionFailed": "Konwersja nie powiodła się. Zobacz ostatnie konwersje po szczegóły.",
+        "convertedTo": "Skonwertowano do: {{target}}",
+        "conversionStatus": "Konwersja: {{status}}",
+        "convertFailed": "Nie udało się skonwertować: {{reason}}",
+        "titleLabel": "Tytuł (opcjonalnie)",
+        "titlePlaceholder": "np. {{example}}",
+        "titlePlaceholderDoc": "Briefing inicjatywy",
+        "titlePlaceholderDeck": "Deck inicjatywy",
+        "titleAriaLabel": "Tytuł konwersji",
+        "sourceSnapshot": "Migawka źródła",
+        "liveRecords": "Rekordy na żywo",
+        "liveRecordsHint": "Przechwyć świeżą migawkę w momencie konwersji",
+        "loadingPacks": "Ładowanie zapisanych paczek…",
+        "noPacksYet": "Brak zapisanych paczek źródeł dla tej tabeli.",
+        "packMeta": "{{count}} rekordów · użyto {{used}}x",
+        "convertAriaLabel": "Konwertuj tabelę",
+        "converting": "Konwertowanie…",
+        "convertSubmit": "Konwertuj do: {{target}}",
+        "recentConversions": "Ostatnie konwersje",
+        "loading": "Ładowanie…",
+        "noConversionsYet": "Brak konwersji.",
+        "statusAriaLabel": "Status: {{status}}",
+        "conversionFallbackTitle": "{{target}} — {{id}}",
+        "openConversionResult": "Otwórz wynik konwersji"
+      },
+      "sourcePack": {
+        "recencyAny": "Dowolny czas",
+        "recency7": "Ostatnie 7 dni",
+        "recency30": "Ostatnie 30 dni",
+        "recency90": "Ostatnie 90 dni",
+        "searchFailed": "Nie udało się wyszukać rekordów: {{reason}}",
+        "unknownError": "nieznany",
+        "listPacksFailed": "Nie udało się pobrać listy paczek: {{reason}}",
+        "packLimit": "Paczka może zawierać maksymalnie {{max}} rekordów",
+        "nameRequired": "Nazwa paczki jest wymagana",
+        "atLeastOneRecord": "Dodaj co najmniej jeden rekord do paczki",
+        "saved": "Paczka „{{name}}” zapisana ({{count}} rekordów)",
+        "saveFailed": "Nie udało się zapisać paczki: {{reason}}",
+        "ariaLabel": "Kreator paczki źródeł Tabele",
+        "title": "Paczka źródeł",
+        "refreshAriaLabel": "Odśwież wyszukiwanie kandydatów",
+        "refresh": "Odśwież",
+        "searchPlaceholder": "Szukaj rekordów po treści",
+        "searchAriaLabel": "Szukaj rekordów",
+        "verifiedOnly": "tylko zweryfikowane",
+        "recencyAriaLabel": "Filtr aktualności",
+        "selectedCount": "{{count}} / {{max}} wybranych",
+        "searching": "Wyszukiwanie…",
+        "noCandidates": "Brak rekordów-kandydatów spełniających filtry.",
+        "savePack": "Zapisz paczkę",
+        "packNamePlaceholder": "Nazwa paczki",
+        "packNameAriaLabel": "Nazwa paczki",
+        "descriptionPlaceholder": "Opcjonalny opis",
+        "descriptionAriaLabel": "Opis paczki",
+        "savedPacks": "Zapisane paczki",
+        "loading": "Ładowanie…",
+        "noSavedPacks": "Brak zapisanych paczek.",
+        "packMeta": "{{count}} rekordów · użyto {{used}}×",
+        "useInAiEditorAriaLabel": "Użyj paczki w Edytorze AI",
+        "use": "Użyj",
+        "score": "wynik {{score}}",
+        "hasVerifiedSource": "ma zweryfikowane źródło",
+        "status": {
+          "verified": "zweryfikowany",
+          "inReview": "w recenzji",
+          "unverified": "niezweryfikowany",
+          "rejected": "odrzucony"
+        },
+        "removeFromPack": "Usuń z paczki",
+        "addToPack": "Dodaj do paczki",
+        "added": "Dodano",
+        "add": "Dodaj",
+        "relative": {
+          "today": "dzisiaj",
+          "yesterday": "wczoraj",
+          "daysAgo": "{{count}} dni temu",
+          "weeksAgo": "{{count}} tyg. temu",
+          "monthsAgo": "{{count}} mies. temu",
+          "yearsAgo": "{{count}} lat temu"
+        }
+      }
     }
   },
   "tabele": {

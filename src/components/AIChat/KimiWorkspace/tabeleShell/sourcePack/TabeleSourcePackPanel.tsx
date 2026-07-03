@@ -32,12 +32,20 @@ import { SourceCandidateCard } from './SourceCandidateCard';
 
 const MAX_PACK_RECORDS = 200;
 const SEARCH_DEBOUNCE_MS = 300;
-const RECENCY_OPTIONS: Array<{ value: number | null; label: string }> = [
-  { value: null, label: 'Any time' },
-  { value: 7, label: 'Last 7 days' },
-  { value: 30, label: 'Last 30 days' },
-  { value: 90, label: 'Last 90 days' },
-];
+
+function useRecencyOptions(
+  t: (key: string, def: string) => string
+): Array<{ value: number | null; label: string }> {
+  return useMemo(
+    () => [
+      { value: null, label: t('kimi.tabeleShell.sourcePack.recencyAny', 'Any time') },
+      { value: 7, label: t('kimi.tabeleShell.sourcePack.recency7', 'Last 7 days') },
+      { value: 30, label: t('kimi.tabeleShell.sourcePack.recency30', 'Last 30 days') },
+      { value: 90, label: t('kimi.tabeleShell.sourcePack.recency90', 'Last 90 days') },
+    ],
+    [t]
+  );
+}
 
 export interface TabeleSourcePackPanelProps {
   tableId: string;
@@ -60,6 +68,7 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
   testInitialPacks,
 }) => {
   const { t } = useTranslation();
+  const recencyOptions = useRecencyOptions(t);
   const [query, setQuery] = useState('');
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [recencyDays, setRecencyDays] = useState<number | null>(null);
@@ -88,11 +97,16 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
       });
       setCandidates(list);
     } catch (e) {
-      toast.error(`Failed to search records: ${(e as Error)?.message ?? 'unknown'}`);
+      toast.error(
+        t('kimi.tabeleShell.sourcePack.searchFailed', {
+          defaultValue: 'Failed to search records: {{reason}}',
+          reason: (e as Error)?.message ?? t('kimi.tabeleShell.sourcePack.unknownError', 'unknown'),
+        })
+      );
     } finally {
       setSearching(false);
     }
-  }, [tableId, query, verifiedOnly, recencyDays, useNetwork]);
+  }, [tableId, query, verifiedOnly, recencyDays, useNetwork, t]);
 
   const refreshPacks = useCallback(async () => {
     if (!tableId || !useNetworkPacks) return;
@@ -101,11 +115,16 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
       const list = await listSourcePacksForTable(tableId, { limit: 25 });
       setSavedPacks(list);
     } catch (e) {
-      toast.error(`Failed to list packs: ${(e as Error)?.message ?? 'unknown'}`);
+      toast.error(
+        t('kimi.tabeleShell.sourcePack.listPacksFailed', {
+          defaultValue: 'Failed to list packs: {{reason}}',
+          reason: (e as Error)?.message ?? t('kimi.tabeleShell.sourcePack.unknownError', 'unknown'),
+        })
+      );
     } finally {
       setPacksLoading(false);
     }
-  }, [tableId, useNetworkPacks]);
+  }, [tableId, useNetworkPacks, t]);
 
   // Debounced search.
   useEffect(() => {
@@ -125,25 +144,34 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
     void refreshPacks();
   }, [refreshPacks, useNetworkPacks]);
 
-  const handleToggle = useCallback((recordId: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(recordId)) next.delete(recordId);
-      else if (next.size < MAX_PACK_RECORDS) next.add(recordId);
-      else toast.error(`A pack can hold at most ${MAX_PACK_RECORDS} records`);
-      return next;
-    });
-  }, []);
+  const handleToggle = useCallback(
+    (recordId: string) => {
+      setSelected((prev) => {
+        const next = new Set(prev);
+        if (next.has(recordId)) next.delete(recordId);
+        else if (next.size < MAX_PACK_RECORDS) next.add(recordId);
+        else
+          toast.error(
+            t('kimi.tabeleShell.sourcePack.packLimit', {
+              defaultValue: 'A pack can hold at most {{max}} records',
+              max: MAX_PACK_RECORDS,
+            })
+          );
+        return next;
+      });
+    },
+    [t]
+  );
 
   const handleSavePack = useCallback(async () => {
     if (!tableId) return;
     if (!packName.trim()) {
-      toast.error(t('tabele.rightRail.sourcePack.nameRequired', 'Pack name is required'));
+      toast.error(t('kimi.tabeleShell.sourcePack.nameRequired', 'Pack name is required'));
       return;
     }
     if (selected.size === 0) {
       toast.error(
-        t('tabele.rightRail.sourcePack.needOneRecord', 'Add at least one record to the pack')
+        t('kimi.tabeleShell.sourcePack.atLeastOneRecord', 'Add at least one record to the pack')
       );
       return;
     }
@@ -156,17 +184,28 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
         description: packDescription.trim() || undefined,
         candidateRecordIds: Array.from(selected),
       });
-      toast.success(`Pack "${pack.name}" saved (${pack.candidateRecordIds.length} records)`);
+      toast.success(
+        t('kimi.tabeleShell.sourcePack.saved', {
+          defaultValue: 'Pack "{{name}}" saved ({{count}} records)',
+          name: pack.name,
+          count: pack.candidateRecordIds.length,
+        })
+      );
       setPackName('');
       setPackDescription('');
       setSelected(new Set());
       setSavedPacks((prev) => [pack, ...prev]);
     } catch (e) {
-      toast.error(`Failed to save pack: ${(e as Error)?.message ?? 'unknown'}`);
+      toast.error(
+        t('kimi.tabeleShell.sourcePack.saveFailed', {
+          defaultValue: 'Failed to save pack: {{reason}}',
+          reason: (e as Error)?.message ?? t('kimi.tabeleShell.sourcePack.unknownError', 'unknown'),
+        })
+      );
     } finally {
       setSavingPack(false);
     }
-  }, [tableId, workspaceId, packName, packDescription, selected]);
+  }, [tableId, workspaceId, packName, packDescription, selected, t]);
 
   const selectedCount = selected.size;
   const candidateLimitReached = selectedCount >= MAX_PACK_RECORDS;
@@ -186,24 +225,26 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
     <section
       className="flex h-full flex-col gap-3 p-3"
       data-testid="tabele-source-pack-panel"
-      aria-label="Tabele source pack builder"
+      aria-label={t('kimi.tabeleShell.sourcePack.ariaLabel', 'Tabele source pack builder')}
     >
       <header className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Source Pack</h3>
+        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+          {t('kimi.tabeleShell.sourcePack.title', 'Source Pack')}
+        </h3>
         <button
           type="button"
           onClick={() => void refreshCandidates()}
           disabled={searching || !tableId}
           className="inline-flex items-center gap-1 rounded-md border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-2 py-1 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50"
           data-testid="source-pack-refresh"
-          aria-label="Refresh candidate search"
+          aria-label={t('kimi.tabeleShell.sourcePack.refreshAriaLabel', 'Refresh candidate search')}
         >
           {searching ? (
             <Loader2 className="h-3 w-3 animate-spin" />
           ) : (
             <RefreshCw className="h-3 w-3" />
           )}
-          Refresh
+          {t('kimi.tabeleShell.sourcePack.refresh', 'Refresh')}
         </button>
       </header>
 
@@ -214,13 +255,10 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={t(
-              'tabele.rightRail.sourcePack.searchPlaceholder',
-              'Search records by content'
-            )}
+            placeholder={t('kimi.tabeleShell.sourcePack.searchPlaceholder', 'Search records by content')}
             className="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 py-1.5 pl-7 pr-2 text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-400 dark:focus:ring-slate-500"
             data-testid="source-pack-search-input"
-            aria-label="Search records"
+            aria-label={t('kimi.tabeleShell.sourcePack.searchAriaLabel', 'Search records')}
           />
         </label>
         <div className="flex flex-wrap items-center gap-2">
@@ -233,23 +271,27 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
               data-testid="source-pack-verified-only"
             />
             <ShieldCheck className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-            verified only
+            {t('kimi.tabeleShell.sourcePack.verifiedOnly', 'verified only')}
           </label>
           <select
             value={recencyDays === null ? '' : String(recencyDays)}
             onChange={(e) => setRecencyDays(e.target.value === '' ? null : Number(e.target.value))}
             className="rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-1.5 py-0.5 text-[11px] text-slate-700 dark:text-slate-300"
             data-testid="source-pack-recency-select"
-            aria-label="Recency filter"
+            aria-label={t('kimi.tabeleShell.sourcePack.recencyAriaLabel', 'Recency filter')}
           >
-            {RECENCY_OPTIONS.map((opt) => (
+            {recencyOptions.map((opt) => (
               <option key={String(opt.value)} value={opt.value === null ? '' : opt.value}>
                 {opt.label}
               </option>
             ))}
           </select>
           <span className="ml-auto text-[11px] text-slate-500 dark:text-slate-400">
-            {selectedCount} / {MAX_PACK_RECORDS} selected
+            {t('kimi.tabeleShell.sourcePack.selectedCount', {
+              defaultValue: '{{count}} / {{max}} selected',
+              count: selectedCount,
+              max: MAX_PACK_RECORDS,
+            })}
           </span>
         </div>
       </div>
@@ -257,14 +299,15 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
       <div className="flex-1 min-h-0 overflow-y-auto">
         {searching && candidates.length === 0 ? (
           <div className="flex items-center justify-center p-4 text-xs text-slate-500 dark:text-slate-400">
-            <Loader2 className="mr-2 h-3 w-3 animate-spin" /> Searching…
+            <Loader2 className="mr-2 h-3 w-3 animate-spin" />{' '}
+            {t('kimi.tabeleShell.sourcePack.searching', 'Searching…')}
           </div>
         ) : sortedCandidates.length === 0 ? (
           <div
             className="rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-xs text-slate-500 dark:text-slate-400"
             data-testid="source-pack-candidates-empty"
           >
-            No candidate records match your filters.
+            {t('kimi.tabeleShell.sourcePack.noCandidates', 'No candidate records match your filters.')}
           </div>
         ) : (
           <ul className="space-y-2" data-testid="source-pack-candidate-list">
@@ -283,28 +326,28 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
 
       <div className="rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 p-2">
         <h4 className="mb-1 text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          Save pack
+          {t('kimi.tabeleShell.sourcePack.savePack', 'Save pack')}
         </h4>
         <div className="space-y-1.5">
           <input
             type="text"
             value={packName}
             onChange={(e) => setPackName(e.target.value)}
-            placeholder={t('tabele.rightRail.sourcePack.namePlaceholder', 'Pack name')}
+            placeholder={t('kimi.tabeleShell.sourcePack.packNamePlaceholder', 'Pack name')}
             maxLength={200}
             className="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2 py-1 text-xs text-slate-800 dark:text-slate-100"
             data-testid="source-pack-name-input"
-            aria-label="Pack name"
+            aria-label={t('kimi.tabeleShell.sourcePack.packNameAriaLabel', 'Pack name')}
           />
           <textarea
             value={packDescription}
             onChange={(e) => setPackDescription(e.target.value)}
-            placeholder="Optional description"
+            placeholder={t('kimi.tabeleShell.sourcePack.descriptionPlaceholder', 'Optional description')}
             rows={2}
             maxLength={2000}
             className="w-full resize-none rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2 py-1 text-xs text-slate-800 dark:text-slate-100"
             data-testid="source-pack-description-input"
-            aria-label="Pack description"
+            aria-label={t('kimi.tabeleShell.sourcePack.descriptionAriaLabel', 'Pack description')}
           />
           <button
             type="button"
@@ -318,25 +361,25 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
             ) : (
               <Save className="h-3 w-3" />
             )}
-            Save pack
+            {t('kimi.tabeleShell.sourcePack.savePack', 'Save pack')}
           </button>
         </div>
       </div>
 
       <div>
         <h4 className="mb-1 text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          Saved packs
+          {t('kimi.tabeleShell.sourcePack.savedPacks', 'Saved packs')}
         </h4>
         {packsLoading ? (
           <div className="flex items-center gap-1 px-2 py-1 text-xs text-slate-500 dark:text-slate-400">
-            <Loader2 className="h-3 w-3 animate-spin" /> Loading…
+            <Loader2 className="h-3 w-3 animate-spin" /> {t('kimi.tabeleShell.sourcePack.loading', 'Loading…')}
           </div>
         ) : savedPacks.length === 0 ? (
           <div
             className="rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 px-3 py-2 text-xs text-slate-500 dark:text-slate-400"
             data-testid="source-pack-saved-empty"
           >
-            No saved packs yet.
+            {t('kimi.tabeleShell.sourcePack.noSavedPacks', 'No saved packs yet.')}
           </div>
         ) : (
           <ul className="space-y-1.5" data-testid="source-pack-saved-list">
@@ -354,7 +397,11 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
                     {p.name}
                   </p>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    {p.candidateRecordIds.length} records · used {p.usedCount}×
+                    {t('kimi.tabeleShell.sourcePack.packMeta', {
+                      defaultValue: '{{count}} records · used {{used}}×',
+                      count: p.candidateRecordIds.length,
+                      used: p.usedCount,
+                    })}
                   </p>
                 </div>
                 {onUseInAiEditor && (
@@ -363,9 +410,9 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
                     onClick={() => onUseInAiEditor(p)}
                     className="inline-flex items-center gap-1 rounded-md border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-2 py-1 text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
                     data-testid="source-pack-use-in-ai"
-                    aria-label="Use pack in AI Editor"
+                    aria-label={t('kimi.tabeleShell.sourcePack.useInAiEditorAriaLabel', 'Use pack in AI Editor')}
                   >
-                    <Sparkles className="h-3 w-3" /> Use
+                    <Sparkles className="h-3 w-3" /> {t('kimi.tabeleShell.sourcePack.use', 'Use')}
                   </button>
                 )}
               </li>

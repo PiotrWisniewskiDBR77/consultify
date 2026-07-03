@@ -36,7 +36,7 @@ import {
   rejectAiProposal,
 } from '@/services/api/tablePlatform.api';
 
-import { AI_EDITOR_LEVELS_META, getLevelMeta } from './levelMeta';
+import { AI_EDITOR_LEVELS_META, getLevelMeta, translateLevelMeta } from './levelMeta';
 import { ProposalDiffCard } from './ProposalDiffCard';
 
 export interface TabeleAiEditorPanelProps {
@@ -102,11 +102,14 @@ export const TabeleAiEditorPanel: React.FC<TabeleAiEditorPanelProps> = ({
       .catch(() => undefined);
   }, [workspaceId, testInitialBudget]);
 
-  const activeMeta = useMemo(() => getLevelMeta(level), [level]);
+  const activeMeta = useMemo(() => {
+    const meta = getLevelMeta(level);
+    return { ...meta, ...translateLevelMeta(meta, t) };
+  }, [level, t]);
 
   const propose = useCallback(async () => {
     if (!tableId || !prompt.trim()) {
-      toast.error(t('tabele.rightRail.aiEditor.promptRequired', 'Prompt is required'));
+      toast.error(t('kimi.tabeleShell.aiEditor.promptRequired', 'Prompt is required'));
       return;
     }
     setProposing(true);
@@ -118,14 +121,21 @@ export const TabeleAiEditorPanel: React.FC<TabeleAiEditorPanelProps> = ({
       });
       setActive({ ...result, prompt: prompt.trim() });
       if (result.softWarn) {
-        toast(`Soft warning: AI budget at 70 %.`, { icon: '⚠️' });
+        toast(t('kimi.tabeleShell.aiEditor.softWarnBudget', 'Soft warning: AI budget at 70 %.'), {
+          icon: '⚠️',
+        });
       }
     } catch (e) {
-      toast.error(`Failed to propose: ${(e as Error)?.message ?? 'unknown error'}`);
+      toast.error(
+        t('kimi.tabeleShell.aiEditor.proposeFailed', {
+          defaultValue: 'Failed to propose: {{reason}}',
+          reason: (e as Error)?.message ?? t('kimi.tabeleShell.aiEditor.unknownError', 'unknown error'),
+        })
+      );
     } finally {
       setProposing(false);
     }
-  }, [tableId, level, prompt, initialContext]);
+  }, [tableId, level, prompt, initialContext, t]);
 
   const apply = useCallback(async () => {
     if (!active || !workspaceId) return;
@@ -134,7 +144,12 @@ export const TabeleAiEditorPanel: React.FC<TabeleAiEditorPanelProps> = ({
       const result = await applyAiProposal(active.proposalId, workspaceId, {
         idempotent: true,
       });
-      toast.success(`Applied: ${result.reason ?? 'ok'}`);
+      toast.success(
+        t('kimi.tabeleShell.aiEditor.applied', {
+          defaultValue: 'Applied: {{reason}}',
+          reason: result.reason ?? t('kimi.tabeleShell.aiEditor.ok', 'ok'),
+        })
+      );
       setActive(null);
       setPrompt('');
       // Refresh budget so the badge reflects the just-spent tokens.
@@ -151,49 +166,70 @@ export const TabeleAiEditorPanel: React.FC<TabeleAiEditorPanelProps> = ({
         // never let a parent callback throw out of the apply path
       }
     } catch (e) {
-      toast.error(`Apply failed: ${(e as Error)?.message ?? 'unknown error'}`);
+      toast.error(
+        t('kimi.tabeleShell.aiEditor.applyFailed', {
+          defaultValue: 'Apply failed: {{reason}}',
+          reason: (e as Error)?.message ?? t('kimi.tabeleShell.aiEditor.unknownError', 'unknown error'),
+        })
+      );
     } finally {
       setBusyApply(false);
     }
-  }, [active, workspaceId, onAfterApply]);
+  }, [active, workspaceId, onAfterApply, t]);
 
   const reject = useCallback(async () => {
     if (!active || !workspaceId) return;
     setBusyReject(true);
     try {
       await rejectAiProposal(active.proposalId, workspaceId);
-      toast.success(t('tabele.rightRail.aiEditor.proposalRejected', 'Proposal rejected'));
+      toast.success(t('kimi.tabeleShell.aiEditor.rejected', 'Proposal rejected'));
       setActive(null);
     } catch (e) {
-      toast.error(`Reject failed: ${(e as Error)?.message ?? 'unknown error'}`);
+      toast.error(
+        t('kimi.tabeleShell.aiEditor.rejectFailed', {
+          defaultValue: 'Reject failed: {{reason}}',
+          reason: (e as Error)?.message ?? t('kimi.tabeleShell.aiEditor.unknownError', 'unknown error'),
+        })
+      );
     } finally {
       setBusyReject(false);
     }
-  }, [active, workspaceId]);
+  }, [active, workspaceId, t]);
 
   return (
     <section
       className="flex h-full flex-col gap-3 p-3"
       data-testid="tabele-ai-editor-panel"
-      aria-label={t('tabele.rightRail.aiEditor.panelAria', 'Tabele AI Editor')}
+      aria-label={t('kimi.tabeleShell.aiEditor.ariaLabel', 'Tabele AI Editor')}
     >
       <header className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">AI Editor</h3>
+        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+          {t('kimi.tabeleShell.aiEditor.title', 'AI Editor')}
+        </h3>
         {budget && (
           <span
             className="text-[11px] text-slate-500 dark:text-slate-400"
             data-testid="ai-editor-budget"
           >
-            {budget.tokensUsedToday.toLocaleString()} / {budget.budget.toLocaleString()} tokens
+            {t('kimi.tabeleShell.aiEditor.budgetLabel', {
+              defaultValue: '{{used}} / {{total}} tokens',
+              used: budget.tokensUsedToday.toLocaleString(),
+              total: budget.budget.toLocaleString(),
+            })}
           </span>
         )}
       </header>
 
-      <div className="grid grid-cols-2 gap-1.5" role="radiogroup" aria-label="AI Editor level">
+      <div
+        className="grid grid-cols-2 gap-1.5"
+        role="radiogroup"
+        aria-label={t('kimi.tabeleShell.aiEditor.levelRadioGroup', 'AI Editor level')}
+      >
         {AI_EDITOR_LEVELS_META.map((meta) => {
           const Icon = meta.icon;
           const disabled = meta.superAdminOnly === true && !isSuperAdmin;
           const selected = level === meta.id;
+          const { label, description } = translateLevelMeta(meta, t);
           return (
             <button
               key={meta.id}
@@ -210,15 +246,22 @@ export const TabeleAiEditorPanel: React.FC<TabeleAiEditorPanelProps> = ({
               } ${disabled ? 'cursor-not-allowed opacity-40' : ''}`}
               title={
                 disabled
-                  ? `${meta.label} requires super-admin role`
-                  : `${meta.label} — ${meta.description}`
+                  ? t('kimi.tabeleShell.aiEditor.requiresSuperAdmin', {
+                      defaultValue: '{{label}} requires super-admin role',
+                      label,
+                    })
+                  : t('kimi.tabeleShell.aiEditor.levelTitle', {
+                      defaultValue: '{{label}} — {{description}}',
+                      label,
+                      description,
+                    })
               }
             >
               <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] text-slate-600 dark:text-slate-300">
                 {meta.numeral}
               </span>
               <Icon className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
-              <span className="truncate">{meta.label}</span>
+              <span className="truncate">{label}</span>
             </button>
           );
         })}
@@ -229,7 +272,10 @@ export const TabeleAiEditorPanel: React.FC<TabeleAiEditorPanelProps> = ({
           htmlFor="ai-editor-prompt"
           className="mb-1 block text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400"
         >
-          {activeMeta.label} prompt
+          {t('kimi.tabeleShell.aiEditor.promptLabel', {
+            defaultValue: '{{label}} prompt',
+            label: activeMeta.label,
+          })}
         </label>
         <textarea
           id="ai-editor-prompt"
@@ -244,7 +290,7 @@ export const TabeleAiEditorPanel: React.FC<TabeleAiEditorPanelProps> = ({
 
       <div className="flex items-center justify-between gap-2">
         <p className="text-[11px] text-slate-500 dark:text-slate-400">
-          AI never executes. You always review the diff and approve.
+          {t('kimi.tabeleShell.aiEditor.disclaimer', 'AI never executes. You always review the diff and approve.')}
         </p>
         <button
           type="button"
@@ -258,7 +304,7 @@ export const TabeleAiEditorPanel: React.FC<TabeleAiEditorPanelProps> = ({
           ) : (
             <Sparkles className="h-3 w-3" />
           )}
-          Propose
+          {t('kimi.tabeleShell.aiEditor.propose', 'Propose')}
         </button>
       </div>
 

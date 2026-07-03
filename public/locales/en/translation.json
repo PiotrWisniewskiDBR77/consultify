@@ -13454,6 +13454,238 @@
       "filter": {
         "ariaLabel": "Template status filter"
       }
+    },
+    "tabeleShell": {
+      "aiEditor": {
+        "ariaLabel": "Tabele AI Editor",
+        "title": "AI Editor",
+        "budgetLabel": "{{used}} / {{total}} tokens",
+        "levelRadioGroup": "AI Editor level",
+        "requiresSuperAdmin": "{{label}} requires super-admin role",
+        "levelTitle": "{{label}} — {{description}}",
+        "promptLabel": "{{label}} prompt",
+        "disclaimer": "AI never executes. You always review the diff and approve.",
+        "propose": "Propose",
+        "promptRequired": "Prompt is required",
+        "softWarnBudget": "Soft warning: AI budget at 70 %.",
+        "proposeFailed": "Failed to propose: {{reason}}",
+        "applied": "Applied: {{reason}}",
+        "ok": "ok",
+        "applyFailed": "Apply failed: {{reason}}",
+        "rejected": "Proposal rejected",
+        "rejectFailed": "Reject failed: {{reason}}",
+        "unknownError": "unknown error",
+        "handlerLive": "live",
+        "handlerStub": "stub",
+        "softWarnDetail": "AI token budget approaching daily limit (soft warn).",
+        "promptSection": "Prompt",
+        "proposedOperations": "Proposed operations",
+        "noOperationsPreview": "No operations preview available. Use the workspace audit log for full diff.",
+        "opFallback": "op",
+        "moreOperations": "+{{count}} more",
+        "reject": "Reject",
+        "apply": "Apply",
+        "level": {
+          "cell": {
+            "label": "Cell",
+            "description": "Refine a single cell value."
+          },
+          "record": {
+            "label": "Record",
+            "description": "Fill missing fields on one record."
+          },
+          "column": {
+            "label": "Column",
+            "description": "Bulk-fill one column across visible records."
+          },
+          "structure": {
+            "label": "Structure",
+            "description": "Add, rename, retype, or drop fields."
+          },
+          "view": {
+            "label": "View",
+            "description": "Create or update a saved view config."
+          },
+          "relational": {
+            "label": "Relations",
+            "description": "Propose new linked-record relations."
+          },
+          "methodological": {
+            "label": "Methodology",
+            "description": "Flag deviations from governance rules."
+          },
+          "source": {
+            "label": "Sources",
+            "description": "Suggest sources for records that lack them."
+          }
+        }
+      },
+      "leftRail": {
+        "ariaLabel": "Tabele outline",
+        "empty": "No sections to display.",
+        "countAriaLabel": "{{label}} count",
+        "cover": "Cover",
+        "kpi": "KPI",
+        "schema": "Schema",
+        "records": "Records",
+        "relations": "Relations",
+        "rationale": "Rationale"
+      },
+      "qa": {
+        "ariaLabel": "Tabele QA report",
+        "title": "QA Report",
+        "recomputeAriaLabel": "Recompute QA report",
+        "recompute": "Recompute",
+        "suggestions": "Suggestions",
+        "loadFailed": "Failed to load QA report: {{reason}}",
+        "unknownError": "unknown error",
+        "refreshed": "QA report refreshed",
+        "recomputeFailed": "Failed to recompute: {{reason}}",
+        "dismissed": "Suggestion marked not applicable",
+        "dismissFailed": "Failed to dismiss: {{reason}}",
+        "health": "Health",
+        "noReportYet": "No QA report yet — run a recompute.",
+        "overallScoreAriaLabel": "Overall QA score {{pct}} percent",
+        "axis": {
+          "completeness": "Completeness",
+          "freshness": "Freshness",
+          "sourceCoverage": "Source coverage",
+          "methodology": "Methodology",
+          "formulaConsistency": "Formula consistency"
+        },
+        "band": {
+          "green": "green",
+          "amber": "amber",
+          "red": "red"
+        },
+        "noSuggestions": "No actionable suggestions. Table is in great shape.",
+        "severityAriaLabel": "severity {{severity}}",
+        "severity": {
+          "high": "high",
+          "medium": "medium",
+          "low": "low"
+        },
+        "axisShort": {
+          "completeness": "completeness",
+          "freshness": "freshness",
+          "sourceCoverage": "sources",
+          "methodology": "methodology",
+          "formulaConsistency": "formula"
+        },
+        "level": {
+          "cell": "cell",
+          "record": "record",
+          "column": "column",
+          "structure": "structure",
+          "view": "view",
+          "relational": "relations",
+          "methodological": "methodology",
+          "source": "sources"
+        },
+        "openInAiEditor": "Open in AI Editor",
+        "markNotApplicable": "Mark not applicable"
+      },
+      "share": {
+        "ariaLabel": "Tabele share and conversions",
+        "title": "Share",
+        "refreshAriaLabel": "Refresh share panel",
+        "refresh": "Refresh",
+        "convertTo": "Convert to",
+        "conversionTargetAriaLabel": "Conversion target",
+        "targetDocument": "Document",
+        "targetDocumentDescription": "Open in Wordy with section outline",
+        "targetPresentation": "Presentation",
+        "targetPresentationDescription": "Open in Prezentacje with slide outline",
+        "statusDone": "Done",
+        "statusFailed": "Failed",
+        "statusRunning": "Running",
+        "statusQueued": "Queued",
+        "statusCancelled": "Cancelled",
+        "listPacksFailed": "Failed to list packs: {{reason}}",
+        "listConversionsFailed": "Failed to list conversions: {{reason}}",
+        "unknownError": "unknown",
+        "titleTooLong": "Title must be {{max}} characters or fewer",
+        "conversionFailed": "Conversion failed. See recent conversions for details.",
+        "convertedTo": "Converted to {{target}}",
+        "conversionStatus": "Conversion {{status}}",
+        "convertFailed": "Failed to convert: {{reason}}",
+        "titleLabel": "Title (optional)",
+        "titlePlaceholder": "e.g. {{example}}",
+        "titlePlaceholderDoc": "Initiative briefing",
+        "titlePlaceholderDeck": "Initiative deck",
+        "titleAriaLabel": "Conversion title",
+        "sourceSnapshot": "Source snapshot",
+        "liveRecords": "Live records",
+        "liveRecordsHint": "Capture a fresh snapshot at conversion time",
+        "loadingPacks": "Loading saved packs…",
+        "noPacksYet": "No saved source packs for this table yet.",
+        "packMeta": "{{count}} records · used {{used}}x",
+        "convertAriaLabel": "Convert table",
+        "converting": "Converting…",
+        "convertSubmit": "Convert to {{target}}",
+        "recentConversions": "Recent conversions",
+        "loading": "Loading…",
+        "noConversionsYet": "No conversions yet.",
+        "statusAriaLabel": "Status: {{status}}",
+        "conversionFallbackTitle": "{{target}} — {{id}}",
+        "openConversionResult": "Open conversion result"
+      },
+      "sourcePack": {
+        "recencyAny": "Any time",
+        "recency7": "Last 7 days",
+        "recency30": "Last 30 days",
+        "recency90": "Last 90 days",
+        "searchFailed": "Failed to search records: {{reason}}",
+        "unknownError": "unknown",
+        "listPacksFailed": "Failed to list packs: {{reason}}",
+        "packLimit": "A pack can hold at most {{max}} records",
+        "nameRequired": "Pack name is required",
+        "atLeastOneRecord": "Add at least one record to the pack",
+        "saved": "Pack \"{{name}}\" saved ({{count}} records)",
+        "saveFailed": "Failed to save pack: {{reason}}",
+        "ariaLabel": "Tabele source pack builder",
+        "title": "Source Pack",
+        "refreshAriaLabel": "Refresh candidate search",
+        "refresh": "Refresh",
+        "searchPlaceholder": "Search records by content",
+        "searchAriaLabel": "Search records",
+        "verifiedOnly": "verified only",
+        "recencyAriaLabel": "Recency filter",
+        "selectedCount": "{{count}} / {{max}} selected",
+        "searching": "Searching…",
+        "noCandidates": "No candidate records match your filters.",
+        "savePack": "Save pack",
+        "packNamePlaceholder": "Pack name",
+        "packNameAriaLabel": "Pack name",
+        "descriptionPlaceholder": "Optional description",
+        "descriptionAriaLabel": "Pack description",
+        "savedPacks": "Saved packs",
+        "loading": "Loading…",
+        "noSavedPacks": "No saved packs yet.",
+        "packMeta": "{{count}} records · used {{used}}×",
+        "useInAiEditorAriaLabel": "Use pack in AI Editor",
+        "use": "Use",
+        "score": "score {{score}}",
+        "hasVerifiedSource": "has verified source",
+        "status": {
+          "verified": "verified",
+          "inReview": "in review",
+          "unverified": "unverified",
+          "rejected": "rejected"
+        },
+        "removeFromPack": "Remove from pack",
+        "addToPack": "Add to pack",
+        "added": "Added",
+        "add": "Add",
+        "relative": {
+          "today": "today",
+          "yesterday": "yesterday",
+          "daysAgo": "{{count}}d ago",
+          "weeksAgo": "{{count}}w ago",
+          "monthsAgo": "{{count}}mo ago",
+          "yearsAgo": "{{count}}y ago"
+        }
+      }
     }
   },
   "tabele": {
