@@ -189,7 +189,7 @@ export const NotebookTodayView: React.FC<NotebookTodayViewProps> = ({
       </div>
 
       {failed && (
-        <p className="rounded-lg bg-[var(--c-warning)]/10 px-3 py-2 text-xs text-c-warning">
+        <p className="rounded-lg bg-c-warning/10 px-3 py-2 text-xs text-c-warning">
           {isPl
             ? 'Nie udało się załadować kokpitu „Dziś”. Notatnik działa dalej.'
             : 'Could not load the Today cockpit. The notebook still works.'}

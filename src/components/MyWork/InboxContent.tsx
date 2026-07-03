@@ -2929,8 +2929,8 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             'group relative rounded-xl border border-c-border-subtle transition-all duration-150 overflow-hidden',
             'bg-c-surface',
             'hover:shadow-md',
-            isSelected ? 'ring-2 ring-[var(--c-info)]/50' : '',
-            isPreviewed ? 'ring-2 ring-[var(--c-info)]/40' : '',
+            isSelected ? 'ring-2 ring-c-info/50' : '',
+            isPreviewed ? 'ring-2 ring-c-info/40' : '',
           ].join(' ')}
           onClick={() => preview(item)}
           onDoubleClick={() => open(item)}

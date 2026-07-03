@@ -171,7 +171,7 @@ export const NotebookVersionHistory: React.FC<NotebookVersionHistoryProps> = ({
       </div>
 
       {error && (
-        <p className="rounded-lg bg-[var(--c-warning)]/8 px-3 py-2 text-[12px] text-c-warning">
+        <p className="rounded-lg bg-c-warning/8 px-3 py-2 text-[12px] text-c-warning">
           {error}
         </p>
       )}
@@ -186,7 +186,7 @@ export const NotebookVersionHistory: React.FC<NotebookVersionHistoryProps> = ({
             key={v.id}
             className={`rounded-lg border px-3 py-2 transition-colors ${
               selectedId === v.id
-                ? 'border-[var(--c-info)]/30 bg-[var(--c-info)]/10'
+                ? 'border-c-info/30 bg-c-info/10'
                 : 'border-c-border hover:bg-c-surface-raised'
             }`}
           >
@@ -206,7 +206,7 @@ export const NotebookVersionHistory: React.FC<NotebookVersionHistoryProps> = ({
                 type="button"
                 onClick={() => handleRestore(v.id)}
                 disabled={restoringId !== null}
-                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-c-info transition-colors hover:bg-[var(--c-info)]/10 disabled:opacity-50"
+                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-c-info transition-colors hover:bg-c-info/10 disabled:opacity-50"
               >
                 {restoringId === v.id ? (
                   <Loader2 className="h-3 w-3 animate-spin" />

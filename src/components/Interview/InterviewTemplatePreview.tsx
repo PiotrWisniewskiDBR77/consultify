@@ -50,7 +50,7 @@ export interface InterviewTemplatePreviewBodyProps {
 }
 
 const TEMPLATE_BADGE_CLASS =
-  'border border-[var(--c-info)]/20 bg-[var(--c-info)]/10 text-[var(--c-info)]';
+  'border border-c-info/20 bg-c-info/10 text-[var(--c-info)]';
 const NEUTRAL_PILL_CLASS =
   'border border-[var(--c-border-subtle)] bg-[var(--c-surface-raised)] text-[var(--c-text-secondary)]';
 

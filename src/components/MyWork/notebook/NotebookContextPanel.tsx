@@ -57,28 +57,28 @@ const SECTION_CFG: Record<
     labelPl: 'Pomysły',
     icon: Lightbulb,
     color: 'text-c-warning',
-    bg: 'bg-[var(--c-warning)]/10',
+    bg: 'bg-c-warning/10',
   },
   initiative: {
     label: 'Initiatives',
     labelPl: 'Inicjatywy',
     icon: Target,
     color: 'text-c-info',
-    bg: 'bg-[var(--c-info)]/10',
+    bg: 'bg-c-info/10',
   },
   task: {
     label: 'Tasks',
     labelPl: 'Zadania',
     icon: CheckSquare,
     color: 'text-c-success',
-    bg: 'bg-[var(--c-success)]/10',
+    bg: 'bg-c-success/10',
   },
   decision: {
     label: 'Decisions',
     labelPl: 'Decyzje',
     icon: Scale,
     color: 'text-c-warning',
-    bg: 'bg-[var(--c-warning)]/10',
+    bg: 'bg-c-warning/10',
   },
   note: {
     label: 'Notes',
@@ -711,7 +711,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                 viewModes={['list']}
               >
                 {linkedOutputsErrorMessage ? (
-                  <div className="rounded-xl border border-[var(--c-warning)]/30 bg-[var(--c-warning)]/8 px-3 py-2 text-[11px] text-c-warning">
+                  <div className="rounded-xl border border-c-warning/30 bg-c-warning/8 px-3 py-2 text-[11px] text-c-warning">
                     {linkedOutputsErrorMessage}
                   </div>
                 ) : (

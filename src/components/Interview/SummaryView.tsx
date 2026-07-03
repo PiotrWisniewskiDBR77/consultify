@@ -136,7 +136,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
           </div>
 
           {/* Important notice */}
-          <div className="mt-4 p-3 bg-[var(--c-warning)]/8 border border-[var(--c-warning)]/20 rounded-token-md">
+          <div className="mt-4 p-3 bg-c-warning/8 border border-c-warning/20 rounded-token-md">
             <div className="flex items-start gap-2">
               <AlertCircle size={16} className="text-[var(--c-warning)] mt-0.5" />
               <div className="text-sm text-[var(--c-text-secondary)]">
@@ -171,7 +171,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                   {session.summaryFacts.map((item, idx) => (
                     <div
                       key={idx}
-                      className="flex items-start gap-3 p-3 bg-[var(--c-success)]/8 border border-[var(--c-success)]/20 rounded-token-md"
+                      className="flex items-start gap-3 p-3 bg-c-success/8 border border-c-success/20 rounded-token-md"
                     >
                       <div className="mt-0.5">{getCategoryIcon(item.category)}</div>
                       <div className="flex-1">
@@ -199,7 +199,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                   {session.summaryGaps.map((item, idx) => (
                     <div
                       key={idx}
-                      className="flex items-start gap-3 p-3 bg-[var(--c-info)]/8 border border-[var(--c-info)]/20 rounded-token-md"
+                      className="flex items-start gap-3 p-3 bg-c-info/8 border border-c-info/20 rounded-token-md"
                     >
                       <div className="mt-0.5">{getCategoryIcon(item.category)}</div>
                       <div className="flex-1">
@@ -227,7 +227,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                   {session.summaryConstraints.map((item, idx) => (
                     <div
                       key={idx}
-                      className="flex items-start gap-3 p-3 bg-[var(--c-warning)]/8 border border-[var(--c-warning)]/20 rounded-token-md"
+                      className="flex items-start gap-3 p-3 bg-c-warning/8 border border-c-warning/20 rounded-token-md"
                     >
                       <div className="mt-0.5">{getCategoryIcon(item.category)}</div>
                       <div className="flex-1">
@@ -257,7 +257,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                   {session.summaryPainPoints.map((item, idx) => (
                     <div
                       key={idx}
-                      className="flex items-start gap-3 p-3 bg-[var(--c-danger)]/8 border border-[var(--c-danger)]/20 rounded-token-md"
+                      className="flex items-start gap-3 p-3 bg-c-danger/8 border border-c-danger/20 rounded-token-md"
                     >
                       <div className="mt-0.5">{getCategoryIcon(item.category)}</div>
                       <div className="flex-1">

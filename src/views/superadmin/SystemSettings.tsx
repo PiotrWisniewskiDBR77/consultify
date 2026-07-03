@@ -1019,7 +1019,7 @@ export const SystemSettings: React.FC = () => {
                   onClick={() => setSelectedTable(table)}
                   className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     selectedTable === table
-                      ? 'bg-slate-100 dark:bg-white/[0.08] text-[var(--c-info)] border border-[var(--c-info)]/30'
+                      ? 'bg-slate-100 dark:bg-white/[0.08] text-[var(--c-info)] border border-c-info/30'
                       : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800/20'
                   }`}
                 >

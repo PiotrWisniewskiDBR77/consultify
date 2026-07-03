@@ -483,7 +483,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                     }}
                     className={`shrink-0 px-2 py-1.5 text-xs rounded-lg border transition-colors bg-white dark:bg-navy-950 text-slate-900 dark:text-white ${
                       isOverridden
-                        ? 'border-[var(--c-info)]/60 ring-1 ring-[var(--c-info)]/20'
+                        ? 'border-c-info/60 ring-1 ring-c-info/20'
                         : 'border-slate-200 dark:border-navy-700'
                     }`}
                   >

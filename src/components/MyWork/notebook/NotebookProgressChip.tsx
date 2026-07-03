@@ -46,7 +46,7 @@ export const NotebookProgressChip: React.FC<NotebookProgressChipProps> = ({
   const pillDisabled =
     'cursor-not-allowed bg-c-surface-raised text-c-text-muted';
   const pillHighlight =
-    'bg-[var(--c-warning)]/10 text-c-warning hover:bg-[var(--c-warning)]/15';
+    'bg-c-warning/10 text-c-warning hover:bg-c-warning/15';
   const sep = (
     <ChevronRight size={12} className="text-c-text-muted select-none" aria-hidden />
   );

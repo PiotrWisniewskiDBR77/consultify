@@ -2569,7 +2569,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                               if (!uploadSource) return null;
                               return (
                                 <span
-                                  className="rounded-md bg-[var(--c-info)]/10 text-c-info px-1.5 py-0.5 text-[11px] font-medium"
+                                  className="rounded-md bg-c-info/10 text-c-info px-1.5 py-0.5 text-[11px] font-medium"
                                   title={uploadSource.title}
                                 >
                                   {uploadSource.label}
@@ -2583,7 +2583,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                               if (convertedSummary.total === 0) return null;
                               return (
                                 <span
-                                  className="rounded-md bg-[var(--c-success)]/10 text-c-success px-1.5 py-0.5 text-[11px] font-medium"
+                                  className="rounded-md bg-c-success/10 text-c-success px-1.5 py-0.5 text-[11px] font-medium"
                                   title={convertedSummary.visibleTypes.join(', ')}
                                 >
                                   ✓ {convertedSummary.visibleTypes.join(', ')}
@@ -3039,7 +3039,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                             return (
                               <>
                                 <span
-                                  className="inline-flex items-center rounded-md bg-[var(--c-info)]/10 text-c-info px-2 py-0.5 text-[11px] font-medium"
+                                  className="inline-flex items-center rounded-md bg-c-info/10 text-c-info px-2 py-0.5 text-[11px] font-medium"
                                   title={uploadSource.title}
                                 >
                                   {uploadSource.label}

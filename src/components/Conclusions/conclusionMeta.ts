@@ -58,11 +58,11 @@ export function confidenceLabel(t: TFunction, raw: string | null | undefined): s
 export function confidenceTone(raw: string | null | undefined): string {
   const key = normalizeConfidence(raw);
   const map: Record<ConfidenceKey, string> = {
-    high: 'bg-[var(--c-success)]/12 text-[var(--c-success)]',
+    high: 'bg-c-success/12 text-[var(--c-success)]',
     medium: 'bg-[var(--c-accent-soft)] text-[var(--c-accent)]',
-    low: 'bg-[var(--c-warning)]/12 text-[var(--c-warning)]',
+    low: 'bg-c-warning/12 text-[var(--c-warning)]',
     insufficient: 'bg-[var(--c-surface-raised)] text-[var(--c-text-muted)]',
-    contradicted: 'bg-[var(--c-danger)]/12 text-[var(--c-danger)]',
+    contradicted: 'bg-c-danger/12 text-[var(--c-danger)]',
   };
   return map[key];
 }
@@ -93,12 +93,12 @@ export function statusLabel(t: TFunction, raw: string | null | undefined): strin
 export function statusTone(raw: string | null | undefined): string {
   const key = String(raw || 'candidate');
   const map: Record<string, string> = {
-    published: 'bg-[var(--c-success)]/12 text-[var(--c-success)]',
+    published: 'bg-c-success/12 text-[var(--c-success)]',
     ready_for_readout: 'bg-[var(--c-accent-soft)] text-[var(--c-accent)]',
     converted: 'bg-[var(--c-accent-soft)] text-[var(--c-accent)]',
-    needs_review: 'bg-[var(--c-warning)]/12 text-[var(--c-warning)]',
-    needs_evidence: 'bg-[var(--c-warning)]/12 text-[var(--c-warning)]',
-    rejected: 'bg-[var(--c-danger)]/12 text-[var(--c-danger)]',
+    needs_review: 'bg-c-warning/12 text-[var(--c-warning)]',
+    needs_evidence: 'bg-c-warning/12 text-[var(--c-warning)]',
+    rejected: 'bg-c-danger/12 text-[var(--c-danger)]',
     candidate: 'bg-[var(--c-surface-raised)] text-[var(--c-text-secondary)]',
   };
   return map[key] || map.candidate;

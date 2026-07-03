@@ -160,7 +160,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
 
       {/* New Note Form */}
       {showNewNote && (
-        <div className="bg-[var(--c-surface)] rounded-token-md border border-[var(--c-accent)]/40 p-3 space-y-3">
+        <div className="bg-[var(--c-surface)] rounded-token-md border border-c-accent/40 p-3 space-y-3">
           <input
             type="text"
             value={newTitle}
@@ -301,7 +301,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
                             </button>
                             <button
                               onClick={() => handleDeleteNote(note.id)}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--c-danger)] hover:bg-[var(--c-danger)]/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--c-danger)] hover:bg-c-danger/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
                             >
                               <Trash2 size={14} />
                               {isPolish ? 'Usuń' : 'Delete'}

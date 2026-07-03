@@ -72,7 +72,7 @@ const ICON_TONE: Record<EmptyStateVariant, string> = {
   new: 'bg-[var(--c-surface-raised)] text-[var(--c-text-secondary)]',
   filter: 'bg-[var(--c-surface-raised)] text-[var(--c-text-secondary)]',
   forbidden: 'bg-[var(--c-surface-raised)] text-[var(--c-text-secondary)]',
-  error: 'bg-[var(--c-danger)]/12 text-[var(--c-danger)]',
+  error: 'bg-c-danger/12 text-[var(--c-danger)]',
 };
 
 const ActionButton: React.FC<{

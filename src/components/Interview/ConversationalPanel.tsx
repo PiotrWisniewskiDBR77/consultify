@@ -206,7 +206,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
   };
 
   const roleColors: Record<string, string> = {
-    user: 'bg-[var(--c-info)]/8 border-[var(--c-info)]/20',
+    user: 'bg-c-info/8 border-c-info/20',
     ai: 'bg-[var(--c-surface-raised)] border-[var(--c-border-subtle)]',
     system: 'bg-[var(--c-surface-raised)] border-[var(--c-border-subtle)]',
   };
@@ -270,7 +270,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
 
       {/* Draft review UI */}
       {draftMappings && (
-        <div className="border-t border-[var(--c-border-subtle)] bg-[var(--c-warning)]/8 p-4 max-h-64 overflow-y-auto">
+        <div className="border-t border-[var(--c-border-subtle)] bg-c-warning/8 p-4 max-h-64 overflow-y-auto">
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-sm font-semibold text-[var(--c-text)]">
               {t('interview.conversational.reviewing')}
@@ -278,7 +278,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
             <div className="flex gap-2">
               <button
                 onClick={acceptAll}
-                className="text-xs px-2 py-1 rounded-token-xs bg-[var(--c-success)]/12 text-[var(--c-success)] hover:bg-[var(--c-success)]/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
+                className="text-xs px-2 py-1 rounded-token-xs bg-c-success/12 text-[var(--c-success)] hover:bg-c-success/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
               >
                 {t('interview.conversational.acceptAll')}
               </button>
@@ -296,8 +296,8 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
                 key={mapping.questionId}
                 className={`flex items-start gap-3 p-2 rounded-token-md border ${
                   mapping.accepted
-                    ? 'border-[var(--c-success)]/30 bg-[var(--c-success)]/8'
-                    : 'border-[var(--c-danger)]/30 bg-[var(--c-danger)]/8 opacity-60'
+                    ? 'border-c-success/30 bg-c-success/8'
+                    : 'border-c-danger/30 bg-c-danger/8 opacity-60'
                 }`}
               >
                 <button onClick={() => toggleMapping(idx)} className="mt-0.5 flex-shrink-0">
@@ -358,7 +358,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
               <button
                 onClick={parseToAnswers}
                 disabled={parsing || messages.length === 0}
-                className="flex items-center justify-center w-10 h-10 rounded-token-md border border-[var(--c-accent)]/40 text-[var(--c-accent)] hover:bg-[var(--c-accent-soft)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
+                className="flex items-center justify-center w-10 h-10 rounded-token-md border border-c-accent/40 text-[var(--c-accent)] hover:bg-[var(--c-accent-soft)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
                 title={t('interview.conversational.parseToAnswers')}
               >
                 {parsing ? (

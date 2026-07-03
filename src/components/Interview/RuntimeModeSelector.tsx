@@ -141,7 +141,7 @@ export const RuntimeModeSelector: React.FC<RuntimeModeSelectorProps> = ({
               disabled={locked}
               className={`relative flex flex-col items-start gap-3 p-4 rounded-token-lg text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] ${
                 isSelected
-                  ? 'bg-[var(--c-accent-soft)] ring-1 ring-[var(--c-accent)]/40'
+                  ? 'bg-[var(--c-accent-soft)] ring-1 ring-c-accent/40'
                   : 'bg-[var(--c-surface-raised)] hover:bg-[var(--c-surface)] border border-[var(--c-border-subtle)]'
               } ${locked ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
             >

@@ -54,19 +54,19 @@ const VARIANT_STYLES = {
   red: {
     bar: 'bg-[var(--c-danger)]',
     text: 'text-[var(--c-danger)]',
-    bg: 'bg-[var(--c-danger)]/10',
+    bg: 'bg-c-danger/10',
     label: 'interview.sufficiency.status.red',
   },
   amber: {
     bar: 'bg-[var(--c-warning)]',
     text: 'text-[var(--c-warning)]',
-    bg: 'bg-[var(--c-warning)]/10',
+    bg: 'bg-c-warning/10',
     label: 'interview.sufficiency.status.amber',
   },
   green: {
     bar: 'bg-[var(--c-success)]',
     text: 'text-[var(--c-success)]',
-    bg: 'bg-[var(--c-success)]/10',
+    bg: 'bg-c-success/10',
     label: 'interview.sufficiency.status.green',
   },
 } as const;

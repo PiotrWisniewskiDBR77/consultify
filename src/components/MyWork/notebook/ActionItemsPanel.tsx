@@ -123,8 +123,8 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
   if (!open) return null;
 
   const priorityColors: Record<string, string> = {
-    high: 'text-c-danger bg-[var(--c-danger)]/10',
-    medium: 'text-c-warning bg-[var(--c-warning)]/10',
+    high: 'text-c-danger bg-c-danger/10',
+    medium: 'text-c-warning bg-c-warning/10',
     low: 'text-c-text-muted bg-c-surface-raised',
   };
 
@@ -168,7 +168,7 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
                 key={idx}
                 className={`rounded-lg p-2.5 border transition-all ${
                   createdIds.has(idx)
-                    ? 'border-[var(--c-success)]/30 bg-[var(--c-success)]/8'
+                    ? 'border-c-success/30 bg-c-success/8'
                     : 'border-c-border-subtle bg-c-surface'
                 }`}
               >
@@ -196,7 +196,7 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
                     <button
                       onClick={() => handleCreateTask(item, idx)}
                       disabled={creatingIdx !== null}
-                      className="shrink-0 p-1 rounded-md bg-[var(--c-success)]/10 text-c-success hover:bg-[var(--c-success)]/20 disabled:opacity-50 transition-colors"
+                      className="shrink-0 p-1 rounded-md bg-c-success/10 text-c-success hover:bg-c-success/20 disabled:opacity-50 transition-colors"
                       title={isPl ? 'Utwórz task' : 'Create task'}
                     >
                       {creatingIdx === idx ? (

@@ -61,7 +61,7 @@ export const CATEGORY_CONFIG: Record<
     labelPl: 'Strategia',
     icon: Target,
     color: 'text-[var(--c-tag-1)]',
-    bgColor: 'bg-[var(--c-tag-1)]/12',
+    bgColor: 'bg-c-tag-1/12',
     descriptionEn: 'Business goals, vision, strategic directions',
     descriptionPl: 'Cele biznesowe, wizja, kierunki strategiczne',
   },
@@ -70,7 +70,7 @@ export const CATEGORY_CONFIG: Record<
     labelPl: 'Operacje',
     icon: Settings,
     color: 'text-[var(--c-tag-3)]',
-    bgColor: 'bg-[var(--c-tag-3)]/12',
+    bgColor: 'bg-c-tag-3/12',
     descriptionEn: 'Operational processes, efficiency, bottlenecks',
     descriptionPl: 'Procesy operacyjne, efektywność, bottlenecki',
   },
@@ -79,7 +79,7 @@ export const CATEGORY_CONFIG: Record<
     labelPl: 'Cyfryzacja',
     icon: Monitor,
     color: 'text-[var(--c-tag-5)]',
-    bgColor: 'bg-[var(--c-tag-5)]/12',
+    bgColor: 'bg-c-tag-5/12',
     descriptionEn: 'Digital maturity, IT systems, automation',
     descriptionPl: 'Dojrzałość cyfrowa, systemy IT, automatyzacja',
   },
@@ -88,7 +88,7 @@ export const CATEGORY_CONFIG: Record<
     labelPl: 'Ludzie',
     icon: Users,
     color: 'text-[var(--c-tag-7)]',
-    bgColor: 'bg-[var(--c-tag-7)]/12',
+    bgColor: 'bg-c-tag-7/12',
     descriptionEn: 'Competencies, culture, change readiness',
     descriptionPl: 'Kompetencje, kultura, gotowość na zmiany',
   },
@@ -97,7 +97,7 @@ export const CATEGORY_CONFIG: Record<
     labelPl: 'Finanse',
     icon: DollarSign,
     color: 'text-[var(--c-tag-9)]',
-    bgColor: 'bg-[var(--c-tag-9)]/12',
+    bgColor: 'bg-c-tag-9/12',
     descriptionEn: 'Budgets, financial constraints, ROI expectations',
     descriptionPl: 'Budżety, ograniczenia finansowe, ROI expectations',
   },
@@ -150,9 +150,9 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
             px-2 py-0.5 text-xs font-medium rounded-token-pill
             ${
               sessionStatus === 'completed'
-                ? 'bg-[var(--c-success)]/12 text-[var(--c-success)]'
+                ? 'bg-c-success/12 text-[var(--c-success)]'
                 : sessionStatus === 'active'
-                  ? 'bg-[var(--c-info)]/12 text-[var(--c-info)]'
+                  ? 'bg-c-info/12 text-[var(--c-info)]'
                   : 'bg-[var(--c-surface-raised)] text-[var(--c-text-secondary)]'
             }
           `}
@@ -219,7 +219,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
                     isActive
                       ? 'bg-[var(--c-surface-raised)] ring-1 ring-[var(--c-border)]'
                       : isComplete
-                        ? 'bg-[var(--c-success)]/8 hover:bg-[var(--c-success)]/12'
+                        ? 'bg-c-success/8 hover:bg-c-success/12'
                         : 'hover:bg-[var(--c-surface-raised)]'
                   }
                 `}
@@ -229,7 +229,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
                     w-8 h-8 rounded-token-md flex items-center justify-center shrink-0
                     ${
                       isComplete
-                        ? 'bg-[var(--c-success)]/12'
+                        ? 'bg-c-success/12'
                         : isActive
                           ? config.bgColor
                           : 'bg-[var(--c-surface-raised)]'

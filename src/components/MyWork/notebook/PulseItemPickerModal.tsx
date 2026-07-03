@@ -31,21 +31,21 @@ const TYPE_CONFIG = {
     label: 'Initiatives',
     labelPl: 'Inicjatywy',
     color: 'text-c-info',
-    bg: 'bg-[var(--c-info)]/10',
+    bg: 'bg-c-info/10',
   },
   task: {
     icon: CheckSquare,
     label: 'Tasks',
     labelPl: 'Zadania',
     color: 'text-c-success',
-    bg: 'bg-[var(--c-success)]/10',
+    bg: 'bg-c-success/10',
   },
   decision: {
     icon: Scale,
     label: 'Decisions',
     labelPl: 'Decyzje',
     color: 'text-c-warning',
-    bg: 'bg-[var(--c-warning)]/10',
+    bg: 'bg-c-warning/10',
   },
 } as const;
 
