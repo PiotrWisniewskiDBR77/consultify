@@ -1752,17 +1752,17 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         <div className="space-y-3">
           {loadWarning &&
             !(activeTab === 'list' && !activeDocumentId && assessments.length === 0) && (
-              <div className="mx-4 mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+              <div className="mx-4 mt-4 rounded-token-lg border border-c-warning/30 bg-c-warning/10 px-4 py-3 text-sm text-c-warning">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
-                    <AlertCircle size={16} className="mt-0.5 shrink-0 text-amber-300" />
+                    <AlertCircle size={16} className="mt-0.5 shrink-0 text-c-warning" />
                     <p>{loadWarning}</p>
                   </div>
                   <button
                     onClick={() => refreshData()}
-                    className="shrink-0 rounded-lg border border-amber-400/30 px-3 py-1.5 text-xs font-medium text-amber-100 hover:bg-amber-400/10"
+                    className="shrink-0 rounded-token-md border border-c-warning/30 px-3 py-1.5 text-xs font-medium text-c-warning hover:bg-c-warning/10"
                   >
-                    Retry
+                    {t('common.retry', 'Retry')}
                   </button>
                 </div>
               </div>

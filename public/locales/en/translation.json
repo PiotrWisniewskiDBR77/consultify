@@ -10699,6 +10699,7 @@
         "closeDocForAi": "Return to list to use AI."
       },
       "defaultSessionName": "Session",
+      "loadingSessions": "Loading tool sessions…",
       "initiatives": {
         "columns": {
           "status": "Status"
