@@ -174,7 +174,15 @@ export async function exportBundleFiles(
         title: `${bundle.spine.meta.company} — model finansowy`,
         headerColor: theme.palette.dominant,
       });
-      xlsx = await buildWorkbookBuffer(wb);
+      // Surface provenance on the Info sheet (company/source/date) so the bundle
+      // workbook carries the same branded metadata band as the standalone one.
+      xlsx = await buildWorkbookBuffer(wb, {
+        meta: {
+          organizationName: bundle.spine.meta.company,
+          source: 'Consultify — wiązka biznesplanu',
+          generatedAt: new Date().toISOString().slice(0, 10),
+        },
+      });
     }
   } catch (err) {
     logger.warn(`${LOG} xlsx render failed: ${err instanceof Error ? err.message : String(err)}`);
