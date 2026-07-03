@@ -272,6 +272,30 @@ export async function resolveOrCreateDemoSession(
   options: { restartOnLocaleMismatch?: boolean } = {}
 ): Promise<DemoSessionRecord & { stats: Awaited<ReturnType<typeof getDemoDatasetStats>> }> {
   const locale = normalizeDemoLocale(requestedLocale);
+
+  // Curated read-only demo: serve the fully-seeded base org directly instead of
+  // provisioning a thin per-user copy. The base org (DEMO_ORG_ID) is the rich,
+  // hand-verified dataset (tools, insights, results KPIs, deliverables); a fresh
+  // template copy is missing those modules. Writes stay blocked because the org
+  // equals DEMO_ORG_ID (demoWriteProtection). Gated by env so only the demo env
+  // opts in. No seeding, no demo_sessions row — demoContextMiddleware resolves an
+  // unmatched session org back to DEMO_ORG_ID anyway.
+  if (String(process.env.DEMO_USE_BASE_ORG || '').toLowerCase() === 'true') {
+    await ensureDemoSessionTables();
+    return {
+      id: makeSessionId(userId),
+      user_id: userId,
+      base_org_id: DEMO_ORG_ID,
+      session_org_id: DEMO_ORG_ID,
+      locale,
+      source,
+      status: 'active',
+      anchor_date: nowIso(),
+      expires_at: new Date(Date.now() + DEMO_SESSION_DURATION_MS).toISOString(),
+      stats: await getDemoDatasetStats(DEMO_ORG_ID),
+    };
+  }
+
   const active = await getActiveDemoSession(userId);
   if (active) {
     if (options.restartOnLocaleMismatch && active.locale !== locale) {
