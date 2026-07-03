@@ -174,7 +174,7 @@ export const AccessBlockedModal: React.FC = () => {
 
             <button
               onClick={() => setOpen(false)}
-              className="mt-6 w-full rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700"
+              className="mt-6 w-full rounded-xl bg-c-text px-4 py-2.5 text-sm font-semibold text-c-bg shadow-sm transition-colors hover:bg-c-text-secondary"
             >
               {t('access.beta.cta')}
             </button>

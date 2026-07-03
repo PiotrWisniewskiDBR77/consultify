@@ -138,7 +138,7 @@ const OAuthCallback: React.FC = () => {
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{message}</p>
             <button
               onClick={() => navigate('/')}
-              className="mt-4 rounded-md bg-primary-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 transition-colors"
+              className="mt-4 rounded-md bg-c-text px-3.5 py-2.5 text-sm font-semibold text-c-bg shadow-sm hover:bg-c-text-secondary transition-colors"
             >
               Back to Home
             </button>

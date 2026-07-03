@@ -788,7 +788,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
           </div>
           <button
             onClick={() => setShowNewCampaign(true)}
-            className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-500"
+            className="inline-flex h-9 items-center gap-2 rounded-lg bg-c-text px-4 text-sm font-medium text-c-bg transition-colors hover:bg-c-text-secondary"
           >
             {t('partner.referrals.newCampaign', 'New Campaign')}
           </button>

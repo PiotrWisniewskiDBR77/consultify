@@ -99,7 +99,7 @@ const TrialExpirationModal: React.FC<TrialExpirationModalProps> = ({
           <div className="flex flex-col gap-3">
             <button
               onClick={onUpgradeClick}
-              className="w-full py-3 px-4 bg-primary-500 hover:bg-primary-600 text-white font-semibold rounded-lg transition-colors"
+              className="w-full py-3 px-4 bg-c-text hover:bg-c-text-secondary text-c-bg font-semibold rounded-lg transition-colors"
             >
               {t('trialExpired.upgrade', 'Upgrade Now')}
             </button>

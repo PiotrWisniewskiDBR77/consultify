@@ -185,7 +185,7 @@ const FilterDropdown: React.FC<{
               </button>
               <button
                 onClick={handleApply}
-                className="px-3 py-1 text-xs font-medium bg-primary-500 text-white rounded-lg hover:bg-primary-400 transition-colors"
+                className="px-3 py-1 text-xs font-medium bg-c-text text-c-bg rounded-lg hover:bg-c-text-secondary transition-colors"
               >
                 Apply
               </button>

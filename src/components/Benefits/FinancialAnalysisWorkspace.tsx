@@ -443,7 +443,7 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
               </button>
               <button
                 onClick={() => void handleCreate()}
-                className="rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
+                className="rounded-xl bg-c-text px-4 py-2 text-sm font-medium text-c-bg transition hover:bg-c-text-secondary"
               >
                 {t('common.create', 'Create')}
               </button>

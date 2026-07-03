@@ -318,7 +318,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                       onClick={() => toggleChatCollapse()}
                       className={`hidden lg:flex w-9 h-9 items-center justify-center rounded-full transition-colors ${
                         isChatCollapsed
-                          ? 'bg-primary-500 text-white hover:bg-primary-600'
+                          ? 'bg-c-text text-c-bg hover:bg-c-text-secondary'
                           : 'bg-primary-500/15 text-primary-600 dark:text-primary-400 hover:bg-primary-500/25'
                       }`}
                       title={

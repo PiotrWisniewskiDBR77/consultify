@@ -103,7 +103,7 @@ const DemoBanner: React.FC<DemoBannerProps> = ({ onStartTrialClick }) => {
           <button
             data-tour="demo-exit"
             onClick={onStartTrialClick || handleContactSales}
-            className="bg-primary-500 hover:bg-primary-600 text-white text-xs px-3 py-1.5 rounded-lg transition-colors font-semibold flex items-center gap-1.5"
+            className="bg-c-text hover:bg-c-text-secondary text-c-bg text-xs px-3 py-1.5 rounded-lg transition-colors font-semibold flex items-center gap-1.5"
           >
             {t('demo.banner.startTrial', 'Start Trial')}
             <ExternalLink size={14} />

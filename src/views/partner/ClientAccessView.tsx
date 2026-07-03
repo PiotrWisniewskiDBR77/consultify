@@ -336,7 +336,7 @@ export const ClientAccessView: React.FC = () => {
         <button
           onClick={handleGetAccessLink}
           disabled={generatingLink}
-          className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-500 disabled:bg-primary-600/50"
+          className="inline-flex h-9 items-center gap-2 rounded-lg bg-c-text px-4 text-sm font-medium text-c-bg transition-colors hover:bg-c-text-secondary disabled:bg-c-border-strong"
         >
           {generatingLink ? (
             <RefreshCw className="w-4 h-4 animate-spin" />

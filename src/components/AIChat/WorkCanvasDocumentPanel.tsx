@@ -2812,7 +2812,7 @@ function WorkCanvasMarkdownDocumentPanel({
             disabled={!selectionEditDraft.trim()}
             className={
               selectionEditDraft.trim()
-                ? 'rounded-full bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-primary-700'
+                ? 'rounded-full bg-c-text px-3 py-1.5 text-xs font-semibold text-c-bg shadow-sm hover:bg-c-text-secondary'
                 : 'cursor-not-allowed rounded-full bg-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:bg-white/10 dark:text-slate-500'
             }
           >
@@ -3848,7 +3848,7 @@ function WorkCanvasMarkdownDocumentPanel({
                                   className={
                                     executionBlocked
                                       ? 'cursor-not-allowed rounded-full bg-slate-200 px-2 py-0.5 font-semibold text-slate-600 dark:bg-white/10 dark:text-slate-500'
-                                      : 'rounded-full bg-primary-600 px-2 py-0.5 font-semibold text-white hover:bg-primary-700'
+                                      : 'rounded-full bg-c-text px-2 py-0.5 font-semibold text-c-bg hover:bg-c-text-secondary'
                                   }
                                 >
                                   {isWorkflowStepRunning
