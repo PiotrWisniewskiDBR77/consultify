@@ -2148,6 +2148,18 @@
       "relatedHint": "Powiązane z aktualnym assessmentem",
       "goAfterPlanning": "Przejdź do Inicjatyw po PLANNING",
       "goTo": "Idź do Inicjatyw"
+    },
+    "drd": {
+      "whyThisMatters": {
+        "title": "Dlaczego o to pytamy",
+        "ariaLabel": "Dlaczego to pytanie"
+      },
+      "glossary": {
+        "button": "Słownik"
+      }
+    },
+    "glossary": {
+      "title": "Słownik konsultingowy"
     }
   },
   "initiatives": {

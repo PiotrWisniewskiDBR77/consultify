@@ -2938,6 +2938,18 @@
       "relatedHint": "Related to the current assessment",
       "goAfterPlanning": "Go to Initiatives after PLANNING",
       "goTo": "Go to Initiatives"
+    },
+    "drd": {
+      "whyThisMatters": {
+        "title": "Why we ask this",
+        "ariaLabel": "Why this question"
+      },
+      "glossary": {
+        "button": "Glossary"
+      }
+    },
+    "glossary": {
+      "title": "Consulting Glossary"
     }
   },
   "initiatives": {

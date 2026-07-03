@@ -18,6 +18,15 @@ export type {
   MaturityPathwayRecommendation,
 } from './maturityPathwayService';
 export { getMaturityPathway } from './maturityPathwayService';
+export type { WhyThisMattersHint } from './whyThisMatters';
+export {
+  ADMA_PILLAR_WHY_HINTS,
+  DRD_AXIS_WHY_HINTS,
+  GENERIC_WHY_HINT,
+  getDRDAxisWhyHint,
+  getWhyThisMattersHint,
+  SIRI_BLOCK_WHY_HINTS,
+} from './whyThisMatters';
 
 /**
  * Universal knowledge getter for any framework
