@@ -67,24 +67,24 @@ const CategoriesTab: React.FC<CategoriesTabProps> = ({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+        <h3 className="text-lg font-medium text-c-text flex items-center gap-2">
           <Bell size={20} />
           {t('settings.notifications.pushTitle', 'Push Notifications')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        <p className="text-sm text-c-text-muted mt-1">
           {t('settings.notifications.pushDesc', 'Get notified about important updates.')}
         </p>
       </div>
 
       {/* Desktop notifications */}
-      <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-800/50 rounded-lg">
+      <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
         <div className="flex items-center gap-3">
-          <Smartphone size={20} className="text-slate-600 dark:text-slate-500" />
+          <Smartphone size={20} className="text-c-text-secondary" />
           <div>
-            <p className="font-medium text-slate-900 dark:text-white">
+            <p className="font-medium text-c-text">
               {t('settings.notifications.desktop', 'Desktop Notifications')}
             </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t('settings.notifications.desktopDesc', 'Show notifications in your browser')}
             </p>
           </div>
@@ -96,7 +96,7 @@ const CategoriesTab: React.FC<CategoriesTabProps> = ({
             onChange={toggleDesktop}
             className="sr-only peer"
           />
-          <div className="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-[color:var(--c-focus)] rounded-full peer dark:bg-navy-700 peer-checked:after:translate-x-full peer-checked:bg-navy-900 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+          <div className="w-11 h-6 bg-c-surface-raised peer-focus:ring-2 peer-focus:ring-[color:var(--c-focus)] rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-navy-900 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-c-surface after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
         </label>
       </div>
 
