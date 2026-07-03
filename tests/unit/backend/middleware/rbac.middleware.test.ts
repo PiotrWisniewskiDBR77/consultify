@@ -106,6 +106,45 @@ describe('rbac.middleware (L1)', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
+  // Regression: GET /api/my-work/team-workload is an org-wide roll-up (every
+  // user's capacity/utilization). It must mirror the client Manager-tab gate
+  // (useUserCan: admin | manager | superadmin/owner). requireRole('manager',
+  // 'admin') is the guard applied in server/src/routes/my-work/stats.routes.ts.
+  describe("my-work /team-workload gate = requireRole('manager','admin')", () => {
+    const guard = () => requireRole('manager', 'admin');
+
+    it.each([
+      ['manager', 'exact match'],
+      ['admin', 'hierarchy level >= admin'],
+      ['owner', 'canonicalises to superadmin'],
+      ['superadmin', 'short-circuit'],
+      ['super_admin', 'superadmin alias'],
+    ])('allows %s (%s)', (role) => {
+      const req: any = { user: { role } };
+      const res = makeRes();
+      const next = vi.fn();
+      guard()(req, res as any, next as any);
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it.each(['user', 'member', 'team_member', 'viewer', 'guest'])(
+      'denies pilot/respondent role %s with 403',
+      (role) => {
+        const req: any = { user: { role } };
+        const res = makeRes();
+        const next = vi.fn();
+        guard()(req, res as any, next as any);
+        expect(next).not.toHaveBeenCalled();
+        expect(res.status).toHaveBeenCalledWith(403);
+        expect(res.body).toEqual({
+          error: 'Insufficient role',
+          code: 'RBAC_INSUFFICIENT_ROLE',
+        });
+      }
+    );
+  });
+
   it('requireOrgAccess: denies when no orgId', () => {
     const req: any = { user: { organizationId: '' } };
     const res = makeRes();
