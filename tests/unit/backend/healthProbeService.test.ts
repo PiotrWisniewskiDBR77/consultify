@@ -30,6 +30,17 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   all: vi.fn(),
   run: vi.fn(),
 }));
+// Round-trip probe dependencies (Paczka1 #3).
+vi.mock('../../../server/src/services/initiative/createInitiativeService.js', () => ({
+  createInitiative: vi.fn(),
+}));
+vi.mock('../../../server/src/services/executionResultsBridge.js', () => ({
+  handoffFromClosure: vi.fn(),
+  CLOSURE_HANDOFF_SOURCE: 'M14_CLOSURE_HANDOFF',
+}));
+vi.mock('../../../server/src/services/v8/resultsFinanceReconciliationService.js', () => ({
+  pullAndReconcileInitiative: vi.fn(),
+}));
 vi.mock('../../../server/src/utils/Logger.js', () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
@@ -47,6 +58,9 @@ vi.mock('../../../server/src/routes/assessment-reports.routes.js', () => ({
 }));
 
 import * as resultsROIService from '../../../server/src/services/v8/resultsROIService.js';
+import { createInitiative as createInitiativeViaFunnel } from '../../../server/src/services/initiative/createInitiativeService.js';
+import { handoffFromClosure } from '../../../server/src/services/executionResultsBridge.js';
+import { pullAndReconcileInitiative } from '../../../server/src/services/v8/resultsFinanceReconciliationService.js';
 import { getRecentArtifactRefsForOrg } from '../../../server/src/services/v8/artifactRegistryService.js';
 import { getAuditLogger } from '../../../server/src/services/AuditLogger.js';
 import * as DbPromise from '../../../server/src/utils/DbPromise.js';
@@ -177,6 +191,12 @@ describe('registry', () => {
         'gp_assessments_list_live',
         'gp_drd_report_live',
         'gp_m17_register_read_live',
+        // golden-path ROUND-TRIP probes (Paczka1 #3)
+        'gp4_tools_to_initiative_round_trip',
+        'gp5_ideas_convert_to_initiative_round_trip',
+        'gp6_initiative_to_execution_round_trip',
+        'gp7_execution_closure_to_results_round_trip',
+        'gp8_results_finance_reconciliation_round_trip',
       ])
     );
   });
@@ -332,6 +352,251 @@ describe('probe (d) — M24 add-member validate + audit', () => {
 
     expect(result.status).toBe('fail');
     expect(result.errorMessage).toMatch(/not readable/i);
+  });
+});
+
+describe('golden-path ROUND-TRIP probes (Paczka1 #3)', () => {
+  describe('gp4 — Tools → initiative with back-ref', () => {
+    const probe = getProbeById('gp4_tools_to_initiative_round_trip')!;
+
+    it('creates via the funnel with sourceType=tool, verifies the persisted back-ref, and cleans up', async () => {
+      (createInitiativeViaFunnel as any).mockImplementation(async (_org: string, input: any) => ({
+        id: 'init-tool-1',
+        sourceType: input.sourceType,
+        sourceId: input.sourceId,
+      }));
+      (DbPromise.get as any).mockImplementation(async () => {
+        const input = (createInitiativeViaFunnel as any).mock.calls[0][1];
+        return { id: 'init-tool-1', source_type: 'tool', source_id: input.sourceId };
+      });
+
+      const result = await runProbe(probe, CTX);
+
+      expect(result.status).toBe('pass');
+      const [orgArg, inputArg, optionsArg] = (createInitiativeViaFunnel as any).mock.calls[0];
+      expect(orgArg).toBe(CTX.organizationId);
+      expect(inputArg.sourceType).toBe('tool');
+      expect(String(inputArg.title)).toContain(HEALTH_PROBE_PREFIX);
+      expect(String(inputArg.sourceId)).toContain(HEALTH_PROBE_PREFIX);
+      expect(optionsArg).toMatchObject({ emitAudit: false });
+      // Hard cleanup deleted the seeded initiative, org-scoped.
+      expect(DbPromise.run).toHaveBeenCalledWith(
+        expect.stringContaining('DELETE FROM initiatives'),
+        ['init-tool-1', CTX.organizationId]
+      );
+    });
+
+    it('FAILS when the back-ref does not survive (source_type falls back to manual) — and still cleans up', async () => {
+      (createInitiativeViaFunnel as any).mockResolvedValue({ id: 'init-tool-2' });
+      (DbPromise.get as any).mockResolvedValue({
+        id: 'init-tool-2',
+        source_type: 'manual',
+        source_id: null,
+      });
+
+      const result = await runProbe(probe, CTX);
+
+      expect(result.status).toBe('fail');
+      expect(result.errorMessage).toMatch(/provenance lost/i);
+      expect(DbPromise.run).toHaveBeenCalledWith(
+        expect.stringContaining('DELETE FROM initiatives'),
+        ['init-tool-2', CTX.organizationId]
+      );
+    });
+  });
+
+  describe('gp5 — Ideas convert → initiative with back-ref', () => {
+    const probe = getProbeById('gp5_ideas_convert_to_initiative_round_trip')!;
+
+    it('round-trips the ConvertTo provenance (sourceType=tool_session)', async () => {
+      (createInitiativeViaFunnel as any).mockImplementation(async (_org: string, input: any) => ({
+        id: 'init-conv-1',
+        sourceType: input.sourceType,
+        sourceId: input.sourceId,
+      }));
+      (DbPromise.get as any).mockImplementation(async () => {
+        const input = (createInitiativeViaFunnel as any).mock.calls[0][1];
+        return { source_type: 'tool_session', source_id: input.sourceId };
+      });
+
+      const result = await runProbe(probe, CTX);
+
+      expect(result.status).toBe('pass');
+      const inputArg = (createInitiativeViaFunnel as any).mock.calls[0][1];
+      expect(inputArg.sourceType).toBe('tool_session');
+    });
+
+    it('FAILS when source_id does not match the session id', async () => {
+      (createInitiativeViaFunnel as any).mockResolvedValue({ id: 'init-conv-2' });
+      (DbPromise.get as any).mockResolvedValue({
+        source_type: 'tool_session',
+        source_id: 'SOMETHING-ELSE',
+      });
+
+      const result = await runProbe(probe, CTX);
+
+      expect(result.status).toBe('fail');
+      expect(result.errorMessage).toMatch(/back-reference lost/i);
+    });
+  });
+
+  describe('gp6 — Initiative → execution task linkage', () => {
+    const probe = getProbeById('gp6_initiative_to_execution_round_trip')!;
+
+    it('seeds initiative + linked task, reads the task back through initiative_id, cleans both', async () => {
+      (DbPromise.get as any).mockResolvedValue({ id: 'task-1' });
+
+      const result = await runProbe(probe, CTX);
+
+      expect(result.status).toBe('pass');
+      // Seeded both rows.
+      expect(DbPromise.run).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT INTO initiatives'),
+        expect.arrayContaining([CTX.organizationId, 'IN_PROGRESS'])
+      );
+      expect(DbPromise.run).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT INTO tasks'),
+        expect.arrayContaining([CTX.organizationId])
+      );
+      // Read back org-scoped through the linkage.
+      expect(DbPromise.get).toHaveBeenCalledWith(
+        expect.stringContaining('initiative_id = ?'),
+        expect.arrayContaining([CTX.organizationId]),
+        { fallback: true }
+      );
+      // Cleanup deleted the task AND the initiative.
+      expect(DbPromise.run).toHaveBeenCalledWith(
+        expect.stringContaining('DELETE FROM tasks'),
+        expect.arrayContaining([CTX.organizationId])
+      );
+      expect(DbPromise.run).toHaveBeenCalledWith(
+        expect.stringContaining('DELETE FROM initiatives'),
+        expect.arrayContaining([CTX.organizationId])
+      );
+    });
+
+    it('FAILS when the task is not readable through the linkage', async () => {
+      (DbPromise.get as any).mockResolvedValue(null);
+      const result = await runProbe(probe, CTX);
+      expect(result.status).toBe('fail');
+      expect(result.errorMessage).toMatch(/linkage/i);
+    });
+  });
+
+  describe('gp7 — Execution closure → benefit (idempotent)', () => {
+    const probe = getProbeById('gp7_execution_closure_to_results_round_trip')!;
+
+    it('runs the real closure handoff, verifies the tagged benefit, and asserts idempotency on re-run', async () => {
+      (handoffFromClosure as any)
+        .mockResolvedValueOnce({ created: 1, skipped: 0, considered: 1 })
+        .mockResolvedValueOnce({ created: 0, skipped: 1, considered: 1 });
+      (DbPromise.get as any).mockResolvedValue({ id: 'benefit-1' });
+
+      const result = await runProbe(probe, CTX);
+
+      expect(result.status).toBe('pass');
+      expect(handoffFromClosure).toHaveBeenCalledTimes(2);
+      expect((handoffFromClosure as any).mock.calls[0][0]).toBe(CTX.organizationId);
+      // Benefit read-back is tagged with the closure source.
+      expect(DbPromise.get).toHaveBeenCalledWith(
+        expect.stringContaining('FROM initiative_benefits'),
+        expect.arrayContaining(['M14_CLOSURE_HANDOFF']),
+        { fallback: true }
+      );
+      // Cleanup removes benefits, planned KPI and the initiative.
+      expect(DbPromise.run).toHaveBeenCalledWith(
+        expect.stringContaining('DELETE FROM initiative_benefits'),
+        expect.arrayContaining(['M14_CLOSURE_HANDOFF'])
+      );
+      expect(DbPromise.run).toHaveBeenCalledWith(
+        expect.stringContaining('DELETE FROM initiative_kpis'),
+        expect.any(Array)
+      );
+    });
+
+    it('FAILS when the re-run is not idempotent (duplicate benefit created)', async () => {
+      (handoffFromClosure as any)
+        .mockResolvedValueOnce({ created: 1, skipped: 0, considered: 1 })
+        .mockResolvedValueOnce({ created: 1, skipped: 0, considered: 1 });
+      (DbPromise.get as any).mockResolvedValue({ id: 'benefit-2' });
+
+      const result = await runProbe(probe, CTX);
+
+      expect(result.status).toBe('fail');
+      expect(result.errorMessage).toMatch(/idempotent/i);
+    });
+  });
+
+  describe('gp8 — Results ↔ Finance reconciliation (units)', () => {
+    const probe = getProbeById('gp8_results_finance_reconciliation_round_trip')!;
+
+    const goodItem = {
+      kpiId: 'kpi-recon-1',
+      realizedValue: 72000,
+      projectedValue: 90000,
+      deviationAbsolute: -18000,
+      deviationPercent: -20,
+      unitMultiplier: 1000,
+    };
+
+    it('reconciles a %-KPI on the finance basis and verifies the persisted row', async () => {
+      (resultsROIService.createKPI as any).mockResolvedValue({ kpiId: 'kpi-recon-1' });
+      (pullAndReconcileInitiative as any).mockResolvedValue({
+        reconciledCount: 1,
+        offTrackCount: 1,
+        items: [goodItem],
+      });
+      (DbPromise.get as any).mockResolvedValue({ unit_multiplier: 1000, deviation_absolute: -18000 });
+
+      const result = await runProbe(probe, CTX);
+
+      expect(result.status).toBe('pass');
+      // The KPI is deliberately NON-monetary (percentage) — the unit-bug guard.
+      const kpiArg = (resultsROIService.createKPI as any).mock.calls[0][0];
+      expect(kpiArg.metricType).toBe('percentage');
+      // Mapping carried an explicit unit multiplier.
+      const mappingArg = (pullAndReconcileInitiative as any).mock.calls[0][2];
+      expect(mappingArg[0]).toMatchObject({ kpiId: 'kpi-recon-1', unitMultiplier: 1000 });
+      // Cleanup removed the reconciliation row and the KPI.
+      expect(DbPromise.run).toHaveBeenCalledWith(
+        expect.stringContaining('DELETE FROM v8_kpi_finance_reconciliations'),
+        [CTX.organizationId, 'kpi-recon-1']
+      );
+      expect(DbPromise.run).toHaveBeenCalledWith(
+        expect.stringContaining('DELETE FROM v8_kpi_definitions'),
+        ['kpi-recon-1', CTX.organizationId]
+      );
+    });
+
+    it('FAILS when the engine mixes bases (raw % vs currency — the OEE bug class)', async () => {
+      (resultsROIService.createKPI as any).mockResolvedValue({ kpiId: 'kpi-recon-2' });
+      (pullAndReconcileInitiative as any).mockResolvedValue({
+        reconciledCount: 1,
+        offTrackCount: 0,
+        // Realized left in raw % (72) while projected is on the finance basis.
+        items: [{ ...goodItem, kpiId: 'kpi-recon-2', realizedValue: 72, deviationAbsolute: -89928 }],
+      });
+
+      const result = await runProbe(probe, CTX);
+
+      expect(result.status).toBe('fail');
+      expect(result.errorMessage).toMatch(/unit conversion broken/i);
+    });
+
+    it('FAILS when the persisted reconciliation row drifted from the engine result', async () => {
+      (resultsROIService.createKPI as any).mockResolvedValue({ kpiId: 'kpi-recon-3' });
+      (pullAndReconcileInitiative as any).mockResolvedValue({
+        reconciledCount: 1,
+        offTrackCount: 1,
+        items: [{ ...goodItem, kpiId: 'kpi-recon-3' }],
+      });
+      (DbPromise.get as any).mockResolvedValue({ unit_multiplier: 1, deviation_absolute: -18 });
+
+      const result = await runProbe(probe, CTX);
+
+      expect(result.status).toBe('fail');
+      expect(result.errorMessage).toMatch(/drifted/i);
+    });
   });
 });
 
