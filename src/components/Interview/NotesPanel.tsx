@@ -9,9 +9,8 @@ import { Edit3, FileText, MoreVertical, Plus, Trash2, X } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState, LoadingState } from '@/components/shared/states';
 import { MetaChip } from '@/components/ui/primitives';
-import { EmptyState } from '@/components/shared/states/EmptyState';
-import { LoadingState } from '@/components/shared/states/LoadingState';
 
 import type { InterviewCategory } from './CategorySidebar';
 import { CATEGORY_CONFIG } from './CategorySidebar';
