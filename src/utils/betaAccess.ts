@@ -38,7 +38,7 @@ export const BETA_ADMINS_EXEMPT = true;
 export const BETA_MENU_STATUS: Record<string, BetaStatus> = {
   MODULE_BENEFITS: 'open', // Results (M15 — GA per D-A)
   MODULE_ECONOMICS: 'open', // Finance (M16 — GA per D-A)
-  MODULE_AUDITS: 'open', // Audits (M12 — GA per D-A)
+  MODULE_AUDITS: 'closed', // Audits (M12 — hidden pre-demo per DECYZJA-D3; empty module, no real content yet)
   MODULE_PRESENTATIONS: 'open', // Documents (Outputs library)
   MODULE_DOCUMENT_STUDIO: 'open', // Document Studio
   MODULE_PREZENTACJE_GEN: 'open', // Presentation Studio

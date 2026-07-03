@@ -52,14 +52,22 @@ export function TabeleSchemaBlock({ field, onClickProposal }: TabeleSchemaBlockP
             {field.name || t('kimi.tabele.schema.unnamedField', { defaultValue: 'unnamed_field' })}
           </code>
           <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-            {field.proposalId
-              ? t('kimi.tabele.schema.proposalCaption', {
-                  defaultValue: 'Linked to schema proposal {{proposalId}}',
-                  proposalId: field.proposalId,
-                })
-              : t('kimi.tabele.schema.caption', {
-                  defaultValue: 'Schema field rendered as an operational table document block',
-                })}
+            {field.description?.trim()
+              ? field.description.trim()
+              : field.proposalId
+                ? t('kimi.tabele.schema.proposalCaption', {
+                    defaultValue: 'Linked to schema proposal {{proposalId}}',
+                    proposalId: field.proposalId,
+                  })
+                : // No authored description: show an honest, field-derived caption
+                  // (the field's own type token) instead of a shared boilerplate
+                  // placeholder that read identically on every row (HOTFIX #62 UI-M6).
+                  t('kimi.tabele.schema.typeCaption', {
+                    defaultValue: '{{fieldType}} field',
+                    fieldType: field.fieldType || t('kimi.tabele.schema.defaultType', {
+                      defaultValue: 'text',
+                    }),
+                  })}
           </p>
         </div>
 

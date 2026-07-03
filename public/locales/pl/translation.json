@@ -13982,6 +13982,7 @@
         "rejected": "Odrzucone",
         "caption": "Pole schematu wyrenderowane jako blok dokumentu tabeli operacyjnej",
         "proposalCaption": "Powiązane z propozycją schematu {{proposalId}}",
+        "typeCaption": "Pole typu {{fieldType}}",
         "unnamedField": "pole_bez_nazwy",
         "defaultType": "tekst"
       },

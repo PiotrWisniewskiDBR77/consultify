@@ -35,6 +35,12 @@ export interface TabelePreviewSchemaField {
    * additive new field types do not break the preview.
    */
   fieldType: string;
+  /**
+   * Human-authored field description/help text from the Table Platform, when
+   * present. Surfaced as the block caption so each schema field shows its OWN
+   * description instead of a shared boilerplate placeholder (HOTFIX #62 UI-M6).
+   */
+  description?: string;
   governanceState?: 'committed' | 'proposed' | 'rejected';
   proposalId?: string;
 }

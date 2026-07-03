@@ -98,6 +98,57 @@ function blockMixForIntent(intent: SlideIntent): string[] {
   return map[intent] || ['heading', 'message', 'supporting-evidence'];
 }
 
+/**
+ * Intent → key-message helper (HOTFIX #62 / UI-M4).
+ *
+ * Historically, when an outline item arrived with an empty `keyMessage`, the
+ * planner STOMPED it with a generic `Key message for ${title}` placeholder.
+ * That synthetic string then rendered VERBATIM onto slides ("Key message for
+ * Podsumowanie") because the downstream per-intent builders in
+ * presentationGeneratorService only fall back on an EMPTY keyMessage — by the
+ * time they ran, keyMessage was already the placeholder, not empty.
+ *
+ * Fix: derive a MEANINGFUL, intent-appropriate message here (PL/EN aware via
+ * setup.language). These phrases mirror the per-intent builder defaults so the
+ * planned outline is coherent. For any intent we cannot map to a sensible
+ * phrase, return `undefined` so the item's keyMessage stays empty and the
+ * builder's own intent-specific fallback fires. A generic "Key message for X"
+ * must NEVER reach a rendered slide.
+ */
+function intentKeyMessage(intent: SlideIntent, isPl: boolean): string | undefined {
+  const map: Partial<Record<SlideIntent, [string, string]>> = {
+    // [PL, EN]
+    executive_summary: ['Podsumowanie kluczowych ustaleń', 'Summary of key findings'],
+    key_messages: ['Kluczowe wnioski', 'Key Messages'],
+    root_cause: ['Źródła problemu', 'Root causes'],
+    performance_overview: [
+      'Przegląd kluczowych wskaźników',
+      'Key performance indicators overview',
+    ],
+    recommendation_portfolio: [
+      'Rekomendacje wynikające z diagnozy',
+      'Recommendations derived from the diagnostic',
+    ],
+    recommendation_single: ['Rekomendacja', 'Recommendation'],
+    roadmap: ['Plan transformacji', 'Transformation roadmap'],
+    risk_management: ['Kluczowe ryzyka i mitygacje', 'Key risks and mitigations'],
+    assessment: ['Wyniki oceny dojrzałości', 'Maturity assessment results'],
+    initiative_portfolio: ['Status portfela inicjatyw', 'Initiative portfolio status'],
+    prioritization_matrix: ['Priorytetyzacja inicjatyw', 'Initiative prioritization'],
+    next_steps: ['Kolejne kroki i decyzje', 'Next steps and decisions required'],
+    comparison: ['Analiza porównawcza', 'Comparative analysis'],
+    // Intentionally NOT mapped (return undefined → builder decides, avoids a
+    // placeholder that would fight the builder's own better default):
+    //  - cover           (builder uses title as key_message, subtitle fallback)
+    //  - single_insight  (builder prefers the tool-insight summary)
+    //  - section_intro   (builder uses the section title)
+    //  - appendix        (builder uses a fixed disclaimers headline)
+  };
+  const pair = map[intent];
+  if (!pair) return undefined;
+  return isPl ? pair[0] : pair[1];
+}
+
 function createModeFor(setup: DeckSetup, hasTemplateOutline: boolean): DeckCreateMode {
   if (setup.templateId || hasTemplateOutline) return 'template-first';
   if ((setup.sourceArtifacts || []).some((source) => source.artifactId || source.id))
@@ -120,6 +171,7 @@ export function planSlides(params: {
 
   const warnings: string[] = [];
   const evidenceGaps: string[] = [];
+  const isPl = (setup as any).language === 'pl';
   const outline = params.outline.map((item, index) => {
     const matchedSource =
       sources.find((source) => sourceId(source) === item.sourceRef) ||
@@ -152,13 +204,17 @@ export function planSlides(params: {
     const itemDensity = (item as any).density || density;
     const visualPolicy = ((item as any).visualPolicy ||
       visualPolicyForIntent(item.intent, itemDensity)) as VisualPolicy;
+    // HOTFIX #62 (UI-M4): never inject a generic "Key message for X" /
+    // "Decision message: X" placeholder. When the item has no keyMessage, derive
+    // an intent-appropriate phrase; if the intent has no sensible mapping, leave
+    // keyMessage EMPTY so the per-intent builder's own fallback fires. A synthetic
+    // placeholder must never reach a rendered slide.
+    const derivedKeyMessage = item.keyMessage || intentKeyMessage(item.intent, isPl);
     const plannedItem: OutlineItem = {
       ...item,
-      keyMessage:
-        item.keyMessage ||
-        ((setup as any).communicationRegister === 'executive'
-          ? `Decision message: ${item.title}`
-          : `Key message for ${item.title}`),
+      // Only set keyMessage when we actually have a real one — otherwise leave it
+      // undefined (spread preserves any original value, which is empty here).
+      ...(derivedKeyMessage ? { keyMessage: derivedKeyMessage } : {}),
       sourceRef: sourceRefs[0] || item.sourceRef,
       confidence,
       sourceRefs,
