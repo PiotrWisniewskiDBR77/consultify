@@ -105,15 +105,15 @@ export const ExtensionMarketplace: React.FC<ExtensionMarketplaceProps> = ({
   const installedIds = new Set(installed.map((e) => e.id));
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-c-surface">
       {/* Tab bar */}
       <div className="flex items-center border-b px-4 gap-1">
         <button
           onClick={() => setTab('installed')}
           className={`px-3 py-2.5 text-sm font-medium border-b-2 transition-colors ${
             tab === 'installed'
-              ? 'border-indigo-600 text-indigo-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+              ? 'border-c-tag-2 text-c-tag-2'
+              : 'border-transparent text-c-text-muted hover:text-c-text-secondary'
           }`}
         >
           Installed ({installed.length})
@@ -122,8 +122,8 @@ export const ExtensionMarketplace: React.FC<ExtensionMarketplaceProps> = ({
           onClick={() => setTab('marketplace')}
           className={`px-3 py-2.5 text-sm font-medium border-b-2 transition-colors ${
             tab === 'marketplace'
-              ? 'border-indigo-600 text-indigo-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+              ? 'border-c-tag-2 text-c-tag-2'
+              : 'border-transparent text-c-text-muted hover:text-c-text-secondary'
           }`}
         >
           Marketplace
@@ -139,8 +139,8 @@ export const ExtensionMarketplace: React.FC<ExtensionMarketplaceProps> = ({
               onClick={() => setCategory(cat.key)}
               className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                 category === cat.key
-                  ? 'bg-indigo-100 text-indigo-700'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-c-tag-2 text-c-tag-2'
+                  : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-border-subtle'
               }`}
             >
               {cat.label}
@@ -152,12 +152,12 @@ export const ExtensionMarketplace: React.FC<ExtensionMarketplaceProps> = ({
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4">
         {loading ? (
-          <div className="flex items-center justify-center py-12 text-gray-600 text-sm">
+          <div className="flex items-center justify-center py-12 text-c-text-secondary text-sm">
             Loading extensions...
           </div>
         ) : tab === 'marketplace' ? (
           marketplace.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-600">
+            <div className="flex flex-col items-center justify-center py-12 text-c-text-secondary">
               <p className="text-sm">No extensions available yet.</p>
               <p className="text-xs mt-1">Check back later or register your own.</p>
             </div>
@@ -176,11 +176,11 @@ export const ExtensionMarketplace: React.FC<ExtensionMarketplaceProps> = ({
             </div>
           )
         ) : installed.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-gray-600">
+          <div className="flex flex-col items-center justify-center py-12 text-c-text-secondary">
             <p className="text-sm">No extensions installed.</p>
             <button
               onClick={() => setTab('marketplace')}
-              className="mt-2 text-xs text-indigo-600 hover:text-indigo-700"
+              className="mt-2 text-xs text-c-tag-2 hover:text-c-tag-2"
             >
               Browse marketplace
             </button>
@@ -234,25 +234,25 @@ const ExtensionCard: React.FC<ExtensionCardProps> = ({
             className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
           />
         ) : (
-          <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
-            <span className="text-indigo-600 text-lg font-bold">
+          <div className="w-10 h-10 rounded-lg bg-c-tag-2 flex items-center justify-center flex-shrink-0">
+            <span className="text-c-tag-2 text-lg font-bold">
               {extension.name.charAt(0).toUpperCase()}
             </span>
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold text-gray-900 truncate">{extension.name}</h3>
-          {extension.author && <p className="text-xs text-gray-500">by {extension.author}</p>}
+          <h3 className="text-sm font-semibold text-c-text truncate">{extension.name}</h3>
+          {extension.author && <p className="text-xs text-c-text-muted">by {extension.author}</p>}
         </div>
-        <span className="text-xs text-gray-600 flex-shrink-0">v{extension.version}</span>
+        <span className="text-xs text-c-text-secondary flex-shrink-0">v{extension.version}</span>
       </div>
 
       {extension.description && (
-        <p className="text-xs text-gray-600 line-clamp-2">{extension.description}</p>
+        <p className="text-xs text-c-text-secondary line-clamp-2">{extension.description}</p>
       )}
 
-      <div className="flex items-center gap-2 text-xs text-gray-600">
-        <span className="px-1.5 py-0.5 bg-gray-100 rounded text-gray-500">
+      <div className="flex items-center gap-2 text-xs text-c-text-secondary">
+        <span className="px-1.5 py-0.5 bg-c-surface-raised rounded text-c-text-muted">
           {extension.category}
         </span>
         <span>
@@ -260,7 +260,7 @@ const ExtensionCard: React.FC<ExtensionCardProps> = ({
         </span>
         <button
           onClick={() => setShowScopes(!showScopes)}
-          className="ml-auto text-gray-600 hover:text-gray-600"
+          className="ml-auto text-c-text-secondary hover:text-c-text-secondary"
         >
           {extension.scopes.length} scope{extension.scopes.length !== 1 ? 's' : ''}
         </button>
@@ -271,7 +271,7 @@ const ExtensionCard: React.FC<ExtensionCardProps> = ({
           {extension.scopes.map((scope) => (
             <span
               key={scope}
-              className="px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded text-[10px]"
+              className="px-1.5 py-0.5 bg-c-warning text-c-warning rounded text-[10px]"
             >
               {SCOPE_LABELS[scope] ?? scope}
             </span>
@@ -285,14 +285,14 @@ const ExtensionCard: React.FC<ExtensionCardProps> = ({
             {onOpen && (
               <button
                 onClick={onOpen}
-                className="flex-1 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded hover:bg-indigo-700 transition-colors"
+                className="flex-1 px-3 py-1.5 text-xs font-medium text-c-text bg-c-tag-2 rounded hover:bg-c-tag-2 transition-colors"
               >
                 Open
               </button>
             )}
             <button
               onClick={onUninstall}
-              className="px-3 py-1.5 text-xs font-medium text-danger-600 bg-danger-50 rounded hover:bg-danger-100 transition-colors"
+              className="px-3 py-1.5 text-xs font-medium text-c-danger bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] rounded hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] transition-colors"
             >
               Uninstall
             </button>
@@ -301,7 +301,7 @@ const ExtensionCard: React.FC<ExtensionCardProps> = ({
           <button
             onClick={onInstall}
             disabled={isInstalling}
-            className="flex-1 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            className="flex-1 px-3 py-1.5 text-xs font-medium text-c-text bg-c-tag-2 rounded hover:bg-c-tag-2 disabled:opacity-50 transition-colors"
           >
             {isInstalling ? 'Installing...' : 'Install'}
           </button>

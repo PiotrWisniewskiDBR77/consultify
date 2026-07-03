@@ -148,8 +148,8 @@ export function PublicFormPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-600" />
+      <div className="flex min-h-screen items-center justify-center bg-c-surface-raised">
+        <Loader2 className="h-8 w-8 animate-spin text-c-text-secondary" />
       </div>
     );
   }
@@ -158,11 +158,11 @@ export function PublicFormPage() {
 
   if (error && !form) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="max-w-md rounded-2xl border border-danger-200 bg-white p-8 text-center shadow-sm">
-          <AlertCircle className="mx-auto mb-3 h-10 w-10 text-danger-400" />
-          <h2 className="mb-2 text-lg font-semibold text-gray-900">Form not found</h2>
-          <p className="text-sm text-gray-500">{error}</p>
+      <div className="flex min-h-screen items-center justify-center bg-c-surface-raised">
+        <div className="max-w-md rounded-2xl border border-c-danger bg-c-surface p-8 text-center shadow-sm">
+          <AlertCircle className="mx-auto mb-3 h-10 w-10 text-c-danger" />
+          <h2 className="mb-2 text-lg font-semibold text-c-text">Form not found</h2>
+          <p className="text-sm text-c-text-muted">{error}</p>
         </div>
       </div>
     );
@@ -174,16 +174,16 @@ export function PublicFormPage() {
 
   if (submitted) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-        <div className="max-w-md rounded-2xl border border-green-200 bg-white p-8 text-center shadow-sm">
-          <CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-green-500" />
-          <h2 className="mb-2 text-lg font-semibold text-gray-900">
+      <div className="flex min-h-screen items-center justify-center bg-c-surface-raised px-4">
+        <div className="max-w-md rounded-2xl border border-c-success bg-c-surface p-8 text-center shadow-sm">
+          <CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-c-success" />
+          <h2 className="mb-2 text-lg font-semibold text-c-text">
             {form.config?.submitMessage || 'Response recorded!'}
           </h2>
           {form.config?.allowMultiple && (
             <button
               onClick={handleSubmitAnother}
-              className="mt-4 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+              className="mt-4 rounded-xl bg-c-info px-6 py-2.5 text-sm font-medium text-c-text transition-colors hover:bg-c-info"
             >
               Submit another response
             </button>
@@ -196,16 +196,16 @@ export function PublicFormPage() {
   // ── Form ───────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-12">
+    <div className="min-h-screen bg-c-surface-raised px-4 py-12">
       <form
         onSubmit={handleSubmit}
-        className="mx-auto max-w-lg rounded-2xl border border-gray-200 bg-white p-8 shadow-sm"
+        className="mx-auto max-w-lg rounded-2xl border border-c-border-subtle bg-c-surface p-8 shadow-sm"
       >
-        <h1 className="mb-1 text-xl font-semibold text-gray-900">{form.name}</h1>
-        {form.description && <p className="mb-6 text-sm text-gray-500">{form.description}</p>}
+        <h1 className="mb-1 text-xl font-semibold text-c-text">{form.name}</h1>
+        {form.description && <p className="mb-6 text-sm text-c-text-muted">{form.description}</p>}
 
         {error && (
-          <div className="mb-4 rounded-xl border border-danger-200 bg-danger-50 px-4 py-3 text-sm text-danger-700">
+          <div className="mb-4 rounded-xl border border-c-danger bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] px-4 py-3 text-sm text-c-danger">
             {error}
           </div>
         )}
@@ -218,18 +218,18 @@ export function PublicFormPage() {
 
             return (
               <div key={fc.fieldId}>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                <label className="mb-1.5 block text-sm font-medium text-c-text-secondary">
                   {fc.label || field.name}
-                  {fc.required && <span className="ml-1 text-danger-500">*</span>}
+                  {fc.required && <span className="ml-1 text-c-danger">*</span>}
                 </label>
-                {fc.helpText && <p className="mb-1 text-xs text-gray-600">{fc.helpText}</p>}
+                {fc.helpText && <p className="mb-1 text-xs text-c-text-secondary">{fc.helpText}</p>}
                 <PublicFormFieldInput
                   field={field}
                   value={values[fc.fieldId]}
                   onChange={(val) => setValue(fc.fieldId, val)}
                   error={!!fieldError}
                 />
-                {fieldError && <p className="mt-1 text-xs text-danger-500">{fieldError}</p>}
+                {fieldError && <p className="mt-1 text-xs text-c-danger">{fieldError}</p>}
               </div>
             );
           })}
@@ -238,14 +238,14 @@ export function PublicFormPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-c-info px-4 py-3 text-sm font-medium text-c-text transition-colors hover:bg-c-info disabled:opacity-50"
         >
           {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
           Submit
         </button>
       </form>
 
-      <p className="mt-4 text-center text-xs text-gray-600">Powered by Consultify Table Platform</p>
+      <p className="mt-4 text-center text-xs text-c-text-secondary">Powered by Consultify Table Platform</p>
     </div>
   );
 }

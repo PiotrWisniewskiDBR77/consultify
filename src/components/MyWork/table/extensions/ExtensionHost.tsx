@@ -179,17 +179,17 @@ export const ExtensionHost: React.FC<ExtensionHostProps> = ({
 
   return (
     <div className="relative flex flex-col h-full border rounded-lg overflow-hidden">
-      <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b">
-        <span className="text-sm font-medium text-gray-700">Extension</span>
+      <div className="flex items-center justify-between px-3 py-2 bg-c-surface-raised border-b">
+        <span className="text-sm font-medium text-c-text-secondary">Extension</span>
         <div className="flex items-center gap-2">
-          {!isReady && <span className="text-xs text-gray-600">Loading...</span>}
-          <span className="text-xs text-gray-600">
+          {!isReady && <span className="text-xs text-c-text-secondary">Loading...</span>}
+          <span className="text-xs text-c-text-secondary">
             {scopes.length} scope{scopes.length !== 1 ? 's' : ''}
           </span>
           {onClose && (
             <button
               onClick={onClose}
-              className="text-gray-600 hover:text-gray-600 text-sm leading-none"
+              className="text-c-text-secondary hover:text-c-text-secondary text-sm leading-none"
               aria-label="Close extension"
             >
               &times;
@@ -202,10 +202,10 @@ export const ExtensionHost: React.FC<ExtensionHostProps> = ({
         <div
           className={`px-3 py-2 text-sm ${
             notification.kind === 'error'
-              ? 'bg-danger-50 text-danger-700'
+              ? 'bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-c-danger'
               : notification.kind === 'success'
-                ? 'bg-green-50 text-green-700'
-                : 'bg-blue-50 text-blue-700'
+                ? 'bg-c-success text-c-success'
+                : 'bg-c-info text-c-info'
           }`}
         >
           {notification.message}
