@@ -255,18 +255,18 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
     >
       <div
         ref={modalRef}
-        className="bg-navy-900 border border-navy-700 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl"
+        className="bg-c-surface border border-c-border rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl"
         role="dialog"
         aria-labelledby="modal-title"
         aria-modal="true"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-navy-700">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-c-border">
           <div>
-            <h2 id="modal-title" className="text-lg font-semibold text-white">
+            <h2 id="modal-title" className="text-lg font-semibold text-c-text">
               {step === 1 ? 'Select Framework' : 'New Assessment'}
             </h2>
-            <p className="text-sm text-slate-600 mt-0.5">
+            <p className="text-sm text-c-text-secondary mt-0.5">
               {step === 1
                 ? 'Choose an assessment framework to get started'
                 : `Creating ${selectedFrameworkData?.shortName} assessment`}
@@ -274,7 +274,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-600 hover:text-white hover:bg-navy-700 transition-colors"
+            className="p-2 rounded-lg text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised transition-colors"
             aria-label="Close modal"
           >
             <X size={20} />
@@ -310,7 +310,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                   <div
                     className={`
                       flex-shrink-0 p-2.5 rounded-lg
-                      bg-navy-800/50 ${framework.textColor}
+                      bg-c-surface-raised ${framework.textColor}
                     `}
                   >
                     {framework.icon}
@@ -320,19 +320,19 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                       <span className={`font-mono text-sm font-bold ${framework.textColor}`}>
                         {framework.shortName}
                       </span>
-                      <span className="text-white font-medium">{framework.name}</span>
+                      <span className="text-c-text font-medium">{framework.name}</span>
                       {framework.comingSoon && (
-                        <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-navy-800/70 text-slate-300 border border-slate-500/30">
+                        <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-c-surface-raised text-c-text-secondary border border-slate-500/30">
                           Coming soon
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-slate-600 mt-1 line-clamp-2">
+                    <p className="text-sm text-c-text-secondary mt-1 line-clamp-2">
                       {framework.description}
                     </p>
                   </div>
                   <svg
-                    className="flex-shrink-0 w-5 h-5 text-slate-500"
+                    className="flex-shrink-0 w-5 h-5 text-c-text-muted"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -360,7 +360,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                   `}
                 >
                   <div
-                    className={`p-2 rounded-lg bg-navy-800/50 ${selectedFrameworkData.textColor}`}
+                    className={`p-2 rounded-lg bg-c-surface-raised ${selectedFrameworkData.textColor}`}
                   >
                     {selectedFrameworkData.icon}
                   </div>
@@ -370,12 +370,12 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                     >
                       {selectedFrameworkData.shortName}
                     </div>
-                    <div className="text-sm text-slate-600">{selectedFrameworkData.name}</div>
+                    <div className="text-sm text-c-text-secondary">{selectedFrameworkData.name}</div>
                   </div>
                   <button
                     type="button"
                     onClick={handleBack}
-                    className="ml-auto text-sm text-slate-600 hover:text-white transition-colors"
+                    className="ml-auto text-sm text-c-text-secondary hover:text-c-text transition-colors"
                   >
                     Change
                   </button>
@@ -386,7 +386,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
               <div>
                 <label
                   htmlFor="assessment-name"
-                  className="block text-sm font-medium text-slate-600 mb-2"
+                  className="block text-sm font-medium text-c-text-secondary mb-2"
                 >
                   Assessment Name
                 </label>
@@ -399,18 +399,18 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                   placeholder="Enter assessment name..."
                   maxLength={200}
                   className="
-                    w-full h-11 px-4 bg-navy-800 border border-navy-600 rounded-lg
-                    text-white placeholder-slate-500
+                    w-full h-11 px-4 bg-c-surface-raised border border-c-border rounded-lg
+                    text-c-text placeholder-c-text-muted
                     focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/25
                     transition-colors
                   "
                 />
                 <div className="flex justify-between mt-1.5">
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-c-text-muted">
                     Give your assessment a descriptive name
                   </span>
                   <span
-                    className={`text-xs ${assessmentName.length > 180 ? 'text-amber-400' : 'text-slate-500'}`}
+                    className={`text-xs ${assessmentName.length > 180 ? 'text-amber-400' : 'text-c-text-muted'}`}
                   >
                     {assessmentName.length}/200
                   </span>
@@ -421,9 +421,9 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
               <div>
                 <label
                   htmlFor="assessment-description"
-                  className="block text-sm font-medium text-slate-600 mb-2"
+                  className="block text-sm font-medium text-c-text-secondary mb-2"
                 >
-                  Description <span className="text-slate-500">(optional)</span>
+                  Description <span className="text-c-text-muted">(optional)</span>
                 </label>
                 <textarea
                   id="assessment-description"
@@ -433,18 +433,18 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                   maxLength={1000}
                   rows={3}
                   className="
-                    w-full px-4 py-3 bg-navy-800 border border-navy-600 rounded-lg
-                    text-white placeholder-slate-500 resize-none
+                    w-full px-4 py-3 bg-c-surface-raised border border-c-border rounded-lg
+                    text-c-text placeholder-c-text-muted resize-none
                     focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/25
                     transition-colors
                   "
                 />
                 <div className="flex justify-between mt-1.5">
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-c-text-muted">
                     Optional context for this assessment
                   </span>
                   <span
-                    className={`text-xs ${assessmentDescription.length > 900 ? 'text-amber-400' : 'text-slate-500'}`}
+                    className={`text-xs ${assessmentDescription.length > 900 ? 'text-amber-400' : 'text-c-text-muted'}`}
                   >
                     {assessmentDescription.length}/1000
                   </span>
@@ -466,8 +466,8 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                   onClick={handleBack}
                   className="
                     px-4 py-2.5 rounded-lg text-sm font-medium
-                    text-slate-600 hover:text-white
-                    border border-navy-600 hover:bg-navy-800
+                    text-c-text-secondary hover:text-c-text
+                    border border-c-border hover:bg-c-surface-raised
                     transition-colors
                   "
                   disabled={isSubmitting}
@@ -502,10 +502,10 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
 
         {/* Footer - Step 1 only */}
         {step === 1 && (
-          <div className="px-6 py-4 border-t border-navy-700 bg-navy-950/50">
+          <div className="px-6 py-4 border-t border-c-border bg-c-surface-raised">
             <button
               onClick={onClose}
-              className="w-full py-2.5 text-sm text-slate-600 hover:text-white transition-colors"
+              className="w-full py-2.5 text-sm text-c-text-secondary hover:text-c-text transition-colors"
             >
               Cancel
             </button>
