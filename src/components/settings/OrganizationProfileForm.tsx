@@ -449,11 +449,11 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
   ) => (
     <button
       onClick={() => toggleSection(id)}
-      className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950/50 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-950 transition-colors"
+      className="w-full flex items-center justify-between p-4 bg-c-surface-raised rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-950 transition-colors"
     >
       <div className="flex items-center gap-3">
-        <div className="text-primary-500">{icon}</div>
-        <span className="font-semibold text-navy-900 dark:text-white">{title}</span>
+        <div className="text-c-accent">{icon}</div>
+        <span className="font-semibold text-navy-900">{title}</span>
         {completionPct !== undefined && (
           <span
             className={`text-xs px-2 py-0.5 rounded-full ${
@@ -461,7 +461,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                 : completionPct >= 50
                   ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                  : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                  : 'bg-c-surface-raised text-c-text-secondary'
             }`}
           >
             {completionPct}%
@@ -481,11 +481,11 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
-            <Building2 className="text-primary-500" />
+          <h2 className="text-2xl font-bold text-navy-900 flex items-center gap-2">
+            <Building2 className="text-c-accent" />
             Strategic Profile
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             Define your organization context for AI-powered strategic insights
           </p>
         </div>
@@ -493,8 +493,8 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
         {/* Completeness Indicator */}
         <div className="flex items-center gap-4">
           <div className="text-right">
-            <div className="text-sm text-slate-500 dark:text-slate-400">Profile Completeness</div>
-            <div className="text-2xl font-bold text-navy-900 dark:text-white">{completeness}%</div>
+            <div className="text-sm text-c-text-muted">Profile Completeness</div>
+            <div className="text-2xl font-bold text-navy-900">{completeness}%</div>
           </div>
           <div className="w-16 h-16 relative">
             <svg className="w-16 h-16 transform -rotate-90">
@@ -502,7 +502,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                 cx="32"
                 cy="32"
                 r="28"
-                className="stroke-slate-200 dark:stroke-slate-700"
+                className="stroke-c-border-subtle"
                 strokeWidth="4"
                 fill="none"
               />
@@ -510,7 +510,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                 cx="32"
                 cy="32"
                 r="28"
-                className="stroke-primary-500"
+                className="stroke-c-accent"
                 strokeWidth="4"
                 fill="none"
                 strokeDasharray={`${completeness * 1.76} 176`}
@@ -532,7 +532,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-c-accent hover:bg-c-accent text-white rounded-lg font-medium transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           Save Profile
@@ -540,14 +540,14 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
         <button
           onClick={handleAnalyze}
           disabled={analyzing || completeness < 30}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-navy-800/40 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 text-navy-900 dark:text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-navy-700 text-navy-900 rounded-lg font-medium transition-colors disabled:opacity-50"
         >
           {analyzing ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
           AI Analysis
         </button>
         <button
           onClick={fetchProfile}
-          className="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-800 rounded-lg transition-colors"
         >
           <RefreshCw size={16} />
           Refresh
@@ -559,19 +559,19 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
       {/* Sections */}
       <div className="space-y-4">
         {/* Industry Context */}
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 overflow-hidden">
           {renderSectionHeader('industry', 'Industry Context', <Briefcase size={20} />)}
           {expandedSections.industry && (
-            <div className="p-6 space-y-4 border-t border-slate-200 dark:border-navy-700">
+            <div className="p-6 space-y-4 border-t border-c-border-subtle dark:border-navy-700">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-2">
                     Industry *
                   </label>
                   <select
                     value={profile.industry || ''}
                     onChange={(e) => updateField('industry', e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
+                    className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
                   >
                     <option value="">Select Industry</option>
                     {INDUSTRIES.map((ind) => (
@@ -582,7 +582,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-2">
                     Industry Subsector
                   </label>
                   <input
@@ -590,7 +590,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                     value={profile.industry_subsector || ''}
                     onChange={(e) => updateField('industry_subsector', e.target.value)}
                     placeholder="e.g., SaaS, Fintech, E-commerce"
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
+                    className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
                   />
                 </div>
               </div>
@@ -599,7 +599,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                   const codeSystem = getIndustryCodeSystem(profile.headquarters_country);
                   return (
                     <>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      <label className="block text-sm font-medium text-c-text-secondary mb-2">
                         {t('admin.strategicProfile.industryCode', {
                           system: codeSystem.label,
                           defaultValue: `Industry Code (${codeSystem.label})`,
@@ -610,7 +610,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                         value={profile.industry_code || ''}
                         onChange={(e) => updateField('industry_code', e.target.value)}
                         placeholder={codeSystem.placeholder}
-                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
+                        className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
                       />
                     </>
                   );
@@ -621,19 +621,19 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
         </div>
 
         {/* Company Info */}
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 overflow-hidden">
           {renderSectionHeader('company', 'Company Information', <Building2 size={20} />)}
           {expandedSections.company && (
-            <div className="p-6 space-y-4 border-t border-slate-200 dark:border-navy-700">
+            <div className="p-6 space-y-4 border-t border-c-border-subtle dark:border-navy-700">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-2">
                     Company Size *
                   </label>
                   <select
                     value={profile.company_size || 'MID_MARKET'}
                     onChange={(e) => updateField('company_size', e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
+                    className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
                   >
                     {COMPANY_SIZES.map((size) => (
                       <option key={size.value} value={size.value}>
@@ -643,7 +643,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-2">
                     Employee Count
                   </label>
                   <input
@@ -653,11 +653,11 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                       updateField('employee_count', parseInt(e.target.value) || null)
                     }
                     placeholder="e.g., 500"
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
+                    className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-2">
                     {t('admin.strategicProfile.annualRevenue', {
                       currency:
                         profile.currency || getDefaultCurrency(profile.headquarters_country),
@@ -672,12 +672,12 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                         updateField('annual_revenue', parseFloat(e.target.value) || null)
                       }
                       placeholder="e.g., 50000000"
-                      className="flex-1 px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
+                      className="flex-1 px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
                     />
                     <select
                       value={profile.currency || getDefaultCurrency(profile.headquarters_country)}
                       onChange={(e) => updateField('currency', e.target.value)}
-                      className="w-28 px-2 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none text-sm"
+                      className="w-28 px-2 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none text-sm"
                     >
                       {CURRENCIES.map((c) => (
                         <option key={c.code} value={c.code}>
@@ -688,7 +688,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-2">
                     Founding Year
                   </label>
                   <input
@@ -696,12 +696,12 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                     value={profile.founding_year || ''}
                     onChange={(e) => updateField('founding_year', parseInt(e.target.value) || null)}
                     placeholder="e.g., 2010"
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
+                    className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-c-text-secondary mb-2">
                   Headquarters Country
                 </label>
                 <input
@@ -709,7 +709,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                   value={profile.headquarters_country || ''}
                   onChange={(e) => updateField('headquarters_country', e.target.value)}
                   placeholder="e.g., Poland"
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
                 />
               </div>
             </div>
@@ -717,19 +717,19 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
         </div>
 
         {/* Strategic Context */}
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 overflow-hidden">
           {renderSectionHeader('strategic', 'Strategic Context', <Target size={20} />)}
           {expandedSections.strategic && (
-            <div className="p-6 space-y-4 border-t border-slate-200 dark:border-navy-700">
+            <div className="p-6 space-y-4 border-t border-c-border-subtle dark:border-navy-700">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-2">
                     Competitive Position *
                   </label>
                   <select
                     value={profile.competitive_position || 'CHALLENGER'}
                     onChange={(e) => updateField('competitive_position', e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
+                    className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
                   >
                     {COMPETITIVE_POSITIONS.map((pos) => (
                       <option key={pos.value} value={pos.value}>
@@ -737,7 +737,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                       </option>
                     ))}
                   </select>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  <p className="text-xs text-c-text-muted mt-1">
                     {
                       COMPETITIVE_POSITIONS.find((p) => p.value === profile.competitive_position)
                         ?.description
@@ -745,13 +745,13 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                   </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-2">
                     Growth Stage *
                   </label>
                   <select
                     value={profile.growth_stage || 'MATURE'}
                     onChange={(e) => updateField('growth_stage', e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
+                    className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
                   >
                     {GROWTH_STAGES.map((stage) => (
                       <option key={stage.value} value={stage.value}>
@@ -759,24 +759,24 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                       </option>
                     ))}
                   </select>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  <p className="text-xs text-c-text-muted mt-1">
                     {GROWTH_STAGES.find((s) => s.value === profile.growth_stage)?.description}
                   </p>
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-c-text-secondary mb-2">
                   Strategic Priorities (comma-separated)
                 </label>
                 <CommaListInput
                   value={profile.strategic_priorities || []}
                   onChange={(val) => updateField('strategic_priorities', val)}
                   placeholder="e.g., Digital transformation, Customer experience, Cost optimization"
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-c-text-secondary mb-2">
                   Mission Statement
                 </label>
                 <textarea
@@ -784,7 +784,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                   onChange={(e) => updateField('mission_statement', e.target.value)}
                   rows={2}
                   placeholder="What is your organization's mission?"
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none resize-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none resize-none"
                 />
               </div>
             </div>
@@ -792,13 +792,13 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
         </div>
 
         {/* Digital Context */}
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 overflow-hidden">
           {renderSectionHeader('digital', 'Digital & Technology', <Cpu size={20} />)}
           {expandedSections.digital && (
-            <div className="p-6 space-y-4 border-t border-slate-200 dark:border-navy-700">
+            <div className="p-6 space-y-4 border-t border-c-border-subtle dark:border-navy-700">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-2">
                     Digital Maturity Self-Assessment (1-7)
                   </label>
                   <input
@@ -811,17 +811,17 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                       updateField('digital_maturity_overall', parseFloat(e.target.value) || null)
                     }
                     placeholder="e.g., 4.5"
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
+                    className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-2">
                     Cloud Adoption Level
                   </label>
                   <select
                     value={profile.cloud_adoption_level || 'PARTIAL'}
                     onChange={(e) => updateField('cloud_adoption_level', e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
+                    className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
                   >
                     {CLOUD_LEVELS.map((level) => (
                       <option key={level.value} value={level.value}>
@@ -832,7 +832,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-c-text-secondary mb-2">
                   Digital Budget (% of total IT spend)
                 </label>
                 <input
@@ -844,18 +844,18 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                     updateField('digital_budget_percent', parseFloat(e.target.value) || null)
                   }
                   placeholder="e.g., 25"
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-c-text-secondary mb-2">
                   Technology Stack (comma-separated)
                 </label>
                 <CommaListInput
                   value={profile.technology_stack || []}
                   onChange={(val) => updateField('technology_stack', val)}
                   placeholder="e.g., AWS, React, Python, Kubernetes"
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
                 />
               </div>
             </div>
@@ -863,45 +863,45 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
         </div>
 
         {/* Market Context */}
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 overflow-hidden">
           {renderSectionHeader('market', 'Market & Competition', <TrendingUp size={20} />)}
           {expandedSections.market && (
-            <div className="p-6 space-y-4 border-t border-slate-200 dark:border-navy-700">
+            <div className="p-6 space-y-4 border-t border-c-border-subtle dark:border-navy-700">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-c-text-secondary mb-2">
                   Primary Markets (comma-separated)
                 </label>
                 <CommaListInput
                   value={profile.primary_markets || []}
                   onChange={(val) => updateField('primary_markets', val)}
                   placeholder="e.g., Poland, DACH, CEE"
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-c-text-secondary mb-2">
                   Customer Segments (comma-separated)
                 </label>
                 <CommaListInput
                   value={profile.customer_segments || []}
                   onChange={(val) => updateField('customer_segments', val)}
                   placeholder="e.g., B2B, Enterprise, SMB"
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-c-text-secondary mb-2">
                   Key Competitors (comma-separated)
                 </label>
                 <CommaListInput
                   value={profile.key_competitors || []}
                   onChange={(val) => updateField('key_competitors', val)}
                   placeholder="e.g., Competitor A, Competitor B"
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-c-text-secondary mb-2">
                   Estimated Market Share (%)
                 </label>
                 <input
@@ -913,7 +913,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                     updateField('market_share_estimate', parseFloat(e.target.value) || null)
                   }
                   placeholder="e.g., 15"
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
                 />
               </div>
             </div>
@@ -921,17 +921,17 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
         </div>
 
         {/* Constraints */}
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 overflow-hidden">
           {renderSectionHeader('constraints', 'Constraints & Risk', <Shield size={20} />)}
           {expandedSections.constraints && (
-            <div className="p-6 space-y-4 border-t border-slate-200 dark:border-navy-700">
+            <div className="p-6 space-y-4 border-t border-c-border-subtle dark:border-navy-700">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-c-text-secondary mb-1">
                   {t('admin.strategicProfile.regulatoryEnvironment', {
                     defaultValue: 'Regulatory Environment',
                   })}
                 </label>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                <p className="text-xs text-c-text-muted mb-2">
                   {t('admin.strategicProfile.regulatoryEnvironmentHint', {
                     defaultValue:
                       'Select regulations and standards your organization is currently subject to or must comply with.',
@@ -944,8 +944,8 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                       onClick={() => updateArrayField('regulatory_environment', reg)}
                       className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
                         (profile.regulatory_environment || []).includes(reg)
-                          ? 'bg-primary-100 border-primary-300 text-primary-700 dark:bg-primary-900/30 dark:border-primary-500/30 dark:text-primary-300'
-                          : 'bg-slate-50 border-slate-200 text-slate-600 dark:bg-navy-950 dark:border-navy-700 dark:text-slate-400 hover:border-primary-300'
+                          ? 'bg-c-accent-soft border-c-accent text-c-accent dark:border-c-accent'
+                          : 'bg-c-surface-raised border-c-border-subtle text-c-text-secondary dark:border-navy-700 hover:border-c-accent'
                       }`}
                     >
                       {reg}
@@ -954,7 +954,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-c-text-secondary mb-2">
                   Risk Appetite
                 </label>
                 <div className="flex gap-3">
@@ -964,8 +964,8 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                       onClick={() => updateField('risk_appetite', risk.value)}
                       className={`flex-1 p-3 rounded-lg border text-center transition-colors ${
                         profile.risk_appetite === risk.value
-                          ? 'bg-primary-100 border-primary-300 text-primary-700 dark:bg-primary-900/30 dark:border-primary-500/30 dark:text-primary-300'
-                          : 'bg-slate-50 border-slate-200 text-slate-600 dark:bg-navy-950 dark:border-navy-700 dark:text-slate-400 hover:border-primary-300'
+                          ? 'bg-c-accent-soft border-c-accent text-c-accent dark:border-c-accent'
+                          : 'bg-c-surface-raised border-c-border-subtle text-c-text-secondary dark:border-navy-700 hover:border-c-accent'
                       }`}
                     >
                       <div className="font-medium">{risk.label}</div>
@@ -975,12 +975,12 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-c-text-secondary mb-1">
                   {t('admin.strategicProfile.budgetConstraints', {
                     defaultValue: 'Strategic Initiative Budget Constraints',
                   })}
                 </label>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                <p className="text-xs text-c-text-muted mb-2">
                   {t('admin.strategicProfile.budgetConstraintsHint', {
                     defaultValue:
                       'Describe budget limits for digital transformation, consulting, or strategic projects — not the overall company budget.',
@@ -994,16 +994,16 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                     defaultValue:
                       'e.g., Max 500k EUR/year for digital initiatives; IT modernization capped at 200k',
                   })}
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none resize-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none resize-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-c-text-secondary mb-1">
                   {t('admin.strategicProfile.timelineConstraints', {
                     defaultValue: 'Timeline Constraints',
                   })}
                 </label>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                <p className="text-xs text-c-text-muted mb-2">
                   {t('admin.strategicProfile.timelineConstraintsHint', {
                     defaultValue:
                       'Key deadlines or time pressures affecting strategic decisions — e.g., regulatory deadlines, board milestones, contract renewals.',
@@ -1017,7 +1017,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                     defaultValue:
                       'e.g., DORA compliance by Q1 2027; ERP migration must finish before license renewal in Oct 2026',
                   })}
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none resize-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none resize-none"
                 />
               </div>
             </div>
@@ -1026,11 +1026,11 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
       </div>
 
       {/* Save Button (Bottom) */}
-      <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-navy-700">
+      <div className="flex justify-end gap-3 pt-4 border-t border-c-border-subtle dark:border-navy-700">
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-6 py-3 bg-c-accent hover:bg-c-accent text-white rounded-lg font-medium transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
           Save Strategic Profile
