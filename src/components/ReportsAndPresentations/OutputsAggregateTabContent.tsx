@@ -932,10 +932,32 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
                         : outputType === 'sheet'
                           ? 'sheet'
                           : 'document';
+                    // HOTFIX task#63 (UI-M5): forward any origin hints on the lineage
+                    // pointer so a promoted-assessment output is not routed to an empty
+                    // report builder here either.
+                    const lineageGovernance: ArtifactGovernanceSummary | null =
+                      out.openPath || out.authority || out.originSummary || out.originRuntime
+                        ? {
+                            openPath: out.openPath || null,
+                            authority:
+                              out.authority ||
+                              (String(out.originRuntime || '') === 'assessment_report'
+                                ? 'assessment_workbench'
+                                : null),
+                            originSummary:
+                              out.originSummary && typeof out.originSummary === 'object'
+                                ? out.originSummary
+                                : null,
+                          }
+                        : null;
                     const openPath =
                       kind === 'sheet' || !originRecordId
                         ? null
-                        : resolveArtifactOpenPath({ kind, originRecordId, governance: null });
+                        : resolveArtifactOpenPath({
+                            kind,
+                            originRecordId,
+                            governance: lineageGovernance,
+                          });
 
                     return (
                       <div
