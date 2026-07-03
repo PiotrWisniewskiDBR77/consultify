@@ -51,7 +51,7 @@ export const ImpersonationBanner: React.FC = () => {
   if (!payload?.impersonatorId) return null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[9999] bg-amber-500 text-white px-4 py-2 flex items-center justify-between shadow-lg">
+    <div className="fixed top-0 left-0 right-0 z-toast bg-amber-500 text-white px-4 py-2 flex items-center justify-between shadow-lg">
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1.5">
           <Shield size={16} />

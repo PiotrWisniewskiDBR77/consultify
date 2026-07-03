@@ -60,7 +60,7 @@ const TRIGGER_CLASS =
 // Portaled to <body> with fixed positioning so it is NEVER clipped by an
 // ancestor's overflow (the table scroll container previously cut it off, #1).
 const PANEL_CLASS =
-  'fixed z-[60] w-64 rounded-xl border border-c-border bg-c-surface-raised ' +
+  'fixed z-context-menu w-64 rounded-xl border border-c-border bg-c-surface-raised ' +
   'p-1.5 shadow-[0_8px_30px_rgba(15,23,42,0.12)] focus:outline-none';
 
 const ROW_CLASS =

@@ -84,7 +84,7 @@ export const FloatingSubmenu: React.FC<FloatingSubmenuProps> = ({
         animate={isPositioned ? 'visible' : 'hidden'}
         exit="exit"
         className={`
-          fixed z-[9999] w-56 py-1.5
+          fixed z-context-menu w-56 py-1.5
           rounded-xl
           ${isDark ? 'bg-navy-900 border-white/[0.08]' : 'bg-white border-slate-200/60'}
           border

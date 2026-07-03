@@ -163,7 +163,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
       {/* Backdrop with spotlight */}
       {showBackdrop && targetRect && (
         <div
-          className="fixed inset-0 z-[9998] pointer-events-none"
+          className="fixed inset-0 z-overlay pointer-events-none"
           style={{
             background: `radial-gradient(
                             ellipse ${targetRect.width + spotlightPadding * 2}px ${targetRect.height + spotlightPadding * 2}px
@@ -178,7 +178,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
       {/* Tooltip */}
       <div
         ref={tooltipRef}
-        className="fixed z-[9999] w-80 bg-white dark:bg-navy-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden"
+        className="fixed z-modal w-80 bg-white dark:bg-navy-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden"
         style={{
           top: tooltipPosition?.top ?? -9999,
           left: tooltipPosition?.left ?? -9999,
