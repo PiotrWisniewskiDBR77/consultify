@@ -15799,5 +15799,16 @@
       "artifact": "Output",
       "assessment": "Assessment"
     }
+  },
+  "superAdmin": {
+    "signalCenter": {
+      "loading": "Loading signals…",
+      "empty": "No active signals in this category.",
+      "loadFailed": "Could not load signals.",
+      "dismissFailed": "Could not dismiss the signal. Please try again."
+    },
+    "integrations": {
+      "loadFailed": "Could not load integrations."
+    }
   }
 }
