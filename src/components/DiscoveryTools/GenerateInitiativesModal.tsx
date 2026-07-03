@@ -200,7 +200,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
           </button>
           <button
             onClick={handleGenerate}
-            className="px-4 py-2 rounded-lg text-sm text-white bg-primary-500 hover:bg-primary-600"
+            className="px-4 py-2 rounded-lg text-sm text-c-bg bg-c-text hover:bg-c-text-secondary"
           >
             {isPolish ? 'Generate drafts' : 'Generate drafts'}
           </button>

@@ -249,7 +249,7 @@ export const CapabilityCard: React.FC<CapabilityCardProps> = ({
             type="button"
             onClick={handleAddDriver}
             disabled={!newDriver.trim()}
-            className="rounded-lg bg-primary-500 px-3 py-2 text-white transition-colors hover:bg-primary-600 disabled:opacity-50"
+            className="rounded-lg bg-c-text px-3 py-2 text-c-bg transition-colors hover:bg-c-text-secondary disabled:opacity-50"
           >
             <Plus className="h-4 w-4" />
           </button>
