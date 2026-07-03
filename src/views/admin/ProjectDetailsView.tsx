@@ -112,7 +112,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
-        <p className="text-slate-400 dark:text-slate-500 animate-pulse">
+        <p className="text-c-text-muted animate-pulse">
           Synchronizing project intelligence...
         </p>
       </div>
@@ -126,7 +126,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
       <InfoButton cardId="project-details" position="top-right" />
 
       {/* Breadcrumbs & Navigation */}
-      <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-2">
+      <div className="flex items-center gap-2 text-xs text-c-text-muted mb-2">
         <button onClick={onBack} className="hover:text-white transition-colors">
           Workspace
         </button>
@@ -140,10 +140,10 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
 
       {/* Project Header - DBR77 Compatible */}
       <div className="flex flex-wrap justify-between items-start gap-4 bg-gradient-to-r from-primary-600 to-secondary-700 dark:bg-navy-900/40 dark:from-transparent dark:to-transparent backdrop-blur-md p-8 rounded-xl border border-primary-500/20 dark:border-navy-700 shadow-2xl relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 dark:bg-primary-600/5 blur-[100px] pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-c-surface/10 dark:bg-primary-600/5 blur-[100px] pointer-events-none"></div>
 
         <div className="flex gap-6 items-start z-10">
-          <div className="p-5 rounded-xl bg-white/20 dark:bg-gradient-to-br dark:from-primary-600 dark:to-indigo-600 text-white shadow-xl shadow-primary-900/20">
+          <div className="p-5 rounded-xl bg-c-surface/20 dark:bg-gradient-to-br dark:from-primary-600 dark:to-indigo-600 text-white shadow-xl shadow-primary-900/20">
             <Layers size={32} />
           </div>
           <div>
@@ -155,13 +155,13 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                     ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                     : project.status === 'completed'
                       ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                      : 'bg-slate-500/10 text-slate-400 dark:text-slate-500 border-slate-500/20'
+                      : 'bg-slate-500/10 text-c-text-muted border-slate-500/20'
                 }`}
               >
                 {project.status}
               </span>
             </div>
-            <div className="flex flex-wrap gap-4 text-sm text-slate-400 dark:text-slate-500">
+            <div className="flex flex-wrap gap-4 text-sm text-c-text-muted">
               <div className="flex items-center gap-1.5">
                 <Users size={16} className="text-blue-400" />
                 <span>{project.team?.length || 0} Members</span>
@@ -174,7 +174,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                 <Activity size={16} className="text-amber-400" />
                 <span>{project.assessments?.length || 0} Assessments</span>
               </div>
-              <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+              <div className="flex items-center gap-1.5 text-c-text-muted">
                 <Globe size={16} />
                 <span>
                   Created {new Date(project.created_at || project.createdAt).toLocaleDateString()}
@@ -189,8 +189,8 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
             onClick={() => setIsEditing(!isEditing)}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-semibold text-sm ${
               isEditing
-                ? 'bg-white text-navy-900 shadow-xl'
-                : 'bg-white/5 border border-white/10 text-white hover:bg-slate-100 dark:hover:bg-navy-800/40'
+                ? 'bg-c-surface text-navy-900 shadow-xl'
+                : 'bg-c-surface/5 border border-white/10 text-white hover:bg-c-surface-raised/40'
             }`}
           >
             {isEditing ? <X size={18} /> : <Edit size={18} />}
@@ -198,7 +198,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
           </button>
           <button
             onClick={onBack}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-navy-950 border border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-xl transition-all text-sm font-semibold"
+            className="flex items-center gap-2 px-4 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-white/5 text-c-text-secondary hover:text-c-text dark:hover:text-white rounded-xl transition-all text-sm font-semibold"
           >
             <ArrowLeft size={18} /> Back
           </button>
@@ -206,7 +206,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
       </div>
 
       {/* Tabs Navigation - DBR77 Compatible */}
-      <div className="flex gap-2 p-1 bg-white dark:bg-navy-900/50 backdrop-blur-sm border border-slate-200 dark:border-navy-700 rounded-xl w-fit shadow-sm dark:shadow-none">
+      <div className="flex gap-2 p-1 bg-c-surface/50 backdrop-blur-sm border border-c-border-subtle rounded-xl w-fit shadow-sm dark:shadow-none">
         {[
           { id: 'overview', label: 'Overview', icon: Layers },
           { id: 'team', label: 'Team & PMO', icon: Users },
@@ -220,7 +220,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
             className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${
               activeTab === tab.id
                 ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/30'
-                : 'text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
+                : 'text-c-text-muted hover:text-navy-900 dark:hover:text-slate-200 hover:bg-c-surface-raised dark:hover:bg-c-surface/5'
             }`}
           >
             <tab.icon size={16} />
@@ -242,7 +242,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                 >
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
+                      <label className="block text-xs font-bold text-c-text-muted uppercase tracking-widest mb-2">
                         Project Name
                       </label>
                       <input
@@ -252,7 +252,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
+                      <label className="block text-xs font-bold text-c-text-muted uppercase tracking-widest mb-2">
                         Description
                       </label>
                       <textarea
@@ -263,7 +263,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
+                      <label className="block text-xs font-bold text-c-text-muted uppercase tracking-widest mb-2">
                         Strategic Goal (CEL)
                       </label>
                       <input
@@ -273,7 +273,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
+                      <label className="block text-xs font-bold text-c-text-muted uppercase tracking-widest mb-2">
                         Status
                       </label>
                       <select
@@ -302,7 +302,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                     <button
                       type="button"
                       onClick={() => setIsEditing(false)}
-                      className="flex-1 py-4 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold transition-all"
+                      className="flex-1 py-4 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-c-text-secondary rounded-xl font-bold transition-all"
                     >
                       Discard
                     </button>
@@ -310,23 +310,23 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                 </form>
               ) : (
                 <div className="space-y-6">
-                  <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-8 space-y-6 relative overflow-hidden shadow-sm dark:shadow-none">
+                  <div className="bg-c-surface border border-c-border-subtle rounded-xl p-8 space-y-6 relative overflow-hidden shadow-sm dark:shadow-none">
                     <div className="flex items-center gap-3 text-primary-600 dark:text-primary-400 mb-2">
                       <Info size={18} />
                       <h3 className="text-sm font-bold uppercase tracking-widest">About Project</h3>
                     </div>
-                    <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-lg">
+                    <p className="text-c-text-secondary leading-relaxed text-lg">
                       {project.description ||
                         'No description provided for this project yet. Edit project details to add context for the team and AI.'}
                     </p>
 
-                    <div className="pt-6 border-t border-slate-200 dark:border-navy-700 flex flex-col gap-4">
+                    <div className="pt-6 border-t border-c-border-subtle flex flex-col gap-4">
                       <div className="flex items-center gap-4">
                         <div className="p-3 rounded-lg bg-success-500/10 text-success-600 dark:text-green-400">
                           <Target size={24} />
                         </div>
                         <div>
-                          <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                          <div className="text-[10px] font-bold text-c-text-muted uppercase tracking-widest">
                             Master Goal (CEL)
                           </div>
                           <div className="text-navy-900 dark:text-white font-semibold text-lg">
@@ -339,7 +339,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
 
                   {/* Quick Stats Grid - DBR77 Compatible */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-white dark:bg-navy-900/60 border border-slate-200 dark:border-navy-700 p-4 rounded-xl hover:border-primary-500/30 dark:hover:border-white/10 transition-all group shadow-sm dark:shadow-none">
+                    <div className="bg-c-surface/60 border border-c-border-subtle p-4 rounded-xl hover:border-primary-500/30 dark:hover:border-white/10 transition-all group shadow-sm dark:shadow-none">
                       <Briefcase
                         size={20}
                         className="text-primary-600 dark:text-blue-400 mb-2 group-hover:scale-110 transition-transform"
@@ -347,11 +347,11 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                       <div className="text-2xl font-bold text-navy-900 dark:text-white">
                         {project.workstreams?.length || 0}
                       </div>
-                      <div className="text-[10px] text-slate-500 dark:text-slate-500 font-bold uppercase">
+                      <div className="text-[10px] text-c-text-muted font-bold uppercase">
                         Workstreams
                       </div>
                     </div>
-                    <div className="bg-white dark:bg-navy-900/60 border border-slate-200 dark:border-navy-700 p-4 rounded-xl hover:border-success-500/30 dark:hover:border-white/10 transition-all group shadow-sm dark:shadow-none">
+                    <div className="bg-c-surface/60 border border-c-border-subtle p-4 rounded-xl hover:border-success-500/30 dark:hover:border-white/10 transition-all group shadow-sm dark:shadow-none">
                       <Target
                         size={20}
                         className="text-success-600 dark:text-green-400 mb-2 group-hover:scale-110 transition-transform"
@@ -359,11 +359,11 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                       <div className="text-2xl font-bold text-navy-900 dark:text-white">
                         {project.initiatives?.length || 0}
                       </div>
-                      <div className="text-[10px] text-slate-500 dark:text-slate-500 font-bold uppercase">
+                      <div className="text-[10px] text-c-text-muted font-bold uppercase">
                         Initiatives
                       </div>
                     </div>
-                    <div className="bg-white dark:bg-navy-900/60 border border-slate-200 dark:border-navy-700 p-4 rounded-xl hover:border-primary-500/30 dark:hover:border-white/10 transition-all group shadow-sm dark:shadow-none">
+                    <div className="bg-c-surface/60 border border-c-border-subtle p-4 rounded-xl hover:border-primary-500/30 dark:hover:border-white/10 transition-all group shadow-sm dark:shadow-none">
                       <PieChart
                         size={20}
                         className="text-primary-500 dark:text-amber-400 mb-2 group-hover:scale-110 transition-transform"
@@ -371,11 +371,11 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                       <div className="text-2xl font-bold text-navy-900 dark:text-white">
                         {project.assessments?.length || 0}
                       </div>
-                      <div className="text-[10px] text-slate-500 dark:text-slate-500 font-bold uppercase">
+                      <div className="text-[10px] text-c-text-muted font-bold uppercase">
                         Assessments
                       </div>
                     </div>
-                    <div className="bg-white dark:bg-navy-900/60 border border-slate-200 dark:border-navy-700 p-4 rounded-xl hover:border-secondary-500/30 dark:hover:border-white/10 transition-all group shadow-sm dark:shadow-none">
+                    <div className="bg-c-surface/60 border border-c-border-subtle p-4 rounded-xl hover:border-secondary-500/30 dark:hover:border-white/10 transition-all group shadow-sm dark:shadow-none">
                       <FileText
                         size={20}
                         className="text-secondary-600 dark:text-indigo-400 mb-2 group-hover:scale-110 transition-transform"
@@ -383,7 +383,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                       <div className="text-2xl font-bold text-navy-900 dark:text-white">
                         {project.documents?.length || 0}
                       </div>
-                      <div className="text-[10px] text-slate-500 dark:text-slate-500 font-bold uppercase">
+                      <div className="text-[10px] text-c-text-muted font-bold uppercase">
                         Documents
                       </div>
                     </div>
@@ -394,12 +394,12 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
 
             <div className="space-y-6">
               {/* Project Ownership Panel - DBR77 Compatible */}
-              <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 shadow-sm dark:shadow-none">
-                <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6 shadow-sm dark:shadow-none">
+                <h3 className="text-sm font-bold text-c-text-muted uppercase tracking-widest mb-4 flex items-center gap-2">
                   <ShieldCheck size={16} className="text-primary-600 dark:text-primary-400" />
                   Project Director
                 </h3>
-                <div className="flex items-center gap-4 bg-slate-50 dark:bg-navy-950 p-4 rounded-xl border border-slate-200 dark:border-navy-700">
+                <div className="flex items-center gap-4 bg-c-surface-raised p-4 rounded-xl border border-c-border-subtle">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-secondary-600 flex items-center justify-center text-white font-bold text-lg shadow-lg">
                     {project.owner_first_name?.[0] || 'U'}
                   </div>
@@ -407,7 +407,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                     <div className="text-navy-900 dark:text-white font-bold">
                       {project.owner_first_name} {project.owner_last_name}
                     </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                    <div className="text-xs text-c-text-muted">
                       Account Executive
                     </div>
                   </div>
@@ -415,27 +415,27 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
               </div>
 
               {/* Security & Access - DBR77 Compatible */}
-              <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 shadow-sm dark:shadow-none">
-                <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6 shadow-sm dark:shadow-none">
+                <h3 className="text-sm font-bold text-c-text-muted uppercase tracking-widest mb-4 flex items-center gap-2">
                   <Lock size={16} className="text-primary-500 dark:text-amber-400" />
                   Data Governance
                 </h3>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-slate-500 dark:text-slate-400">Visibility</span>
-                    <span className="text-slate-600 dark:text-slate-300 px-2 py-0.5 bg-slate-100 dark:bg-white/5 rounded">
+                    <span className="text-c-text-muted">Visibility</span>
+                    <span className="text-c-text-secondary px-2 py-0.5 bg-c-surface-raised dark:bg-c-surface/5 rounded">
                       Org Wide
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-slate-500 dark:text-slate-400">AI Processing</span>
+                    <span className="text-c-text-muted">AI Processing</span>
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-success-500/10 text-success-600 dark:text-emerald-400 border border-success-500/20">
                       <Check size={12} /> Active
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-slate-500 dark:text-slate-400">Data Residency</span>
-                    <span className="text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                    <span className="text-c-text-muted">Data Residency</span>
+                    <span className="text-c-text-secondary flex items-center gap-1">
                       <Globe size={12} /> EU (AWS)
                     </span>
                   </div>
@@ -467,7 +467,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {project.initiatives?.length === 0 ? (
-                <div className="col-span-full py-12 text-center bg-navy-900/50 border border-dashed border-white/10 rounded-xl text-slate-500 dark:text-slate-400">
+                <div className="col-span-full py-12 text-center bg-navy-900/50 border border-dashed border-white/10 rounded-xl text-c-text-muted">
                   No initiatives defined for this project.
                 </div>
               ) : (
@@ -480,19 +480,19 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                       <h4 className="font-bold text-white mb-1 group-hover:text-primary-400 transition-colors">
                         {item.title}
                       </h4>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                      <p className="text-xs text-c-text-muted mb-4">
                         {item.description}
                       </p>
                       <div className="flex items-center gap-3">
                         <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 text-[10px] font-bold rounded uppercase">
                           {item.status}
                         </span>
-                        <span className="text-[10px] text-slate-600 dark:text-slate-400">
+                        <span className="text-[10px] text-c-text-secondary">
                           ROI: {item.expected_roi || 'TBD'}
                         </span>
                       </div>
                     </div>
-                    <button className="p-2 text-slate-600 dark:text-slate-400 hover:text-white transition-colors">
+                    <button className="p-2 text-c-text-secondary hover:text-white transition-colors">
                       <Edit size={16} />
                     </button>
                   </div>
@@ -514,7 +514,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {project.assessments?.length === 0 ? (
-                <div className="col-span-full py-12 text-center bg-navy-900/50 border border-dashed border-white/10 rounded-xl text-slate-500 dark:text-slate-400">
+                <div className="col-span-full py-12 text-center bg-navy-900/50 border border-dashed border-white/10 rounded-xl text-c-text-muted">
                   No multi-framework assessments found.
                 </div>
               ) : (
@@ -541,7 +541,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                       {item.framework} Diagnostic
                     </h4>
                     <div className="flex justify-between items-center mt-6">
-                      <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-bold">
+                      <div className="text-[10px] text-c-text-muted uppercase tracking-widest font-bold">
                         Maturity Score
                       </div>
                       <div className="text-xl font-black text-white">
@@ -572,13 +572,13 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                     onChange={(e) => setUploadFile(e.target.files ? e.target.files[0] : null)}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   />
-                  <div className="bg-navy-950 border-2 border-dashed border-white/10 rounded-xl p-4 text-center transition-all hover:bg-slate-50 dark:hover:bg-navy-800/20 hover:border-blue-500 group">
+                  <div className="bg-navy-950 border-2 border-dashed border-white/10 rounded-xl p-4 text-center transition-all hover:bg-c-surface-raised/20 hover:border-blue-500 group">
                     {uploadFile ? (
                       <span className="text-blue-400 font-bold flex justify-center items-center gap-2">
                         <FileText size={18} /> {uploadFile.name}
                       </span>
                     ) : (
-                      <span className="text-slate-500 dark:text-slate-400 text-sm group-hover:text-slate-300 transition-colors italic">
+                      <span className="text-c-text-muted text-sm group-hover:text-slate-300 transition-colors italic">
                         Drag & drop files to ingest into project brain...
                       </span>
                     )}
@@ -602,7 +602,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
             {/* Documents List */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {project.documents?.length === 0 ? (
-                <div className="col-span-full py-12 text-center text-slate-500 dark:text-slate-400 bg-navy-900/30 border border-dashed border-white/10 rounded-xl">
+                <div className="col-span-full py-12 text-center text-c-text-muted bg-navy-900/30 border border-dashed border-white/10 rounded-xl">
                   No documents ingested for this project.
                 </div>
               ) : (
@@ -619,13 +619,13 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                         <div className="text-sm font-bold text-white truncate max-w-[150px]">
                           {item.filename}
                         </div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                        <div className="text-[10px] text-c-text-muted">
                           {new Date(item.created_at || item.createdAt).toLocaleDateString()}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button className="p-2 text-slate-600 dark:text-slate-400 hover:text-danger-400 transition-colors">
+                      <button className="p-2 text-c-text-secondary hover:text-danger-400 transition-colors">
                         <Trash2 size={16} />
                       </button>
                     </div>

@@ -130,7 +130,7 @@ export const CompanyProfileModule: React.FC = () => {
     <div className="space-y-2">
       <div className="flex items-center gap-2">
         {Icon && <Icon size={14} className="text-primary-500" />}
-        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+        <label className="text-xs font-bold text-c-text-muted uppercase tracking-wider">
           {label}
         </label>
       </div>
@@ -138,7 +138,7 @@ export const CompanyProfileModule: React.FC = () => {
         {options.map((opt) => (
           <label
             key={opt}
-            className="relative flex items-center p-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 cursor-pointer hover:border-primary-400 dark:hover:border-primary-500 hover:bg-primary-50/50 dark:hover:bg-primary-900/20 transition group"
+            className="relative flex items-center p-3 rounded-xl border border-c-border-subtle bg-c-surface cursor-pointer hover:border-primary-400 dark:hover:border-primary-500 hover:bg-primary-50/50 dark:hover:bg-primary-900/20 transition group"
           >
             <input
               type="radio"
@@ -147,10 +147,10 @@ export const CompanyProfileModule: React.FC = () => {
               checked={value === opt}
               onChange={() => onChange(opt)}
             />
-            <div className="w-4 h-4 rounded-full border border-slate-300 dark:border-slate-500 mr-3 peer-checked:border-primary-600 peer-checked:bg-navy-900 relative flex items-center justify-center transition-colors">
-              <div className="w-1.5 h-1.5 bg-white dark:bg-navy-900 rounded-full opacity-0 peer-checked:opacity-100" />
+            <div className="w-4 h-4 rounded-full border border-c-border mr-3 peer-checked:border-primary-600 peer-checked:bg-navy-900 relative flex items-center justify-center transition-colors">
+              <div className="w-1.5 h-1.5 bg-c-surface rounded-full opacity-0 peer-checked:opacity-100" />
             </div>
-            <span className="text-sm text-slate-700 dark:text-slate-200 font-medium group-hover:text-primary-700 dark:group-hover:text-primary-300 transition-colors">
+            <span className="text-sm text-c-text-secondary font-medium group-hover:text-primary-700 dark:group-hover:text-primary-300 transition-colors">
               {opt}
             </span>
             <div className="absolute inset-0 rounded-xl ring-2 ring-transparent peer-checked:ring-primary-500/50 pointer-events-none transition" />
@@ -172,14 +172,14 @@ export const CompanyProfileModule: React.FC = () => {
     onChange: (val: string) => void;
   }) => (
     <div>
-      <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5 ml-1">
+      <label className="block text-xs font-bold text-c-text-muted uppercase mb-1.5 ml-1">
         {label}
       </label>
       <div className="relative">
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full appearance-none px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-900 text-sm font-medium text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-shadow"
+          className="w-full appearance-none px-4 py-2.5 rounded-xl border border-c-border-subtle bg-c-surface text-sm font-medium text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-shadow"
         >
           <option value="" disabled>
             Select...
@@ -190,7 +190,7 @@ export const CompanyProfileModule: React.FC = () => {
             </option>
           ))}
         </select>
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-600 dark:text-slate-500">
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-c-text-secondary">
           <svg
             width="10"
             height="6"
@@ -214,7 +214,7 @@ export const CompanyProfileModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Sub-Module Tabs */}
-      <div className="flex border-b border-slate-200 dark:border-navy-700 space-x-6 overflow-x-auto no-scrollbar">
+      <div className="flex border-b border-c-border-subtle space-x-6 overflow-x-auto no-scrollbar">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -226,7 +226,7 @@ export const CompanyProfileModule: React.FC = () => {
                             ${
                               activeTab === tab.id
                                 ? 'border-primary-600 text-primary-600 dark:text-primary-400'
-                                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:border-slate-300 dark:border-navy-700 dark:hover:border-white/20'
+                                : 'border-transparent text-c-text-muted hover:text-navy-900 dark:hover:text-white hover:border-c-border dark:hover:border-white/20'
                             }
                         `}
           >
@@ -252,7 +252,7 @@ export const CompanyProfileModule: React.FC = () => {
                 High Confidence
               </span>
             </h4>
-            <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+            <p className="text-xs text-c-text-secondary mt-1 leading-relaxed">
               Based on analysis of <strong>Annual Report 2024.pdf</strong>, the Industry
               classification seems more specific.
               <br />
@@ -275,7 +275,7 @@ export const CompanyProfileModule: React.FC = () => {
             </button>
             <button
               onClick={() => setShowContextBanner(false)}
-              className="px-4 py-1.5 bg-white dark:bg-navy-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-navy-700 text-xs font-medium rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800/20 dark:hover:bg-white/5 transition-colors"
+              className="px-4 py-1.5 bg-c-surface text-c-text-muted border border-c-border-subtle text-xs font-medium rounded-lg hover:bg-c-surface-raised/20 dark:hover:bg-c-surface/5 transition-colors"
             >
               Dismiss
             </button>
@@ -300,7 +300,7 @@ export const CompanyProfileModule: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Column 1: Firm Context */}
               <div className="space-y-6">
-                <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-200 dark:border-navy-700">
+                <div className="flex items-center gap-2 mb-2 pb-2 border-b border-c-border-subtle">
                   <Briefcase size={18} className="text-primary-500" />
                   <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
                     Firm Context
@@ -348,7 +348,7 @@ export const CompanyProfileModule: React.FC = () => {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Globe size={14} className="text-primary-500" />
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <label className="text-xs font-bold text-c-text-muted uppercase tracking-wider">
                       Target Markets
                     </label>
                   </div>
@@ -362,7 +362,7 @@ export const CompanyProfileModule: React.FC = () => {
                           checked={companyProfile.targetMarkets.includes(m)}
                           onChange={() => setCompanyProfile({ targetMarkets: [m] })} // Doing simple radio for now
                         />
-                        <div className="text-center py-2.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-900 text-sm font-medium text-slate-600 dark:text-slate-300 peer-checked:bg-navy-900 peer-checked:text-white peer-checked:border-primary-600 transition shadow-sm hover:shadow">
+                        <div className="text-center py-2.5 px-3 rounded-lg border border-c-border-subtle bg-c-surface text-sm font-medium text-c-text-secondary peer-checked:bg-navy-900 peer-checked:text-white peer-checked:border-primary-600 transition shadow-sm hover:shadow">
                           {m}
                         </div>
                       </label>
@@ -373,7 +373,7 @@ export const CompanyProfileModule: React.FC = () => {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Award size={14} className="text-primary-500" />
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <label className="text-xs font-bold text-c-text-muted uppercase tracking-wider">
                       Certifications
                     </label>
                   </div>
@@ -391,12 +391,12 @@ export const CompanyProfileModule: React.FC = () => {
                             setCompanyProfile({ certifications: newCerts });
                           }}
                         />
-                        <div className="px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-900 text-xs font-medium text-slate-600 dark:text-slate-300 peer-checked:bg-primary-100 peer-checked:text-primary-700 peer-checked:border-primary-200 dark:peer-checked:bg-primary-900/30 dark:peer-checked:text-primary-300 dark:peer-checked:border-primary-500/50 transition select-none">
+                        <div className="px-3 py-1.5 rounded-full border border-c-border-subtle bg-c-surface text-xs font-medium text-c-text-secondary peer-checked:bg-primary-100 peer-checked:text-primary-700 peer-checked:border-primary-200 dark:peer-checked:bg-primary-900/30 dark:peer-checked:text-primary-300 dark:peer-checked:border-primary-500/50 transition select-none">
                           {cert}
                         </div>
                       </label>
                     ))}
-                    <button className="px-3 py-1.5 rounded-full border border-dashed border-slate-300 dark:border-navy-700 text-xs font-medium text-slate-600 dark:text-slate-500 hover:text-primary-600 hover:border-primary-300 transition-colors">
+                    <button className="px-3 py-1.5 rounded-full border border-dashed border-c-border text-xs font-medium text-c-text-secondary hover:text-primary-600 hover:border-primary-300 transition-colors">
                       + Add Custom
                     </button>
                   </div>
@@ -405,14 +405,14 @@ export const CompanyProfileModule: React.FC = () => {
 
               {/* Column 2: Scale & Reach */}
               <div className="space-y-6">
-                <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-200 dark:border-navy-700">
+                <div className="flex items-center gap-2 mb-2 pb-2 border-b border-c-border-subtle">
                   <MapPin size={18} className="text-primary-500" />
                   <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
                     Scale & Reach
                   </h3>
                 </div>
 
-                <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl p-4 border border-slate-200 dark:border-navy-700 space-y-5">
+                <div className="bg-c-surface-raised/50 rounded-xl p-4 border border-c-border-subtle space-y-5">
                   <SelectField
                     label="Employees (FTE)"
                     options={['1-50', '51-200', '201-500', '501-1000', '1000-5000', '5000+']}
@@ -428,7 +428,7 @@ export const CompanyProfileModule: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <label className="text-xs font-bold text-c-text-muted uppercase tracking-wider">
                     Operational Footprint
                   </label>
                   <div className="grid grid-cols-2 gap-3 mb-3">
@@ -441,9 +441,9 @@ export const CompanyProfileModule: React.FC = () => {
                           checked={companyProfile.operationalFootprint === opt}
                           onChange={() => setCompanyProfile({ operationalFootprint: opt })}
                         />
-                        <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-900 peer-checked:ring-2 peer-checked:ring-primary-500 peer-checked:border-primary-500 transition text-center">
+                        <div className="p-3 rounded-xl border border-c-border-subtle bg-c-surface peer-checked:ring-2 peer-checked:ring-primary-500 peer-checked:border-primary-500 transition text-center">
                           <div className="font-bold text-navy-900 dark:text-white mb-1">{opt}</div>
-                          <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                          <div className="text-[10px] text-c-text-muted">
                             {opt === 'Single Site' ? 'Centralized ops' : 'Distributed ops'}
                           </div>
                         </div>
@@ -453,7 +453,7 @@ export const CompanyProfileModule: React.FC = () => {
 
                   <div className="relative group">
                     <MapPin
-                      className="absolute top-3 left-3 text-slate-600 dark:text-slate-500 group-focus-within:text-primary-500 transition-colors z-10"
+                      className="absolute top-3 left-3 text-c-text-secondary group-focus-within:text-primary-500 transition-colors z-10"
                       size={16}
                     />
                     <AITextArea
@@ -464,7 +464,7 @@ export const CompanyProfileModule: React.FC = () => {
                       className="pl-10"
                       aiContext="location"
                     />
-                    <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-1.5 px-1">
+                    <p className="text-[10px] text-c-text-secondary mt-1.5 px-1">
                       Tip: Listing specific locations helps AI infer regional constraints.
                     </p>
                   </div>
@@ -487,7 +487,7 @@ export const CompanyProfileModule: React.FC = () => {
               ]}
             />
             {/* Production System Section */}
-            <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm">
+            <div className="bg-c-surface p-6 rounded-xl border border-c-border-subtle shadow-sm">
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 bg-primary-50 dark:bg-primary-900/30 rounded-lg text-primary-600">
                   <Factory size={20} />
@@ -496,7 +496,7 @@ export const CompanyProfileModule: React.FC = () => {
                   <h4 className="text-base font-bold text-navy-900 dark:text-white">
                     Production System Archetype
                   </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-c-text-muted">
                     Select the model that best describes your core operations.
                   </p>
                 </div>
@@ -517,14 +517,14 @@ export const CompanyProfileModule: React.FC = () => {
                       checked={companyProfile.productionSystem === model.id}
                       onChange={() => setCompanyProfile({ productionSystem: model.id })}
                     />
-                    <div className="h-full p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-navy-950/50 hover:bg-white dark:hover:bg-navy-800 hover:border-primary-300 transition flex flex-col items-center text-center peer-checked:bg-white dark:peer-checked:bg-navy-800 peer-checked:ring-2 peer-checked:ring-primary-500 peer-checked:border-transparent shadow-sm">
+                    <div className="h-full p-4 rounded-xl border border-c-border-subtle bg-c-bg/50 dark:bg-navy-950/50 hover:bg-c-surface dark:hover:bg-navy-800 hover:border-primary-300 transition flex flex-col items-center text-center peer-checked:bg-c-surface dark:peer-checked:bg-navy-800 peer-checked:ring-2 peer-checked:ring-primary-500 peer-checked:border-transparent shadow-sm">
                       <div className="text-2xl mb-2 grayscale group-hover:grayscale-0 peer-checked:grayscale-0 transition">
                         {model.icon}
                       </div>
                       <div className="font-bold text-sm text-navy-900 dark:text-white mb-1">
                         {model.label}
                       </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400">{model.sub}</div>
+                      <div className="text-xs text-c-text-muted">{model.sub}</div>
                     </div>
                     <div className="absolute top-3 right-3 opacity-0 peer-checked:opacity-100 transition-opacity text-primary-600">
                       <Check size={16} strokeWidth={3} />
@@ -533,12 +533,12 @@ export const CompanyProfileModule: React.FC = () => {
                 ))}
               </div>
 
-              <div className="mt-6 pt-6 border-t border-slate-200 dark:border-navy-700">
+              <div className="mt-6 pt-6 border-t border-c-border-subtle">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
-                      <Clock size={16} className="text-slate-600 dark:text-slate-500" />
-                      <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">
+                      <Clock size={16} className="text-c-text-secondary" />
+                      <label className="text-xs font-bold text-c-text-muted uppercase">
                         Shift Pattern
                       </label>
                     </div>
@@ -552,7 +552,7 @@ export const CompanyProfileModule: React.FC = () => {
                             checked={companyProfile.shiftPattern === shift}
                             onChange={() => setCompanyProfile({ shiftPattern: shift })}
                           />
-                          <div className="py-2 px-1 text-center text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-950 text-slate-600 dark:text-slate-300 peer-checked:bg-primary-100 dark:peer-checked:bg-primary-900/40 peer-checked:text-primary-700 dark:peer-checked:text-primary-300 peer-checked:border-primary-300 transition hover:bg-slate-50 dark:hover:bg-navy-800/20">
+                          <div className="py-2 px-1 text-center text-xs font-medium rounded-lg border border-c-border-subtle bg-c-surface text-c-text-secondary peer-checked:bg-primary-100 dark:peer-checked:bg-primary-900/40 peer-checked:text-primary-700 dark:peer-checked:text-primary-300 peer-checked:border-primary-300 transition hover:bg-c-surface-raised/20">
                             {shift}
                           </div>
                         </label>
@@ -561,8 +561,8 @@ export const CompanyProfileModule: React.FC = () => {
                   </div>
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
-                      <Sparkles size={16} className="text-slate-600 dark:text-slate-500" />
-                      <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">
+                      <Sparkles size={16} className="text-c-text-secondary" />
+                      <label className="text-xs font-bold text-c-text-muted uppercase">
                         Automation Level ({companyProfile.automationLevel}%)
                       </label>
                     </div>
@@ -576,7 +576,7 @@ export const CompanyProfileModule: React.FC = () => {
                         setCompanyProfile({ automationLevel: Number(e.target.value) })
                       }
                     />
-                    <div className="flex justify-between text-[10px] text-slate-600 dark:text-slate-500 font-medium uppercase px-1">
+                    <div className="flex justify-between text-[10px] text-c-text-secondary font-medium uppercase px-1">
                       <span>Manual</span>
                       <span>Semi-Auto</span>
                       <span>Highly Auto</span>
@@ -625,7 +625,7 @@ export const CompanyProfileModule: React.FC = () => {
             />
             {/* Org Structure & Decision Making */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-navy-700 h-full">
+              <div className="bg-c-surface p-6 rounded-xl border border-c-border-subtle h-full">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="p-1.5 bg-primary-50 dark:bg-primary-900/30 rounded text-primary-600">
                     <Users size={16} />
@@ -680,14 +680,14 @@ export const CompanyProfileModule: React.FC = () => {
                           checked={companyProfile.decisionMaking === opt.id}
                           onChange={() => setCompanyProfile({ decisionMaking: opt.id })}
                         />
-                        <div className="p-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900/50 hover:bg-slate-50 dark:hover:bg-navy-800/20 dark:hover:bg-white/5 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 peer-checked:border-primary-500 peer-checked:ring-1 peer-checked:ring-primary-500/50 transition flex flex-col h-full">
-                          <div className="flex items-center gap-2 mb-1.5 text-slate-500 dark:text-slate-400 peer-checked:text-primary-600 transition-colors">
+                        <div className="p-3 rounded-xl border border-c-border-subtle bg-c-surface/50 hover:bg-c-surface-raised/20 dark:hover:bg-c-surface/5 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 peer-checked:border-primary-500 peer-checked:ring-1 peer-checked:ring-primary-500/50 transition flex flex-col h-full">
+                          <div className="flex items-center gap-2 mb-1.5 text-c-text-muted peer-checked:text-primary-600 transition-colors">
                             {opt.icon}
                           </div>
                           <div className="font-bold text-sm text-navy-900 dark:text-white leading-tight mb-1">
                             {opt.label}
                           </div>
-                          <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+                          <div className="text-[10px] text-c-text-muted leading-tight">
                             {opt.sub}
                           </div>
                         </div>
@@ -701,7 +701,7 @@ export const CompanyProfileModule: React.FC = () => {
               </div>
 
               {/* New: Workforce Dynamics Section */}
-              <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-navy-700 h-full">
+              <div className="bg-c-surface p-6 rounded-xl border border-c-border-subtle h-full">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="p-1.5 bg-blue-50 dark:bg-blue-900/30 rounded text-blue-600">
                     <Users size={16} />
@@ -861,7 +861,7 @@ export const CompanyProfileModule: React.FC = () => {
                   <AlertTriangle size={20} className="text-amber-500" />
                   Hard Constraints
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-xs text-c-text-muted mt-1">
                   Select factors that might limit the transformation pace or scope.
                 </p>
               </div>
@@ -955,9 +955,9 @@ export const CompanyProfileModule: React.FC = () => {
                     }}
                   />
 
-                  <div className="h-full p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-primary-300 dark:hover:border-primary-500/50 transition peer-checked:border-primary-500 peer-checked:ring-1 peer-checked:ring-primary-500/50 peer-checked:bg-primary-50/30 dark:peer-checked:bg-primary-900/10 shadow-sm">
+                  <div className="h-full p-4 rounded-xl border border-c-border-subtle bg-c-surface hover:border-primary-300 dark:hover:border-primary-500/50 transition peer-checked:border-primary-500 peer-checked:ring-1 peer-checked:ring-primary-500/50 peer-checked:bg-primary-50/30 dark:peer-checked:bg-primary-900/10 shadow-sm">
                     <div className="flex items-start gap-4">
-                      <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 peer-checked:bg-primary-100 peer-checked:text-primary-600 dark:peer-checked:bg-primary-500/20 dark:peer-checked:text-primary-300 transition-colors">
+                      <div className="p-2.5 rounded-xl bg-c-surface-raised dark:bg-c-surface/5 text-c-text-muted peer-checked:bg-primary-100 peer-checked:text-primary-600 dark:peer-checked:bg-primary-500/20 dark:peer-checked:text-primary-300 transition-colors">
                         {constraint.icon}
                       </div>
                       <div className="flex-1">
@@ -965,7 +965,7 @@ export const CompanyProfileModule: React.FC = () => {
                           <h4 className="font-bold text-navy-900 dark:text-white leading-tight">
                             {constraint.label}
                           </h4>
-                          <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-500 flex items-center justify-center peer-checked:border-primary-600 peer-checked:bg-navy-900 transition">
+                          <div className="w-5 h-5 rounded-full border-2 border-c-border flex items-center justify-center peer-checked:border-primary-600 peer-checked:bg-navy-900 transition">
                             <Check
                               size={12}
                               className="text-white opacity-0 peer-checked:opacity-100"
@@ -973,7 +973,7 @@ export const CompanyProfileModule: React.FC = () => {
                             />
                           </div>
                         </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        <p className="text-xs text-c-text-muted mt-1">
                           {constraint.hint}
                         </p>
                       </div>
@@ -981,7 +981,7 @@ export const CompanyProfileModule: React.FC = () => {
 
                     {/* Expandable Description Area */}
                     <div
-                      className={`grid transition duration-300 ease-in-out ${companyProfile.activeConstraints.includes(constraint.id) ? 'grid-rows-[1fr] pt-4 mt-2 border-t border-slate-200 dark:border-navy-700' : 'grid-rows-[0fr]'}`}
+                      className={`grid transition duration-300 ease-in-out ${companyProfile.activeConstraints.includes(constraint.id) ? 'grid-rows-[1fr] pt-4 mt-2 border-t border-c-border-subtle' : 'grid-rows-[0fr]'}`}
                     >
                       <div className="overflow-hidden">
                         <AITextArea

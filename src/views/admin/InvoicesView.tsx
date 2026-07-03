@@ -137,7 +137,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
       paid: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
       pending: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
       overdue: 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-400',
-      void: 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400',
+      void: 'bg-c-surface-raised text-c-text-muted',
     };
 
     const icons = {
@@ -214,18 +214,18 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <h2 className="text-xl font-semibold text-c-text flex items-center gap-2">
             <FileText size={24} />
             {t('admin.billing.invoices', 'Invoices & Billing History')}
           </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-muted mt-1">
             {t('admin.billing.invoicesDesc', 'View and download your billing history')}
           </p>
         </div>
         {!loadError && (
           <div className="text-right">
-            <p className="text-sm text-slate-500 dark:text-slate-400">Total Paid (All Time)</p>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">
+            <p className="text-sm text-c-text-muted">Total Paid (All Time)</p>
+            <p className="text-2xl font-bold text-c-text">
               {formatCurrency(totalPaid, 'USD')}
             </p>
           </div>
@@ -238,7 +238,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
       <div className="flex flex-wrap gap-4">
         <div className="relative flex-1 min-w-[200px]">
           <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-muted"
             size={18}
           />
           <input
@@ -247,14 +247,14 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search invoices..."
             disabled={!!loadError}
-            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
+            className="w-full pl-10 pr-4 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           disabled={!!loadError}
-          className="px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
+          className="px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text"
         >
           <option value="all">All Status</option>
           <option value="paid">Paid</option>
@@ -265,7 +265,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
           value={dateRange}
           onChange={(e) => setDateRange(e.target.value)}
           disabled={!!loadError}
-          className="px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
+          className="px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text"
         >
           <option value="all">All Time</option>
           <option value="month">This Month</option>
@@ -275,11 +275,11 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
 
       {/* Invoices List */}
       {loadError ? (
-        <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+        <div className="p-6 bg-c-surface rounded-xl border border-c-border-subtle">
           <DegradedState title="Billing history unavailable" description={loadError} />
         </div>
       ) : filteredInvoices.length === 0 ? (
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle">
           {searchTerm || statusFilter !== 'all' || dateRange !== 'all' ? (
             <SharedEmptyState
               variant="filter"
@@ -311,50 +311,50 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
           )}
         </div>
       ) : (
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
           <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full">
-            <thead className="bg-slate-50 dark:bg-navy-900">
+            <thead className="bg-c-surface-raised">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-c-text-muted uppercase">
                   Invoice
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-c-text-muted uppercase">
                   Date
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-c-text-muted uppercase">
                   Status
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                <th className="px-6 py-3 text-right text-xs font-medium text-c-text-muted uppercase">
                   Amount
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                <th className="px-6 py-3 text-right text-xs font-medium text-c-text-muted uppercase">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-navy-700">
               {filteredInvoices.map((invoice) => (
-                <tr key={invoice.id} className="hover:bg-slate-50 dark:hover:bg-navy-700/50">
+                <tr key={invoice.id} className="hover:bg-c-surface-raised/50">
                   <td className="px-6 py-4">
-                    <div className="font-medium text-slate-900 dark:text-white">
+                    <div className="font-medium text-c-text">
                       {invoice.number}
                     </div>
-                    <div className="text-sm text-slate-500 dark:text-slate-400">
+                    <div className="text-sm text-c-text-muted">
                       {invoice.description}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
+                  <td className="px-6 py-4 text-sm text-c-text-secondary">
                     {formatDate(invoice.date)}
                   </td>
                   <td className="px-6 py-4">{getStatusBadge(invoice.status)}</td>
-                  <td className="px-6 py-4 text-right font-medium text-slate-900 dark:text-white">
+                  <td className="px-6 py-4 text-right font-medium text-c-text">
                     {formatCurrency(invoice.amount, invoice.currency)}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => setSelectedInvoice(invoice)}
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-navy-600 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-300"
+                        className="p-2 hover:bg-c-surface-raised rounded-lg text-c-text-muted hover:text-c-text-secondary"
                         title="View details"
                       >
                         <Eye size={16} />
@@ -362,7 +362,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
                       <button
                         onClick={() => handleDownload(invoice)}
                         disabled={downloading === invoice.id}
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-navy-600 rounded-lg text-slate-500 dark:text-slate-400 hover:text-primary-600"
+                        className="p-2 hover:bg-c-surface-raised rounded-lg text-c-text-muted hover:text-primary-600"
                         title="Download PDF"
                       >
                         {downloading === invoice.id ? (
@@ -393,14 +393,14 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white dark:bg-navy-800 rounded-xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden"
+              className="bg-c-surface rounded-xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden"
             >
-              <div className="p-6 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
+              <div className="p-6 border-b border-c-border-subtle flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                  <h3 className="text-lg font-semibold text-c-text">
                     {selectedInvoice.number}
                   </h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-c-text-muted">
                     {formatDate(selectedInvoice.date)}
                   </p>
                 </div>
@@ -409,25 +409,25 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
               <div className="p-6 space-y-4">
                 {/* Line Items */}
                 <div>
-                  <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+                  <h4 className="text-sm font-medium text-c-text-secondary mb-3">
                     Items
                   </h4>
                   <div className="space-y-2">
                     {selectedInvoice.items.map((item, idx) => (
                       <div
                         key={idx}
-                        className="flex justify-between py-2 border-b border-slate-100 dark:border-navy-700"
+                        className="flex justify-between py-2 border-b border-c-border-subtle"
                       >
                         <div>
-                          <p className="text-sm text-slate-900 dark:text-white">
+                          <p className="text-sm text-c-text">
                             {item.description}
                           </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                          <p className="text-xs text-c-text-muted">
                             Qty: {item.quantity} ×{' '}
                             {formatCurrency(item.unitPrice, selectedInvoice.currency)}
                           </p>
                         </div>
-                        <p className="font-medium text-slate-900 dark:text-white">
+                        <p className="font-medium text-c-text">
                           {formatCurrency(item.amount, selectedInvoice.currency)}
                         </p>
                       </div>
@@ -436,17 +436,17 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
                 </div>
 
                 {/* Total */}
-                <div className="pt-4 border-t border-slate-200 dark:border-navy-700 flex justify-between">
-                  <span className="font-semibold text-slate-900 dark:text-white">Total</span>
-                  <span className="text-xl font-bold text-slate-900 dark:text-white">
+                <div className="pt-4 border-t border-c-border-subtle flex justify-between">
+                  <span className="font-semibold text-c-text">Total</span>
+                  <span className="text-xl font-bold text-c-text">
                     {formatCurrency(selectedInvoice.amount, selectedInvoice.currency)}
                   </span>
                 </div>
               </div>
-              <div className="p-6 border-t border-slate-200 dark:border-navy-700 flex justify-between">
+              <div className="p-6 border-t border-c-border-subtle flex justify-between">
                 <button
                   onClick={() => setSelectedInvoice(null)}
-                  className="px-4 py-2 text-slate-600 dark:text-slate-400"
+                  className="px-4 py-2 text-c-text-secondary"
                 >
                   Close
                 </button>

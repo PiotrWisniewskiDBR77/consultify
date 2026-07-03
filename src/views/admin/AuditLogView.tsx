@@ -357,17 +357,17 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
       case 'DELETE':
         return <Trash2 size={14} className="text-danger-500" />;
       case 'VIEW':
-        return <Eye size={14} className="text-slate-500 dark:text-slate-400" />;
+        return <Eye size={14} className="text-c-text-muted" />;
       case 'LOGIN':
         return <LogIn size={14} className="text-primary-500" />;
       case 'LOGOUT':
-        return <LogOut size={14} className="text-slate-500 dark:text-slate-400" />;
+        return <LogOut size={14} className="text-c-text-muted" />;
       case 'SECURITY':
         return <Shield size={14} className="text-amber-500" />;
       case 'EXPORT':
         return <Download size={14} className="text-blue-500" />;
       default:
-        return <FileText size={14} className="text-slate-500 dark:text-slate-400" />;
+        return <FileText size={14} className="text-c-text-muted" />;
     }
   };
 
@@ -387,7 +387,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
       case 'EXPORT':
         return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400';
       default:
-        return 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300';
+        return 'bg-c-surface-raised text-c-text-secondary';
     }
   };
 
@@ -459,11 +459,11 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <h2 className="text-xl font-semibold text-c-text flex items-center gap-2">
             <History size={24} />
             {t('admin.security.auditLog', 'Audit Log')}
           </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-muted mt-1">
             {t('admin.security.auditLogDesc', 'Track all activity in your organization')}
           </p>
         </div>
@@ -479,14 +479,14 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
 
       {loadError && <DegradedState title="Audit logs unavailable" description={loadError} />}
 
-      <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
+      <div className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div>
-            <h3 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-base font-semibold text-c-text flex items-center gap-2">
               <Shield size={18} />
               Organization Context Audit
             </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-sm text-c-text-muted mt-1">
               Trace AI document lineage and storage events for organization context.
             </p>
           </div>
@@ -508,7 +508,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
               type="button"
               onClick={loadContextAudit}
               disabled={contextAuditLoading}
-              className="flex items-center gap-2 px-3 py-2 text-sm border border-slate-200 dark:border-navy-600 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 disabled:opacity-50"
+              className="flex items-center gap-2 px-3 py-2 text-sm border border-c-border-subtle rounded-lg hover:bg-c-surface-raised disabled:opacity-50"
             >
               <RefreshCw size={14} className={contextAuditLoading ? 'animate-spin' : ''} />
               Refresh
@@ -522,21 +522,21 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
             description={contextAuditError}
           />
         ) : contextAuditLoading ? (
-          <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-2 text-sm text-c-text-muted">
             <RefreshCw size={16} className="animate-spin" />
             Loading context audit...
           </div>
         ) : (
           <div className="grid gap-4 xl:grid-cols-3">
-            <div className="rounded-lg border border-slate-200 dark:border-navy-700 overflow-hidden">
-              <div className="px-3 py-2 bg-slate-50 dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
-                <p className="text-sm font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
+            <div className="rounded-lg border border-c-border-subtle overflow-hidden">
+              <div className="px-3 py-2 bg-c-surface-raised border-b border-c-border-subtle">
+                <p className="text-sm font-medium text-c-text-secondary flex items-center gap-2">
                   <FileText size={14} />
                   AI Lineage Events
                 </p>
               </div>
               {contextLineage.length === 0 ? (
-                <p className="p-3 text-sm text-slate-500 dark:text-slate-400">
+                <p className="p-3 text-sm text-c-text-muted">
                   No context lineage events found.
                 </p>
               ) : (
@@ -544,17 +544,17 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
                   {contextLineage.map((event) => (
                     <div key={event.id} className="p-3 text-sm">
                       <div className="flex items-center justify-between gap-3">
-                        <span className="font-medium text-slate-900 dark:text-white">
+                        <span className="font-medium text-c-text">
                           {event.eventType.replaceAll('_', ' ')}
                         </span>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                        <span className="text-xs text-c-text-muted">
                           {formatTimestamp(event.createdAt)}
                         </span>
                       </div>
-                      <p className="mt-1 text-slate-600 dark:text-slate-300">
+                      <p className="mt-1 text-c-text-secondary">
                         Insight: <span className="font-mono">{event.targetId}</span>
                       </p>
-                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      <p className="mt-1 text-xs text-c-text-muted">
                         Documents: {(event.selectedDocumentIds || []).length} · Chunks:{' '}
                         {(event.usedChunks || []).length}
                         {event.degraded ? ' · Degraded' : ''}
@@ -565,15 +565,15 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
               )}
             </div>
 
-            <div className="rounded-lg border border-slate-200 dark:border-navy-700 overflow-hidden">
-              <div className="px-3 py-2 bg-slate-50 dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
-                <p className="text-sm font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
+            <div className="rounded-lg border border-c-border-subtle overflow-hidden">
+              <div className="px-3 py-2 bg-c-surface-raised border-b border-c-border-subtle">
+                <p className="text-sm font-medium text-c-text-secondary flex items-center gap-2">
                   <HardDrive size={14} />
                   Storage Events
                 </p>
               </div>
               {contextStorageEvents.length === 0 ? (
-                <p className="p-3 text-sm text-slate-500 dark:text-slate-400">
+                <p className="p-3 text-sm text-c-text-muted">
                   No context storage events found.
                 </p>
               ) : (
@@ -581,17 +581,17 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
                   {contextStorageEvents.map((event) => (
                     <div key={event.id} className="p-3 text-sm">
                       <div className="flex items-center justify-between gap-3">
-                        <span className="font-medium text-slate-900 dark:text-white">
+                        <span className="font-medium text-c-text">
                           {event.eventType.replaceAll('_', ' ')}
                         </span>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                        <span className="text-xs text-c-text-muted">
                           {formatTimestamp(event.createdAt)}
                         </span>
                       </div>
-                      <p className="mt-1 text-slate-600 dark:text-slate-300">
+                      <p className="mt-1 text-c-text-secondary">
                         Document: <span className="font-mono">{event.documentId}</span>
                       </p>
-                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      <p className="mt-1 text-xs text-c-text-muted">
                         {formatBytes(event.bytesDelta)} · {event.sourceUpload || 'unknown source'}
                       </p>
                     </div>
@@ -614,7 +614,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
       <div className="flex flex-wrap gap-4">
         <div className="relative flex-1 min-w-[200px]">
           <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-muted"
             size={18}
           />
           <input
@@ -623,14 +623,14 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search logs..."
             disabled={!!loadError}
-            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg"
+            className="w-full pl-10 pr-4 py-2 bg-c-surface border border-c-border-subtle rounded-lg"
           />
         </div>
         <select
           value={actionFilter}
           onChange={(e) => setActionFilter(e.target.value)}
           disabled={!!loadError}
-          className="px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg"
+          className="px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg"
         >
           <option value="all">All Actions</option>
           <option value="CREATE">Create</option>
@@ -644,7 +644,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
           value={resourceFilter}
           onChange={(e) => setResourceFilter(e.target.value)}
           disabled={!!loadError}
-          className="px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg"
+          className="px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg"
         >
           <option value="all">All Resources</option>
           <option value="User">Users</option>
@@ -658,7 +658,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
           value={dateRange}
           onChange={(e) => setDateRange(e.target.value)}
           disabled={!!loadError}
-          className="px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg"
+          className="px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg"
         >
           <option value="1d">Last 24 hours</option>
           <option value="7d">Last 7 days</option>
@@ -669,11 +669,11 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
 
       {/* Logs List */}
       {loadError ? (
-        <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+        <div className="p-6 bg-c-surface rounded-xl border border-c-border-subtle">
           <DegradedState title="Audit activity unavailable" description={loadError} />
         </div>
       ) : filteredLogs.length === 0 ? (
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle">
           <SharedEmptyState
             variant="filter"
             icon={History}
@@ -693,21 +693,21 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
           />
         </div>
       ) : (
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
           <div className="divide-y divide-slate-200 dark:divide-navy-700">
             {filteredLogs.map((log) => (
               <div key={log.id}>
                 <div
-                  className="p-4 hover:bg-slate-50 dark:hover:bg-navy-700/50 cursor-pointer"
+                  className="p-4 hover:bg-c-surface-raised/50 cursor-pointer"
                   onClick={() => setExpandedLog(expandedLog === log.id ? null : log.id)}
                 >
                   <div className="flex items-start gap-4">
-                    <div className="p-2 rounded-lg bg-slate-100 dark:bg-navy-700">
+                    <div className="p-2 rounded-lg bg-c-surface-raised">
                       {getActionIcon(log.actionType)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-slate-900 dark:text-white">
+                        <span className="font-medium text-c-text">
                           {log.userName}
                         </span>
                         <span
@@ -716,13 +716,13 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
                           {log.actionType}
                         </span>
                       </div>
-                      <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
+                      <p className="text-sm text-c-text-secondary mt-0.5">
                         {log.action}
                         {log.resourceName && (
                           <span className="font-medium"> • {log.resourceName}</span>
                         )}
                       </p>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      <div className="flex items-center gap-3 mt-1 text-xs text-c-text-muted">
                         <span className="flex items-center gap-1">
                           <Clock size={12} />
                           {formatTimestamp(log.timestamp)}
@@ -730,7 +730,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
                         <span>{log.ipAddress}</span>
                       </div>
                     </div>
-                    <div className="text-slate-400 dark:text-slate-500">
+                    <div className="text-c-text-muted">
                       {expandedLog === log.id ? (
                         <ChevronDown size={18} />
                       ) : (
@@ -743,15 +743,15 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
                 {/* Expanded Details */}
                 {expandedLog === log.id && log.details && (
                   <div className="px-4 pb-4 ml-14">
-                    <div className="p-3 bg-slate-50 dark:bg-navy-900 rounded-lg text-sm">
-                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
+                    <div className="p-3 bg-c-surface-raised rounded-lg text-sm">
+                      <p className="text-xs font-medium text-c-text-muted mb-2">
                         Details
                       </p>
-                      <pre className="text-slate-700 dark:text-slate-300 overflow-x-auto">
+                      <pre className="text-c-text-secondary overflow-x-auto">
                         {JSON.stringify(log.details, null, 2)}
                       </pre>
                       {log.userAgent && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                        <p className="text-xs text-c-text-muted mt-2">
                           User Agent: {log.userAgent}
                         </p>
                       )}

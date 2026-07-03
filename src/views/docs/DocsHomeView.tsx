@@ -54,21 +54,21 @@ import { ROUTES } from '@/routes/routeConfig';
 // Icon mapping for categories
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   'getting-started': <PlayCircle size={24} className="text-green-500" />,
-  'quick-guides': <Rocket size={24} className="text-c-accent" />,
+  'quick-guides': <Rocket size={24} className="text-primary-500" />,
   methodologies: <BookOpen size={24} className="text-blue-500" />,
   'best-practices': <Sparkles size={24} className="text-amber-500" />,
   'case-studies': <FolderOpen size={24} className="text-green-500" />,
-  'tools-features': <Wrench size={24} className="text-slate-500" />,
+  'tools-features': <Wrench size={24} className="text-c-text-muted" />,
   'assessment-frameworks': <ClipboardCheck size={24} className="text-indigo-500" />,
   'industrial-modules': <Factory size={24} className="text-blue-500" />,
   'ai-platform': <Brain size={24} className="text-pink-500" />,
   'analytics-reporting': <BarChart3 size={24} className="text-emerald-500" />,
   transformation: <TrendingUp size={24} className="text-amber-500" />,
-  administration: <Settings size={24} className="text-gray-500" />,
-  'api-reference': <Code size={24} className="text-c-accent" />,
+  administration: <Settings size={24} className="text-c-text-muted" />,
+  'api-reference': <Code size={24} className="text-primary-500" />,
   integrations: <Link2 size={24} className="text-blue-400" />,
   troubleshooting: <LifeBuoy size={24} className="text-danger-500" />,
-  default: <Book size={24} className="text-c-accent" />,
+  default: <Book size={24} className="text-primary-500" />,
 };
 
 const DynamicIcon: React.FC<{ name: string; className?: string }> = ({ name, className }) => {
@@ -98,7 +98,7 @@ export const DocsHomeView: React.FC = () => {
   return (
     <div className="min-h-full">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-slate-50 to-white dark:from-navy-900 dark:to-navy-950 border-b border-c-border">
+      <section className="relative overflow-hidden bg-gradient-to-b from-slate-50 to-white dark:from-navy-900 dark:to-navy-950 border-b border-c-border-subtle">
         {/* Decorative elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-500/10 rounded-full blur-3xl" />
@@ -129,14 +129,14 @@ export const DocsHomeView: React.FC = () => {
               <div className="relative">
                 <Search
                   size={20}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-c-text-muted"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-c-text-secondary"
                 />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t('docs.home.searchPlaceholder', 'Search documentation...')}
-                  className="w-full pl-12 pr-4 py-4 rounded-xl bg-c-surface border border-c-border text-lg shadow-lg focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-transparent transition-all"
+                  className="w-full pl-12 pr-4 py-4 rounded-xl bg-c-surface border border-c-border-subtle text-lg shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                 />
                 <button
                   type="submit"
@@ -151,21 +151,21 @@ export const DocsHomeView: React.FC = () => {
             <div className="flex flex-wrap justify-center gap-4 mt-8">
               <Link
                 to="/docs/quick-guides/getting-started-consultify"
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-c-accent-soft text-c-accent font-medium text-sm hover:bg-c-accent/15 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-medium text-sm hover:bg-primary-200 dark:hover:bg-primary-900/50 transition-colors"
               >
                 <Rocket size={16} />
                 {t('docs.home.gettingStarted', 'Getting Started')}
               </Link>
               <Link
                 to="/docs/api"
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-c-surface border border-c-border text-c-text-secondary font-medium text-sm hover:bg-c-surface-raised transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-c-surface border border-c-border-subtle text-c-text-secondary font-medium text-sm hover:bg-c-surface-raised transition-colors"
               >
                 <Code size={16} />
                 {t('docs.home.apiReference', 'API Reference')}
               </Link>
               <Link
                 to="/docs/security"
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-c-surface border border-c-border text-c-text-secondary font-medium text-sm hover:bg-c-surface-raised transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-c-surface border border-c-border-subtle text-c-text-secondary font-medium text-sm hover:bg-c-surface-raised transition-colors"
               >
                 <Shield size={16} />
                 {t('docs.home.security', 'Security')}
@@ -176,10 +176,10 @@ export const DocsHomeView: React.FC = () => {
       </section>
 
       <section className="max-w-6xl mx-auto px-4 py-12">
-        <div className="rounded-2xl border border-c-border bg-c-surface p-6 lg:p-8">
+        <div className="rounded-2xl border border-c-border-subtle bg-c-surface/50 p-6 lg:p-8">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-c-accent-soft px-3 py-1 text-xs font-semibold text-c-accent">
+              <div className="inline-flex items-center gap-2 rounded-full bg-primary-100 dark:bg-primary-900/30 px-3 py-1 text-xs font-semibold text-primary-700 dark:text-primary-300">
                 <Sparkles size={14} />
                 {t('docs.home.helpRuntime.badge', 'Help runtime')}
               </div>
@@ -240,18 +240,18 @@ export const DocsHomeView: React.FC = () => {
               <Link
                 key={item.title}
                 to={item.to}
-                className="group rounded-xl border border-c-border bg-c-surface-raised p-4 hover:border-c-accent hover:shadow-md transition-all"
+                className="group rounded-xl border border-c-border-subtle bg-c-bg/80 dark:bg-navy-950/40 p-4 hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-md transition-all"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-c-surface border border-c-border">
-                  <item.icon size={18} className="text-c-accent" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-c-surface border border-c-border-subtle">
+                  <item.icon size={18} className="text-primary-600 dark:text-primary-400" />
                 </div>
-                <h3 className="mt-4 font-semibold group-hover:text-c-accent transition-colors">
+                <h3 className="mt-4 font-semibold group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                   {item.title}
                 </h3>
                 <p className="mt-2 text-sm text-c-text-secondary">
                   {item.description}
                 </p>
-                <div className="mt-4 flex items-center text-sm font-medium text-c-accent">
+                <div className="mt-4 flex items-center text-sm font-medium text-primary-600 dark:text-primary-400">
                   {t('docs.home.helpRuntime.cards.cta', 'Open')}
                   <ArrowRight
                     size={14}
@@ -277,10 +277,10 @@ export const DocsHomeView: React.FC = () => {
               {overviewCards.journey.map((card) => (
                 <div
                   key={card.id}
-                  className="flex items-start gap-3 rounded-xl border border-c-border bg-c-surface p-4"
+                  className="flex items-start gap-3 rounded-xl border border-c-border-subtle bg-c-surface/40 p-4"
                 >
                   <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-lg bg-c-surface-raised">
-                    <DynamicIcon name={card.icon} className="text-c-accent" />
+                    <DynamicIcon name={card.icon} className="text-primary-500" />
                   </div>
                   <div>
                     <div className="font-semibold">{card.title}</div>
@@ -308,7 +308,7 @@ export const DocsHomeView: React.FC = () => {
                 {overviewCards.support.map((card) => (
                   <div
                     key={card.id}
-                    className="rounded-xl border border-c-border bg-c-surface p-4"
+                    className="rounded-xl border border-c-border-subtle bg-c-surface/40 p-4"
                   >
                     <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-c-surface-raised">
                       <DynamicIcon name={card.icon} className="text-blue-500" />
@@ -337,8 +337,8 @@ export const DocsHomeView: React.FC = () => {
                   <div
                     key={guide.id}
                     className={cn(
-                      'rounded-xl border border-c-border bg-c-surface p-4',
-                      'hover:border-c-accent transition-colors'
+                      'rounded-xl border border-c-border-subtle bg-c-surface/40 p-4',
+                      'hover:border-primary-300 dark:hover:border-primary-700 transition-colors'
                     )}
                   >
                     <div className="font-semibold">{guide.title}</div>
@@ -354,7 +354,7 @@ export const DocsHomeView: React.FC = () => {
       </section>
 
       <section className="max-w-6xl mx-auto px-4 py-6">
-        <div className="rounded-2xl border border-c-border bg-c-surface p-6 lg:p-8">
+        <div className="rounded-2xl border border-c-border-subtle bg-c-surface/50 p-6 lg:p-8">
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 rounded-full bg-blue-100 dark:bg-blue-900/30 px-3 py-1 text-xs font-semibold text-blue-700 dark:text-blue-300">
               <GraduationCap size={14} />
@@ -372,9 +372,9 @@ export const DocsHomeView: React.FC = () => {
           </div>
 
           <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="rounded-xl border border-c-border bg-c-surface-raised p-5">
+            <div className="rounded-xl border border-c-border-subtle bg-c-bg/80 dark:bg-navy-950/40 p-5">
               <div className="flex items-center gap-2 text-sm font-semibold text-c-text">
-                <LifeBuoy size={16} className="text-c-accent" />
+                <LifeBuoy size={16} className="text-primary-500" />
                 {t('docs.home.educationScope.helpTitle', 'Inside Help / Knowledge Base')}
               </div>
               <ul className="mt-3 space-y-2 text-sm text-c-text-secondary">
@@ -399,7 +399,7 @@ export const DocsHomeView: React.FC = () => {
               </ul>
             </div>
 
-            <div className="rounded-xl border border-c-border bg-c-surface-raised p-5">
+            <div className="rounded-xl border border-c-border-subtle bg-c-bg/80 dark:bg-navy-950/40 p-5">
               <div className="flex items-center gap-2 text-sm font-semibold text-c-text">
                 <GraduationCap size={16} className="text-blue-500" />
                 {t(
@@ -460,7 +460,7 @@ export const DocsHomeView: React.FC = () => {
               ].map((step) => (
                 <div
                   key={step.title}
-                  className="rounded-xl border border-c-border bg-c-surface p-4"
+                  className="rounded-xl border border-c-border-subtle bg-c-surface/40 p-4"
                 >
                   <div className="font-semibold text-c-text">{step.title}</div>
                   <div className="mt-2 text-sm text-c-text-secondary">
@@ -484,11 +484,11 @@ export const DocsHomeView: React.FC = () => {
               Array.from({ length: 5 }).map((_, i) => (
                 <div
                   key={i}
-                  className="p-6 rounded-xl border border-c-border bg-c-surface-raised animate-pulse"
+                  className="p-6 rounded-xl border border-c-border-subtle bg-c-surface-raised/50 animate-pulse"
                 >
-                  <div className="h-12 w-12 rounded-lg bg-c-border mb-4" />
-                  <div className="h-5 w-32 rounded bg-c-border mb-2" />
-                  <div className="h-4 w-full rounded bg-c-border" />
+                  <div className="h-12 w-12 rounded-lg bg-slate-200 dark:bg-navy-800 mb-4" />
+                  <div className="h-5 w-32 rounded bg-slate-200 dark:bg-navy-800 mb-2" />
+                  <div className="h-4 w-full rounded bg-slate-200 dark:bg-navy-800" />
                 </div>
               ))
             : categories?.map((category: KbCategory) => (
@@ -501,19 +501,19 @@ export const DocsHomeView: React.FC = () => {
                 >
                   <Link
                     to={`/docs/${category.slug}`}
-                    className="block p-6 rounded-xl border border-c-border bg-c-surface hover:border-c-accent hover:shadow-lg transition-all"
+                    className="block p-6 rounded-xl border border-c-border-subtle bg-c-surface/50 hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-lg transition-all"
                   >
-                    <div className="h-12 w-12 rounded-lg bg-c-surface-raised flex items-center justify-center mb-4 group-hover:bg-c-accent-soft transition-colors">
+                    <div className="h-12 w-12 rounded-lg bg-c-surface-raised flex items-center justify-center mb-4 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 transition-colors">
                       {CATEGORY_ICONS[category.slug] || CATEGORY_ICONS['default']}
                     </div>
-                    <h3 className="text-lg font-semibold mb-1 group-hover:text-c-accent transition-colors">
+                    <h3 className="text-lg font-semibold mb-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                       {category.name}
                     </h3>
                     <p className="text-sm text-c-text-secondary mb-3">
                       {category.description ||
                         t('docs.home.categoryFallback', 'Explore articles in this category')}
                     </p>
-                    <div className="flex items-center text-sm text-c-accent font-medium">
+                    <div className="flex items-center text-sm text-primary-600 dark:text-primary-400 font-medium">
                       {t('docs.home.browseArticles', 'Browse articles')}
                       <ChevronRight
                         size={16}
@@ -527,7 +527,7 @@ export const DocsHomeView: React.FC = () => {
       </section>
 
       {/* Featured Articles */}
-      <section className="max-w-6xl mx-auto px-4 py-12 border-t border-c-border">
+      <section className="max-w-6xl mx-auto px-4 py-12 border-t border-c-border-subtle">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <Star size={24} className="text-amber-500" />
@@ -535,7 +535,7 @@ export const DocsHomeView: React.FC = () => {
           </h2>
           <Link
             to="/docs/featured"
-            className="text-sm font-medium text-c-accent hover:text-c-accent/80 flex items-center gap-1"
+            className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 flex items-center gap-1"
           >
             {t('docs.home.viewAll', 'View all')}
             <ArrowRight size={14} />
@@ -548,12 +548,12 @@ export const DocsHomeView: React.FC = () => {
               Array.from({ length: 3 }).map((_, i) => (
                 <div
                   key={i}
-                  className="p-6 rounded-xl border border-c-border bg-c-surface-raised animate-pulse"
+                  className="p-6 rounded-xl border border-c-border-subtle bg-c-surface-raised/50 animate-pulse"
                 >
-                  <div className="h-4 w-20 rounded bg-c-border mb-3" />
-                  <div className="h-6 w-full rounded bg-c-border mb-2" />
-                  <div className="h-4 w-3/4 rounded bg-c-border mb-4" />
-                  <div className="h-4 w-24 rounded bg-c-border" />
+                  <div className="h-4 w-20 rounded bg-slate-200 dark:bg-navy-800 mb-3" />
+                  <div className="h-6 w-full rounded bg-slate-200 dark:bg-navy-800 mb-2" />
+                  <div className="h-4 w-3/4 rounded bg-slate-200 dark:bg-navy-800 mb-4" />
+                  <div className="h-4 w-24 rounded bg-slate-200 dark:bg-navy-800" />
                 </div>
               ))
             : featuredArticles?.map((article: KbArticleListItem) => (
@@ -566,16 +566,16 @@ export const DocsHomeView: React.FC = () => {
                 >
                   <Link
                     to={`/docs/${article.category_slug}/${article.slug}`}
-                    className="block p-6 rounded-xl border border-c-border bg-c-surface hover:border-c-accent hover:shadow-lg transition-all h-full"
+                    className="block p-6 rounded-xl border border-c-border-subtle bg-c-surface/50 hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-lg transition-all h-full"
                   >
                     {/* Category Badge */}
-                    <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-c-accent-soft text-c-accent text-xs font-medium mb-3">
+                    <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs font-medium mb-3">
                       <Book size={12} />
                       {article.category_name}
                     </div>
 
                     {/* Title */}
-                    <h3 className="text-lg font-semibold mb-2 group-hover:text-c-accent transition-colors line-clamp-2">
+                    <h3 className="text-lg font-semibold mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors line-clamp-2">
                       {article.title}
                     </h3>
 
@@ -602,20 +602,20 @@ export const DocsHomeView: React.FC = () => {
       </section>
 
       {/* Developer Resources - OpenAI Style */}
-      <section className="max-w-6xl mx-auto px-4 py-12 border-t border-c-border">
+      <section className="max-w-6xl mx-auto px-4 py-12 border-t border-c-border-subtle">
         <h2 className="text-2xl font-bold mb-6">Developer Resources</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* API Reference */}
           <Link
             to="/docs/api"
-            className="group relative overflow-hidden rounded-xl border border-c-border bg-gradient-to-br from-primary-50 to-primary-50 dark:from-primary-950/30 dark:to-primary-950/30 p-6 hover:border-c-accent hover:shadow-lg transition-all"
+            className="group relative overflow-hidden rounded-xl border border-c-border-subtle bg-gradient-to-br from-primary-50 to-primary-50 dark:from-primary-950/30 dark:to-primary-950/30 p-6 hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-lg transition-all"
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
             <div className="relative">
               <div className="h-12 w-12 rounded-lg bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center mb-4 group-hover:bg-primary-200 dark:group-hover:bg-primary-900 transition-colors">
-                <Code size={24} className="text-c-accent" />
+                <Code size={24} className="text-primary-600 dark:text-primary-400" />
               </div>
-              <h3 className="text-lg font-semibold mb-2 group-hover:text-c-accent transition-colors">
+              <h3 className="text-lg font-semibold mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                 {t('docs.home.apiReference', 'API Reference')}
               </h3>
               <p className="text-sm text-c-text-secondary mb-4">
@@ -624,7 +624,7 @@ export const DocsHomeView: React.FC = () => {
                   'Check the current API documentation status and request access to integration guidance until the live reference is published.'
                 )}
               </p>
-              <div className="flex items-center text-sm text-c-accent font-medium">
+              <div className="flex items-center text-sm text-primary-600 dark:text-primary-400 font-medium">
                 {t('docs.home.apiCardCta', 'View API status')}
                 <ArrowRight
                   size={16}
@@ -637,7 +637,7 @@ export const DocsHomeView: React.FC = () => {
           {/* Changelog */}
           <Link
             to="/docs/changelog"
-            className="group relative overflow-hidden rounded-xl border border-c-border bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/30 dark:to-green-950/30 p-6 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-lg transition-all"
+            className="group relative overflow-hidden rounded-xl border border-c-border-subtle bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/30 dark:to-green-950/30 p-6 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-lg transition-all"
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
             <div className="relative">
@@ -663,7 +663,7 @@ export const DocsHomeView: React.FC = () => {
           {/* Security & Compliance */}
           <Link
             to="/docs/security"
-            className="group relative overflow-hidden rounded-xl border border-c-border bg-gradient-to-br from-blue-50 to-blue-50 dark:from-blue-950/30 dark:to-blue-950/30 p-6 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-lg transition-all"
+            className="group relative overflow-hidden rounded-xl border border-c-border-subtle bg-gradient-to-br from-blue-50 to-blue-50 dark:from-blue-950/30 dark:to-blue-950/30 p-6 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-lg transition-all"
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
             <div className="relative">
@@ -705,14 +705,14 @@ export const DocsHomeView: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 to="/trial/start"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-white text-primary-700 font-semibold hover:bg-slate-100 transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-c-surface text-primary-700 font-semibold hover:bg-c-surface-raised transition-colors"
               >
                 Start Free Trial
                 <ArrowRight size={18} />
               </Link>
               <Link
                 to="/demo"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-white/20 text-white font-semibold hover:bg-white/30 transition-colors border border-white/30"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-c-surface/20 text-white font-semibold hover:bg-c-surface/30 transition-colors border border-white/30"
               >
                 Explore Demo
               </Link>

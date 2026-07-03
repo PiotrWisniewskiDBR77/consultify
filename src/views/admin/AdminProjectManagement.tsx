@@ -107,11 +107,11 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
 
   const StatBadge = ({ icon: Icon, count, label, color = 'indigo' }: any) => (
     <div
-      className={`flex items-center gap-1.5 px-2 py-1 rounded-md bg-${color}-500/5 border border-${color}-500/10 text-xs text-slate-500 dark:text-slate-400`}
+      className={`flex items-center gap-1.5 px-2 py-1 rounded-md bg-${color}-500/5 border border-${color}-500/10 text-xs text-c-text-muted`}
       title={label}
     >
       <Icon size={12} className={`text-${color}-600 dark:text-${color}-400`} />
-      <span className="font-medium text-slate-700 dark:text-slate-300">{count || 0}</span>
+      <span className="font-medium text-c-text-secondary">{count || 0}</span>
     </div>
   );
 
@@ -124,23 +124,23 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
           <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-1">
             Project Command Center
           </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+          <p className="text-sm text-c-text-secondary">
             Manage transformation projects, teams, and knowledge assets.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           {/* View Toggle */}
-          <div className="flex bg-slate-100 dark:bg-navy-900 p-1 rounded-lg border border-slate-200 dark:border-navy-700">
+          <div className="flex bg-c-surface-raised p-1 rounded-lg border border-c-border-subtle">
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20' : 'text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-slate-300'}`}
+              className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20' : 'text-c-text-muted hover:text-navy-900 dark:hover:text-slate-300'}`}
             >
               <LayoutGrid size={18} />
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20' : 'text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-slate-300'}`}
+              className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20' : 'text-c-text-muted hover:text-navy-900 dark:hover:text-slate-300'}`}
             >
               <List size={18} />
             </button>
@@ -159,14 +159,14 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
       <div className="flex items-center gap-4 mb-6">
         <div className="relative flex-1 max-w-md">
           <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-muted"
             size={18}
           />
           <input
             placeholder="Search projects..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-primary-500 outline-none"
+            className="w-full pl-10 pr-4 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-navy-900 dark:text-white focus:border-primary-500 outline-none"
           />
         </div>
       </div>
@@ -176,13 +176,13 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
         </div>
       ) : filteredProjects.length === 0 ? (
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-16 text-center space-y-4">
-          <div className="w-16 h-16 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto text-slate-400 dark:text-slate-600">
+        <div className="bg-c-surface border border-c-border-subtle rounded-xl p-16 text-center space-y-4">
+          <div className="w-16 h-16 bg-c-bg dark:bg-c-surface/5 rounded-full flex items-center justify-center mx-auto text-c-text-muted">
             <Layers size={32} />
           </div>
           <div>
             <h3 className="text-navy-900 dark:text-white font-medium">No projects found</h3>
-            <p className="text-slate-600 dark:text-slate-500 text-sm mt-1">
+            <p className="text-c-text-secondary text-sm mt-1">
               Start by creating a new project to organize your transformation assets.
             </p>
           </div>
@@ -203,7 +203,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                 useAppStore.getState().setCurrentProjectId(p.id);
                 useAppStore.getState().setCurrentView(AppView.ADMIN_PROJECT_DETAILS);
               }}
-              className="bg-white dark:bg-navy-900/50 backdrop-blur-sm border border-slate-200 dark:border-navy-700 rounded-xl p-6 hover:bg-slate-50 dark:hover:bg-navy-800 transition-all group relative border-l-4 border-l-primary-500 cursor-pointer shadow-sm dark:shadow-none"
+              className="bg-c-surface/50 backdrop-blur-sm border border-c-border-subtle rounded-xl p-6 hover:bg-c-surface-raised transition-all group relative border-l-4 border-l-primary-500 cursor-pointer shadow-sm dark:shadow-none"
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="p-3 rounded-xl bg-primary-500/10 text-primary-400 group-hover:bg-primary-500 group-hover:text-white transition-all">
@@ -213,7 +213,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                   {canEdit && (
                     <button
                       onClick={() => setSelectedProjectForGovernance(p)}
-                      className="p-2 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-primary-400 hover:bg-slate-100 dark:hover:bg-navy-800/40 shadow-sm"
+                      className="p-2 bg-c-bg/30 dark:bg-navy-950/20 rounded-lg text-c-text-muted hover:text-primary-400 hover:bg-c-surface-raised/40 shadow-sm"
                       title="Project Settings"
                     >
                       <Settings size={16} />
@@ -222,7 +222,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                   {canDelete && (
                     <button
                       onClick={() => handleDeleteProject(p.id)}
-                      className="p-2 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-danger-400 hover:bg-slate-100 dark:hover:bg-navy-800/40 shadow-sm"
+                      className="p-2 bg-c-bg/30 dark:bg-navy-950/20 rounded-lg text-c-text-muted hover:text-danger-400 hover:bg-c-surface-raised/40 shadow-sm"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -235,13 +235,13 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
               </h3>
 
               {p.description && (
-                <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 mb-4 h-10">
+                <p className="text-sm text-c-text-secondary line-clamp-2 mb-4 h-10">
                   {p.description}
                 </p>
               )}
 
               {!p.description && (
-                <p className="text-sm text-slate-400 dark:text-slate-600 italic mb-4 h-10">
+                <p className="text-sm text-c-text-muted italic mb-4 h-10">
                   No description provided.
                 </p>
               )}
@@ -268,14 +268,14 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                 />
               </div>
 
-              <div className="pt-4 border-t border-slate-100 dark:border-navy-700 flex justify-between items-center text-xs">
+              <div className="pt-4 border-t border-c-border-subtle flex justify-between items-center text-xs">
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 flex items-center justify-center text-[10px] text-navy-900 dark:text-white">
+                  <div className="w-6 h-6 rounded-full bg-c-surface-raised border border-c-border-subtle flex items-center justify-center text-[10px] text-navy-900 dark:text-white">
                     {p.owner?.firstName?.[0] || (p as any).owner_first_name?.[0] || 'U'}
                   </div>
                   <EntityStatusChip status={p.status} />
                 </div>
-                <span className="text-slate-400 dark:text-slate-600">
+                <span className="text-c-text-muted">
                   {new Date(p.createdAt || (p as any).created_at).toLocaleDateString()}
                 </span>
               </div>
@@ -284,10 +284,10 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
         </div>
       ) : (
         /* List View */
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden shadow-sm dark:shadow-xl">
+        <div className="bg-c-surface border border-c-border-subtle rounded-xl overflow-hidden shadow-sm dark:shadow-xl">
           <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-navy-700">
+              <tr className="bg-c-bg dark:bg-c-surface/5 text-c-text-secondary text-xs uppercase tracking-wider font-semibold border-b border-c-border-subtle">
                 <th className="px-6 py-4">Project</th>
                 <th className="px-6 py-4">Team</th>
                 <th className="px-6 py-4">Assets</th>
@@ -304,7 +304,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                     useAppStore.getState().setCurrentProjectId(p.id);
                     useAppStore.getState().setCurrentView(AppView.ADMIN_PROJECT_DETAILS);
                   }}
-                  className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors group cursor-pointer"
+                  className="hover:bg-c-bg dark:hover:bg-c-surface/[0.02] transition-colors group cursor-pointer"
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-4">
@@ -315,7 +315,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                         <div className="text-navy-900 dark:text-white font-medium group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                           {p.name}
                         </div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1 max-w-[200px]">
+                        <div className="text-[10px] text-c-text-muted mt-0.5 line-clamp-1 max-w-[200px]">
                           {p.description || 'No description'}
                         </div>
                       </div>
@@ -330,24 +330,24 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div
-                        className="flex items-center gap-1 text-slate-600 dark:text-slate-300"
+                        className="flex items-center gap-1 text-c-text-secondary"
                         title="Initiatives"
                       >
                         <Target size={14} className="text-green-600 dark:text-green-400" />
                         <span className="text-xs">{p.initiativeCount || 0}</span>
                       </div>
                       <div
-                        className="flex items-center gap-1 text-slate-600 dark:text-slate-300"
+                        className="flex items-center gap-1 text-c-text-secondary"
                         title="Assessments"
                       >
                         <PieChart size={14} className="text-amber-600 dark:text-amber-400" />
                         <span className="text-xs">{p.assessmentCount || 0}</span>
                       </div>
                       <div
-                        className="flex items-center gap-1 text-slate-600 dark:text-slate-300"
+                        className="flex items-center gap-1 text-c-text-secondary"
                         title="Documents"
                       >
-                        <FileText size={14} className="text-slate-400 dark:text-slate-400" />
+                        <FileText size={14} className="text-c-text-muted" />
                         <span className="text-xs">{p.documentCount || 0}</span>
                       </div>
                     </div>
@@ -356,14 +356,14 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                     <EntityStatusChip status={p.status} />
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-slate-600 dark:text-slate-400 text-sm">
+                    <div className="text-c-text-secondary text-sm">
                       {p.owner?.firstName || (p as any).owner_first_name || 'System'}
                     </div>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <button
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white transition-colors"
+                        className="p-2 hover:bg-c-surface-raised dark:hover:bg-c-surface/5 rounded-lg text-c-text-muted hover:text-navy-900 dark:hover:text-white transition-colors"
                         title="View Details"
                       >
                         <ChevronRight size={18} />
@@ -371,7 +371,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                       {canEdit && (
                         <button
                           onClick={() => setSelectedProjectForGovernance(p)}
-                          className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                          className="p-2 hover:bg-c-surface-raised dark:hover:bg-c-surface/5 rounded-lg text-c-text-muted hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                           title="Settings"
                         >
                           <Settings size={18} />
@@ -380,7 +380,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                       {canDelete && (
                         <button
                           onClick={() => handleDeleteProject(p.id)}
-                          className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-danger-600 dark:hover:text-danger-400 transition-colors"
+                          className="p-2 hover:bg-c-surface-raised dark:hover:bg-c-surface/5 rounded-lg text-c-text-muted hover:text-danger-600 dark:hover:text-danger-400 transition-colors"
                         >
                           <Trash2 size={18} />
                         </button>
@@ -397,7 +397,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
       {/* Add Project Modal */}
       {showAddProjectModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-8 w-full max-w-lg shadow-2xl animate-in zoom-in duration-200">
+          <div className="bg-c-surface border border-c-border-subtle rounded-xl p-8 w-full max-w-lg shadow-2xl animate-in zoom-in duration-200">
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-navy-900 rounded-lg text-white">
@@ -409,7 +409,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
               </div>
               <button
                 onClick={() => setShowAddProjectModal(false)}
-                className="p-2 text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+                className="p-2 text-c-text-muted hover:text-navy-900 dark:hover:text-white hover:bg-c-surface-raised dark:hover:bg-c-surface/5 rounded-lg transition-colors"
               >
                 <X size={20} />
               </button>
@@ -417,39 +417,39 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
 
             <form onSubmit={handleCreateProject} className="space-y-5">
               <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-c-text-muted uppercase tracking-wider mb-1.5">
                   Project Identity
                 </label>
                 <input
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl p-4 text-navy-900 dark:text-white focus:border-primary-500 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
+                  className="w-full bg-c-surface-raised border border-c-border-subtle rounded-xl p-4 text-navy-900 dark:text-white focus:border-primary-500 outline-none transition-all placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary"
                   placeholder="e.g. Intelligent Factory Optimization"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-c-text-muted uppercase tracking-wider mb-1.5">
                   Scope & Description
                 </label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl p-4 text-navy-900 dark:text-white focus:border-primary-500 outline-none transition-all h-24 resize-none placeholder:text-slate-400 dark:placeholder:text-slate-600"
+                  className="w-full bg-c-surface-raised border border-c-border-subtle rounded-xl p-4 text-navy-900 dark:text-white focus:border-primary-500 outline-none transition-all h-24 resize-none placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary"
                   placeholder="Briefly describe the project transformation scope..."
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                <label className="block text-xs font-bold text-c-text-muted uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                   <Target size={12} className="text-green-600 dark:text-green-400" />
                   Strategic Goal (CEL)
                 </label>
                 <input
                   value={formData.goal}
                   onChange={(e) => setFormData({ ...formData, goal: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl p-4 text-navy-900 dark:text-white focus:border-primary-500 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
+                  className="w-full bg-c-surface-raised border border-c-border-subtle rounded-xl p-4 text-navy-900 dark:text-white focus:border-primary-500 outline-none transition-all placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary"
                   placeholder="e.g. Reduce operational waste by 25% by Q4"
                 />
               </div>
@@ -458,7 +458,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowAddProjectModal(false)}
-                  className="flex-1 py-3.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl font-semibold transition-all"
+                  className="flex-1 py-3.5 bg-c-surface-raised hover:bg-slate-200 dark:hover:bg-slate-700 text-c-text-secondary rounded-xl font-semibold transition-all"
                 >
                   Cancel
                 </button>
@@ -477,7 +477,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
       {/* Project Governance Modal */}
       {selectedProjectForGovernance && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-auto">
+          <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6 w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
                 <Settings size={22} className="text-primary-600 dark:text-primary-400" />
@@ -485,7 +485,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
               </h2>
               <button
                 onClick={() => setSelectedProjectForGovernance(null)}
-                className="p-2 text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+                className="p-2 text-c-text-muted hover:text-navy-900 dark:hover:text-white hover:bg-c-surface-raised dark:hover:bg-c-surface/5 rounded-lg transition-colors"
               >
                 <X size={20} />
               </button>

@@ -109,7 +109,7 @@ export const PartnerPricingView: React.FC = () => {
 
   return (
     <MarketingLayout>
-      <div className="min-h-full bg-slate-50 dark:bg-navy-950">
+      <div className="min-h-full bg-c-surface-raised">
         <section className="relative overflow-hidden bg-gradient-to-b from-primary-50 via-white to-slate-50 px-6 pb-20 pt-14 dark:from-navy-900 dark:via-navy-950 dark:to-navy-950">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary-100/40 via-transparent to-transparent dark:from-primary-900/20" />
 
@@ -122,7 +122,7 @@ export const PartnerPricingView: React.FC = () => {
             >
               <div>
                 <span className="inline-flex items-center gap-2 rounded-full bg-primary-100 px-4 py-2 text-sm font-semibold text-primary-600 dark:bg-primary-900/30 dark:text-primary-300">
-                  <span className="h-2 w-2 rounded-full bg-navy-900 dark:bg-white" />
+                  <span className="h-2 w-2 rounded-full bg-navy-900 dark:bg-c-surface" />
                   Consultify Partner Program
                 </span>
 
@@ -133,7 +133,7 @@ export const PartnerPricingView: React.FC = () => {
                   </span>
                 </h1>
 
-                <p className="mt-6 max-w-3xl text-lg leading-relaxed text-slate-600 dark:text-slate-300">
+                <p className="mt-6 max-w-3xl text-lg leading-relaxed text-c-text-secondary">
                   To nie jest tylko listing partnerów. Otrzymujesz wspólną ścieżkę aplikacji,
                   playbook handlowy, academy, case pack, wsparcie deal-desk i model rozliczeń
                   dopasowany do wzrostu partnera.
@@ -149,13 +149,13 @@ export const PartnerPricingView: React.FC = () => {
                   </button>
                   <button
                     onClick={openPartnerDocs}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-slate-300 px-6 py-3 text-sm font-bold text-navy-950 transition hover:border-primary-300 hover:bg-white dark:border-white/20 dark:bg-navy-900 dark:text-white dark:hover:bg-white/5"
+                    className="inline-flex items-center gap-2 rounded-full border-2 border-c-border px-6 py-3 text-sm font-bold text-navy-950 transition hover:border-primary-300 hover:bg-c-surface dark:border-white/20 dark:bg-navy-900 dark:text-white dark:hover:bg-c-surface/5"
                   >
                     Odkrywaj program
                   </button>
                   <button
                     onClick={openPartnerLogin}
-                    className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-6 py-3 text-sm font-bold text-slate-700 transition hover:border-slate-400 hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/5"
+                    className="inline-flex items-center gap-2 rounded-full border border-c-border px-6 py-3 text-sm font-bold text-c-text-secondary transition hover:border-slate-400 hover:bg-c-surface-raised dark:border-white/15 dark:text-white dark:hover:bg-c-surface/5"
                   >
                     <LogIn size={16} />
                     Zaloguj się jako partner
@@ -164,26 +164,26 @@ export const PartnerPricingView: React.FC = () => {
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-2xl border border-primary-200 bg-white/90 p-6 shadow-sm dark:border-primary-900/40 dark:bg-navy-900/80 md:col-span-2">
+                <div className="rounded-2xl border border-primary-200 bg-c-surface/90 p-6 shadow-sm dark:border-primary-900/40 dark:bg-navy-900/80 md:col-span-2">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-600 dark:text-primary-300">
                     Co dostajesz od dnia 1
                   </p>
                   <div className="mt-4 grid gap-4 md:grid-cols-3">
                     <div>
                       <p className="text-3xl font-black text-navy-950 dark:text-white">1 flow</p>
-                      <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                      <p className="mt-1 text-sm text-c-text-secondary">
                         Taka sama ścieżka wejścia z LP i z aplikacji.
                       </p>
                     </div>
                     <div>
                       <p className="text-3xl font-black text-navy-950 dark:text-white">do 20%</p>
-                      <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                      <p className="mt-1 text-sm text-c-text-secondary">
                         Prowizji oraz progresji wraz z certyfikacją i aktywacją.
                       </p>
                     </div>
                     <div>
                       <p className="text-3xl font-black text-navy-950 dark:text-white">case pack</p>
-                      <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                      <p className="mt-1 text-sm text-c-text-secondary">
                         Materiały, które pomagają domknąć discovery i ofertę.
                       </p>
                     </div>
@@ -195,7 +195,7 @@ export const PartnerPricingView: React.FC = () => {
                   return (
                     <div
                       key={step.title}
-                      className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-900"
+                      className="rounded-2xl border border-c-border-subtle bg-c-surface p-5 shadow-sm dark:border-navy-700 dark:bg-navy-900"
                     >
                       <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300">
                         <Icon size={20} />
@@ -203,10 +203,10 @@ export const PartnerPricingView: React.FC = () => {
                       <h3 className="mt-4 text-lg font-bold text-navy-950 dark:text-white">
                         {step.title}
                       </h3>
-                      <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                      <p className="mt-2 text-sm text-c-text-secondary">
                         {step.description}
                       </p>
-                      <p className="mt-3 text-sm font-medium text-slate-800 dark:text-slate-200">
+                      <p className="mt-3 text-sm font-medium text-c-text">
                         {step.detail}
                       </p>
                     </div>
@@ -218,7 +218,7 @@ export const PartnerPricingView: React.FC = () => {
         </section>
 
         <section className="px-6 py-10">
-          <div className="mx-auto max-w-6xl rounded-3xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-900">
+          <div className="mx-auto max-w-6xl rounded-3xl border border-c-border-subtle bg-c-surface p-6 dark:border-navy-700 dark:bg-navy-900">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-primary-500">
@@ -227,7 +227,7 @@ export const PartnerPricingView: React.FC = () => {
                 <h2 className="mt-3 text-2xl font-black text-navy-950 dark:text-white">
                   Kanoniczne partner docs i wspólna ścieżka wejścia
                 </h2>
-                <p className="mt-3 max-w-3xl text-sm text-slate-600 dark:text-slate-400">
+                <p className="mt-3 max-w-3xl text-sm text-c-text-secondary">
                   Public docs są source of truth dla programu, activation, certification i case
                   studies. Niezależnie od tego, skąd partner startuje, kończy w tym samym
                   application flow.
@@ -237,7 +237,7 @@ export const PartnerPricingView: React.FC = () => {
               <div className="grid gap-3 sm:grid-cols-2">
                 <button
                   onClick={openPartnerDocs}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 px-5 py-4 text-sm font-bold text-slate-700 transition hover:border-primary-400 hover:text-primary-600 dark:border-white/15 dark:text-white"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-c-border px-5 py-4 text-sm font-bold text-c-text-secondary transition hover:border-primary-400 hover:text-primary-600 dark:border-white/15 dark:text-white"
                 >
                   Otwórz partner docs
                   <ArrowRight size={16} />
@@ -260,7 +260,7 @@ export const PartnerPricingView: React.FC = () => {
               <h2 className="text-3xl font-black text-navy-950 dark:text-white">
                 Jak ten program pracuje w praktyce
               </h2>
-              <p className="mx-auto mt-4 max-w-3xl text-slate-600 dark:text-slate-400">
+              <p className="mx-auto mt-4 max-w-3xl text-c-text-secondary">
                 Budujemy program pod partnera, który chce sprzedawać i wdrażać Consultify
                 profesjonalnie, a nie tylko zbierać leady. Dlatego ścieżka łączy sales enablement,
                 onboarding, certyfikację i payout readiness.
@@ -273,20 +273,20 @@ export const PartnerPricingView: React.FC = () => {
                 return (
                   <div
                     key={step.title}
-                    className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-900"
+                    className="rounded-2xl border border-c-border-subtle bg-c-surface p-6 dark:border-navy-700 dark:bg-navy-900"
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300">
                         <Icon size={18} />
                       </div>
-                      <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-600">
+                      <span className="text-xs font-black uppercase tracking-[0.2em] text-c-text-secondary">
                         0{idx + 1}
                       </span>
                     </div>
                     <h3 className="mt-4 text-lg font-bold text-navy-950 dark:text-white">
                       {step.title}
                     </h3>
-                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                    <p className="mt-2 text-sm text-c-text-secondary">
                       {step.description}
                     </p>
                   </div>
@@ -296,7 +296,7 @@ export const PartnerPricingView: React.FC = () => {
           </div>
         </section>
 
-        <section id="partner-case-study" className="bg-white px-6 py-16 dark:bg-navy-900/50">
+        <section id="partner-case-study" className="bg-c-surface px-6 py-16 dark:bg-navy-900/50">
           <div className="mx-auto max-w-6xl">
             <div className="mb-10 flex flex-col gap-4 text-center lg:text-left">
               <div className="inline-flex w-fit self-center rounded-full bg-emerald-100 px-4 py-2 text-sm font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 lg:self-start">
@@ -305,7 +305,7 @@ export const PartnerPricingView: React.FC = () => {
               <h2 className="text-3xl font-black text-navy-950 dark:text-white">
                 Przykład korzyści w pracy partnera, nie tylko na slajdzie
               </h2>
-              <p className="max-w-3xl text-slate-600 dark:text-slate-400">
+              <p className="max-w-3xl text-c-text-secondary">
                 Partner wprowadził Consultify do rozmowy z firmą produkcyjną, przeprowadził
                 discovery w oparciu o frameworki oceny, a potem zbudował wspólną ofertę z
                 Consultify. Klient szybciej przeszedł z diagnozy do roadmapy, a partner miał gotowy
@@ -314,14 +314,14 @@ export const PartnerPricingView: React.FC = () => {
             </div>
 
             <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-7 dark:border-navy-700 dark:bg-navy-950">
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+              <div className="rounded-2xl border border-c-border-subtle bg-c-bg p-7 dark:border-navy-700 dark:bg-navy-950">
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-c-text-muted">
                   Partner motion
                 </p>
                 <h3 className="mt-3 text-2xl font-black text-navy-950 dark:text-white">
                   Od rozmowy sprzedażowej do aktywnego rolloutu
                 </h3>
-                <div className="mt-6 space-y-4 text-sm leading-7 text-slate-600 dark:text-slate-300">
+                <div className="mt-6 space-y-4 text-sm leading-7 text-c-text-secondary">
                   <p>
                     Partner rozpoczął od warsztatu z zarządem i kierownikami operacyjnymi. Dzięki
                     gotowym materiałom Consultify nie musiał budować narracji od zera.
@@ -347,11 +347,11 @@ export const PartnerPricingView: React.FC = () => {
                 ].map((item) => (
                   <div
                     key={item}
-                    className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-navy-700 dark:bg-navy-900"
+                    className="rounded-2xl border border-c-border-subtle bg-c-surface p-5 dark:border-navy-700 dark:bg-navy-900"
                   >
                     <div className="flex items-start gap-3">
                       <Check className="mt-0.5 text-emerald-500" size={18} />
-                      <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                      <p className="text-sm font-medium text-c-text-secondary">
                         {item}
                       </p>
                     </div>
@@ -360,7 +360,7 @@ export const PartnerPricingView: React.FC = () => {
 
                 <button
                   onClick={openContact}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-navy-950 px-5 py-4 text-sm font-bold text-white transition hover:bg-navy-900 dark:bg-white dark:text-navy-950"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-navy-950 px-5 py-4 text-sm font-bold text-white transition hover:bg-navy-900 dark:bg-c-surface dark:text-navy-950"
                 >
                   Skontaktuj się, aby omówić pełny case
                   <ArrowRight size={16} />
@@ -376,7 +376,7 @@ export const PartnerPricingView: React.FC = () => {
               <h2 className="text-3xl font-black text-navy-950 dark:text-white">
                 Korzyści z partnerstwa
               </h2>
-              <p className="mx-auto mt-4 max-w-2xl text-slate-600 dark:text-slate-400">
+              <p className="mx-auto mt-4 max-w-2xl text-c-text-secondary">
                 Program jest zbudowany tak, by partner mógł szybciej wejść na rynek, przejść przez
                 aktywację i skalować współpracę bez ręcznego zszywania procesu.
               </p>
@@ -392,7 +392,7 @@ export const PartnerPricingView: React.FC = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: idx * 0.05 }}
-                    className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-900"
+                    className="rounded-2xl border border-c-border-subtle bg-c-surface p-6 dark:border-navy-700 dark:bg-navy-900"
                   >
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/30">
                       <Icon size={24} className="text-primary-600 dark:text-primary-400" />
@@ -400,7 +400,7 @@ export const PartnerPricingView: React.FC = () => {
                     <h3 className="mt-4 text-lg font-bold text-navy-950 dark:text-white">
                       {benefit.title}
                     </h3>
-                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                    <p className="mt-2 text-sm text-c-text-secondary">
                       {benefit.description}
                     </p>
                   </motion.div>
@@ -410,13 +410,13 @@ export const PartnerPricingView: React.FC = () => {
           </div>
         </section>
 
-        <section className="bg-slate-100 px-6 py-16 dark:bg-navy-900/40">
+        <section className="bg-c-surface-raised px-6 py-16 dark:bg-navy-900/40">
           <div className="mx-auto max-w-6xl">
             <div className="mb-12 text-center">
               <h2 className="text-3xl font-black text-navy-950 dark:text-white">
                 Start application: wspólna ścieżka z LP i z aplikacji
               </h2>
-              <p className="mx-auto mt-4 max-w-3xl text-slate-600 dark:text-slate-400">
+              <p className="mx-auto mt-4 max-w-3xl text-c-text-secondary">
                 Każde wejście do programu prowadzi do tego samego procesu aplikacyjnego. Partner
                 może przejść go samodzielnie, a jeśli potrzebuje niestandardowych warunków, ma od
                 razu ścieżkę kontaktu do ustalenia modelu współpracy.
@@ -448,7 +448,7 @@ export const PartnerPricingView: React.FC = () => {
                 return (
                   <div
                     key={step.title}
-                    className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-900"
+                    className="rounded-2xl border border-c-border-subtle bg-c-surface p-6 dark:border-navy-700 dark:bg-navy-900"
                   >
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300">
                       <Icon size={22} />
@@ -456,7 +456,7 @@ export const PartnerPricingView: React.FC = () => {
                     <h3 className="mt-4 text-lg font-bold text-navy-950 dark:text-white">
                       {step.title}
                     </h3>
-                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                    <p className="mt-2 text-sm text-c-text-secondary">
                       {step.description}
                     </p>
                   </div>
@@ -474,7 +474,7 @@ export const PartnerPricingView: React.FC = () => {
               </button>
               <button
                 onClick={openContact}
-                className="inline-flex items-center gap-2 rounded-full border-2 border-slate-300 px-8 py-4 font-bold text-navy-950 transition hover:border-primary-300 hover:bg-white dark:border-white/20 dark:text-white dark:hover:bg-white/5"
+                className="inline-flex items-center gap-2 rounded-full border-2 border-c-border px-8 py-4 font-bold text-navy-950 transition hover:border-primary-300 hover:bg-c-surface dark:border-white/20 dark:text-white dark:hover:bg-c-surface/5"
               >
                 Ustal warunki współpracy
               </button>
@@ -488,7 +488,7 @@ export const PartnerPricingView: React.FC = () => {
               <h2 className="text-3xl font-black text-navy-950 dark:text-white">
                 Poziomy programu
               </h2>
-              <p className="mx-auto mt-4 max-w-2xl text-slate-600 dark:text-slate-400">
+              <p className="mx-auto mt-4 max-w-2xl text-c-text-secondary">
                 Poziomy nadal porządkują rozwój partnera, ale najpierw partner dostaje jeden, spójny
                 flow wejścia i jasną ścieżkę wzrostu.
               </p>
@@ -506,7 +506,7 @@ export const PartnerPricingView: React.FC = () => {
                     className={`relative flex flex-col rounded-2xl p-6 ${
                       tier.highlight
                         ? 'z-10 scale-[1.02] bg-gradient-to-b from-primary-600 to-primary-700 text-white shadow-2xl shadow-primary-500/20 ring-4 ring-primary-500/50'
-                        : 'border border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900'
+                        : 'border border-c-border-subtle bg-c-surface dark:border-navy-700 dark:bg-navy-900'
                     }`}
                   >
                     {tier.badge && (
@@ -520,7 +520,7 @@ export const PartnerPricingView: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <div
                         className={`flex h-12 w-12 items-center justify-center rounded-xl ${
-                          tier.highlight ? 'bg-white/20' : 'bg-primary-100 dark:bg-primary-900/30'
+                          tier.highlight ? 'bg-c-surface/20' : 'bg-primary-100 dark:bg-primary-900/30'
                         }`}
                       >
                         <Icon
@@ -542,7 +542,7 @@ export const PartnerPricingView: React.FC = () => {
                           className={`text-xs ${
                             tier.highlight
                               ? 'text-primary-200'
-                              : 'text-slate-500 dark:text-slate-400'
+                              : 'text-c-text-muted'
                           }`}
                         >
                           {tier.subtitle}
@@ -563,7 +563,7 @@ export const PartnerPricingView: React.FC = () => {
                           className={`text-sm ${
                             tier.highlight
                               ? 'text-primary-200'
-                              : 'text-slate-500 dark:text-slate-400'
+                              : 'text-c-text-muted'
                           }`}
                         >
                           commission
@@ -571,7 +571,7 @@ export const PartnerPricingView: React.FC = () => {
                       </div>
                       <p
                         className={`mt-1 text-xs ${
-                          tier.highlight ? 'text-primary-200' : 'text-slate-500 dark:text-slate-400'
+                          tier.highlight ? 'text-primary-200' : 'text-c-text-muted'
                         }`}
                       >
                         Support SLA: {tier.supportSLA}
@@ -580,7 +580,7 @@ export const PartnerPricingView: React.FC = () => {
 
                     <p
                       className={`mt-4 text-sm ${
-                        tier.highlight ? 'text-primary-100' : 'text-slate-600 dark:text-slate-400'
+                        tier.highlight ? 'text-primary-100' : 'text-c-text-secondary'
                       }`}
                     >
                       {tier.description}
@@ -602,7 +602,7 @@ export const PartnerPricingView: React.FC = () => {
                               className={`mt-0.5 flex-shrink-0 ${
                                 tier.highlight
                                   ? 'text-primary-300/50'
-                                  : 'text-slate-600 dark:text-slate-400'
+                                  : 'text-c-text-secondary'
                               }`}
                             />
                           )}
@@ -611,10 +611,10 @@ export const PartnerPricingView: React.FC = () => {
                               feature.included
                                 ? tier.highlight
                                   ? 'text-primary-100'
-                                  : 'text-slate-700 dark:text-slate-300'
+                                  : 'text-c-text-secondary'
                                 : tier.highlight
                                   ? 'text-primary-300/50'
-                                  : 'text-slate-600 dark:text-slate-500'
+                                  : 'text-c-text-secondary'
                             } ${feature.highlight ? 'font-semibold' : ''}`}
                           >
                             {feature.name}
@@ -625,12 +625,12 @@ export const PartnerPricingView: React.FC = () => {
 
                     <div
                       className={`mt-6 rounded-xl p-3 ${
-                        tier.highlight ? 'bg-white/10' : 'bg-slate-50 dark:bg-navy-950'
+                        tier.highlight ? 'bg-c-surface/10' : 'bg-c-surface-raised'
                       }`}
                     >
                       <p
                         className={`mb-2 text-xs font-semibold uppercase tracking-wide ${
-                          tier.highlight ? 'text-primary-200' : 'text-slate-500 dark:text-slate-400'
+                          tier.highlight ? 'text-primary-200' : 'text-c-text-muted'
                         }`}
                       >
                         Wymagania
@@ -645,7 +645,7 @@ export const PartnerPricingView: React.FC = () => {
                               className={
                                 tier.highlight
                                   ? 'text-primary-200'
-                                  : 'text-slate-600 dark:text-slate-400'
+                                  : 'text-c-text-secondary'
                               }
                             >
                               {req.label}
@@ -666,10 +666,10 @@ export const PartnerPricingView: React.FC = () => {
                       onClick={() => handleTierCta(tier)}
                       className={`mt-6 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition ${
                         tier.ctaVariant === 'primary'
-                          ? 'bg-white text-primary-700 shadow-lg hover:bg-primary-50'
+                          ? 'bg-c-surface text-primary-700 shadow-lg hover:bg-primary-50'
                           : tier.ctaVariant === 'secondary'
                             ? 'bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800'
-                            : 'border-2 border-slate-300 text-navy-950 hover:bg-slate-50 dark:border-white/20 dark:text-white dark:hover:bg-white/5'
+                            : 'border-2 border-c-border text-navy-950 hover:bg-c-bg dark:border-white/20 dark:text-white dark:hover:bg-c-surface/5'
                       }`}
                     >
                       {tier.id === 'PLATINUM' ? 'Ustal warunki' : 'Start application'}
@@ -680,7 +680,7 @@ export const PartnerPricingView: React.FC = () => {
               })}
             </div>
 
-            <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-sm text-slate-500 dark:text-slate-400">
+            <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-sm text-c-text-muted">
               {TRUST_INDICATORS.map((indicator, idx) => {
                 const Icon = indicator.icon;
                 return (
@@ -700,7 +700,7 @@ export const PartnerPricingView: React.FC = () => {
               <h2 className="text-3xl font-black text-navy-950 dark:text-white">
                 Najczęściej zadawane pytania
               </h2>
-              <p className="mt-4 text-slate-600 dark:text-slate-400">
+              <p className="mt-4 text-c-text-secondary">
                 Masz scenariusz, który wymaga niestandardowych warunków?{' '}
                 <button onClick={openContact} className="text-primary-600 hover:underline">
                   Skontaktuj się z nami
@@ -716,7 +716,7 @@ export const PartnerPricingView: React.FC = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: idx * 0.05 }}
-                  className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900"
+                  className="overflow-hidden rounded-2xl border border-c-border-subtle bg-c-surface dark:border-navy-700 dark:bg-navy-900"
                 >
                   <button
                     onClick={() => setExpandedFaq(expandedFaq === idx ? null : idx)}
@@ -730,14 +730,14 @@ export const PartnerPricingView: React.FC = () => {
                     </div>
                     <ChevronDown
                       size={20}
-                      className={`flex-shrink-0 text-slate-600 dark:text-slate-500 transition-transform ${
+                      className={`flex-shrink-0 text-c-text-secondary transition-transform ${
                         expandedFaq === idx ? 'rotate-180' : ''
                       }`}
                     />
                   </button>
                   {expandedFaq === idx && (
-                    <div className="border-t border-slate-200 p-4 pb-5 pt-4 dark:border-navy-700">
-                      <p className="pl-8 text-sm text-slate-600 dark:text-slate-400">
+                    <div className="border-t border-c-border-subtle p-4 pb-5 pt-4 dark:border-navy-700">
+                      <p className="pl-8 text-sm text-c-text-secondary">
                         {faq.answer}
                       </p>
                     </div>
@@ -758,14 +758,14 @@ export const PartnerPricingView: React.FC = () => {
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <button
                 onClick={startApplication}
-                className="inline-flex items-center gap-2 rounded-full bg-white px-8 py-4 font-bold text-primary-700 shadow-lg transition hover:bg-primary-50 dark:bg-navy-900"
+                className="inline-flex items-center gap-2 rounded-full bg-c-surface px-8 py-4 font-bold text-primary-700 shadow-lg transition hover:bg-primary-50 dark:bg-navy-900"
               >
                 Start application
                 <ArrowRight size={18} />
               </button>
               <button
                 onClick={openContact}
-                className="inline-flex items-center gap-2 rounded-full border-2 border-white/30 px-8 py-4 font-bold text-white transition hover:bg-white/10"
+                className="inline-flex items-center gap-2 rounded-full border-2 border-white/30 px-8 py-4 font-bold text-white transition hover:bg-c-surface/10"
               >
                 Skontaktuj się z zespołem partnerskim
               </button>
