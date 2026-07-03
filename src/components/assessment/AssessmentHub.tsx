@@ -1065,7 +1065,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           name: item.name,
           framework: mapApiFramework(item.type),
           status: mapAssessmentApiStatus(item.status),
-          progress: item.progress ?? 0,
+          // API returns snake_case (completion_percent); item.progress is never set by the
+          // backend, so this always fell back to 0 even for fully-completed assessments.
+          progress: item.progress ?? (item as any).completion_percent ?? 0,
           updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
         }));
         break;
