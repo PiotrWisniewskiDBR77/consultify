@@ -271,8 +271,8 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
 
                 {menuOpen === relay.id && (
                   <>
-                    <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(null)} />
-                    <div className="absolute right-0 top-full mt-1 z-50 w-48 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1">
+                    <div className="fixed inset-0 z-dropdown" onClick={() => setMenuOpen(null)} />
+                    <div className="absolute right-0 top-full mt-1 z-overlay w-48 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1">
                       <MenuBtn
                         icon={
                           testingId === relay.id ? (

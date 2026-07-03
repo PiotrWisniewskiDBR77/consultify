@@ -248,7 +248,7 @@ export const BlockInsertMenu: React.FC<BlockInsertMenuProps> = ({
     <div
       ref={menuRef}
       style={{ left: position.x, top: position.y }}
-      className="fixed z-50 w-80 bg-white dark:bg-navy-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden"
+      className="fixed z-overlay w-80 bg-white dark:bg-navy-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden"
     >
       {/* Search */}
       <div className="p-3 border-b border-slate-200 dark:border-slate-700">

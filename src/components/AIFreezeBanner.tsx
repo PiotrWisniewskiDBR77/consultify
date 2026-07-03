@@ -9,7 +9,7 @@ export const AIFreezeBanner: React.FC = () => {
   if (!aiFreezeStatus.isFrozen) return null;
 
   return (
-    <div className="bg-amber-600 dark:bg-amber-900/40 text-white px-4 py-2 flex items-center justify-between shadow-lg z-[70] border-b border-amber-500/30 backdrop-blur-md animate-in slide-in-from-top duration-300">
+    <div className="bg-amber-600 dark:bg-amber-900/40 text-white px-4 py-2 flex items-center justify-between shadow-lg z-modal border-b border-amber-500/30 backdrop-blur-md animate-in slide-in-from-top duration-300">
       <div className="flex items-center gap-3">
         <div className="bg-amber-500/30 p-1.5 rounded-full">
           <ShieldAlert size={18} className="text-white animate-pulse" />

@@ -107,7 +107,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-overlay flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
       <div className="relative w-[480px] bg-white dark:bg-navy-900 rounded-2xl shadow-2xl overflow-hidden">

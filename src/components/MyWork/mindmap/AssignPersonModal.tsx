@@ -42,7 +42,7 @@ export const AssignPersonModal: React.FC<AssignPersonModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30"
+      className="fixed inset-0 z-context-menu flex items-center justify-center bg-black/30"
       onClick={onClose}
     >
       <div

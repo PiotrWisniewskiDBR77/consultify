@@ -315,7 +315,7 @@ export const LegalPanel: React.FC = () => {
       )}
 
       {showPublishModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay p-4">
           <div className="bg-white dark:bg-navy-800 rounded-xl shadow-2xl max-w-lg w-full">
             <div className="p-6 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white">

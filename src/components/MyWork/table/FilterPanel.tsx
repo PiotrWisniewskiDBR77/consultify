@@ -76,7 +76,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   const needsValue = (op: FilterOperator) => op !== 'not_empty' && op !== 'is_empty';
 
   return (
-    <div className="absolute left-0 top-full mt-1 z-50 w-[400px] rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-2xl">
+    <div className="absolute left-0 top-full mt-1 z-overlay w-[400px] rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-2xl">
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200/60 dark:border-navy-700/60">
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold text-slate-800 dark:text-slate-200">

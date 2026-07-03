@@ -78,7 +78,7 @@ export const BatchConvertModal: React.FC<BatchConvertModalProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/40">
+    <div className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-black/40">
       <div className="w-full max-w-md rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
         <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
           <div>

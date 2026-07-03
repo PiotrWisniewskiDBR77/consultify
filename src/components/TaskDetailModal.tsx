@@ -129,7 +129,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
     const TASK_TYPES: string[] = ['task', 'bug', 'story', 'epic', 'subtask', 'pilot'];
 
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 dark:bg-navy-950/90 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="fixed inset-0 z-overlay flex items-center justify-center bg-slate-900/50 dark:bg-navy-950/90 backdrop-blur-sm p-4 animate-in fade-in duration-200">
         <div className="bg-c-surface border border-c-border rounded-xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col h-[85vh]">
           {/* Initiative Context Banner */}
           {initiative && (

@@ -104,7 +104,7 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
     <div
       ref={overlayRef}
       onClick={handleOverlayClick}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm transition-opacity duration-200"
+      className="fixed inset-0 z-overlay flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm transition-opacity duration-200"
     >
       <div className="w-full max-w-lg mx-4 rounded-2xl border border-primary-500/30 bg-white dark:bg-zinc-900 dark:border-zinc-700 shadow-2xl overflow-hidden transition-all duration-200 animate-in fade-in zoom-in-95">
         {/* Header */}

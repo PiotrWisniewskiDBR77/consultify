@@ -147,7 +147,7 @@ export const DeckGovernanceCardModal: React.FC<DeckGovernanceCardModalProps> = (
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm"
+      className="fixed inset-0 z-overlay flex items-center justify-center bg-slate-900/40 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="deck-governance-card-title"

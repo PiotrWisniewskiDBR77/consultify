@@ -163,7 +163,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-start justify-end" onClick={onClose}>
+    <div className="fixed inset-0 z-modal flex items-start justify-end" onClick={onClose}>
       <div
         className="w-80 h-full bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-auto"
         onClick={(e) => e.stopPropagation()}

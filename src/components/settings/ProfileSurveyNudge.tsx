@@ -186,7 +186,7 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
   if (!visible) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-context-menu flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={handleDismiss} />
       <div className="relative w-full max-w-lg bg-white dark:bg-navy-900 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300">
         {/* Progress bar */}

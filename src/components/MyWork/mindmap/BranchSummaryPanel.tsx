@@ -170,7 +170,7 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-y-0 right-0 z-50 flex">
+    <div className="fixed inset-y-0 right-0 z-overlay flex">
       <div className="w-[380px] bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border-l border-slate-200 dark:border-white/10 shadow-2xl flex flex-col rounded-l-2xl">
         <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200 dark:border-white/10">
           <FileText size={16} className="text-slate-500 shrink-0" />

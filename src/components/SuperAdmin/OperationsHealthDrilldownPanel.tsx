@@ -460,7 +460,7 @@ const OperationsHealthDrilldownPanel: React.FC<OperationsHealthDrilldownPanelPro
   const headingId = 'operations-health-drilldown-heading';
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-40">
+    <div className="pointer-events-none fixed inset-0 z-dropdown">
       <div
         className="pointer-events-auto absolute inset-0 bg-slate-900/20 dark:bg-slate-950/40"
         onClick={onClose}

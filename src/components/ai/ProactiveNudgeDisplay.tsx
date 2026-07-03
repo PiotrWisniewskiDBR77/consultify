@@ -216,7 +216,7 @@ export function ProactiveNudgeDisplay({
   }
 
   return (
-    <div className={`fixed ${positionStyles[position]} z-50 flex flex-col gap-3 max-w-sm`}>
+    <div className={`fixed ${positionStyles[position]} z-overlay flex flex-col gap-3 max-w-sm`}>
       {/* Collapse/Expand button when there are many nudges */}
       {nudges.length > 1 && (
         <button

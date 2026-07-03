@@ -487,7 +487,7 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
       {isOpen && (
         <div
           className="
-            absolute top-full left-0 mt-1 z-50
+            absolute top-full left-0 mt-1 z-overlay
             min-w-[200px] py-1
             bg-white dark:bg-navy-800 rounded-xl
             shadow-hig-xl dark:shadow-hig-dark-xl

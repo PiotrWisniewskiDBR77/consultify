@@ -2445,7 +2445,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 backdrop-blur-sm"
+      className="fixed inset-0 z-overlay flex items-center justify-center bg-slate-950/55 backdrop-blur-sm"
       data-testid="initiative-wizard-modal"
       role="dialog"
       aria-modal="true"

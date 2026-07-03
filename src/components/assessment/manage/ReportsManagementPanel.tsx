@@ -396,8 +396,8 @@ const ReportRow: FC<{
 
             {showActions && (
               <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowActions(false)} />
-                <div className="absolute right-0 top-full mt-1 z-50 w-44 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
+                <div className="fixed inset-0 z-dropdown" onClick={() => setShowActions(false)} />
+                <div className="absolute right-0 top-full mt-1 z-overlay w-44 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
                   <button
                     onClick={() => {
                       onOpen(report.id, report.name, report.status);

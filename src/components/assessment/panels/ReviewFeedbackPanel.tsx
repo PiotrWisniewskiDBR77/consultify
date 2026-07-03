@@ -185,13 +185,13 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-dropdown" onClick={onClose} />
 
       {/* Panel */}
       <div
         ref={panelRef}
         className={`
-                    fixed top-0 right-0 h-full w-full max-w-lg bg-white dark:bg-navy-900 shadow-2xl z-50
+                    fixed top-0 right-0 h-full w-full max-w-lg bg-white dark:bg-navy-900 shadow-2xl z-overlay
                     transform transition-transform duration-300 ease-out
                     ${isOpen ? 'translate-x-0' : 'translate-x-full'}
                 `}

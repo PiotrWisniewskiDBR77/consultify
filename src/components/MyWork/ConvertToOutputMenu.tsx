@@ -211,13 +211,13 @@ export const ConvertToOutputMenu: React.FC<ConvertToOutputMenuProps> = ({
             {open && (
               <>
                 <div
-                  className="fixed inset-0 z-40"
+                  className="fixed inset-0 z-dropdown"
                   onClick={() => setOpen(false)}
                   aria-hidden="true"
                 />
                 {/* V5-IDEA-46: Dark/light parity */}
                 <div
-                  className="absolute top-full left-0 mt-1 z-50 min-w-[220px] rounded-lg bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-white/10 shadow-xl py-1"
+                  className="absolute top-full left-0 mt-1 z-overlay min-w-[220px] rounded-lg bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-white/10 shadow-xl py-1"
                   role="menu"
                 >
                   {TARGET_ITEMS.map(({ type, icon: Icon, labelKey }) => (

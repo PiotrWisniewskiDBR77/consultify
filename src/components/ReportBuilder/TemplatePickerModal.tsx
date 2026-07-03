@@ -320,7 +320,7 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-overlay flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       >
         <motion.div
@@ -512,7 +512,7 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
           onClick={() => setIsNewTemplateMetaOpen(false)}
         >
           <motion.div
@@ -610,7 +610,7 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
 
       {/* Template builder overlay (full ReportEditor in template mode) */}
       {isTemplateBuilderOpen && (
-        <div className="fixed inset-0 z-[70]">
+        <div className="fixed inset-0 z-modal">
           <ReportEditor
             mode="template"
             templateMeta={{

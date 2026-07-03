@@ -440,7 +440,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
     };
 
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 dark:bg-black/80 backdrop-blur-sm p-4 transition-all">
+      <div className="fixed inset-0 z-overlay flex items-center justify-center bg-slate-900/50 dark:bg-black/80 backdrop-blur-sm p-4 transition-all">
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl w-full max-w-5xl h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
           {/* Header with Module Indicator */}
           <div className="border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950">

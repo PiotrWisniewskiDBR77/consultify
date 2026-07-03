@@ -757,10 +757,10 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
     return (
       <>
         <div
-          className="fixed inset-0 z-[150] bg-black/20 backdrop-blur-[2px]"
+          className="fixed inset-0 z-context-menu bg-black/20 backdrop-blur-[2px]"
           onClick={handleClose}
         />
-        <div className="fixed right-0 top-0 bottom-0 z-[151] w-[480px] max-w-[90vw] bg-white dark:bg-zinc-900 border-l border-slate-200 dark:border-zinc-700 shadow-2xl flex flex-col">
+        <div className="fixed right-0 top-0 bottom-0 z-context-menu w-[480px] max-w-[90vw] bg-white dark:bg-zinc-900 border-l border-slate-200 dark:border-zinc-700 shadow-2xl flex flex-col">
           {panelContent}
         </div>
       </>

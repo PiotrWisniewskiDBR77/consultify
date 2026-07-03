@@ -789,7 +789,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-40 flex justify-end"
+          className="fixed inset-0 z-dropdown flex justify-end"
         >
           <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
           <div className="relative">{panelContent}</div>
