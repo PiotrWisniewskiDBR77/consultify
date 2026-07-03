@@ -75,7 +75,7 @@ export const StatusChangeToast: React.FC<StatusChangeToastProps> = ({
                 {t('statusChangeToast.viewIn', 'View in {{module}}', {
                   module: moduleConfig.name,
                 })}
-                <ArrowRight size={12} />
+                <ArrowRight size={14} />
               </button>
             )}
           </div>

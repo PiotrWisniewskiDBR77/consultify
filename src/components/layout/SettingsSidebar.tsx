@@ -175,7 +175,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
       {/* Header / Brand */}
       <div className="h-16 border-b border-slate-200 dark:border-navy-700 flex items-center px-4 gap-3 relative shrink-0">
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-600 to-slate-700 dark:from-primary-600 dark:to-primary-700 flex items-center justify-center shadow-lg shrink-0">
-          <Settings size={18} className="text-white" />
+          <Settings size={16} className="text-white" />
         </div>
 
         <div
@@ -256,7 +256,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 hover:text-primary-600 dark:hover:text-primary-400 transition-all group ${!showFull ? 'justify-center' : ''}`}
           title={t('settings.backToApp', 'Back to App')}
         >
-          <ArrowLeft size={18} className="shrink-0" />
+          <ArrowLeft size={16} className="shrink-0" />
           <span
             className={`text-sm whitespace-nowrap transition-all duration-300 ${showFull ? 'w-auto opacity-100' : 'w-0 opacity-0 hidden'}`}
           >

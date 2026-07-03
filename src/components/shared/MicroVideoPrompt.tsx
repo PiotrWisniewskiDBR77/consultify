@@ -217,7 +217,7 @@ export const MicroVideoPrompt: React.FC<MicroVideoPromptProps> = ({
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <Play size={12} className="text-slate-600 dark:text-slate-500" />
+                            <Play size={14} className="text-slate-600 dark:text-slate-500" />
                           </div>
                         )}
                       </div>
@@ -227,7 +227,7 @@ export const MicroVideoPrompt: React.FC<MicroVideoPromptProps> = ({
                         </p>
                         {rec.duration && (
                           <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
-                            <Clock size={10} />
+                            <Clock size={12} />
                             {rec.duration}
                           </div>
                         )}
@@ -265,7 +265,7 @@ export const MicroVideoPrompt: React.FC<MicroVideoPromptProps> = ({
                 onClick={handleDontShow}
                 className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-xl text-xs font-medium transition-colors"
               >
-                <EyeOff size={12} />
+                <EyeOff size={14} />
                 {t('help.microVideo.dontShow', "Don't show again")}
               </button>
             </div>

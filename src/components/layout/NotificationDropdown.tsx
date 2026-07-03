@@ -375,7 +375,7 @@ export const NotificationDropdown = () => {
                 className="text-xs text-c-text-secondary hover:text-c-accent font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md hover:bg-c-surface"
                 title={t('notificationDropdown.openInbox', 'Open Inbox (Action Queue)')}
               >
-                <ArrowRight size={12} /> {t('notificationDropdown.inbox', 'Inbox')}
+                <ArrowRight size={14} /> {t('notificationDropdown.inbox', 'Inbox')}
               </button>
               <button
                 onClick={() => {
@@ -386,7 +386,7 @@ export const NotificationDropdown = () => {
                 className="text-xs text-c-text-secondary hover:text-c-accent font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md hover:bg-c-surface"
                 title={t('notificationDropdown.openCenter', 'Open Notification Center')}
               >
-                <ArrowRight size={12} /> {t('notificationDropdown.center', 'Center')}
+                <ArrowRight size={14} /> {t('notificationDropdown.center', 'Center')}
               </button>
               {unreadCount > 0 && (
                 <button
@@ -394,7 +394,7 @@ export const NotificationDropdown = () => {
                   className="text-xs text-c-text-secondary hover:text-c-accent font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md hover:bg-c-surface"
                   title={t('notificationDropdown.markAllRead', 'Mark all as read')}
                 >
-                  <Check size={12} /> {t('notificationDropdown.markAllReadShort', 'Mark all read')}
+                  <Check size={14} /> {t('notificationDropdown.markAllReadShort', 'Mark all read')}
                 </button>
               )}
               <button
@@ -484,7 +484,7 @@ export const NotificationDropdown = () => {
                                   {contract.priority}
                                 </span>
                                 <span className="inline-flex items-center gap-1 text-xs font-medium text-c-accent bg-c-accent-soft px-2.5 py-1 rounded-md transition-colors">
-                                  {primaryLabel} <ArrowRight size={12} />
+                                  {primaryLabel} <ArrowRight size={14} />
                                 </span>
                               </div>
                             </div>

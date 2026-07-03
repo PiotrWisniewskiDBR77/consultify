@@ -729,7 +729,7 @@ export const Sidebar: React.FC = () => {
                 </span>
               )}
               {isCompleted && !isActive && <CheckCircle2 size={14} className="text-green-500/80" />}
-              {isLocked && <Lock size={12} className="text-slate-600 dark:text-slate-500" />}
+              {isLocked && <Lock size={14} className="text-slate-600 dark:text-slate-500" />}
               {hasSubItems && (
                 <span
                   className={`text-slate-600 dark:text-slate-400 transition-transform ${activeFloating?.id === item.id ? 'translate-x-1' : ''}`}
@@ -867,7 +867,7 @@ export const Sidebar: React.FC = () => {
                 ${!showFull ? 'justify-center px-0' : 'px-3'} `}
               title={t('sidebar.logOut')}
             >
-              <LogOut size={18} />
+              <LogOut size={16} />
               {showFull && <span>{t('sidebar.logOut')}</span>}
             </button>
           </div>
