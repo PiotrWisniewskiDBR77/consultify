@@ -35,8 +35,8 @@ function severityStyles(severity: ConflictSeverity) {
     case 'low':
     default:
       return {
-        pill: 'bg-slate-500/15 text-slate-300 border border-slate-500/25',
-        dot: 'bg-slate-400',
+        pill: 'bg-c-surface-raised text-c-text-secondary border border-c-border',
+        dot: 'bg-c-text-muted',
       };
   }
 }
@@ -44,12 +44,12 @@ function severityStyles(severity: ConflictSeverity) {
 function typeMeta(type: ConflictType) {
   switch (type) {
     case 'dependency':
-      return { label: 'Dependency', icon: <Link2 size={14} className="text-slate-300" /> };
+      return { label: 'Dependency', icon: <Link2 size={14} className="text-c-text-secondary" /> };
     case 'resource':
-      return { label: 'Resource', icon: <Users size={14} className="text-slate-300" /> };
+      return { label: 'Resource', icon: <Users size={14} className="text-c-text-secondary" /> };
     case 'timeline':
     default:
-      return { label: 'Timeline', icon: <AlertTriangle size={14} className="text-slate-300" /> };
+      return { label: 'Timeline', icon: <AlertTriangle size={14} className="text-c-text-secondary" /> };
   }
 }
 
@@ -80,11 +80,11 @@ export const InitiativeConflictsPanel: React.FC<InitiativeConflictsPanelProps> =
   const highCount = grouped.high.length;
 
   return (
-    <div className="mt-3 rounded-xl border border-navy-700 bg-navy-950/40 p-3">
+    <div className="mt-3 rounded-xl border border-c-border bg-c-surface p-3">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold uppercase text-slate-300">{title}</span>
-          <span className="text-xs text-slate-400">
+          <span className="text-xs font-semibold uppercase text-c-text-secondary">{title}</span>
+          <span className="text-xs text-c-text-muted">
             {total} total{highCount ? ` • ${highCount} high` : ''}
           </span>
         </div>
@@ -104,7 +104,7 @@ export const InitiativeConflictsPanel: React.FC<InitiativeConflictsPanelProps> =
                   <span className={`w-2 h-2 rounded-full ${sevStyle.dot}`} />
                   {sev.toUpperCase()}
                 </span>
-                <span className="text-xs text-slate-400">{list.length}</span>
+                <span className="text-xs text-c-text-muted">{list.length}</span>
               </div>
 
               <div className="space-y-2">
@@ -114,31 +114,31 @@ export const InitiativeConflictsPanel: React.FC<InitiativeConflictsPanelProps> =
                   return (
                     <div
                       key={`${c.source}-${c.type}-${sev}-${idx}`}
-                      className="rounded-lg border border-navy-800 bg-navy-900/40 p-3"
+                      className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-3"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
                             {meta.icon}
-                            <span className="text-xs font-semibold text-slate-200">
+                            <span className="text-xs font-semibold text-c-text">
                               {meta.label}
                             </span>
-                            <span className="text-[10px] text-slate-500">
+                            <span className="text-[10px] text-c-text-muted">
                               {c.source === 'ai' ? 'AI' : 'Local'}
                             </span>
                           </div>
-                          <div className="mt-1 text-xs text-slate-300 truncate" title={names}>
+                          <div className="mt-1 text-xs text-c-text-secondary truncate" title={names}>
                             {names}
                           </div>
                         </div>
                       </div>
 
-                      <div className="mt-2 text-xs text-slate-400 whitespace-pre-wrap">
+                      <div className="mt-2 text-xs text-c-text-muted whitespace-pre-wrap">
                         {c.description}
                       </div>
                       {c.recommendation && (
-                        <div className="mt-2 text-xs text-slate-300">
-                          <span className="text-slate-500">Recommendation:</span> {c.recommendation}
+                        <div className="mt-2 text-xs text-c-text-secondary">
+                          <span className="text-c-text-muted">Recommendation:</span> {c.recommendation}
                         </div>
                       )}
                     </div>
