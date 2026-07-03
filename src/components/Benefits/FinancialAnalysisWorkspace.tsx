@@ -1,7 +1,9 @@
-import { Loader2, Plus, X } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { LoadingState } from '@/components/shared/states';
 
 import { Api } from '../../services/api';
 import { shouldFallbackToLegacyFinance, V8FinanceApi } from '../../services/api/v8/finance';
@@ -306,8 +308,8 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
+      <div className="h-full p-6">
+        <LoadingState template="panel" />
       </div>
     );
   }
