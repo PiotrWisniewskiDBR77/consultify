@@ -6,6 +6,7 @@ import type {
 } from '@/store/useToolStore';
 
 import type { ToolAiPendingAction } from './dynamicSwot';
+import { pickW2SummaryFields } from './w2SummaryFields';
 
 interface AmbitionDecomposerActionHandlers {
   updateInputData: (data: Partial<AmbitionDecomposerData>) => void;
@@ -312,6 +313,7 @@ export function applyAmbitionDecomposerPendingAction({
     actions.updateInputData({
       summary: {
         proposalId: 'ambition-decomposer-summary',
+        ...pickW2SummaryFields(summaryObj),
         executiveSummary:
           typeof summaryObj?.executiveSummary === 'string'
             ? summaryObj.executiveSummary

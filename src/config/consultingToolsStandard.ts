@@ -105,6 +105,14 @@ export interface ConsultingSummarySnapshot {
   executiveSummary?: string;
   keyInsights: string[];
   appliedConclusions?: string[];
+  /**
+   * CONCLUSION_LAYER_STANDARD variant-W2 finishing fields (optional, additive).
+   * Populated when the tool's conclusion prompt returns them nested under
+   * `summary`; consumed by the Conclusions bridge (answers.summary.verdict).
+   */
+  verdict?: string;
+  tradeoffs?: { chosen: string; rejected: string; why: string }[];
+  expectedEffect?: { text: string; horizon: string };
 }
 
 export interface ConsultingEvidenceItem {

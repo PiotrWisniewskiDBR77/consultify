@@ -16,6 +16,7 @@ import type {
 } from '@/store/useToolStore';
 
 import type { ToolAiPendingAction } from './dynamicSwot';
+import { pickW2SummaryFields } from './w2SummaryFields';
 
 export interface OperationalSectionMeta {
   id: string;
@@ -157,6 +158,7 @@ const buildSummary = (
     parsed.summary && typeof parsed.summary === 'object' ? parsed.summary : null;
   const initiatives = Array.isArray(parsed.initiatives) ? parsed.initiatives : [];
   return {
+    ...pickW2SummaryFields(summaryObj),
     executiveSummary:
       typeof summaryObj?.executiveSummary === 'string'
         ? summaryObj.executiveSummary
@@ -170,7 +172,9 @@ const buildSummary = (
         : [],
     appliedConclusions: Array.isArray(summaryObj?.appliedConclusions)
       ? summaryObj.appliedConclusions.filter(Boolean)
-      : [],
+      : Array.isArray(parsed.appliedConclusions)
+        ? parsed.appliedConclusions.filter(Boolean)
+        : [],
     recommendedInitiatives: initiatives.map((initiative: any) => ({
       id: '',
       title: initiative.title || '',
