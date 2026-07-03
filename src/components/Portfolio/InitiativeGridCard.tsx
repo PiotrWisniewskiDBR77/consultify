@@ -148,14 +148,26 @@ export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
       onDoubleClick={() => onOpenFull?.(initiative)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      aria-label={t('initiatives.card.openInitiative', 'Open initiative: {{title}}', {
+        title: initiative.name,
+      })}
       className={[
         'group relative cursor-pointer rounded-xl p-4',
         'border border-c-border-subtle',
         // canon §8.1 — neutral card surface; status color lives in the badge, not the card
         'bg-c-surface',
         'hover:shadow-md hover:-translate-y-px transition-all duration-150',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-2 ring-offset-c-bg',
         terminal ? 'opacity-60' : '',
       ].join(' ')}
     >
