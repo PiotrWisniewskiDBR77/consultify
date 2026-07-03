@@ -260,7 +260,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
 
   if (viewState === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+      <div className="min-h-screen flex items-center justify-center bg-c-surface-raised">
         <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
       </div>
     );
@@ -268,9 +268,9 @@ export const PublicMiniAssessmentView: React.FC = () => {
 
   if (viewState === 'error') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-c-surface-raised p-4">
         <div className="text-center max-w-md">
-          <p className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-2">{error}</p>
+          <p className="text-lg font-medium text-c-text mb-2">{error}</p>
           <button
             onClick={() => window.location.reload()}
             className="text-indigo-600 hover:underline text-sm"
@@ -288,20 +288,20 @@ export const PublicMiniAssessmentView: React.FC = () => {
         className="min-h-screen bg-gradient-to-br from-crimson-50 via-white to-primary-50 dark:from-gray-950 dark:via-gray-900 dark:to-crimson-950 flex items-center justify-center p-4"
         dir={lang === 'ar' ? 'rtl' : 'ltr'}
       >
-        <div className="max-w-lg w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center">
+        <div className="max-w-lg w-full bg-c-surface rounded-2xl shadow-xl p-8 text-center">
           <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
             <BarChart3 className="w-8 h-8 text-indigo-600" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-2xl font-bold text-c-text mb-2">
             {t('publicAssessment.title', 'Digital Transformation Readiness Check')}
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 mb-6">
+          <p className="text-c-text-muted mb-6">
             {t(
               'publicAssessment.subtitle',
               'Answer a few quick questions and get an AI-powered snapshot of your readiness.'
             )}
           </p>
-          <div className="flex items-center justify-center gap-4 text-xs text-gray-600 mb-6">
+          <div className="flex items-center justify-center gap-4 text-xs text-c-text-secondary mb-6">
             <span className="flex items-center gap-1">
               <Star className="w-3 h-3" /> {assessmentData?.template?.questions?.length || 6}{' '}
               {t('publicAssessment.questions', 'questions')}
@@ -313,18 +313,18 @@ export const PublicMiniAssessmentView: React.FC = () => {
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm text-gray-500 dark:text-gray-400 mb-1 text-left">
+            <label className="block text-sm text-c-text-muted mb-1 text-left">
               {t('publicAssessment.emailOptional', 'Email (optional — to receive your results)')}
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-c-text-secondary" />
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@company.com"
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700
-                  text-sm text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-c-border-subtle bg-c-surface
+                  text-sm text-c-text-secondary focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
           </div>
@@ -349,7 +349,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
             </p>
           )}
 
-          <p className="text-xs text-gray-600 mt-4">
+          <p className="text-xs text-c-text-secondary mt-4">
             {t(
               'publicAssessment.disclaimer',
               'Your answers are saved as a draft before submit and used to generate a rules-based readiness snapshot. No account required.'
@@ -362,10 +362,10 @@ export const PublicMiniAssessmentView: React.FC = () => {
 
   if (viewState === 'submitting') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-c-surface-raised p-4">
         <div className="text-center">
           <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-c-text-secondary">
             {t('publicAssessment.analyzing', 'Analyzing your responses...')}
           </p>
         </div>
@@ -380,7 +380,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
         dir={lang === 'ar' ? 'rtl' : 'ltr'}
       >
         <div className="max-w-2xl mx-auto">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
+          <div className="bg-c-surface rounded-2xl shadow-xl overflow-hidden">
             {/* Score header */}
             <div className="bg-indigo-600 text-white p-8 text-center">
               <p className="text-xs uppercase tracking-[0.2em] text-indigo-100/80 mb-3">
@@ -391,7 +391,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
               </h1>
               <div className="text-5xl font-bold mb-2">{aiResult.overallScore}%</div>
               <span
-                className={`inline-block px-3 py-1 rounded-full text-sm font-medium bg-white/20`}
+                className={`inline-block px-3 py-1 rounded-full text-sm font-medium bg-c-surface/20`}
               >
                 {levelLabel(aiResult.overallLevel)}
               </span>
@@ -404,20 +404,20 @@ export const PublicMiniAssessmentView: React.FC = () => {
             </div>
 
             {/* Dimensions */}
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">
+            <div className="p-6 border-b border-c-border-subtle">
+              <h2 className="text-sm font-semibold text-c-text-muted uppercase tracking-wider mb-4">
                 {t('publicAssessment.dimensions', 'Breakdown by Dimension')}
               </h2>
               <div className="space-y-3">
                 {aiResult.dimensions.map((dim) => (
                   <div key={dim.name}>
                     <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="text-gray-700 dark:text-gray-300">{dim.name}</span>
+                      <span className="text-c-text-secondary">{dim.name}</span>
                       <span className={`font-medium ${levelColor(dim.level)}`}>
                         {dim.score}/{dim.maxScore}
                       </span>
                     </div>
-                    <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2">
+                    <div className="w-full bg-c-surface-raised rounded-full h-2">
                       <div
                         className="bg-indigo-500 h-2 rounded-full transition-all"
                         style={{ width: `${(dim.score / dim.maxScore) * 100}%` }}
@@ -429,8 +429,8 @@ export const PublicMiniAssessmentView: React.FC = () => {
             </div>
 
             {/* Insights */}
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+            <div className="p-6 border-b border-c-border-subtle">
+              <h2 className="text-sm font-semibold text-c-text-muted uppercase tracking-wider mb-3">
                 <Sparkles className="w-4 h-4 inline mr-1" />
                 {t('publicAssessment.keyInsights', 'Key Insights')}
               </h2>
@@ -438,7 +438,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
                 {aiResult.insights.map((insight, idx) => (
                   <li
                     key={idx}
-                    className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300"
+                    className="flex items-start gap-2 text-sm text-c-text-secondary"
                   >
                     <TrendingUp className="w-4 h-4 text-indigo-500 mt-0.5 flex-shrink-0" />
                     {insight}
@@ -448,26 +448,26 @@ export const PublicMiniAssessmentView: React.FC = () => {
             </div>
 
             {/* Biggest challenge */}
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+            <div className="p-6 border-b border-c-border-subtle">
+              <h2 className="text-sm font-semibold text-c-text-muted uppercase tracking-wider mb-3">
                 {t('publicAssessment.mainChallenge', 'Main challenge reported')}
               </h2>
-              <p className="text-sm text-gray-700 dark:text-gray-300">
+              <p className="text-sm text-c-text-secondary">
                 {aiResult.biggestChallenge ||
                   t('publicAssessment.noChallenge', 'No free-text challenge was provided.')}
               </p>
             </div>
 
             {/* Follow-up interview action */}
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+            <div className="p-6 border-b border-c-border-subtle">
+              <h2 className="text-sm font-semibold text-c-text-muted uppercase tracking-wider mb-3">
                 {t('publicAssessment.followUpTitle', 'Suggested follow-up interview focus')}
               </h2>
               <ul className="space-y-2">
                 {aiResult.followUpTopics.map((topic, idx) => (
                   <li
                     key={`${topic}-${idx}`}
-                    className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300"
+                    className="flex items-start gap-2 text-sm text-c-text-secondary"
                   >
                     <CheckCircle2 className="w-4 h-4 text-indigo-500 mt-0.5 flex-shrink-0" />
                     {topic}
@@ -477,32 +477,32 @@ export const PublicMiniAssessmentView: React.FC = () => {
             </div>
 
             {/* Source answers */}
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+            <div className="p-6 border-b border-c-border-subtle">
+              <h2 className="text-sm font-semibold text-c-text-muted uppercase tracking-wider mb-3">
                 {t('publicAssessment.sourceAnswers', 'Source answers used')}
               </h2>
               <div className="space-y-3">
                 {aiResult.answerSummary.map((entry) => (
                   <div
                     key={entry.questionId}
-                    className="rounded-xl bg-gray-50 dark:bg-gray-900/40 p-3"
+                    className="rounded-xl bg-c-surface-raised/40 p-3"
                   >
-                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    <p className="text-xs font-medium text-c-text-muted mb-1">
                       {entry.question}
                     </p>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">{entry.answer}</p>
+                    <p className="text-sm text-c-text-secondary">{entry.answer}</p>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Assumptions */}
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30">
+            <div className="p-6 border-b border-c-border-subtle bg-c-surface-raised/30">
               <div className="space-y-2">
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <p className="text-xs font-semibold text-c-text-muted uppercase tracking-wider">
                   {t('publicAssessment.methodTitle', 'Method notes')}
                 </p>
-                <p className="text-xs text-gray-600 italic">
+                <p className="text-xs text-c-text-secondary italic">
                   {[...aiResult.methodNotes, ...aiResult.assumptions].join(' • ')}
                 </p>
               </div>
@@ -510,7 +510,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
 
             {/* Action */}
             <div className="p-6">
-              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
+              <h2 className="text-sm font-semibold text-c-text-secondary mb-4">
                 {t('publicAssessment.nextSteps', 'Next action')}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -533,7 +533,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
             </div>
           </div>
 
-          <p className="text-center text-xs text-gray-600 mt-6">Powered by Consultify</p>
+          <p className="text-center text-xs text-c-text-secondary mt-6">Powered by Consultify</p>
         </div>
       </div>
     );
@@ -541,13 +541,13 @@ export const PublicMiniAssessmentView: React.FC = () => {
 
   // Survey state
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+    <div className="min-h-screen bg-c-surface-raised" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      <header className="bg-c-surface border-b border-c-border-subtle px-4 py-3">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <h1 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          <h1 className="text-sm font-semibold text-c-text-secondary">
             {t('publicAssessment.title', 'Digital Transformation Readiness Check')}
           </h1>
-          <span className="text-xs text-gray-600">Consultify</span>
+          <span className="text-xs text-c-text-secondary">Consultify</span>
         </div>
       </header>
       <div className="max-w-3xl mx-auto py-6">
@@ -556,7 +556,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
             {error}
           </div>
         )}
-        <div className="mb-4 px-1 text-xs text-gray-600">
+        <div className="mb-4 px-1 text-xs text-c-text-secondary">
           {isDraftSaving
             ? t('publicAssessment.savingDraft', 'Saving draft...')
             : t('publicAssessment.draftSaved', 'Draft answers are autosaved before submit.')}
