@@ -82,8 +82,15 @@ export const buildDRDVisualizationDataFromAxes = (
   axisData: Record<string, { actual?: number; target?: number }>
 ): AssessmentVisualizationData => {
   const dimensions = DRD_STRUCTURE.map((axis, index) => {
-    const key = DRD_AXIS_KEY_MAP[axis.id];
-    const entry = (key && axisData[key]) || {};
+    // Key-convention divergence: the report editor stores NAMED axis keys
+    // ("processes" …), while the backend `computeAxisDataFromAssessment`
+    // writes NUMERIC axis ids ("1" … "7"). Accept BOTH so the radar renders on
+    // whichever convention the real data uses — named first, numeric fallback.
+    // (The backend divergence itself is fixed in a separate wave.)
+    const namedKey = DRD_AXIS_KEY_MAP[axis.id];
+    const numericKey = String(axis.id);
+    const entry =
+      (namedKey && axisData[namedKey]) || axisData[numericKey] || {};
     return {
       id: String(axis.id),
       name: axis.name,
