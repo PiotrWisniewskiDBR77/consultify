@@ -10,6 +10,11 @@ import { type WebSocket, WebSocketServer } from 'ws';
 import { config } from '../config/Config.js';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
+import {
+  isWsOrgContextFresh,
+  resolveWsOrgContext,
+  type WsOrgContext,
+} from '../realtime/wsOrgContext.js';
 import logger from '../utils/Logger.js';
 
 // ---------------------------------------------------------------------------
@@ -40,7 +45,20 @@ interface CollabSocket extends WebSocket {
   __sessionId?: string;
   __actionsCount?: number;
   __alive?: boolean;
+  /** Demo-aware org context this connection is bound to (#101 Grupa 0). */
+  __orgCtx?: WsOrgContext;
+  /** Shared in-flight re-resolution so concurrent writes don't stampede the DB. */
+  __orgCtxRefresh?: Promise<WsOrgContext> | null;
 }
+
+/** Message types that mutate shared/org state — all must pass the org gate. */
+const WRITE_OPS = new Set([
+  'lock_node',
+  'unlock_node',
+  'select_nodes',
+  'viewport_sync',
+  'graph_patch',
+]);
 
 // ---------------------------------------------------------------------------
 // State
@@ -189,6 +207,89 @@ async function persistEvent(
 }
 
 // ---------------------------------------------------------------------------
+// Org-context enforcement (#101 Grupa 0 — WS-leak)
+// ---------------------------------------------------------------------------
+
+/**
+ * Ensure the socket's org context is still the user's ACTIVE org.
+ *
+ * Fresh context → returned as-is. Stale context → re-resolved (one shared
+ * in-flight promise per socket). If the active org changed mid-connection
+ * (e.g. the user entered/left demo mode), the stale socket must not keep
+ * writing to the old org: we log a warning, notify the client, and close with
+ * 4403 so the frontend re-handshakes into the correct org room.
+ *
+ * Returns null when the write must NOT proceed (socket closed / fail-closed).
+ */
+async function ensureFreshOrgContext(ws: CollabSocket, db: IDatabase): Promise<WsOrgContext | null> {
+  const ctx = ws.__orgCtx;
+  const user = ws.__user;
+  if (!ctx || !user) {
+    logger.warn('[IdeaCollabWs] Missing org context on socket; closing', { ideaId: ws.ideaId });
+    try {
+      ws.close(4401, 'missing org context');
+    } catch {
+      ws.terminate();
+    }
+    return null;
+  }
+  if (isWsOrgContextFresh(ctx)) return ctx;
+
+  if (!ws.__orgCtxRefresh) {
+    ws.__orgCtxRefresh = resolveWsOrgContext(db, user.userId, ctx.jwtOrganizationId).finally(
+      () => {
+        ws.__orgCtxRefresh = null;
+      }
+    );
+  }
+  let fresh: WsOrgContext;
+  try {
+    fresh = await ws.__orgCtxRefresh;
+  } catch (err) {
+    // Fail CLOSED: unknown demo state must never allow a write.
+    logger.warn('[IdeaCollabWs] Org-context revalidation failed; closing connection', {
+      userId: user.userId,
+      ideaId: ws.ideaId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    try {
+      ws.close(1011, 'org context unavailable');
+    } catch {
+      ws.terminate();
+    }
+    return null;
+  }
+
+  if (fresh.organizationId !== ctx.organizationId) {
+    logger.warn(
+      '[IdeaCollabWs] Org context changed mid-connection — rejecting write, closing stale socket',
+      {
+        userId: user.userId,
+        ideaId: ws.ideaId,
+        boundOrg: ctx.organizationId,
+        activeOrg: fresh.organizationId,
+      }
+    );
+    if (ws.readyState === 1) {
+      try {
+        ws.send(JSON.stringify({ type: 'error', code: 'ORG_CONTEXT_CHANGED' }));
+      } catch {
+        /* best effort */
+      }
+    }
+    try {
+      ws.close(4403, 'org context changed');
+    } catch {
+      ws.terminate();
+    }
+    return null;
+  }
+
+  ws.__orgCtx = fresh;
+  return fresh;
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -232,24 +333,48 @@ export function attachIdeaCollabWs(server: HttpServer): void {
       return;
     }
 
-    // Verify ideaId belongs to the user's org before allowing collab join
-    db.get<{ id: string }>(
-      'SELECT id FROM my_ideas WHERE id = ? AND organization_id = ?',
-      [ideaId, organizationId]
-    ).then((idea) => {
-      if (!idea) {
-        socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+    // #101 Grupa 0 (WS-leak): resolve the ACTIVE org context (demo-aware) the
+    // same way HTTP does via demoContextMiddleware, then verify the idea
+    // belongs to that active org — never blindly to the JWT org. A user inside
+    // a demo session must not open a realtime write channel to their real org.
+    resolveWsOrgContext(db, userId, organizationId)
+      .then(async (orgCtx) => {
+        const idea = await db.get<{ id: string }>(
+          'SELECT id FROM my_ideas WHERE id = ? AND organization_id = ?',
+          [ideaId, orgCtx.organizationId]
+        );
+        if (!idea) {
+          if (orgCtx.demoMode && orgCtx.organizationId !== organizationId) {
+            logger.warn(
+              '[IdeaCollabWs] Cross-org WS join rejected: demo session active, idea not in active org',
+              { userId, ideaId, activeOrg: orgCtx.organizationId, jwtOrg: organizationId }
+            );
+          }
+          socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+          socket.destroy();
+          return;
+        }
+        wss.handleUpgrade(request, socket, head, (ws) => {
+          (ws as CollabSocket).__user = {
+            userId,
+            organizationId: orgCtx.organizationId,
+            userName,
+          };
+          (ws as CollabSocket).__orgCtx = orgCtx;
+          wss.emit('connection', ws, request, ideaId);
+        });
+      })
+      .catch((err) => {
+        // Fail CLOSED: if we cannot determine the active org (demo state
+        // unknown), we must not bind the connection to any org.
+        logger.warn('[IdeaCollabWs] Org-context resolution failed; rejecting upgrade', {
+          userId,
+          ideaId,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        socket.write('HTTP/1.1 500 Internal Server Error\r\n\r\n');
         socket.destroy();
-        return;
-      }
-      wss.handleUpgrade(request, socket, head, (ws) => {
-        (ws as CollabSocket).__user = { userId, organizationId, userName };
-        wss.emit('connection', ws, request, ideaId);
       });
-    }).catch(() => {
-      socket.write('HTTP/1.1 500 Internal Server Error\r\n\r\n');
-      socket.destroy();
-    });
   });
 
   // --- Heartbeat ---
@@ -263,6 +388,12 @@ export function attachIdeaCollabWs(server: HttpServer): void {
       }
       ws.__alive = false;
       ws.ping();
+      // #101 Grupa 0: passive listeners also get their org context revalidated
+      // so a socket left open across a demo↔real org switch is closed even if
+      // it never attempts a write (closes the read-side of the stale channel).
+      if (ws.__orgCtx && !isWsOrgContextFresh(ws.__orgCtx)) {
+        void ensureFreshOrgContext(ws, db);
+      }
     });
   }, HEARTBEAT_INTERVAL_MS);
 
@@ -302,9 +433,31 @@ export function attachIdeaCollabWs(server: HttpServer): void {
       ws.__alive = true;
     });
 
-    ws.on('message', (data: Buffer) => {
+    ws.on('message', async (data: Buffer) => {
       try {
         const msg = JSON.parse(data.toString());
+
+        // #101 Grupa 0: every mutating op must (a) run against a FRESH active
+        // org context (demo switch mid-connection closes the stale socket) and
+        // (b) be allowed to write (shared demo org is read-only, parity with
+        // HTTP demoWriteProtection). Rejections are logged + surfaced to the
+        // client — never a silent drop.
+        if (WRITE_OPS.has(msg.type)) {
+          const orgCtx = await ensureFreshOrgContext(ws, db);
+          if (!orgCtx) return;
+          if (!orgCtx.writeAllowed) {
+            logger.warn('[IdeaCollabWs] Write rejected: read-only demo org context', {
+              userId: user.id,
+              ideaId,
+              org: orgCtx.organizationId,
+              op: msg.type,
+            });
+            if (ws.readyState === 1) {
+              ws.send(JSON.stringify({ type: 'error', code: 'DEMO_READ_ONLY', op: msg.type }));
+            }
+            return;
+          }
+        }
 
         switch (msg.type) {
           case 'join':
