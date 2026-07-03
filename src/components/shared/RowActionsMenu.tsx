@@ -285,9 +285,9 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
                             ) : null}
                             {hasSub ? (
                               expanded ? (
-                                <ChevronDown size={13} className="shrink-0 opacity-60" />
+                                <ChevronDown size={14} className="shrink-0 opacity-60" />
                               ) : (
-                                <ChevronRight size={13} className="shrink-0 opacity-60" />
+                                <ChevronRight size={14} className="shrink-0 opacity-60" />
                               )
                             ) : null}
                           </button>
