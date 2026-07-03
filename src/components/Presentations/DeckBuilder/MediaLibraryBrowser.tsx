@@ -108,16 +108,16 @@ export const MediaLibraryBrowser: React.FC<MediaLibraryBrowserProps> = ({
   });
 
   return (
-    <div className="absolute right-0 top-0 bottom-0 w-80 bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700 shadow-2xl z-40 flex flex-col">
+    <div className="absolute right-0 top-0 bottom-0 w-80 bg-c-surface border-l border-c-border-subtle shadow-2xl z-40 flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 dark:border-navy-800">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle">
         <div className="flex items-center gap-2">
-          <ImageIcon size={14} className="text-primary-500" />
-          <h3 className="text-sm font-semibold text-slate-700 dark:text-white">
+          <ImageIcon size={14} className="text-c-accent" />
+          <h3 className="text-sm font-semibold text-c-text">
             {t('presentations.builder.mediaLibrary.title', 'Media Library')}
           </h3>
         </div>
-        <button onClick={onClose} className="text-slate-600 hover:text-slate-600">
+        <button onClick={onClose} className="text-c-text-secondary hover:text-c-text-secondary">
           <X size={14} />
         </button>
       </div>
@@ -125,12 +125,12 @@ export const MediaLibraryBrowser: React.FC<MediaLibraryBrowserProps> = ({
       {/* Search */}
       <div className="px-3 py-2">
         <div className="relative">
-          <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-600" />
+          <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-c-text-secondary" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('presentations.builder.mediaLibrary.search', 'Search by tag or name...')}
-            className="w-full pl-7 pr-2 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 outline-none focus:ring-1 focus:ring-primary-400"
+            className="w-full pl-7 pr-2 py-1.5 text-xs rounded-lg border border-c-border-subtle bg-c-surface-raised outline-none focus:ring-1 focus:ring-c-focus"
           />
         </div>
       </div>
@@ -143,8 +143,8 @@ export const MediaLibraryBrowser: React.FC<MediaLibraryBrowserProps> = ({
             onClick={() => setCategory(cat.id)}
             className={`px-2 py-0.5 text-[10px] rounded-full whitespace-nowrap transition-colors ${
               category === cat.id
-                ? 'bg-navy-900 text-white'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-500 hover:bg-slate-200'
+                ? 'bg-c-surface text-c-text'
+                : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-border-subtle'
             }`}
           >
             {cat.label}
@@ -156,17 +156,17 @@ export const MediaLibraryBrowser: React.FC<MediaLibraryBrowserProps> = ({
       <div className="flex-1 overflow-y-auto px-3 py-2">
         {loading ? (
           <div className="flex items-center justify-center h-32">
-            <div className="animate-spin w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full" />
+            <div className="animate-spin w-5 h-5 border-2 border-c-accent border-t-transparent rounded-full" />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-32 text-slate-600">
+          <div className="flex flex-col items-center justify-center h-32 text-c-text-secondary">
             <ImageIcon size={20} className="mb-2 opacity-40" />
             <p className="text-xs">
               {t('presentations.builder.mediaLibrary.empty', 'No images found')}
             </p>
             <button
               onClick={handleUpload}
-              className="mt-2 text-[10px] text-primary-500 hover:text-primary-600 font-medium"
+              className="mt-2 text-[10px] text-c-accent hover:text-c-accent font-medium"
             >
               {t('presentations.builder.mediaLibrary.uploadFirst', 'Upload your first image')}
             </button>
@@ -177,7 +177,7 @@ export const MediaLibraryBrowser: React.FC<MediaLibraryBrowserProps> = ({
               <button
                 key={item.id}
                 onClick={() => onSelect(item)}
-                className="relative group rounded-lg overflow-hidden border border-slate-200 dark:border-navy-700 hover:border-primary-400 transition-colors aspect-square"
+                className="relative group rounded-lg overflow-hidden border border-c-border-subtle hover:border-c-accent transition-colors aspect-square"
               >
                 <img
                   src={item.thumbnail_url || item.storage_url}
@@ -187,9 +187,9 @@ export const MediaLibraryBrowser: React.FC<MediaLibraryBrowserProps> = ({
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-end">
                   <div className="w-full p-1.5 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                    <p className="text-[8px] text-white truncate">{item.original_name}</p>
+                    <p className="text-[8px] text-c-text truncate">{item.original_name}</p>
                     {item.ai_tags.length > 0 && (
-                      <p className="text-[7px] text-white/70 truncate">
+                      <p className="text-[7px] text-c-text truncate">
                         {item.ai_tags.slice(0, 3).join(', ')}
                       </p>
                     )}
@@ -202,10 +202,10 @@ export const MediaLibraryBrowser: React.FC<MediaLibraryBrowserProps> = ({
       </div>
 
       {/* Upload button */}
-      <div className="px-3 py-2 border-t border-slate-200 dark:border-navy-800">
+      <div className="px-3 py-2 border-t border-c-border-subtle">
         <button
           onClick={handleUpload}
-          className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-slate-300 dark:border-navy-600 text-xs text-slate-500 hover:text-primary-500 hover:border-primary-400 transition-colors"
+          className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-c-border text-xs text-c-text-secondary hover:text-c-accent hover:border-c-accent transition-colors"
         >
           <Upload size={12} />
           {t('presentations.builder.mediaLibrary.upload', 'Upload images')}

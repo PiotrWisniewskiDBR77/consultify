@@ -892,7 +892,7 @@ export const DeckBuilder: React.FC = () => {
   if (loadingDeck || !deck) {
     if (!loadingDeck && loadError) {
       return (
-        <div className="h-screen flex items-center justify-center bg-white dark:bg-navy-950 px-6">
+        <div className="h-screen flex items-center justify-center bg-c-surface px-6">
           <ErrorState
             title={t('presentations.builder.loadFailed', 'Failed to load deck')}
             message={loadError}
@@ -903,7 +903,7 @@ export const DeckBuilder: React.FC = () => {
     }
 
     return (
-      <div className="h-screen flex items-center justify-center bg-white dark:bg-navy-950">
+      <div className="h-screen flex items-center justify-center bg-c-surface">
         <LoadingState
           variant="spinner"
           label={t('presentations.builder.loading', 'Loading deck...')}
@@ -1015,7 +1015,7 @@ export const DeckBuilder: React.FC = () => {
           }
           teresaSlot={
             teresaOpen ? (
-              <aside className="w-[360px] min-w-[320px] max-w-[420px] flex-shrink-0 border-r border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950">
+              <aside className="w-[360px] min-w-[320px] max-w-[420px] flex-shrink-0 border-r border-c-border-subtle bg-c-surface-raised">
                 <UnifiedChatPanel
                   mode="split"
                   title={t('presentations.builder.teresa.title', 'Teresa')}
@@ -1038,14 +1038,14 @@ export const DeckBuilder: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleAcceptAgentEdit}
-                  className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition-colors"
+                  className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-c-text hover:bg-green-700 transition-colors"
                 >
                   {t('presentations.accept')}
                 </button>
                 <button
                   type="button"
                   onClick={handleRejectAgentEdit}
-                  className="rounded-lg bg-slate-200 dark:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+                  className="rounded-lg bg-c-border-subtle px-3 py-1.5 text-xs font-medium text-c-text hover:bg-c-border transition-colors"
                 >
                   {t('presentations.reject')}
                 </button>
@@ -1139,7 +1139,7 @@ export const DeckBuilder: React.FC = () => {
       initialColorSetId={deck.color_set_id || 'midnight_navy'}
       initialBrandKit={brandKit}
     >
-      <div className="h-screen flex flex-col bg-white dark:bg-navy-950 overflow-hidden">
+      <div className="h-screen flex flex-col bg-c-surface overflow-hidden">
         {/* Top Bar */}
         <div className="relative">
           <DeckBuilderTopBar
@@ -1170,7 +1170,7 @@ export const DeckBuilder: React.FC = () => {
           <ThemeSwitcher isOpen={themeSwitcherOpen} onClose={() => setThemeSwitcherOpen(false)} />
         </div>
 
-        <div className="border-b border-slate-200 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-900/40 px-4 py-2">
+        <div className="border-b border-c-border-subtle bg-c-surface-raised px-4 py-2">
           <EmbeddedView
             title={t('presentations.builder.usedIn', 'Used in (backlinks)')}
             count={deckBacklinks.length}
@@ -1179,7 +1179,7 @@ export const DeckBuilder: React.FC = () => {
             viewModes={['list']}
           >
             {deckBacklinks.length === 0 && !deckBacklinksLoading ? (
-              <div className="text-xs text-slate-500 dark:text-slate-400">
+              <div className="text-xs text-c-text-secondary">
                 {t('presentations.noLinksYet')}
               </div>
             ) : (
@@ -1199,7 +1199,7 @@ export const DeckBuilder: React.FC = () => {
                         })
                       )
                     }
-                    className="rounded-full border border-slate-200 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:border-blue-400 dark:hover:border-blue-500/50"
+                    className="rounded-full border border-c-border-subtle/[0.08] bg-c-surface/[0.04] px-3 py-1 text-[11px] font-medium text-c-text hover:border-blue-400 dark:hover:border-blue-500/50"
                   >
                     {getSourceDisplayLabel(bl.sourceType, i18n.language === 'pl')}: {bl.sourceId}
                   </button>
@@ -1232,14 +1232,14 @@ export const DeckBuilder: React.FC = () => {
             <button
               type="button"
               onClick={handleAcceptAgentEdit}
-              className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition-colors"
+              className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-c-text hover:bg-green-700 transition-colors"
             >
               {t('presentations.accept')}
             </button>
             <button
               type="button"
               onClick={handleRejectAgentEdit}
-              className="rounded-lg bg-slate-200 dark:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+              className="rounded-lg bg-c-border-subtle px-3 py-1.5 text-xs font-medium text-c-text hover:bg-c-border transition-colors"
             >
               {t('presentations.reject')}
             </button>
@@ -1249,7 +1249,7 @@ export const DeckBuilder: React.FC = () => {
         {/* Main Content */}
         <div className="flex-1 flex overflow-hidden relative">
           {teresaOpen && (
-            <aside className="w-[360px] min-w-[320px] max-w-[420px] flex-shrink-0 border-r border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950">
+            <aside className="w-[360px] min-w-[320px] max-w-[420px] flex-shrink-0 border-r border-c-border-subtle bg-c-surface-raised">
               <UnifiedChatPanel
                 mode="split"
                 title={t('presentations.builder.teresa.title', 'Teresa')}

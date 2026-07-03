@@ -93,14 +93,14 @@ const priorityGroupHeaderColor: Record<PriorityKey, string> = {
   P0: 'text-danger-600',
   P1: 'text-amber-600',
   P2: 'text-blue-600',
-  Other: 'text-slate-500',
+  Other: 'text-c-text-secondary',
 };
 
 const resultStyles: Record<string, string> = {
   PASS: 'text-emerald-600',
   PASS_WITH_P2: 'text-amber-600',
   BLOCKED_P1: 'text-danger-600',
-  INCONCLUSIVE: 'text-slate-500',
+  INCONCLUSIVE: 'text-c-text-secondary',
 };
 
 function PriorityPill({ priority }: { priority: 'P0' | 'P1' | 'P2' }) {
@@ -263,36 +263,36 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
 
   const resultValue = report?.scorecard?.passVocabulary ?? report?.result;
   const resultColorClass = resultValue
-    ? resultStyles[resultValue] || 'text-slate-500'
-    : 'text-slate-500';
+    ? resultStyles[resultValue] || 'text-c-text-secondary'
+    : 'text-c-text-secondary';
 
   return (
-    <div className="absolute top-0 right-0 w-80 h-full bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700 z-30 flex flex-col shadow-xl">
+    <div className="absolute top-0 right-0 w-80 h-full bg-c-surface border-l border-c-border-subtle z-30 flex flex-col shadow-xl">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
         <div className="flex items-center gap-2">
-          <Shield size={16} className="text-primary-500" />
-          <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+          <Shield size={16} className="text-c-accent" />
+          <h3 className="text-sm font-semibold text-c-text">
             {t('presentations.qualityGates.title', 'Quality Gates')}
           </h3>
         </div>
-        <button onClick={onClose} className="text-slate-600 hover:text-slate-600 text-sm">
+        <button onClick={onClose} className="text-c-text-secondary hover:text-c-text-secondary text-sm">
           ✕
         </button>
       </div>
 
       {/* Score */}
       {report && (
-        <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-800">
+        <div className="px-4 py-3 border-b border-c-border-subtle">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-c-text-secondary">
               {t('presentations.qualityGates.score', 'Deck Score')}
             </span>
             <span className={`text-2xl font-bold ${scoreColor}`}>{report.score}</span>
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
             {report.result && (
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-500/10 text-slate-600 dark:text-slate-300">
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-c-surface-raised text-c-text-secondary">
                 {report.result}
               </span>
             )}
@@ -326,12 +326,12 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
 
         {loading && (
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full" />
+            <div className="animate-spin w-5 h-5 border-2 border-c-accent border-t-transparent rounded-full" />
           </div>
         )}
 
         {!loading && report && report.scorecard && (
-          <div className="rounded-lg border border-slate-200 dark:border-navy-700 p-3 space-y-2">
+          <div className="rounded-lg border border-c-border-subtle p-3 space-y-2">
             <div className="grid grid-cols-3 gap-2">
               <div className="rounded-md bg-danger-500/10 p-2 text-center">
                 <div className="text-lg font-bold text-danger-600">{report.scorecard.p0}</div>
@@ -353,7 +353,7 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
               </div>
             </div>
             {resultValue && (
-              <div className="text-xs text-slate-600 dark:text-slate-300">
+              <div className="text-xs text-c-text-secondary">
                 Result: <span className={`font-semibold ${resultColorClass}`}>{resultValue}</span>
               </div>
             )}
@@ -364,7 +364,7 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
           <div
             role="group"
             aria-label="View mode"
-            className="inline-flex rounded-md border border-slate-200 dark:border-navy-700 overflow-hidden text-[11px]"
+            className="inline-flex rounded-md border border-c-border-subtle overflow-hidden text-[11px]"
           >
             <button
               type="button"
@@ -372,8 +372,8 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
               onClick={() => setViewMode('priority')}
               className={`px-2.5 py-1 ${
                 viewMode === 'priority'
-                  ? 'bg-navy-900 text-white'
-                  : 'bg-transparent text-slate-600 dark:text-slate-300'
+                  ? 'bg-c-surface text-c-text'
+                  : 'bg-transparent text-c-text-secondary'
               }`}
             >
               By priority
@@ -382,10 +382,10 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
               type="button"
               aria-pressed={viewMode === 'category'}
               onClick={() => setViewMode('category')}
-              className={`px-2.5 py-1 border-l border-slate-200 dark:border-navy-700 ${
+              className={`px-2.5 py-1 border-l border-c-border-subtle ${
                 viewMode === 'category'
-                  ? 'bg-navy-900 text-white'
-                  : 'bg-transparent text-slate-600 dark:text-slate-300'
+                  ? 'bg-c-surface text-c-text'
+                  : 'bg-transparent text-c-text-secondary'
               }`}
             >
               By category
@@ -396,10 +396,10 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
         {!loading && report && report.gates.length === 0 && (
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <CheckCircle2 size={32} className="text-green-500 mb-2" />
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            <p className="text-sm font-medium text-c-text">
               {t('presentations.qualityGates.allPassed', 'All quality gates passed!')}
             </p>
-            <p className="text-xs text-slate-600 mt-1">
+            <p className="text-xs text-c-text-secondary mt-1">
               {t(
                 'presentations.qualityGates.readyToExport',
                 'Your deck is ready to export and share.'
@@ -425,12 +425,12 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
                   className="flex items-center gap-2 w-full text-left py-1.5"
                 >
                   {expanded ? (
-                    <ChevronDown size={14} className="text-slate-600" />
+                    <ChevronDown size={14} className="text-c-text-secondary" />
                   ) : (
-                    <ChevronRight size={14} className="text-slate-600" />
+                    <ChevronRight size={14} className="text-c-text-secondary" />
                   )}
-                  <CatIcon size={14} className="text-slate-500" />
-                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
+                  <CatIcon size={14} className="text-c-text-secondary" />
+                  <span className="text-xs font-semibold text-c-text-secondary uppercase tracking-wide">
                     {categoryLabels[category] || category}
                   </span>
                   <div className="ml-auto flex gap-1">
@@ -471,16 +471,16 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
                   className="flex items-center gap-2 w-full text-left py-1.5"
                 >
                   {expanded ? (
-                    <ChevronDown size={14} className="text-slate-600" />
+                    <ChevronDown size={14} className="text-c-text-secondary" />
                   ) : (
-                    <ChevronRight size={14} className="text-slate-600" />
+                    <ChevronRight size={14} className="text-c-text-secondary" />
                   )}
                   <span
                     className={`text-xs font-semibold uppercase tracking-wide ${priorityGroupHeaderColor[p]}`}
                   >
                     {priorityGroupLabel[p]}
                   </span>
-                  <span className="ml-auto px-1.5 py-0.5 rounded text-[10px] bg-slate-500/10 text-slate-600 dark:text-slate-300 font-medium">
+                  <span className="ml-auto px-1.5 py-0.5 rounded text-[10px] bg-c-surface-raised text-c-text-secondary font-medium">
                     {gates.length}
                   </span>
                 </button>
@@ -493,11 +493,11 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-2 border-t border-slate-200 dark:border-navy-800">
+      <div className="px-4 py-2 border-t border-c-border-subtle">
         <button
           onClick={runCheck}
           disabled={loading}
-          className="w-full py-2 rounded-lg bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 text-xs font-medium hover:bg-navy-800 disabled:opacity-50"
+          className="w-full py-2 rounded-lg bg-c-surface text-c-text text-xs font-medium hover:bg-c-surface-raised disabled:opacity-50"
         >
           {loading
             ? t('presentations.qualityGates.checking', 'Checking...')

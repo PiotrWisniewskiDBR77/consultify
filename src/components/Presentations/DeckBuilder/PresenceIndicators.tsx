@@ -44,7 +44,7 @@ export const PresenceIndicators: React.FC<PresenceIndicatorsProps> = ({
               ? 'bg-amber-50 text-amber-600'
               : connectionStatus === 'error'
                 ? 'bg-danger-50 text-danger-600'
-                : 'bg-slate-100 text-slate-400'
+                : 'bg-c-surface-raised text-c-text-muted'
         }`}
       >
         {isConnected ? <Wifi size={10} /> : <WifiOff size={10} />}
@@ -62,7 +62,7 @@ export const PresenceIndicators: React.FC<PresenceIndicatorsProps> = ({
               onMouseLeave={() => setHoveredUser(null)}
             >
               <div
-                className="w-7 h-7 rounded-full border-2 border-white dark:border-navy-900 flex items-center justify-center text-[10px] font-bold text-white shadow-sm"
+                className="w-7 h-7 rounded-full border-2 border-c-border flex items-center justify-center text-[10px] font-bold text-c-text shadow-sm"
                 style={{ backgroundColor: user.color }}
               >
                 {user.avatarUrl ? (
@@ -78,15 +78,15 @@ export const PresenceIndicators: React.FC<PresenceIndicatorsProps> = ({
 
               {/* Online indicator */}
               <span
-                className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-navy-900 ${
-                  user.isOnline ? 'bg-green-500' : 'bg-slate-400'
+                className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-c-border ${
+                  user.isOnline ? 'bg-green-500' : 'bg-c-text-muted'
                 }`}
               />
 
               {/* Active card number */}
               {user.activeCardIndex !== undefined && (
                 <span
-                  className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full text-[7px] font-bold flex items-center justify-center text-white"
+                  className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full text-[7px] font-bold flex items-center justify-center text-c-text"
                   style={{ backgroundColor: user.color }}
                 >
                   {user.activeCardIndex + 1}
@@ -95,10 +95,10 @@ export const PresenceIndicators: React.FC<PresenceIndicatorsProps> = ({
 
               {/* Tooltip */}
               {hoveredUser === user.userId && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded shadow-lg whitespace-nowrap z-50">
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-c-surface text-c-text text-[10px] rounded shadow-lg whitespace-nowrap z-50">
                   {user.name}
                   {user.activeCardIndex !== undefined && (
-                    <span className="text-slate-400"> · Slide {user.activeCardIndex + 1}</span>
+                    <span className="text-c-text-muted"> · Slide {user.activeCardIndex + 1}</span>
                   )}
                 </div>
               )}
@@ -106,7 +106,7 @@ export const PresenceIndicators: React.FC<PresenceIndicatorsProps> = ({
           ))}
 
           {overflow > 0 && (
-            <div className="w-7 h-7 rounded-full border-2 border-white dark:border-navy-900 bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-[10px] font-medium text-slate-500">
+            <div className="w-7 h-7 rounded-full border-2 border-c-border bg-c-border-subtle flex items-center justify-center text-[10px] font-medium text-c-text-secondary">
               +{overflow}
             </div>
           )}
@@ -114,7 +114,7 @@ export const PresenceIndicators: React.FC<PresenceIndicatorsProps> = ({
       )}
 
       {users.length === 0 && isConnected && (
-        <div className="flex items-center gap-1 text-[10px] text-slate-400">
+        <div className="flex items-center gap-1 text-[10px] text-c-text-muted">
           <Users size={10} />
           <span>Only you</span>
         </div>

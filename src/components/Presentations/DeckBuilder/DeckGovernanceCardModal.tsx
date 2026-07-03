@@ -37,8 +37,8 @@ const VERDICT_STYLE: Record<GovernanceVerdict, { bg: string; text: string; label
     label: 'BLOCKED P0',
   },
   INCONCLUSIVE: {
-    bg: 'bg-slate-100 dark:bg-slate-500/20',
-    text: 'text-slate-700 dark:text-slate-300',
+    bg: 'bg-c-surface-raised',
+    text: 'text-c-text',
     label: 'INCONCLUSIVE',
   },
 };
@@ -82,13 +82,13 @@ const StatTile: React.FC<{
   const toneClass: Record<string, string> = {
     rose: 'text-danger-600 dark:text-danger-300',
     amber: 'text-amber-600 dark:text-amber-300',
-    slate: 'text-slate-700 dark:text-slate-200',
+    slate: 'text-c-text',
     emerald: 'text-emerald-600 dark:text-emerald-300',
     blue: 'text-blue-600 dark:text-blue-300',
   };
   return (
-    <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/40 px-3 py-2">
-      <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+    <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2">
+      <div className="text-[10px] uppercase tracking-wide text-c-text-secondary">
         {label}
       </div>
       <div className={`text-lg font-semibold ${toneClass[tone]}`}>{value}</div>
@@ -147,18 +147,18 @@ export const DeckGovernanceCardModal: React.FC<DeckGovernanceCardModalProps> = (
 
   return (
     <div
-      className="fixed inset-0 z-overlay flex items-center justify-center bg-slate-900/40 backdrop-blur-sm"
+      className="fixed inset-0 z-overlay flex items-center justify-center bg-c-surface-raised backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="deck-governance-card-title"
     >
-      <div className="max-w-xl w-full mx-4 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 shadow-xl overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-800">
+      <div className="max-w-xl w-full mx-4 rounded-xl bg-c-surface border border-c-border-subtle shadow-xl overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
           <div className="flex items-center gap-2">
-            <ShieldCheck size={16} className="text-primary-500" />
+            <ShieldCheck size={16} className="text-c-accent" />
             <h2
               id="deck-governance-card-title"
-              className="text-sm font-semibold text-slate-700 dark:text-white"
+              className="text-sm font-semibold text-c-text"
             >
               {t('presentations.governance.title', 'Governance Card')}
             </h2>
@@ -170,7 +170,7 @@ export const DeckGovernanceCardModal: React.FC<DeckGovernanceCardModalProps> = (
               disabled={!card}
               aria-label={t('presentations.governance.exportJson', 'Export JSON')}
               title={t('presentations.governance.exportJson', 'Export JSON')}
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-700 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-c-surface-raised text-c-text hover:bg-c-border-subtle disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Download size={12} />
               <span>{t('common.exportJson', 'Export JSON')}</span>
@@ -179,7 +179,7 @@ export const DeckGovernanceCardModal: React.FC<DeckGovernanceCardModalProps> = (
               type="button"
               onClick={onClose}
               aria-label={t('common.close', 'Close')}
-              className="text-slate-600 hover:text-slate-600 dark:hover:text-white p-1"
+              className="text-c-text-secondary hover:text-c-text-secondary p-1"
             >
               <X size={16} />
             </button>
@@ -188,7 +188,7 @@ export const DeckGovernanceCardModal: React.FC<DeckGovernanceCardModalProps> = (
 
         <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
           {loading && (
-            <div className="flex items-center justify-center py-8 text-sm text-slate-500 dark:text-slate-400">
+            <div className="flex items-center justify-center py-8 text-sm text-c-text-secondary">
               <span className="animate-pulse">
                 {t('presentations.governance.loading', 'Loading governance card…')}
               </span>
@@ -217,7 +217,7 @@ export const DeckGovernanceCardModal: React.FC<DeckGovernanceCardModalProps> = (
                 <button
                   type="button"
                   onClick={load}
-                  className="mt-2 inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-medium bg-amber-600 text-white hover:bg-amber-500"
+                  className="mt-2 inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-medium bg-amber-600 text-c-text hover:bg-amber-500"
                 >
                   {t('common.retry', 'Retry')}
                 </button>
@@ -229,22 +229,22 @@ export const DeckGovernanceCardModal: React.FC<DeckGovernanceCardModalProps> = (
             <>
               <section
                 aria-label={t('presentations.governance.overall', 'Overall verdict')}
-                className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/40 px-3 py-2.5"
+                className="flex items-center justify-between rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  <span className="text-[10px] uppercase tracking-wide text-c-text-secondary">
                     {t('presentations.governance.overall', 'Overall')}
                   </span>
                   <VerdictPill verdict={card.overallVerdict} />
                 </div>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                <span className="text-[11px] text-c-text-secondary">
                   {formatTimestamp(card.generatedAt)}
                 </span>
               </section>
 
               <section className="space-y-2" aria-label="Quality">
                 <header className="flex items-center justify-between">
-                  <h3 className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  <h3 className="text-xs font-semibold text-c-text">
                     {t('presentations.governance.quality', 'Quality')}
                   </h3>
                   <VerdictPill verdict={card.quality.verdict as GovernanceVerdict} />
@@ -254,7 +254,7 @@ export const DeckGovernanceCardModal: React.FC<DeckGovernanceCardModalProps> = (
                   <StatTile label="P1" value={card.quality.p1} tone="amber" />
                   <StatTile label="P2" value={card.quality.p2} tone="slate" />
                 </div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                <div className="text-[11px] text-c-text-secondary">
                   {t('presentations.governance.gateCount', 'Total gates: {{n}}', {
                     n: card.quality.gateCount,
                   })}
@@ -263,7 +263,7 @@ export const DeckGovernanceCardModal: React.FC<DeckGovernanceCardModalProps> = (
 
               <section className="space-y-2" aria-label="Confidentiality">
                 <header className="flex items-center justify-between">
-                  <h3 className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  <h3 className="text-xs font-semibold text-c-text">
                     {t('presentations.governance.confidentiality', 'Confidentiality')}
                   </h3>
                 </header>
@@ -280,7 +280,7 @@ export const DeckGovernanceCardModal: React.FC<DeckGovernanceCardModalProps> = (
                     );
                   })()}
                   {typeof card.confidentiality.sharingAllowedForRole === 'string' && (
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                    <span className="text-[11px] text-c-text-secondary">
                       {t(
                         'presentations.governance.sharingAllowedForRole',
                         'Sharing for role: {{value}}',
@@ -295,7 +295,7 @@ export const DeckGovernanceCardModal: React.FC<DeckGovernanceCardModalProps> = (
 
               <section className="space-y-2" aria-label="Telemetry">
                 <header className="flex items-center justify-between">
-                  <h3 className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  <h3 className="text-xs font-semibold text-c-text">
                     {t('presentations.governance.telemetry', 'Telemetry (last {{n}}d)', {
                       n: card.telemetry.windowDays,
                     })}
@@ -323,7 +323,7 @@ export const DeckGovernanceCardModal: React.FC<DeckGovernanceCardModalProps> = (
                     tone="rose"
                   />
                 </div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                <div className="text-[11px] text-c-text-secondary">
                   {t('presentations.governance.lastActivity', 'Last activity:')}{' '}
                   {formatTimestamp(card.telemetry.lastActivityAt)}
                 </div>
