@@ -90,7 +90,7 @@ type Tab = 'sessions' | 'history';
 const TabToggle: React.FC<{ active: Tab; onChange: (t: Tab) => void }> = ({ active, onChange }) => {
   const { t } = useTranslation();
   return (
-    <div className="inline-flex rounded-lg bg-navy-900/50 p-0.5">
+    <div className="inline-flex rounded-lg bg-c-surface-raised p-0.5">
       {[
         {
           id: 'sessions' as Tab,
@@ -110,7 +110,7 @@ const TabToggle: React.FC<{ active: Tab; onChange: (t: Tab) => void }> = ({ acti
             'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200',
             active === tab.id
               ? 'bg-c-accent text-white shadow-sm'
-              : 'text-c-text-secondary hover:text-white hover:bg-c-surface-raised'
+              : 'text-c-text-secondary hover:text-c-text hover:bg-c-surface'
           )}
         >
           <tab.icon size={13} />

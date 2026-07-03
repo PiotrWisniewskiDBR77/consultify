@@ -201,7 +201,7 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
       'p-3.5 rounded-lg border-2 transition-all text-left cursor-pointer',
       active
         ? 'border-c-accent bg-c-accent-soft'
-        : 'border-white/5 hover:border-c-accent bg-navy-800/30'
+        : 'border-c-border-subtle hover:border-c-accent bg-c-surface-raised'
     );
 
   return (
@@ -241,7 +241,7 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
                     className="flex items-center justify-between p-3.5 bg-c-surface-raised border border-c-border-subtle rounded-lg"
                   >
                     <div>
-                      <p className="text-sm font-medium text-white">
+                      <p className="text-sm font-medium text-c-text">
                         {t(`settings.emailDigest.cat_${key}`, label)}
                       </p>
                       <p className="text-xs text-c-text-muted mt-0.5">
@@ -254,7 +254,7 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
                         'w-6 h-6 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0',
                         emailSettings[key]
                           ? 'bg-navy-900 border-navy-900 text-white dark:bg-c-surface dark:border-white dark:text-navy-950'
-                          : 'border-white/20 hover:border-white/40'
+                          : 'border-c-border hover:border-c-border-strong'
                       )}
                     >
                       {emailSettings[key] && (

@@ -193,7 +193,7 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({
                                     flex flex-col items-start gap-2 p-4 rounded-lg border-2 transition-all text-left
                                     ${
                                       isSelected
-                                        ? 'border-c-border-strong bg-c-surface-raised.07]'
+                                        ? 'border-c-border-strong bg-c-surface-raised'
                                         : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border-strong'
                                     }
                                 `}

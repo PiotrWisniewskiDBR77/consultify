@@ -291,7 +291,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
                                                 p-4 rounded-lg border-2 text-left transition-all
                                                 ${
                                                   isSelected
-                                                    ? 'border-c-border-strong bg-c-surface-raised.07]'
+                                                    ? 'border-c-border-strong bg-c-surface-raised'
                                                     : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border-strong dark:hover:border-white/30'
                                                 }
                                             `}

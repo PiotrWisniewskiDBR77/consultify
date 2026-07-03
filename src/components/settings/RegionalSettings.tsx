@@ -342,7 +342,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
                     key={format.code}
                     className={`flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer transition-all ${
                       isSelected
-                        ? 'border-c-border-strong bg-c-surface-raised.07]'
+                        ? 'border-c-border-strong bg-c-surface-raised'
                         : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border-strong'
                     }`}
                   >
@@ -399,7 +399,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
                     key={format.code}
                     className={`flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer transition-all ${
                       isSelected
-                        ? 'border-c-border-strong bg-c-surface-raised.07]'
+                        ? 'border-c-border-strong bg-c-surface-raised'
                         : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border-strong'
                     }`}
                   >
