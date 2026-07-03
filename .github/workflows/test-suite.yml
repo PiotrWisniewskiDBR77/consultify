@@ -56,6 +56,9 @@ jobs:
 
       - name: Run TypeScript check
         run: npm run type-check
+
+      - name: Hardcoded-color ratchet gate (VEGAS V7.7)
+        run: npm run check:colors
       - name: Job duration
         if: always()
         run: |
