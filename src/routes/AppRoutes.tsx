@@ -423,6 +423,13 @@ const HowItWorksPage = lazyWithRetry(() =>
 );
 const AppIntroView = lazyWithRetry(() => import('@/views/AppIntroView'));
 
+// DRD Maturity Matrix — read-only DEMONSTRATION prototype (Piotr's Digital
+// Pathfinder). Reconnects the previously orphaned DRD_STRUCTURE + MaturityMatrix
+// onto an achievable URL for live review. Not a production flow.
+const DRDMatrixPreview = lazyWithRetry(() =>
+  import('@/views/DRDMatrixPreview').then((m) => ({ default: m.DRDMatrixPreview }))
+);
+
 const ForWhomPage = lazyWithRetry(() =>
   import('@/views/ForWhomPage').then((m) => ({ default: m.ForWhomPage }))
 );
@@ -918,6 +925,18 @@ export const AppRoutes: React.FC = () => {
                 <HowItWorksPage />
               </Suspense>
             </AuthLayout>
+          }
+        />
+
+        {/* DRD Maturity Matrix — read-only DEMONSTRATION prototype (Piotr's
+            Digital Pathfinder). Publicly reachable by URL for live review;
+            no auth, no backend. Not a production flow. */}
+        <Route
+          path="/drd-matrix-preview"
+          element={
+            <Suspense fallback={<LoadingScreen message="Loading matrix..." />}>
+              <DRDMatrixPreview />
+            </Suspense>
           }
         />
 
