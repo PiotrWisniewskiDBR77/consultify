@@ -27,15 +27,16 @@ interface AIAutoClusteringProps {
   onApplyClusters: (clusters: Cluster[]) => void;
 }
 
+// Cluster colors = DATA (series). Canonical identity palette, blue-first (§15.1).
 const CLUSTER_COLORS = [
-  '#fb7185',
-  '#34d399',
-  '#fbbf24',
-  '#38bdf8',
-  '#a78bfa',
-  '#22d3ee',
-  '#f472b6',
-  '#4ade80',
+  'var(--c-tag-1)',
+  'var(--c-tag-2)',
+  'var(--c-tag-6)',
+  'var(--c-tag-9)',
+  'var(--c-tag-3)',
+  'var(--c-tag-4)',
+  'var(--c-tag-11)',
+  'var(--c-tag-12)',
 ];
 
 export const AIAutoClustering: React.FC<AIAutoClusteringProps> = ({

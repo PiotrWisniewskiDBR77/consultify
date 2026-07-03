@@ -14,69 +14,30 @@ interface ColorPickerPopoverProps {
   onClose: () => void;
 }
 
-// M06 L-06: de-duped — repeated hex values caused React duplicate-key warnings
-// (key={c}) and redundant swatches. Set keeps first occurrence, preserves order.
-export const RECOMMENDED_COLORS = Array.from(
-  new Set([
-    '#3b82f6',
-    '#10b981',
-    '#f59e0b',
-    '#f43f5e',
-    '#6366f1',
-    '#ec4899',
-    '#3b82f6',
-  ])
-);
+// Node colors = DATA (categorical). Sourced from the canonical 12-tag identity
+// palette (--c-tag-1..12, defined in src/index.css light+dark) so node fills stay
+// on-brand and theme-aware. CSS-var strings resolve in inline `backgroundColor`.
+const TAG_VARS = Array.from({ length: 12 }, (_, i) => `var(--c-tag-${i + 1})`);
 
-export const PALETTE = Array.from(
-  new Set([
-  '#1e293b',
-  '#334155',
-  '#475569',
-  '#64748b',
-  '#94a3b8',
-  '#f43f5e',
-  '#f59e0b',
-  '#f59e0b',
-  '#eab308',
-  '#84cc16',
-  '#22c55e',
-  '#10b981',
-  '#3b82f6',
-  '#3b82f6',
-  '#0ea5e9',
-  '#3b82f6',
-  '#6366f1',
-  '#6366f1',
-  '#a855f7',
-  '#d946ef',
-  '#ec4899',
-  '#f43f5e',
-  '#fb923c',
-  '#fbbf24',
-  '#a3e635',
-  '#34d399',
-  '#2dd4bf',
-  '#22d3ee',
-  '#38bdf8',
-  '#818cf8',
-  '#a78bfa',
-  '#c084fc',
-  '#e879f9',
-  '#f472b6',
-  '#fb7185',
-  '#fca5a5',
-  '#fdba74',
-  '#fde047',
-  '#bef264',
-  '#86efac',
-  '#6ee7b7',
-  '#5eead4',
-  '#67e8f9',
-  '#7dd3fc',
-  '#93c5fd',
-  ])
-);
+// A compact "recommended" subset (blue-first ordering per §15.1).
+export const RECOMMENDED_COLORS = [
+  'var(--c-tag-1)',
+  'var(--c-tag-12)',
+  'var(--c-tag-9)',
+  'var(--c-tag-4)',
+  'var(--c-tag-2)',
+  'var(--c-tag-11)',
+];
+
+// Full palette = status accents + the 12 identity tags (theme tokens, no raw hex).
+export const PALETTE = [
+  'var(--c-info)',
+  'var(--c-success)',
+  'var(--c-warning)',
+  'var(--c-danger)',
+  'var(--c-accent)',
+  ...TAG_VARS,
+];
 
 const LINE_STYLES: Array<{ id: 'solid' | 'dashed' | 'dotted'; label: string; dash: string }> = [
   { id: 'solid', label: '━━━', dash: '' },
@@ -152,7 +113,7 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
           step={5}
           value={opacity}
           onChange={handleOpacityChange}
-          className="w-full h-1 rounded-full accent-slate-500"
+          className="w-full h-1 rounded-full accent-c-accent"
         />
       </div>
 

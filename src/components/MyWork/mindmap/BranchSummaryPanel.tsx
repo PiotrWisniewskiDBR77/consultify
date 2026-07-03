@@ -229,7 +229,7 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
             <button
               type="button"
               onClick={copyToClipboard}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-c-surface hover:bg-c-surface text-c-text dark:bg-[#F4F7FB] dark:text-c-text-secondary dark:hover:bg-[#DDE5EF] text-xs font-medium transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-c-surface hover:bg-c-surface text-c-text dark:bg-c-surface-raised dark:text-c-text dark:hover:bg-c-surface-raised text-xs font-medium transition-colors"
             >
               <Clipboard size={14} />
               {isPl ? 'Kopiuj do schowka' : 'Copy to clipboard'}

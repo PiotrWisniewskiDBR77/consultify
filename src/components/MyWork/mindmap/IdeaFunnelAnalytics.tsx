@@ -17,14 +17,14 @@ const FUNNEL_STAGES = [
     key: 'idea',
     labelPl: 'Pomysł',
     labelEn: 'Idea',
-    color: '#94a3b8',
+    color: 'var(--c-tag-8)',
     bg: 'bg-c-surface-raised dark:bg-c-surface',
   },
   {
     key: 'exploring',
     labelPl: 'Eksploracja',
     labelEn: 'Exploring',
-    color: '#3b82f6',
+    color: 'var(--c-info)',
     bg: 'bg-c-info dark:bg-c-info',
   },
   {
@@ -45,7 +45,7 @@ const FUNNEL_STAGES = [
     key: 'converted',
     labelPl: 'Skonwertowany',
     labelEn: 'Converted',
-    color: '#6366f1',
+    color: 'var(--c-tag-2)',
     bg: 'bg-c-accent dark:bg-c-accent',
   },
 ];

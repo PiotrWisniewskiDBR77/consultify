@@ -39,7 +39,15 @@ interface CollaborationOverlayProps {
   onRegisterSend?: (sendFn: (msg: any) => void) => void;
 }
 
-const CURSOR_COLORS = ['#f43f5e', '#6366f1', '#3b82f6', '#22c55e', '#f59e0b', '#ec4899'];
+// Presence cursor colors = DATA (per-user identity). Canonical identity palette.
+const CURSOR_COLORS = [
+  'var(--c-tag-1)',
+  'var(--c-tag-2)',
+  'var(--c-tag-4)',
+  'var(--c-tag-6)',
+  'var(--c-tag-9)',
+  'var(--c-tag-11)',
+];
 const STALE_THRESHOLD_MS = 30_000;
 const HEARTBEAT_INTERVAL_MS = 10_000;
 const CURSOR_THROTTLE_MS = 80;
@@ -529,7 +537,7 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
         >
           <div
             className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-bold text-c-text whitespace-nowrap"
-            style={{ backgroundColor: userColorMap[uid] || '#94a3b8' }}
+            style={{ backgroundColor: userColorMap[uid] || 'var(--c-tag-8)' }}
           >
             <Lock size={8} />
             {users.find((u) => u.id === uid)?.name || 'User'}
@@ -547,8 +555,8 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
             top: nodeRects[nodeId]?.top ?? 0,
             width: nodeRects[nodeId]?.width ?? 0,
             height: nodeRects[nodeId]?.height ?? 0,
-            borderColor: userColorMap[uid] || '#94a3b8',
-            boxShadow: `0 0 0 2px ${userColorMap[uid] || '#94a3b8'}`,
+            borderColor: userColorMap[uid] || 'var(--c-tag-8)',
+            boxShadow: `0 0 0 2px ${userColorMap[uid] || 'var(--c-tag-8)'}`,
             opacity: nodeRects[nodeId] ? 1 : 0,
           }}
         />

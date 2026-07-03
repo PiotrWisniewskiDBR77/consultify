@@ -64,7 +64,7 @@ export const LabeledEdge: React.FC<EdgeProps> = ({
   );
 
   const gradientId = `edge-gradient-${id}`;
-  const rawStroke = (style?.stroke as string) || '#6366f1';
+  const rawStroke = (style?.stroke as string) || 'var(--c-tag-2)';
   // Resolve CSS custom properties (e.g. var(--c-danger)) for SVG attributes
   // which only accept literal color values, not CSS expressions.
   const strokeColor = rawStroke.startsWith('var(')

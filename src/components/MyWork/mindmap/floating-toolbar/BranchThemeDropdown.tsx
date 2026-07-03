@@ -58,7 +58,7 @@ export const BranchThemeDropdown: React.FC<BranchThemeDropdownProps> = ({
             <svg viewBox="0 0 32 16" className="w-8 h-4 shrink-0">
               <path
                 d={s.preview}
-                stroke={isActive ? 'currentColor' : '#94a3b8'}
+                stroke={isActive ? 'currentColor' : 'var(--c-tag-8)'}
                 strokeWidth="2"
                 fill="none"
                 strokeLinecap="round"

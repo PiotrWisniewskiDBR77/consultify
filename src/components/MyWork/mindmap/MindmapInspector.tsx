@@ -17,15 +17,16 @@ export interface MindmapInspectorProps {
 
 const BRANCH_STYLES = ['curved', 'straight', 'step'] as const;
 const FONT_SIZES = [10, 11, 12, 14, 16] as const;
+// Node text-color swatches = DATA (categorical). Canonical identity palette.
 const NODE_COLOR_PALETTE = [
-  '#6366f1',
-  '#3b82f6',
-  '#10b981',
-  '#f59e0b',
-  '#f43f5e',
-  '#ec4899',
-  '#6366f1',
-  '#64748b',
+  'var(--c-tag-2)',
+  'var(--c-tag-1)',
+  'var(--c-success)',
+  'var(--c-warning)',
+  'var(--c-danger)',
+  'var(--c-tag-4)',
+  'var(--c-tag-3)',
+  'var(--c-tag-8)',
 ];
 
 const STRUCTURES = [
@@ -176,7 +177,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
                   onChange={(e) =>
                     patchNode({ style: { ...nodeStyle, width: Number(e.target.value) } })
                   }
-                  className="flex-1 h-1.5 accent-slate-500"
+                  className="flex-1 h-1.5 accent-c-accent"
                 />
                 <span className="text-[10px] text-c-text-secondary w-8 text-right">
                   {nodeStyle.width || 200}
@@ -241,7 +242,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
                   onChange={(e) =>
                     patchNode({ style: { ...nodeStyle, fillOpacity: Number(e.target.value) } })
                   }
-                  className="flex-1 h-1.5 accent-slate-500"
+                  className="flex-1 h-1.5 accent-c-accent"
                 />
                 <span className="text-[10px] text-c-text-secondary w-8 text-right">
                   {nodeStyle.fillOpacity ?? 100}%
@@ -297,7 +298,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
               type="checkbox"
               checked={autoLayout}
               onChange={(e) => setAutoLayout(e.target.checked)}
-              className="w-3.5 h-3.5 rounded accent-slate-500"
+              className="w-3.5 h-3.5 rounded accent-c-accent"
             />
             <span className="text-[11px] text-c-text-secondary dark:text-c-text-muted">
               {isPl ? 'Auto-layout przy zmianach' : 'Auto-layout on changes'}

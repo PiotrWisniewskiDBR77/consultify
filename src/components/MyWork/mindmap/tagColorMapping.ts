@@ -6,66 +6,70 @@ export interface TagColorRule {
   borderClass: string;
 }
 
+// Node tag colors = DATA (categorical/status). `color` = CSS var string for
+// canvas/inline rendering; *Class = theme utility classes. Status tags use
+// c-success/warning/danger/info; neutral concept tags use the c-tag identity
+// palette (NEVER c-accent/crimson as data).
 const TAG_COLOR_MAP: Record<string, { color: string; bg: string; text: string; border: string }> = {
   risk: {
-    color: '#f43f5e',
-    bg: 'bg-c-danger dark:bg-c-danger',
-    text: 'text-c-danger dark:text-c-danger',
-    border: 'border-c-danger dark:border-c-danger',
+    color: 'var(--c-danger)',
+    bg: 'bg-c-danger',
+    text: 'text-c-danger',
+    border: 'border-c-danger',
   },
   opportunity: {
-    color: '#22c55e',
-    bg: 'bg-c-success dark:bg-c-success',
-    text: 'text-c-success dark:text-c-success',
-    border: 'border-c-success dark:border-c-success',
+    color: 'var(--c-success)',
+    bg: 'bg-c-success',
+    text: 'text-c-success',
+    border: 'border-c-success',
   },
   hypothesis: {
-    color: '#6366f1',
-    bg: 'bg-c-accent dark:bg-c-accent',
-    text: 'text-c-accent dark:text-c-accent',
-    border: 'border-c-accent dark:border-c-accent',
+    color: 'var(--c-tag-2)',
+    bg: 'bg-c-tag-2',
+    text: 'text-c-tag-2',
+    border: 'border-c-tag-2',
   },
   evidence: {
-    color: '#3b82f6',
-    bg: 'bg-c-info dark:bg-c-info',
-    text: 'text-c-info dark:text-c-info',
-    border: 'border-c-info dark:border-c-info',
+    color: 'var(--c-info)',
+    bg: 'bg-c-info',
+    text: 'text-c-info',
+    border: 'border-c-info',
   },
   action: {
-    color: '#f59e0b',
-    bg: 'bg-c-warning dark:bg-c-warning',
-    text: 'text-c-warning dark:text-c-warning',
-    border: 'border-c-warning dark:border-c-warning',
+    color: 'var(--c-warning)',
+    bg: 'bg-c-warning',
+    text: 'text-c-warning',
+    border: 'border-c-warning',
   },
   question: {
-    color: '#3b82f6',
-    bg: 'bg-c-info dark:bg-c-info',
-    text: 'text-c-info dark:text-c-info',
-    border: 'border-c-info dark:border-c-info',
+    color: 'var(--c-info)',
+    bg: 'bg-c-info',
+    text: 'text-c-info',
+    border: 'border-c-info',
   },
   blocker: {
-    color: '#dc2626',
-    bg: 'bg-c-danger dark:bg-c-danger',
-    text: 'text-c-danger dark:text-c-danger',
-    border: 'border-c-danger dark:border-c-danger',
+    color: 'var(--c-danger)',
+    bg: 'bg-c-danger',
+    text: 'text-c-danger',
+    border: 'border-c-danger',
   },
   insight: {
-    color: '#a855f7',
-    bg: 'bg-c-accent dark:bg-c-accent',
-    text: 'text-c-accent dark:text-c-accent',
-    border: 'border-c-accent dark:border-c-accent',
+    color: 'var(--c-tag-3)',
+    bg: 'bg-c-tag-3',
+    text: 'text-c-tag-3',
+    border: 'border-c-tag-3',
   },
   decision: {
-    color: '#10b981',
-    bg: 'bg-c-success dark:bg-c-success',
-    text: 'text-c-success dark:text-c-success',
-    border: 'border-c-success dark:border-c-success',
+    color: 'var(--c-success)',
+    bg: 'bg-c-success',
+    text: 'text-c-success',
+    border: 'border-c-success',
   },
   goal: {
-    color: '#3b82f6',
-    bg: 'bg-c-info dark:bg-c-info',
-    text: 'text-c-info dark:text-c-info',
-    border: 'border-c-info dark:border-c-info',
+    color: 'var(--c-info)',
+    bg: 'bg-c-info',
+    text: 'text-c-info',
+    border: 'border-c-info',
   },
 };
 
@@ -85,7 +89,7 @@ export function resolveTagColor(tags: string[]): TagColorRule | null {
 
 export function getTagColor(tag: string): string {
   const lower = tag.toLowerCase().trim();
-  return TAG_COLOR_MAP[lower]?.color || '#94a3b8';
+  return TAG_COLOR_MAP[lower]?.color || 'var(--c-tag-8)';
 }
 
 export const ALL_TAG_COLORS = TAG_COLOR_MAP;

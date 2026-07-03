@@ -298,7 +298,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
           >
             <div
               className="w-3.5 h-3.5 rounded-full border border-c-border-subtle dark:border-c-border"
-              style={{ backgroundColor: style.color || 'var(--color-primary-500, #A51C30)' }}
+              style={{ backgroundColor: style.color || 'var(--c-tag-2)' }}
             />
           </button>
           {openDropdown === 'color' && (
