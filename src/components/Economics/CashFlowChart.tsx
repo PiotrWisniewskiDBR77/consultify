@@ -127,10 +127,7 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
             </div>
             {showCumulative && (
               <div className="flex items-center justify-between gap-4">
-                <span
-                  className="flex items-center gap-1"
-                  style={{ color: chart.cumulative }}
-                >
+                <span className="flex items-center gap-1" style={{ color: chart.cumulative }}>
                   <div
                     className="w-3 h-3 rounded-full border-2"
                     style={{ borderColor: chart.cumulative }}

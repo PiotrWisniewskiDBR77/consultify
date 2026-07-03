@@ -1,3 +1,10 @@
+/*
+ * The hardcoded hex values in this file are the SANCTIONED fallbacks that mirror
+ * the `--c-*` CSS tokens in src/index.css — used only when getComputedStyle() is
+ * unavailable (SSR / detached DOM). This is the single place allowed to name them,
+ * so the hex-literal lint is intentionally disabled here.
+ */
+/* eslint-disable no-restricted-syntax */
 import { useEffect, useState } from 'react';
 
 /**
