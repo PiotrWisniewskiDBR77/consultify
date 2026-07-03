@@ -576,12 +576,22 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     navigateWithChatContext(AppView.FULL_TRANSFORMATION_CHAT);
   };
 
+  // H1.4 — materialize initiatives FROM this tool session (with source back-ref)
+  // instead of only navigating. Opens the generate modal, whose onGenerate calls
+  // POST /tools/:toolId/generate-initiatives → persists initiatives with
+  // source_type='tool' + source_id=<toolSessionId>, so each initiative links
+  // back to the tool output it came from. If a parent injects its own
+  // onCreateInitiative handler, that takes precedence (backwards compatible).
   const handleOpenInitiatives = () => {
     if (onCreateInitiative) {
       onCreateInitiative();
       return;
     }
-    setCurrentView(AppView.FULL_STEP2_INITIATIVES);
+    if (toolPermissions.canGenerate === false) {
+      toast.error(isPolish ? 'Brak uprawnień' : 'Permission denied');
+      return;
+    }
+    setShowGenerateModal(true);
   };
 
   const handleRequestReview = async () => {
@@ -700,7 +710,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
           setHelpOpen(true);
         }}
         onExport={() => console.log('Export clicked')}
-        onCreateInitiative={onCreateInitiative}
+        onCreateInitiative={handleOpenInitiatives}
         onRequestReview={handleRequestReview}
         canRequestReview={completionReady && toolPermissions.canRequestReview !== false}
         isPolish={isPolish}
