@@ -231,6 +231,7 @@
     "check:colors": "node scripts/check-hardcoded-colors.cjs",
     "check:colors:update": "node scripts/check-hardcoded-colors.cjs --update",
     "check:colors:list": "node scripts/check-hardcoded-colors.cjs --list",
+    "test:smoke:hubs": "VITEST_HEAP_MB=8192 vitest run tests/components/smoke/hubs.smoke.test.tsx",
     "branding:generate": "npx tsx scripts/branding/generate-consultinity-assets.ts",
     "doctor": "npx tsx scripts/dev/doctor.ts",
     "cleanup:quarantine-duplicates": "npx tsx scripts/dev/quarantine-icloud-duplicates.ts",
