@@ -439,12 +439,12 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
   return (
     <div className="space-y-6">
       {/* ── Security Score + Status Cards ── */}
-      <div className="bg-navy-800/50 rounded-xl border border-white/5 overflow-hidden">
+      <div className="bg-c-surface-raised rounded-xl border border-c-border-subtle overflow-hidden">
         <div className="p-6">
           <div className="flex items-start gap-6">
             <SecurityScoreRing score={score} max={securityChecks.length} />
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-semibold text-white">
+              <h3 className="text-lg font-semibold text-c-text">
                 {t('settings.security.overviewTitle', 'Security Overview')}
               </h3>
               <p className="text-sm text-c-text-secondary mt-1">
@@ -567,7 +567,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                   setNewPassword('');
                   setConfirmPassword('');
                 }}
-                className="px-4 py-2 text-sm text-c-text-secondary hover:text-white transition-colors"
+                className="px-4 py-2 text-sm text-c-text-secondary hover:text-c-text transition-colors"
               >
                 {t('common.cancel', 'Cancel')}
               </button>
@@ -652,7 +652,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                 onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
                 maxLength={6}
                 placeholder="000000"
-                className="w-32 px-3 py-2 text-center text-lg font-mono tracking-widest bg-navy-800 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                className="w-32 px-3 py-2 text-center text-lg font-mono tracking-widest bg-c-surface-raised border border-c-border rounded-lg text-c-text focus:ring-2 focus:ring-rose-500 focus:border-transparent"
               />
               <button
                 onClick={disableMfa}
@@ -668,7 +668,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                   setVerificationCode('');
                   setMfaError(null);
                 }}
-                className="px-4 py-2 text-sm text-c-text-secondary hover:text-white transition-colors"
+                className="px-4 py-2 text-sm text-c-text-secondary hover:text-c-text transition-colors"
               >
                 {t('common.cancel', 'Cancel')}
               </button>
@@ -749,7 +749,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                     {t('security.mfa.cantScan', "Can't scan? Enter this code manually:")}
                   </p>
                   <div className="flex items-center gap-2">
-                    <code className="flex-1 bg-navy-800 px-3 py-2 rounded-lg text-xs font-mono text-c-text-secondary select-all overflow-x-auto border border-white/5">
+                    <code className="flex-1 bg-c-surface-raised px-3 py-2 rounded-lg text-xs font-mono text-c-text-secondary select-all overflow-x-auto border border-c-border-subtle">
                       {showSecret ? secret : '•'.repeat(32)}
                     </code>
                     <button
@@ -781,7 +781,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                       onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
                       maxLength={6}
                       placeholder="000000"
-                      className="w-32 px-3 py-2 text-center text-lg font-mono tracking-widest bg-navy-800 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
+                      className="w-32 px-3 py-2 text-center text-lg font-mono tracking-widest bg-c-surface-raised border border-c-border rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
                       onKeyDown={(e) => e.key === 'Enter' && verifyMfa()}
                     />
                     <button
@@ -841,12 +841,12 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-1.5 bg-navy-900/50 p-3 rounded-xl border border-white/5">
+            <div className="grid grid-cols-2 gap-1.5 bg-c-surface-raised p-3 rounded-xl border border-c-border-subtle">
               {backupCodes.map((code, i) => (
                 <button
                   key={i}
                   onClick={() => copyCode(code, i)}
-                  className="flex items-center justify-between px-2.5 py-1.5 bg-navy-800/50 rounded-lg hover:bg-navy-800 transition-colors group text-left"
+                  className="flex items-center justify-between px-2.5 py-1.5 bg-c-surface-raised rounded-lg hover:bg-c-surface transition-colors group text-left"
                 >
                   <code className="font-mono text-xs text-c-text-secondary">{code}</code>
                   {copiedIndex === i ? (
@@ -864,13 +864,13 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
             <div className="flex gap-2">
               <button
                 onClick={copyAllCodes}
-                className="flex-1 py-2 text-xs font-medium text-c-text-secondary hover:text-white hover:bg-c-surface-raised rounded-lg transition-colors flex items-center justify-center gap-1.5"
+                className="flex-1 py-2 text-xs font-medium text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised rounded-lg transition-colors flex items-center justify-center gap-1.5"
               >
                 <Copy size={12} /> {t('security.mfa.copyAll', 'Copy All')}
               </button>
               <button
                 onClick={downloadCodes}
-                className="flex-1 py-2 text-xs font-medium text-c-text-secondary hover:text-white hover:bg-c-surface-raised rounded-lg transition-colors flex items-center justify-center gap-1.5"
+                className="flex-1 py-2 text-xs font-medium text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised rounded-lg transition-colors flex items-center justify-center gap-1.5"
               >
                 <Download size={12} /> {t('security.mfa.download', 'Download')}
               </button>
@@ -878,7 +878,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
 
             <button
               onClick={completeMfaSetup}
-              className="w-full py-3 bg-c-surface/[0.08] hover:bg-c-surface/[0.12] text-white text-sm font-semibold rounded-xl transition-colors"
+              className="w-full py-3 bg-c-surface-raised hover:bg-c-surface text-c-text text-sm font-semibold rounded-xl transition-colors border border-c-border-subtle"
             >
               {t('security.mfa.savedCodes', 'I have saved my backup codes')}
             </button>
