@@ -1786,6 +1786,23 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     const isTerminalStatusValue = (status: string) =>
       status === InitiativeStatus.CANCELLED || status === InitiativeStatus.ARCHIVED;
 
+    // canon A10/C1: dot color derives from the neutral c-* semantic tokens
+    // (statusChipTone), never from STATUS_METADATA.dotColor — one status there
+    // maps to the legacy crimson brand class (tracked separately in
+    // initiativeLifecycle.ts) which must not surface in new Triada UI.
+    const statusDotClass = (status: string): string => {
+      const tone = statusChipTone(status);
+      return tone === 'info'
+        ? 'bg-c-info'
+        : tone === 'warning'
+          ? 'bg-c-warning'
+          : tone === 'success'
+            ? 'bg-c-success'
+            : tone === 'danger'
+              ? 'bg-c-danger'
+              : 'bg-c-text-muted';
+    };
+
     const initiativeColumns: StandardTableColumn[] = [
       {
         id: 'name',
@@ -1802,23 +1819,15 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         filterOptions: ALL_STATUSES.map((s) => ({
           value: s,
           label: STATUS_METADATA[s as InitiativeStatus]?.label || s,
+          color: statusDotClass(s),
         })),
         render: (row: PortfolioInitiative) => {
-          const tone = statusChipTone(row.status);
-          const dotClass =
-            tone === 'info'
-              ? 'bg-c-info'
-              : tone === 'warning'
-                ? 'bg-c-warning'
-                : tone === 'success'
-                  ? 'bg-c-success'
-                  : tone === 'danger'
-                    ? 'bg-c-danger'
-                    : 'bg-c-text-muted';
           const label = STATUS_METADATA[row.status as InitiativeStatus]?.label || row.status;
           return (
             <span className="inline-flex items-center gap-1.5 text-xs font-medium text-c-text-secondary">
-              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotClass}`} />
+              <span
+                className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${statusDotClass(row.status)}`}
+              />
               {label}
             </span>
           );
@@ -1829,7 +1838,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         label: t('initiatives.table.priority', 'Priority'),
         width: '110px',
         filterable: true,
-        filterOptions: ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map((p) => ({ value: p, label: p })),
+        filterOptions: [
+          { value: 'CRITICAL', label: 'Critical', color: 'bg-danger-500' },
+          { value: 'HIGH', label: 'High', color: 'bg-amber-500' },
+          { value: 'MEDIUM', label: 'Medium', color: 'bg-blue-500' },
+          { value: 'LOW', label: 'Low', color: 'bg-c-text-muted' },
+        ],
         render: (row: PortfolioInitiative) => {
           const level = PRIORITY_LEVEL_MAP[row.priority];
           return level ? (
