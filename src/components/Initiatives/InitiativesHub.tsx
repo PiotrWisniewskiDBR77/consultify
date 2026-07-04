@@ -12,8 +12,11 @@ import {
   BarChart3,
   CalendarClock,
   CheckCircle2,
+  Clock,
+  Copy,
   Download,
   Edit2,
+  ExternalLink,
   Filter,
   GitBranch,
   Lightbulb,
@@ -35,6 +38,20 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import {
+  StandardPreview,
+  standardPreviewShortcuts,
+  type StandardPreviewActions,
+  type StandardRowMenu,
+  StandardTable,
+  type TableColumn as StandardTableColumn,
+} from '@/components/standard';
+import {
+  DueChip,
+  PriorityChip,
+  type PriorityLevel,
+  statusChipTone,
+} from '@/components/ui/primitives/chips';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, shouldAllowDemoData } from '@/services/api';
@@ -53,7 +70,13 @@ import {
 } from '@/services/initiativeWriteTruth';
 import { useConversationStore } from '@/store/useConversationStore';
 import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
-import { ACTIVE_STATUSES, ALL_STATUSES } from '@/utils/initiativeHelpers';
+import {
+  ACTIVE_STATUSES,
+  ALL_STATUSES,
+  formatRelativeTime,
+  formatShortDate,
+  getHealthInfo,
+} from '@/utils/initiativeHelpers';
 import { isInitiativesBulkStubEnabled } from '@/utils/initiativesBulkStubFlag';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
 import { buildInitiativeDeepLink, readInitiativeDeepLinkId } from '@/utils/initiativeDeepLink';
@@ -72,7 +95,6 @@ import { TaskDetailView } from '../MyWork/TaskDetailView';
 import { InitiativeGridCard } from '../Portfolio/InitiativeGridCard';
 // Portfolio view components
 import { type KanbanScope, PortfolioKanbanView } from '../Portfolio/PortfolioKanbanView';
-import { PortfolioListView } from '../Portfolio/PortfolioListView';
 // ModuleHub components
 import {
   FilterChip,
@@ -107,6 +129,7 @@ import {
   upsertPortfolioInitiative,
 } from './initiativeCreateFlow';
 import { InitiativeDocumentView } from './InitiativeDocumentView';
+import { getSourceDisplayLabel } from './InitiativeSourceLink';
 import {
   InitiativePreviewV3Body,
   InitiativePreviewV3Footer,
@@ -1434,6 +1457,51 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     ]
   );
 
+  // Triada standard (canon B.24): Esc closes the Portfolio 'table' (list)
+  // StandardPreview; [O] shortcut opens the full initiative document. Mirrors
+  // AssessmentHub 'list' / InterviewHub Inbox — renderContent() is a plain
+  // function, not a component, so this hook must live at top level
+  // (rules-of-hooks).
+  useEffect(() => {
+    if (viewMode !== 'table' || activeDocumentId || !previewInitiativeId) return;
+    const row = initiatives.find((i) => i.id === previewInitiativeId);
+    if (!row) return;
+    const shortcuts = standardPreviewShortcuts({
+      informational: [
+        {
+          id: 'open',
+          variant: 'neutral',
+          label: 'Open',
+          shortcut: 'O',
+          onClick: () => handleOpenInitiativeDocument(row),
+        },
+      ],
+    });
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable)
+        return;
+      if (e.key === 'Escape') {
+        handlePreviewSelection(null);
+        return;
+      }
+      const handler = shortcuts[e.key.toUpperCase()];
+      if (handler) {
+        e.preventDefault();
+        handler();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [
+    viewMode,
+    activeDocumentId,
+    previewInitiativeId,
+    initiatives,
+    handleOpenInitiativeDocument,
+    handlePreviewSelection,
+  ]);
+
   // ============================================
   // CONTENT RENDERING - Original Portfolio Components
   // ============================================
@@ -1703,39 +1771,320 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       />
     );
 
+    // Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7): Portfolio
+    // 'table' viewMode → StandardTable + StandardPreview. Moduł deklaruje
+    // TYLKO dane + kontrakt kebaba/akcji; chrome pochodzi z fasad Standard*
+    // (wzorzec 1:1 z AssessmentHub 'list' — 6fb79511fe / InterviewHub Inbox —
+    // 290c78ea33). Widok KANBAN (poniżej) pozostaje nietknięty.
+    const PRIORITY_LEVEL_MAP: Record<string, PriorityLevel> = {
+      CRITICAL: 'urgent',
+      HIGH: 'high',
+      MEDIUM: 'medium',
+      LOW: 'low',
+    };
+
+    const isTerminalStatusValue = (status: string) =>
+      status === InitiativeStatus.CANCELLED || status === InitiativeStatus.ARCHIVED;
+
+    const initiativeColumns: StandardTableColumn[] = [
+      {
+        id: 'name',
+        label: t('initiatives.table.initiative', 'Initiative'),
+        render: (row: PortfolioInitiative) => (
+          <span className="text-sm font-semibold text-c-text truncate block">{row.name}</span>
+        ),
+      },
+      {
+        id: 'status',
+        label: t('initiatives.table.status', 'Status'),
+        width: '150px',
+        filterable: true,
+        filterOptions: ALL_STATUSES.map((s) => ({
+          value: s,
+          label: STATUS_METADATA[s as InitiativeStatus]?.label || s,
+        })),
+        render: (row: PortfolioInitiative) => {
+          const tone = statusChipTone(row.status);
+          const dotClass =
+            tone === 'info'
+              ? 'bg-c-info'
+              : tone === 'warning'
+                ? 'bg-c-warning'
+                : tone === 'success'
+                  ? 'bg-c-success'
+                  : tone === 'danger'
+                    ? 'bg-c-danger'
+                    : 'bg-c-text-muted';
+          const label = STATUS_METADATA[row.status as InitiativeStatus]?.label || row.status;
+          return (
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-c-text-secondary">
+              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotClass}`} />
+              {label}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'priority',
+        label: t('initiatives.table.priority', 'Priority'),
+        width: '110px',
+        filterable: true,
+        filterOptions: ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map((p) => ({ value: p, label: p })),
+        render: (row: PortfolioInitiative) => {
+          const level = PRIORITY_LEVEL_MAP[row.priority];
+          return level ? (
+            <PriorityChip level={level} label={row.priority} />
+          ) : (
+            <span className="text-xs text-c-text-muted">—</span>
+          );
+        },
+      },
+      {
+        id: 'owner',
+        label: t('initiatives.table.owner', 'Owner'),
+        width: '170px',
+        render: (row: PortfolioInitiative) => {
+          const owner = row.ownerBusiness || row.ownerExecution;
+          if (!owner) return <span className="text-xs text-c-text-muted">—</span>;
+          const name = `${owner.firstName || ''} ${owner.lastName || ''}`.trim() || '—';
+          return <span className="text-xs text-c-text-secondary truncate block">{name}</span>;
+        },
+      },
+      {
+        id: 'plannedEndDate',
+        label: t('initiatives.table.targetDate', 'Target date'),
+        width: '140px',
+        sortable: true,
+        sortAccessor: (row: PortfolioInitiative) =>
+          row.plannedEndDate ? new Date(row.plannedEndDate).getTime() : 0,
+        render: (row: PortfolioInitiative) =>
+          row.plannedEndDate ? (
+            <DueChip
+              label={formatShortDate(row.plannedEndDate)}
+              due={isTerminalStatusValue(row.status) ? null : row.plannedEndDate}
+              showIcon
+            />
+          ) : (
+            <span className="text-xs text-c-text-muted">—</span>
+          ),
+      },
+      {
+        id: 'health',
+        label: t('initiatives.table.health', 'Health'),
+        width: '110px',
+        render: (row: PortfolioInitiative) => {
+          const health = getHealthInfo(row);
+          return (
+            <span className="inline-flex items-center gap-1.5 text-xs text-c-text-muted">
+              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${health.dotClass}`} />
+              {health.label}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'updatedAt',
+        label: t('initiatives.table.updated', 'Updated'),
+        width: '110px',
+        align: 'right',
+        sortable: true,
+        sortAccessor: (row: PortfolioInitiative) =>
+          row.updatedAt ? new Date(row.updatedAt).getTime() : 0,
+        render: (row: PortfolioInitiative) => (
+          <span className="text-xs text-c-text-muted tabular-nums">
+            {formatRelativeTime(row.updatedAt)}
+          </span>
+        ),
+      },
+    ];
+
+    const selectedTableRow: PortfolioInitiative | null = selectedInit;
+
+    const tablePreviewActions: StandardPreviewActions | undefined = selectedTableRow
+      ? {
+          resolutions: !isPilotParticipant
+            ? [
+                {
+                  id: 'delete',
+                  variant: 'destructive',
+                  label: t('common.delete', 'Delete'),
+                  icon: Trash2,
+                  onClick: () => void handleDeleteInitiative(selectedTableRow),
+                },
+              ]
+            : undefined,
+          informational: [
+            {
+              id: 'open',
+              variant: 'neutral',
+              label: t('common.open', 'Open'),
+              icon: ExternalLink,
+              shortcut: 'O',
+              onClick: () => handleOpenInitiativeDocument(selectedTableRow),
+            },
+            {
+              id: 'copy-link',
+              variant: 'neutral',
+              label: i18n.language?.startsWith('pl') ? 'Kopiuj link' : 'Copy link',
+              icon: Copy,
+              onClick: () => void copyInitiativeLink(selectedTableRow.id),
+            },
+          ],
+        }
+      : undefined;
+
     switch (viewMode) {
       case 'table':
         return (
-          <div className="h-full overflow-hidden">
-            <TableWithPreviewLayout<PreviewItem>
-              selectedId={previewInitiativeId}
-              selectedItem={selectedItem}
-              onSelect={handlePreviewSelection}
-              itemIds={itemIds}
-              getItemById={getPreviewItemById}
-              renderPreview={renderInitiativePreview}
-              renderPreviewFooter={renderInitiativePreviewFooter}
-            >
-              <PortfolioListView
-                persistKey="initiatives.portfolio"
-                initiatives={searchedInitiatives}
-                onInitiativeClick={handleInitiativeClick}
-                onOpenFull={(initiative) =>
-                  handleOpenDocument({
-                    id: initiative.id,
-                    type: 'initiative',
-                    name: String(initiative.name || ''),
-                    status: String(initiative.status || '').toUpperCase() as any,
-                  })
+          <div className="h-full flex overflow-hidden">
+            <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
+              <StandardTable
+                columns={initiativeColumns}
+                data={searchedInitiatives as unknown as Array<Record<string, unknown> & { id: string }>}
+                selectedRowId={previewInitiativeId}
+                onRowClick={(row) => handleInitiativeClick(row as unknown as PortfolioInitiative)}
+                onRowDoubleClick={(row) =>
+                  handleOpenInitiativeDocument(row as unknown as PortfolioInitiative)
                 }
-                onStatusChange={handleStatusChange}
-                onQuickUpdate={handleQuickUpdate}
-                onSelectionChange={setSelectedIds}
-                canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
-                onArchive={handleArchiveInitiative}
-                onDelete={handleDeleteInitiative}
+                rowDescription={(row) => (row as unknown as PortfolioInitiative).summary || null}
+                defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
+                persistKey="initiatives.portfolio.list"
+                selection={{ selectedIds, onChange: setSelectedIds }}
+                empty={{
+                  icon: Lightbulb,
+                  title: t('initiatives.hub.noInitiativesFound', 'No initiatives found'),
+                  description: t(
+                    'initiatives.hub.noInitiativesFoundDesc',
+                    'No initiatives match the current filters. Try widening the search or clearing filters.'
+                  ),
+                }}
+                rowMenu={(row): StandardRowMenu => {
+                  const initiative = row as unknown as PortfolioInitiative;
+                  const canArchive =
+                    initiative.status === InitiativeStatus.DONE ||
+                    initiative.status === InitiativeStatus.CANCELLED;
+                  return {
+                    primary: [
+                      {
+                        id: 'open',
+                        label: t('common.open', 'Open'),
+                        icon: ExternalLink,
+                        onClick: () => handleOpenInitiativeDocument(initiative),
+                      },
+                    ],
+                    timeActions: initiative.plannedEndDate
+                      ? [
+                          {
+                            id: 'delay',
+                            label: t('common.delay', 'Delay'),
+                            icon: Clock,
+                            // Brak dedykowanego endpointu "delay by N days" — quickUpdate
+                            // istnieje, ale bez zwalidowanej semantyki przesunięcia terminu
+                            // w tym module (§9-todo w PortfolioListView). Disabled z notą
+                            // zamiast cichego dopisywania nowej logiki biznesowej.
+                            disabled: true,
+                            note: t('common.comingSoonBackend', 'Coming soon (backend)'),
+                          },
+                        ]
+                      : undefined,
+                    universalHandlers: {
+                      preview: () => handleInitiativeClick(initiative),
+                      edit: () => handleInitiativeClick(initiative),
+                      archive: canArchive ? () => handleArchiveInitiative(initiative) : undefined,
+                      archiveNote: canArchive
+                        ? undefined
+                        : t('initiatives.archive.hint', 'Zakończ lub anuluj najpierw'),
+                    },
+                    destructive: {
+                      onClick: isPilotParticipant
+                        ? undefined
+                        : () => handleDeleteInitiative(initiative),
+                      note: isPilotParticipant
+                        ? t('initiatives.pilotAccessBlocked', 'Not available in pilot mode')
+                        : undefined,
+                    },
+                  };
+                }}
               />
-            </TableWithPreviewLayout>
+            </div>
+
+            {selectedTableRow ? (
+              <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+                <StandardPreview
+                  title={selectedTableRow.name || t('initiatives.document.untitled', 'Untitled initiative')}
+                  onClose={() => handlePreviewSelection(null)}
+                  onOpenFull={() => handleOpenInitiativeDocument(selectedTableRow)}
+                  meta={{
+                    pills: [
+                      {
+                        label:
+                          STATUS_METADATA[selectedTableRow.status as InitiativeStatus]?.label ||
+                          selectedTableRow.status,
+                        tone: statusChipTone(selectedTableRow.status),
+                      },
+                      {
+                        label: selectedTableRow.priority || 'MEDIUM',
+                        tone: 'neutral',
+                      },
+                    ],
+                    trailing: (
+                      <span className="text-[11px] font-semibold text-c-text-secondary">
+                        {selectedTableRow.plannedEndDate
+                          ? formatShortDate(selectedTableRow.plannedEndDate)
+                          : '—'}
+                      </span>
+                    ),
+                  }}
+                  details={{
+                    text:
+                      selectedTableRow.summary ||
+                      selectedTableRow.description ||
+                      (i18n.language?.startsWith('pl') ? 'Brak opisu.' : 'No description.'),
+                    onCopy: () => {
+                      void navigator.clipboard?.writeText(
+                        `${selectedTableRow.name} — ${selectedTableRow.status}`
+                      );
+                    },
+                  }}
+                  ai={{
+                    hints:
+                      i18n.language === 'pl'
+                        ? ['Podsumuj', 'Napisz dokument']
+                        : ['Summarize', 'Make document'],
+                    onRunHint: (hint) => {
+                      const isSummarize = hint === 'Podsumuj' || hint === 'Summarize';
+                      void openAiChat(
+                        selectedTableRow,
+                        isSummarize
+                          ? i18n.language === 'pl'
+                            ? 'Podsumuj tę inicjatywę w 5 punktach i zaproponuj 3 kolejne kroki.'
+                            : 'Summarize this initiative in 5 bullets and propose 3 next steps.'
+                          : i18n.language === 'pl'
+                            ? 'Napisz dokument na podstawie tej inicjatywy: cele, status, ryzyka i rekomendacje.'
+                            : 'Write a document based on this initiative: goals, status, risks and recommendations.'
+                      );
+                    },
+                  }}
+                  relations={
+                    selectedTableRow.sourceType && selectedTableRow.sourceId
+                      ? [
+                          {
+                            label: getSourceDisplayLabel(
+                              selectedTableRow.sourceType,
+                              i18n.language === 'pl'
+                            ),
+                            onClick: () =>
+                              navigate(
+                                buildInitiativeDeepLink(selectedTableRow.id, { mode: 'doc' })
+                              ),
+                          },
+                        ]
+                      : []
+                  }
+                  actions={tablePreviewActions}
+                />
+              </aside>
+            ) : null}
           </div>
         );
       case 'grid':
