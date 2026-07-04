@@ -331,6 +331,15 @@ export interface AuthRequest extends AuthenticatedRequest {
   user?: AuthenticatedUser;
   isDemo?: boolean;
   can?: (capability: string) => boolean;
+  /**
+   * Table Platform Service Account (PAT) auth context. Set by
+   * `serviceAccountAuth` middleware when the request presents a `tp_sa_*`
+   * bearer token instead of an interactive user JWT. Handlers/permission
+   * middleware use these to enforce scopes and cap the effective base role.
+   */
+  isServiceAccount?: boolean;
+  serviceAccountId?: string;
+  serviceAccountScopes?: string[];
 }
 
 // ==========================================
@@ -967,6 +976,14 @@ const checkTokenRevocation = async (
  */
 export const verifyToken = asyncHandler(
   async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    // Service-account (PAT) requests are authenticated upstream by
+    // `serviceAccountAuth` (Table Platform REST gateway). Their bearer is a
+    // `tp_sa_*` token, NOT a JWT — running the JWT path here would reject it.
+    // Skip straight through when the SA context is already established.
+    if (req.isServiceAccount === true) {
+      next();
+      return;
+    }
     if (!isTestEnv) {
       logger.debug(`[AuthMiddleware] Verifying token for path: ${safeReadRequestPath(req)}`);
     }

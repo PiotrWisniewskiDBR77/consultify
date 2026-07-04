@@ -414,6 +414,24 @@ const permissionsService = {
             });
             return;
           }
+          // Service-account (PAT) requests must NOT inherit the legacy
+          // org-level `base_owner` fallback — that would let an API token edit
+          // schema regardless of its scopes. Cap the effective role to the
+          // fail-closed role derived from the token's scopes (data_editor for
+          // write, else viewer) and re-check it against the required set so the
+          // Wave-2 field/row-level permission machinery sees the capped role.
+          if ((authReq as any).isServiceAccount) {
+            const cappedRole = (authReq.userRole as BaseRole) ?? 'viewer';
+            if (!roles.includes(cappedRole)) {
+              res.status(403).json({
+                error: `Access denied. Required roles: ${roles.join(', ')}. Current role: ${cappedRole}`,
+              });
+              return;
+            }
+            (authReq as any).userRole = cappedRole;
+            next();
+            return;
+          }
           (authReq as any).userRole = role;
           next();
         })
