@@ -1606,7 +1606,11 @@
         "rejectedAll": "Odrzucono wszystkie propozycje AI",
         "generated": "AI wygenerowało propozycję",
         "proposalApplied": "Propozycja zastosowana",
-        "allProposalsApplied": "Wszystkie propozycje zastosowane"
+        "allProposalsApplied": "Wszystkie propozycje zastosowane",
+        "generating": "AI analizuje tablic\u0119\u2026",
+        "generateFailed": "Generowanie AI nie powiod\u0142o si\u0119",
+        "noProposals": "AI nie zwr\u00f3ci\u0142o propozycji dla tej tablicy",
+        "needsElements": "Najpierw dodaj elementy na tablic\u0119"
       },
       "errors": {
         "saveFailed": "Błąd zapisu",

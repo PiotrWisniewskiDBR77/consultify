@@ -27,6 +27,7 @@ import ReactFlow, {
 } from 'reactflow';
 
 import { Api } from '@/services/api';
+import { generateAIProposal } from '@/services/ideaAIGenerator';
 import { useAppStore } from '@/store/useAppStore';
 import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
 
@@ -42,6 +43,7 @@ import { useCanvasKeyboard } from './canvas/useIdeasToolKeyboard';
 import { type DrawingPath, IdeaDrawingLayer } from './IdeaDrawingLayer';
 import { IdeaScenesManager, type Scene } from './IdeaScenesManager';
 import {
+  type AIProposal,
   type AIProposalBatch,
   type CanvasBgPattern,
   type CanvasToolType,
@@ -64,7 +66,18 @@ import { whiteboardEdgeTypes, whiteboardNodeTypes } from './whiteboard/nodes/nod
 import { STICKY_COLORS, useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
 import { useWhiteboardCollab } from './whiteboard/useWhiteboardCollab';
 import { useWhiteboardNodes } from './whiteboard/useWhiteboardNodes';
-import { useWhiteboardQuickActions } from './whiteboard/useWhiteboardQuickActions';
+import {
+  useWhiteboardQuickActions,
+  type WhiteboardAIGeneratorType,
+} from './whiteboard/useWhiteboardQuickActions';
+import {
+  applyProposalNodeMoves,
+  applyProposalNodeUpdates,
+  isWbNodeKind,
+  resolveProposalEdges,
+  toWbNodeKind,
+  type WbNodeKind,
+} from './whiteboard/whiteboardProposalPatch';
 import {
   createWhiteboardActivityEntry,
   createWhiteboardHistoryEntry,
@@ -448,43 +461,6 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
 };
 
 // ── Main component ───────────────────────────────────────────────────────────
-
-type WbNodeKind =
-  | 'sticky'
-  | 'text'
-  | 'group'
-  | 'shape_rectangle'
-  | 'shape_circle'
-  | 'shape_diamond'
-  | 'shape_hexagon'
-  | 'frame'
-  | 'image'
-  | 'link'
-  | 'kpi_badge'
-  | 'score'
-  | 'progress'
-  | 'summary';
-
-const WB_NODE_KINDS: WbNodeKind[] = [
-  'sticky',
-  'text',
-  'group',
-  'shape_rectangle',
-  'shape_circle',
-  'shape_diamond',
-  'shape_hexagon',
-  'frame',
-  'image',
-  'link',
-  'kpi_badge',
-  'score',
-  'progress',
-  'summary',
-];
-
-function isWbNodeKind(value: unknown): value is WbNodeKind {
-  return typeof value === 'string' && WB_NODE_KINDS.includes(value as WbNodeKind);
-}
 
 type WhiteboardQuickStart = 'brainstorm' | 'affinity' | 'workshop';
 
@@ -1981,6 +1957,9 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     });
 
   // ── Quick action listener (extracted to useWhiteboardQuickActions) ───────
+  // AI runner is defined below (needs handleGenerateProposal); bridged via ref
+  // like the hook's own internal latest-handler pattern.
+  const runAIActionRef = useRef<(generatorType: WhiteboardAIGeneratorType) => void>(() => {});
   useWhiteboardQuickActions({
     open,
     handlers: {
@@ -2003,6 +1982,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       cycleGovernance,
       undo: undoWhiteboard,
       redo: redoWhiteboard,
+      runAIAction: (generatorType) => runAIActionRef.current(generatorType),
     },
   });
 
@@ -2552,6 +2532,82 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   );
 
   // ── AI Proposals (Propose→Accept) ──────────────────────────────────────────
+  // Inserts proposal nodes+edges preserving the patch topology: proposal node ids
+  // are remapped to fresh canvas ids so patch edges stay connected.
+  const insertProposalGraph = useCallback(
+    (
+      addNodes: NonNullable<AIProposal['patch']['addNodes']>,
+      addEdges: NonNullable<AIProposal['patch']['addEdges']>
+    ) => {
+      if (!addNodes.length && !addEdges.length) return;
+      pushUndoSnapshot();
+      const idMap = new Map<string, string>();
+      const created: Node[] = [];
+      addNodes.forEach((an, index) => {
+        const node = createNode(
+          toWbNodeKind(an.type),
+          {
+            ...(an.label ? { label: an.label } : {}),
+            ...(an.position && { position: an.position }),
+            ...(an.data || {}),
+          },
+          nodes.length + index
+        );
+        if (an.id) idMap.set(String(an.id), node.id);
+        created.push(node);
+      });
+      if (created.length) {
+        setNodes((prev: Node[]) => [...prev, ...created]);
+        for (const node of created) collab.broadcastNodeAdd(node);
+      }
+      const existingIds = new Set(nodes.map((node) => node.id));
+      const resolvedEdges = resolveProposalEdges(addEdges, idMap, existingIds);
+      if (resolvedEdges.length) {
+        setEdges((prev: Edge[]) => [...prev, ...(resolvedEdges as Edge[])]);
+      }
+    },
+    [collab, createNode, nodes, pushUndoSnapshot, setEdges, setNodes]
+  );
+
+  // Applies an ACCEPTED proposal patch to the canvas. Only ever called from the
+  // review flow (whiteboardCanon AC-05: generate→preview→apply, no silent apply).
+  const applyProposalPatch = useCallback(
+    (p: AIProposal) => {
+      insertProposalGraph(p.patch?.addNodes || [], p.patch?.addEdges || []);
+      // wb_to_table (cross-tool preview): insert generated row nodes as stickies
+      const generatedRowNodes = (p.patch?.extensions as any)?.table?.generatedRowNodes;
+      if (Array.isArray(generatedRowNodes) && generatedRowNodes.length) {
+        insertProposalGraph(
+          generatedRowNodes.map((rn: any) => ({
+            id: String(rn?.id || ''),
+            label: String(rn?.data?.label || ''),
+            type: rn?.type,
+            position: rn?.position,
+            data: rn?.data || {},
+          })),
+          []
+        );
+      }
+      // wb_name_clusters: rename existing nodes (merge data, keep callbacks)
+      if (p.patch?.updateNodes?.length) {
+        const updateNodes = p.patch.updateNodes;
+        setNodes((nds: Node[]) => applyProposalNodeUpdates(nds, updateNodes));
+      }
+      // whiteboard_organize: reposition existing nodes
+      if (p.patch?.moveNodes?.length) {
+        const moveNodes = p.patch.moveNodes;
+        setNodes((nds: Node[]) => applyProposalNodeMoves(nds, moveNodes));
+      }
+      // Cross-tool proposals (wb_to_map_branches → mindmap, wb_to_table → table):
+      // no tool switching here — the preview lands on the whiteboard and the
+      // resultSummary tells the user where to continue.
+      if (p.generatorStatus === 'cross-tool' && p.resultSummary) {
+        toast(p.resultSummary, { icon: 'ℹ️' });
+      }
+    },
+    [insertProposalGraph, setNodes]
+  );
+
   const handleAcceptProposal = useCallback(
     (proposalId: string) => {
       if (!proposalBatch) return;
@@ -2566,15 +2622,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         (p) => p.id === proposalId && p.status === 'accepted'
       );
       for (const p of accepted) {
-        if (p.patch?.addNodes?.length) {
-          for (const an of p.patch.addNodes) {
-            addElement(an.type as any, {
-              label: an.label,
-              ...(an.position && { position: an.position }),
-              ...(an.data || {}),
-            });
-          }
-        }
+        applyProposalPatch(p);
       }
       appendActivity(
         createWhiteboardActivityEntry(
@@ -2585,7 +2633,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       );
       toast.success(t('myWork.whiteboard.ai.proposalApplied'));
     },
-    [addElement, appendActivity, currentUserId, isPl, proposalBatch]
+    [applyProposalPatch, appendActivity, currentUserId, isPl, proposalBatch]
   );
 
   const handleRejectProposal = useCallback(
@@ -2621,21 +2669,13 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     };
     setProposalBatch(updated);
     for (const p of updated.proposals.filter((pr) => pr.status === 'accepted')) {
-      if (p.patch?.addNodes?.length) {
-        for (const an of p.patch.addNodes) {
-          addElement(an.type as any, {
-            label: an.label,
-            ...(an.position && { position: an.position }),
-            ...(an.data || {}),
-          });
-        }
-      }
+      applyProposalPatch(p);
     }
     appendActivity(
       createWhiteboardActivityEntry('ai', t('myWork.whiteboard.ai.acceptedAll'), currentUserId)
     );
     toast.success(t('myWork.whiteboard.ai.allProposalsApplied'));
-  }, [addElement, appendActivity, currentUserId, isPl, proposalBatch]);
+  }, [applyProposalPatch, appendActivity, currentUserId, isPl, proposalBatch]);
 
   const handleRejectAllProposals = useCallback(() => {
     setProposalBatch((prev) => {
@@ -2665,6 +2705,74 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     },
     [appendActivity, currentUserId, isPl]
   );
+
+  // ── AI quick actions (wb_* facilitation generators) ───────────────────────
+  // generate → preview (IdeaProposalReview) → apply; never applied silently (AC-05).
+  const aiActionPendingRef = useRef(false);
+  const runWhiteboardAIAction = useCallback(
+    async (generatorType: WhiteboardAIGeneratorType) => {
+      if (locked || aiActionPendingRef.current) return;
+      if (nodes.length === 0) {
+        toast.error(t('myWork.whiteboard.ai.needsElements'));
+        return;
+      }
+      aiActionPendingRef.current = true;
+      const toastId = toast.loading(t('myWork.whiteboard.ai.generating'));
+      try {
+        const batch = await generateAIProposal({
+          ideaId,
+          generatorType,
+          tool: 'whiteboard',
+          context: {
+            seedText: ideaSeedText,
+            title: ideaTitle,
+            existingNodes: nodes.map((node) => ({
+              id: node.id,
+              type: node.type,
+              position: node.position,
+              data: { label: node.data?.label, semanticType: node.data?.semanticType },
+            })),
+            existingEdges: edges.map((edge) => ({
+              id: edge.id,
+              source: edge.source,
+              target: edge.target,
+            })),
+            language: i18n.language || 'en',
+            ...(selectedNodeIds.length > 0 && {
+              selection: {
+                type: 'nodes',
+                count: selectedNodeIds.length,
+                ids: selectedNodeIds,
+                primaryId: selectedNodeIds[0],
+              },
+            }),
+          },
+        });
+        if (!batch.proposals.length) {
+          toast.error(t('myWork.whiteboard.ai.noProposals'));
+          return;
+        }
+        handleGenerateProposal(batch);
+      } catch (error: any) {
+        toast.error(error?.message || t('myWork.whiteboard.ai.generateFailed'));
+      } finally {
+        toast.dismiss(toastId);
+        aiActionPendingRef.current = false;
+      }
+    },
+    [
+      edges,
+      handleGenerateProposal,
+      i18n.language,
+      ideaId,
+      ideaSeedText,
+      ideaTitle,
+      locked,
+      nodes,
+      selectedNodeIds,
+    ]
+  );
+  runAIActionRef.current = runWhiteboardAIAction;
 
   // ── Keyboard shortcuts ────────────────────────────────────────────────────
 

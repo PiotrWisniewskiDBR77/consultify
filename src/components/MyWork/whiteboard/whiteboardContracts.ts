@@ -199,6 +199,33 @@ export const WHITEBOARD_ACTIONS: Record<string, WhiteboardActionDefinition> = {
     surface: 'system',
     label: 'Cycle governance level',
   },
+  // V51-05: AI facilitation quick actions (generate→preview→apply, AC-05)
+  wb_ai_find_themes: { id: 'wb_ai_find_themes', surface: 'tools_panel', label: 'AI: find themes' },
+  wb_ai_name_clusters: {
+    id: 'wb_ai_name_clusters',
+    surface: 'tools_panel',
+    label: 'AI: name clusters',
+  },
+  wb_ai_extract_actions: {
+    id: 'wb_ai_extract_actions',
+    surface: 'tools_panel',
+    label: 'AI: extract action items',
+  },
+  wb_ai_to_map: {
+    id: 'wb_ai_to_map',
+    surface: 'tools_panel',
+    label: 'AI: convert board to mind map (cross-tool preview)',
+  },
+  wb_ai_to_table: {
+    id: 'wb_ai_to_table',
+    surface: 'tools_panel',
+    label: 'AI: convert board to table (cross-tool preview)',
+  },
+  wb_ai_summarize: {
+    id: 'wb_ai_summarize',
+    surface: 'tools_panel',
+    label: 'AI: summarize stickies',
+  },
 };
 
 const SEMANTIC_TYPE_LABELS: Record<WhiteboardSemanticType, { en: string; pl: string }> = {
