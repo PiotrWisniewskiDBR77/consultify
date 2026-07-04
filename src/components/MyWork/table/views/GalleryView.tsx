@@ -1,13 +1,16 @@
 /**
  * GalleryView (Platform) — Responsive card gallery renderer for the Table Platform.
  * Shows records as visual cards with optional cover image, title, metadata fields,
- * and status badge. Supports configurable card sizes.
+ * and status badge. Supports configurable card sizes, plus sort and filter controls
+ * reusing the same `FilterPanel` UI and `filterEval` evaluator as the Grid view.
  */
-import { Image, Star } from 'lucide-react';
-import React, { useMemo } from 'react';
+import { ArrowDownAZ, ArrowUpAZ, Filter, Image, Star } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { ColumnDef, TableNode } from '../tableTypes';
+import { evaluateFilterRule } from '../filterEval';
+import { FilterPanel } from '../FilterPanel';
+import type { ColumnDef, FilterGroup, TableNode } from '../tableTypes';
 import { SELECT_COLORS } from '../tableTypes';
 
 export type CardSize = 'small' | 'medium' | 'large';
@@ -20,6 +23,8 @@ export interface GalleryViewProps {
   cardSize: CardSize;
   onRecordClick: (recordId: string) => void;
 }
+
+const EMPTY_FILTERS: FilterGroup = { logic: 'and', rules: [] };
 
 const GRID_CLASSES: Record<CardSize, string> = {
   small: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6',
@@ -180,6 +185,11 @@ export const GalleryView: React.FC<GalleryViewProps> = ({
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
+  const [filters, setFilters] = useState<FilterGroup>(EMPTY_FILTERS);
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [sortKey, setSortKey] = useState<string>('');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
   const displayColumns = useMemo(() => {
     const visible = new Set(visibleFieldIds);
     return columns
@@ -189,6 +199,105 @@ export const GalleryView: React.FC<GalleryViewProps> = ({
       )
       .slice(0, 5);
   }, [columns, coverImageFieldId, visibleFieldIds]);
+
+  const sortableColumns = useMemo(() => {
+    const hasLabel = columns.some((c) => c.key === 'label');
+    return hasLabel
+      ? columns
+      : [{ key: 'label', header: isPl ? 'Nazwa' : 'Name' } as ColumnDef, ...columns];
+  }, [columns, isPl]);
+
+  const filteredRecords = useMemo(() => {
+    if (filters.rules.length === 0) return records;
+    return records.filter((record) => {
+      const results = filters.rules.map((rule) => evaluateFilterRule(rule, record));
+      return filters.logic === 'and' ? results.every(Boolean) : results.some(Boolean);
+    });
+  }, [records, filters]);
+
+  const sortedRecords = useMemo(() => {
+    if (!sortKey) return filteredRecords;
+    const dir = sortDir === 'asc' ? 1 : -1;
+    return [...filteredRecords].sort((a, b) => {
+      const av = a.data?.[sortKey] ?? a.data?.label ?? '';
+      const bv = b.data?.[sortKey] ?? b.data?.label ?? '';
+      const an = Number(av);
+      const bn = Number(bv);
+      if (Number.isFinite(an) && Number.isFinite(bn) && av !== '' && bv !== '') {
+        return (an - bn) * dir;
+      }
+      return String(av).localeCompare(String(bv)) * dir;
+    });
+  }, [filteredRecords, sortKey, sortDir]);
+
+  const activeFilterCount = filters.rules.length;
+
+  const toolbar = (
+    <div className="flex items-center gap-2 px-4 pt-3 pb-1 flex-wrap">
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setShowFilterPanel((v) => !v)}
+          className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
+            activeFilterCount > 0
+              ? 'bg-c-accent-soft text-c-accent'
+              : 'text-c-text-secondary hover:bg-c-surface-raised'
+          }`}
+        >
+          <Filter size={12} />
+          {isPl ? 'Filtruj' : 'Filter'}
+          {activeFilterCount > 0 && (
+            <span className="inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-c-accent text-white text-[9px] font-bold">
+              {activeFilterCount}
+            </span>
+          )}
+        </button>
+        <FilterPanel
+          open={showFilterPanel}
+          onClose={() => setShowFilterPanel(false)}
+          filters={filters}
+          onChange={setFilters}
+          columns={columns}
+        />
+      </div>
+
+      <div className="flex items-center gap-1.5">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
+          {isPl ? 'Sortuj' : 'Sort'}
+        </span>
+        <select
+          value={sortKey}
+          onChange={(e) => setSortKey(e.target.value)}
+          className="text-[11px] font-medium px-2 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-c-text-secondary"
+        >
+          <option value="">{isPl ? 'Brak' : 'None'}</option>
+          {sortableColumns.map((c) => (
+            <option key={c.key} value={c.key}>
+              {c.header}
+            </option>
+          ))}
+        </select>
+        {sortKey && (
+          <button
+            type="button"
+            onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
+            className="p-1.5 rounded-lg text-c-text-secondary hover:bg-c-surface-raised transition-colors"
+            title={
+              sortDir === 'asc'
+                ? isPl
+                  ? 'Rosnąco'
+                  : 'Ascending'
+                : isPl
+                  ? 'Malejąco'
+                  : 'Descending'
+            }
+          >
+            {sortDir === 'asc' ? <ArrowDownAZ size={12} /> : <ArrowUpAZ size={12} />}
+          </button>
+        )}
+      </div>
+    </div>
+  );
 
   if (records.length === 0) {
     return (
@@ -205,18 +314,29 @@ export const GalleryView: React.FC<GalleryViewProps> = ({
   }
 
   return (
-    <div className="flex-1 overflow-auto p-4">
-      <div className={`grid ${GRID_CLASSES[cardSize]} gap-3`}>
-        {records.map((record) => (
-          <GalleryCard
-            key={record.id}
-            record={record}
-            displayColumns={displayColumns}
-            coverImageFieldId={coverImageFieldId}
-            cardSize={cardSize}
-            onClick={onRecordClick}
-          />
-        ))}
+    <div className="flex-1 flex flex-col overflow-hidden">
+      {toolbar}
+      <div className="flex-1 overflow-auto p-4 pt-2">
+        {sortedRecords.length === 0 ? (
+          <div className="flex flex-col items-center justify-center text-c-text-muted gap-2 p-8">
+            <span className="text-sm font-medium">
+              {isPl ? 'Brak wyników dla tych filtrów' : 'No results for these filters'}
+            </span>
+          </div>
+        ) : (
+          <div className={`grid ${GRID_CLASSES[cardSize]} gap-3`}>
+            {sortedRecords.map((record) => (
+              <GalleryCard
+                key={record.id}
+                record={record}
+                displayColumns={displayColumns}
+                coverImageFieldId={coverImageFieldId}
+                cardSize={cardSize}
+                onClick={onRecordClick}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
