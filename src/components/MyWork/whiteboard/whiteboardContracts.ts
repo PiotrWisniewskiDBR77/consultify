@@ -280,6 +280,39 @@ export function inferWhiteboardSemanticType(node: {
   }
 }
 
+const OUTCOME_SEMANTIC_TYPES: readonly WhiteboardOutcomeRecord['type'][] = [
+  'cluster',
+  'theme',
+  'outcome',
+  'decision',
+  'action',
+];
+
+/**
+ * Resolves the outcomeRegistry record type for a node that was just converted
+ * (SelectionBar wb_convert_* / facilitation handoff → my-ideas /convert).
+ *
+ * Order:
+ *  1. Node's own semantics (explicit `data.semanticType` or inferred from node type)
+ *     when they already map to an outcome type — preserves pre-A4 behavior.
+ *  2. Fallback derived from the convert TARGET, so generic nodes (plain sticky/text)
+ *     converted via "Convert decision"/"Convert action" still land in the registry
+ *     with an exportedTo ref instead of being silently skipped.
+ */
+export function resolveConvertOutcomeType(
+  node: { type?: string; data?: { semanticType?: unknown } },
+  target: string
+): WhiteboardOutcomeRecord['type'] | null {
+  const inferred = inferWhiteboardSemanticType(node);
+  if ((OUTCOME_SEMANTIC_TYPES as readonly string[]).includes(inferred)) {
+    return inferred as WhiteboardOutcomeRecord['type'];
+  }
+  if (target === 'decision') return 'decision';
+  if (target === 'task_set') return 'action';
+  if (target === 'initiative') return 'outcome';
+  return null;
+}
+
 export function createWhiteboardActivityEntry(
   type: WhiteboardActivityEntry['type'],
   label: string,

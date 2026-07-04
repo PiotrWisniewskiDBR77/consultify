@@ -87,6 +87,7 @@ import {
   type FacilitationPhase,
   getSemanticTypeLabel,
   inferWhiteboardSemanticType,
+  resolveConvertOutcomeType,
   type WhiteboardActivityEntry,
   type WhiteboardClassification,
   type WhiteboardHistoryEntry,
@@ -2258,18 +2259,13 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       if (!outputId || nodeIds.length === 0) return;
       const linkedNodes = nodes.filter((node) => nodeIds.includes(node.id));
       linkedNodes.forEach((node) => {
-        const semanticType = String(
-          node.data?.semanticType || ''
-        ) as WhiteboardOutcomeRecord['type'];
-        if (
-          semanticType === 'cluster' ||
-          semanticType === 'theme' ||
-          semanticType === 'outcome' ||
-          semanticType === 'decision' ||
-          semanticType === 'action'
-        ) {
+        // A4: resolve via node semantics with a target-derived fallback so generic
+        // nodes (plain sticky/text) converted from the SelectionBar still get an
+        // outcomeRegistry entry with the exportedTo ref (no silent skip).
+        const outcomeType = resolveConvertOutcomeType(node, target);
+        if (outcomeType) {
           registerOutcomeRecord(
-            createOutcomeRecord(semanticType, node, nodeIds, {
+            createOutcomeRecord(outcomeType, node, nodeIds, {
               exportedToId: outputId,
               exportedToType: target,
             })
@@ -2928,6 +2924,9 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     [displayNodes, locked]
   );
   const selectedCount = selectedNodes.length;
+  // A4: selectedNodeIds is already computed once at component top (from nodes'
+  // selected flag) and is in scope here; reuse it for the SelectionBar convert
+  // dispatch instead of redeclaring it.
   const hasSelectedFrame = selectedNodes.some(
     (node: Node) => node.type === 'frameNode' || node.type === 'groupNode'
   );
@@ -3032,6 +3031,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             selectedCount={selectedCount}
             hasSelectedFrame={hasSelectedFrame}
             ideaId={ideaId}
+            selectedNodeIds={selectedNodeIds}
             onAlignNodes={alignNodes}
             onDistributeNodes={distributeNodes}
             onGroupSelected={groupSelected}
