@@ -80,7 +80,7 @@ const SortableNavItem: React.FC<SortableNavItemProps> = ({
         onClick={() => onSectionChange(section.id)}
         className={`group w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 ${
           isActive
-            ? 'bg-primary-500/10 dark:bg-primary-500/15 text-primary-700 dark:text-primary-300 border-l-2 border-primary-500'
+            ? 'bg-c-surface-raised text-c-text border-l-2 border-c-accent'
             : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-navy-800/60 border-l-2 border-transparent'
         } ${isDragging ? 'opacity-90 shadow-lg shadow-slate-300/20 dark:shadow-navy-900/40' : ''}`}
       >
@@ -98,7 +98,7 @@ const SortableNavItem: React.FC<SortableNavItemProps> = ({
             size={14}
             className={
               isActive
-                ? 'text-primary-500 dark:text-primary-400'
+                ? 'text-c-text'
                 : 'text-slate-600 dark:text-slate-500 group-hover:text-slate-500 dark:group-hover:text-slate-300'
             }
           />
@@ -193,7 +193,7 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
         onClick={() => onSectionChange(section.id)}
         className={`group w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 ${
           isActive
-            ? 'bg-primary-500/10 dark:bg-primary-500/15 text-primary-700 dark:text-primary-300 border-l-2 border-primary-500'
+            ? 'bg-c-surface-raised text-c-text border-l-2 border-c-accent'
             : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-navy-800/60 border-l-2 border-transparent'
         }`}
       >
@@ -202,7 +202,7 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
             size={14}
             className={
               isActive
-                ? 'text-primary-500 dark:text-primary-400'
+                ? 'text-c-text'
                 : 'text-slate-600 dark:text-slate-500 group-hover:text-slate-500 dark:group-hover:text-slate-300'
             }
           />

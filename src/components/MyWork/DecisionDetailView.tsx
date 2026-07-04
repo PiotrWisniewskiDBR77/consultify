@@ -1388,7 +1388,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       return {
         icon: <Flag size={12} />,
         label: t('decisions.detail.activityLog.statusChange', 'Status change'),
-        style: 'text-primary-500 bg-primary-500/10 border-primary-400/30',
+        style: 'text-c-info bg-c-info/10 border-c-info/30',
       };
     if (type === 'edit')
       return {
@@ -3717,7 +3717,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
       <button
         onClick={() => setAiMenuOpenField((prev) => (prev === fieldKey ? null : fieldKey))}
         disabled={isDecisionStageLocked || !!aiFieldLoading[fieldKey]}
-        className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium text-primary-500 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium text-c-info dark:text-c-info hover:bg-c-info/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         title={t('decisions.detail.refine.aiActionsTitle', 'AI actions for this field')}
       >
         {aiFieldLoading[fieldKey] ? (
@@ -4541,7 +4541,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                         disabled={workflowActionLoading}
                         className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                           action.tone === 'primary'
-                            ? 'border border-primary-400/50 bg-primary-500/10 text-primary-700 hover:bg-primary-500/15 dark:text-primary-300'
+                            ? 'border border-c-info/50 bg-c-info/10 text-c-info hover:bg-c-info/15 dark:text-c-info'
                             : action.tone === 'success'
                               ? 'border border-emerald-400/50 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-300'
                               : 'border border-slate-300/60 text-slate-600 hover:bg-slate-100 dark:border-navy-600/60 dark:text-slate-300 dark:hover:bg-navy-800'
@@ -4588,8 +4588,8 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                         disabled={isDecisionStageLocked || isGeneratingAlternatives}
                         className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                           isGeneratingAlternatives
-                            ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
-                            : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                            ? 'border-c-info/50 text-c-info dark:text-c-info bg-c-info/10'
+                            : 'border-c-info/50 text-c-info dark:text-c-info bg-c-info/10 hover:bg-c-info/15'
                         } disabled:opacity-40 disabled:cursor-not-allowed`}
                         title={t('decisions.detail.actions.generateOptionsTitle', 'Generate options with AI')}
                       >
@@ -4607,8 +4607,8 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                         disabled={isDecisionStageLocked || isGeneratingRisks}
                         className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                           isGeneratingRisks
-                            ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
-                            : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                            ? 'border-c-info/50 text-c-info dark:text-c-info bg-c-info/10'
+                            : 'border-c-info/50 text-c-info dark:text-c-info bg-c-info/10 hover:bg-c-info/15'
                         } disabled:opacity-40 disabled:cursor-not-allowed`}
                         title={t('decisions.detail.actions.analyzeRisksTitle', 'Analyze risks with AI')}
                       >
@@ -4626,8 +4626,8 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                         disabled={isDecisionStageLocked || isSuggestingStakeholders}
                         className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                           isSuggestingStakeholders
-                            ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
-                            : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                            ? 'border-c-info/50 text-c-info dark:text-c-info bg-c-info/10'
+                            : 'border-c-info/50 text-c-info dark:text-c-info bg-c-info/10 hover:bg-c-info/15'
                         } disabled:opacity-40 disabled:cursor-not-allowed`}
                         title={t('decisions.detail.actions.generateRaciTitle', 'Generate RACI with AI')}
                       >
@@ -4645,8 +4645,8 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                         disabled={isDecisionStageLocked || isGeneratingAIComment}
                         className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                           isGeneratingAIComment
-                            ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
-                            : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                            ? 'border-c-info/50 text-c-info dark:text-c-info bg-c-info/10'
+                            : 'border-c-info/50 text-c-info dark:text-c-info bg-c-info/10 hover:bg-c-info/15'
                         } disabled:opacity-40 disabled:cursor-not-allowed`}
                         title={t('decisions.detail.actions.generateCommentTitle', 'Generate AI comment')}
                       >
@@ -4664,8 +4664,8 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                         disabled={isDecisionStageLocked || isGeneratingConsequenceScenarios}
                         className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                           isGeneratingConsequenceScenarios
-                            ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
-                            : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                            ? 'border-c-info/50 text-c-info dark:text-c-info bg-c-info/10'
+                            : 'border-c-info/50 text-c-info dark:text-c-info bg-c-info/10 hover:bg-c-info/15'
                         } disabled:opacity-40 disabled:cursor-not-allowed`}
                         title={
                           t('decisions.detail.actions.analyzeConsequencesTitle', 'Run AI consequence analysis')
@@ -4711,7 +4711,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                             <button
                               onClick={generateDescriptionAI}
                               disabled={isDecisionStageLocked || isGeneratingDescription}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-primary-500 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-c-info dark:text-c-info hover:bg-c-info/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                               {isGeneratingDescription ? (
                                 <Loader2 size={13} className="animate-spin" />
@@ -4739,7 +4739,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                     className="flex items-center justify-between gap-3 text-sm text-slate-700 dark:text-slate-300"
                                   >
                                     <div className="flex min-w-0 items-center gap-2">
-                                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 uppercase">
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border border-c-info/50 text-c-info dark:text-c-info bg-c-info/10 uppercase">
                                         {item.type}
                                       </span>
                                       <span className="truncate">{item.title}</span>
@@ -4880,7 +4880,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                               </p>
                               <button
                                 onClick={addAlternative}
-                                className="text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors"
+                                className="text-xs font-medium text-c-info hover:text-c-info transition-colors"
                               >
                                 + {t('decisions.detail.options.addOption', 'Add option')}
                               </button>
@@ -5092,7 +5092,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
 
                           <button
                             onClick={addAlternative}
-                            className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-primary-500 transition-colors"
+                            className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-c-info transition-colors"
                           >
                             + {t('decisions.detail.options.addOption', 'Add option')}
                           </button>
@@ -5278,7 +5278,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                         },
                                       });
                                     }}
-                                    className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                    className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-info hover:border-c-info/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                   >
                                     + {t('decisions.detail.governance.addPerson', 'Add person')}
                                   </button>
@@ -5349,7 +5349,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                                   setEditingStakeholderId(s.id);
                                                   setStakeholderDraft({ ...s });
                                                 }}
-                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500 disabled:opacity-40"
+                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-c-info disabled:opacity-40"
                                                 title={t('decisions.detail.activityLog.edit', 'Edit')}
                                               >
                                                 <Edit3 size={13} />
@@ -5401,7 +5401,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                         enabled: true,
                                       });
                                     }}
-                                    className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                    className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-info hover:border-c-info/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                   >
                                     + {t('decisions.detail.governance.addReminder', 'Add reminder')}
                                   </button>
@@ -5477,7 +5477,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                                   setEditingReminderId(r.id);
                                                   setReminderDraft(normalizeReminderRule({ ...r }));
                                                 }}
-                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500 disabled:opacity-40"
+                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-c-info disabled:opacity-40"
                                                 title={t('decisions.detail.activityLog.edit', 'Edit')}
                                               >
                                                 <Edit3 size={13} />
@@ -5534,7 +5534,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                       );
                                       setEditingEscalationId('__new__');
                                     }}
-                                    className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                    className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-info hover:border-c-info/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                   >
                                     + {t('decisions.detail.governance.addEscalation', 'Add escalation')}
                                   </button>
@@ -5627,7 +5627,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                                   setEditingEscalationId(rule.id);
                                                   setEscalationDraft({ ...rule });
                                                 }}
-                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500 disabled:opacity-40"
+                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-c-info disabled:opacity-40"
                                                 title={t('decisions.detail.activityLog.edit', 'Edit')}
                                               >
                                                 <Edit3 size={13} />
@@ -5678,7 +5678,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                     <button
                                       disabled={isDecisionStageLocked || isSuggestingStakeholders}
                                       onClick={suggestStakeholderDraftAI}
-                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-primary-300/40 dark:border-primary-500/30 text-primary-500 hover:text-primary-600 hover:border-primary-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-c-info/40 dark:border-c-info/30 text-c-info hover:text-c-info hover:border-c-info/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
                                     >
                                       {isSuggestingStakeholders ? (
                                         <Loader2 size={12} className="animate-spin" />
@@ -5817,7 +5817,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                             onClick={channel.toggle}
                                             className={`${channelChipClass} ${
                                               channel.active
-                                                ? 'border-primary-400/60 text-primary-500 bg-primary-500/10'
+                                                ? 'border-c-info/60 text-c-info bg-c-info/10'
                                                 : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
                                             }`}
                                           >
@@ -5857,7 +5857,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                               }}
                                               className={`${channelChipClass} ${
                                                 selected
-                                                  ? 'border-primary-400/60 text-primary-500 bg-primary-500/10'
+                                                  ? 'border-c-info/60 text-c-info bg-c-info/10'
                                                   : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
                                               }`}
                                               title={channel.scope}
@@ -5955,7 +5955,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                     <button
                                       disabled={isDecisionStageLocked || isSuggestingReminders}
                                       onClick={suggestReminderDraftAI}
-                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-primary-300/40 dark:border-primary-500/30 text-primary-500 hover:text-primary-600 hover:border-primary-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-c-info/40 dark:border-c-info/30 text-c-info hover:text-c-info hover:border-c-info/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
                                     >
                                       {isSuggestingReminders ? (
                                         <Loader2 size={12} className="animate-spin" />
@@ -6099,7 +6099,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                               }
                                               className={`${channelChipClass} ${
                                                 enabled
-                                                  ? 'border-primary-400/60 text-primary-500 bg-primary-500/10'
+                                                  ? 'border-c-info/60 text-c-info bg-c-info/10'
                                                   : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
                                               }`}
                                             >
@@ -6141,7 +6141,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                               }
                                               className={`${channelChipClass} ${
                                                 enabled
-                                                  ? 'border-primary-400/60 text-primary-500 bg-primary-500/10'
+                                                  ? 'border-c-info/60 text-c-info bg-c-info/10'
                                                   : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
                                               }`}
                                               title={channel.scope}
@@ -6258,7 +6258,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                     <button
                                       disabled={isDecisionStageLocked || isSuggestingEscalations}
                                       onClick={suggestEscalationDraftAI}
-                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-primary-300/40 dark:border-primary-500/30 text-primary-500 hover:text-primary-600 hover:border-primary-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-c-info/40 dark:border-c-info/30 text-c-info hover:text-c-info hover:border-c-info/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
                                     >
                                       {isSuggestingEscalations ? (
                                         <Loader2 size={12} className="animate-spin" />
@@ -6419,7 +6419,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                             }
                                             className={`${channelChipClass} ${
                                               enabled
-                                                ? 'border-primary-400/60 text-primary-500 bg-primary-500/10'
+                                                ? 'border-c-info/60 text-c-info bg-c-info/10'
                                                 : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
                                             }`}
                                           >
@@ -6460,7 +6460,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                             }
                                             className={`${channelChipClass} ${
                                               enabled
-                                                ? 'border-primary-400/60 text-primary-500 bg-primary-500/10'
+                                                ? 'border-c-info/60 text-c-info bg-c-info/10'
                                                 : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
                                             }`}
                                             title={channel.scope}
@@ -6665,7 +6665,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                     onClick={() => setClickupTab(key)}
                     className={`px-3 py-1.5 rounded-lg text-xs border transition-all ${
                       clickupTab === key
-                        ? 'bg-primary-500/15 border-primary-400/50 text-primary-600 dark:text-primary-300'
+                        ? 'bg-c-info/15 border-c-info/50 text-c-info dark:text-c-info'
                         : 'bg-transparent border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400'
                     }`}
                   >
@@ -6785,7 +6785,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                               };
                               setStakeholders([...stakeholders, newStakeholder]);
                             }}
-                            className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-info hover:border-c-info/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                           >
                             + {t('decisions.detail.governance.add', 'Add')}
                           </button>
@@ -6920,7 +6920,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                 },
                               ])
                             }
-                            className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-info hover:border-c-info/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                           >
                             + {t('decisions.detail.governance.add', 'Add')}
                           </button>
@@ -7154,7 +7154,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                   message: '',
                                 })
                               }
-                              className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                              className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-info hover:border-c-info/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                               + {t('decisions.detail.governance.add', 'Add')}
                             </button>
@@ -7289,7 +7289,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                             className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
                               isDecisionStageLocked
                                 ? 'border-slate-300/40 dark:border-navy-700 text-slate-500 dark:text-slate-400 dark:text-slate-500 cursor-not-allowed'
-                                : 'border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 cursor-pointer'
+                                : 'border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-info hover:border-c-info/50 cursor-pointer'
                             }`}
                           >
                             + {t('decisions.detail.governance.add', 'Add')}
@@ -7387,7 +7387,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                 title: t('decisions.detail.linkedItems.newLinkedItem', 'New linked item'),
                               })
                             }
-                            className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-info hover:border-c-info/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                           >
                             + {t('decisions.detail.governance.add', 'Add')}
                           </button>
