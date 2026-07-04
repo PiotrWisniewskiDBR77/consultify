@@ -180,7 +180,7 @@ describe('P13 A5 — Whiteboard object limit (422 hard cap at >500)', () => {
   describe('PUT /my-ideas/:id/map — hard cap at 500 nodes', () => {
     it('PUT with 500 nodes → 200 (at limit, allowed)', async () => {
       mockQueryOne
-        .mockResolvedValueOnce({ id: IDEA_ID, title: 'Test' }) // idea exists
+        .mockResolvedValueOnce({ ownerUserId: USER_ID }) // resolveCanonicalMapOwner
         .mockResolvedValueOnce(null); // no existing map
 
       const nodes = generateNodes(500);
@@ -229,7 +229,7 @@ describe('P13 A5 — Whiteboard object limit (422 hard cap at >500)', () => {
   describe('POST /my-ideas/:id/map/sync — hard cap at 500 nodes', () => {
     it('POST /sync with 500 nodes → 200 (at limit, allowed)', async () => {
       mockQueryOne
-        .mockResolvedValueOnce({ id: IDEA_ID, title: 'Test' }) // idea exists
+        .mockResolvedValueOnce({ ownerUserId: USER_ID }) // resolveCanonicalMapOwner
         .mockResolvedValueOnce(null); // no existing map
 
       const nodes = generateNodes(500);
