@@ -11,10 +11,13 @@ import logger from '../../utils/Logger.js';
 import { createP23Error, type P23ClassifiedError } from '../v8/exceleCanon.js';
 import type {
   CellStyle,
+  ChartImage,
   ColumnDef,
   ConditionalFormattingBlock,
   ConditionalFormattingRule,
   DataValidation,
+  ScenarioSwitch,
+  SensitivityTable,
   WorkbookSchema,
 } from './WorkbookSchema.js';
 import {
@@ -601,6 +604,298 @@ function assumptionNameRefs(
 }
 
 // ---------------------------------------------------------------------------
+// EQ — A1 helpers shared by the equity-research primitives
+// ---------------------------------------------------------------------------
+
+/** A1 address from 1-based col/row (e.g. 2,3 → "B3"). */
+function a1(col: number, row: number): string {
+  return `${colLetterLocal(col)}${row}`;
+}
+
+/** Excel-safe string literal for a formula (double up any embedded quotes). */
+function xlStr(s: string): string {
+  return `"${String(s).replace(/"/g, '""')}"`;
+}
+
+/** Sanitize a scenario/driver label into a valid Excel defined-name fragment. */
+function sanitizeNameFragment(label: string): string {
+  const ascii = label
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^A-Za-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  return ascii || 'Item';
+}
+
+// ---------------------------------------------------------------------------
+// EQ-A — Scenario switch: dropdown selector + CHOOSE/MATCH driver selection
+//
+// Layout (relative to the sheet's data area, appended BELOW existing rows so no
+// data row is shifted and every prior A1/formula reference stays valid):
+//
+//   [selectorLabel] [selector cell ▼ Base/Bull/Bear]
+//   [Driver]  [Active]                       [Base] [Bull] [Bear]
+//   Revenue   =CHOOSE(MATCH($sel,{...},0),F,G,H)  0.05  0.08  0.02
+//   ...
+//
+// The scenario band columns (Base/Bull/Bear) each get a workbook-level named
+// range so the active formula reads `CHOOSE(MATCH(sel, ...), Rev_Base, Rev_Bull,
+// Rev_Bear)` semantics via absolute refs, and the named ranges themselves cover
+// the 3 distinct columns (proof: 3 columns, not 1).
+// ---------------------------------------------------------------------------
+
+function emitScenarioSwitch(
+  wb: ExcelJS.Workbook,
+  ws: ExcelJS.Worksheet,
+  sheetDef: WorkbookSchema['sheets'][number],
+  sw: ScenarioSwitch,
+  startRow: number
+): number {
+  const nScen = sw.scenarios.length;
+  // Validate column wiring; fail-soft on a malformed spec.
+  const colKeys = sheetDef.columns.map((c) => c.key);
+  const labelIdx = colKeys.indexOf(sw.labelColumn);
+  const activeIdx = colKeys.indexOf(sw.activeColumn);
+  const scenIdxs = sw.scenarioColumns.map((k) => colKeys.indexOf(k));
+  if (
+    labelIdx < 0 ||
+    activeIdx < 0 ||
+    sw.scenarioColumns.length !== nScen ||
+    scenIdxs.some((i) => i < 0)
+  ) {
+    logger.warn('[WorkbookBuilder] scenarioSwitch skipped — column wiring invalid', {
+      sheet: sheetDef.name,
+    });
+    return startRow;
+  }
+
+  const labelCol = labelIdx + 1;
+  const activeCol = activeIdx + 1;
+  const scenCols = scenIdxs.map((i) => i + 1);
+
+  // 1) Selector row: label + dropdown cell.
+  const selRow = startRow;
+  const selectorA1 = sw.selectorCell ?? a1(activeCol, selRow);
+  const selParsed = parseA1(selectorA1) ?? { col: activeCol, row: selRow };
+  const selLabelCell = ws.getCell(a1(labelCol, selParsed.row));
+  selLabelCell.value = sw.selectorLabel ?? 'Scenario';
+  selLabelCell.font = { ...(selLabelCell.font ?? {}), bold: true };
+
+  const selCell = ws.getCell(selectorA1);
+  const active = sw.active && sw.scenarios.includes(sw.active) ? sw.active : sw.scenarios[0];
+  selCell.value = active;
+  selCell.dataValidation = {
+    type: 'list',
+    allowBlank: false,
+    formulae: [`"${sw.scenarios.map((s) => s.replace(/"/g, '')).join(',')}"`],
+    showErrorMessage: true,
+  };
+  selCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEAF2FB' } };
+  selCell.font = { ...(selCell.font ?? {}), bold: true };
+  selCell.border = {
+    top: { style: 'thin' },
+    bottom: { style: 'thin' },
+    left: { style: 'thin' },
+    right: { style: 'thin' },
+  };
+
+  // 2) Header row for the driver block.
+  const headRow = selParsed.row + 2;
+  ws.getCell(a1(labelCol, headRow)).value = 'Driver';
+  ws.getCell(a1(activeCol, headRow)).value = 'Active';
+  sw.scenarios.forEach((name, i) => {
+    ws.getCell(a1(scenCols[i], headRow)).value = name;
+  });
+  [labelCol, activeCol, ...scenCols].forEach((c) => {
+    const cell = ws.getCell(a1(c, headRow));
+    cell.font = { ...(cell.font ?? {}), bold: true };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEF2F7' } };
+  });
+
+  // 3) Driver rows: literals in the scenario band + CHOOSE(MATCH(...)) active cell.
+  const seenNames = new Set<string>();
+  let r = headRow + 1;
+  const firstDriverRow = r;
+  for (const driver of sw.drivers) {
+    if (driver.values.length !== nScen) {
+      logger.warn('[WorkbookBuilder] scenarioSwitch driver skipped — values/scenario mismatch', {
+        sheet: sheetDef.name,
+        driver: driver.label,
+      });
+      continue;
+    }
+    ws.getCell(a1(labelCol, r)).value = driver.label;
+
+    // Scenario band: one literal per scenario column.
+    scenCols.forEach((c, i) => {
+      const cell = ws.getCell(a1(c, r));
+      cell.value = driver.values[i];
+      if (driver.numberFormat) cell.numFmt = driver.numberFormat;
+    });
+
+    // Active = CHOOSE(MATCH(selector, {scenarios}, 0), <scen1>, <scen2>, ...).
+    const scenList = sw.scenarios.map(xlStr).join(',');
+    const bandRefs = scenCols.map((c) => `$${colLetterLocal(c)}$${r}`).join(',');
+    const activeFormula = `CHOOSE(MATCH($${colLetterLocal(selParsed.col)}$${selParsed.row},{${scenList}},0),${bandRefs})`;
+    const activeCell = ws.getCell(a1(activeCol, r));
+    activeCell.value = { formula: activeFormula } as ExcelJS.CellFormulaValue;
+    if (driver.numberFormat) activeCell.numFmt = driver.numberFormat;
+    activeCell.font = { ...(activeCell.font ?? {}), bold: true };
+
+    // Per-driver named ranges over the 3 (or N) scenario columns — proof that
+    // the band spans distinct columns, not one.
+    const base = sanitizeNameFragment(driver.namePrefix ?? driver.label);
+    sw.scenarios.forEach((name, i) => {
+      let nm = `${base}_${sanitizeNameFragment(name)}`;
+      if (/^\d/.test(nm)) nm = `_${nm}`;
+      let uniq = nm;
+      let k = 2;
+      while (seenNames.has(uniq.toLowerCase())) uniq = `${nm}_${k++}`;
+      seenNames.add(uniq.toLowerCase());
+      const ref = `'${sheetDef.name.replace(/'/g, "''")}'!$${colLetterLocal(scenCols[i])}$${r}`;
+      try {
+        wb.definedNames.add(ref, uniq);
+      } catch (e) {
+        logger.warn(`[WorkbookBuilder] scenario definedName failed: ${uniq}`, e);
+      }
+    });
+    r++;
+  }
+  void firstDriverRow;
+  return r; // next free row
+}
+
+// ---------------------------------------------------------------------------
+// EQ-B — Sensitivity table: N×M grid of output formulas + color-scale
+//
+// Corner cell at anchor; column inputs across the top; row inputs down the left;
+// interior cells recompute `outputFormulaTemplate` with {col}/{row} substituted
+// by the A1 of the header cell above / left of each interior cell. A subtle
+// color-scale is applied over the interior for equity-research readability.
+// Supports 1-D (no rowInputs → single output row) and 2-D grids.
+// ---------------------------------------------------------------------------
+
+function emitSensitivityTable(
+  ws: ExcelJS.Worksheet,
+  st: SensitivityTable
+): void {
+  const anchor = parseA1(st.anchorCell);
+  if (!anchor) {
+    logger.warn('[WorkbookBuilder] sensitivityTable skipped — bad anchorCell', {
+      anchor: st.anchorCell,
+    });
+    return;
+  }
+  const c0 = anchor.col;
+  const r0 = anchor.row;
+  const cols = st.colInputs;
+  const rows = st.rowInputs && st.rowInputs.length > 0 ? st.rowInputs : [];
+  const is2D = rows.length > 0;
+  const headerFmt = st.headerNumberFormat ?? st.numberFormat;
+
+  // Optional title banner one row above the corner.
+  if (st.title) {
+    const titleCell = ws.getCell(a1(c0, r0 - 1 >= 1 ? r0 - 1 : r0));
+    if (r0 - 1 >= 1) {
+      titleCell.value = st.title;
+      titleCell.font = { ...(titleCell.font ?? {}), bold: true, size: 11 };
+    }
+  }
+
+  // Corner label.
+  const corner = ws.getCell(a1(c0, r0));
+  corner.value = st.cornerLabel ?? '';
+  corner.font = { ...(corner.font ?? {}), bold: true, italic: true };
+  corner.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEF2F7' } };
+
+  // Column-input headers across the top (row r0, cols c0+1 ..).
+  cols.forEach((cv, j) => {
+    const cell = ws.getCell(a1(c0 + 1 + j, r0));
+    cell.value = cv;
+    if (headerFmt) cell.numFmt = headerFmt;
+    cell.font = { ...(cell.font ?? {}), bold: true };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEF2F7' } };
+    cell.alignment = { horizontal: 'center' };
+  });
+
+  const interiorRows = is2D ? rows : [null];
+  interiorRows.forEach((rv, i) => {
+    const rowNum = r0 + 1 + i;
+    // Row-input header down the left column (only for 2-D grids).
+    if (is2D) {
+      const rc = ws.getCell(a1(c0, rowNum));
+      rc.value = rv as number;
+      if (headerFmt) rc.numFmt = headerFmt;
+      rc.font = { ...(rc.font ?? {}), bold: true };
+      rc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEF2F7' } };
+      rc.alignment = { horizontal: 'center' };
+    }
+    cols.forEach((_cv, j) => {
+      const colNum = c0 + 1 + j;
+      const colHeaderA1 = a1(colNum, r0);
+      const rowHeaderA1 = is2D ? a1(c0, rowNum) : '';
+      let formula = st.outputFormulaTemplate.trim().replace(/^=+/, '');
+      formula = formula.replace(/\{col\}/g, colHeaderA1);
+      if (is2D) formula = formula.replace(/\{row\}/g, rowHeaderA1);
+      const cell = ws.getCell(a1(colNum, rowNum));
+      cell.value = { formula } as ExcelJS.CellFormulaValue;
+      if (st.numberFormat) cell.numFmt = st.numberFormat;
+      cell.alignment = { horizontal: 'right' };
+    });
+  });
+
+  // Color-scale over the interior grid.
+  const lastCol = c0 + cols.length;
+  const lastRow = r0 + interiorRows.length;
+  const interiorRef = `${a1(c0 + 1, r0 + 1)}:${a1(lastCol, lastRow)}`;
+  const scaleColors = st.colorScale ?? ['FCE4E4', 'FFF3CD', 'E4F4EC'];
+  const cfvo =
+    scaleColors.length === 2
+      ? [{ type: 'min' }, { type: 'max' }]
+      : [{ type: 'min' }, { type: 'percentile', value: 50 }, { type: 'max' }];
+  try {
+    ws.addConditionalFormatting({
+      ref: interiorRef,
+      rules: [
+        {
+          type: 'colorScale',
+          priority: 1,
+          cfvo: cfvo as any,
+          color: scaleColors.map((c) => ({ argb: hexToArgb(c) })),
+        } as any,
+      ],
+    });
+  } catch (e) {
+    logger.warn('[WorkbookBuilder] sensitivity color-scale failed', e);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// EQ-C — Chart image mount (exceljs has NO native chart write API; a
+// pre-rendered PNG via worksheet.addImage is the realistic alternative).
+// ---------------------------------------------------------------------------
+
+function emitChartImages(
+  wb: ExcelJS.Workbook,
+  ws: ExcelJS.Worksheet,
+  images: ChartImage[]
+): void {
+  for (const img of images) {
+    try {
+      const base64 = img.pngBase64.replace(/^data:image\/png;base64,/, '');
+      const imageId = wb.addImage({ base64, extension: 'png' });
+      const anchor = parseA1(img.anchorCell) ?? { col: 1, row: 1 };
+      ws.addImage(imageId, {
+        tl: { col: anchor.col - 1, row: anchor.row - 1 } as any,
+        ext: { width: img.width ?? 480, height: img.height ?? 300 },
+      });
+    } catch (e) {
+      logger.warn('[WorkbookBuilder] chart image mount failed', e);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Builder
 // ---------------------------------------------------------------------------
 
@@ -969,6 +1264,33 @@ export async function buildWorkbookBuffer(
           logger.warn(`[WorkbookBuilder] definedName failed: ${name} → ${ref}`, e);
         }
       }
+    }
+
+    // EQ-A — Scenario switch (dropdown + CHOOSE/MATCH driver selection). Appended
+    // BELOW existing data rows so no A1/formula reference is shifted. Fail-soft.
+    if (sheetDef.scenarioSwitch) {
+      try {
+        const startRow = sheetDef.rows.length + 3; // header row 1 + data + spacer
+        emitScenarioSwitch(wb, ws, sheetDef, sheetDef.scenarioSwitch, startRow);
+      } catch (e) {
+        logger.warn('[WorkbookBuilder] scenarioSwitch emit failed', e);
+      }
+    }
+
+    // EQ-B — Sensitivity table(s): N×M grid of output formulas + color-scale.
+    if (sheetDef.sensitivityTables && sheetDef.sensitivityTables.length > 0) {
+      for (const st of sheetDef.sensitivityTables) {
+        try {
+          emitSensitivityTable(ws, st);
+        } catch (e) {
+          logger.warn('[WorkbookBuilder] sensitivityTable emit failed', e);
+        }
+      }
+    }
+
+    // EQ-C — Pre-rendered chart image(s) via worksheet.addImage.
+    if (sheetDef.chartImages && sheetDef.chartImages.length > 0) {
+      emitChartImages(wb, ws, sheetDef.chartImages);
     }
   }
 
