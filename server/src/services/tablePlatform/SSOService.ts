@@ -1,9 +1,10 @@
 /**
  * SSO Service — SAML 2.0 & OIDC configuration + login flow
  *
- * NOTE: SAML response validation is simplified (base64 + regex extraction).
- * Production deployments MUST use xml-crypto or a dedicated SAML library
- * (e.g. passport-saml / @node-saml/node-saml) for proper signature verification.
+ * SECURITY: SAML response validation FAILS CLOSED. Signature verification
+ * requires a real XML-signature verifier (xml-crypto / @node-saml/node-saml)
+ * registered via `setSignatureVerifier()`. Until one is wired in, every SAML
+ * response is rejected — we never trust an unsigned/forged assertion.
  */
 
 import crypto from 'crypto';
@@ -111,41 +112,119 @@ export class SSOService {
   }
 
   /**
-   * Simplified SAML response validation.
-   * Production MUST use xml-crypto for certificate-based signature verification.
+   * SAML response validation.
+   *
+   * SECURITY: A SAML response MUST have its XML signature cryptographically
+   * verified against the IdP certificate before any identity claim (NameID /
+   * email / attributes) is trusted. The previous implementation only did a
+   * base64-decode + regex extraction — it returned `valid: true` for ANY
+   * forged, unsigned XML, which is an authentication bypass (an attacker could
+   * mint a SAML response for an arbitrary email and log in as that user).
+   *
+   * No XML signature-verification library is currently present in the
+   * dependency tree (@node-saml/node-saml / xml-crypto / samlify). Rather than
+   * installing one blindly, we FAIL CLOSED: signature verification is treated
+   * as "not configured" and every response is rejected. This is safe (SAML
+   * login is unusable until a verifier is wired in) instead of dangerous
+   * (accepting forged assertions).
+   *
+   * To enable SAML login, provide a signature verifier via
+   * `setSignatureVerifier()` (real xml-crypto-based verification). Until then
+   * this method returns `valid: false`.
    */
+  private signatureVerifier: SAMLSignatureVerifier | null = null;
+
+  /**
+   * Wire in a real XML-signature verifier (e.g. backed by xml-crypto). This is
+   * the single, clean extension point for making SAML login functional without
+   * touching the callers. The verifier MUST throw or return false for any
+   * response whose signature does not validate against the IdP certificate.
+   */
+  setSignatureVerifier(verifier: SAMLSignatureVerifier | null): void {
+    this.signatureVerifier = verifier;
+  }
+
   async validateSAMLResponse(
-    _organizationId: string,
+    organizationId: string,
     samlResponse: string
   ): Promise<{
     valid: boolean;
     email?: string;
     nameId?: string;
     attributes?: Record<string, string>;
+    error?: string;
   }> {
+    let decoded: string;
     try {
-      const decoded = Buffer.from(samlResponse, 'base64').toString('utf-8');
-
-      const nameIdMatch = decoded.match(/<saml:NameID[^>]*>([^<]+)<\/saml:NameID>/);
-      const emailMatch = decoded.match(/email[^>]*>([^<]+)</i);
-
-      if (!nameIdMatch) {
-        return { valid: false };
-      }
-
-      return {
-        valid: true,
-        nameId: nameIdMatch[1],
-        email: emailMatch?.[1] || nameIdMatch[1],
-        attributes: {},
-      };
+      decoded = Buffer.from(samlResponse, 'base64').toString('utf-8');
     } catch (err) {
-      logger.error('[SSOService] SAML response validation failed', {
+      logger.error('[SSOService] SAML response decode failed', {
         error: (err as Error).message,
       });
-      return { valid: false };
+      return { valid: false, error: 'malformed SAML response' };
     }
+
+    // FAIL CLOSED: without a configured, cryptographically-real signature
+    // verifier we refuse to trust ANY assertion. Never return valid:true here.
+    if (!this.signatureVerifier) {
+      logger.error(
+        '[SSOService] SAML signature verification not configured — rejecting response (fail-closed)',
+        { organizationId }
+      );
+      return {
+        valid: false,
+        error: 'SAML signature verification not configured',
+      };
+    }
+
+    let signatureOk = false;
+    try {
+      const config = await this.getSSOConfig(organizationId);
+      const certificate =
+        config?.provider === 'saml' ? (config.config as SAMLConfig).certificate : undefined;
+      if (!certificate) {
+        return { valid: false, error: 'no SAML certificate configured' };
+      }
+      signatureOk = await this.signatureVerifier(decoded, certificate);
+    } catch (err) {
+      logger.error('[SSOService] SAML signature verification threw', {
+        error: (err as Error).message,
+      });
+      return { valid: false, error: 'signature verification failed' };
+    }
+
+    if (!signatureOk) {
+      logger.warn('[SSOService] SAML signature verification failed — rejecting response', {
+        organizationId,
+      });
+      return { valid: false, error: 'invalid SAML signature' };
+    }
+
+    // Signature verified: only NOW is it safe to extract identity claims.
+    const nameIdMatch = decoded.match(/<saml:NameID[^>]*>([^<]+)<\/saml:NameID>/);
+    const emailMatch = decoded.match(/email[^>]*>([^<]+)</i);
+    if (!nameIdMatch) {
+      return { valid: false, error: 'no NameID in assertion' };
+    }
+
+    return {
+      valid: true,
+      nameId: nameIdMatch[1],
+      email: emailMatch?.[1] || nameIdMatch[1],
+      attributes: {},
+    };
   }
 }
+
+/**
+ * Verifies the XML signature of a decoded SAML response against the IdP
+ * certificate. Returns true only if the signature is cryptographically valid.
+ * Implement this with xml-crypto (or @node-saml/node-saml) and register it via
+ * `ssoService.setSignatureVerifier(...)`.
+ */
+export type SAMLSignatureVerifier = (
+  decodedXml: string,
+  certificate: string
+) => boolean | Promise<boolean>;
 
 export const ssoService = new SSOService();

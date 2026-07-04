@@ -437,6 +437,48 @@ describe('AutomationService', () => {
   });
 
   // -----------------------------------------------------------------------
+  // SECURITY (BUG 2 — run_script RCE)
+  //
+  // The old `run_script` action executed arbitrary user-supplied JavaScript via
+  // `new Function(...)` on the server. Any user with table access could create
+  // such an automation and it would fire on record_created/record_updated.
+  // The fix disables execution (flag OFF by default) and returns a structured
+  // error instead of evaluating the script.
+  // -----------------------------------------------------------------------
+
+  describe('run_script action (RCE hardening)', () => {
+    it('does NOT execute arbitrary JS — returns a structured "disabled" error', async () => {
+      // Sentinel that a real RCE would mutate. On the vulnerable code the
+      // `new Function` body below runs and sets globalThis.__rceProof = true.
+      (globalThis as any).__rceProof = false;
+
+      const action = {
+        id: 'act-1',
+        actionOrder: 0,
+        actionType: 'run_script',
+        actionConfig: {
+          script: 'globalThis.__rceProof = true; return 1;',
+        },
+      };
+      const automation = { id: 'auto-1', table_id: 't-1', created_by: 'u-1' };
+
+      // executeAction is private; invoke via cast (matches repo test style).
+      const result = await (service as any).executeAction(
+        action,
+        { id: 'rec-1', data: {} },
+        automation
+      );
+
+      // The script MUST NOT have executed.
+      expect((globalThis as any).__rceProof).toBe(false);
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/script actions are disabled/i);
+
+      delete (globalThis as any).__rceProof;
+    });
+  });
+
+  // -----------------------------------------------------------------------
   // getRunHistory
   // -----------------------------------------------------------------------
 
