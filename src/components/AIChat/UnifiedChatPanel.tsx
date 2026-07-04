@@ -5235,7 +5235,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       ref={splitShellRef}
       className={`relative flex h-full overflow-hidden bg-slate-50 dark:bg-navy-950 ${
         isPrivateMode
-          ? 'ring-1 ring-primary-200/70 dark:ring-primary-800/45'
+          ? 'ring-1 ring-c-accent/30'
           : 'ring-1 ring-transparent'
       } ${className}`}
       style={rootStyle}
@@ -5653,7 +5653,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     key={cap.label}
                     type="button"
                     onClick={() => handleModeTile(cap.preset, cap.prompt)}
-                    className="group flex flex-col items-start gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface/60 p-2.5 text-left transition-[background-color,border-color] duration-200 hover:border-c-border hover:bg-c-surface"
+                    className="group flex flex-col items-start gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface p-2.5 text-left transition-[background-color,border-color] duration-200 hover:border-c-border hover:bg-c-surface-raised"
                   >
                     <div className={`rounded-md p-1.5 ${cap.bg}`}>
                       <cap.icon size={15} className={cap.color} />
