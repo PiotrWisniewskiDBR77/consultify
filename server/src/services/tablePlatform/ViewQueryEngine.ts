@@ -33,15 +33,32 @@ export interface GroupAggregate {
   functions: Array<'count' | 'sum' | 'avg' | 'min' | 'max'>;
 }
 
+/**
+ * A filter tree node: either a leaf rule (fieldId/operator/value) or a nested
+ * group with its own AND/OR logic. Groups may nest arbitrarily (bounded by
+ * MAX_FILTER_GROUP_DEPTH) to express Airtable-style "AND of (OR of AND...)"
+ * combinations.
+ */
 export interface FilterGroup {
   logic: 'and' | 'or';
-  rules: FilterRule[];
+  rules: Array<FilterRule | FilterGroup>;
 }
 
 export interface FilterRule {
   fieldId: string;
   operator: string;
   value?: unknown;
+}
+
+/** Narrow a filter-tree node to a nested FilterGroup (vs. a leaf FilterRule). */
+function isFilterGroup(node: FilterRule | FilterGroup): node is FilterGroup {
+  return (
+    !!node &&
+    typeof node === 'object' &&
+    'logic' in node &&
+    'rules' in node &&
+    Array.isArray((node as FilterGroup).rules)
+  );
 }
 
 export interface SortRule {
@@ -75,6 +92,12 @@ const DEFAULT_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE = 200;
 const CURSOR_DELIM = '|';
 const QUERY_TIMEOUT_MS = 30000;
+
+/**
+ * Maximum nesting depth for FilterGroup trees (a top-level group is depth 1).
+ * Guards against pathological/abusive payloads recursing unbounded SQL.
+ */
+const MAX_FILTER_GROUP_DEPTH = 5;
 
 const TEXT_FIELD_TYPES = new Set([
   'singleLineText',
@@ -407,21 +430,50 @@ function buildSingleFilterClause(
   );
 }
 
+/**
+ * Recursively translate a (possibly nested) FilterGroup into a parameterized,
+ * fully-parenthesized SQL boolean expression. Each nesting level is wrapped in
+ * its own parens so precedence matches the tree exactly, e.g.
+ *   { and: [A, { or: [B, C] }] }  ->  "(A) AND ((B) OR (C))"
+ *
+ * `depth` is 1-based for the top-level group; nesting beyond
+ * MAX_FILTER_GROUP_DEPTH throws a clear error instead of recursing unbounded.
+ */
 export function buildFilterClause(
   filters: FilterGroup,
   params: unknown[],
   startIdx: number,
-  fieldTypes: Map<string, string>
+  fieldTypes: Map<string, string>,
+  depth = 1
 ): { sql: string; nextIdx: number } {
   if (!filters?.rules?.length) {
     return { sql: 'TRUE', nextIdx: startIdx };
+  }
+
+  if (depth > MAX_FILTER_GROUP_DEPTH) {
+    throw new Error(
+      `Filter group nesting exceeds maximum depth of ${MAX_FILTER_GROUP_DEPTH}`
+    );
   }
 
   const logic = (filters.logic || 'and').toUpperCase();
   const parts: string[] = [];
   let idx = startIdx;
 
-  for (const rule of filters.rules) {
+  for (const node of filters.rules) {
+    if (!node) continue;
+
+    if (isFilterGroup(node)) {
+      // Nested group: recurse with incremented depth. An empty/degenerate
+      // nested group resolves to 'TRUE' and is skipped like an empty rule.
+      const { sql, nextIdx } = buildFilterClause(node, params, idx, fieldTypes, depth + 1);
+      idx = nextIdx;
+      if (sql === 'TRUE' && !node.rules?.length) continue;
+      parts.push(`(${sql})`);
+      continue;
+    }
+
+    const rule = node as FilterRule;
     if (!rule.fieldId) continue;
     const fieldType = fieldTypes.get(rule.fieldId) || 'singleLineText';
     const { sql, nextIdx } = buildSingleFilterClause(rule, params, idx, fieldType);
@@ -429,7 +481,7 @@ export function buildFilterClause(
     idx = nextIdx;
   }
 
-  if (parts.length === 0) return { sql: 'TRUE', nextIdx: startIdx };
+  if (parts.length === 0) return { sql: 'TRUE', nextIdx: idx };
   return { sql: parts.join(` ${logic} `), nextIdx: idx };
 }
 
