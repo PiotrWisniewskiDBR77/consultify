@@ -69,6 +69,7 @@ import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
 import { AITableAssistant } from './AITableAssistant';
 import { AITableProposal, type TableProposal } from './AITableProposal';
+import { NotificationBell } from './NotificationBell';
 import { useTableData } from './TableDataProvider';
 import type { ColumnDef, FilterGroup, SavedView, SortConfig, TableNode } from './tableTypes';
 import type { ViewLayout } from './useTableViews';
@@ -368,6 +369,9 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
           enabled={usePlatform}
         />
       )}
+
+      {/* Notification inbox (P7) — platform surface only */}
+      {usePlatform && <NotificationBell />}
 
       {/* Saved view tabs */}
       <div className="flex items-center gap-0.5 mr-2">
