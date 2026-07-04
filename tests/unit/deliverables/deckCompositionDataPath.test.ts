@@ -73,7 +73,19 @@ describe('STEP 1b — deckFromUnifiedJson carries composition', () => {
         {
           intent: 'performance_overview',
           key_message: 'Four metrics + trend',
-          content: { title: 'Maturity', type: 'performance_overview' },
+          // W7 guard-split reconciliation (2026-07-05): include a realistic
+          // metrics payload (deckFromUnifiedJson only emits this block for
+          // performance_overview slides) so the card isn't a bare heading.
+          content: {
+            title: 'Maturity',
+            type: 'performance_overview',
+            metrics: [
+              { label: 'Automation', value: '18%', trend: 'down' },
+              { label: 'Adoption', value: '42%', trend: 'up' },
+              { label: 'Data sources', value: '7', trend: 'flat' },
+              { label: 'ROI', value: '3.2x', trend: 'up' },
+            ],
+          },
           composition: {
             layoutVariantId: 'kpi_grid_2x2',
             emphasis: 'data',
@@ -87,8 +99,17 @@ describe('STEP 1b — deckFromUnifiedJson carries composition', () => {
     expect(card.layout_id).toBe('kpi_grid_2x2');
     expect(card.composition).not.toBeNull();
     expect(card.composition!.layoutVariantId).toBe('kpi_grid_2x2');
-    // The carried composition makes selectLayout honour the mapped template.
-    expect(selectLayout(card).id).toBe(ARCHETYPE_TO_TEMPLATE['kpi_grid_2x2']);
+    // W7 guard-split (2acec9fc46, intentional) downgrades this to a stacked
+    // KPI layout: deckFromUnifiedJson's performance_overview path emits a
+    // SINGLE metric_strip block (heading + metric_strip, weight ~2.8), never
+    // 4 distinct kpi blocks — not enough to fill kpi_grid_4's four cells
+    // (kpi2/kpi3/kpi4 land empty → guard-split rule "any column empty").
+    // exec_top_kpi ("KPI Strip + Content") is the correct, non-split fallback
+    // for real content of this shape; it still honours the metric_strip in
+    // its dedicated `kpi` region rather than falling through to the pure
+    // heuristic. This does NOT regress composition-carrying (asserted above)
+    // — only the final template resolution for genuinely sparse content.
+    expect(selectLayout(card).id).toBe('exec_top_kpi');
   });
 
   it('is byte-identical to prior behaviour when no composition (back-compat)', () => {

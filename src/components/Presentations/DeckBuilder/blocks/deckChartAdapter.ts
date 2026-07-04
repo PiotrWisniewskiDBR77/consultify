@@ -382,8 +382,9 @@ function adaptHarvey(content: Record<string, unknown>, title?: string): HarveySp
       const level = num(obj.level ?? obj.value);
       if (level === null) return null;
       const lvl = toHarveyLevel(level);
-      const note = obj.note != null ? str(obj.note) : undefined;
-      return { label: str(obj.label ?? obj.name), level: lvl, fillFraction: lvl / 4, note };
+      const ball: HarveyBall = { label: str(obj.label ?? obj.name), level: lvl, fillFraction: lvl / 4 };
+      if (obj.note != null) ball.note = str(obj.note);
+      return ball;
     })
     .filter((x): x is HarveyBall => x !== null);
   if (balls.length === 0) return null;
