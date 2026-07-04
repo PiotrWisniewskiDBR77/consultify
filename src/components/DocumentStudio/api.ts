@@ -34,6 +34,7 @@ import type {
   DocumentTypeKey,
   DocumentVariant,
   DocumentVariantSummary,
+  DocumentVersionSnapshotSummary,
   TemplateAuditEntry,
   TemplateDraftInput,
   TemplateStatus,
@@ -676,6 +677,20 @@ export async function getDocumentStudioVariant(
   );
   const json = await handleResponse<{ variant: DocumentVariant }>(res, 'DocumentStudio variant');
   return json.variant;
+}
+
+export async function listDocumentStudioSnapshots(
+  artifactId: string
+): Promise<DocumentVersionSnapshotSummary[]> {
+  const res = await fetchWithRetry(`${BASE}/${encodeURIComponent(artifactId)}/snapshots`, {
+    method: 'GET',
+    headers: getHeaders(),
+  });
+  const json = await handleResponse<{ snapshots: DocumentVersionSnapshotSummary[] }>(
+    res,
+    'DocumentStudio snapshots'
+  );
+  return json.snapshots;
 }
 
 export async function getDocumentStudioSchemaDiff(

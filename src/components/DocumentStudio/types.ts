@@ -690,3 +690,20 @@ export interface DocumentSchemaDiffResponse {
   summary: string;
   diff: DocumentSchemaDiff;
 }
+
+/**
+ * B3 — summary projection of a server-side `DocumentVersionSnapshot`
+ * (documentStudioTypes.ts) as listed by `GET /:artifactId/snapshots`.
+ * The full snapshot also carries `schema`; the diff panel only needs
+ * the identity/metadata fields to populate the baseline picker.
+ */
+export interface DocumentVersionSnapshotSummary {
+  versionId: string;
+  artifactId: string;
+  versionNumber: number;
+  capturedAt: string;
+  capturedBy: string;
+  label?: string;
+  reason?: string;
+  origin?: string;
+}

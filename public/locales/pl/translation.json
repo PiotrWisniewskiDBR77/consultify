@@ -17292,7 +17292,8 @@
       "before": "Przed",
       "after": "Po",
       "structuredChanges": "Zmiany strukturalne",
-      "auditTrail": "Ślad audytowy"
+      "auditTrail": "Ślad audytowy",
+      "rawBeforeAfter": "Surowe przed / po"
     },
     "documentPanel": {
       "commentAdded": "Dodano komentarz",
@@ -17679,7 +17680,9 @@
       "blockingCategories": "{{count}} kategorii blokujących",
       "scoreFindings": "wynik {{score}}/100 · {{count}} ustaleń",
       "presenceSources": "{{count}} źródeł",
-      "presenceAssumptions": "{{count}} założeń"
+      "presenceAssumptions": "{{count}} założeń",
+      "diffBaselinePicker": "Porównaj z migawką",
+      "diffBaselineLatest": "Najnowsza migawka"
     },
     "generationWarnings": {
       "summary_one": "Wygenerowano z ograniczeniami ({{count}})",
@@ -17696,6 +17699,24 @@
         "chart_raster_failed": "Nie udało się wygenerować wykresu",
         "logo_unavailable": "Logo na okładce niedostępne"
       }
+    },
+    "diff": {
+      "kindAdded": "Dodano",
+      "kindRemoved": "Usunięto",
+      "kindModified": "Zmieniono",
+      "kindReordered": "Zmieniono kolejność",
+      "structuralAdded": "Dodany blok: {{type}}",
+      "structuralRemoved": "Usunięty blok: {{type}}",
+      "structuralChanged": "Blok zmieniony: {{type}}",
+      "unknownBlockType": "nieznany",
+      "before": "Przed",
+      "after": "Po",
+      "blockMoved": "pozycja {{from}} → {{to}}",
+      "sectionMoved": "Pozycja {{from}} → {{to}}",
+      "wholeDocument": "Cały dokument",
+      "noChanges": "Brak zmian do wyświetlenia.",
+      "legendAdded": "dodane",
+      "legendRemoved": "usunięte"
     }
   },
   "priority": {

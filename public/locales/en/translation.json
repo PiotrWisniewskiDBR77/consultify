@@ -16239,7 +16239,8 @@
       "before": "Before",
       "after": "After",
       "structuredChanges": "Structured changes",
-      "auditTrail": "Audit trail"
+      "auditTrail": "Audit trail",
+      "rawBeforeAfter": "Raw before / after"
     },
     "documentPanel": {
       "commentAdded": "Comment added",
@@ -16608,7 +16609,9 @@
       "blockingCategories": "{{count}} blocking categories",
       "scoreFindings": "score {{score}}/100 · {{count}} findings",
       "presenceSources": "{{count}} sources",
-      "presenceAssumptions": "{{count}} assumptions"
+      "presenceAssumptions": "{{count}} assumptions",
+      "diffBaselinePicker": "Compare against snapshot",
+      "diffBaselineLatest": "Latest snapshot"
     },
     "generationWarnings": {
       "summary_one": "Generated with limitations ({{count}})",
@@ -16621,6 +16624,24 @@
         "chart_raster_failed": "Chart could not be rendered",
         "logo_unavailable": "Cover logo unavailable"
       }
+    },
+    "diff": {
+      "kindAdded": "Added",
+      "kindRemoved": "Removed",
+      "kindModified": "Modified",
+      "kindReordered": "Reordered",
+      "structuralAdded": "Added block: {{type}}",
+      "structuralRemoved": "Removed block: {{type}}",
+      "structuralChanged": "Changed block: {{type}}",
+      "unknownBlockType": "unknown",
+      "before": "Before",
+      "after": "After",
+      "blockMoved": "position {{from}} → {{to}}",
+      "sectionMoved": "Position {{from}} → {{to}}",
+      "wholeDocument": "Whole document",
+      "noChanges": "No changes to display.",
+      "legendAdded": "added",
+      "legendRemoved": "removed"
     }
   },
   "priority": {

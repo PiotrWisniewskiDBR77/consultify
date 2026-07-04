@@ -59,6 +59,7 @@ import {
   listDocumentStudioApprovals,
   listDocumentStudioContentBlocks,
   listDocumentStudioShareLinks,
+  listDocumentStudioSnapshots,
   listDocumentStudioVariants,
   QaBlockingError,
   QaOverrideUnauthorizedError,
@@ -66,6 +67,7 @@ import {
   requestDocumentStudioApproval,
 } from './api';
 import { DocumentExportSuccessNote } from './DocumentExportSuccessNote';
+import { DocumentSchemaDiffView } from './DocumentSchemaDiffView';
 import { DocumentStudioQaPanel } from './DocumentStudioQaPanel';
 import { DocumentTipTapEditor } from './editor';
 import type {
@@ -86,6 +88,7 @@ import type {
   DocumentSourceRef,
   DocumentStudioPolicy,
   DocumentVariantSummary,
+  DocumentVersionSnapshotSummary,
 } from './types';
 
 interface DocumentStudioDocumentPanelProps {
@@ -1016,6 +1019,8 @@ function AudienceVariantsPanel({ artifactId }: { artifactId: string }): React.Re
 function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactElement {
   const { t } = useTranslation();
   const [result, setResult] = useState<DocumentSchemaDiffResponse | null>(null);
+  const [snapshots, setSnapshots] = useState<DocumentVersionSnapshotSummary[]>([]);
+  const [selectedVersionId, setSelectedVersionId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -1023,7 +1028,7 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
     setLoading(true);
     setError(null);
     try {
-      setResult(await getDocumentStudioSchemaDiff(artifactId));
+      setResult(await getDocumentStudioSchemaDiff(artifactId, selectedVersionId || undefined));
     } catch (err) {
       setError(
         err instanceof Error
@@ -1033,14 +1038,27 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
     } finally {
       setLoading(false);
     }
-  }, [artifactId, t]);
+  }, [artifactId, selectedVersionId, t]);
 
   useEffect(() => {
     void refresh();
   }, [refresh]);
 
-  const changedSections =
-    result?.diff.sectionDiffs.filter((section) => section.kind !== 'unchanged') ?? [];
+  useEffect(() => {
+    // Best-effort: the baseline picker is optional sugar — the diff itself
+    // defaults to the latest snapshot when the list cannot be loaded.
+    let cancelled = false;
+    void listDocumentStudioSnapshots(artifactId)
+      .then((items) => {
+        if (!cancelled) setSnapshots(items);
+      })
+      .catch(() => {
+        if (!cancelled) setSnapshots([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [artifactId]);
 
   return (
     <div className="flex h-full flex-col overflow-y-auto p-4">
@@ -1066,6 +1084,28 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
         <div className="rounded-lg border border-danger-500/30 bg-danger-500/10 p-3 text-xs text-danger-700 dark:text-danger-300">
           {error}
         </div>
+      ) : null}
+      {snapshots.length > 0 ? (
+        <label className="mb-3 block text-xs text-c-text-secondary">
+          {t('documentStudio.panel.diffBaselinePicker', 'Compare against snapshot')}
+          <select
+            value={selectedVersionId}
+            onChange={(event) => setSelectedVersionId(event.target.value)}
+            className="mt-1 h-9 w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 text-sm"
+            data-testid="schema-diff-baseline-select"
+          >
+            <option value="">
+              {t('documentStudio.panel.diffBaselineLatest', 'Latest snapshot')}
+            </option>
+            {[...snapshots].reverse().map((snapshot) => (
+              <option key={snapshot.versionId} value={snapshot.versionId}>
+                {`v${snapshot.versionNumber} · ${new Date(snapshot.capturedAt).toLocaleString()}${
+                  snapshot.label ? ` · ${snapshot.label}` : ''
+                }`}
+              </option>
+            ))}
+          </select>
+        </label>
       ) : null}
       {result ? (
         <div className="space-y-3">
@@ -1095,7 +1135,7 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
               </div>
             ))}
           </div>
-          {changedSections.length === 0 ? (
+          {!result.diff.hasChanges ? (
             <div className="rounded-lg border border-success-500/30 bg-success-500/10 p-3 text-xs text-success-700 dark:text-emerald-300">
               {t(
                 'documentStudio.panel.diffNoChanges',
@@ -1103,47 +1143,7 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
               )}
             </div>
           ) : (
-            <ul className="space-y-2">
-              {changedSections.map((section) => {
-                const changedBlocks = section.blockDiffs.filter(
-                  (block) => block.kind !== 'unchanged'
-                );
-                return (
-                  <li
-                    key={section.sectionId}
-                    className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="font-medium text-c-text">
-                        {section.afterTitle ?? section.beforeTitle ?? section.sectionId}
-                      </div>
-                      <span className="rounded-full bg-c-accent-soft0 px-2 py-0.5 text-[10px] font-medium text-c-accent">
-                        {section.kind}
-                      </span>
-                    </div>
-                    <div className="mt-1 text-c-text-secondary">
-                      {t('documentStudio.panel.diffChangedBlocks', {
-                        defaultValue: '{{count}} changed blocks',
-                        count: changedBlocks.length,
-                      })}
-                    </div>
-                    {changedBlocks.slice(0, 3).map((block) => (
-                      <div
-                        key={block.blockId}
-                        className="mt-2 rounded border border-c-border-subtle bg-c-surface-raised p-2"
-                      >
-                        <div className="font-medium text-c-text-secondary">
-                          {block.kind} · {block.blockType ?? 'unknown'}
-                        </div>
-                        <div className="mt-1 line-clamp-2 text-c-text-secondary">
-                          {block.afterText ?? block.beforeText ?? block.blockId}
-                        </div>
-                      </div>
-                    ))}
-                  </li>
-                );
-              })}
-            </ul>
+            <DocumentSchemaDiffView diff={result.diff} />
           )}
         </div>
       ) : null}

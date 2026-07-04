@@ -15,6 +15,8 @@ import {
   rejectDocumentStudioProposal,
 } from './api';
 import { TransformativeConfirmDialog } from './TransformativeConfirmDialog';
+import { proposalToSchemaDiff } from './documentDiffModel';
+import { DocumentSchemaDiffView } from './DocumentSchemaDiffView';
 import type {
   DocumentAuditEntry,
   DocumentEditorProposal,
@@ -450,49 +452,30 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
               </span>
             ) : null}
           </div>
-          <div className="grid gap-2 md:grid-cols-2">
-            <div className="rounded-md border border-c-border p-2 text-xs">
-              <div className="mb-1 font-semibold text-c-text-muted">
-                {t('documentStudio.editor.before', 'Before')}
+          <DocumentSchemaDiffView diff={proposalToSchemaDiff(pendingProposal, schema)} />
+          <details className="mt-2 text-xs">
+            <summary className="cursor-pointer select-none text-c-text-muted">
+              {t('documentStudio.editor.rawBeforeAfter', 'Raw before / after')}
+            </summary>
+            <div className="mt-2 grid gap-2 md:grid-cols-2">
+              <div className="rounded-md border border-c-border p-2">
+                <div className="mb-1 font-semibold text-c-text-muted">
+                  {t('documentStudio.editor.before', 'Before')}
+                </div>
+                <pre className="whitespace-pre-wrap text-c-text">
+                  {pendingProposal.diff.before}
+                </pre>
               </div>
-              <pre className="whitespace-pre-wrap text-c-text">{pendingProposal.diff.before}</pre>
-            </div>
-            <div className="rounded-md border border-sky-300/60 bg-sky-50 p-2 text-xs dark:border-sky-400/30 dark:bg-sky-500/10">
-              <div className="mb-1 font-semibold text-sky-700 dark:text-sky-300">
-                {t('documentStudio.editor.after', 'After')}
+              <div className="rounded-md border border-c-border p-2">
+                <div className="mb-1 font-semibold text-c-text-muted">
+                  {t('documentStudio.editor.after', 'After')}
+                </div>
+                <pre className="whitespace-pre-wrap text-c-text">
+                  {pendingProposal.diff.after}
+                </pre>
               </div>
-              <pre className="whitespace-pre-wrap text-c-text">{pendingProposal.diff.after}</pre>
             </div>
-          </div>
-          {pendingProposal.proposedChanges && pendingProposal.proposedChanges.length > 0 ? (
-            <div className="mt-3 rounded-md border border-c-border bg-c-surface-raised p-2 text-xs">
-              <div className="mb-2 font-semibold text-c-text-secondary">
-                {t('documentStudio.editor.structuredChanges', 'Structured changes')}
-              </div>
-              <ul className="space-y-2">
-                {pendingProposal.proposedChanges.map((change, index) => (
-                  <li
-                    key={`${change.targetSectionId}:${change.targetBlockId ?? 'section'}:${index}`}
-                    className="rounded border border-c-border bg-c-surface p-2"
-                  >
-                    <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
-                      {change.targetSectionId}
-                      {change.targetBlockId ? ` · ${change.targetBlockId}` : ''} ·{' '}
-                      {change.editType ?? 'rewrite'}
-                    </div>
-                    <div className="grid gap-2 md:grid-cols-2">
-                      <pre className="whitespace-pre-wrap rounded bg-c-surface-raised p-2 text-c-text">
-                        {change.before}
-                      </pre>
-                      <pre className="whitespace-pre-wrap rounded bg-sky-50 p-2 text-c-text dark:bg-sky-500/10">
-                        {change.after}
-                      </pre>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
+          </details>
           {pendingProposal.versionBeforeId || pendingProposal.versionAfterId ? (
             <div className="mt-2 text-[11px] text-c-text-muted">
               {pendingProposal.versionBeforeId
