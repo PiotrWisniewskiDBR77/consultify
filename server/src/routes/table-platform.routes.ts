@@ -10,6 +10,10 @@ import multer from 'multer';
 import { featureFlags } from '../config/FeatureFlags.js';
 import { type AuthRequest, requireSuperAdmin, verifyToken } from '../middleware/auth.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
+import {
+  requireServiceAccountScope,
+  serviceAccountAuth,
+} from '../middleware/serviceAccountAuth.middleware.js';
 import { automationService } from '../services/tablePlatform/AutomationService.js';
 import { handleRouteError } from '../services/tablePlatform/ErrorHandling.js';
 import { extensionService } from '../services/tablePlatform/ExtensionService.js';
@@ -304,7 +308,13 @@ router.get('/health', async (_req: Request, res: Response) => {
   }
 });
 
+// Service-account (PAT) auth for the REST API gateway (Zapier/Make/scripts).
+// Runs BEFORE verifyToken: a `tp_sa_*` bearer is authenticated + org-scoped
+// here; anything else is a no-op and falls through to the JWT path unchanged.
+router.use(serviceAccountAuth as any);
 router.use(verifyToken as any);
+// Coarse read/write scope gate for service accounts (pass-through for JWT).
+router.use(requireServiceAccountScope as any);
 router.use(requireTablePlatform);
 router.use(tablePlatformLimiter);
 
