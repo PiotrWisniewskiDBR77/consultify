@@ -457,6 +457,141 @@ const relationService = {
     return computed;
   },
 
+  /**
+   * Cross-record recompute (root fix for "tabele kłamią").
+   *
+   * When a source record's cell values change, any *other* records that LINK
+   * to it may carry rollup/lookup computed fields whose value is derived from
+   * those cells. Historically these only refreshed on link/unlink/delete, so a
+   * plain field edit left dependent rollups/lookups stale.
+   *
+   * This finds the records that link the changed source (rows in
+   * `tp_record_links` where `to_record_id = sourceRecordId`), determines which
+   * of them own a rollup/lookup that (a) traverses the specific link field that
+   * points at the source and (b) reads one of the changed fields, and
+   * recomputes those dependents.
+   *
+   * `count` is intentionally excluded: a count only depends on link
+   * cardinality, not on the source record's cell values, so a value change on
+   * the source never moves a count.
+   *
+   * Safety: a shared `visited` set (record ids already recomputed) plus a depth
+   * cap prevent infinite cascades / reciprocal-link loops. Returns the set of
+   * dependent record ids that were actually recomputed so the caller can emit
+   * realtime updates for them.
+   */
+  async recomputeDependentsOfSource(
+    sourceRecordId: string,
+    changedFieldIds: string[],
+    opts: { visited?: Set<string>; depth?: number; maxDepth?: number } = {}
+  ): Promise<Array<{ recordId: string; tableId: string }>> {
+    const db = getDatabase();
+    const visited = opts.visited ?? new Set<string>([sourceRecordId]);
+    const depth = opts.depth ?? 0;
+    const maxDepth = opts.maxDepth ?? 5;
+    if (depth >= maxDepth) return [];
+    if (!changedFieldIds || changedFieldIds.length === 0) return [];
+
+    const changedSet = new Set(changedFieldIds);
+    const recomputed: Array<{ recordId: string; tableId: string }> = [];
+
+    try {
+      // Records that link the changed source, plus the link field they used.
+      const backRefResult = await db.query(
+        `SELECT DISTINCT from_record_id, from_field_id
+           FROM tp_record_links
+          WHERE to_record_id = $1`,
+        [sourceRecordId]
+      );
+      const backRefs = backRefResult.rows as Array<{
+        from_record_id: string;
+        from_field_id: string;
+      }>;
+      if (backRefs.length === 0) return [];
+
+      // Group the link fields by the dependent record's table so we only load
+      // computed-field metadata once per table.
+      const dependentRecordIds = [...new Set(backRefs.map((r) => r.from_record_id))];
+      const tableByRecord = new Map<string, string>();
+      const recTablesResult = await db.query(
+        `SELECT id, table_id FROM tp_records WHERE id = ANY($1)`,
+        [dependentRecordIds]
+      );
+      for (const row of recTablesResult.rows as Array<{ id: string; table_id: string }>) {
+        tableByRecord.set(row.id, row.table_id);
+      }
+
+      // For each dependent table, the rollup/lookup fields keyed by the link
+      // field they traverse (`linkedFieldId`) so we can decide per-record
+      // whether the changed source field is actually consumed.
+      const computedByTable = new Map<
+        string,
+        Map<string, Array<{ id: string; lookupFieldId?: string }>>
+      >();
+      const loadComputedForTable = async (tableId: string) => {
+        if (computedByTable.has(tableId)) return computedByTable.get(tableId)!;
+        const fieldsResult = await db.query(
+          `SELECT id, field_type, options FROM tp_fields
+            WHERE table_id = $1 AND field_type IN ('rollup', 'lookup')`,
+          [tableId]
+        );
+        const byLinkField = new Map<string, Array<{ id: string; lookupFieldId?: string }>>();
+        for (const f of fieldsResult.rows as Array<{
+          id: string;
+          field_type: string;
+          options: unknown;
+        }>) {
+          const opts = (f.options ?? {}) as { linkedFieldId?: string; lookupFieldId?: string };
+          const linkedFieldId = opts.linkedFieldId;
+          if (!linkedFieldId) continue;
+          const arr = byLinkField.get(linkedFieldId) ?? [];
+          arr.push({ id: f.id, lookupFieldId: opts.lookupFieldId });
+          byLinkField.set(linkedFieldId, arr);
+        }
+        computedByTable.set(tableId, byLinkField);
+        return byLinkField;
+      };
+
+      for (const ref of backRefs) {
+        const dependentId = ref.from_record_id;
+        if (visited.has(dependentId)) continue;
+        const tableId = tableByRecord.get(dependentId);
+        if (!tableId) continue;
+
+        const byLinkField = await loadComputedForTable(tableId);
+        const candidates = byLinkField.get(ref.from_field_id);
+        if (!candidates || candidates.length === 0) continue;
+
+        // A rollup/lookup is affected only if it reads one of the changed
+        // fields on the source record.
+        const affected = candidates.some(
+          (c) => c.lookupFieldId != null && changedSet.has(c.lookupFieldId)
+        );
+        if (!affected) continue;
+
+        visited.add(dependentId);
+        try {
+          await this.recomputeComputedFields(dependentId);
+          recomputed.push({ recordId: dependentId, tableId });
+        } catch (e) {
+          logger.error('[RelationService] recomputeDependentsOfSource recompute failed', {
+            dependentId,
+            error: (e as Error).message,
+          });
+        }
+      }
+
+      return recomputed;
+    } catch (e) {
+      logger.error('[RelationService] recomputeDependentsOfSource failed', {
+        sourceRecordId,
+        error: (e as Error).message,
+      });
+      // Fail-soft: never let cross-record recompute break the originating write.
+      return recomputed;
+    }
+  },
+
   async expandRecord(recordId: string, depth: number = 1): Promise<ExpandedRecord | null> {
     const MAX_DEPTH = 3;
     const effectiveDepth = Math.min(Math.max(depth, 0), MAX_DEPTH);
