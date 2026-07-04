@@ -2865,7 +2865,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               })}
             </div>
             <div className={MENU_3_RIGHT_CLASS}>
-              <div className="inline-flex items-center gap-1 rounded-full border border-slate-200/80 bg-white/80 p-1 dark:border-white/[0.08] dark:bg-navy-900/70">
+              <div className="inline-flex items-center gap-1 rounded-full border border-slate-200/80 bg-white/80 p-1 dark:border-c-border-subtle dark:bg-c-surface">
                 {(
                   [
                     {

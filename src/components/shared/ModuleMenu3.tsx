@@ -52,9 +52,11 @@ export const MENU_3_BADGE_INACTIVE = cn(
   'bg-c-surface-raised text-c-text-secondary'
 );
 
+// Licznik aktywnego filtra = zwykły neutralny badge (NIE crimson) — czerwień
+// zostaje wyłącznie na semantyce danych (Critical/Overdue), nie na stanie filtra.
 export const MENU_3_BADGE_ACTIVE = cn(
   MENU_3_BADGE_BASE,
-  'bg-c-accent-soft text-c-text'
+  'bg-c-surface text-c-text dark:bg-white/[0.16]'
 );
 
 export const MENU_3_ACTION_BASE =
