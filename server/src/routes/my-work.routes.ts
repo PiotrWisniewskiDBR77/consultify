@@ -3699,6 +3699,111 @@ router.get(
 );
 
 /**
+ * POST /api/my-work/my-ideas/:ideaId/map/export/pptx
+ *
+ * M06 FALA3 3.4 — real .pptx export for the mind map, reusing the same
+ * BCG-grade `PptxPipelineService` the Report Builder uses (see
+ * report-builder.routes.ts `GET /:id/export/pptx` for the reference
+ * buffer → Content-Disposition → pptx MIME pattern). Replaces the legacy
+ * client-side HTML blob in `ExportPowerPoint.tsx` when the FE flag
+ * `mindmapPptxNative` is ON.
+ *
+ * Body:
+ *   - ideaTitle: string (required)
+ *   - branches: Array<{ branchKey, label, nodes: Array<{ id, label, status? }> }>
+ *   - language?: 'en' | 'pl'
+ *   - template?: 'corporate' | 'minimal' | 'modern'
+ */
+router.post(
+  '/my-ideas/:ideaId/map/export/pptx',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const ideaId = String(req.params.ideaId || '').trim();
+    if (!ideaId || ideaId === 'all') return res.status(400).json({ error: 'Invalid idea id' });
+
+    if (!(await requireTables(res, ['my_ideas']))) return;
+
+    const idea = await queryHelpers.queryOne<any>(
+      `SELECT id, title FROM my_ideas WHERE id = ? AND organization_id = ? LIMIT 1`,
+      [ideaId, orgId]
+    );
+    if (!idea) return res.status(404).json({ error: 'Idea not found' });
+
+    const body = (req.body || {}) as {
+      ideaTitle?: unknown;
+      branches?: unknown;
+      language?: unknown;
+      template?: unknown;
+    };
+
+    const ideaTitle = String(body.ideaTitle || idea.title || 'Mind Map').trim();
+    const rawBranches = Array.isArray(body.branches) ? body.branches : [];
+    const branches = rawBranches
+      .filter((b: any) => b && typeof b === 'object')
+      .map((b: any) => ({
+        branchKey: String(b.branchKey || '').trim(),
+        label: String(b.label || b.branchKey || '').trim(),
+        nodes: Array.isArray(b.nodes)
+          ? b.nodes
+              .filter((n: any) => n && typeof n === 'object')
+              .map((n: any) => ({
+                id: String(n.id || ''),
+                label: String(n.label || ''),
+                status: n.status ? String(n.status) : undefined,
+              }))
+          : [],
+      }));
+
+    const language = body.language === 'en' ? 'en' : 'pl';
+    const template =
+      body.template === 'minimal' || body.template === 'modern' ? body.template : 'corporate';
+
+    try {
+      const { mapMindMapToUnifiedReport } = await import(
+        '../services/mindmap/mindMapToUnifiedReport.js'
+      );
+      const { PptxPipelineService } = await import('../services/report/pptx/PptxPipelineService.js');
+
+      const report = mapMindMapToUnifiedReport(ideaTitle, branches, {
+        language,
+        template,
+        confidentiality: 'internal',
+      });
+
+      const pipeline = new PptxPipelineService();
+      const result = await pipeline.generateFromUnifiedJson(report, {
+        template,
+        language,
+      });
+
+      logger.info('[MyWork] Mind map PPTX exported', {
+        ideaId,
+        userId,
+        slideCount: result.slideCount,
+        warnings: result.warnings.length,
+      });
+
+      const safeFileName = ideaTitle.replace(/[<>:"/\\|?*]/g, '').trim() || 'mindmap';
+
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+      );
+      res.setHeader('Content-Disposition', `attachment; filename="${safeFileName}.pptx"`);
+      return res.send(result.buffer);
+    } catch (err: any) {
+      logger.error('[MyWork] Error exporting mind map PPTX:', err);
+      return res
+        .status(500)
+        .json({ error: 'Failed to export mind map PPTX', code: 'MINDMAP_EXPORT_PPTX_FAILED' });
+    }
+  })
+);
+
+/**
  * GET /api/my-work/my-ideas/metrics/map?ids=comma,separated,ideaIds
  * Returns nodes/edges/items counts for many ideas (for list/table rendering).
  *

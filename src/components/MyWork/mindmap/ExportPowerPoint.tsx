@@ -7,9 +7,14 @@ import React, { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Api } from '@/services/api';
+
+import { isMindmapPptxNativeEnabled } from './mindmapExportFlags';
+
 interface ExportPowerPointProps {
   open: boolean;
   onClose: () => void;
+  ideaId: string;
   ideaTitle: string;
   branches: Array<{
     branchKey: string;
@@ -77,16 +82,42 @@ function generateSlideHTML(title: string, branches: ExportPowerPointProps['branc
 export const ExportPowerPoint: React.FC<ExportPowerPointProps> = ({
   open,
   onClose,
+  ideaId,
   ideaTitle,
   branches,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [exporting, setExporting] = useState(false);
+  const nativePptx = isMindmapPptxNativeEnabled();
 
   const handleExport = useCallback(async () => {
     setExporting(true);
     try {
+      if (nativePptx) {
+        // ON: real .pptx via PptxPipelineService (BCG-grade), same pipeline
+        // Report Builder uses. See server/src/services/mindmap/mindMapToUnifiedReport.ts.
+        const blob = await Api.exportMyIdeaMapPptx(ideaId, {
+          ideaTitle,
+          branches,
+          language: isPl ? 'pl' : 'en',
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${ideaTitle || 'mindmap'}.pptx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast.success(isPl ? 'Prezentacja .pptx wyeksportowana!' : 'Presentation (.pptx) exported!', {
+          duration: 1500,
+        });
+        onClose();
+        return;
+      }
+
+      // OFF (default/fallback): legacy HTML blob, unchanged.
       const html = generateSlideHTML(ideaTitle, branches);
       const blob = new Blob([html], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
@@ -106,7 +137,7 @@ export const ExportPowerPoint: React.FC<ExportPowerPointProps> = ({
     } finally {
       setExporting(false);
     }
-  }, [branches, ideaTitle, isPl, onClose]);
+  }, [branches, ideaId, ideaTitle, isPl, nativePptx, onClose]);
 
   const handlePrint = useCallback(() => {
     const html = generateSlideHTML(ideaTitle, branches);
@@ -158,21 +189,33 @@ export const ExportPowerPoint: React.FC<ExportPowerPointProps> = ({
               className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-c-surface-raised text-[11px] font-bold text-c-info dark:text-c-info transition-all disabled:opacity-40"
             >
               {exporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
-              {isPl ? 'Pobierz HTML (do PDF/PPTX)' : 'Download HTML (for PDF/PPTX)'}
+              {nativePptx
+                ? isPl
+                  ? 'Pobierz .pptx'
+                  : 'Download .pptx'
+                : isPl
+                  ? 'Pobierz HTML (do PDF/PPTX)'
+                  : 'Download HTML (for PDF/PPTX)'}
             </button>
-            <button
-              onClick={handlePrint}
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-c-surface-raised dark:bg-c-surface text-[11px] font-bold text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-all"
-            >
-              <FileText size={14} />
-              {isPl ? 'Drukuj / Zapisz jako PDF' : 'Print / Save as PDF'}
-            </button>
+            {!nativePptx ? (
+              <button
+                onClick={handlePrint}
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-c-surface-raised dark:bg-c-surface text-[11px] font-bold text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-all"
+              >
+                <FileText size={14} />
+                {isPl ? 'Drukuj / Zapisz jako PDF' : 'Print / Save as PDF'}
+              </button>
+            ) : null}
           </div>
 
           <p className="text-[9px] text-c-text-secondary mt-3 text-center">
-            {isPl
-              ? 'Otwórz HTML w przeglądarce i użyj Ctrl+P aby zapisać jako PDF.'
-              : 'Open HTML in browser and use Ctrl+P to save as PDF.'}
+            {nativePptx
+              ? isPl
+                ? 'Prawdziwy plik .pptx — otwórz w PowerPoint lub Keynote.'
+                : 'Real .pptx file — open in PowerPoint or Keynote.'
+              : isPl
+                ? 'Otwórz HTML w przeglądarce i użyj Ctrl+P aby zapisać jako PDF.'
+                : 'Open HTML in browser and use Ctrl+P to save as PDF.'}
           </p>
         </div>
       </div>

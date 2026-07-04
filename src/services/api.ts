@@ -4607,6 +4607,45 @@ export const Api = {
     return handleResponse(res, 'Failed to sync idea map');
   },
 
+  /**
+   * M06 FALA3 3.4 — real .pptx export for the mind map (BCG-grade pipeline,
+   * see server/src/services/mindmap/mindMapToUnifiedReport.ts). Gated by
+   * `isMindmapPptxNativeEnabled()` on the caller side.
+   */
+  exportMyIdeaMapPptx: async (
+    ideaId: string,
+    payload: {
+      ideaTitle: string;
+      branches: Array<{
+        branchKey: string;
+        label: string;
+        nodes: Array<{ id: string; label: string; status?: string }>;
+      }>;
+      language?: 'en' | 'pl';
+      template?: 'corporate' | 'minimal' | 'modern';
+    }
+  ): Promise<Blob> => {
+    const res = await fetch(
+      `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map/export/pptx`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+    if (!res.ok) {
+      let message = 'Failed to export mind map PPTX';
+      try {
+        const errBody = await res.clone().json();
+        if (errBody?.error) message = errBody.error;
+      } catch {
+        /* ignore — keep default message */
+      }
+      throw new Error(message);
+    }
+    return res.blob();
+  },
+
   expandMyIdeaMap: async (
     ideaId: string,
     payload: {
