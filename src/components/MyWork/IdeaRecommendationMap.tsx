@@ -42,6 +42,7 @@ import ReactFlow, {
 } from 'reactflow';
 
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
+import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { Api, getMapVersionFromPayload } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import {
@@ -53,9 +54,8 @@ import {
 } from '@/utils/artifactLinks';
 
 import TeresaMark from '../shared/TeresaMark';
-import { useConfirmDialog } from './shared/ConfirmDialog';
-import { CanvasZoomControls } from './canvas/CanvasZoomControls';
 import { getCanvasBg } from './canvas/canvasBackground';
+import { CanvasZoomControls } from './canvas/CanvasZoomControls';
 import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import {
   IDEA_STAGE_COLORS,
@@ -73,7 +73,6 @@ import {
   type MindMapInteractionMode,
 } from './ideaSelectionTypes';
 import { knowledgeNodeTypes } from './knowledge/KnowledgeCardNodes';
-import { useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
 import { ActivityFeed, pushActivity } from './mindmap/ActivityFeed';
 import { AddEvidenceModal } from './mindmap/AddEvidenceModal';
 import { AIAutoClustering, type Cluster } from './mindmap/AIAutoClustering';
@@ -150,6 +149,8 @@ import {
 import { useMindMapPersistence } from './mindmap/useMindMapPersistence';
 import { useMindMapQuickActions } from './mindmap/useMindMapQuickActions';
 import { VoiceToNode } from './mindmap/VoiceToNode';
+import { useConfirmDialog } from './shared/ConfirmDialog';
+import { useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
 type IdeaNodeData = NodeDetailData & {
   _depth?: number;
 };
@@ -1498,7 +1499,10 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   <StickyNote size={9} className="text-amber-400 dark:text-amber-500 shrink-0" />
                 )}
                 {data.riskNote && (
-                  <AlertTriangle size={9} className="text-danger-400 dark:text-danger-500 shrink-0" />
+                  <AlertTriangle
+                    size={9}
+                    className="text-danger-400 dark:text-danger-500 shrink-0"
+                  />
                 )}
                 {Array.isArray(data.evidenceLinks) && data.evidenceLinks.length > 0 && (
                   <span
@@ -2000,8 +2004,7 @@ function MindMapInner({
     if (!locked) {
       const ae = document.activeElement as HTMLElement | null;
       const typingElsewhere =
-        ae &&
-        (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
+        ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
       if (!typingElsewhere) {
         try {
           containerRef.current?.focus({ preventScroll: true });
@@ -3788,6 +3791,14 @@ function MindMapInner({
     return 'options';
   }, [nodes]);
 
+  // ── Feature flags (DP-5: honest AI overlays) ─────────────────────────────
+  const { isEnabled: isFeatureEnabled } = useFeatureFlagsContext();
+  // Overlays whose displayed result is a client-side heuristic, not real LLM
+  // output (AIBranchBalancer, AISentimentOverlay, AIAutoClustering,
+  // AIDependencyDetector) — hidden until backed by real AI analysis.
+  // See DEFAULT_FLAGS in useFeatureFlags for the honesty audit details.
+  const heuristicAiOverlaysEnabled = isFeatureEnabled('mindmapHeuristicAiOverlays');
+
   // ── Visual modes ─────────────────────────────────────────────────────────
   const [showClusterBubbles, setShowClusterBubbles] = useState(false);
   const [heatmapMode, setHeatmapMode] = useState(false);
@@ -5058,6 +5069,7 @@ function MindMapInner({
           canPasteStyle={!!styleClipboard}
           canPasteNodes={hasMindMapClipboard()}
           hasChildren={findChildrenIds(contextMenu.nodeId).length > 0}
+          comingSoonIds={heuristicAiOverlaysEnabled ? [] : ['ctx_dependencies']}
           onClose={() => setContextMenu(null)}
           onAction={handleContextAction}
         />
@@ -5303,7 +5315,17 @@ function MindMapInner({
               }}
             >
               {/* P2: background via SSOT canvasBackground.ts */}
-              {(() => { const bg = getCanvasBg('mindmap', isDarkMindmap ? 'dark' : 'light'); return <Background color={bg.color} gap={bg.gap} size={bg.size} variant={bg.variant as any} />; })()}
+              {(() => {
+                const bg = getCanvasBg('mindmap', isDarkMindmap ? 'dark' : 'light');
+                return (
+                  <Background
+                    color={bg.color}
+                    gap={bg.gap}
+                    size={bg.size}
+                    variant={bg.variant as any}
+                  />
+                );
+              })()}
               {showMiniMap && (
                 <MiniMap
                   nodeStrokeWidth={3}
@@ -5412,29 +5434,31 @@ function MindMapInner({
         </MindMapIdeaIdContext.Provider>
       )}
 
-      {/* AI Branch Balancer */}
-      <AIBranchBalancer
-        nodes={nodes.map((n) => ({ id: n.id, data: n.data, type: n.type }))}
-        edges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
-        locked={locked}
-        onFocusBranch={(branchKey) => {
-          const branchNode = nodes.find(
-            (n) => n.data?.branchKey === branchKey && n.id.startsWith('branch-')
-          );
-          if (branchNode) {
-            setNodes((prev: Node[]) =>
-              prev.map((n) => ({ ...n, selected: n.id === branchNode.id }))
+      {/* AI Branch Balancer — DP-5: client-side heuristic (no LLM), flag OFF by default */}
+      {heuristicAiOverlaysEnabled && (
+        <AIBranchBalancer
+          nodes={nodes.map((n) => ({ id: n.id, data: n.data, type: n.type }))}
+          edges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
+          locked={locked}
+          onFocusBranch={(branchKey) => {
+            const branchNode = nodes.find(
+              (n) => n.data?.branchKey === branchKey && n.id.startsWith('branch-')
             );
-            setTimeout(() => {
-              try {
-                fitView({ nodes: [{ id: branchNode.id } as any], padding: 0.5, duration: 400 });
-              } catch {
-                /* ignore */
-              }
-            }, 100);
-          }
-        }}
-      />
+            if (branchNode) {
+              setNodes((prev: Node[]) =>
+                prev.map((n) => ({ ...n, selected: n.id === branchNode.id }))
+              );
+              setTimeout(() => {
+                try {
+                  fitView({ nodes: [{ id: branchNode.id } as any], padding: 0.5, duration: 400 });
+                } catch {
+                  /* ignore */
+                }
+              }, 100);
+            }
+          }}
+        />
+      )}
 
       {/* AI What-If Scenarios */}
       {showWhatIf &&
@@ -5724,8 +5748,8 @@ function MindMapInner({
         />
       ) : null}
 
-      {/* R1.3: AI Dependency Detection */}
-      {showDependencyDetector ? (
+      {/* R1.3: AI Dependency Detection — DP-5: heuristic pair mapping, flag OFF by default */}
+      {heuristicAiOverlaysEnabled && showDependencyDetector ? (
         <AIDependencyDetector
           open={showDependencyDetector}
           onClose={() => setShowDependencyDetector(false)}
@@ -5826,8 +5850,8 @@ function MindMapInner({
         />
       ) : null}
 
-      {/* R1.1: AI Auto-Clustering */}
-      {showAutoClustering ? (
+      {/* R1.1: AI Auto-Clustering — DP-5: substring-match membership, flag OFF by default */}
+      {heuristicAiOverlaysEnabled && showAutoClustering ? (
         <AIAutoClustering
           open={showAutoClustering}
           onClose={() => setShowAutoClustering(false)}
@@ -5856,8 +5880,8 @@ function MindMapInner({
         />
       ) : null}
 
-      {/* R1.4: AI Sentiment Analysis */}
-      {showSentimentOverlay ? (
+      {/* R1.4: AI Sentiment Analysis — DP-5: confidence-threshold heuristic, flag OFF by default */}
+      {heuristicAiOverlaysEnabled && showSentimentOverlay ? (
         <AISentimentOverlay
           open={showSentimentOverlay}
           onClose={() => setShowSentimentOverlay(false)}

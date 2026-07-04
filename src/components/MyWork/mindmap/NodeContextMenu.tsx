@@ -45,6 +45,11 @@ export interface NodeContextMenuProps {
   canPasteStyle?: boolean;
   canPasteNodes?: boolean;
   hasChildren?: boolean;
+  /**
+   * DP-5: item ids rendered as disabled with a "Wkrótce / Coming soon" badge
+   * (feature-flagged heuristic AI actions that are not yet honestly AI-backed).
+   */
+  comingSoonIds?: string[];
   onClose: () => void;
   onAction: (action: string) => void;
 }
@@ -65,6 +70,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
   canPasteStyle = false,
   canPasteNodes = false,
   hasChildren = false,
+  comingSoonIds,
   onClose,
   onAction,
 }) => {
@@ -479,20 +485,27 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
 
   const renderItem = (item: MenuItemBase) => {
     const Icon = item.icon;
+    const comingSoon = comingSoonIds?.includes(item.id) ?? false;
+    const disabled = item.disabled || comingSoon;
     return (
       <button
         key={item.id}
         type="button"
-        disabled={item.disabled}
+        disabled={disabled}
         onClick={() => handleClick(item.id)}
-        className={`w-full flex items-center gap-2 px-3 py-[6px] text-left text-[11px] font-medium transition-colors rounded-md ${menuItemClass(item)}`}
+        className={`w-full flex items-center gap-2 px-3 py-[6px] text-left text-[11px] font-medium transition-colors rounded-md ${menuItemClass({ ...item, disabled })}`}
       >
         <Icon
           size={13}
           className={`shrink-0 ${item.danger ? 'text-danger-500' : 'text-slate-600 dark:text-slate-500'}`}
         />
         <span className="flex-1 truncate">{isPl ? item.labelPl : item.labelEn}</span>
-        {item.shortcut && (
+        {comingSoon && (
+          <span className="text-[9px] text-slate-500 dark:text-slate-400 ml-2 shrink-0 italic">
+            {isPl ? 'Wkrótce' : 'Coming soon'}
+          </span>
+        )}
+        {item.shortcut && !comingSoon && (
           <span className="text-[9px] text-slate-600 dark:text-slate-500 font-mono ml-2 shrink-0">
             {item.shortcut}
           </span>

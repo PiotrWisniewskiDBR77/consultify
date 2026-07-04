@@ -54,6 +54,8 @@ interface CanvasLeftToolbarProps {
   ideaId?: string;
   canUndo?: boolean;
   canRedo?: boolean;
+  /** DP-5: enables heuristic AI actions in the AI popover (mindmapHeuristicAiOverlays flag). */
+  heuristicAiEnabled?: boolean;
   onAction: (action: string) => void;
   onOpenChat: () => void;
   onApplyTemplate: (templateId: string) => void;
@@ -216,6 +218,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   isAccepted,
   canUndo = true,
   canRedo = true,
+  heuristicAiEnabled = false,
   onAction,
   onOpenChat,
   onApplyTemplate,
@@ -373,6 +376,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
               <AIActionsPopover
                 isPl={!!isPl}
                 selection={selection}
+                heuristicAiEnabled={heuristicAiEnabled}
                 onAction={handlePopoverAction}
                 onOpenChat={onOpenChat}
                 onClose={closePopover}
