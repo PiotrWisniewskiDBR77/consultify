@@ -12930,7 +12930,8 @@
       "source": "Source",
       "slides": "Slides",
       "reportType": "Type",
-      "mode": "Tryb"
+      "mode": "Tryb",
+      "quality": "Quality"
     },
     "filters": {
       "type": "Type",

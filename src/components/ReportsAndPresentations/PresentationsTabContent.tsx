@@ -36,9 +36,51 @@ import type { RowAction } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { appendArtifactOpenAction, resolveArtifactOpenPath } from './artifactNavigation';
 import { PresentationPreviewBody, PresentationPreviewFooter } from './previews/PresentationPreview';
-import { PRESENTATION_STATUS_META, type PresentationItem, SOURCE_TYPE_META } from './types';
+import {
+  PRESENTATION_STATUS_META,
+  type PresentationItem,
+  SOURCE_TYPE_META,
+  type StatusChipTone,
+} from './types';
 import type { useRapActions } from './useRapData';
 import { useTrustState } from './useTrustState';
+
+/**
+ * P2.5 — deck rows carry `governance.validationState` (title present / source
+ * grounded / execution complete), NOT a full quality scorecard. The 0-100 +
+ * A-F `bundleQualityScorecard` lives on business-plan bundles only
+ * (server/src/services/deliverables/bundleQualityScorecard.ts, wired via
+ * generateBundleFromSpine); presentation decks never populate it. Until a
+ * deck-level scorecard pipeline exists, this maps the real governance signal
+ * — same vocabulary as TrustStatePreviewSection's TrustBadge — to a discreet
+ * list-column badge. No entry = no badge (never fabricate a grade).
+ */
+const QUALITY_VALIDATION_META: Record<
+  string,
+  { label: string; labelPl: string; title: string; titlePl: string; tone: StatusChipTone }
+> = {
+  validated: {
+    label: 'Validated',
+    labelPl: 'Zwalidowana',
+    title: 'Governance checks passed (title, source grounding, execution).',
+    titlePl: 'Kontrole governance przeszły (tytuł, źródła, wykonanie).',
+    tone: 'success',
+  },
+  pending: {
+    label: 'Pending',
+    labelPl: 'W trakcie',
+    title: 'Governance validation still pending (e.g. execution in progress).',
+    titlePl: 'Walidacja governance w toku (np. wykonanie w trakcie).',
+    tone: 'warning',
+  },
+  attention_required: {
+    label: 'Attention',
+    labelPl: 'Uwaga',
+    title: 'Governance validation flagged an issue (missing source grounding or failed execution).',
+    titlePl: 'Walidacja governance wykryła problem (brak źródeł lub błąd wykonania).',
+    tone: 'danger',
+  },
+};
 
 interface PresentationsTabContentProps {
   viewMode: ViewMode;
@@ -156,6 +198,28 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
         render: (row: PresentationItem) => {
           const meta = PRESENTATION_STATUS_META[row.status] || PRESENTATION_STATUS_META.draft;
           return <StatusChip label={isPolish ? meta.labelPl : meta.label} tone={meta.tone} />;
+        },
+      },
+      {
+        // P2.5 — discreet quality/validation signal. Decks don't carry a
+        // per-deck quality scorecard (bundleQualityScorecard is business-plan
+        // bundle-only); this surfaces the real governance validation snapshot
+        // (title/source-grounding/execution checks) that IS available on every
+        // row today. Renders nothing when the signal is absent — no fabricated
+        // score.
+        id: 'quality',
+        label: t('rap.columns.quality', 'Jakość'),
+        width: '110px',
+        render: (row: PresentationItem) => {
+          const meta = QUALITY_VALIDATION_META[row.governance?.validationState || ''];
+          if (!meta) return null;
+          return (
+            <StatusChip
+              label={isPolish ? meta.labelPl : meta.label}
+              tone={meta.tone}
+              title={isPolish ? meta.titlePl : meta.title}
+            />
+          );
         },
       },
       {
