@@ -44,7 +44,7 @@ export const RACICell: React.FC<NodeProps<RACICellData>> = memo(({ data, selecte
                         ? 'bg-slate-700 border-slate-600 text-white font-medium'
                         : 'bg-slate-800 border-slate-700 text-slate-600 font-medium -rotate-45'
                     }
-                    ${selected ? 'ring-2 ring-white/30 ring-offset-1 ring-offset-slate-900' : ''}
+                    ${selected ? 'ring-2 ring-c-border ring-offset-1 ring-offset-slate-900' : ''}
                 `}
       >
         <span className="text-xs truncate px-2">{headerType === 'task' ? task : role}</span>
@@ -57,7 +57,7 @@ export const RACICell: React.FC<NodeProps<RACICellData>> = memo(({ data, selecte
       className={`
                 w-16 h-16 flex items-center justify-center border-2 rounded-md
                 transition-all duration-200 ${(valueColors as any)[value]}
-                ${selected ? 'ring-2 ring-white/30 ring-offset-1 ring-offset-slate-900' : ''}
+                ${selected ? 'ring-2 ring-c-border ring-offset-1 ring-offset-slate-900' : ''}
             `}
       title={(valueLabels as any)[value]}
     >

@@ -402,8 +402,8 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
 
   const aiProposalsPanel =
     aiProposals !== null ? (
-      <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] overflow-hidden m-4">
-        <div className="px-4 py-3 bg-white dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
+      <div className="rounded-xl border border-slate-200 dark:border-c-border-subtle bg-slate-50 dark:bg-white/[0.04] overflow-hidden m-4">
+        <div className="px-4 py-3 bg-white dark:bg-white/[0.03] border-b border-slate-200 dark:border-c-border-subtle flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles size={16} className="text-[var(--c-info)]" />
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">

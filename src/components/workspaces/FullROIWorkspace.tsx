@@ -41,8 +41,8 @@ export const FullROIWorkspace: React.FC<FullROIWorkspaceProps> = ({
   // --- Render Functions ---
 
   const renderInitiatives = () => (
-    <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
-      <div className="p-4 border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-navy-950 flex justify-between items-center">
+    <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl overflow-hidden">
+      <div className="p-4 border-b border-slate-200 dark:border-c-border-subtle bg-slate-50 dark:bg-navy-950 flex justify-between items-center">
         <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <DollarSign className="text-blue-400" size={18} />
           Initiative Economics
@@ -90,7 +90,7 @@ export const FullROIWorkspace: React.FC<FullROIWorkspaceProps> = ({
     <div className="space-y-6">
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-slate-50 dark:bg-navy-950 p-4 rounded-xl border border-slate-200 dark:border-white/5">
+        <div className="bg-slate-50 dark:bg-navy-950 p-4 rounded-xl border border-slate-200 dark:border-c-border-subtle">
           <div className="text-slate-500 dark:text-slate-400 text-xs uppercase mb-1">
             Total Capex/Opex
           </div>
@@ -98,7 +98,7 @@ export const FullROIWorkspace: React.FC<FullROIWorkspaceProps> = ({
             ${economics.totalCost.toLocaleString()}
           </div>
         </div>
-        <div className="bg-slate-50 dark:bg-navy-950 p-4 rounded-xl border border-slate-200 dark:border-white/5">
+        <div className="bg-slate-50 dark:bg-navy-950 p-4 rounded-xl border border-slate-200 dark:border-c-border-subtle">
           <div className="text-slate-500 dark:text-slate-400 text-xs uppercase mb-1">
             Annual Value
           </div>
@@ -106,7 +106,7 @@ export const FullROIWorkspace: React.FC<FullROIWorkspaceProps> = ({
             ${economics.totalAnnualBenefit.toLocaleString()}
           </div>
         </div>
-        <div className="bg-slate-50 dark:bg-navy-950 p-4 rounded-xl border border-slate-200 dark:border-white/5">
+        <div className="bg-slate-50 dark:bg-navy-950 p-4 rounded-xl border border-slate-200 dark:border-c-border-subtle">
           <div className="text-slate-500 dark:text-slate-400 text-xs uppercase mb-1">
             Portfolio ROI
           </div>
@@ -114,7 +114,7 @@ export const FullROIWorkspace: React.FC<FullROIWorkspaceProps> = ({
             {economics.overallROI.toFixed(0)}%
           </div>
         </div>
-        <div className="bg-slate-50 dark:bg-navy-950 p-4 rounded-xl border border-slate-200 dark:border-white/5">
+        <div className="bg-slate-50 dark:bg-navy-950 p-4 rounded-xl border border-slate-200 dark:border-c-border-subtle">
           <div className="text-slate-500 dark:text-slate-400 text-xs uppercase mb-1">
             Payback Period
           </div>
@@ -125,7 +125,7 @@ export const FullROIWorkspace: React.FC<FullROIWorkspaceProps> = ({
       </div>
 
       {/* Chart */}
-      <div className="bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/5 rounded-xl p-6 h-[400px]">
+      <div className="bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6 h-[400px]">
         <h3 className="text-sm font-bold text-slate-600 dark:text-slate-500 mb-4 uppercase">
           Investment vs Return Over Time
         </h3>
@@ -135,7 +135,7 @@ export const FullROIWorkspace: React.FC<FullROIWorkspaceProps> = ({
   );
 
   const renderCostStructure = () => (
-    <div className="p-10 text-center bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl">
+    <div className="p-10 text-center bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl">
       <Layers className="w-16 h-16 mx-auto text-pink-500 mb-4" />
       <h3 className="text-xl font-bold mb-2">Cost Structure Model</h3>
       <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto">
@@ -150,7 +150,7 @@ export const FullROIWorkspace: React.FC<FullROIWorkspaceProps> = ({
       {['Conservative', 'Realistic', 'Aggressive'].map((scenario) => (
         <div
           key={scenario}
-          className={`p-6 rounded-xl border ${scenario === 'Realistic' ? 'bg-blue-900/20 border-blue-500' : 'bg-navy-950 border-white/10'}`}
+          className={`p-6 rounded-xl border ${scenario === 'Realistic' ? 'bg-blue-900/20 border-blue-500' : 'bg-navy-950 border-c-border-subtle'}`}
         >
           <h3
             className={`text-lg font-bold mb-4 ${scenario === 'Realistic' ? 'text-blue-400' : 'text-slate-700 dark:text-slate-300'}`}
@@ -174,7 +174,7 @@ export const FullROIWorkspace: React.FC<FullROIWorkspaceProps> = ({
                     : '0.9 yrs'}
               </span>
             </div>
-            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/10 text-xs text-slate-500 dark:text-slate-400 italic">
+            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-c-border-subtle text-xs text-slate-500 dark:text-slate-400 italic">
               Based on adjusted risk probabilities.
             </div>
           </div>
@@ -273,7 +273,7 @@ export const FullROIWorkspace: React.FC<FullROIWorkspaceProps> = ({
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white">
       {/* Header */}
-      <div className="h-16 border-b border-slate-200 dark:border-white/10 px-6 flex items-center justify-between bg-white/50 dark:bg-navy-900/50 backdrop-blur-sm sticky top-0 z-10">
+      <div className="h-16 border-b border-slate-200 dark:border-c-border-subtle px-6 flex items-center justify-between bg-white/50 dark:bg-navy-900/50 backdrop-blur-sm sticky top-0 z-10">
         <h1 className="text-xl font-bold flex items-center gap-2">
           <TrendingUp className="text-green-500" size={24} />
           Economics & ROI
@@ -288,7 +288,7 @@ export const FullROIWorkspace: React.FC<FullROIWorkspaceProps> = ({
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex border-b border-slate-200 dark:border-white/10 px-6 gap-6 mt-2 overflow-x-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-white/10">
+      <div className="flex border-b border-slate-200 dark:border-c-border-subtle px-6 gap-6 mt-2 overflow-x-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-white/10">
         {[
           { id: 'initiatives', label: '6.1 Initiatives', icon: DollarSign },
           { id: 'portfolio', label: '6.2 Portfolio ROI', icon: PieChart },

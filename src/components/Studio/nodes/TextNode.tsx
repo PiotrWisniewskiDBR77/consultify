@@ -30,7 +30,7 @@ export const TextNode: React.FC<NodeProps<TextNodeData>> = memo(
         className={`
                 min-w-[100px] max-w-[200px] p-3 rounded-lg border transition-all duration-200
                 ${(colorClasses as any)[color]}
-                ${selected ? 'ring-2 ring-white/30 ring-offset-2 ring-offset-slate-900' : ''}
+                ${selected ? 'ring-2 ring-c-border ring-offset-2 ring-offset-slate-900' : ''}
             `}
       >
         {/* Optional connection handles */}

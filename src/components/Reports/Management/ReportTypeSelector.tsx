@@ -216,8 +216,8 @@ export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
                 className={`flex flex-col p-4 rounded-xl border-2 transition-all text-left
                                     ${
                                       isSelected
-                                        ? 'border-slate-500 dark:border-white/40 bg-slate-100/60 dark:bg-white/[0.07]'
-                                        : 'border-slate-200 dark:border-navy-700 hover:border-slate-400 dark:hover:border-white/30'
+                                        ? 'border-slate-500 dark:border-c-border bg-slate-100/60 dark:bg-white/[0.07]'
+                                        : 'border-slate-200 dark:border-navy-700 hover:border-slate-400 dark:hover:border-c-border'
                                     }`}
               >
                 <div className="flex items-center gap-3 mb-2">
@@ -258,7 +258,7 @@ export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
             className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border transition-all
                             ${
                               scope === 'PORTFOLIO'
-                                ? 'border-slate-500 dark:border-white/40 bg-slate-100/60 dark:bg-white/[0.07] text-slate-900 dark:text-white'
+                                ? 'border-slate-500 dark:border-c-border bg-slate-100/60 dark:bg-white/[0.07] text-slate-900 dark:text-white'
                                 : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-slate-400'
                             }`}
           >
@@ -270,7 +270,7 @@ export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
             className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border transition-all
                             ${
                               scope === 'PROJECT'
-                                ? 'border-slate-500 dark:border-white/40 bg-slate-100/60 dark:bg-white/[0.07] text-slate-900 dark:text-white'
+                                ? 'border-slate-500 dark:border-c-border bg-slate-100/60 dark:bg-white/[0.07] text-slate-900 dark:text-white'
                                 : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-slate-400'
                             }`}
           >

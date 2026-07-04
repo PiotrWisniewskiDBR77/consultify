@@ -23,7 +23,7 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
   return (
     <div className="flex flex-col h-full bg-white dark:bg-navy-900">
       {/* Header / Progress */}
-      <div className="h-20 border-b border-slate-200 dark:border-white/5 flex flex-col justify-center px-8 bg-white dark:bg-navy-900 shrink-0">
+      <div className="h-20 border-b border-slate-200 dark:border-c-border-subtle flex flex-col justify-center px-8 bg-white dark:bg-navy-900 shrink-0">
         <div className="flex justify-between items-center mb-1">
           <span className="text-sm font-semibold text-slate-900 dark:text-white tracking-wide">
             {t.title}
@@ -38,7 +38,7 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
       {/* Content Scrollable */}
       <div className="flex-1 overflow-y-auto p-8 space-y-6">
         {/* Card 1: Basic Info */}
-        <div className="bg-gradient-to-br from-slate-50 dark:from-navy-950/80 to-white dark:to-navy-900/80 border border-slate-200 dark:border-white/10 rounded-xl p-6 relative group hover:border-primary-500/30 transition-colors backdrop-blur-sm shadow-xl">
+        <div className="bg-gradient-to-br from-slate-50 dark:from-navy-950/80 to-white dark:to-navy-900/80 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6 relative group hover:border-primary-500/30 transition-colors backdrop-blur-sm shadow-xl">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
             <span className="w-1 h-6 bg-navy-900 rounded-full"></span>
             {t.profile}
@@ -66,13 +66,13 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
         </div>
 
         {/* Card 2: Business Model */}
-        <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+        <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6">
           <h3 className="text-lg font-semibold text-primary-200 mb-4 flex items-center gap-2">
             <Box size={20} />
             Business Model
           </h3>
           <div className="space-y-4">
-            <div className="p-3 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg border border-slate-200 dark:border-white/5">
+            <div className="p-3 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg border border-slate-200 dark:border-c-border-subtle">
               <p className="text-sm text-slate-700 dark:text-slate-300">
                 {profile.businessModel?.description || 'No model description.'}
               </p>
@@ -91,7 +91,7 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
         </div>
 
         {/* Card 3: Core Processes */}
-        <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+        <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6">
           <h3 className="text-lg font-semibold text-blue-200 mb-4 flex items-center gap-2">
             <Layers size={20} />
             Core Processes
@@ -115,7 +115,7 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
         </div>
 
         {/* Card 4: IT Landscape */}
-        <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+        <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6">
           <h3 className="text-lg font-semibold text-green-200 mb-4 flex items-center gap-2">
             <Server size={20} />
             IT Landscape
@@ -160,7 +160,7 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
       </div>
 
       {/* Footer / CTA */}
-      <div className="p-6 border-t border-slate-200 dark:border-white/5 bg-white dark:bg-navy-900 flex justify-end">
+      <div className="p-6 border-t border-slate-200 dark:border-c-border-subtle bg-white dark:bg-navy-900 flex justify-end">
         <button
           onClick={onNextStep}
           disabled={!isStepComplete}

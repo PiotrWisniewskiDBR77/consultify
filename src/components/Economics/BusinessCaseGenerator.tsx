@@ -170,7 +170,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
           className={`p-4 rounded-xl border transition-all ${
             options.format === 'pdf'
               ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10'
-              : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
+              : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-c-border'
           }`}
         >
           <FileText
@@ -188,7 +188,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
           className={`p-4 rounded-xl border transition-all ${
             options.format === 'docx'
               ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10'
-              : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
+              : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-c-border'
           }`}
         >
           <FileSpreadsheet
@@ -260,7 +260,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
                   {options.sections[key] ? (
                     <Check size={14} className="text-indigo-500" />
                   ) : (
-                    <div className="w-3.5 h-3.5 rounded border border-slate-300 dark:border-white/20" />
+                    <div className="w-3.5 h-3.5 rounded border border-slate-300 dark:border-c-border" />
                   )}
                   {icon}
                   <span className="truncate">{label}</span>

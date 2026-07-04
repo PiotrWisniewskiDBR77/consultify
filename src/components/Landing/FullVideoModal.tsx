@@ -39,7 +39,7 @@ export const FullVideoModal: React.FC<FullVideoModalProps> = ({
             transition={{ type: 'spring', damping: 26, stiffness: 260 }}
             className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-5xl bg-black rounded-2xl shadow-2xl z-overlay overflow-hidden flex flex-col max-h-[90vh]"
           >
-            <div className="flex items-center justify-between p-4 bg-black/60 border-b border-white/10">
+            <div className="flex items-center justify-between p-4 bg-black/60 border-b border-c-border-subtle">
               <div className="min-w-0">
                 <p className="text-white font-bold text-sm truncate">
                   {title ?? t('landing.videos.fullTitleFallback', 'Full video')}

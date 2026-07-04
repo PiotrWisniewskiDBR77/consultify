@@ -85,7 +85,7 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
   return (
     <div className="max-w-7xl mx-auto space-y-6 animate-fade-in pb-12">
       {/* Project Status Overview */}
-      <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-white/10 shadow-sm">
+      <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-c-border-subtle shadow-sm">
         <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-6">
           Project Status Overview
         </h2>
@@ -174,7 +174,7 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
       </div>
 
       {/* Live Active Initiatives */}
-      <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-white/10 shadow-sm">
+      <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-c-border-subtle shadow-sm">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-bold text-navy-900 dark:text-white">
             Live Active Initiatives
@@ -198,7 +198,7 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
             {activeInitiatives.slice(0, 5).map((initiative) => (
               <div
                 key={initiative.id}
-                className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-white/10"
+                className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-c-border-subtle"
               >
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
@@ -238,7 +238,7 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
       </div>
 
       {/* Key Performance Indicators */}
-      <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-white/10 shadow-sm">
+      <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-c-border-subtle shadow-sm">
         <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-6">
           Key Performance Indicators
         </h3>

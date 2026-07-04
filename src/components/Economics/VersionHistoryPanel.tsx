@@ -425,7 +425,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                               ? 'bg-amber-500 border-amber-500'
                               : version.version_type === 'milestone'
                                 ? 'bg-emerald-500 border-emerald-500'
-                                : 'bg-white dark:bg-navy-900 border-slate-300 dark:border-white/20 hover:border-blue-500'
+                                : 'bg-white dark:bg-navy-900 border-slate-300 dark:border-c-border hover:border-blue-500'
                         }`}
                       />
 

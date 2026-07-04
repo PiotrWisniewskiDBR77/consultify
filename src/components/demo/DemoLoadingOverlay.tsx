@@ -118,8 +118,8 @@ export const DemoLoadingOverlay: React.FC<DemoLoadingOverlayProps> = ({
                     transition={{ duration: 0.3, delay: index * 0.1 }}
                     className={`flex items-center gap-4 p-4 rounded-xl transition-all duration-300 ${
                       isActive
-                        ? 'bg-white/10 border border-white/20'
-                        : 'bg-white/5 border border-white/5'
+                        ? 'bg-white/10 border border-c-border'
+                        : 'bg-white/5 border border-c-border-subtle'
                     }`}
                   >
                     <div

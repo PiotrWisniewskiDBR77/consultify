@@ -71,7 +71,7 @@ export const InitiativeLevelSelector: React.FC<InitiativeLevelSelectorProps> = (
               transition-all
               ${
                 isSelected
-                  ? 'border-slate-500 dark:border-white/40 bg-slate-100/60 dark:bg-white/[0.07] ring-2 ring-slate-400/40 dark:ring-white/10'
+                  ? 'border-slate-500 dark:border-c-border bg-slate-100/60 dark:bg-white/[0.07] ring-2 ring-slate-400/40 dark:ring-c-border'
                   : 'border-slate-200 dark:border-navy-600 hover:border-slate-300 dark:hover:border-navy-500 hover:ring-2 hover:ring-slate-400/30'
               }
               ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}

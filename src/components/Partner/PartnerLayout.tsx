@@ -135,7 +135,7 @@ export const PartnerLayout: React.FC<PartnerLayoutProps> = ({
       {/* Main Content - Navy Background */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50 dark:bg-navy-900">
         {/* Header */}
-        <header className="sticky top-0 z-30 bg-slate-50 dark:bg-navy-900 border-b border-slate-200 dark:border-white/5 border-t-2 border-t-crimson-600 dark:border-t-crimson-500">
+        <header className="sticky top-0 z-30 bg-slate-50 dark:bg-navy-900 border-b border-slate-200 dark:border-c-border-subtle border-t-2 border-t-crimson-600 dark:border-t-crimson-500">
           <div className="flex items-center justify-between px-4 lg:px-6 h-14">
             {/* Left side: Mobile menu + Breadcrumbs/Title */}
             <div className="flex items-center gap-4">
@@ -192,7 +192,7 @@ export const PartnerLayout: React.FC<PartnerLayoutProps> = ({
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
           <div className="p-4 lg:p-6">
-            <div className="bg-white dark:bg-navy-800/50 rounded-xl border border-slate-200 dark:border-white/5 p-6">
+            <div className="bg-white dark:bg-navy-800/50 rounded-xl border border-slate-200 dark:border-c-border-subtle p-6">
               {children}
             </div>
           </div>

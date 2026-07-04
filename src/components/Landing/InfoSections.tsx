@@ -97,7 +97,7 @@ const AppFeatureSlide: React.FC<{
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.1 }}
-              className={`p-4 rounded-xl ${item.bg} border border-white/5 flex items-start gap-3`}
+              className={`p-4 rounded-xl ${item.bg} border border-c-border-subtle flex items-start gap-3`}
             >
               <div
                 className={`w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0`}
@@ -166,7 +166,7 @@ const AppFeatureSlide: React.FC<{
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
-              className="p-4 rounded-xl bg-white/5 border border-white/5"
+              className="p-4 rounded-xl bg-white/5 border border-c-border-subtle"
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
@@ -250,7 +250,7 @@ const AppFeatureSlide: React.FC<{
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.1 }}
-              className="p-4 rounded-xl bg-white/5 border border-white/5"
+              className="p-4 rounded-xl bg-white/5 border border-c-border-subtle"
             >
               <div className="flex items-center justify-between mb-3">
                 <span className="text-white font-semibold text-sm">{init.name}</span>
@@ -330,7 +330,7 @@ const AppFeatureSlide: React.FC<{
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: i * 0.1 }}
-            className="p-4 rounded-xl bg-white/5 border border-white/5"
+            className="p-4 rounded-xl bg-white/5 border border-c-border-subtle"
           >
             <div className="flex items-start justify-between mb-2">
               <span className="text-white font-semibold text-sm">{dec.title}</span>
@@ -400,7 +400,7 @@ const FeatureCarousel: React.FC = () => {
       </div>
 
       {/* Main Card */}
-      <div className="aspect-[4/5] bg-white/5 backdrop-blur-3xl rounded-[3rem] shadow-2xl border border-white/10 p-8 flex flex-col overflow-hidden">
+      <div className="aspect-[4/5] bg-white/5 backdrop-blur-3xl rounded-[3rem] shadow-2xl border border-c-border-subtle p-8 flex flex-col overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentSlide}
@@ -415,7 +415,7 @@ const FeatureCarousel: React.FC = () => {
         </AnimatePresence>
 
         {/* Navigation Dots */}
-        <div className="flex items-center justify-center gap-2 mt-4 pt-4 border-t border-white/10">
+        <div className="flex items-center justify-center gap-2 mt-4 pt-4 border-t border-c-border-subtle">
           {slides.map((_, idx) => (
             <button
               key={idx}
@@ -433,13 +433,13 @@ const FeatureCarousel: React.FC = () => {
       {/* Navigation Arrows */}
       <button
         onClick={() => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)}
-        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 bg-white/10 backdrop-blur-xl rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10"
+        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 bg-white/10 backdrop-blur-xl rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-c-border-subtle"
       >
         <ChevronLeft size={20} />
       </button>
       <button
         onClick={() => setCurrentSlide((prev) => (prev + 1) % slides.length)}
-        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-10 h-10 bg-white/10 backdrop-blur-xl rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10"
+        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-10 h-10 bg-white/10 backdrop-blur-xl rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-c-border-subtle"
       >
         <ChevronRight size={20} />
       </button>
@@ -611,14 +611,14 @@ export const InfoSections: React.FC = () => {
 
       {/* Trust & Governance */}
       <section className="px-6 relative z-10">
-        <div className="max-w-6xl mx-auto bg-navy-950 rounded-[4rem] p-12 lg:p-24 relative overflow-hidden border border-navy-800 dark:border-white/10 shadow-3xl">
+        <div className="max-w-6xl mx-auto bg-navy-950 rounded-[4rem] p-12 lg:p-24 relative overflow-hidden border border-navy-800 dark:border-c-border-subtle shadow-3xl">
           {/* Background decoration */}
           <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-c-accent/10 rounded-full blur-[120px] -mr-32 -mt-32" />
           <div className="absolute bottom-0 left-0 w-[40%] h-[40%] bg-indigo-600/5 rounded-full blur-[100px] -ml-20 -mb-20" />
 
           <div className="relative z-10 grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
             <div className="space-y-8">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 text-[10px] font-black text-white uppercase tracking-[0.2em]">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-c-border-subtle text-[10px] font-black text-white uppercase tracking-[0.2em]">
                 <ShieldCheck size={16} className="text-emerald-400" />
                 {t('landing.trust.badge', 'Enterprise Integrity')}
               </div>

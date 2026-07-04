@@ -100,7 +100,7 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         onClick={() => setIsMinimized(false)}
-        className="fixed top-4 left-1/2 -translate-x-1/2 z-overlay px-4 py-2 bg-navy-800/95 dark:bg-navy-900 text-slate-100 text-sm font-medium rounded-full shadow-lg border border-white/5 hover:border-white/10 transition-all flex items-center gap-2"
+        className="fixed top-4 left-1/2 -translate-x-1/2 z-overlay px-4 py-2 bg-navy-800/95 dark:bg-navy-900 text-slate-100 text-sm font-medium rounded-full shadow-lg border border-c-border-subtle hover:border-c-border-subtle transition-all flex items-center gap-2"
       >
         <Sparkles size={16} className="text-primary-400" />
         {t('demo.banner.minimizedLabel', 'Demo')} • {DEMO_ORG_NAME}
@@ -116,7 +116,7 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
       className="fixed top-0 left-0 right-0 z-overlay"
     >
       {/* Main Banner — DBR77: navy base, primary CTA only */}
-      <div className="bg-navy-900/95 dark:bg-navy-950 border-b border-white/5 text-slate-100">
+      <div className="bg-navy-900/95 dark:bg-navy-950 border-b border-c-border-subtle text-slate-100">
         <div className="max-w-7xl mx-auto px-4 py-2.5">
           <div className="flex items-center justify-between">
             {/* Left: Demo Info */}
@@ -225,7 +225,7 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="bg-navy-800/80 dark:bg-navy-900/80 border-b border-white/5 overflow-hidden"
+            className="bg-navy-800/80 dark:bg-navy-900/80 border-b border-c-border-subtle overflow-hidden"
           >
             <div className="max-w-7xl mx-auto px-4 py-4">
               <div className="flex flex-wrap items-center justify-between gap-4">

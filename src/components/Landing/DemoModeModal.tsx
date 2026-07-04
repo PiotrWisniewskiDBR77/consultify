@@ -189,7 +189,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                     required
                     value={form.email}
                     onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                    className="w-full px-3 py-2 text-sm rounded-lg bg-c-surface-raised border border-white/5 text-c-text placeholder:text-c-text-muted focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-c-accent/30 transition-colors"
+                    className="w-full px-3 py-2 text-sm rounded-lg bg-c-surface-raised border border-c-border-subtle text-c-text placeholder:text-c-text-muted focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-c-accent/30 transition-colors"
                     placeholder="you@company.com"
                   />
                 </div>
@@ -209,7 +209,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                         type="text"
                         value={form.firstName}
                         onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
-                        className="w-full px-3 py-2 text-sm rounded-lg bg-c-surface-raised border border-white/5 text-c-text placeholder:text-c-text-muted focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-c-accent/30 transition-colors"
+                        className="w-full px-3 py-2 text-sm rounded-lg bg-c-surface-raised border border-c-border-subtle text-c-text placeholder:text-c-text-muted focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-c-accent/30 transition-colors"
                         placeholder="Jan"
                         required={mode === 'trial'}
                       />
@@ -224,7 +224,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                             type="text"
                             value={form.lastName}
                             onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
-                            className="w-full px-3 py-2 text-sm rounded-lg bg-c-surface-raised border border-white/5 text-c-text placeholder:text-c-text-muted focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-c-accent/30 transition-colors"
+                            className="w-full px-3 py-2 text-sm rounded-lg bg-c-surface-raised border border-c-border-subtle text-c-text placeholder:text-c-text-muted focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-c-accent/30 transition-colors"
                             placeholder="Kowalski"
                             required
                           />
@@ -239,7 +239,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                             onChange={(e) =>
                               setForm((f) => ({ ...f, companyName: e.target.value }))
                             }
-                            className="w-full px-3 py-2 text-sm rounded-lg bg-c-surface-raised border border-white/5 text-c-text placeholder:text-c-text-muted focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-c-accent/30 transition-colors"
+                            className="w-full px-3 py-2 text-sm rounded-lg bg-c-surface-raised border border-c-border-subtle text-c-text placeholder:text-c-text-muted focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-c-accent/30 transition-colors"
                             placeholder="My Company"
                           />
                         </div>
@@ -257,7 +257,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                     minLength={tab === 'signup' ? 8 : undefined}
                     value={form.password}
                     onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
-                    className="w-full px-3 py-2 text-sm rounded-lg bg-c-surface-raised border border-white/5 text-c-text placeholder:text-c-text-muted focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-c-accent/30 transition-colors"
+                    className="w-full px-3 py-2 text-sm rounded-lg bg-c-surface-raised border border-c-border-subtle text-c-text placeholder:text-c-text-muted focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-c-accent/30 transition-colors"
                     placeholder={tab === 'signup' ? 'Min. 8 characters' : '••••••••'}
                   />
                 </div>
@@ -314,7 +314,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                     </p>
                   </div>
                 )}
-                <p className="text-xs text-c-text-muted mt-3 pt-3 border-t border-white/5">
+                <p className="text-xs text-c-text-muted mt-3 pt-3 border-t border-c-border-subtle">
                   {t(
                     'demo.modal.commercialDescription',
                     'This demo is based on the Atelier Toys story. If you have questions, talk to Anna or contact us directly.'
@@ -334,7 +334,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                 <button
                   type="button"
                   onClick={openContactForm}
-                  className="block w-full py-2.5 px-4 text-sm bg-c-surface-raised border border-white/10 hover:bg-c-surface-raised text-c-text font-medium rounded-lg transition-colors text-center"
+                  className="block w-full py-2.5 px-4 text-sm bg-c-surface-raised border border-c-border-subtle hover:bg-c-surface-raised text-c-text font-medium rounded-lg transition-colors text-center"
                 >
                   {t('demo.modal.contactUs', 'Contact Us')}
                 </button>

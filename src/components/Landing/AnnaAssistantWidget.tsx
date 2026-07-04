@@ -1511,9 +1511,9 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
             exit={{ opacity: 0, y: 12, scale: 0.97 }}
             transition={{ duration: 0.18 }}
             dir={isRtl ? 'rtl' : 'ltr'}
-            className="w-[380px] max-w-full overflow-hidden rounded-2xl border border-white/10 bg-[#0E0A25]/95 shadow-[0_24px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl"
+            className="w-[380px] max-w-full overflow-hidden rounded-2xl border border-c-border-subtle bg-[#0E0A25]/95 shadow-[0_24px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl"
           >
-            <div className="flex items-start justify-between gap-3 border-b border-white/8 bg-white/[0.03] px-4 py-3">
+            <div className="flex items-start justify-between gap-3 border-b border-c-border-subtle bg-white/[0.03] px-4 py-3">
               <div className="flex items-start gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-c-accent text-white">
                   <TeresaMark size={18} />
@@ -1607,7 +1607,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
                           key={suggestion}
                           type="button"
                           onClick={() => void sendMessage(suggestion)}
-                          className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-left text-xs text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white"
+                          className="rounded-full border border-c-border-subtle bg-white/[0.04] px-3 py-1.5 text-left text-xs text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white"
                         >
                           {suggestion}
                         </button>
@@ -1616,7 +1616,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
                   </div>
                 )}
 
-                <div className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3">
+                <div className="rounded-2xl border border-c-border-subtle bg-white/[0.03] px-4 py-3">
                   <p className="mb-2 text-xs font-medium text-white/45">{copy.handoffLabel}</p>
                   <div className="flex flex-wrap gap-2">
                     <button
@@ -1636,7 +1636,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
                     <button
                       type="button"
                       onClick={() => triggerHandoff('contact')}
-                      className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-white/75 transition-colors hover:bg-white/[0.09] hover:text-white"
+                      className="rounded-full border border-c-border-subtle bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-white/75 transition-colors hover:bg-white/[0.09] hover:text-white"
                     >
                       {copy.contactCta}
                     </button>
@@ -1647,7 +1647,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
               </div>
             </div>
 
-            <div className="border-t border-white/8 px-4 py-3">
+            <div className="border-t border-c-border-subtle px-4 py-3">
               <div className="flex items-end gap-2">
                 <textarea
                   value={input}
@@ -1666,7 +1666,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
                   }}
                   rows={1}
                   placeholder={copy.placeholder}
-                  className="min-h-[44px] flex-1 resize-none rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-c-accent/40"
+                  className="min-h-[44px] flex-1 resize-none rounded-2xl border border-c-border-subtle bg-white/[0.04] px-4 py-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-c-accent/40"
                 />
                 <button
                   type="button"
@@ -1731,7 +1731,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
           openWidget();
         }}
         aria-label={copy.open}
-        className="group inline-flex items-center gap-3 rounded-full border border-white/10 bg-[#140D31]/95 px-4 py-3 text-white shadow-[0_16px_32px_rgba(0,0,0,0.35)] backdrop-blur-xl transition-all hover:bg-[#19123A]"
+        className="group inline-flex items-center gap-3 rounded-full border border-c-border-subtle bg-[#140D31]/95 px-4 py-3 text-white shadow-[0_16px_32px_rgba(0,0,0,0.35)] backdrop-blur-xl transition-all hover:bg-[#19123A]"
       >
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-c-accent text-white shadow-[0_0_30px_rgba(165,28,48,0.35)]">
           {isOpen ? <X size={18} /> : <MessageCircle size={18} />}

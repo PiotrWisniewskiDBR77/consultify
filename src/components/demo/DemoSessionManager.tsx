@@ -563,7 +563,7 @@ const WorkspaceDemoNextSteps: React.FC<WorkspaceDemoNextStepsProps> = ({
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-6 left-6 z-40 max-w-md rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-2xl backdrop-blur dark:border-white/10 dark:bg-navy-900/95">
+    <div className="fixed bottom-6 left-6 z-40 max-w-md rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-2xl backdrop-blur dark:border-c-border-subtle dark:bg-navy-900/95">
       <p className="text-xs font-semibold uppercase tracking-wide text-indigo-500 dark:text-indigo-300">
         Sample workspace
       </p>
@@ -579,7 +579,7 @@ const WorkspaceDemoNextSteps: React.FC<WorkspaceDemoNextStepsProps> = ({
           {scenarios.slice(0, 3).map((scenario) => (
             <div
               key={scenario.id}
-              className="rounded-xl border border-slate-200 px-3 py-2 text-xs dark:border-white/10"
+              className="rounded-xl border border-slate-200 px-3 py-2 text-xs dark:border-c-border-subtle"
             >
               <div className="flex items-center justify-between gap-3">
                 <span className="font-medium text-slate-800 dark:text-slate-100">
@@ -609,7 +609,7 @@ const WorkspaceDemoNextSteps: React.FC<WorkspaceDemoNextStepsProps> = ({
         <button
           type="button"
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+          className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-c-border-subtle dark:text-slate-200 dark:hover:bg-white/5"
         >
           Review the walkthrough
         </button>

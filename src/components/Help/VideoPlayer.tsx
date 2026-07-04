@@ -534,8 +534,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                 </button>
 
                 {showChapters && (
-                  <div className="absolute bottom-full right-0 mb-2 w-64 bg-slate-900 rounded-lg shadow-xl border border-white/10 overflow-hidden">
-                    <div className="p-2 border-b border-white/10">
+                  <div className="absolute bottom-full right-0 mb-2 w-64 bg-slate-900 rounded-lg shadow-xl border border-c-border-subtle overflow-hidden">
+                    <div className="p-2 border-b border-c-border-subtle">
                       <span className="text-xs font-medium text-white/60">
                         {t('help.video.chapters')}
                       </span>
@@ -576,8 +576,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
               </button>
 
               {showSettings && (
-                <div className="absolute bottom-full right-0 mb-2 w-40 bg-slate-900 rounded-lg shadow-xl border border-white/10 overflow-hidden">
-                  <div className="p-2 border-b border-white/10">
+                <div className="absolute bottom-full right-0 mb-2 w-40 bg-slate-900 rounded-lg shadow-xl border border-c-border-subtle overflow-hidden">
+                  <div className="p-2 border-b border-c-border-subtle">
                     <span className="text-xs font-medium text-white/60">
                       {t('help.video.speed')}
                     </span>

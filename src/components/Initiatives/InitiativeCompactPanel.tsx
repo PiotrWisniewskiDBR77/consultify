@@ -721,7 +721,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-1 px-2.5 py-2 text-[11px] font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === tab.id
-                  ? 'border-navy-900 dark:border-white/80 text-slate-900 dark:text-white'
+                  ? 'border-navy-900 dark:border-c-border-strong text-slate-900 dark:text-white'
                   : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >

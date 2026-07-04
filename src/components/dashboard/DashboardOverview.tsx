@@ -177,7 +177,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
       {/* Project Status Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Overall Progress */}
-        <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden">
+        <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-c-border-subtle shadow-sm relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-5">
             <Activity size={100} />
           </div>
@@ -199,7 +199,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         </div>
 
         {/* Current Phase */}
-        <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-white/10 shadow-sm flex flex-col justify-center">
+        <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-c-border-subtle shadow-sm flex flex-col justify-center">
           <h3 className="text-slate-500 font-medium text-sm uppercase tracking-wide mb-2">
             Current Phase
           </h3>
@@ -245,7 +245,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
       {/* Module Completion Status */}
       {hasStarted && (
-        <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-white/10 shadow-sm flex flex-wrap gap-4 justify-between items-center">
+        <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-c-border-subtle shadow-sm flex flex-wrap gap-4 justify-between items-center">
           {[
             {
               label: 'Goals & Challenges',
@@ -293,7 +293,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         <div className="space-y-6">
           {/* Initiative Summary */}
           {dashPrefs.widgets.initiatives && (
-            <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-white/10 shadow-sm">
+            <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-c-border-subtle shadow-sm">
               <h3 className="font-bold text-navy-900 dark:text-white mb-4">Initiative Summary</h3>
               <div className="flex justify-between items-end mb-6">
                 <div>
@@ -332,7 +332,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
           {/* KPI Snapshot */}
           {dashPrefs.widgets.metrics && (
-            <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-white/10 shadow-sm">
+            <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-c-border-subtle shadow-sm">
               <h3 className="font-bold text-navy-900 dark:text-white mb-4">
                 Key Performance Indicators
               </h3>
@@ -374,7 +374,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
                 <div className="space-y-6">
                   {/* Weekly Summary */}
-                  <div className="bg-white/10 backdrop-blur-md rounded-xl p-5 border border-white/10">
+                  <div className="bg-white/10 backdrop-blur-md rounded-xl p-5 border border-c-border-subtle">
                     <h4 className="text-sm font-semibold text-indigo-200 uppercase tracking-wider mb-2">
                       Executive Summary
                     </h4>
@@ -382,7 +382,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                   </div>
 
                   {/* Recommended Actions */}
-                  <div className="bg-white/10 backdrop-blur-md rounded-xl p-5 border border-white/10">
+                  <div className="bg-white/10 backdrop-blur-md rounded-xl p-5 border border-c-border-subtle">
                     <h4 className="text-sm font-semibold text-indigo-200 uppercase tracking-wider mb-3">
                       Recommended Actions
                     </h4>
@@ -418,20 +418,20 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <button
                 onClick={onCreateTask}
-                className="p-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl hover:bg-slate-50 transition-colors text-center group"
+                className="p-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl hover:bg-slate-50 transition-colors text-center group"
               >
                 <Plus className="mx-auto mb-2 text-primary-600 group-hover:scale-110 transition-transform" />
                 <span className="text-xs font-semibold">New Task</span>
               </button>
-              <button className="p-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl hover:bg-slate-50 transition-colors text-center group">
+              <button className="p-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl hover:bg-slate-50 transition-colors text-center group">
                 <LayoutDashboard className="mx-auto mb-2 text-primary-600 group-hover:scale-110 transition-transform" />
                 <span className="text-xs font-semibold">Assessment</span>
               </button>
-              <button className="p-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl hover:bg-slate-50 transition-colors text-center group">
+              <button className="p-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl hover:bg-slate-50 transition-colors text-center group">
                 <Map className="mx-auto mb-2 text-blue-600 group-hover:scale-110 transition-transform" />
                 <span className="text-xs font-semibold">Roadmap</span>
               </button>
-              <button className="p-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl hover:bg-slate-50 transition-colors text-center group">
+              <button className="p-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl hover:bg-slate-50 transition-colors text-center group">
                 <Rocket className="mx-auto mb-2 text-amber-600 group-hover:scale-110 transition-transform" />
                 <span className="text-xs font-semibold">Pilot</span>
               </button>

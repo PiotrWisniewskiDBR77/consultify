@@ -264,7 +264,7 @@ export const SourceStep: React.FC<SourceStepProps> = ({
                   onClick={() => onToggleSource(artifact)}
                   className={`rounded-lg border p-4 text-left transition-all ${
                     selected
-                      ? 'border-slate-500 dark:border-white/40 bg-slate-100/60 dark:bg-white/[0.07]'
+                      ? 'border-slate-500 dark:border-c-border bg-slate-100/60 dark:bg-white/[0.07]'
                       : 'border-slate-200 hover:border-slate-300 dark:border-navy-700 dark:hover:border-navy-600'
                   }`}
                 >
@@ -322,7 +322,7 @@ export const SourceStep: React.FC<SourceStepProps> = ({
               }
               className={`p-5 rounded-xl border-2 text-left transition-all ${
                 selected
-                  ? 'border-slate-500 dark:border-white/40 bg-slate-100/60 dark:bg-white/[0.06] shadow-sm'
+                  ? 'border-slate-500 dark:border-c-border bg-slate-100/60 dark:bg-white/[0.06] shadow-sm'
                   : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
               }`}
             >
