@@ -23,8 +23,10 @@ import {
   AlertTriangle,
   CheckCircle,
   GitMerge,
+  Grid3x3,
   Lightbulb,
   Loader2,
+  Magnet,
   MessageSquare,
   Plus,
   X,
@@ -96,6 +98,13 @@ import {
 } from './processflow/LaneSystem';
 import { LaneSystem } from './processflow/LaneSystem';
 import { isNodeInCollapsedLane, setLaneHeight, toggleLaneCollapsed } from './processflow/laneState';
+import { appendComment, removeComment, type ProcessFlowNodeComment } from './processflow/nodeComments';
+import { ProcessFlowNodeCommentThread } from './processflow/ProcessFlowNodeCommentThread';
+import {
+  normalizeProcessFlowViewState,
+  processFlowViewportStorageKey,
+  resolveHydrationViewport,
+} from './processflow/viewState';
 import { ActivityNode } from './processflow/nodes/ActivityNode';
 import { BPMNEndNode } from './processflow/nodes/BPMNEndNode';
 import { BPMNStartNode } from './processflow/nodes/BPMNStartNode';
@@ -328,6 +337,16 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const [showKPIDashboard, setShowKPIDashboard] = useState(false);
   const [showMiniMap, setShowMiniMap] = useState(false);
   const [internalFullscreen, setInternalFullscreen] = useState(false);
+  // M07 F5b B1: real grid/snap view-state (previously a hardcoded stub that
+  // was written on save but never reflected actual UI state or restored).
+  const [showGrid, setShowGrid] = useState(true);
+  const [snapToGridEnabled, setSnapToGridEnabled] = useState(true);
+  const [savedViewport, setSavedViewport] = useState<{ x: number; y: number; zoom: number } | null>(
+    null
+  );
+  // Viewport read from the persisted blob/localStorage during hydrate, applied
+  // to the live ReactFlow instance once it mounts (see onInit below).
+  const pendingViewportRef = useRef<{ x: number; y: number; zoom: number } | null>(null);
   const flowContainerRef = useRef<HTMLDivElement>(null);
   const reactFlowInstanceRef = useRef<ReactFlowInstance | null>(null);
 
@@ -430,6 +449,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const [showReadbackPanel, setShowReadbackPanel] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [showPropertiesPanel, setShowPropertiesPanel] = useState(false);
+  // M07 F5b B3: node comment threads — comments live in `node.data.comments[]`
+  // and ride the existing graph blob (no new API, no F4 save-layer change).
+  const [commentsPanelNodeId, setCommentsPanelNodeId] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
@@ -470,8 +492,21 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     () => formatIdeaMapSyncLabel(syncState, lastSavedAt, isPl),
     [isPl, lastSavedAt, syncState]
   );
-  const buildPersistPayload = useCallback(
-    () => ({
+  const buildPersistPayload = useCallback(() => {
+    // M07 F5b B1 (bug L-04): persist the REAL grid/snap/viewport state
+    // instead of the previous hardcoded stub, so hydration can restore it.
+    const currentViewport = reactFlowInstanceRef.current?.getViewport?.() ?? null;
+    if (currentViewport) {
+      try {
+        localStorage.setItem(
+          processFlowViewportStorageKey(ideaId),
+          JSON.stringify(currentViewport)
+        );
+      } catch {
+        /* ignore (private mode / disabled storage) */
+      }
+    }
+    return {
       nodes: nodes as any,
       edges: edges as any,
       preferredTool: 'process_flow' as CanvasToolType,
@@ -484,12 +519,16 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           lanes,
           flowMode,
           semanticKit,
-          viewState: { layoutMode: 'horizontal', showGrid: true, snap: true },
+          viewState: {
+            layoutMode: 'horizontal' as const,
+            showGrid,
+            snap: snapToGridEnabled,
+            ...(currentViewport ? { viewport: currentViewport } : {}),
+          },
         },
       },
-    }),
-    [edges, extensions, flowMode, lanes, nodes, semanticKit]
-  );
+    };
+  }, [edges, extensions, flowMode, ideaId, lanes, nodes, semanticKit, showGrid, snapToGridEnabled]);
 
   useEffect(() => {
     if (flowMode === 'classic' || flowMode === 'automation' || flowMode === 'vsm') {
@@ -1031,6 +1070,26 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       ) {
         setSemanticKit(savedSemantic);
       }
+
+      // M07 F5b B1 (bug L-04): viewState was written on every save but never
+      // read back — restore the user's own grid/snap/viewport prefs here.
+      // The viewport itself needs the live ReactFlow instance (not mounted
+      // yet on first hydrate), so stash it and apply post-mount below.
+      const restoredViewState = normalizeProcessFlowViewState(pfExt?.viewState);
+      setShowGrid(restoredViewState.showGrid);
+      setSnapToGridEnabled(restoredViewState.snap);
+      let localViewportRaw: string | null = null;
+      try {
+        localViewportRaw = localStorage.getItem(processFlowViewportStorageKey(ideaId));
+      } catch {
+        /* ignore (private mode / disabled storage) */
+      }
+      const resolvedViewport = resolveHydrationViewport(
+        restoredViewState.viewport,
+        localViewportRaw
+      );
+      pendingViewportRef.current = resolvedViewport;
+      setSavedViewport(resolvedViewport);
 
       const hydratedNodes = rawNodes
         .filter((n: any) => n?.id)
@@ -2437,6 +2496,40 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               dragOverLaneId={dragOverLaneId}
             />
           </div>
+
+          {/* M07 F5b B1: grid/snap toggle — real, user-controllable, and now
+              round-trips through hydration (bug L-04). Solid c-* tokens only
+              (no /alpha suffix — those don't emit rules for hex-valued c-*
+              tokens, see finding_c_token_alpha_colormix). */}
+          <div className="absolute top-2 left-2 z-20 flex items-center gap-0.5 rounded-xl border border-c-border bg-c-surface shadow-sm px-1 py-0.5">
+            <button
+              type="button"
+              onClick={() => setShowGrid((prev) => !prev)}
+              className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
+                showGrid ? 'text-c-info bg-c-surface-raised' : 'text-c-text-muted hover:bg-c-surface-raised'
+              }`}
+              title={isPl ? 'Pokaż/ukryj siatkę' : 'Toggle grid'}
+              aria-label={isPl ? 'Pokaż/ukryj siatkę' : 'Toggle grid'}
+              aria-pressed={showGrid}
+            >
+              <Grid3x3 size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setSnapToGridEnabled((prev) => !prev)}
+              className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
+                snapToGridEnabled
+                  ? 'text-c-info bg-c-surface-raised'
+                  : 'text-c-text-muted hover:bg-c-surface-raised'
+              }`}
+              title={isPl ? 'Przyciąganie do siatki' : 'Snap to grid'}
+              aria-label={isPl ? 'Przyciąganie do siatki' : 'Snap to grid'}
+              aria-pressed={snapToGridEnabled}
+            >
+              <Magnet size={14} />
+            </button>
+          </div>
+
           {/* V51-28: Empty state overlay */}
           {filteredNodes.length === 0 && filteredGhostNodes.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
@@ -2511,14 +2604,29 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 });
               }}
               {...getIdeasToolInteractionProps('processflow', { locked, connectMode: !locked })}
+              snapToGrid={snapToGridEnabled}
+              snapGrid={[16, 16]}
               onInit={(instance: ReactFlowInstance) => {
                 reactFlowInstanceRef.current = instance;
+                // M07 F5b B1: restore the user's own last viewport (bug L-04
+                // — viewState was persisted but never read back). Applied
+                // after the initial `fitView` pass settles so it wins.
+                const pending = pendingViewportRef.current;
+                if (pending) {
+                  window.setTimeout(() => {
+                    try {
+                      instance.setViewport(pending, { duration: 300 });
+                    } catch {
+                      /* ignore */
+                    }
+                  }, 50);
+                }
               }}
-              fitView
+              fitView={!pendingViewportRef.current}
               className="bg-transparent"
               defaultEdgeOptions={{ type: 'flowEdge', animated: false }}
             >
-              {(() => { const bg = getCanvasBg('process_flow', isDarkFlow ? 'dark' : 'light'); return <Background color={bg.color} gap={bg.gap} size={bg.size} variant={bg.variant as any} />; })()}
+              {(() => { const bg = getCanvasBg('process_flow', isDarkFlow ? 'dark' : 'light', showGrid ? undefined : 'blank'); return <Background color={bg.color} gap={bg.gap} size={bg.size} variant={bg.variant as any} />; })()}
               {showMiniMap && (
                 <MiniMap
                   nodeStrokeWidth={3}
@@ -2529,6 +2637,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               )}
               <CanvasZoomControls
                 isPolish={isPl}
+                savedViewport={savedViewport}
                 selectedNodeId={selectedNodeId}
                 showMiniMap={showMiniMap}
                 onToggleMiniMap={() => setShowMiniMap((prev) => !prev)}
@@ -2594,10 +2703,53 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   )
                 );
               }}
+              onOpenComments={() => setCommentsPanelNodeId(selectedNode.id)}
+              commentCount={
+                Array.isArray(selectedNode.data?.comments) ? selectedNode.data.comments.length : 0
+              }
             />
           )}
         </div>
       )}
+
+      {commentsPanelNodeId &&
+        (() => {
+          const node = nodes.find((n) => n.id === commentsPanelNodeId);
+          if (!node) return null;
+          const nodeComments: ProcessFlowNodeComment[] = Array.isArray(node.data?.comments)
+            ? node.data.comments
+            : [];
+          return (
+            <ProcessFlowNodeCommentThread
+              open
+              onClose={() => setCommentsPanelNodeId(null)}
+              nodeId={commentsPanelNodeId}
+              nodeLabel={node.data?.label || commentsPanelNodeId}
+              comments={nodeComments}
+              locked={locked}
+              currentUser={currentUserName}
+              isPl={!!isPl}
+              onAddComment={(nodeId, comment) => {
+                setNodes((nds) =>
+                  nds.map((n) =>
+                    n.id === nodeId
+                      ? { ...n, data: { ...n.data, comments: appendComment(n.data?.comments, comment) } }
+                      : n
+                  )
+                );
+              }}
+              onDeleteComment={(nodeId, commentId) => {
+                setNodes((nds) =>
+                  nds.map((n) =>
+                    n.id === nodeId
+                      ? { ...n, data: { ...n.data, comments: removeComment(n.data?.comments, commentId) } }
+                      : n
+                  )
+                );
+              }}
+            />
+          );
+        })()}
 
       {/* ── New panels: Validation, AI Proposal, Readback, Properties, Export, Context Menu ── */}
 
@@ -2779,6 +2931,16 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         isPl={!!isPl}
       />
 
+      {/* M07 F5b B2 decision: KEEP this own ProcessFlowContextMenu, do NOT
+          adopt the shared `IdeaCanvasContextMenu` (src/components/MyWork/
+          IdeaCanvasContextMenu.tsx). That component is a different tool
+          entirely — an AI-actions menu (expand/challenge/find-evidence/
+          brainstorm via generateAIProposal), not a structural editing menu.
+          It has zero PF-shaped actions (no add-node-per-shape, no lane ops,
+          no auto-layout/paste/duplicate/delete) and would need real feature
+          additions to the shared file to cover them — out of budget per the
+          spec's "minimal risk, don't grow someone else's shared component"
+          guidance. Leaving PF's own menu as-is. */}
       {contextMenu && (
         <ProcessFlowContextMenu
           x={contextMenu.x}
