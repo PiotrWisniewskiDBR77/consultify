@@ -570,7 +570,83 @@ const metadataService = {
          VALUES ($1, $2, $3, $4, $5, $6)`,
         [id, tableId, name, fieldType, options ? JSON.stringify(options) : '{}', fieldOrder]
       );
-      const field = (await db.query('SELECT * FROM tp_fields WHERE id = $1', [id])).rows[0];
+      let field = (await db.query('SELECT * FROM tp_fields WHERE id = $1', [id])).rows[0];
+
+      // Auto-symmetric links (Airtable-style): a linkedRecord field gets a
+      // reverse field auto-created in the target table, with reverseFieldId
+      // cross-wired on BOTH sides. Without this the backlink relies on the
+      // fragile findBacklinkFieldId heuristic (first same-shaped field wins),
+      // which misfires when a table has two links to the same target.
+      if (fieldType === 'linkedRecord') {
+        try {
+          const opts = (options ?? {}) as Record<string, unknown>;
+          const linkedTableId = opts.linkedTableId as string | undefined;
+          const explicitReverse = opts.reverseFieldId as string | undefined;
+          const isReverse = opts.isReverse === true;
+
+          // Only originate a reverse field when: we target a real table, no
+          // reverse is already wired, and this field is not itself the reverse
+          // side being created by a sibling call (guards infinite recursion).
+          if (linkedTableId && !explicitReverse && !isReverse) {
+            const reverseId = uuidv4();
+            const sourceTableRow = (
+              await db.query('SELECT name FROM tp_tables WHERE id = $1', [tableId])
+            ).rows[0] as { name?: string } | undefined;
+            const reverseName = sourceTableRow?.name ? `${sourceTableRow.name}` : name;
+            const reverseOptions = {
+              linkedTableId: tableId,
+              reverseFieldId: id,
+              isReverse: true,
+            };
+            const reverseOrderResult = await db.query(
+              'SELECT COALESCE(MAX(field_order), -1) + 1 AS next_order FROM tp_fields WHERE table_id = $1',
+              [linkedTableId]
+            );
+            const reverseOrder =
+              (reverseOrderResult.rows[0] as { next_order?: number })?.next_order ?? 0;
+            await db.query(
+              `INSERT INTO tp_fields (id, table_id, name, field_type, options, field_order)
+               VALUES ($1, $2, $3, $4, $5, $6)`,
+              [
+                reverseId,
+                linkedTableId,
+                reverseName,
+                'linkedRecord',
+                JSON.stringify(reverseOptions),
+                reverseOrder,
+              ]
+            );
+
+            // Cross-wire reverseFieldId onto the originating field's options.
+            const mergedOptions = { ...opts, reverseFieldId: reverseId };
+            await db.query(`UPDATE tp_fields SET options = $2, updated_at = NOW() WHERE id = $1`, [
+              id,
+              JSON.stringify(mergedOptions),
+            ]);
+            field = (await db.query('SELECT * FROM tp_fields WHERE id = $1', [id])).rows[0];
+
+            const reverseField = (
+              await db.query('SELECT * FROM tp_fields WHERE id = $1', [reverseId])
+            ).rows[0];
+            await auditService.logEvent(
+              'create',
+              'field',
+              reverseId,
+              createdBy,
+              undefined,
+              reverseField,
+              { table_id: linkedTableId, reverseOf: id }
+            );
+          }
+        } catch (reverseErr) {
+          // Fail-soft: a missing reverse field must not break primary creation.
+          logger.warn('[MetadataService] reverse linkedRecord field creation failed', {
+            fieldId: id,
+            error: (reverseErr as Error).message,
+          });
+        }
+      }
+
       await auditService.logEvent('create', 'field', id, createdBy, undefined, field, {
         table_id: tableId,
       });
