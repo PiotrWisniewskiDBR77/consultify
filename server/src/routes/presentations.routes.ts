@@ -2224,10 +2224,33 @@ router.put(
       }
     }
 
-    await dbRun(
-      `UPDATE presentation_decks SET deck_json = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
-      [bodyStr, newVersion, deckId, orgId]
-    );
+    // Compare-and-swap: pin the UPDATE to the exact version we just read
+    // (or the client-supplied version, when present) so two writers that
+    // both observed the same starting version can no longer BOTH succeed.
+    // Whichever writer's UPDATE commits first advances the row's version;
+    // the loser's WHERE clause no longer matches (`version` has moved on),
+    // `changes` comes back 0, and it gets the same 409 VERSION_CONFLICT
+    // shape as the pre-existing stale-read check above, so the FE doesn't
+    // need to distinguish the two cases.
+    const expectedVersion = clientVersion !== null ? clientVersion : deck.version;
+    const updateResult = (await dbRun(
+      `UPDATE presentation_decks SET deck_json = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ? AND version = ?`,
+      [bodyStr, newVersion, deckId, orgId, expectedVersion]
+    )) as { success?: boolean; changes?: number } | undefined;
+
+    if ((updateResult?.changes ?? 0) === 0) {
+      const latest = (await dbGet(
+        'SELECT id, version FROM presentation_decks WHERE id = ? AND organization_id = ?',
+        [deckId, orgId]
+      )) as any;
+      return res.status(409).json({
+        success: false,
+        error: 'Version conflict: deck was modified by another session. Please refresh.',
+        code: 'VERSION_CONFLICT',
+        serverVersion: latest?.version ?? null,
+        clientVersion,
+      });
+    }
 
     res.json({ success: true, version: newVersion });
   })

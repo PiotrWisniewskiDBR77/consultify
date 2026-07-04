@@ -10,30 +10,26 @@
  *   - Otherwise it writes: `UPDATE presentation_decks SET deck_json = ?,
  *     version = serverVersion + 1 ... WHERE id = ? AND organization_id = ?`.
  *
- * KNOWN-GAP (documented here, NOT fixed — out of scope for P0.4 which is
- * tests-only): the version check and the write are two separate round-trips
- * with NO compare-and-swap in the UPDATE's WHERE clause (no `AND version = ?`).
- * So the "409 on stale write" guarantee only holds when the second writer's
- * SELECT observes a version that has already been bumped by the first
- * writer's UPDATE. Under true concurrency — both requests interleave their
- * SELECT before either UPDATE commits — both requests see the SAME
- * `deck.version`, both pass the `clientVersion < deck.version` check (since
- * clientVersion equals serverVersion for both), and BOTH writes succeed: the
- * second UPDATE silently overwrites the first with no 409 and no merge. This
- * is a classic lost-update race, not just a "client forgot to send the
- * header" edge case. A real fix would need `UPDATE ... WHERE id = ? AND
- * organization_id = ? AND version = ?` and branch on `rowCount === 0` (or a
- * row-level lock/transaction). See presentations.routes.ts:2172-2233.
+ * P0.5 FIX: the UPDATE now carries its own compare-and-swap guard —
+ * `UPDATE ... WHERE id = ? AND organization_id = ? AND version = ?`, where
+ * the expected version is the client-supplied version (or the just-read
+ * server version, for header-less callers) — and the handler branches on
+ * `changes === 0` to return the same 409 VERSION_CONFLICT shape as the
+ * pre-existing stale-read check. This closes the lost-update race: under
+ * true concurrency, where both requests interleave their SELECT before
+ * either UPDATE commits and both observe the SAME `deck.version`, only the
+ * writer whose UPDATE lands first still matches `version = expectedVersion`;
+ * the second writer's UPDATE matches zero rows (the row has already moved
+ * on), so it now gets 409 instead of silently overwriting the winner. See
+ * presentations.routes.ts:2172-2260.
  *
  * The tests below pin CURRENT observable behaviour:
  *  1. Sequential autosave with an up-to-date version -> 200, version bumped.
  *  2. Sequential autosave with a stale (behind) version -> 409 VERSION_CONFLICT.
  *  3. Two "concurrent" writers that both read version N before either writes
- *     (simulated via a controllable DB mock) -> the gap reproduces: BOTH
- *     succeed with 200, no 409, and the DB ends up on the LAST writer's
- *     content even though from the first writer's perspective its update
- *     silently vanished. This test intentionally documents the gap; it is a
- *     regression guard for CURRENT behaviour, not an endorsement of it.
+ *     (simulated via a controllable DB mock) -> exactly ONE succeeds (200)
+ *     and the OTHER is rejected (409 VERSION_CONFLICT), because the losing
+ *     writer's compare-and-swap UPDATE no longer matches the row's version.
  */
 import express from 'express';
 import request from 'supertest';
@@ -118,10 +114,28 @@ const mockDbGet = vi.fn(async (sql: string) => {
 const mockDbRun = vi.fn(async (sql: string, params: unknown[] = []) => {
   dbRunCalls.push({ sql, params });
   if (/UPDATE presentation_decks SET/i.test(sql)) {
-    const [newDeckJson, newVersion] = params as [string, number, string, string];
-    deckState = { version: newVersion, deck_json: newDeckJson };
+    // Mirrors the real compare-and-swap: `UPDATE ... WHERE id = ? AND
+    // organization_id = ? AND version = ?`. Only mutate `deckState` (and
+    // report changes: 1) when the expected version in the WHERE clause
+    // still matches the CURRENT row version at the moment this UPDATE
+    // actually executes -- i.e. after any interleave-gate release, so a
+    // second writer whose expected version was overtaken by the first
+    // writer's commit sees changes: 0, just like a real DB's rowCount.
+    const [, newVersion, , , expectedVersion] = params as [
+      string,
+      number,
+      string,
+      string,
+      number,
+    ];
+    if (deckState.version === expectedVersion) {
+      const [newDeckJson] = params as [string, number, string, string, number];
+      deckState = { version: newVersion, deck_json: newDeckJson };
+      return { success: true, changes: 1 };
+    }
+    return { success: true, changes: 0 };
   }
-  return undefined;
+  return { success: true, changes: 1 };
 });
 
 vi.mock('../../../server/src/utils/DbPromise.js', () => ({
@@ -205,11 +219,11 @@ describe('P0.4 — PUT /presentations/decks/:deckId/autosave version-conflict co
   });
 
   // -------------------------------------------------------------------
-  // KNOWN-GAP regression guard — see file header. This documents CURRENT
-  // behaviour under true read-then-write concurrency: no compare-and-swap
-  // in the UPDATE, so two writers who both observed version N both "win".
+  // P0.5 regression guard — see file header. Asserts the compare-and-swap
+  // fix: two writers who both observed version N under true concurrency no
+  // longer BOTH win; exactly one succeeds and the other is rejected.
   // -------------------------------------------------------------------
-  it('KNOWN-GAP: two interleaved writers that both read version=1 BOTH succeed with 200 (no 409, lost update)', async () => {
+  it('two interleaved writers that both read version=1 -> exactly ONE gets 200, the OTHER gets 409 (no lost update)', async () => {
     const app = await buildApp();
 
     // Force the true race: both requests' SELECTs are held open until BOTH
@@ -234,19 +248,26 @@ describe('P0.4 — PUT /presentations/decks/:deckId/autosave version-conflict co
         .send({ cards: [{ card_id: 'c1', title: 'Writer B' }] }),
     ]);
 
-    // Current (gap) behaviour: NEITHER request is rejected with 409, because
-    // both SELECTs observed the same pre-write snapshot before either
-    // UPDATE landed — there is no compare-and-swap (`AND version = ?`) in
-    // the UPDATE's WHERE clause to catch this after the fact.
-    expect([resA.status, resB.status]).toEqual([200, 200]);
-    expect(resA.body.success).toBe(true);
-    expect(resB.body.success).toBe(true);
+    // Fixed behaviour: both SELECTs observed the same pre-write snapshot
+    // before either UPDATE landed, but the UPDATE's own compare-and-swap
+    // guard (`AND version = ?`) means only the writer whose UPDATE commits
+    // FIRST still matches the row (version still 1); the second writer's
+    // UPDATE matches zero rows because the first writer already bumped it
+    // to 2, so it is rejected with 409 instead of silently overwriting.
+    const statuses = [resA.status, resB.status].sort();
+    expect(statuses).toEqual([200, 409]);
 
-    // Both bumped from the SAME base version (1 -> 2), so the final DB state
-    // reflects whichever write physically landed last — the other writer's
-    // change is silently lost with no signal to either client.
-    expect(resA.body.version).toBe(2);
-    expect(resB.body.version).toBe(2);
+    const [winner, loser] = resA.status === 200 ? [resA, resB] : [resB, resA];
+    expect(winner.body).toMatchObject({ success: true, version: 2 });
+    expect(loser.body).toMatchObject({
+      success: false,
+      code: 'VERSION_CONFLICT',
+      serverVersion: 2,
+      clientVersion: 1,
+    });
+
+    // The DB ends up on the winner's content, with no silent overwrite: the
+    // loser was told to refresh instead of clobbering the winner's write.
     expect(deckState.version).toBe(2);
   });
 });
