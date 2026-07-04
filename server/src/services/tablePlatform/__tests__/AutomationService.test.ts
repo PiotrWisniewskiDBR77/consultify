@@ -479,6 +479,118 @@ describe('AutomationService', () => {
   });
 
   // -----------------------------------------------------------------------
+  // runManually — manual "Run now" for ANY trigger type (record_created,
+  // record_updated, webhook_received), not just scheduled automations.
+  // -----------------------------------------------------------------------
+
+  describe('runManually', () => {
+    it('runs a record_created automation on demand', async () => {
+      const autoRow = {
+        id: 'auto-1',
+        base_id: 'b-1',
+        table_id: 't-1',
+        name: 'Auto',
+        enabled: true,
+        trigger_type: 'record_created',
+        trigger_config: {},
+        actions: [
+          {
+            id: 'act-1',
+            actionOrder: 0,
+            actionType: 'send_webhook',
+            actionConfig: { url: 'https://example.com/hook', method: 'POST' },
+          },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({ status: 200, ok: true });
+
+      mockQuery
+        .mockResolvedValueOnce({ rows: [autoRow] }) // getAutomation
+        .mockResolvedValueOnce({ rows: [{ id: 'run-1' }] }) // INSERT run
+        .mockResolvedValueOnce({ rows: [] }) // UPDATE run completed
+        .mockResolvedValueOnce({ rows: [] }); // INSERT run_counts
+
+      const result = await service.runManually('auto-1');
+
+      expect(result.success).toBe(true);
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://example.com/hook',
+        expect.objectContaining({ method: 'POST' })
+      );
+    });
+
+    it('returns an error when the automation does not exist', async () => {
+      mockQuery.mockResolvedValueOnce({ rows: [] }); // getAutomation -> not found
+
+      const result = await service.runManually('missing-id');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Automation not found');
+    });
+
+    it('returns an error when the automation is disabled', async () => {
+      const autoRow = {
+        id: 'auto-1',
+        base_id: 'b-1',
+        table_id: 't-1',
+        name: 'Auto',
+        enabled: false,
+        trigger_type: 'webhook_received',
+        trigger_config: {},
+        actions: [],
+      };
+      mockQuery.mockResolvedValueOnce({ rows: [autoRow] }); // getAutomation
+
+      const result = await service.runManually('auto-1');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Automation is not active');
+    });
+
+    it('captures action failures as a structured error instead of throwing', async () => {
+      const autoRow = {
+        id: 'auto-1',
+        base_id: 'b-1',
+        table_id: 't-1',
+        name: 'Auto',
+        enabled: true,
+        trigger_type: 'record_updated',
+        trigger_config: {},
+        actions: [
+          {
+            id: 'act-1',
+            actionOrder: 0,
+            actionType: 'send_webhook',
+            actionConfig: { url: 'https://example.com/hook' },
+          },
+        ],
+      };
+
+      mockFetch.mockRejectedValueOnce(new Error('fetch failed'));
+
+      mockQuery
+        .mockResolvedValueOnce({ rows: [autoRow] }) // getAutomation
+        .mockResolvedValueOnce({ rows: [{ id: 'run-1' }] }) // INSERT run
+        .mockResolvedValueOnce({ rows: [] }) // UPDATE run completed
+        .mockResolvedValueOnce({ rows: [] }); // INSERT run_counts
+
+      const result = await service.runManually('auto-1');
+
+      // send_webhook catches its own fetch errors and records them in the
+      // action result rather than throwing — the run still completes and
+      // runManually resolves success. The failure is visible in the
+      // action_results JSON persisted on the run.
+      expect(result.success).toBe(true);
+      const completedUpdateCall = mockQuery.mock.calls.find(
+        (c) => typeof c[0] === 'string' && c[0].includes("status = 'completed'")
+      );
+      expect(completedUpdateCall).toBeDefined();
+      expect(completedUpdateCall![1][2]).toContain('fetch failed');
+    });
+  });
+
+  // -----------------------------------------------------------------------
   // getRunHistory
   // -----------------------------------------------------------------------
 

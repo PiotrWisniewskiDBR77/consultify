@@ -3086,8 +3086,24 @@ router.post('/automations/:automationId/run-now', async (req: Request, res: Resp
   try {
     const { automationId } = req.params;
     if (!automationId) return res.status(400).json({ error: 'automationId is required' });
-    const result = await scheduledAutomationExecutor.runNow(automationId);
-    return res.status(200).json(result);
+
+    const automation = await automationService.getAutomation(automationId);
+    if (!automation) return res.status(404).json({ error: 'Automation not found' });
+
+    // Scheduled automations go through the cron executor (it also advances
+    // lastRunAt/nextRunAt bookkeeping). All other trigger types (record
+    // created/updated, webhook) run manually via the generic executor.
+    if (automation.triggerType === 'scheduled') {
+      const result = await scheduledAutomationExecutor.runNow(automationId);
+      return res.status(200).json(result);
+    }
+
+    const result = await automationService.runManually(automationId);
+    if (!result.success) {
+      const status = result.error === 'Automation not found' ? 404 : 409;
+      return res.status(status).json({ error: result.error });
+    }
+    return res.status(200).json({ runId: result.runId ?? automationId, status: 'completed' });
   } catch (err: any) {
     if (err?.message === 'Automation not found') {
       return res.status(404).json({ error: err.message });

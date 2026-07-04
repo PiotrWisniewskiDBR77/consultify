@@ -493,6 +493,38 @@ export class AutomationService {
     });
   }
 
+  /**
+   * Manually execute an automation regardless of its trigger type
+   * (used by the "Run now" action in the UI). Runs with a synthetic/empty
+   * trigger record since there is no real triggering event.
+   */
+  async runManually(
+    automationId: string
+  ): Promise<{ success: boolean; runId?: string; error?: string }> {
+    const automation = await this.getAutomation(automationId);
+    if (!automation) {
+      return { success: false, error: 'Automation not found' };
+    }
+    if (!automation.enabled) {
+      return { success: false, error: 'Automation is not active' };
+    }
+
+    const triggerRecord = { id: null, data: {} };
+
+    try {
+      await this.runAutomation(
+        { ...automation, table_id: automation.tableId, trigger_config: automation.triggerConfig },
+        triggerRecord
+      );
+      return { success: true };
+    } catch (err) {
+      logger.error(`[AutomationService] Manual run failed for ${automationId}`, {
+        error: (err as Error).message,
+      });
+      return { success: false, error: (err as Error).message };
+    }
+  }
+
   async getRunHistory(automationId: string, limit = 20): Promise<any[]> {
     const db = getDatabase();
     const result = await db.query(
