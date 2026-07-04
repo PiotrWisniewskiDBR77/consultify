@@ -390,10 +390,41 @@ export class AutomationService {
       }
 
       case 'run_script': {
-        const script = action.actionConfig?.script || '';
-        const fn = new Function('context', 'record', `'use strict';\n${script}`);
-        const result = fn(context, context.record || {});
-        return { success: true, result };
+        // SECURITY: executing user-supplied JavaScript via `new Function(...)`
+        // is remote code execution. Any user with table access can create an
+        // automation with a `run_script` action; it then runs on every
+        // record_created / record_updated trigger with full server privileges.
+        //
+        // No JS sandbox (isolated-vm / vm2) is present in the dependency tree,
+        // so we DISABLE execution behind a flag that is OFF by default and
+        // return a structured error instead of evaluating arbitrary code. The
+        // action type is preserved (data compatibility); only the dangerous
+        // `new Function` execution path is gated. To enable safely, wire in a
+        // real sandbox at the SCRIPT_SANDBOX extension point below and flip
+        // TP_AUTOMATION_RUN_SCRIPT_ENABLED=true.
+        const scriptEnabled = process.env.TP_AUTOMATION_RUN_SCRIPT_ENABLED === 'true';
+        if (!scriptEnabled) {
+          logger.warn(
+            '[AutomationService] run_script action blocked — script execution disabled (fail-closed)',
+            { tableId: automation.table_id, automationId: automation.id }
+          );
+          return {
+            success: false,
+            error: 'script actions are disabled',
+          };
+        }
+        // SCRIPT_SANDBOX extension point: replace the following with an
+        // isolated-vm / vm2 sandboxed evaluation before enabling the flag.
+        // Until a real sandbox is added, even with the flag on we refuse to
+        // fall back to unsandboxed `new Function`.
+        logger.error(
+          '[AutomationService] run_script enabled but no sandbox configured — refusing to execute',
+          { tableId: automation.table_id, automationId: automation.id }
+        );
+        return {
+          success: false,
+          error: 'script sandbox not configured',
+        };
       }
 
       case 'update_linked_records': {
