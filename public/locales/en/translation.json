@@ -2391,7 +2391,11 @@
         "rejectedAll": "Rejected all AI proposals",
         "generated": "AI generated proposal",
         "proposalApplied": "Proposal applied",
-        "allProposalsApplied": "All proposals applied"
+        "allProposalsApplied": "All proposals applied",
+        "generating": "AI is analyzing the board\u2026",
+        "generateFailed": "AI generation failed",
+        "noProposals": "AI returned no proposals for this board",
+        "needsElements": "Add elements to the board first"
       },
       "errors": {
         "saveFailed": "Save failed",

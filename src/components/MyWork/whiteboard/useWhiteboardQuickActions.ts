@@ -5,6 +5,28 @@
  */
 import { useEffect, useRef } from 'react';
 
+/**
+ * AI facilitation generators reachable from whiteboard quick actions.
+ * All map to backend generatorTypes served by POST /my-ideas/:id/ai-generate
+ * and flow through the Propose→Accept review (whiteboardCanon AC-05 — no silent apply).
+ */
+export type WhiteboardAIGeneratorType =
+  | 'wb_find_themes'
+  | 'wb_name_clusters'
+  | 'wb_to_map_branches'
+  | 'wb_to_table'
+  | 'wb_extract_actions'
+  | 'sticky_summarize';
+
+const AI_ACTION_MAP: Record<string, WhiteboardAIGeneratorType> = {
+  wb_ai_find_themes: 'wb_find_themes',
+  wb_ai_name_clusters: 'wb_name_clusters',
+  wb_ai_to_map: 'wb_to_map_branches',
+  wb_ai_to_table: 'wb_to_table',
+  wb_ai_extract_actions: 'wb_extract_actions',
+  wb_ai_summarize: 'sticky_summarize',
+};
+
 export interface WhiteboardQuickActionHandlers {
   addElement: (kind: any, extraData?: Record<string, unknown>) => void;
   deleteSelected: () => void;
@@ -25,6 +47,8 @@ export interface WhiteboardQuickActionHandlers {
   cycleGovernance?: () => void;
   undo?: () => void;
   redo?: () => void;
+  /** Runs an AI generator (preview→apply via IdeaProposalReview; never applies silently). */
+  runAIAction?: (generatorType: WhiteboardAIGeneratorType) => void;
 }
 
 export interface UseWhiteboardQuickActionsOpts {
@@ -104,6 +128,10 @@ export function useWhiteboardQuickActions(opts: UseWhiteboardQuickActionsOpts): 
     if (action === 'wb_library_insert_last') handlers.insertLatestLibraryItem?.();
     if (action === 'wb_history_restore_latest') handlers.restoreLatestHistory?.();
     if (action === 'wb_governance_cycle') handlers.cycleGovernance?.();
+
+    // AI facilitation quick actions → generate→preview→apply flow
+    const aiGeneratorType = AI_ACTION_MAP[action];
+    if (aiGeneratorType) handlers.runAIAction?.(aiGeneratorType);
 
     // Convert actions are forwarded back to the workspace event bus
     // so handleQuickAction's CONVERT_PREFIX_MAP can route them

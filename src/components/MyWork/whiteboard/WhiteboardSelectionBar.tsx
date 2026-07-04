@@ -28,6 +28,13 @@ export interface WhiteboardSelectionBarProps {
   selectedCount: number;
   hasSelectedFrame: boolean;
   ideaId: string;
+  /**
+   * A4: ids of the currently selected nodes, forwarded as `nodeIds` on the
+   * wb_convert_* dispatches so handleConvert scopes the conversion to the
+   * selection explicitly (server converts the WHOLE idea when nodeIds are absent
+   * and the parent's synced selection state comes up empty).
+   */
+  selectedNodeIds?: string[];
   onAlignNodes: (dir: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => void;
   onDistributeNodes: (dir: 'horizontal' | 'vertical') => void;
   onGroupSelected: () => void;
@@ -43,6 +50,7 @@ export const WhiteboardSelectionBar: React.FC<WhiteboardSelectionBarProps> = ({
   selectedCount,
   hasSelectedFrame,
   ideaId,
+  selectedNodeIds,
   onAlignNodes,
   onDistributeNodes,
   onGroupSelected,
@@ -95,7 +103,11 @@ export const WhiteboardSelectionBar: React.FC<WhiteboardSelectionBarProps> = ({
         onClick={() =>
           window.dispatchEvent(
             new CustomEvent('idea-workspace-quick-action', {
-              detail: { action: 'wb_convert_decision', ideaId },
+              detail: {
+                action: 'wb_convert_decision',
+                ideaId,
+                ...(selectedNodeIds?.length ? { nodeIds: selectedNodeIds } : {}),
+              },
             })
           )
         }
@@ -108,7 +120,11 @@ export const WhiteboardSelectionBar: React.FC<WhiteboardSelectionBarProps> = ({
         onClick={() =>
           window.dispatchEvent(
             new CustomEvent('idea-workspace-quick-action', {
-              detail: { action: 'wb_convert_action', ideaId },
+              detail: {
+                action: 'wb_convert_action',
+                ideaId,
+                ...(selectedNodeIds?.length ? { nodeIds: selectedNodeIds } : {}),
+              },
             })
           )
         }

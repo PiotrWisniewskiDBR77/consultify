@@ -8,11 +8,16 @@ import {
   BookOpen,
   Brain,
   GitBranch,
+  Layers,
   Lightbulb,
   Link2,
+  ListChecks,
   Loader2,
+  Network,
   Search,
   Sparkles,
+  Table2,
+  Tags,
   Target,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -62,6 +67,8 @@ interface MenuItem {
   chatPrompt?: (label: string, isPl: boolean) => string;
   nodeOnly?: boolean;
   emptyOnly?: boolean;
+  /** Restrict item to specific canvas tools (undefined = all tools). */
+  tools?: CanvasToolType[];
 }
 
 const NODE_ACTIONS: MenuItem[] = [
@@ -113,6 +120,34 @@ const NODE_ACTIONS: MenuItem[] = [
     labelEn: 'Attach knowledge',
     nodeOnly: true,
   },
+  // V51-05: Whiteboard facilitation (generate→preview→apply via IdeaProposalReview)
+  {
+    id: 'wb_find_themes',
+    icon: Layers,
+    labelPl: 'AI: Znajdź tematy',
+    labelEn: 'AI: Find themes',
+    generatorType: 'wb_find_themes',
+    nodeOnly: true,
+    tools: ['whiteboard'],
+  },
+  {
+    id: 'wb_name_clusters',
+    icon: Tags,
+    labelPl: 'AI: Nazwij klastry',
+    labelEn: 'AI: Name clusters',
+    generatorType: 'wb_name_clusters',
+    nodeOnly: true,
+    tools: ['whiteboard'],
+  },
+  {
+    id: 'wb_extract_actions',
+    icon: ListChecks,
+    labelPl: 'AI: Wyodrębnij akcje',
+    labelEn: 'AI: Extract actions',
+    generatorType: 'wb_extract_actions',
+    nodeOnly: true,
+    tools: ['whiteboard'],
+  },
 ];
 
 const EMPTY_ACTIONS: MenuItem[] = [
@@ -131,6 +166,26 @@ const EMPTY_ACTIONS: MenuItem[] = [
     labelEn: 'AI: Brainstorm here',
     generatorType: 'whiteboard_brainstorm',
     emptyOnly: true,
+  },
+  // V51-05: cross-tool conversions — result previews on the whiteboard; the
+  // proposal's resultSummary points the user to the target tool after accept.
+  {
+    id: 'wb_to_map_branches',
+    icon: Network,
+    labelPl: 'AI: Przekształć w mapę myśli',
+    labelEn: 'AI: Convert to mind map',
+    generatorType: 'wb_to_map_branches',
+    emptyOnly: true,
+    tools: ['whiteboard'],
+  },
+  {
+    id: 'wb_to_table',
+    icon: Table2,
+    labelPl: 'AI: Przekształć w tabelę',
+    labelEn: 'AI: Convert to table',
+    generatorType: 'wb_to_table',
+    emptyOnly: true,
+    tools: ['whiteboard'],
   },
 ];
 
@@ -243,7 +298,9 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
   if (!position) return null;
 
   const isOnNode = !!target.nodeId;
-  const actions = isOnNode ? NODE_ACTIONS : EMPTY_ACTIONS;
+  const actions = (isOnNode ? NODE_ACTIONS : EMPTY_ACTIONS).filter(
+    (item) => !item.tools || item.tools.includes(activeTool)
+  );
 
   return (
     <div
