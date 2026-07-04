@@ -125,6 +125,7 @@ import {
   EmptyState as SharedEmptyState,
   LoadingState as SharedLoadingState,
 } from '@/components/shared/states';
+import { QuietChip, renderCappedTags } from '@/components/shared/canon';
 
 // Tool category types (V3: includes licensed assessments)
 type ToolCategory = 'strategic' | 'operational' | 'digital' | 'automation' | 'licensed';
@@ -1727,10 +1728,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           label: meta.name,
         })),
         render: (row) => {
+          // canon: Category is a low-information column → quiet text (recedes behind title).
           const category = (row.libraryCategory || '') as ToolCategory;
           const meta = CATEGORY_META[category];
           return (
-            <span className={`text-xs font-medium ${meta?.textClass || 'text-c-text-secondary'}`}>
+            <span className="text-xs text-c-text-muted">
               {meta?.name || row.libraryCategory || '-'}
             </span>
           );
@@ -1740,24 +1742,8 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         id: 'tags',
         label: t('tools.hub.table.tags', 'Tags'),
         width: '200px',
-        render: (row) => (
-          <div className="flex items-center gap-1 overflow-hidden">
-            {(row.tags || []).slice(0, 3).map((tag: string) => (
-              <span
-                key={tag}
-                className="shrink-0 px-1.5 py-px rounded text-[10px] bg-c-surface-raised text-c-text-secondary border border-c-border-subtle truncate max-w-[80px]"
-                title={tag}
-              >
-                {tag}
-              </span>
-            ))}
-            {(row.tags || []).length > 3 ? (
-              <span className="shrink-0 text-[10px] text-c-text-muted">
-                +{(row.tags || []).length - 3}
-              </span>
-            ) : null}
-          </div>
-        ),
+        // canon: tags capped at 2 visible + "+N" overflow (no wall of tags).
+        render: (row) => renderCappedTags((row.tags || []) as string[], 2),
       },
       {
         id: 'license',
@@ -1769,17 +1755,17 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           { value: 'free', label: t('tools.hub.license.free', 'Free') },
         ],
         render: (row) => (
-          // canon §4.0a: neutral chip shell; signal carried by the leading dot.
-          <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[11px] font-medium border border-c-border bg-c-surface-raised text-c-text-secondary">
-            <span
-              className={`h-1.5 w-1.5 rounded-full ${
-                row.isLicensed ? 'bg-amber-500' : 'bg-emerald-500'
-              }`}
-            />
-            {row.isLicensed
-              ? t('tools.hub.license.licensed', 'Licensed')
-              : t('tools.hub.license.free', 'Free')}
-          </span>
+          // canon: QuietChip dot variant — signal carried by the dot, calm neutral label.
+          <QuietChip
+            variant="dot"
+            status={row.isLicensed ? 'pending' : 'approved'}
+            tone={row.isLicensed ? 'amber' : 'emerald'}
+            label={
+              row.isLicensed
+                ? t('tools.hub.license.licensed', 'Licensed')
+                : t('tools.hub.license.free', 'Free')
+            }
+          />
         ),
       },
       {
@@ -1792,22 +1778,21 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           { value: 'inactive', label: isPolish ? 'Nieaktywny' : 'Inactive' },
         ],
         render: (row) => (
-          // canon §3.5/§4.0: status carried by signal dot only; chip shell stays neutral
-          // (no status-colored background fill).
-          <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[11px] font-medium border border-c-border bg-c-surface-raised text-c-text-secondary">
-            <span
-              className={`h-1.5 w-1.5 rounded-full ${
-                row.isActive ? 'bg-emerald-500' : 'bg-c-text-muted'
-              }`}
-            />
-            {row.isActive
-              ? isPolish
-                ? 'Aktywny'
-                : 'Active'
-              : isPolish
-                ? 'Nieaktywny'
-                : 'Inactive'}
-          </span>
+          // canon: QuietChip dot variant — active/inactive carried by the dot.
+          <QuietChip
+            variant="dot"
+            status={row.isActive ? 'approved' : 'archived'}
+            tone={row.isActive ? 'emerald' : 'slate'}
+            label={
+              row.isActive
+                ? isPolish
+                  ? 'Aktywny'
+                  : 'Active'
+                : isPolish
+                  ? 'Nieaktywny'
+                  : 'Inactive'
+            }
+          />
         ),
       },
     ],
