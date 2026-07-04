@@ -704,8 +704,29 @@ export const Scheduler = {
     });
     this.jobs.push(job36);
 
+    // 37. Idea Map Auto-Snapshots (M06 F0.5) — every N minutes (default 15).
+    // Snapshots changed idea maps into my_idea_map_snapshots (the SnapshotHistory
+    // canon) with an `auto:`-prefixed label; prunes old auto snapshots (default
+    // keep 20 per map), never touches manual snapshots.
+    // Config: IDEA_MAP_AUTO_SNAPSHOT_INTERVAL_MIN, IDEA_MAP_AUTO_SNAPSHOT_RETENTION,
+    // DISABLE_IDEA_MAP_AUTO_SNAPSHOTS=true to turn off.
+    const { autoSnapshotCronExpression } = await import('../jobs/ideaMapAutoSnapshotJob.js');
+    const job37 = cron.schedule(autoSnapshotCronExpression(), async () => {
+      if (process.env.DISABLE_IDEA_MAP_AUTO_SNAPSHOTS === 'true') return;
+      try {
+        const { runIdeaMapAutoSnapshots } = await import('../jobs/ideaMapAutoSnapshotJob.js');
+        const result = await runIdeaMapAutoSnapshots();
+        if (result.snapshotted > 0 || result.pruned > 0 || result.errors > 0) {
+          logger.info('[Scheduler] Idea map auto-snapshots completed', result);
+        }
+      } catch (err: any) {
+        logger.error('[Scheduler] Idea map auto-snapshot job failed:', err?.message || err);
+      }
+    });
+    this.jobs.push(job37);
+
     logger.info(
-      '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM), Interview Reminders (Hourly)'
+      '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM), Interview Reminders (Hourly), Idea Map Auto-Snapshots (Every 15min default)'
     );
   },
   stop(): void {

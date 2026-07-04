@@ -23,6 +23,7 @@ import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import auditEventsService from '../services/AuditEventsService.js';
 import type { OutcomeType } from '../services/ideaClusterService.js';
 import { createOutcomeFromCluster, materializeClusters } from '../services/ideaClusterService.js';
+import { createIdeaMapSnapshot } from '../services/ideaMapSnapshotService.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import { InboxAiAssistItemSchema, runInboxAiAssist } from '../services/inboxAiAssistService.js';
 import inboxService from '../services/inboxService.js';
@@ -4934,39 +4935,25 @@ router.post(
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
 
-    const id = uuidv4();
-    const dataJson = JSON.stringify({ nodes: parsed.data.nodes, edges: parsed.data.edges });
-
-    await queryHelpers.run(
-      `INSERT INTO my_idea_map_snapshots (id, idea_id, user_id, organization_id, label, node_count, edge_count, data_json, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-      [
-        id,
-        ideaId,
-        userId,
-        orgId,
-        parsed.data.label,
-        parsed.data.nodes.length,
-        parsed.data.edges.length,
-        dataJson,
-      ]
-    );
+    // Shared write-path with the auto-snapshot cron (ideaMapAutoSnapshotJob).
+    const snapshot = await createIdeaMapSnapshot({
+      ideaId,
+      userId,
+      organizationId: orgId,
+      label: parsed.data.label,
+      nodes: parsed.data.nodes,
+      edges: parsed.data.edges,
+    });
 
     await req.emitAuditEvent?.({
       action: 'IDEA_MAP_SNAPSHOT_CREATE',
       resourceType: 'IDEA_MAP_SNAPSHOT',
-      resourceId: id,
+      resourceId: snapshot.id,
     });
 
     res.status(201).json({
       ok: true,
-      snapshot: {
-        id,
-        label: parsed.data.label,
-        nodeCount: parsed.data.nodes.length,
-        edgeCount: parsed.data.edges.length,
-        timestamp: Date.now(),
-      },
+      snapshot,
     });
   })
 );
