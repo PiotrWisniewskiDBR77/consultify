@@ -25,6 +25,7 @@
  */
 
 import { generateChatResponse } from '../aiService.js';
+import type { DocumentGenerationWarningCollector } from './documentGenerationWarnings.js';
 import type { DocumentIntake, DocumentSchema, DocumentSourceRef } from './documentStudioTypes.js';
 
 /** Block types whose prose we enrich. Structured blocks are left alone. */
@@ -39,6 +40,15 @@ export interface GenerateBlockProseOptions {
   enable?: boolean;
   model?: string;
   maxTokens?: number;
+  /**
+   * A4 — optional generation-warnings collector. When provided, any
+   * fallback path (LLM failure, empty / invalid response) records an
+   * `llm_prose_fallback` warning so the degradation is visible to the
+   * user instead of being swallowed by a `console.warn`. Passing
+   * `undefined` is the legacy behaviour (no recording). NEVER changes
+   * the fallback behaviour itself — the stubs are still returned.
+   */
+  warnings?: DocumentGenerationWarningCollector;
 }
 
 interface ProseTargetBlock {
@@ -197,11 +207,29 @@ export async function generateBlockProse(
     // (silnik prozy padał po cichu i nikt tego nie zauważył).
     const message = err instanceof Error ? err.message : String(err);
     console.warn(`[DocumentBlockProse] LLM prose generation failed, returning stubs: ${message}`);
+    // A4 — record the degradation so it is visible to the user, not just
+    // in server logs. Behaviour unchanged: the deterministic stubs are
+    // still returned.
+    options.warnings?.record({
+      code: 'llm_prose_fallback',
+      scope: 'document',
+      message: `LLM prose generation failed; deterministic placeholders retained (${message}).`,
+    });
     return schema;
   }
 
   const parsed = safeParseJson(response.content);
-  if (!parsed || !Array.isArray(parsed.blocks)) return schema;
+  if (!parsed || !Array.isArray(parsed.blocks)) {
+    // A4 — the call succeeded but returned an unusable payload (empty /
+    // invalid JSON / wrong shape). This is the same silent degrade path:
+    // record it.
+    options.warnings?.record({
+      code: 'llm_prose_fallback',
+      scope: 'document',
+      message: 'LLM prose response was empty or unparseable; deterministic placeholders retained.',
+    });
+    return schema;
+  }
 
   // Build a blockId -> generated payload map, restricted to known targets.
   const targetById = new Map(targets.map((t) => [t.blockId, t]));
@@ -225,7 +253,17 @@ export async function generateBlockProse(
     }
   }
 
-  if (generated.size === 0) return schema;
+  if (generated.size === 0) {
+    // A4 — parsed JSON carried no entries that mapped to a known prose
+    // target. Same silent-degrade class: the deterministic stubs survive.
+    options.warnings?.record({
+      code: 'llm_prose_fallback',
+      scope: 'document',
+      message:
+        'LLM prose response matched no document blocks; deterministic placeholders retained.',
+    });
+    return schema;
+  }
 
   // Deep clone so the caller's input schema is never mutated in place.
   const next = JSON.parse(JSON.stringify(schema)) as DocumentSchema;

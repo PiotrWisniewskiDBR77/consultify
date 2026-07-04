@@ -283,6 +283,7 @@ import {
   getDocumentArtifact,
   getDocumentComment,
   getDocumentCommentSectionCounts,
+  getDocumentGenerationWarnings,
   getDocumentLifecycleState,
   getDocumentVersionSnapshot,
   insertDocumentContentBlock,
@@ -536,7 +537,14 @@ router.post(
           });
         });
 
-      res.json({ artifactId: result.artifactId, schema: result.schema });
+      res.json({
+        artifactId: result.artifactId,
+        schema: result.schema,
+        // A4 — surface any generation-time warnings (e.g. LLM prose
+        // fallback) so the FE can show the "generated with limitations"
+        // chip. Absent / empty for full-fidelity documents.
+        generationWarnings: result.generationWarnings ?? [],
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to generate document artifact';
       logger.error('[DocumentStudio] generate failed', { message });
@@ -3414,7 +3422,11 @@ router.get(
       res.status(404).json({ error: 'not_found' });
       return;
     }
-    res.json({ schema });
+    // A4 — hydrate the persisted generation-warnings channel so the FE
+    // can render the "generated with limitations" chip on reload, not
+    // just immediately after generation. Best-effort ([] on any miss).
+    const generationWarnings = await getDocumentGenerationWarnings(artifactId, organizationId);
+    res.json({ schema, generationWarnings });
   })
 );
 

@@ -159,6 +159,24 @@ export interface DocumentSchema {
   owner?: string;
 }
 
+/**
+ * A4 — frontend mirror of the backend generation-warnings channel. A
+ * warning records a point where the generation / export pipeline degraded
+ * via a silent fallback (LLM prose failure, chart rasterization fallback,
+ * cover-logo unavailable). Surfaced to the user as a discreet "generated
+ * with limitations" chip on the document panel.
+ */
+export type DocumentGenerationWarningScope = 'document' | 'section' | 'block' | 'export';
+
+export interface DocumentGenerationWarning {
+  code: string;
+  scope: DocumentGenerationWarningScope;
+  sectionId?: string;
+  blockId?: string;
+  message: string;
+  occurredAt: string;
+}
+
 // Slice E3.5 widened from 3 → 5 scopes to match the SSOT 5-scope
 // editor doctrine (local / section / global / methodology / source).
 // Slice E3.6 completes the 6-scope doctrine by adding `transformative`:

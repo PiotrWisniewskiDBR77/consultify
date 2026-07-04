@@ -17669,6 +17669,18 @@
       "scoreFindings": "wynik {{score}}/100 · {{count}} ustaleń",
       "presenceSources": "{{count}} źródeł",
       "presenceAssumptions": "{{count}} założeń"
+    },
+    "generationWarnings": {
+      "summary_one": "Wygenerowano z ograniczeniami ({{count}})",
+      "summary_few": "Wygenerowano z ograniczeniami ({{count}})",
+      "summary_many": "Wygenerowano z ograniczeniami ({{count}})",
+      "summary_other": "Wygenerowano z ograniczeniami ({{count}})",
+      "codes": {
+        "llm_prose_fallback": "Treść AI niedostępna",
+        "citation_fallback": "Cytowania niedostępne",
+        "chart_raster_failed": "Nie udało się wygenerować wykresu",
+        "logo_unavailable": "Logo na okładce niedostępne"
+      }
     }
   },
   "priority": {

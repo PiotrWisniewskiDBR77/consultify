@@ -53,6 +53,7 @@ import {
   resolveDocxFonts,
   resolveFormattingClass,
 } from './documentDocxStyles.js';
+import type { DocumentGenerationWarningCollector } from './documentGenerationWarnings.js';
 import {
   type DocumentAsset,
   type DocumentBlock,
@@ -83,6 +84,15 @@ export interface DocumentRenderOptions {
     /** Embed width in centimetres. Default 4cm. */
     widthCm?: number;
   };
+  /**
+   * A4 — optional generation-warnings collector. When provided, the
+   * renderer records `chart_raster_failed` for any chart that fell
+   * through to the typographic placeholder, and `logo_unavailable` when
+   * the schema asked for a cover-page logo but no asset bytes reached the
+   * renderer. Passing `undefined` is the legacy behaviour (no recording).
+   * The renderer stays pure and never throws on recording.
+   */
+  warnings?: DocumentGenerationWarningCollector;
 }
 
 interface DocxRuntime {
@@ -208,11 +218,14 @@ interface RenderContext {
   sourceRefIndex: Map<string, number>;
   /** Optional chart raster bytes keyed by `blockId`. */
   chartPngByBlockId: Map<string, Buffer>;
+  /** A4 — optional generation-warnings collector (chart / logo fallbacks). */
+  warnings?: DocumentGenerationWarningCollector;
 }
 
 function buildRenderContext(
   schema: DocumentSchema,
-  chartPngByBlockId: Map<string, Buffer>
+  chartPngByBlockId: Map<string, Buffer>,
+  warnings?: DocumentGenerationWarningCollector
 ): RenderContext {
   const formattingClass = resolveFormattingClass(schema);
   const fonts = resolveDocxFonts(schema, formattingClass);
@@ -231,6 +244,7 @@ function buildRenderContext(
     footnotes: new Map(),
     sourceRefIndex,
     chartPngByBlockId,
+    warnings,
   };
 }
 
@@ -811,6 +825,16 @@ function renderChartBlock(block: DocumentBlock, ctx: RenderContext): Paragraph[]
         const seriesText = summary.seriesCount === 1 ? '1 series' : `${summary.seriesCount} series`;
         const valuesText =
           summary.totalValueCount === 1 ? '1 value' : `${summary.totalValueCount} values`;
+        // A4 — the chart fell through to a typographic placeholder because
+        // rasterization produced no PNG. Record it so the export surfaces a
+        // "generated with limitations" warning. Rendering behaviour is
+        // unchanged: the placeholder paragraph is still returned.
+        ctx.warnings?.record({
+          code: 'chart_raster_failed',
+          scope: 'block',
+          blockId: block.blockId,
+          message: `Chart "${titleText}" could not be rasterized; a text placeholder was inserted (${kindText} chart, ${seriesText}, ${valuesText}).`,
+        });
         return new Paragraph({
           style: DOCX_STYLE_IDS.CAPTION,
           children: [
@@ -959,6 +983,18 @@ function renderCoverBlock(ctx: RenderContext, options: DocumentRenderOptions = {
   const includeLogo = coverDetailed?.includeLogo ?? false;
   const logoParagraph =
     includeLogo && options.coverLogoAsset ? buildCoverLogoParagraph(options.coverLogoAsset) : null;
+  // A4 — the schema asked for a cover-page logo but no logo paragraph was
+  // produced (asset bytes never reached the renderer, or decoding the
+  // bytes failed). Record it so the export flags the missing logo instead
+  // of silently rendering a logo-less cover. Behaviour unchanged.
+  if (includeLogo && !logoParagraph) {
+    ctx.warnings?.record({
+      code: 'logo_unavailable',
+      scope: 'export',
+      message:
+        'Cover-page logo was requested but no usable logo asset was available; the cover was rendered without it.',
+    });
+  }
 
   // Subtitle composition — strip out parts that the override
   // explicitly disables. Status = `<density> · <type-language>` line;
@@ -1158,7 +1194,7 @@ export async function renderDocumentSchemaToDocxBuffer(
 ): Promise<Buffer> {
   const formatting = schema.formattingSchema;
   const chartPngByBlockId = await buildChartPngByBlockId(schema);
-  const ctx = buildRenderContext(schema, chartPngByBlockId);
+  const ctx = buildRenderContext(schema, chartPngByBlockId, options.warnings);
   const formattingClass = resolveFormattingClass(schema);
   const styles = buildDocxStyleConfig(schema, formattingClass);
   const margins = formatting.page.marginsCm;

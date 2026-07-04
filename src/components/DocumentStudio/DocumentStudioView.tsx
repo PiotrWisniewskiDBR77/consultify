@@ -29,7 +29,13 @@ import { DocumentStudioDocumentPanel } from './DocumentStudioDocumentPanel';
 import { DocumentStudioIntakeForm, type IntakeSubmitOptions } from './DocumentStudioIntakeForm';
 import { DocumentStudioOutlinePanel } from './DocumentStudioOutlinePanel';
 import { DocumentStudioTemplateArchitectView } from './DocumentStudioTemplateArchitectView';
-import type { DocumentIntake, DocumentOutline, DocumentSchema, DocumentTemplate } from './types';
+import type {
+  DocumentGenerationWarning,
+  DocumentIntake,
+  DocumentOutline,
+  DocumentSchema,
+  DocumentTemplate,
+} from './types';
 
 type Phase = 'intake' | 'outline' | 'document';
 type Tab = 'generate' | 'templates';
@@ -49,6 +55,9 @@ export const DocumentStudioView: React.FC = () => {
   const [templatesError, setTemplatesError] = useState<string | null>(null);
   const [artifactId, setArtifactId] = useState<string | null>(null);
   const [schema, setSchema] = useState<DocumentSchema | null>(null);
+  // A4 — generation-time warnings (silent-fallback surface). Passed to the
+  // document panel which renders the "generated with limitations" chip.
+  const [generationWarnings, setGenerationWarnings] = useState<DocumentGenerationWarning[]>([]);
   const [planning, setPlanning] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [loadingArtifact, setLoadingArtifact] = useState(false);
@@ -94,7 +103,8 @@ export const DocumentStudioView: React.FC = () => {
         const result = await getDocumentStudioArtifact(artifactIdFromUrl);
         if (cancelled) return;
         setArtifactId(artifactIdFromUrl);
-        setSchema(result);
+        setSchema(result.schema);
+        setGenerationWarnings(result.generationWarnings);
         setPhase('document');
       } catch (err) {
         if (cancelled) return;
@@ -131,6 +141,7 @@ export const DocumentStudioView: React.FC = () => {
         });
         setArtifactId(result.artifactId);
         setSchema(result.schema);
+        setGenerationWarnings(result.generationWarnings ?? []);
         setPhase('document');
         navigate(`/document-studio/${encodeURIComponent(result.artifactId)}`, { replace: true });
       } catch (err) {
@@ -188,6 +199,7 @@ export const DocumentStudioView: React.FC = () => {
       });
       setArtifactId(result.artifactId);
       setSchema(result.schema);
+      setGenerationWarnings(result.generationWarnings ?? []);
       setPhase('document');
       navigate(`/document-studio/${encodeURIComponent(result.artifactId)}`, { replace: true });
     } catch (err) {
@@ -209,6 +221,7 @@ export const DocumentStudioView: React.FC = () => {
     setActiveTemplateId(null);
     setArtifactId(null);
     setSchema(null);
+    setGenerationWarnings([]);
     setError(null);
     navigate('/document-studio', { replace: true });
   };
@@ -312,6 +325,7 @@ export const DocumentStudioView: React.FC = () => {
           <DocumentStudioDocumentPanel
             artifactId={artifactId}
             schema={schema}
+            generationWarnings={generationWarnings}
             onStartOver={handleStartOver}
             onSchemaUpdated={setSchema}
           />

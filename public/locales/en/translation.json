@@ -16598,6 +16598,16 @@
       "scoreFindings": "score {{score}}/100 · {{count}} findings",
       "presenceSources": "{{count}} sources",
       "presenceAssumptions": "{{count}} assumptions"
+    },
+    "generationWarnings": {
+      "summary_one": "Generated with limitations ({{count}})",
+      "summary_other": "Generated with limitations ({{count}})",
+      "codes": {
+        "llm_prose_fallback": "AI prose unavailable",
+        "citation_fallback": "Citations unavailable",
+        "chart_raster_failed": "Chart could not be rendered",
+        "logo_unavailable": "Cover logo unavailable"
+      }
     }
   },
   "priority": {

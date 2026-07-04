@@ -28,6 +28,11 @@ import {
 import { getActiveOrgLogo } from './documentAssetRegistryService.js';
 import { generateBlockProse } from './documentBlockProseGenerator.js';
 import {
+  createDocumentGenerationWarningCollector,
+  type DocumentGenerationWarning,
+  normalizeGenerationWarnings,
+} from './documentGenerationWarnings.js';
+import {
   ensureBrandVoiceRegistryHydrated,
   getActiveBrandVoiceProfile,
 } from './documentBrandVoiceService.js';
@@ -155,6 +160,10 @@ const STUDIO_MODE_METADATA_KEY = 'documentStudioMode';
 const STUDIO_DOC_TYPE_METADATA_KEY = 'documentStudioDocumentType';
 const STUDIO_TEMPLATE_ID_METADATA_KEY = 'documentStudioTemplateId';
 const STUDIO_TEMPLATE_VERSION_METADATA_KEY = 'documentStudioTemplateVersion';
+// A4 — persisted generation-warnings channel. Lives under
+// `metadata_json.generationWarnings` so it round-trips through the
+// wave5 artifact metadata alongside the schema.
+const STUDIO_GENERATION_WARNINGS_METADATA_KEY = 'generationWarnings';
 const proposalStore = new Map<string, DocumentEditorProposal>();
 const auditStore = new Map<string, DocumentAuditEntry[]>();
 /**
@@ -489,6 +498,12 @@ export async function materializeDocumentArtifact(
   }
   provisionalSchema.owner = params.userId;
 
+  // A4 — collect generation-time warnings so silent fallbacks (LLM prose
+  // failure → deterministic stubs) become visible to the user instead of
+  // being swallowed by a `console.warn`. The collector is threaded into
+  // the enrichment layer; it never changes fallback behaviour.
+  const warningsCollector = createDocumentGenerationWarningCollector();
+
   // D11 — block-level prose generation. Opt-in via `useLlm`; fills the
   // deterministic placeholder prose with grounded, consulting-grade
   // narrative (Teresa). Best-effort: any failure returns the
@@ -497,8 +512,11 @@ export async function materializeDocumentArtifact(
   if (params.useLlm) {
     provisionalSchema = await generateBlockProse(provisionalSchema, params.intake, sourceRefs, {
       enable: true,
+      warnings: warningsCollector,
     });
   }
+
+  const generationWarnings = warningsCollector.list();
 
   const markdown = renderSchemaToMarkdown(provisionalSchema);
 
@@ -510,6 +528,12 @@ export async function materializeDocumentArtifact(
   if (template) {
     metadata[STUDIO_TEMPLATE_ID_METADATA_KEY] = template.templateId;
     metadata[STUDIO_TEMPLATE_VERSION_METADATA_KEY] = template.version;
+  }
+  // A4 — persist the warnings channel on the artifact metadata so the
+  // GET path can rehydrate them (only when non-empty to keep pre-A4
+  // metadata byte-stable for full-fidelity documents).
+  if (generationWarnings.length > 0) {
+    metadata[STUDIO_GENERATION_WARNINGS_METADATA_KEY] = generationWarnings;
   }
 
   const artifact = await createWave5Artifact({
@@ -562,7 +586,11 @@ export async function materializeDocumentArtifact(
   finalSchema.statusChangedAt = lifecycle.statusChangedAt;
   finalSchema.statusChangedBy = lifecycle.statusChangedBy;
 
-  return { artifactId, schema: finalSchema };
+  return {
+    artifactId,
+    schema: finalSchema,
+    ...(generationWarnings.length > 0 ? { generationWarnings } : {}),
+  };
 }
 
 export async function getDocumentArtifact(
@@ -618,6 +646,28 @@ export async function getDocumentArtifact(
   }
 
   return null;
+}
+
+/**
+ * A4 — read the persisted generation-warnings channel for an artifact.
+ * Returns `[]` for artifacts that generated at full fidelity (no warnings
+ * persisted) and for legacy artifacts that predate this channel. Never
+ * throws; a missing / malformed metadata row degrades to an empty list so
+ * the GET path never fails because of the warnings read.
+ */
+export async function getDocumentGenerationWarnings(
+  artifactId: string,
+  organizationId: string
+): Promise<DocumentGenerationWarning[]> {
+  try {
+    const artifact = await getWave5Artifact(artifactId, organizationId);
+    if (!artifact) return [];
+    const metadata = parseMetadata(artifact.metadata_json ?? artifact.metadata);
+    const raw = metadata?.[STUDIO_GENERATION_WARNINGS_METADATA_KEY];
+    return normalizeGenerationWarnings(raw);
+  } catch {
+    return [];
+  }
 }
 
 export interface ExportDocumentOptions {
@@ -821,12 +871,24 @@ export async function exportDocumentArtifact(
       err instanceof Error ? err.message : String(err);
   }
 
+  // A4 — collect export-time warnings (chart rasterization fell back to a
+  // text placeholder; requested cover logo unavailable). Threaded into the
+  // binary renderers; never changes render behaviour.
+  const exportWarnings = createDocumentGenerationWarningCollector();
+
   let binary: Buffer;
   if (format === 'docx') {
-    binary = await renderDocumentSchemaToDocxBuffer(schema, { coverLogoAsset });
+    binary = await renderDocumentSchemaToDocxBuffer(schema, {
+      coverLogoAsset,
+      warnings: exportWarnings,
+    });
   } else {
-    binary = await renderDocumentSchemaToPdfBuffer(schema, { coverLogoAsset });
+    binary = await renderDocumentSchemaToPdfBuffer(schema, {
+      coverLogoAsset,
+      warnings: exportWarnings,
+    });
   }
+  const generationWarnings = exportWarnings.list();
 
   try {
     await markWave5ArtifactExported(artifactId, organizationId);
@@ -845,7 +907,11 @@ export async function exportDocumentArtifact(
       ...manifest,
       renderedFromSchema: true,
       byteLength: binary.byteLength,
+      // A4 — mirror export warnings into the manifest so any manifest
+      // consumer (audit panel, download record) sees the degradations.
+      ...(generationWarnings.length > 0 ? { generationWarnings } : {}),
     },
+    ...(generationWarnings.length > 0 ? { generationWarnings } : {}),
   };
 }
 

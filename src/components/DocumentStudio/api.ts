@@ -21,6 +21,7 @@ import type {
   DocumentCommentThread,
   DocumentContentBlockTemplate,
   DocumentEditorProposal,
+  DocumentGenerationWarning,
   DocumentIntake,
   DocumentOutline,
   DocumentQaReport,
@@ -94,10 +95,20 @@ interface PlanResponse {
 interface GenerateResponse {
   artifactId: string;
   schema: DocumentSchema;
+  /** A4 — generation-time warnings (LLM prose fallback etc.). */
+  generationWarnings?: DocumentGenerationWarning[];
 }
 
 interface GetArtifactResponse {
   schema: DocumentSchema;
+  /** A4 — persisted generation-time warnings for this artifact. */
+  generationWarnings?: DocumentGenerationWarning[];
+}
+
+/** A4 — artifact + its persisted generation warnings, returned by GET. */
+export interface DocumentStudioArtifactResult {
+  schema: DocumentSchema;
+  generationWarnings: DocumentGenerationWarning[];
 }
 
 export interface DocumentExportPayload {
@@ -106,6 +117,8 @@ export interface DocumentExportPayload {
   contentText?: string;
   contentBase64?: string;
   manifest?: Record<string, unknown>;
+  /** A4 — export-time warnings (chart rasterization / logo fallbacks). */
+  generationWarnings?: DocumentGenerationWarning[];
 }
 
 export interface PlanDocumentStudioOptions {
@@ -159,13 +172,18 @@ export async function generateDocumentStudioArtifact(
   return handleResponse<GenerateResponse>(res, 'DocumentStudio generate');
 }
 
-export async function getDocumentStudioArtifact(artifactId: string): Promise<DocumentSchema> {
+export async function getDocumentStudioArtifact(
+  artifactId: string
+): Promise<DocumentStudioArtifactResult> {
   const res = await fetchWithRetry(`${BASE}/${encodeURIComponent(artifactId)}`, {
     method: 'GET',
     headers: getHeaders(),
   });
   const json = await handleResponse<GetArtifactResponse>(res, 'DocumentStudio get');
-  return json.schema;
+  return {
+    schema: json.schema,
+    generationWarnings: json.generationWarnings ?? [],
+  };
 }
 
 export interface ExportArtifactOptions {

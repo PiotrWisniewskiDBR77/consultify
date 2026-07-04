@@ -7,7 +7,9 @@
  */
 
 import {
+  AlertTriangle,
   Bot,
+  ChevronDown,
   Download,
   FileText,
   FileWarning,
@@ -73,6 +75,7 @@ import type {
   DocumentBlock,
   DocumentCommentThread,
   DocumentContentBlockTemplate,
+  DocumentGenerationWarning,
   DocumentQaReport,
   DocumentSchema,
   DocumentSchemaDiffResponse,
@@ -87,11 +90,155 @@ import type {
 interface DocumentStudioDocumentPanelProps {
   artifactId: string;
   schema: DocumentSchema;
+  /**
+   * A4 — generation-time warnings recorded when the pipeline degraded via
+   * a silent fallback (LLM prose failure, chart rasterization fallback,
+   * cover-logo unavailable). Rendered as a discreet, dismissible-by-
+   * expand "generated with limitations" chip. Defaults to none.
+   */
+  generationWarnings?: DocumentGenerationWarning[];
   onStartOver: () => void;
   onSchemaUpdated: (nextSchema: DocumentSchema) => void;
 }
 
 type TFn = TFunction;
+
+/**
+ * A4 — discreet "generated with limitations" chip. Collapsed by default to
+ * a single amber (c-warning) pill showing the count; expands to a list of
+ * the individual warnings. Zero crimson: uses only neutral `c-*` tokens +
+ * the amber warning accent, matching the panel's existing inline banners.
+ */
+export const DocumentGenerationWarningsChip: React.FC<{
+  warnings: DocumentGenerationWarning[];
+}> = ({ warnings }) => {
+  const { t } = useTranslation();
+  const [expanded, setExpanded] = useState(false);
+  if (warnings.length === 0) return null;
+
+  const labelFor = (code: string): string => {
+    // Per-code friendly label with a safe fallback to the raw code so an
+    // unknown future code still renders something meaningful.
+    const key = `documentStudio.generationWarnings.codes.${code}`;
+    const translated = t(key);
+    return translated === key ? code : translated;
+  };
+
+  return (
+    <div
+      className="rounded-md border border-c-warning/40 bg-c-warning/10 px-3 py-2 text-xs text-c-text"
+      data-testid="document-generation-warnings-chip"
+    >
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        className="flex w-full items-center justify-between gap-2 text-left"
+      >
+        <span className="flex items-center gap-1.5 font-medium text-c-text">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-c-warning" aria-hidden />
+          {t('documentStudio.generationWarnings.summary', { count: warnings.length })}
+        </span>
+        <ChevronDown
+          className={`h-3.5 w-3.5 shrink-0 text-c-text-muted transition-transform ${
+            expanded ? 'rotate-180' : ''
+          }`}
+          aria-hidden
+        />
+      </button>
+      {expanded ? (
+        <ul className="mt-2 space-y-1.5 border-t border-c-warning/20 pt-2 text-c-text-secondary">
+          {warnings.map((w, i) => (
+            <li key={`${w.code}-${i}`} className="flex flex-col gap-0.5">
+              <span className="font-medium text-c-text">{labelFor(w.code)}</span>
+              <span className="text-c-text-muted">{w.message}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+};
+
+function renderSectionPreview(section: DocumentSection, idx: number): React.ReactNode {
+  return (
+    <section
+      key={section.sectionId}
+      id={section.sectionId}
+      className="rounded-lg border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900"
+    >
+      <header className="mb-2 flex items-baseline justify-between gap-2">
+        <h3 className="text-base font-semibold text-navy-900 dark:text-white">
+          {idx + 1}. {section.title}
+        </h3>
+        {section.purpose ? <span className="text-xs text-slate-600">{section.purpose}</span> : null}
+      </header>
+      <div className="flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-300">
+        {section.blocks.map((block) => {
+          const isAssumption = Boolean(block.isAssumption);
+          const blockClass = isAssumption
+            ? 'rounded border border-amber-400/30 bg-amber-50 px-2 py-1 dark:border-amber-400/30 dark:bg-amber-500/10'
+            : '';
+          const content = (() => {
+            if (block.type === 'heading') {
+              const value = block.content as { text?: string };
+              return (
+                <div className="font-semibold text-navy-900 dark:text-white">{value.text}</div>
+              );
+            }
+            if (block.type === 'paragraph') {
+              const value = block.content as { text?: string };
+              return <p>{value.text}</p>;
+            }
+            if (block.type === 'list') {
+              const value = block.content as { style?: string; items?: string[] };
+              const items = Array.isArray(value.items) ? value.items : [];
+              if (value.style === 'numbered') {
+                return (
+                  <ol className="list-decimal pl-5">
+                    {items.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ol>
+                );
+              }
+              return (
+                <ul className="list-disc pl-5">
+                  {items.map((item, i) => (
+                    <li key={i}>{item}</li>
+                  ))}
+                </ul>
+              );
+            }
+            if (block.type === 'callout') {
+              const value = block.content as { variant?: string; text?: string };
+              return (
+                <div className="rounded-md border border-primary-500/30 bg-primary-500/5 px-3 py-2 italic">
+                  {value.text}
+                </div>
+              );
+            }
+            return (
+              <pre className="whitespace-pre-wrap text-xs text-slate-500">
+                {JSON.stringify(block.content, null, 2)}
+              </pre>
+            );
+          })();
+          return (
+            <div key={block.blockId} className={blockClass}>
+              {content}
+              {isAssumption ? (
+                <div className="mt-1 text-xs font-medium uppercase tracking-wide text-amber-600">
+                  Assumption — needs source
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
 
 function metadataLabel(value: string | string[] | undefined, notSet: string): string {
   if (Array.isArray(value)) return value.length > 0 ? value.join(', ') : notSet;
@@ -1598,6 +1745,7 @@ function TeresaDrawerPanel({
 export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelProps> = ({
   artifactId,
   schema,
+  generationWarnings = [],
   onStartOver,
   onSchemaUpdated,
 }) => {
@@ -2024,6 +2172,11 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
 
   const canvas = (
     <div className="flex min-h-full flex-col">
+      {generationWarnings.length > 0 && (
+        <div className="px-6 pt-4">
+          <DocumentGenerationWarningsChip warnings={generationWarnings} />
+        </div>
+      )}
       {(exportNote || exportError || qaBlock) && (
         <div className="space-y-3 px-6 pt-4">
           {exportNote ? (

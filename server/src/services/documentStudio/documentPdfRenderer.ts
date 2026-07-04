@@ -44,6 +44,7 @@ import {
   planSectionHeadings,
 } from './documentDocxStructure.js';
 import { type FormattingClass, resolveFormattingClass } from './documentDocxStyles.js';
+import type { DocumentGenerationWarningCollector } from './documentGenerationWarnings.js';
 import {
   type DocumentAsset,
   type DocumentBlock,
@@ -62,6 +63,13 @@ export interface DocumentPdfRenderOptions {
   coverLogoAsset?: Pick<DocumentAsset, 'mimeType' | 'dataBase64'> & {
     widthCm?: number;
   };
+  /**
+   * A4 — optional generation-warnings collector. Mirrors the DOCX
+   * renderer: records `chart_raster_failed` for chart placeholders and
+   * `logo_unavailable` when a requested cover logo could not be embedded.
+   * `undefined` is the legacy no-recording behaviour.
+   */
+  warnings?: DocumentGenerationWarningCollector;
 }
 
 const POINTS_PER_CM = 28.3464567; // 1cm at 72dpi
@@ -257,11 +265,14 @@ interface PdfRenderContext {
   sourceRefIndex: Map<string, number>;
   /** Optional chart raster bytes keyed by `blockId`. */
   chartPngByBlockId: Map<string, Buffer>;
+  /** A4 — optional generation-warnings collector (chart / logo fallbacks). */
+  warnings?: DocumentGenerationWarningCollector;
 }
 
 function buildPdfRenderContext(
   schema: DocumentSchema,
-  chartPngByBlockId: Map<string, Buffer>
+  chartPngByBlockId: Map<string, Buffer>,
+  warnings?: DocumentGenerationWarningCollector
 ): PdfRenderContext {
   const formattingClass = resolveFormattingClass(schema);
   const baseSizing = PDF_SIZING_BY_CLASS[formattingClass];
@@ -295,6 +306,7 @@ function buildPdfRenderContext(
     nextFootnoteId: { value: 1 },
     sourceRefIndex,
     chartPngByBlockId,
+    warnings,
   };
 }
 
@@ -417,8 +429,16 @@ function drawCover(
   // AND orchestrator hydrated the asset bytes. Defensive: any decode
   // failure silently skips the logo so the cover still renders.
   const includeLogo = coverDetailed?.includeLogo ?? false;
-  if (includeLogo && options.coverLogoAsset) {
-    drawCoverLogo(doc, options.coverLogoAsset);
+  // A4 — track whether a requested logo actually made it onto the cover.
+  const logoEmbedded =
+    includeLogo && options.coverLogoAsset ? drawCoverLogo(doc, options.coverLogoAsset) : false;
+  if (includeLogo && !logoEmbedded) {
+    ctx.warnings?.record({
+      code: 'logo_unavailable',
+      scope: 'export',
+      message:
+        'Cover-page logo was requested but no usable logo asset was available; the cover was rendered without it.',
+    });
   }
   const generatedAt = new Date(schema.updatedAt || schema.createdAt || Date.now())
     .toISOString()
@@ -460,14 +480,14 @@ function drawCover(
 function drawCoverLogo(
   doc: PDFKit.PDFDocument,
   asset: NonNullable<DocumentPdfRenderOptions['coverLogoAsset']>
-): void {
+): boolean {
   let buffer: Buffer;
   try {
     buffer = Buffer.from(asset.dataBase64, 'base64');
   } catch {
-    return;
+    return false;
   }
-  if (!buffer || buffer.length === 0) return;
+  if (!buffer || buffer.length === 0) return false;
   const widthCm = typeof asset.widthCm === 'number' && asset.widthCm > 0 ? asset.widthCm : 4;
   // 72 dpi: 1cm ≈ 28.35 points (PDFKit measures in points).
   const widthPt = widthCm * 28.346456;
@@ -492,9 +512,10 @@ function drawCoverLogo(
     // Defensive: bad PNG/JPEG byte sequence → silently skip embed so
     // the cover keeps rendering. Production registry write-side
     // validates the bytes; this is a belt-and-braces safety net.
-    return;
+    return false;
   }
   doc.moveDown(0.5);
+  return true;
 }
 
 function drawTableOfContents(doc: PDFKit.PDFDocument, ctx: PdfRenderContext): void {
@@ -827,6 +848,14 @@ function drawChart(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRender
     const seriesText = summary.seriesCount === 1 ? '1 series' : `${summary.seriesCount} series`;
     const valuesText =
       summary.totalValueCount === 1 ? '1 value' : `${summary.totalValueCount} values`;
+    // A4 — chart fell through to a text placeholder (no PNG). Record the
+    // degradation; rendering is unchanged.
+    ctx.warnings?.record({
+      code: 'chart_raster_failed',
+      scope: 'block',
+      blockId: block.blockId,
+      message: `Chart "${titleText}" could not be rasterized; a text placeholder was inserted (${kindText} chart, ${seriesText}, ${valuesText}).`,
+    });
     doc
       .fontSize(ctx.sizing.caption)
       .fillColor('#64748B')
@@ -1107,7 +1136,7 @@ export async function renderDocumentSchemaToPdfBuffer(
   const formatting = schema.formattingSchema;
   const margins = marginsInPoints(formatting);
   const chartPngByBlockId = await buildChartPngByBlockId(schema);
-  const ctx = buildPdfRenderContext(schema, chartPngByBlockId);
+  const ctx = buildPdfRenderContext(schema, chartPngByBlockId, options.warnings);
   return new Promise<Buffer>((resolve, reject) => {
     try {
       const doc = new PDFDocument({
