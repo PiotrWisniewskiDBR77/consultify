@@ -161,18 +161,21 @@ const getPriorityConfig = (priority?: string) => {
   switch (priority?.toLowerCase()) {
     case 'urgent':
     case 'critical':
+      // Cicha semantyka danger: miękki tint bez ramki (odbiór Piotra 2026-07-04).
+      // Czerwień zostaje na krytycznych danych, forma nie krzyczy w każdym wierszu.
       return {
-        color: 'text-danger-800 dark:text-danger-400',
+        color: 'text-c-danger',
         badgeClass:
-          'bg-danger-50 dark:bg-danger-500/10 border border-danger-200 dark:border-danger-500/30 rounded-md px-1.5 py-0.5',
+          'bg-[color:var(--c-danger)]/10 text-c-danger rounded-md px-1.5 py-0.5',
         bg: 'bg-danger-50',
         dot: 'bg-danger-500',
         label: 'Critical',
       };
     case 'high':
       return {
-        color: 'text-c-text-secondary',
-        badgeClass: '',
+        color: 'text-c-warning',
+        badgeClass:
+          'bg-[color:var(--c-warning)]/10 text-c-warning rounded-md px-1.5 py-0.5',
         bg: 'bg-amber-500',
         dot: 'bg-amber-500',
         label: 'High',
@@ -627,7 +630,7 @@ const TaskTableRow: React.FC<{
         ${isPreviewed ? TASK_PREVIEW_ROW_CLASS : ''}
         ${isFocused && !isPreviewed && !isSelected ? FOCUSED_ROW_CLASS : ''}
         transition-colors duration-150
-        hover:bg-slate-50/70 dark:hover:bg-white/[0.03]
+        hover:bg-slate-50/70 dark:hover:bg-c-surface-raised/50
       `}
     >
       {/* Select Checkbox */}
@@ -2186,7 +2189,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                   style={{ minWidth: tableMinWidth }}
                 >
                   <thead>
-                    <tr className="border-b border-c-border-subtle bg-c-surface sticky top-0 z-10">
+                    <tr className="border-b border-c-border-subtle bg-c-bg/90 backdrop-blur-sm sticky top-0 z-10">
                       {/* Select All */}
                       <th className="px-2 py-2" style={{ width: columnWidths.select }}>
                         <button
