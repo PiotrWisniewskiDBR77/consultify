@@ -21,12 +21,11 @@ import TeresaMark from '../../shared/TeresaMark';
 import { type ProcessFlowSemanticKit } from '../canvas/canvasOsContract';
 import { type FlowShape, SHAPE_CONFIG } from './FlowNodeComponent';
 
-// DP-5: "Propozycja AI" (AI Proposal panel) is hidden until F2 rewires
-// useProcessFlowAIProposal / AIProposalPanel from the dead V8
-// `/process-flow/:id/ai-proposals` route to a real AI endpoint
-// (e.g. /my-ideas/:id/ai-generate). The panel and hook are kept intact so F2
-// only needs to flip this constant once the backend exists.
-export const AI_PROPOSAL_ENABLED = false;
+// M07 F2: useProcessFlowAIProposal / AIProposalPanel now consume the real
+// blob backend (POST /api/my-work/my-ideas/:id/ai-generate). This constant
+// stays in the code as an emergency kill-switch (spec decision 7) — flip to
+// false to hide the "Propozycja AI" button without touching the wiring.
+export const AI_PROPOSAL_ENABLED = true;
 
 // ── Re-export types ──────────────────────────────────────────────────────────
 

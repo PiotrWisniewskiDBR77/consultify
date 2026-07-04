@@ -83,6 +83,7 @@ import {
 } from './mindmap/CollaborationOverlay';
 import { useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
 import { AIProposalPanel } from './processflow/AIProposalPanel';
+import type { ApplyPatchResult } from './processflow/applyProposalPatch';
 import { ExportDialog } from './processflow/ExportDialog';
 import { FlowEdgeComponent } from './processflow/FlowEdgeComponent';
 import {
@@ -388,14 +389,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     onError: (message) =>
       toast.error(isPl ? 'Walidacja przepływu nie powiodła się. Spróbuj ponownie.' : message),
   });
-  const {
-    activeProposal,
-    isGenerating: isAIGenerating,
-    error: aiError,
-    createProposal,
-    resolveProposal,
-    dismiss: dismissProposal,
-  } = useProcessFlowAIProposal({ processId });
+  // (M07 F2: useProcessFlowAIProposal moved below useProcessFlowUndoRedo —
+  // its onApply handler needs pushUndo for the single-undo-step acceptance.)
   const {
     result: readbackResult,
     isLoading: isReadbackLoading,
@@ -498,6 +493,64 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       setLanes,
     });
   const dragSnapshotTakenRef = useRef(false);
+
+  // ── M07 F2: AI proposal (real backend via /my-ideas/:id/ai-generate) ────
+  // Decision 5: accepting a proposal applies the whole patch as ONE undo
+  // step, then persists via the autosave effect (queueSync fires from the
+  // nodes/edges/lanes → buildPersistPayload → queueSync effect below).
+  const handleApplyAIProposal = useCallback(
+    (result: ApplyPatchResult) => {
+      if (locked) return;
+      pushUndo();
+      const added = new Set(result.addedNodeIds);
+      setNodes(
+        result.nodes.map((n) =>
+          added.has(String(n.id))
+            ? {
+                ...n,
+                data: {
+                  ...n.data,
+                  locked,
+                  onLabelChange: (next: string) => {
+                    setNodes((nds: Node[]) =>
+                      nds.map((x: Node) =>
+                        x.id === n.id ? { ...x, data: { ...x.data, label: next } } : x
+                      )
+                    );
+                  },
+                  onNodeDetail: onNodeDetail || undefined,
+                },
+              }
+            : n
+        )
+      );
+      setEdges(result.edges);
+      setLanes(result.lanes);
+      toast.success(isPl ? 'Zastosowano propozycję AI' : 'AI proposal applied', {
+        duration: 1200,
+      });
+    },
+    [isPl, locked, onNodeDetail, pushUndo, setEdges, setNodes]
+  );
+
+  const {
+    activeProposal,
+    isGenerating: isAIGenerating,
+    error: aiError,
+    createProposal,
+    resolveProposal,
+    dismiss: dismissProposal,
+  } = useProcessFlowAIProposal({
+    ideaId,
+    nodes,
+    edges,
+    lanes,
+    semanticKit,
+    isPl: !!isPl,
+    language: i18n.language,
+    selectedNodeIds,
+    onApply: handleApplyAIProposal,
+  });
 
   // ── Selection tracking ─────────────────────────────────────────────────
   const handleSelectionUpdate = useCallback(
@@ -2091,6 +2144,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   style: { opacity: 0.4 },
                   data: { ...g.data, onAcceptGhost: acceptGhostNode },
                 })),
+                // M07 F2 decision 6: pending AI proposal → added nodes shown
+                // as ghosts (no per-node accept; the whole proposal is
+                // accepted/rejected in the panel). Cleared with the proposal.
+                ...(activeProposal?.status === 'pending' && activeProposal.previewNodes
+                  ? activeProposal.previewNodes.map((g) => ({
+                      ...g,
+                      style: { opacity: 0.4 },
+                    }))
+                  : []),
               ]}
               edges={filteredEdgesWithHandlers}
               onNodesChange={locked ? undefined : onNodesChange}
@@ -2254,9 +2316,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             isPl={!!isPl}
             onAccept={() => resolveProposal('accept')}
             onReject={() => resolveProposal('reject')}
-            onEditPrompt={(prompt) => {
+            onEditPrompt={() => {
+              // Back to the prompt form (the panel keeps the previous prompt
+              // in its draft); the user edits and regenerates explicitly.
               dismissProposal();
-              createProposal(prompt);
             }}
             onDismiss={dismissProposal}
             onGenerate={createProposal}

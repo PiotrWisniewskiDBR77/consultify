@@ -4,7 +4,6 @@ import { renderHook, act } from '@testing-library/react';
 import type { Node, Edge } from 'reactflow';
 
 import { useProcessFlowValidation } from '../../../src/components/MyWork/processflow/useProcessFlowValidation';
-import { useProcessFlowAIProposal } from '../../../src/components/MyWork/processflow/useProcessFlowAIProposal';
 import { useProcessFlowReadback } from '../../../src/components/MyWork/processflow/useProcessFlowReadback';
 import { useProcessFlowExport } from '../../../src/components/MyWork/processflow/useProcessFlowExport';
 
@@ -113,92 +112,10 @@ describe('useProcessFlowValidation (client-side)', () => {
   });
 });
 
-describe('useProcessFlowAIProposal', () => {
-  it('createProposal calls endpoint and sets activeProposal', async () => {
-    const proposal = {
-      id: 'ai-1',
-      status: 'pending',
-      prompt: 'add login step',
-      summary: 'Added login',
-      operations: [],
-      risk_flags: [],
-      validation_before: { valid: true, issue_count: 0 },
-      validation_after: { valid: true, issue_count: 0 },
-      readback_before: '',
-      readback_after: '',
-      created_at: '2026-04-11',
-    };
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => proposal });
-
-    const { result } = renderHook(() => useProcessFlowAIProposal({ processId: 'p1' }));
-
-    await act(async () => {
-      await result.current.createProposal('add login step');
-    });
-
-    expect(result.current.activeProposal).toEqual(proposal);
-    expect(result.current.isGenerating).toBe(false);
-  });
-
-  it('resolveProposal clears activeProposal', async () => {
-    const proposal = {
-      id: 'ai-1',
-      status: 'pending',
-      prompt: 'test',
-      summary: 'Test',
-      operations: [],
-      risk_flags: [],
-      validation_before: { valid: true, issue_count: 0 },
-      validation_after: { valid: true, issue_count: 0 },
-      readback_before: '',
-      readback_after: '',
-      created_at: '2026-04-11',
-    };
-    mockFetch
-      .mockResolvedValueOnce({ ok: true, json: async () => proposal })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({}) });
-
-    const { result } = renderHook(() => useProcessFlowAIProposal({ processId: 'p1' }));
-
-    await act(async () => {
-      await result.current.createProposal('test');
-    });
-    expect(result.current.activeProposal).toBeTruthy();
-
-    await act(async () => {
-      await result.current.resolveProposal('accept');
-    });
-    expect(result.current.activeProposal).toBeNull();
-  });
-
-  it('dismiss clears activeProposal without API call', async () => {
-    const proposal = {
-      id: 'ai-1',
-      status: 'pending',
-      prompt: 'test',
-      summary: 'Test',
-      operations: [],
-      risk_flags: [],
-      validation_before: { valid: true, issue_count: 0 },
-      validation_after: { valid: true, issue_count: 0 },
-      readback_before: '',
-      readback_after: '',
-      created_at: '2026-04-11',
-    };
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => proposal });
-
-    const { result } = renderHook(() => useProcessFlowAIProposal({ processId: 'p1' }));
-    await act(async () => {
-      await result.current.createProposal('test');
-    });
-
-    act(() => {
-      result.current.dismiss();
-    });
-    expect(result.current.activeProposal).toBeNull();
-    expect(mockFetch).toHaveBeenCalledTimes(1); // Only the create call
-  });
-});
+// M07 F2: useProcessFlowAIProposal no longer talks to the dead V8
+// `/process-flow/:id/ai-proposals` routes — it goes through the real
+// generateAIProposal client. Its coverage lives in
+// tests/unit/mywork/processFlowAIProposal.test.ts.
 
 describe('useProcessFlowReadback (client-side)', () => {
   it('fetchReadback computes a traversal locally without any fetch', async () => {

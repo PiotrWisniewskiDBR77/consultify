@@ -13,25 +13,11 @@ import {
 import React, { useEffect, useState } from 'react';
 
 import TeresaMark from '../../shared/TeresaMark';
-export interface AIProposalOp {
-  action: 'create' | 'delete' | 'connect' | 'move' | 'update_label';
-  target_id?: string;
-  params?: Record<string, unknown>;
-}
+// M07 F2: the view-model is owned by the hook (single source of truth) —
+// the panel re-exports it so existing importers keep working.
+import type { AIProposal, AIProposalOp } from './useProcessFlowAIProposal';
 
-export interface AIProposal {
-  id: string;
-  status: 'pending' | 'accepted' | 'rejected';
-  prompt: string;
-  summary: string;
-  operations: AIProposalOp[];
-  risk_flags: string[];
-  validation_before: { valid: boolean; issue_count: number };
-  validation_after: { valid: boolean; issue_count: number };
-  readback_before: string;
-  readback_after: string;
-  created_at: string;
-}
+export type { AIProposal, AIProposalOp } from './useProcessFlowAIProposal';
 
 export interface AIProposalPanelProps {
   proposal: AIProposal | null;
@@ -170,7 +156,11 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
                     <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400">
                       {op.action}
                     </span>
-                    {op.target_id ? (
+                    {typeof op.params?.label === 'string' && op.params.label ? (
+                      <span className="truncate text-slate-600 dark:text-slate-300">
+                        {op.params.label}
+                      </span>
+                    ) : op.target_id ? (
                       <span className="truncate text-slate-600 dark:text-slate-300">
                         {op.target_id}
                       </span>
@@ -181,27 +171,29 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
             </ul>
           </div>
 
-          <div>
-            <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
-              {t.risks}
+          {proposal.risk_flags.length > 0 || destructiveCount(proposal.operations) > 0 ? (
+            <div>
+              <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                {t.risks}
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {proposal.risk_flags.map((flag) => (
+                  <span
+                    key={flag}
+                    className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-800 dark:text-amber-200"
+                  >
+                    <AlertTriangle size={11} />
+                    {flag}
+                  </span>
+                ))}
+                {destructiveCount(proposal.operations) > 0 ? (
+                  <span className="inline-flex items-center rounded-full bg-danger-500/15 px-2 py-0.5 text-[10px] font-bold text-danger-700 dark:text-danger-300">
+                    {t.destructive}: {destructiveCount(proposal.operations)}
+                  </span>
+                ) : null}
+              </div>
             </div>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {proposal.risk_flags.map((flag) => (
-                <span
-                  key={flag}
-                  className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-800 dark:text-amber-200"
-                >
-                  <AlertTriangle size={11} />
-                  {flag}
-                </span>
-              ))}
-              {destructiveCount(proposal.operations) > 0 ? (
-                <span className="inline-flex items-center rounded-full bg-danger-500/15 px-2 py-0.5 text-[10px] font-bold text-danger-700 dark:text-danger-300">
-                  {t.destructive}: {destructiveCount(proposal.operations)}
-                </span>
-              ) : null}
-            </div>
-          </div>
+          ) : null}
 
           <div>
             <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
