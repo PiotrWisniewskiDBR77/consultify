@@ -155,7 +155,7 @@ export const PartnerPricingView: React.FC = () => {
                   </button>
                   <button
                     onClick={openPartnerLogin}
-                    className="inline-flex items-center gap-2 rounded-full border border-c-border px-6 py-3 text-sm font-bold text-c-text-secondary transition hover:border-c-border-strong hover:bg-c-surface-raised dark:border-white/15 dark:text-white dark:hover:bg-white/5"
+                    className="inline-flex items-center gap-2 rounded-full border border-c-border px-6 py-3 text-sm font-bold text-c-text-secondary transition hover:border-c-border-strong hover:bg-c-surface-raised dark:border-c-border-subtle dark:text-white dark:hover:bg-white/5"
                   >
                     <LogIn size={16} />
                     Zaloguj się jako partner
@@ -765,7 +765,7 @@ export const PartnerPricingView: React.FC = () => {
               </button>
               <button
                 onClick={openContact}
-                className="inline-flex items-center gap-2 rounded-full border-2 border-white/30 px-8 py-4 font-bold text-white transition hover:bg-white/10"
+                className="inline-flex items-center gap-2 rounded-full border-2 border-c-border px-8 py-4 font-bold text-white transition hover:bg-white/10"
               >
                 Skontaktuj się z zespołem partnerskim
               </button>

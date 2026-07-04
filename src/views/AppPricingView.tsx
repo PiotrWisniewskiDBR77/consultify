@@ -442,7 +442,7 @@ export const AppPricingView: React.FC = () => {
                         ? 'bg-c-surface text-primary-700 hover:bg-primary-50 shadow-lg'
                         : tier.ctaVariant === 'secondary'
                           ? 'bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800'
-                          : 'border-2 border-c-border dark:border-white/20 text-navy-950 dark:text-white hover:bg-c-bg dark:hover:bg-c-surface/5'
+                          : 'border-2 border-c-border dark:border-c-border text-navy-950 dark:text-white hover:bg-c-bg dark:hover:bg-c-surface/5'
                     }`}
                   >
                     {tier.cta}
@@ -662,7 +662,7 @@ export const AppPricingView: React.FC = () => {
             </button>
             <button
               onClick={() => window.open(CALENDAR_URL, '_blank')}
-              className="inline-flex items-center gap-2 rounded-full border-2 border-white/30 px-6 py-3 text-sm font-bold text-white transition hover:bg-c-surface-raised/40"
+              className="inline-flex items-center gap-2 rounded-full border-2 border-c-border px-6 py-3 text-sm font-bold text-white transition hover:bg-c-surface-raised/40"
             >
               <Calendar size={16} />
               Umów demo

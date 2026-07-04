@@ -69,7 +69,7 @@ export const PublicLandingPage: React.FC = () => {
             </Link>
             <Link
               to="/login"
-              className="px-4 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-colors border border-white/10"
+              className="px-4 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-colors border border-c-border-subtle"
             >
               {t('pages.public.nav.signIn', 'Sign In')}
             </Link>
@@ -93,7 +93,7 @@ export const PublicLandingPage: React.FC = () => {
             {/* Card 1: Explore Demo */}
             <div
               onClick={handleDemoClick}
-              className="glass-card p-8 rounded-xl group hover:bg-c-accent/5 transition duration-300 border-white/5 cursor-pointer relative overflow-hidden"
+              className="glass-card p-8 rounded-xl group hover:bg-c-accent/5 transition duration-300 border-c-border-subtle cursor-pointer relative overflow-hidden"
             >
               <div className="absolute top-4 left-4 text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">
                 {t('pages.public.cards.demo.meta', 'Instant Access')}
@@ -139,7 +139,7 @@ export const PublicLandingPage: React.FC = () => {
             {/* Card 3: How It Works - Video Tour */}
             <div
               onClick={() => navigate('/demo')}
-              className="glass-card p-6 rounded-xl group hover:bg-blue-600/5 transition duration-300 border-white/5 cursor-pointer relative overflow-hidden"
+              className="glass-card p-6 rounded-xl group hover:bg-blue-600/5 transition duration-300 border-c-border-subtle cursor-pointer relative overflow-hidden"
             >
               <div className="absolute top-4 left-4 text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">
                 {t('pages.public.cards.tour.meta', 'Product Tour')}
@@ -197,7 +197,7 @@ export const PublicLandingPage: React.FC = () => {
             {/* Card 5: Become Partner - Replacing Log In */}
             <div
               onClick={handlePartnerClick}
-              className="glass-card p-8 rounded-xl group hover:bg-c-accent/5 transition duration-300 border-white/5 cursor-pointer relative overflow-hidden"
+              className="glass-card p-8 rounded-xl group hover:bg-c-accent/5 transition duration-300 border-c-border-subtle cursor-pointer relative overflow-hidden"
             >
               <div className="absolute top-4 left-4 text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">
                 {t('pages.public.cards.partner.meta', 'Returning Users')}
@@ -218,7 +218,7 @@ export const PublicLandingPage: React.FC = () => {
             </div>
 
             {/* Card 7: AI Consulting Pitch */}
-            <div className="glass-card p-8 rounded-xl group hover:bg-c-accent/10 transition duration-300 border-white/5 relative overflow-hidden">
+            <div className="glass-card p-8 rounded-xl group hover:bg-c-accent/10 transition duration-300 border-c-border-subtle relative overflow-hidden">
               <div className="flex flex-col h-full justify-center items-center text-center">
                 <h3 className="text-3xl font-bold mb-2">
                   {t('pages.public.tagline.line1', 'AI consulting.')}

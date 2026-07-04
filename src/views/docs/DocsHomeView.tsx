@@ -712,7 +712,7 @@ export const DocsHomeView: React.FC = () => {
               </Link>
               <Link
                 to="/demo"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-c-surface/20 text-white font-semibold hover:bg-c-surface/30 transition-colors border border-white/30"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-c-surface/20 text-white font-semibold hover:bg-c-surface/30 transition-colors border border-c-border"
               >
                 Explore Demo
               </Link>

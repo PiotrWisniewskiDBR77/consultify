@@ -173,7 +173,7 @@ export const BusinessCasesPage: React.FC = () => {
             ].map((p) => (
               <div
                 key={p.site}
-                className="rounded-2xl border border-c-border-subtle bg-c-bg px-5 py-4 dark:border-white/10 dark:bg-c-surface/[0.03]"
+                className="rounded-2xl border border-c-border-subtle bg-c-bg px-5 py-4 dark:border-c-border-subtle dark:bg-c-surface/[0.03]"
               >
                 <p className="text-xs font-bold uppercase tracking-widest text-primary-600 dark:text-primary-400">
                   {p.site}
@@ -237,7 +237,7 @@ export const BusinessCasesPage: React.FC = () => {
               return (
                 <div
                   key={item.text}
-                  className="flex items-start gap-4 rounded-2xl border border-c-border-subtle bg-c-surface p-5 shadow-sm dark:border-white/10 dark:bg-slate-800/50"
+                  className="flex items-start gap-4 rounded-2xl border border-c-border-subtle bg-c-surface p-5 shadow-sm dark:border-c-border-subtle dark:bg-slate-800/50"
                 >
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-danger-100 text-danger-600 dark:bg-danger-500/10 dark:text-danger-400">
                     <Icon size={18} />
@@ -317,7 +317,7 @@ export const BusinessCasesPage: React.FC = () => {
               return (
                 <div
                   key={stream.title}
-                  className="rounded-3xl border border-c-border-subtle bg-c-bg p-6 dark:border-white/10 dark:bg-c-surface/[0.03]"
+                  className="rounded-3xl border border-c-border-subtle bg-c-bg p-6 dark:border-c-border-subtle dark:bg-c-surface/[0.03]"
                 >
                   <div
                     className={`flex h-12 w-12 items-center justify-center rounded-2xl ${stream.bg} ${stream.accent}`}
@@ -330,7 +330,7 @@ export const BusinessCasesPage: React.FC = () => {
                   <p className="mt-3 text-sm leading-7 text-c-text-secondary">
                     {stream.body}
                   </p>
-                  <div className="mt-5 space-y-2.5 border-t border-c-border-subtle pt-5 dark:border-white/10">
+                  <div className="mt-5 space-y-2.5 border-t border-c-border-subtle pt-5 dark:border-c-border-subtle">
                     {stream.bullets.map((b) => (
                       <div key={b} className="flex items-start gap-2.5">
                         <CheckCircle2 size={15} className={`mt-0.5 shrink-0 ${stream.accent}`} />
@@ -383,7 +383,7 @@ export const BusinessCasesPage: React.FC = () => {
             ].map((w) => (
               <div
                 key={w.num}
-                className="rounded-3xl border border-c-border-subtle bg-c-surface p-6 shadow-sm dark:border-white/10 dark:bg-slate-800/50"
+                className="rounded-3xl border border-c-border-subtle bg-c-surface p-6 shadow-sm dark:border-c-border-subtle dark:bg-slate-800/50"
               >
                 <span className="text-4xl font-black text-slate-200 dark:text-white/10">
                   {w.num}
@@ -451,7 +451,7 @@ export const BusinessCasesPage: React.FC = () => {
             </div>
 
             {/* cost side */}
-            <div className="rounded-3xl border border-c-border-subtle bg-c-bg p-6 dark:border-white/10 dark:bg-c-surface/[0.03]">
+            <div className="rounded-3xl border border-c-border-subtle bg-c-bg p-6 dark:border-c-border-subtle dark:bg-c-surface/[0.03]">
               <p className="text-sm font-bold uppercase tracking-widest text-c-text-muted">
                 Total program cost
               </p>
@@ -484,7 +484,7 @@ export const BusinessCasesPage: React.FC = () => {
                 ].map((k) => (
                   <div
                     key={k.label}
-                    className="rounded-2xl border border-c-border-subtle bg-c-surface px-4 py-4 text-center dark:border-white/10 dark:bg-black/10"
+                    className="rounded-2xl border border-c-border-subtle bg-c-surface px-4 py-4 text-center dark:border-c-border-subtle dark:bg-black/10"
                   >
                     <p className="text-[11px] font-bold uppercase tracking-widest text-c-text-muted">
                       {k.label}
@@ -567,7 +567,7 @@ export const BusinessCasesPage: React.FC = () => {
               return (
                 <div
                   key={item.title}
-                  className="rounded-3xl border border-c-border-subtle bg-c-surface p-5 shadow-sm dark:border-white/10 dark:bg-slate-800/50"
+                  className="rounded-3xl border border-c-border-subtle bg-c-surface p-5 shadow-sm dark:border-c-border-subtle dark:bg-slate-800/50"
                 >
                   <div
                     className={`flex h-11 w-11 items-center justify-center rounded-2xl ${item.bg} ${item.accent}`}
@@ -633,7 +633,7 @@ export const BusinessCasesPage: React.FC = () => {
             <button
               type="button"
               onClick={() => navigate(ROUTES.LEGAL.CONTACT)}
-              className="inline-flex items-center gap-2 rounded-full border border-white/25 px-7 py-3.5 text-sm font-black text-white transition hover:bg-c-surface/10"
+              className="inline-flex items-center gap-2 rounded-full border border-c-border px-7 py-3.5 text-sm font-black text-white transition hover:bg-c-surface/10"
             >
               Discuss your rollout
             </button>

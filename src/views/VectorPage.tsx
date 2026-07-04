@@ -198,7 +198,7 @@ export const VectorPage: React.FC = () => {
               </a>
               <button
                 onClick={handleDemoClick}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold border border-slate-200 dark:border-white/12 text-slate-700 dark:text-white/70 hover:bg-slate-50 dark:hover:bg-white/5 transition-all"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold border border-slate-200 dark:border-c-border-subtle text-slate-700 dark:text-white/70 hover:bg-slate-50 dark:hover:bg-white/5 transition-all"
               >
                 {t('vector.hero.demoCta', 'Book a Demo')}
                 <ArrowRight size={15} />
@@ -587,7 +587,7 @@ export const VectorPage: React.FC = () => {
               </a>
               <button
                 onClick={handleDemoClick}
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-sm font-semibold border border-slate-200 dark:border-white/12 text-slate-700 dark:text-white/70 hover:bg-slate-50 dark:hover:bg-white/5 transition-all"
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-sm font-semibold border border-slate-200 dark:border-c-border-subtle text-slate-700 dark:text-white/70 hover:bg-slate-50 dark:hover:bg-white/5 transition-all"
               >
                 <Zap size={16} />
                 {t('vector.cta.demo', 'Book a Live Demo')}

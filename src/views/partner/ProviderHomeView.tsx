@@ -145,14 +145,14 @@ const WelcomeHeroBanner: React.FC = () => {
           </button>
           <button
             onClick={() => navigate(PARTNER_DOCS.overview.href)}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-c-bg/50 dark:bg-navy-950/30 text-white font-semibold rounded-lg hover:bg-c-surface/20 transition-colors border border-white/20"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-c-bg/50 dark:bg-navy-950/30 text-white font-semibold rounded-lg hover:bg-c-surface/20 transition-colors border border-c-border"
           >
             <Play className="w-5 h-5" />
             {t('partner.hero.watchOverview', 'Open partner docs')}
           </button>
           <button
             onClick={() => navigate(ROUTES.LEGAL.CONTACT)}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-transparent text-white font-semibold rounded-lg hover:bg-c-surface/10 transition-colors border border-white/25"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-transparent text-white font-semibold rounded-lg hover:bg-c-surface/10 transition-colors border border-c-border"
           >
             <MessageCircle className="w-5 h-5" />
             {t('partner.hero.customTerms', 'Discuss custom terms')}

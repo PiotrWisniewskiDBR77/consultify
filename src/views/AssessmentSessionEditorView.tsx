@@ -1946,7 +1946,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
         </div>
 
         <AssessmentMenu3ActionBar
-          className="mx-6 rounded-xl border border-slate-200/60 dark:border-white/5"
+          className="mx-6 rounded-xl border border-slate-200/60 dark:border-c-border-subtle"
           chips={sessionMenu3Chips}
           actions={sessionAiActions}
         />

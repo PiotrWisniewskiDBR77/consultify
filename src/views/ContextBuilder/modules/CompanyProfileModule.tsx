@@ -226,7 +226,7 @@ export const CompanyProfileModule: React.FC = () => {
                             ${
                               activeTab === tab.id
                                 ? 'border-primary-600 text-primary-600 dark:text-primary-400'
-                                : 'border-transparent text-c-text-muted hover:text-navy-900 dark:hover:text-white hover:border-c-border dark:hover:border-white/20'
+                                : 'border-transparent text-c-text-muted hover:text-navy-900 dark:hover:text-white hover:border-c-border dark:hover:border-c-border'
                             }
                         `}
           >

@@ -415,7 +415,7 @@ export const PricingLandingPage: React.FC = () => {
               </button>
               <button
                 onClick={() => navigate(ROUTES.TRIAL_ENTRY)}
-                className="inline-flex items-center gap-2 rounded-full border border-white/20 px-6 py-3 text-sm font-black text-white transition hover:bg-white/5"
+                className="inline-flex items-center gap-2 rounded-full border border-c-border px-6 py-3 text-sm font-black text-white transition hover:bg-white/5"
               >
                 {t('pricing.enterpriseNote.ctaTrial', 'Start trial first')}
               </button>

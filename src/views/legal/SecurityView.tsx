@@ -764,7 +764,7 @@ export const SecurityView: React.FC = () => {
               </a>
               <button
                 onClick={handleContactClick}
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-sm font-semibold border border-c-border-subtle dark:border-white/12 text-c-text-secondary dark:text-white/70 hover:bg-c-bg dark:hover:bg-c-surface/5 transition-all"
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-sm font-semibold border border-c-border-subtle dark:border-c-border-subtle text-c-text-secondary dark:text-white/70 hover:bg-c-bg dark:hover:bg-c-surface/5 transition-all"
               >
                 {t('security.cta.walkthrough', 'Schedule Architecture Walkthrough')}
                 <ArrowRight size={15} />

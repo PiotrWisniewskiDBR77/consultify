@@ -52,7 +52,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
   icon,
   color,
 }) => (
-  <div className="bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-xl p-4 relative overflow-hidden group hover:border-blue-500/30 dark:hover:border-white/10 transition-colors shadow-sm dark:shadow-none">
+  <div className="bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-xl p-4 relative overflow-hidden group hover:border-blue-500/30 dark:hover:border-c-border-subtle transition-colors shadow-sm dark:shadow-none">
     <div
       className={`absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity ${color}`}
     >

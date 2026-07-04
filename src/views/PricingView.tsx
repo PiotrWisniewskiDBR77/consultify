@@ -424,7 +424,7 @@ export const PricingView: React.FC = () => {
                         ? 'bg-c-surface text-primary-700 hover:bg-primary-50 shadow-lg'
                         : tier.ctaVariant === 'secondary'
                           ? 'bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800'
-                          : 'border-2 border-c-border dark:border-white/20 text-navy-950 dark:text-white hover:bg-c-bg dark:hover:bg-c-surface/5'
+                          : 'border-2 border-c-border dark:border-c-border text-navy-950 dark:text-white hover:bg-c-bg dark:hover:bg-c-surface/5'
                     }`}
                   >
                     {tier.cta}
@@ -644,7 +644,7 @@ export const PricingView: React.FC = () => {
               href={CALENDAR_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-8 py-4 border-2 border-c-border dark:border-white/20 text-navy-950 dark:text-white font-bold rounded-xl hover:bg-c-surface dark:hover:bg-c-surface/5 transition-colors flex items-center justify-center gap-2"
+              className="px-8 py-4 border-2 border-c-border dark:border-c-border text-navy-950 dark:text-white font-bold rounded-xl hover:bg-c-surface dark:hover:bg-c-surface/5 transition-colors flex items-center justify-center gap-2"
             >
               <Calendar size={18} />
               Schedule a Demo
