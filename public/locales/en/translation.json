@@ -10638,7 +10638,10 @@
       "alternativeLayout": "Alternative layout",
       "regenerateSlide": "Regenerate slide",
       "regenerating": "Regenerating…",
-      "notesPlaceholder": "Speaker notes for this slide..."
+      "notesPlaceholder": "Speaker notes for this slide...",
+      "duplicate": "Duplicate",
+      "delete": "Delete",
+      "slideSorter": "Slides"
     },
     "governance": {
       "loading": "Loading…",

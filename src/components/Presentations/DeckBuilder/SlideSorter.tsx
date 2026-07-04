@@ -182,7 +182,7 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
                     }}
                     className="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300"
                   >
-                    <Copy size={12} /> Duplicate
+                    <Copy size={12} /> {t('presentations.builder.duplicate')}
                   </button>
                   <button
                     onClick={(e) => {
@@ -192,7 +192,7 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
                     }}
                     className="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-danger-50 dark:hover:bg-danger-500/10 text-danger-500"
                   >
-                    <Trash2 size={12} /> Delete
+                    <Trash2 size={12} /> {t('presentations.builder.delete')}
                   </button>
                 </div>
               )}

@@ -869,7 +869,10 @@
       "alternativeLayout": "Alternatywny układ",
       "regenerateSlide": "Wygeneruj slajd ponownie",
       "regenerating": "Generowanie ponowne…",
-      "notesPlaceholder": "Notatki prelegenta do tego slajdu..."
+      "notesPlaceholder": "Notatki prelegenta do tego slajdu...",
+      "duplicate": "Duplikuj",
+      "delete": "Usuń",
+      "slideSorter": "Slajdy"
     },
     "agent": {
       "title": "Agent AI",
