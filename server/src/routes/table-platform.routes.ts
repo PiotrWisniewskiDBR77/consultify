@@ -1373,6 +1373,83 @@ router.get(
   }
 );
 
+// ==========================================
+// NOTIFICATION INBOX (P7)
+// ==========================================
+//
+// User-scoped read-model over record-watch / mention events. Every handler is
+// BOTH org-scoped and user-scoped — a user sees ONLY their own notifications.
+// The service enforces the (org_id, user_id) predicate; do not bypass it.
+
+router.get('/notifications', async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const userId = authReq.userId;
+    const orgId = authReq.organizationId;
+    if (!userId) return res.status(401).json({ error: 'Authentication required' });
+    if (!orgId) return res.status(400).json({ error: 'Organization context required' });
+
+    const unreadOnly = String(req.query.unreadOnly ?? '') === 'true';
+    const limit = parseInt(String(req.query.limit ?? '25'), 10);
+    const offset = parseInt(String(req.query.offset ?? '0'), 10);
+
+    const NotificationInboxService = (
+      await import('../services/tablePlatform/NotificationInboxService.js')
+    ).default;
+    const result = await NotificationInboxService.listForUser(orgId, userId, {
+      unreadOnly,
+      limit: Number.isFinite(limit) ? limit : undefined,
+      offset: Number.isFinite(offset) ? offset : undefined,
+    });
+    return res.status(200).json(result);
+  } catch (err) {
+    handleRouteError(err, res, 'listNotifications');
+  }
+});
+
+router.post('/notifications/:id/read', async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const userId = authReq.userId;
+    const orgId = authReq.organizationId;
+    const { id } = req.params;
+    if (!userId) return res.status(401).json({ error: 'Authentication required' });
+    if (!orgId) return res.status(400).json({ error: 'Organization context required' });
+    if (!id) return res.status(400).json({ error: 'id is required' });
+
+    const NotificationInboxService = (
+      await import('../services/tablePlatform/NotificationInboxService.js')
+    ).default;
+    const ok = await NotificationInboxService.markRead(id, orgId, userId);
+    if (!ok) {
+      // Row does not exist or is not addressed to this user → 404 (no leak).
+      return res.status(404).json({ error: 'Notification not found' });
+    }
+    const unreadCount = await NotificationInboxService.getUnreadCount(orgId, userId);
+    return res.status(200).json({ ok: true, unreadCount });
+  } catch (err) {
+    handleRouteError(err, res, 'markNotificationRead');
+  }
+});
+
+router.post('/notifications/read-all', async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const userId = authReq.userId;
+    const orgId = authReq.organizationId;
+    if (!userId) return res.status(401).json({ error: 'Authentication required' });
+    if (!orgId) return res.status(400).json({ error: 'Organization context required' });
+
+    const NotificationInboxService = (
+      await import('../services/tablePlatform/NotificationInboxService.js')
+    ).default;
+    const updated = await NotificationInboxService.markAllRead(orgId, userId);
+    return res.status(200).json({ ok: true, updated, unreadCount: 0 });
+  } catch (err) {
+    handleRouteError(err, res, 'markAllNotificationsRead');
+  }
+});
+
 router.post(
   '/tables/:tableId/records/query',
   requireTableAccess,

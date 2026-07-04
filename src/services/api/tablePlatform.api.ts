@@ -2195,3 +2195,67 @@ export async function submitPublicFormByJwt(
   const json = await res.json();
   return json.data ?? json;
 }
+
+// ============================================================================
+// NOTIFICATION INBOX (P7)
+// ============================================================================
+
+export interface TpNotification {
+  id: string;
+  org_id: string;
+  user_id: string;
+  base_id: string | null;
+  table_id: string | null;
+  record_id: string | null;
+  type: string;
+  payload: Record<string, unknown>;
+  read_at: string | null;
+  created_at: string;
+}
+
+export interface TpNotificationList {
+  notifications: TpNotification[];
+  total: number;
+  unreadCount: number;
+}
+
+/** List the current user's notifications (org + user scoped server-side). */
+export async function listNotifications(opts?: {
+  unreadOnly?: boolean;
+  limit?: number;
+  offset?: number;
+}): Promise<TpNotificationList> {
+  const params = new URLSearchParams();
+  if (opts?.unreadOnly) params.set('unreadOnly', 'true');
+  if (opts?.limit != null) params.set('limit', String(opts.limit));
+  if (opts?.offset != null) params.set('offset', String(opts.offset));
+  const qs = params.toString();
+  const res = await fetchWithRetry(`${BASE_PATH}/notifications${qs ? `?${qs}` : ''}`, {
+    headers: getHeaders(),
+  });
+  return handleResponse<TpNotificationList>(res, 'Failed to load notifications');
+}
+
+/** Mark a single notification read. Returns the new unread count. */
+export async function markNotificationRead(
+  id: string
+): Promise<{ ok: boolean; unreadCount: number }> {
+  const res = await fetchWithRetry(`${BASE_PATH}/notifications/${encodeURIComponent(id)}/read`, {
+    method: 'POST',
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'Failed to mark notification read');
+}
+
+/** Mark every notification read. */
+export async function markAllNotificationsRead(): Promise<{
+  ok: boolean;
+  updated: number;
+  unreadCount: number;
+}> {
+  const res = await fetchWithRetry(`${BASE_PATH}/notifications/read-all`, {
+    method: 'POST',
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'Failed to mark all notifications read');
+}
