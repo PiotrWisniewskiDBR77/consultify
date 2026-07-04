@@ -32,6 +32,7 @@ const FeatureFlagsSchema = z.object({
   ENABLE_V8_SHADOW_MODE: z.boolean().default(false),
   ENABLE_DELIVERABLES_LIGHT: z.boolean().default(false),
   ENABLE_TERESA_RETRIEVAL: z.boolean().default(false),
+  ENABLE_TERESA_MINDMAP: z.boolean().default(false),
   ENABLE_DELIVERABLES_DOC_STREAMING: z.boolean().default(false),
   ENABLE_DELIVERABLES_PREMIUM: z.boolean().default(false),
   ENABLE_SHARED_IDEA_MAPS: z.boolean().default(false),
@@ -123,6 +124,13 @@ export function loadFeatureFlags(): FeatureFlags {
     // locate notes, insights and initiatives the user references by topic.
     // Opt-in; when off the chat stream and persona prompt are untouched.
     ENABLE_TERESA_RETRIEVAL: process.env.ENABLE_TERESA_RETRIEVAL === 'true',
+
+    // Teresa mind-map integration (ff_teresaMindmap / M06 Fala 2): chat-side
+    // READ tool `search_org_mindmaps` that lets Teresa locate an org idea-map
+    // by topic and inject its serialized outline. Co-gated with
+    // ENABLE_TERESA_RETRIEVAL for retrieval (S2). Opt-in; when off the tool
+    // returns an empty envelope and the retrieval regex block stays inert.
+    ENABLE_TERESA_MINDMAP: process.env.ENABLE_TERESA_MINDMAP === 'true',
 
     // Deliverables A3: per-section streaming for documents. Generates section
     // by section (each call sees prior sections for coherence) and writes the

@@ -1706,6 +1706,67 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     onDeliverable: (payload) => {
       const draftId = String(payload?.draftId || payload?.generationId || '').trim();
       if (!draftId) return;
+
+      // M06 Fala 2 · 2.3 — mind map: NOT a canvas draft. Mount it in the Ideas
+      // mind-map workspace (same handoff path as "save message as idea"), seeded
+      // with the topic so the describe-with-AI flow builds a real map.
+      // TODO (M06 Fala 2 · [REAL-AI] nightly): consume the backend-built skeleton
+      // graph (payload.graph) directly instead of re-deriving from seedText —
+      // requires MyWorkHub → IdeaMapWorkspace to forward a `seedGraph` prop.
+      if ((payload as any)?.kind === 'mindmap') {
+        const mmTitle = String(payload.title || t('chat.titles.idea', 'Mapa myśli')).slice(0, 120);
+        const seedText = String((payload as any)?.seedText || mmTitle);
+        const creationPayload: IdeaWorkspaceCreationPayload = {
+          title: mmTitle,
+          body: seedText,
+          tags: [],
+          sourceType: 'chat',
+          sourceConversationId: activeConversationId,
+        };
+        const seedIntent: IdeaWorkspaceSeedIntent = {
+          startMode: 'describe_with_ai',
+          seedText,
+          preferredSystem: 'mindmap',
+          templateId: null,
+          popularStartId: null,
+          popularStartLabel: null,
+          structuredBrief: null,
+          source: 'chat_handoff',
+        };
+        const newIdeaId = `new-idea-${Date.now()}`;
+        try {
+          trackFunnelEvent('my_idea_saved', {
+            source: 'chat_deliverable_mindmap',
+            ideaId: newIdeaId,
+            handoff: true,
+          });
+        } catch {
+          /* ignore telemetry errors */
+        }
+        try {
+          const { setMyWorkIntent, setCurrentView } = useAppStore.getState() as any;
+          setMyWorkIntent?.({
+            tab: 'ideas',
+            open: {
+              type: 'idea',
+              id: newIdeaId,
+              name: mmTitle,
+              data: {
+                isNew: true,
+                creationPayload,
+                seedIntent,
+              },
+            },
+          });
+          setCurrentView?.(AppView.MY_WORK);
+        } catch (err) {
+          console.warn('[UnifiedChatPanel] mindmap deliverable mount failed', err);
+          return;
+        }
+        toast.success(t('myWork.ideas.sentToWorkspaceToast', 'Opened in Ideas workspace'));
+        return;
+      }
+
       const kind = payload.kind === 'sheet' ? 'sheet' : payload.kind === 'deck' ? 'deck' : 'doc';
       const title =
         payload.title || (kind === 'sheet' ? 'Arkusz' : kind === 'deck' ? 'Prezentacja' : 'Dokument');

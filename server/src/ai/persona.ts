@@ -340,20 +340,37 @@ function isTeresaRetrievalEnabled(): boolean {
   return process.env.ENABLE_TERESA_RETRIEVAL === 'true';
 }
 
+function isTeresaMindmapEnabled(): boolean {
+  return process.env.ENABLE_TERESA_MINDMAP === 'true';
+}
+
 function buildOrgRetrievalGuidance(lang: PersonaLanguage): string {
+  const mindmap = isTeresaMindmapEnabled();
   if (lang === 'pl') {
-    return `## NARZĘDZIA TREŚCI ORGANIZACJI (search_org_notes, search_insights, get_initiative)
-Gdy użytkownik odwołuje się do treści organizacji po temacie (notatka, wniosek/insight, inicjatywa), narzędzia wyszukiwania lokalizują ją, a wyniki dostajesz w bloku [ORG CONTENT SEARCH].
+    const toolsList = mindmap
+      ? 'search_org_notes, search_insights, get_initiative, search_org_mindmaps'
+      : 'search_org_notes, search_insights, get_initiative';
+    const mindmapLine = mindmap
+      ? '\n- Gdy użytkownik pyta o „mapę myśli" na dany temat, użyj wyników search_org_mindmaps (tytuł + outline mapy); nie zmyślaj węzłów spoza wyników.'
+      : '';
+    return `## NARZĘDZIA TREŚCI ORGANIZACJI (${toolsList})
+Gdy użytkownik odwołuje się do treści organizacji po temacie (notatka, wniosek/insight, inicjatywa${mindmap ? ', mapa myśli' : ''}), narzędzia wyszukiwania lokalizują ją, a wyniki dostajesz w bloku [ORG CONTENT SEARCH].
 - Wskaż najlepsze dopasowanie (tytuł + identyfikator) i POTWIERDŹ z użytkownikiem, że o nie chodzi, ZANIM na nim oprzesz dalsze działanie.
 - Przy kilku kandydatach wymień maks. 3 i poproś o wybór; przy braku wyników powiedz to wprost i poproś o doprecyzowanie tematu lub tytułu.
-- Nie zmyślaj treści notatek, wniosków ani inicjatyw spoza wyników wyszukiwania.`;
+- Nie zmyślaj treści notatek, wniosków ani inicjatyw spoza wyników wyszukiwania.${mindmapLine}`;
   }
 
-  return `## ORGANIZATION CONTENT TOOLS (search_org_notes, search_insights, get_initiative)
-When the user references organization content by topic (a note, an insight, an initiative), the search tools locate it and the results arrive in an [ORG CONTENT SEARCH] block.
+  const toolsList = mindmap
+    ? 'search_org_notes, search_insights, get_initiative, search_org_mindmaps'
+    : 'search_org_notes, search_insights, get_initiative';
+  const mindmapLine = mindmap
+    ? '\n- When the user asks about a "mind map" on a topic, use the search_org_mindmaps results (title + map outline); never invent nodes beyond the results.'
+    : '';
+  return `## ORGANIZATION CONTENT TOOLS (${toolsList})
+When the user references organization content by topic (a note, an insight, an initiative${mindmap ? ', a mind map' : ''}), the search tools locate it and the results arrive in an [ORG CONTENT SEARCH] block.
 - Name the best match (title + id) and CONFIRM with the user that it is the right item BEFORE acting on it.
 - With several candidates, list up to 3 and ask the user to pick; with no results, say so and ask for a more specific topic or title.
-- Never invent note/insight/initiative content beyond the search results.`;
+- Never invent note/insight/initiative content beyond the search results.${mindmapLine}`;
 }
 
 // ---------------------------------------------------------------------------
