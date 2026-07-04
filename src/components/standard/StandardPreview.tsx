@@ -1,0 +1,316 @@
+/**
+ * StandardPreview — JEDYNA fasada panelu podglądu (Triada standard).
+ *
+ * SSOT wzorca: My Work Decisions preview + NOTATKA-PRAWO
+ * `_STANDARD_TRIADA_NOTATKA.md` (ANEKS #5). ŻELAZNA kolejność 6 bloków:
+ *
+ *  (1) Header — tytuł / pin / Open / ×          → PreviewPaneShell
+ *  (2) Karta meta — chipy Status/Priorytet/…
+ *      + termin (trailing) + linia rekomendacji → PreviewMetaCard
+ *  (3) DETAILS z ⋮ Copy / Export / Pobierz      → PreviewDetailsSection
+ *  (4) Ramka AI z chipami per encja             → PreviewAIHintStrip
+ *  (5) Relations                                → PreviewRelations
+ *  (6) AKCJE — grid 2 kolumny:
+ *      rząd 1 = rozstrzygnięcia (Approve[A]/Reject[R]),
+ *      rząd 2 = informacyjne (More info[I]/Delegate[G]),
+ *      rząd 3 = czas/eskalacja (Remind/Escalate/Snooze[Z])
+ *      → WYŁĄCZNIE PreviewActionButton (4 warianty, moduł nie styluje).
+ *
+ * Skróty klawiszowe: `standardPreviewShortcuts(actions)` → podłącz do
+ * TableWithPreviewLayout.actionShortcuts.
+ */
+
+import { ExternalLink, type LucideIcon, Pin, PinOff } from 'lucide-react';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
+import {
+  type DetailsAction,
+  type MetaPill,
+  PreviewActionButton,
+  type PreviewActionVariant,
+  PreviewAIHintStrip,
+  type PreviewAIHintStripProps,
+  PreviewDetailsSection,
+  PreviewMetaCard,
+  PreviewRelations,
+  type RelationItem,
+  SKELETON_LINE_1,
+  SKELETON_LINE_2,
+  SKELETON_LINE_3,
+  SKELETON_LINE_4,
+} from '../shared/PreviewPane';
+import { PreviewPaneShell } from '../ui/ResizableTable/PreviewPaneShell';
+
+export type { MetaPill, RelationItem } from '../shared/PreviewPane';
+
+export interface StandardPreviewAction {
+  id: string;
+  variant: PreviewActionVariant;
+  label: string;
+  icon?: LucideIcon;
+  /** Pojedynczy klawisz (badge + skrót w TableWithPreviewLayout). */
+  shortcut?: string;
+  onClick: () => void;
+  disabled?: boolean;
+}
+
+export interface StandardPreviewActions {
+  /** Rząd 1 — rozstrzygnięcia (Approve[A] / Reject[R]). */
+  resolutions?: StandardPreviewAction[];
+  /** Rząd 2 — informacyjne (More info[I] / Delegate[G]). */
+  informational?: StandardPreviewAction[];
+  /** Rząd 3 — czas / eskalacja (Remind / Escalate / Snooze[Z]). */
+  time?: StandardPreviewAction[];
+}
+
+export interface StandardPreviewMeta {
+  pills: MetaPill[];
+  /** Termin / SLA — prawa strona karty meta. */
+  trailing?: React.ReactNode;
+  /** Linia rekomendacji pod chipami (np. brief AI). */
+  recommendation?: React.ReactNode;
+}
+
+export interface StandardPreviewDetails {
+  text?: string;
+  loading?: boolean;
+  label?: string;
+  /** ⋮ Copy — zawsze pierwszy w kebabie Details. */
+  onCopy?: () => void;
+  /** ⋮ Export (np. do formatu udostępnienia). */
+  onExport?: () => void;
+  exportLabel?: string;
+  /** ⋮ Pobierz (plik). */
+  onDownload?: () => void;
+  downloadLabel?: string;
+  /** Dodatkowe pozycje kebaba PO standardowych. */
+  extraActions?: DetailsAction[];
+}
+
+export interface StandardPreviewProps {
+  /* Blok 1 — Header */
+  title: string;
+  onClose?: () => void;
+  onOpenFull?: () => void;
+  openLabel?: string;
+  pinned?: boolean;
+  onTogglePin?: () => void;
+  headerExtra?: React.ReactNode;
+
+  /* Blok 2 — karta meta */
+  meta?: StandardPreviewMeta;
+
+  /* Blok 3 — Details */
+  details?: StandardPreviewDetails;
+
+  /* Blok 4 — ramka AI (chipy per encja) */
+  ai?: PreviewAIHintStripProps;
+
+  /* Blok 5 — Relations */
+  relations?: RelationItem[];
+  relationsEmptyLabel?: string;
+
+  /* Blok 6 — akcje (PreviewActionButton, grid 2 kolumny) */
+  actions?: StandardPreviewActions;
+
+  loading?: boolean;
+  className?: string;
+  children?: React.ReactNode;
+}
+
+/** Zbiera skróty ze wszystkich rzędów akcji → TableWithPreviewLayout.actionShortcuts. */
+export function standardPreviewShortcuts(
+  actions?: StandardPreviewActions
+): Record<string, () => void> {
+  const map: Record<string, () => void> = {};
+  for (const row of [actions?.resolutions, actions?.informational, actions?.time]) {
+    for (const action of row ?? []) {
+      if (action.shortcut && !action.disabled) map[action.shortcut.toUpperCase()] = action.onClick;
+    }
+  }
+  return map;
+}
+
+const ActionGridRow: React.FC<{ actions: StandardPreviewAction[] }> = ({ actions }) => (
+  /* ANEKS #5 — grid 2 kolumny. */
+  <div className="grid grid-cols-2 gap-2">
+    {actions.map((action) => (
+      <PreviewActionButton
+        key={action.id}
+        variant={action.variant}
+        label={action.label}
+        icon={action.icon}
+        shortcut={action.shortcut}
+        onClick={action.onClick}
+        disabled={action.disabled}
+      />
+    ))}
+  </div>
+);
+
+export const StandardPreview: React.FC<StandardPreviewProps> = ({
+  title,
+  onClose,
+  onOpenFull,
+  openLabel,
+  pinned,
+  onTogglePin,
+  headerExtra,
+  meta,
+  details,
+  ai,
+  relations,
+  relationsEmptyLabel,
+  actions,
+  loading,
+  className,
+  children,
+}) => {
+  const { t, i18n } = useTranslation();
+  const isPolish = !!i18n.language?.startsWith('pl');
+
+  // Blok 3 — kebab Details: Copy / Export / Pobierz (żelazny zestaw).
+  const detailsActions: DetailsAction[] | undefined = details
+    ? [
+        ...(details.onCopy
+          ? [
+              {
+                id: 'copy',
+                label: t('common.copy', isPolish ? 'Kopiuj' : 'Copy'),
+                onClick: details.onCopy,
+              },
+            ]
+          : []),
+        ...(details.onExport
+          ? [
+              {
+                id: 'export',
+                label: details.exportLabel ?? t('common.export', isPolish ? 'Eksportuj' : 'Export'),
+                onClick: details.onExport,
+              },
+            ]
+          : []),
+        ...(details.onDownload
+          ? [
+              {
+                id: 'download',
+                label:
+                  details.downloadLabel ?? t('common.download', isPolish ? 'Pobierz' : 'Download'),
+                onClick: details.onDownload,
+              },
+            ]
+          : []),
+        ...(details.extraActions ?? []),
+      ]
+    : undefined;
+
+  const actionRows = [actions?.resolutions, actions?.informational, actions?.time].filter(
+    (row): row is StandardPreviewAction[] => !!row && row.length > 0
+  );
+
+  const footer =
+    ai || relations || actionRows.length > 0 ? (
+      // canon §7.3 — footer cards stacked space-y-2.5, bez dividerów między kartami.
+      <div className="space-y-2.5">
+        {/* Blok 4 — ramka AI */}
+        {ai ? (
+          <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
+            <PreviewAIHintStrip {...ai} />
+          </div>
+        ) : null}
+
+        {/* Blok 5 — Relations */}
+        {relations ? (
+          <PreviewRelations
+            items={relations}
+            emptyLabel={
+              relationsEmptyLabel ?? t('common.noRelations', isPolish ? 'Brak powiązań' : 'No relations')
+            }
+          />
+        ) : null}
+
+        {/* Blok 6 — pełny blok akcji na dole */}
+        {actionRows.length > 0 ? (
+          <div className="space-y-2.5 py-1">
+            {actionRows.map((row, idx) => (
+              <ActionGridRow key={idx} actions={row} />
+            ))}
+          </div>
+        ) : null}
+      </div>
+    ) : undefined;
+
+  return (
+    <PreviewPaneShell
+      title={title}
+      onClose={onClose}
+      className={className}
+      actions={
+        <>
+          {onTogglePin ? (
+            <button
+              type="button"
+              onClick={onTogglePin}
+              className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-colors ${
+                pinned
+                  ? 'text-[var(--c-info)] bg-slate-100 dark:bg-white/[0.10]'
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
+              }`}
+              title={pinned ? 'Unpin' : 'Pin for comparison'}
+            >
+              {pinned ? <PinOff size={13} /> : <Pin size={13} />}
+            </button>
+          ) : null}
+          {headerExtra}
+          {onOpenFull ? (
+            <button
+              type="button"
+              onClick={onOpenFull}
+              className="inline-flex items-center gap-2 h-8 px-3 rounded-full border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+              title={openLabel ?? t('common.open', isPolish ? 'Otwórz' : 'Open')}
+            >
+              <ExternalLink size={13} />
+              {openLabel ?? t('common.open', isPolish ? 'Otwórz' : 'Open')}
+            </button>
+          ) : null}
+        </>
+      }
+      footer={footer}
+    >
+      {loading ? (
+        <div className="space-y-2 animate-pulse" data-testid="standard-preview-loading">
+          <div className={SKELETON_LINE_1} />
+          <div className={SKELETON_LINE_2} />
+          <div className={SKELETON_LINE_3} />
+          <div className={SKELETON_LINE_4} />
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {/* Blok 2 — karta meta */}
+          {meta ? (
+            <PreviewMetaCard pills={meta.pills} trailing={meta.trailing}>
+              {meta.recommendation ? (
+                <div className="mt-2 text-xs text-c-text-muted">{meta.recommendation}</div>
+              ) : null}
+            </PreviewMetaCard>
+          ) : null}
+
+          {/* Blok 3 — Details z ⋮ */}
+          {details ? (
+            <PreviewDetailsSection
+              text={details.text}
+              loading={details.loading}
+              label={details.label}
+              customActions={detailsActions?.length ? detailsActions : undefined}
+            />
+          ) : null}
+
+          {children}
+        </div>
+      )}
+    </PreviewPaneShell>
+  );
+};
+
+export default StandardPreview;
