@@ -5,6 +5,7 @@
 
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
+import { ValidationError } from './ErrorHandling.js';
 import { type FormulaAST, parseFormula } from './formulaEngine.js';
 
 // ---------------------------------------------------------------------------
@@ -451,9 +452,7 @@ export function buildFilterClause(
   }
 
   if (depth > MAX_FILTER_GROUP_DEPTH) {
-    throw new Error(
-      `Filter group nesting exceeds maximum depth of ${MAX_FILTER_GROUP_DEPTH}`
-    );
+    throw new Error(`Filter group nesting exceeds maximum depth of ${MAX_FILTER_GROUP_DEPTH}`);
   }
 
   const logic = (filters.logic || 'and').toUpperCase();
@@ -705,13 +704,203 @@ function astToSql(
     }
 
     case 'function': {
-      // For filter formulas, we don't support function calls in SQL generation.
-      // Return TRUE as a safe fallback.
-      return { sql: 'TRUE', nextIdx: idx };
+      return functionToSql(node, params, idx, fieldNameToId, fieldTypes);
     }
 
     default:
       return { sql: 'TRUE', nextIdx: idx };
+  }
+}
+
+/**
+ * Translate a subset of the formula engine's built-in functions
+ * (see BUILTINS in formulaEngine.ts) into parameterized Postgres SQL
+ * fragments, for use inside filterByFormula's generated WHERE clause.
+ *
+ * Every function argument is itself compiled via astToSql, so nested
+ * field references / literals / operators / functions all thread through
+ * the same parameterization ($N placeholders only — no user value is ever
+ * concatenated into the SQL string).
+ *
+ * Functions NOT in this list throw a ValidationError (surfaced to the API
+ * caller as HTTP 400) rather than silently degrading the filter to a
+ * no-op TRUE, which would hide the fact that filtering never happened.
+ */
+function functionToSql(
+  node: FormulaAST,
+  params: unknown[],
+  startIdx: number,
+  fieldNameToId: Map<string, string>,
+  fieldTypes: Map<string, string>
+): { sql: string; nextIdx: number } {
+  const fnName = (node.name || '').toUpperCase();
+  const children = node.children ?? [];
+
+  /** Compile all children in order, threading the param index through. */
+  function compileArgs(count?: number): { sqls: string[]; nextIdx: number } {
+    const wanted = count === undefined ? children.length : count;
+    const sqls: string[] = [];
+    let idx = startIdx;
+    for (let i = 0; i < wanted; i++) {
+      const child = children[i];
+      if (!child) {
+        // Missing optional argument: treat as SQL NULL literal so callers
+        // that expect e.g. ROUND(x) (no explicit decimals) still compile.
+        sqls.push('NULL');
+        continue;
+      }
+      const { sql, nextIdx } = astToSql(child, params, idx, fieldNameToId, fieldTypes);
+      sqls.push(sql);
+      idx = nextIdx;
+    }
+    return { sqls, nextIdx: idx };
+  }
+
+  // Cast an already-compiled text expression to ::text explicitly, since
+  // the argument might be a numeric-cast field ref or a bare literal.
+  const asText = (expr: string) => `(${expr})::text`;
+  const asNumeric = (expr: string) => `(${expr})::numeric`;
+
+  switch (fnName) {
+    // ── Text functions ─────────────────────────────────────────────────
+    case 'LOWER': {
+      const { sqls, nextIdx } = compileArgs(1);
+      return { sql: `lower(${asText(sqls[0])})`, nextIdx };
+    }
+    case 'UPPER': {
+      const { sqls, nextIdx } = compileArgs(1);
+      return { sql: `upper(${asText(sqls[0])})`, nextIdx };
+    }
+    case 'TRIM': {
+      const { sqls, nextIdx } = compileArgs(1);
+      return { sql: `trim(${asText(sqls[0])})`, nextIdx };
+    }
+    case 'LEN': {
+      const { sqls, nextIdx } = compileArgs(1);
+      return { sql: `length(${asText(sqls[0])})`, nextIdx };
+    }
+    case 'LEFT': {
+      const { sqls, nextIdx } = compileArgs(2);
+      return {
+        sql: `substring(${asText(sqls[0])} from 1 for greatest(${asNumeric(sqls[1])}::int, 0))`,
+        nextIdx,
+      };
+    }
+    case 'RIGHT': {
+      const { sqls, nextIdx } = compileArgs(2);
+      const text = asText(sqls[0]);
+      const n = `${asNumeric(sqls[1])}::int`;
+      return {
+        sql: `substring(${text} from greatest(length(${text}) - greatest(${n}, 0) + 1, 1))`,
+        nextIdx,
+      };
+    }
+    case 'CONCATENATE':
+    case 'CONCAT': {
+      const { sqls, nextIdx } = compileArgs();
+      if (sqls.length === 0) return { sql: `''`, nextIdx };
+      return { sql: `concat(${sqls.map((s) => asText(s)).join(', ')})`, nextIdx };
+    }
+
+    // ── Numeric functions ──────────────────────────────────────────────
+    case 'ABS': {
+      const { sqls, nextIdx } = compileArgs(1);
+      return { sql: `abs(${asNumeric(sqls[0])})`, nextIdx };
+    }
+    case 'ROUND': {
+      // ROUND(x) or ROUND(x, decimals)
+      if (children.length >= 2) {
+        const { sqls, nextIdx } = compileArgs(2);
+        return { sql: `round(${asNumeric(sqls[0])}, ${asNumeric(sqls[1])}::int)`, nextIdx };
+      }
+      const { sqls, nextIdx } = compileArgs(1);
+      return { sql: `round(${asNumeric(sqls[0])})`, nextIdx };
+    }
+
+    // ── Logical functions ──────────────────────────────────────────────
+    case 'IF': {
+      const { sqls, nextIdx } = compileArgs(3);
+      const [cond, whenTrue, whenFalse] = sqls;
+      return {
+        sql: `(CASE WHEN (${cond}) THEN (${whenTrue}) ELSE (${whenFalse}) END)`,
+        nextIdx,
+      };
+    }
+    // NOTE: formulaEngine's tokenizer treats AND/OR/NOT as infix/prefix
+    // keyword operators (see KEYWORDS/OPERATOR handling in formulaEngine.ts),
+    // so `AND(a, b, c)` as an n-ary function call is not reachable through
+    // parseFormula today — only the infix `a AND b` form is (handled above
+    // in the `case 'operator'` branch). BUILTINS.AND/OR/NOT do exist as
+    // evaluator functions though (for ASTs built programmatically rather
+    // than parsed from a string), so these cases translate them correctly
+    // for forward-compatibility / defense in depth.
+    case 'AND': {
+      const { sqls, nextIdx } = compileArgs();
+      if (sqls.length === 0) return { sql: 'TRUE', nextIdx };
+      return { sql: `(${sqls.map((s) => `(${s})`).join(' AND ')})`, nextIdx };
+    }
+    case 'OR': {
+      const { sqls, nextIdx } = compileArgs();
+      if (sqls.length === 0) return { sql: 'FALSE', nextIdx };
+      return { sql: `(${sqls.map((s) => `(${s})`).join(' OR ')})`, nextIdx };
+    }
+    case 'NOT': {
+      const { sqls, nextIdx } = compileArgs(1);
+      return { sql: `NOT (${sqls[0]})`, nextIdx };
+    }
+
+    // ── Date functions (simple subset) ─────────────────────────────────
+    case 'DATETIME_DIFF': {
+      // DATETIME_DIFF(date1, date2, unit) -> date1 - date2 expressed in `unit`.
+      // Mirrors formulaEngine's DATEDIFF(d1, d2, unit) semantics: positive
+      // when date1 is later than date2. Only a safe, literal unit suffix is
+      // ever interpolated (validated against an allowlist) — dates/values
+      // stay fully parameterized.
+      const unitArg = children[2];
+      const unit =
+        unitArg && unitArg.type === 'literal'
+          ? String(unitArg.value ?? 'days').toLowerCase()
+          : 'days';
+      if (!VALID_INTERVAL_UNITS.has(unit)) {
+        throw new ValidationError(`unsupported unit in filterByFormula DATETIME_DIFF: ${unit}`);
+      }
+      const { sqls, nextIdx } = compileArgs(2);
+      const [d1, d2] = sqls;
+      const epochDiff = `(EXTRACT(EPOCH FROM (${d1})::timestamptz) - EXTRACT(EPOCH FROM (${d2})::timestamptz))`;
+      const secondsPerUnit: Record<string, number> = {
+        minutes: 60,
+        hours: 3600,
+        days: 86400,
+        weeks: 604800,
+        months: 2629800, // 30.4375 days average
+        years: 31557600, // 365.25 days average
+      };
+      const divisor = secondsPerUnit[unit] ?? 86400;
+      return { sql: `floor(${epochDiff} / ${divisor})`, nextIdx };
+    }
+    case 'DATEADD': {
+      const unitArg = children[2];
+      const unit =
+        unitArg && unitArg.type === 'literal'
+          ? String(unitArg.value ?? 'days').toLowerCase()
+          : 'days';
+      if (!VALID_INTERVAL_UNITS.has(unit)) {
+        throw new ValidationError(`unsupported unit in filterByFormula DATEADD: ${unit}`);
+      }
+      const { sqls, nextIdx } = compileArgs(2);
+      const [date, count] = sqls;
+      return {
+        sql: `((${date})::timestamptz + (${asNumeric(count)} || ' ${unit}')::interval)`,
+        nextIdx,
+      };
+    }
+
+    default:
+      // Deliberately NOT a silent TRUE fallback: an unsupported function
+      // would otherwise make the whole filter a no-op while looking like
+      // it "worked". Surface a clear, controlled error instead (400 via
+      // ValidationError / handleRouteError at the route layer).
+      throw new ValidationError(`unsupported function in filterByFormula: ${fnName}`);
   }
 }
 
@@ -722,16 +911,24 @@ function buildFormulaFilterClause(
   fieldNameToId: Map<string, string>,
   fieldTypes: Map<string, string>
 ): { sql: string; nextIdx: number } {
+  let ast: FormulaAST;
   try {
-    const ast = parseFormula(formula);
-    return astToSql(ast, params, startIdx, fieldNameToId, fieldTypes);
+    ast = parseFormula(formula);
   } catch (e) {
+    // Genuine parse/syntax errors (bad formula text) fall back to a no-op
+    // TRUE filter, same as before — the formula is simply not applied.
     logger.warn('[ViewQueryEngine] filterByFormula parse failed', {
       formula,
       error: (e as Error).message,
     });
     return { sql: 'TRUE', nextIdx: startIdx };
   }
+
+  // Deliberately NOT wrapped in try/catch: astToSql throws a ValidationError
+  // for unsupported functions, and that must propagate to the caller as a
+  // controlled 400 rather than being silently swallowed into a TRUE no-op
+  // (which would hide the fact that the filter never ran).
+  return astToSql(ast, params, startIdx, fieldNameToId, fieldTypes);
 }
 
 // ---------------------------------------------------------------------------
