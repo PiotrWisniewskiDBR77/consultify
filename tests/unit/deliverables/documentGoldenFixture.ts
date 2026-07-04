@@ -11,9 +11,10 @@
  *   - paragraph, bullet list, numbered list
  *   - callout, quote (with citation)
  *   - table (KPI-strip-shaped + a regular data table)
- *   - chart block (bar chart — falls back to a text placeholder in the
- *     test environment because `chartjs-node-canvas` is not installed,
- *     which is itself a legitimate, deterministic contract to assert)
+ *   - chart block (bar chart — rasterized to a real PNG via `@napi-rs/canvas`
+ *     + chart.js and embedded as an image, C5; the rasterizer forces
+ *     chart.js's `BasicPlatform` so this renders identically under Node
+ *     and Vitest/jsdom — see documentChartRasterizer.ts)
  *   - footnote block + inline citation (`inline_marker` style)
  *   - an appendix section (page-break-before + lettered numbering)
  *   - sources & traceability list

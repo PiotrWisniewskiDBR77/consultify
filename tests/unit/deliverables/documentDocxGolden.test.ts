@@ -45,6 +45,12 @@ async function unzipDocx(buffer: Buffer): Promise<UnzippedDocx> {
   return { document, styles, contentTypes, coreProps, footnotes };
 }
 
+/** List the embedded media parts (images) inside a DOCX ZIP package. */
+async function listDocxMediaParts(buffer: Buffer): Promise<string[]> {
+  const zip = await JSZip.loadAsync(buffer);
+  return Object.keys(zip.files).filter((name) => name.startsWith('word/media/'));
+}
+
 /** Count non-overlapping occurrences of a literal substring. */
 function countOccurrences(haystack: string, needle: string): number {
   if (needle.length === 0) return 0;
@@ -135,18 +141,21 @@ describe('Document Studio golden DOCX export (C4)', () => {
     expect(document).toContain('EMEA');
   });
 
-  it('renders the chart block as Figure 1 with a deterministic placeholder (no chart-canvas backend in test env)', async () => {
+  it('renders the chart block as Figure 1 with a real embedded ImageRun (C5 — @napi-rs/canvas)', async () => {
     const buffer = await renderDocumentSchemaToDocxBuffer(makeGoldenDocumentSchema());
     const { document } = await unzipDocx(buffer);
+    const media = await listDocxMediaParts(buffer);
     expect(document).toContain('Figure 1 — Revenue by Quarter');
-    // documentChartRasterizer.renderChartBlockToPng() returns null when
-    // `chartjs-node-canvas` is not installed (true for this test env) —
-    // the renderer degrades to a typographic placeholder rather than an
-    // <w:drawing> image run. This is the current, intentional contract;
-    // see the report for the follow-up recommendation to add a canvas
-    // dependency + real ImageRun assertion in CI.
-    expect(document).toContain('chart placeholder');
-    expect(document).toContain('rasterization fallback');
+    // C5 — `documentChartRasterizer.renderChartBlockToPng()` rasterizes via
+    // `@napi-rs/canvas` (prebuilt binaries, no native build) + chart.js,
+    // forcing chart.js's `BasicPlatform` explicitly so the same code path
+    // renders identically under Node (production) and Vitest's jsdom
+    // environment. The DOCX must embed a real `<w:drawing>`/media image
+    // part rather than falling through to the text placeholder.
+    expect(media.length).toBeGreaterThan(0);
+    expect(document).toContain('<w:drawing>');
+    expect(document).not.toContain('chart placeholder');
+    expect(document).not.toContain('rasterization fallback');
   });
 
   it('appends the inline_marker citation to the sourced paragraph and lists it in Sources & traceability', async () => {

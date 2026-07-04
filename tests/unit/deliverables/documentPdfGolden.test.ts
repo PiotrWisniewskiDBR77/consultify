@@ -108,15 +108,20 @@ describe('Document Studio golden PDF export (C4)', () => {
     expect(text.indexOf('Table 1')).toBeLessThan(text.indexOf('Table 2'));
   });
 
-  it('renders the chart block as Figure 1 with a deterministic placeholder (no chart-canvas backend in test env)', async () => {
+  it('renders the chart block as Figure 1 with a real embedded raster image (C5 — @napi-rs/canvas)', async () => {
     const buffer = await renderDocumentSchemaToPdfBuffer(makeGoldenDocumentSchema());
     const text = await extractPdfText(buffer);
     expectContains(text, 'Figure 1');
     expectContains(text, 'Revenue by Quarter');
-    // Same fallback contract as the DOCX renderer (documented there) —
-    // `renderChartBlockToPng()` returns null without `chartjs-node-canvas`.
-    expectContains(text, 'chart placeholder');
-    expectContains(text, 'rasterization fallback');
+    // C5 — `renderChartBlockToPng()` rasterizes via `@napi-rs/canvas` +
+    // chart.js (prebuilt binaries, no native build / no system cairo/pango
+    // needed). The PDF must embed a real `/Image` XObject rather than
+    // falling through to the "chart placeholder" text fallback.
+    expect(text).not.toContain('chart placeholder');
+    expect(text).not.toContain('rasterization fallback');
+    const raw = buffer.toString('latin1');
+    expect(raw).toContain('/Subtype /Image');
+    expect(raw).toMatch(/\/Filter\s*\/DCTDecode|\/Filter\s*\/FlateDecode/);
   });
 
   it('appends the inline_marker [1] citation and lists the source in Sources & traceability', async () => {
