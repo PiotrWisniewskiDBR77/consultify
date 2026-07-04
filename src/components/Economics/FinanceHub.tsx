@@ -116,6 +116,31 @@ import { ValuationVisualsPanel } from './panels/ValuationVisualsPanel';
 import { ValueOfficePanel } from './panels/ValueOfficePanel';
 import { VarianceBridgePanel } from './panels/VarianceBridgePanel';
 
+/**
+ * Guard against raw JS Date `.toString()` leaking into a statement title
+ * (owner 2026-07-04 saw "Thu Dec 31 2026 00:00:00 GMT+0000 (Coordinated Universal
+ * Time)" as a card name). If the value looks like a JS/ISO date-string, render a
+ * compact locale date instead; otherwise pass the label through unchanged.
+ */
+const JS_DATE_TOSTRING_RE =
+  /^[A-Z][a-z]{2}\s+[A-Z][a-z]{2}\s+\d{1,2}\s+\d{4}\b/; // "Thu Dec 31 2026 ..."
+function sanitizeStatementTitle(raw?: string | null): string {
+  const value = String(raw ?? '').trim();
+  if (!value) return '';
+  const looksLikeDate = JS_DATE_TOSTRING_RE.test(value);
+  if (looksLikeDate) {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+    }
+  }
+  return value;
+}
+
 function isInvestmentAnalysisType(value: unknown): boolean {
   const normalized = String(value || '')
     .trim()
@@ -400,11 +425,10 @@ export const FinanceHub: React.FC = () => {
               : [];
         return {
           id: String(statement.id),
-          title: String(
-            statement.entity_name ||
-              statement.period_label ||
-              `${t('finance.pack.titleFallback', 'Statement Pack')} ${statement.period_end || ''}`
-          ),
+          title:
+            sanitizeStatementTitle(statement.entity_name) ||
+            sanitizeStatementTitle(statement.period_label) ||
+            `${t('finance.pack.titleFallback', 'Statement Pack')} ${sanitizeStatementTitle(statement.period_end)}`.trim(),
           kind: 'statements',
           status:
             effectiveReadiness === 'ready'
@@ -2003,7 +2027,10 @@ export const FinanceHub: React.FC = () => {
       const statementRow: FinanceStatementRow = pack
         ? {
             id: String(pack.id),
-            title: String(pack.entity_name || pack.period_label || pack.id),
+            title:
+              sanitizeStatementTitle(pack.entity_name) ||
+              sanitizeStatementTitle(pack.period_label) ||
+              String(pack.id),
             kind: 'statements',
             status:
               String(pack.pack_readiness_status || '').toLowerCase() === 'ready'
