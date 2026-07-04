@@ -6,6 +6,7 @@
 import { Request, Response, Router } from 'express';
 
 import { getDatabase } from '../../database/index.js';
+import { tableExists } from '../../utils/DbPromise.js';
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
@@ -186,13 +187,26 @@ router.get('/', async (req: AuthRequest, res: Response) => {
     if (!organizationId) return;
     const { status, projectId } = req.query as { status?: string; projectId?: string };
 
+    // Fail-soft: the workflow-status overlay lives in `assessment_workflows`, an
+    // optional table that is absent on some deployments (e.g. demo). Without this
+    // guard the LEFT JOIN throws `relation "assessment_workflows" does not exist`
+    // and the outer catch turns it into a bare 500 — breaking the live NewReport
+    // flow (GET /api/assessments?status=APPROVED). When the table is missing we
+    // drop the join and fall back to the assessment's own `a.status`, still
+    // returning a correct 200 list. When present, behaviour is unchanged.
+    const hasWorkflows = await tableExists('assessment_workflows').catch(() => false);
+    const statusExpr = hasWorkflows ? 'COALESCE(w.status, a.status)' : 'a.status';
+    const workflowJoin = hasWorkflows
+      ? 'LEFT JOIN assessment_workflows w ON w.assessment_id = a.id'
+      : '';
+
     const assessments = await new Promise<any[]>((resolve, reject) => {
       const params: (string | number)[] = [organizationId];
-      let sql = `SELECT 
+      let sql = `SELECT
                     a.id,
                     a.organization_id as organizationId,
                     a.name,
-                    COALESCE(w.status, a.status) as status,
+                    ${statusExpr} as status,
                     a.created_at as createdAt,
                     a.updated_at as updatedAt,
                     COALESCE(a.framework_type, a.assessment_type, 'DRD') as type,
@@ -209,11 +223,11 @@ router.get('/', async (req: AuthRequest, res: Response) => {
                     a.answers_json,
                     a.score_summary
                 FROM assessments a
-                LEFT JOIN assessment_workflows w ON w.assessment_id = a.id
+                ${workflowJoin}
                 WHERE a.organization_id = ?`;
 
       if (status) {
-        sql += ' AND UPPER(COALESCE(w.status, a.status)) = ?';
+        sql += ` AND UPPER(${statusExpr}) = ?`;
         params.push(status.toUpperCase());
       }
 
