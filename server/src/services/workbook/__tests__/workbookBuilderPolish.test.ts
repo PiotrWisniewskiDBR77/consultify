@@ -73,6 +73,11 @@ async function workbookXml(buf: Buffer): Promise<string> {
   const zip = await JSZip.loadAsync(buf);
   return zip.file('xl/workbook.xml')!.async('string');
 }
+/** Raw XML of the first worksheet (xl/worksheets/sheet1.xml). */
+async function firstSheetXml(buf: Buffer): Promise<string> {
+  const zip = await JSZip.loadAsync(buf);
+  return zip.file('xl/worksheets/sheet1.xml')!.async('string');
+}
 
 // ---------------------------------------------------------------------------
 // TASK 1 — fullCalcOnLoad + cached formula results
@@ -267,5 +272,80 @@ describe('polish/4 — data validation on Assumptions inputs', () => {
     const asm = wb.getWorksheet('Assumptions')!;
     expect(asm.getRow(2).getCell(2).dataValidation?.type).toBe('whole');
     expect(asm.getRow(3).getCell(2).dataValidation?.type).toBe('whole');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// TASK 5 (hardening) — formula sanitizer: leading `=` MUST NOT reach XML `<f>`
+//
+// ExcelJS writes the formula string verbatim into the worksheet XML `<f>`
+// element. A valid Excel formula in XML is `SUM(A1:A2)` — a leading `=`
+// (`<f>=SUM(A1:A2)</f>`) makes Excel treat the file as corrupt / render #NAME?.
+// Our schema+prompt convention emits `=`-prefixed formulas, so the builder MUST
+// strip the leading `=` at write time. RED on base (verbatim passthrough left
+// `<f>=…</f>`); GREEN after sanitizeFormula().
+// ---------------------------------------------------------------------------
+describe('hardening — formula sanitizer strips leading "=" before ExcelJS', () => {
+  const SEED: WorkbookSchema = {
+    title: 'Sanitize',
+    sheets: [
+      {
+        name: 'S',
+        columns: [
+          { key: 'a', header: 'A', type: 'number' },
+          { key: 'b', header: 'B', type: 'number' },
+          { key: 'sum', header: 'Sum', type: 'number' },
+        ],
+        rows: [
+          { cells: { a: { value: 1 }, b: { value: 2 }, sum: { formula: '=A1+B1' } } },
+          { cells: { a: { value: 3 }, b: { value: 4 }, sum: { formula: '=SUM(A2:B2)' } } },
+        ],
+      },
+    ],
+  };
+
+  it('worksheet XML <f> element has NO leading "=" (real file is valid)', async () => {
+    const buf = await buildWorkbookBuffer(SEED);
+    const xml = await firstSheetXml(buf);
+    const formulas = [...xml.matchAll(/<f[^>]*>([^<]*)<\/f>/g)].map((m) => m[1]);
+    expect(formulas.length).toBeGreaterThanOrEqual(2);
+    // The load-bearing assertion: NO formula in the XML may start with '='.
+    for (const f of formulas) {
+      expect(f.startsWith('=')).toBe(false);
+    }
+    // And the bodies are preserved (meaning unchanged).
+    expect(formulas.some((f) => f.replace(/\s/g, '') === 'A1+B1')).toBe(true);
+    expect(formulas.some((f) => f.replace(/\s/g, '') === 'SUM(A2:B2)')).toBe(true);
+  });
+
+  it('ExcelJS read-back formula is free of its leading "=" (row 2 = 1st data row)', async () => {
+    const buf = await buildWorkbookBuffer(SEED);
+    const wb = await load(buf);
+    // Builder emits a header row (Excel row 1), so the 1st data formula is row 2.
+    const cell = wb.getWorksheet('S')!.getRow(2).getCell(3).value as { formula?: string };
+    expect(cell.formula).toBeDefined();
+    expect(cell.formula!.startsWith('=')).toBe(false);
+    expect(cell.formula!.replace(/\s/g, '')).toBe('A1+B1');
+  });
+
+  it('a double "==" is also collapsed to a valid formula (no leading "=")', async () => {
+    const seed: WorkbookSchema = {
+      title: 'Double',
+      sheets: [
+        {
+          name: 'S',
+          columns: [
+            { key: 'a', header: 'A', type: 'number' },
+            { key: 'x', header: 'X', type: 'number' },
+          ],
+          rows: [{ cells: { a: { value: 5 }, x: { formula: '==A1*2' } } }],
+        },
+      ],
+    };
+    const buf = await buildWorkbookBuffer(seed);
+    const xml = await firstSheetXml(buf);
+    const formulas = [...xml.matchAll(/<f[^>]*>([^<]*)<\/f>/g)].map((m) => m[1]);
+    expect(formulas.every((f) => !f.startsWith('='))).toBe(true);
+    expect(formulas.some((f) => f.replace(/\s/g, '') === 'A1*2')).toBe(true);
   });
 });
