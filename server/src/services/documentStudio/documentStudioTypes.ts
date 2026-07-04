@@ -1079,6 +1079,31 @@ export interface DocumentEditorProposal {
    * between approval and execute on contended workflows).
    */
   versionAfterId?: string;
+  /**
+   * C2 hardening — durable-persistence outcome for THIS write of the
+   * proposal (create / approve / reject / execute all re-stamp it).
+   * Additive + optional so existing consumers that only read the
+   * proposal fields above are unaffected.
+   *
+   * `persisted: true`  — the durable-write survived a DB round trip
+   *   (INSERT/UPSERT confirmed `success`). The in-process cache and
+   *   the DB row agree.
+   * `persisted: false` — the durable write did NOT confirm; the
+   *   caller is running on the in-process cache only. `degraded`
+   *   distinguishes *why*:
+   *     - `degraded: 'schema_missing'` — the backing table doesn't
+   *       exist yet (pre-migration environment). Expected/tolerated;
+   *       not a production incident by itself.
+   *     - `degraded: 'db_error'` — the table exists but the write
+   *       failed (connection loss, constraint violation, etc.). A
+   *       real signal that this proposal is at risk of being lost on
+   *       process restart.
+   */
+  persistence?: {
+    persisted: boolean;
+    degraded?: 'schema_missing' | 'db_error';
+    reason?: string;
+  };
 }
 
 /**

@@ -25,6 +25,7 @@ import {
   getWave5Artifact,
   markWave5ArtifactExported,
 } from '../wave5ArtifactRuntimeService.js';
+import logger from '../../utils/Logger.js';
 import { getActiveOrgLogo } from './documentAssetRegistryService.js';
 import { generateBlockProse } from './documentBlockProseGenerator.js';
 import {
@@ -195,11 +196,29 @@ function schemaOverlayKey(artifactId: string, organizationId: string): string {
 // `20260603_document_studio_editor_state.sql`) so proposals, the audit
 // ledger, and the schema overlay survive a server restart.
 //
-// Reads hydrate the cache lazily once per (artifact, organization). Writes
-// update the cache synchronously and persist asynchronously (best-effort:
-// a DAO failure never aborts the in-process mutation that already
-// succeeded). A `void`-ed promise keeps the public API synchronous where
-// it already was.
+// Reads hydrate the cache lazily once per (artifact, organization).
+//
+// PROPOSAL writes (C2 hardening, 2026-07-04): the durable write is now
+// AWAITED on the request path that creates/approves/rejects/executes a
+// proposal — `persistProposalWriteThrough` is `async` and every call
+// site awaits it. This closes the kill-window where a proposal was
+// cached in-process (so the response looked successful) but never
+// reached Postgres, and a process restart before the fire-and-forget
+// flush completed silently lost the proposal.
+//
+// The DAO itself never throws (`persistProposal` always resolves to a
+// `PersistOutcome`) and a missing migration / table degrades to the
+// in-process Map — that fallback is intentional and stays. What
+// changed is that the degradation is no longer silent: it is stamped
+// onto `proposal.persistence` (additive field, existing consumers
+// unaffected) and `db_error` degradations (table exists but the write
+// failed — a real risk of loss, unlike a pre-migration environment)
+// are logged at `error` level so they are visible in prod monitoring.
+//
+// The audit ledger (`pushAuditEntry`) and the schema-overlay cache
+// remain fire-and-forget: the audit trail is a secondary log, not the
+// proposal itself, and the schema overlay is a separate surface
+// (rollback / content-block insert) outside this slice's scope.
 // =============================================================================
 
 /** Tracks which (artifact, organization) pairs have been hydrated. */
@@ -251,10 +270,42 @@ async function ensureEditorStateHydrated(
   }
 }
 
-/** Write-through helper: cache the proposal synchronously, persist async. */
-function persistProposalWriteThrough(proposal: DocumentEditorProposal): void {
+/**
+ * Write-through helper: cache the proposal synchronously, AWAIT the
+ * durable write, and stamp the outcome onto `proposal.persistence`
+ * (mutated in place — callers hold the same reference they pass in
+ * and later return to the route layer, so the stamp round-trips to
+ * the API response for free).
+ *
+ * Never throws: `daoPersistProposal` already resolves to a
+ * `PersistOutcome` for every failure path. A `db_error` degradation
+ * (table exists, write failed) is logged at `error` level — that is
+ * the one case that represents real data-loss risk. A
+ * `schema_missing` degradation (pre-migration environment) logs at
+ * `warn` — expected/tolerated, the in-process cache remains
+ * authoritative for the life of the process.
+ */
+async function persistProposalWriteThrough(
+  proposal: DocumentEditorProposal
+): Promise<DocumentEditorProposal> {
   proposalStore.set(proposalKey(proposal.artifactId, proposal.proposalId), proposal);
-  void daoPersistProposal(proposal);
+  const outcome = await daoPersistProposal(proposal);
+  proposal.persistence = {
+    persisted: outcome.ok,
+    degraded: outcome.degraded,
+    reason: outcome.reason,
+  };
+  if (!outcome.ok) {
+    const logFn = outcome.degraded === 'db_error' ? logger.error : logger.warn;
+    logFn('[DocumentStudio] proposal durable write did not confirm', {
+      proposalId: proposal.proposalId,
+      artifactId: proposal.artifactId,
+      organizationId: proposal.organizationId,
+      degraded: outcome.degraded,
+      reason: outcome.reason,
+    });
+  }
+  return proposal;
 }
 
 /** Write-through helper: cache the overlay synchronously, persist async. */
@@ -1094,7 +1145,7 @@ export async function createLocalEditProposal(
     // accept-proposal / apply path lands.
     versionBeforeId: resolveProposalVersionBeforeId(artifactId, organizationId),
   };
-  persistProposalWriteThrough(proposal);
+  await persistProposalWriteThrough(proposal);
   pushAuditEntry({
     auditId: makeId('doc-audit'),
     artifactId,
@@ -1200,7 +1251,7 @@ export async function createSectionEditProposal(
     // accept-proposal / apply path lands.
     versionBeforeId: resolveProposalVersionBeforeId(artifactId, organizationId),
   };
-  persistProposalWriteThrough(proposal);
+  await persistProposalWriteThrough(proposal);
   pushAuditEntry({
     auditId: makeId('doc-audit'),
     artifactId,
@@ -1298,7 +1349,7 @@ export async function createGlobalEditProposal(
     // accept-proposal / apply path lands.
     versionBeforeId: resolveProposalVersionBeforeId(artifactId, organizationId),
   };
-  persistProposalWriteThrough(proposal);
+  await persistProposalWriteThrough(proposal);
   pushAuditEntry({
     auditId: makeId('doc-audit'),
     artifactId,
@@ -1457,7 +1508,7 @@ export async function createMethodologyEditProposal(
     // accept-proposal / apply path lands.
     versionBeforeId: resolveProposalVersionBeforeId(artifactId, organizationId),
   };
-  persistProposalWriteThrough(proposal);
+  await persistProposalWriteThrough(proposal);
   pushAuditEntry({
     auditId: makeId('doc-audit'),
     artifactId,
@@ -1583,7 +1634,7 @@ export async function createSourceEditProposal(
     // accept-proposal / apply path lands.
     versionBeforeId: resolveProposalVersionBeforeId(artifactId, organizationId),
   };
-  persistProposalWriteThrough(proposal);
+  await persistProposalWriteThrough(proposal);
   pushAuditEntry({
     auditId: makeId('doc-audit'),
     artifactId,
@@ -1695,7 +1746,7 @@ export async function createTransformativeEditProposal(
     // accept-proposal / apply path lands.
     versionBeforeId: resolveProposalVersionBeforeId(artifactId, organizationId),
   };
-  persistProposalWriteThrough(proposal);
+  await persistProposalWriteThrough(proposal);
   pushAuditEntry({
     auditId: makeId('doc-audit'),
     artifactId,
@@ -1854,7 +1905,7 @@ export async function approveEditProposal(params: {
     status: 'executed',
     executedAt,
   };
-  persistProposalWriteThrough(nextProposal);
+  await persistProposalWriteThrough(nextProposal);
   pushAuditEntry({
     auditId: makeId('doc-audit'),
     artifactId: params.artifactId,
@@ -1919,7 +1970,7 @@ export async function rejectEditProposal(params: {
     rejectedBy: params.userId,
     rejectedAt,
   };
-  persistProposalWriteThrough(nextProposal);
+  await persistProposalWriteThrough(nextProposal);
   pushAuditEntry({
     auditId: makeId('doc-audit'),
     artifactId: params.artifactId,
