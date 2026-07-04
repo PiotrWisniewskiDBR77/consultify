@@ -103,6 +103,14 @@ const fakePool = {
       return { rows: [], rowCount: 1 };
     }
 
+    if (s.startsWith('DELETE FROM tp_records WHERE id = $1')) {
+      const id = params[0] as string;
+      const existed = records.delete(id);
+      return { rows: [], rowCount: existed ? 1 : 0 };
+    }
+
+    if (s.startsWith('SELECT * FROM tp_row_policies')) return { rows: [], rowCount: 0 };
+
     throw new Error(`Unexpected SQL in fakePool: ${s}`);
   }),
 };
@@ -237,5 +245,39 @@ describe('Date dependency cascade auto-triggers on RecordsService.update', () =>
     await recordsService.updateRecord(p.id, { note: 'hello' }, 'user-1');
 
     expect(records.get(s.id)?.data[F_START]).toBe('2024-01-05');
+  });
+
+  it('creating a successor with a predecessor already out of sync cascades on create', async () => {
+    // Predecessor P finishes 2024-01-10, but the successor is created with a
+    // stale start date (2024-01-05) that predates P's finish — the cascade
+    // triggered on create must pull it forward.
+    const p = await recordsService.createRecord(
+      TABLE,
+      { [F_START]: '2024-01-01', [F_END]: '2024-01-10', [F_PRED]: [] },
+      'user-1'
+    );
+
+    const s = await recordsService.createRecord(
+      TABLE,
+      { [F_START]: '2024-01-05', [F_END]: '2024-01-08', [F_PRED]: [p.id] },
+      'user-1'
+    );
+
+    // ROOT ASSERTION: cascade runs on create, pulling S.start to P.end.
+    // Pre-fix (no cascade on create), S.start stays at its stale 2024-01-05.
+    expect(records.get(s.id)?.data[F_START]).toBe('2024-01-10');
+  });
+
+  it('deleting a predecessor triggers a cascade recompute (fail-soft, no crash)', async () => {
+    const { p, s } = await seedChain();
+    notifyRecordUpdated.mockClear();
+
+    const ok = await recordsService.deleteRecord(p.id, 'user-1');
+
+    expect(ok).toBe(true);
+    expect(records.has(p.id)).toBe(false);
+    // Successor still exists — deleting the predecessor must not crash the
+    // cascade path (fail-soft), and the record store is left consistent.
+    expect(records.has(s.id)).toBe(true);
   });
 });
