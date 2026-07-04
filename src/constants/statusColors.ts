@@ -138,13 +138,31 @@ export function getStatusStyle(status?: string): BadgeStyle {
 // PRIORITY MAP
 // ─────────────────────────────────────────────
 
+// Priorytet = CICHY chip (wzorzec Piotra 2026-07-04): kropka + tonowany tekst,
+// bez wypełnionej pigułki-alarmu. Wypełnienie alarmowe zostaje wyłącznie dla
+// STATUSÓW krytycznych (Blocked/Rejected) — priorytet to etykieta, nie alarm.
 export const PRIORITY_STYLES: Record<string, BadgeStyle> = {
-  CRITICAL: ALARM.red,
-  URGENT: ALARM.red,
-  HIGH: ALARM.amber,
-  MEDIUM: { ...SUBTLE.blue, tier: 'subtle' },
-  LOW: NEUTRAL,
-  NORMAL: NEUTRAL,
+  CRITICAL: {
+    bg: 'bg-transparent',
+    text: 'text-danger-700 dark:text-danger-300',
+    dot: 'bg-danger-500',
+    tier: 'subtle',
+  },
+  URGENT: {
+    bg: 'bg-transparent',
+    text: 'text-danger-700 dark:text-danger-300',
+    dot: 'bg-danger-500',
+    tier: 'subtle',
+  },
+  HIGH: {
+    bg: 'bg-transparent',
+    text: 'text-amber-700 dark:text-amber-400',
+    dot: 'bg-amber-500',
+    tier: 'subtle',
+  },
+  MEDIUM: { ...SUBTLE.blue, bg: 'bg-transparent' },
+  LOW: { ...NEUTRAL, bg: 'bg-transparent' },
+  NORMAL: { ...NEUTRAL, bg: 'bg-transparent' },
 };
 
 /**

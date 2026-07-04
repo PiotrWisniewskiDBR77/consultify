@@ -2226,7 +2226,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             <button
               type="button"
               onClick={() => setShowInitiativeWizard(true)}
-              className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-c-accent text-white hover:opacity-90 transition-colors duration-150"
+              className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium border border-navy-700/20 bg-navy-900 text-white hover:bg-navy-800 dark:border-white/20 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors duration-150"
             >
               <span>{t('initiatives.form.newInitiative')}</span>
             </button>
