@@ -692,6 +692,14 @@ const BRANCH_COLORS: Record<
 // V5-IDEA-43: Hierarchical color system — depth-based opacity modulation
 const DEPTH_OPACITY = [1, 0.85, 0.7, 0.55, 0.4] as const;
 
+/** Edge colors for AI-detected dependency types (AIDependencyDetector). */
+const DEP_EDGE_COLOR: Record<string, string> = {
+  depends_on: 'var(--c-danger)',
+  enables: 'var(--c-success)',
+  conflicts_with: 'var(--c-warning)',
+  related_to: 'var(--c-info)',
+};
+
 function getNodeDepth(data: IdeaNodeData) {
   return data._depth ?? 0;
 }
@@ -5762,12 +5770,6 @@ function MindMapInner({
             pushUndo();
             const edgeId = `dep-edge-${uid()}`;
             const depType = dep.type || 'related_to';
-            const DEP_EDGE_COLOR: Record<string, string> = {
-              depends_on: 'var(--c-danger)',
-              enables: 'var(--c-success)',
-              conflicts_with: 'var(--c-warning)',
-              related_to: 'var(--c-info)',
-            };
             const color = DEP_EDGE_COLOR[depType] ?? 'var(--c-info)';
             const newEdge: Edge = {
               id: edgeId,
