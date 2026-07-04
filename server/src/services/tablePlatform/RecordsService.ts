@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../../database/Database.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
 import logger from '../../utils/Logger.js';
+import { parseMaybeJson } from '../../utils/pgFlags.js';
 import attachmentService from './AttachmentService.js';
 import auditService from './AuditService.js';
 import { automationService } from './AutomationService.js';
@@ -280,6 +281,121 @@ async function getBaseIdForTable(tableId: string): Promise<string | null> {
   return (r.rows[0] as { base_id?: string } | undefined)?.base_id ?? null;
 }
 
+interface DateDependencyConfigShape {
+  startDateFieldId?: string;
+  endDateFieldId?: string;
+  durationFieldId?: string;
+  predecessorFieldId?: string;
+  dependencyTypeFieldId?: string;
+  lagFieldId?: string;
+  defaultDependencyType?: 'FS' | 'SS' | 'FF' | 'SF';
+  defaultLagDays?: number;
+  skipWeekends?: boolean;
+}
+
+/**
+ * Auto-trigger the DateDependencyEngine (#3): when a record's start/end/
+ * duration/predecessor cell changes and the table carries a
+ * `dependency_config`, recalculate the dependency chain and persist the
+ * cascade. Previously this engine only ran from a manual endpoint, so editing
+ * a predecessor's dates never moved its successors.
+ *
+ * Fail-soft: any error is swallowed so a scheduling recompute never blocks the
+ * originating write. Returns the ids of records whose dates actually changed
+ * (for realtime emission).
+ */
+async function triggerDateCascade(tableId: string, changedFieldIds: string[]): Promise<string[]> {
+  const db = getDatabase();
+  try {
+    const tableRow = (
+      await db.query('SELECT dependency_config FROM tp_tables WHERE id = $1', [tableId])
+    ).rows[0] as { dependency_config?: unknown } | undefined;
+    const config = parseMaybeJson<DateDependencyConfigShape | null>(
+      tableRow?.dependency_config ?? null,
+      null
+    );
+    if (!config || !config.startDateFieldId || !config.endDateFieldId) return [];
+
+    // Only run when a date-controlling field was actually touched.
+    const dateFieldIds = new Set(
+      [
+        config.startDateFieldId,
+        config.endDateFieldId,
+        config.durationFieldId,
+        config.predecessorFieldId,
+        config.dependencyTypeFieldId,
+        config.lagFieldId,
+      ].filter(Boolean) as string[]
+    );
+    if (!changedFieldIds.some((id) => dateFieldIds.has(id))) return [];
+
+    const { DateDependencyEngine } = await import('./DateDependencyEngine.js');
+
+    const recordsResult = await db.query('SELECT * FROM tp_records WHERE table_id = $1', [tableId]);
+    const rawRecords = recordsResult.rows as Array<{ id: string; data: Record<string, unknown> }>;
+
+    const toRecordDateData = (r: { id: string; data: Record<string, unknown> }) => ({
+      recordId: r.id,
+      startDate: (r.data?.[config.startDateFieldId!] as string | null) ?? null,
+      endDate: (r.data?.[config.endDateFieldId!] as string | null) ?? null,
+      duration: config.durationFieldId
+        ? ((r.data?.[config.durationFieldId] as number | null) ?? null)
+        : null,
+      predecessorIds: config.predecessorFieldId
+        ? Array.isArray(r.data?.[config.predecessorFieldId])
+          ? (r.data[config.predecessorFieldId] as string[])
+          : []
+        : [],
+      dependencyType: (config.dependencyTypeFieldId
+        ? ((r.data?.[config.dependencyTypeFieldId] as string) ??
+          config.defaultDependencyType ??
+          'FS')
+        : (config.defaultDependencyType ?? 'FS')) as 'FS' | 'SS' | 'FF' | 'SF',
+      lagDays: config.lagFieldId
+        ? Number(r.data?.[config.lagFieldId]) || (config.defaultLagDays ?? 0)
+        : (config.defaultLagDays ?? 0),
+    });
+
+    const engine = new DateDependencyEngine({
+      tableId,
+      startDateFieldId: config.startDateFieldId,
+      endDateFieldId: config.endDateFieldId,
+      durationFieldId: config.durationFieldId,
+      predecessorFieldId: config.predecessorFieldId,
+      dependencyTypeFieldId: config.dependencyTypeFieldId,
+      lagFieldId: config.lagFieldId,
+      defaultDependencyType: config.defaultDependencyType ?? 'FS',
+      defaultLagDays: config.defaultLagDays ?? 0,
+      skipWeekends: config.skipWeekends ?? false,
+    });
+
+    const updates = engine.recalculateDates(rawRecords.map(toRecordDateData));
+    const changedIds: string[] = [];
+    for (const update of updates) {
+      if (!update.changed) continue;
+      const raw = rawRecords.find((r) => r.id === update.recordId);
+      if (!raw) continue;
+      const newData = { ...raw.data };
+      if (update.startDate !== null) newData[config.startDateFieldId] = update.startDate;
+      if (update.endDate !== null) newData[config.endDateFieldId] = update.endDate;
+      if (config.durationFieldId && update.duration !== null)
+        newData[config.durationFieldId] = update.duration;
+      await db.query('UPDATE tp_records SET data = $1, updated_at = NOW() WHERE id = $2', [
+        JSON.stringify(newData),
+        update.recordId,
+      ]);
+      changedIds.push(update.recordId);
+    }
+    return changedIds;
+  } catch (e) {
+    logger.warn('[RecordsService] date dependency cascade failed', {
+      tableId,
+      error: (e as Error).message,
+    });
+    return [];
+  }
+}
+
 const recordsService = {
   async createRecord(
     tableId: string,
@@ -386,10 +502,7 @@ const recordsService = {
       try {
         const changedFieldIds = Object.keys(enrichedData);
         if (changedFieldIds.length > 0) {
-          const dependents = await relationService.recomputeDependentsOfSource(
-            id,
-            changedFieldIds
-          );
+          const dependents = await relationService.recomputeDependentsOfSource(id, changedFieldIds);
           for (const dep of dependents) {
             try {
               const depRow = (
@@ -696,6 +809,33 @@ const recordsService = {
         logger.warn('[RecordsService] cross-record recompute after update failed', {
           recordId,
           error: (crossRecomputeErr as Error).message,
+        });
+      }
+
+      // Auto-trigger date dependency cascade (#3): if the table has a
+      // dependency_config and a date-controlling field changed, recompute
+      // successors' dates. Fail-soft inside triggerDateCascade.
+      try {
+        const changedFieldIds = Object.keys(enrichedData);
+        const cascaded = await triggerDateCascade(tableId, changedFieldIds);
+        for (const recId of cascaded) {
+          if (recId === recordId) continue; // this record's realtime emits below
+          try {
+            const cRow = (await db.query('SELECT * FROM tp_records WHERE id = $1', [recId]))
+              .rows[0];
+            if (cRow) tablePlatformRealtime.notifyRecordUpdated(tableId, recId, cRow);
+          } catch {
+            /* realtime is best-effort */
+          }
+        }
+        // Re-read the edited record if the cascade also moved its own dates.
+        if (cascaded.includes(recordId)) {
+          after = (await db.query('SELECT * FROM tp_records WHERE id = $1', [recordId])).rows[0];
+        }
+      } catch (dateCascadeErr) {
+        logger.warn('[RecordsService] date cascade after update failed', {
+          recordId,
+          error: (dateCascadeErr as Error).message,
         });
       }
 
