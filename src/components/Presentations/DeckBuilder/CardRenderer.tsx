@@ -21,7 +21,12 @@ import { SmartLayoutBlock } from './blocks/SmartLayoutBlock';
 import { TableBlock } from './blocks/TableBlock';
 import { TimelineBlock } from './blocks/TimelineBlock';
 import { sanitizeDeckBlock, sanitizeDeckDisplayText } from './deckTextSanitizer';
-import { assignBlocksToRegions, selectLayout } from './layouts/LayoutEngine';
+import {
+  assignBlocksToRegions,
+  selectLayout,
+  verticalFillMode,
+  type VerticalFillMode,
+} from './layouts/LayoutEngine';
 import { BlockSourceBadge, CardSourceFooter } from './SourceTraceability';
 
 interface CardRendererProps {
@@ -87,6 +92,21 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
   }, [layout, card.blocks, card.composition]);
 
   const useGridLayout = layout && regionMap && layout.regions.length > 1;
+
+  // W7 FILL-CANVAS — for the single-region stacked path, decide how the blocks
+  // distribute down the canvas (top / center / space-between) so sparse content
+  // is not glued to the top with a dead bottom.
+  const stackedFillMode = useMemo(
+    () =>
+      card.blocks.length
+        ? verticalFillMode(
+            card.blocks as { type: string; content?: Record<string, unknown> }[],
+            undefined,
+            card.intent
+          )
+        : 'top',
+    [card.blocks, card.intent]
+  );
 
   const handleSourceClick = (ref: {
     artifact_id: string;
@@ -194,10 +214,17 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
           >
             {layout.regions.map((region) => {
               const blocksInRegion = regionMap.get(region.area) || [];
+              // W7 FILL-CANVAS — per-region vertical distribution so a tall
+              // region with light content breathes instead of top-clustering.
+              const regionFill = verticalFillMode(
+                blocksInRegion as { type: string; content?: Record<string, unknown> }[],
+                undefined,
+                card.intent
+              );
               return (
                 <div
                   key={region.area}
-                  style={{ gridArea: region.gridArea }}
+                  style={{ gridArea: region.gridArea, justifyContent: justifyFor(regionFill) }}
                   className="flex flex-col gap-2 overflow-hidden"
                 >
                   {blocksInRegion.map((block, idx) => renderBlockItem(block as CardBlock, idx))}
@@ -206,7 +233,10 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
             })}
           </div>
         ) : (
-          <div className="flex-1 flex flex-col gap-3">
+          <div
+            className="flex-1 flex flex-col gap-3"
+            style={{ justifyContent: justifyFor(stackedFillMode) }}
+          >
             {card.blocks
               .sort((a, b) => a.position.order - b.position.order)
               .map((block, blockIndex) => renderBlockItem(block, blockIndex))}
@@ -230,6 +260,18 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
     </AnimatedCard>
   );
 };
+
+/** W7 FILL-CANVAS — map a VerticalFillMode to a flex `justify-content` value. */
+function justifyFor(mode: VerticalFillMode): React.CSSProperties['justifyContent'] {
+  switch (mode) {
+    case 'center':
+      return 'center';
+    case 'space-between':
+      return 'space-between';
+    default:
+      return 'flex-start';
+  }
+}
 
 function getBackgroundStyle(card: DeckCard, theme: CuratedColorSet): React.CSSProperties {
   switch (card.background.type) {
