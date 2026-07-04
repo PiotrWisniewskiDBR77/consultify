@@ -4,7 +4,7 @@
  * Table Platform API, based on the tablePlatformMetadataFirst feature flag.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
@@ -189,8 +189,15 @@ export function useTablePlatformBridge(
     recordVersionsRef.current.set(rec.id, rec.version);
   }, []);
 
-  const columns = fields.map(fieldToColumn);
-  const nodes = records.map((r) => recordToNode(r, fields));
+  // Memoized: `fields`/`records` are plain useState arrays that only get new
+  // references when their setters run, so these stay referentially stable
+  // across renders that don't touch table data. Without this, every render
+  // (e.g. from unrelated state changes in this hook) produced fresh `nodes`/
+  // `columns` arrays, which broke consumers that sync them via
+  // `useEffect(..., [bridge.nodes])` (see useTablePlatformIntegration) —
+  // that effect never settled, causing a render loop.
+  const columns = useMemo(() => fields.map(fieldToColumn), [fields]);
+  const nodes = useMemo(() => records.map((r) => recordToNode(r, fields)), [records, fields]);
 
   const ensureBaseAndTable = useCallback(async (): Promise<{
     baseId: string;
