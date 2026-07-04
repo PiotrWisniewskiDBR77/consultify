@@ -626,7 +626,15 @@ export async function getDocumentArtifact(
   if (schemaCandidate && typeof schemaCandidate === 'object') {
     schema = schemaCandidate as DocumentSchema;
   } else {
-    const contentJson = parseMetadata(artifact.content_json);
+    // D1 E2E fix — `getWave5Artifact`/`mapArtifact` (wave5ArtifactRuntimeService.ts)
+    // maps the persisted `content_json_native` column onto a camelCase
+    // `contentJson` property; there is no `content_json` (snake_case) property on
+    // the mapped artifact, so this fallback previously ALWAYS missed and every
+    // fresh GET (page reload / resume-by-URL / export / comments / QA — anything
+    // reading through getDocumentArtifact) 404'd even though the artifact and its
+    // schema were persisted correctly. Caught by the D1 Playwright E2E suite
+    // (tests/e2e/documents/mode1-intake-to-document.spec.ts "reload resumes").
+    const contentJson = parseMetadata(artifact.contentJson);
     if (contentJson && typeof contentJson === 'object') {
       schema = contentJson as unknown as DocumentSchema;
     }
