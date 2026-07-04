@@ -161,7 +161,7 @@ describe('Document Studio golden DOCX export (C4)', () => {
     const buffer = await renderDocumentSchemaToDocxBuffer(makeGoldenDocumentSchema());
     const { document } = await unzipDocx(buffer);
     expect(document).toContain('Assumption');
-    expect(document).toContain('B45309'); // amber marker color
+    expect(document).toContain('92400E'); // amber marker color (DOCX_PALETTE.amberInk)
   });
 
   it('wires header content and footer confidentiality + page numbering fields', async () => {
