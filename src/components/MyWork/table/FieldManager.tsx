@@ -128,6 +128,7 @@ const CREATABLE_FIELD_TYPES: FieldType[] = [
   'phone',
   'attachment',
   'linkedRecord',
+  'lookup',
   'formula',
   'rating',
   'duration',
@@ -242,9 +243,7 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
-          <h3 className="text-sm font-bold text-c-text">
-            {isPl ? 'Pola' : 'Fields'}
-          </h3>
+          <h3 className="text-sm font-bold text-c-text">{isPl ? 'Pola' : 'Fields'}</h3>
           <div className="flex items-center gap-1">
             {!locked && (
               <button
@@ -412,6 +411,7 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
       {showAddField && (
         <AddFieldDialog
           isPl={!!isPl}
+          fields={fields}
           onClose={() => setShowAddField(false)}
           onAdd={async (name, fieldType, options) => {
             try {
@@ -588,6 +588,21 @@ const FieldOptionsDisplay: React.FC<{ field: TablePlatformField; isPl: boolean }
     }
   }
 
+  if (field.fieldType === 'lookup') {
+    if (opts.linkedFieldId) {
+      items.push({
+        label: isPl ? 'Pole linkujące' : 'Linking field',
+        value: String(opts.linkedFieldId),
+      });
+    }
+    if (opts.lookupFieldId) {
+      items.push({
+        label: isPl ? 'Pole docelowe' : 'Target field',
+        value: String(opts.lookupFieldId),
+      });
+    }
+  }
+
   if (field.fieldType === 'formula') {
     if (opts.expression || opts.formula) {
       items.push({
@@ -622,9 +637,7 @@ const FieldOptionsDisplay: React.FC<{ field: TablePlatformField; isPl: boolean }
           <span className="text-[9px] font-bold text-c-text-secondary whitespace-nowrap">
             {item.label}:
           </span>
-          <span className="text-[9px] text-c-text-secondary break-all">
-            {item.value}
-          </span>
+          <span className="text-[9px] text-c-text-secondary break-all">{item.value}</span>
         </div>
       ))}
     </div>
@@ -639,9 +652,11 @@ interface AddFieldDialogProps {
   isPl: boolean;
   onClose: () => void;
   onAdd: (name: string, fieldType: string, options?: Record<string, unknown>) => Promise<void>;
+  /** Fields already on this table — used to populate the lookup "linking field" select. */
+  fields?: TablePlatformField[];
 }
 
-const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd }) => {
+const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd, fields = [] }) => {
   const [name, setName] = useState('');
   const [fieldType, setFieldType] = useState<FieldType>('singleLineText');
   const [selectOptions, setSelectOptions] = useState('');
@@ -650,6 +665,57 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
   const [ratingMax, setRatingMax] = useState(5);
   const [currencySymbol, setCurrencySymbol] = useState('$');
   const [adding, setAdding] = useState(false);
+
+  // Lookup config: which linkedRecord field to traverse + which field on the
+  // linked table to read. Options shape matches RelationService.computeLookup
+  // (server/src/services/tablePlatform/RelationService.ts): { linkedFieldId, lookupFieldId }.
+  const linkedRecordFields = useMemo(
+    () => fields.filter((f) => f.fieldType === 'linkedRecord'),
+    [fields]
+  );
+  const [lookupLinkedFieldId, setLookupLinkedFieldId] = useState('');
+  const [lookupTargetFieldId, setLookupTargetFieldId] = useState('');
+  const [linkedTableFields, setLinkedTableFields] = useState<
+    Array<{ id: string; name: string; fieldType: string }>
+  >([]);
+  const [loadingLinkedFields, setLoadingLinkedFields] = useState(false);
+
+  useEffect(() => {
+    if (fieldType !== 'lookup' || !lookupLinkedFieldId) {
+      setLinkedTableFields([]);
+      return;
+    }
+    const linkedField = linkedRecordFields.find((f) => f.id === lookupLinkedFieldId);
+    const linkedTableIdForLookup = (linkedField?.options as { linkedTableId?: string })
+      ?.linkedTableId;
+    if (!linkedTableIdForLookup) {
+      setLinkedTableFields([]);
+      return;
+    }
+    let cancelled = false;
+    setLoadingLinkedFields(true);
+    TablePlatformApi.getTable(linkedTableIdForLookup)
+      .then((table) => {
+        if (cancelled) return;
+        const rawFields = Array.isArray(table?.fields) ? table.fields : [];
+        setLinkedTableFields(
+          rawFields.map((f: Record<string, unknown>) => ({
+            id: String(f.id),
+            name: String(f.name ?? f.id),
+            fieldType: String(f.field_type ?? f.fieldType ?? ''),
+          }))
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setLinkedTableFields([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingLinkedFields(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [fieldType, lookupLinkedFieldId, linkedRecordFields]);
 
   const handleCreate = async () => {
     if (!name.trim()) return;
@@ -665,6 +731,10 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
     }
     if (fieldType === 'linkedRecord' && linkedTableId) {
       options.linkedTableId = linkedTableId;
+    }
+    if (fieldType === 'lookup' && lookupLinkedFieldId && lookupTargetFieldId) {
+      options.linkedFieldId = lookupLinkedFieldId;
+      options.lookupFieldId = lookupTargetFieldId;
     }
     if (fieldType === 'formula' && formulaExpr) {
       options.formula = formulaExpr;
@@ -692,9 +762,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
-          <h3 className="text-sm font-bold text-c-text">
-            {isPl ? 'Nowe pole' : 'New Field'}
-          </h3>
+          <h3 className="text-sm font-bold text-c-text">{isPl ? 'Nowe pole' : 'New Field'}</h3>
           <button
             onClick={onClose}
             className="p-1 rounded-lg hover:bg-c-surface-raised transition-colors"
@@ -775,6 +843,69 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
             </div>
           )}
 
+          {fieldType === 'lookup' && (
+            <div className="space-y-2">
+              <div>
+                <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
+                  {isPl ? 'Pole linkujące' : 'Linking field'}
+                </label>
+                <select
+                  value={lookupLinkedFieldId}
+                  onChange={(e) => {
+                    setLookupLinkedFieldId(e.target.value);
+                    setLookupTargetFieldId('');
+                  }}
+                  className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
+                >
+                  <option value="">{isPl ? 'Wybierz pole...' : 'Select field...'}</option>
+                  {linkedRecordFields.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name}
+                    </option>
+                  ))}
+                </select>
+                {linkedRecordFields.length === 0 && (
+                  <p className="mt-1 text-[9px] text-c-text-secondary">
+                    {isPl
+                      ? 'Najpierw dodaj pole typu "Powiązany rekord"'
+                      : 'Add a "Linked record" field first'}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
+                  {isPl ? 'Pole docelowe' : 'Target field'}
+                </label>
+                <select
+                  value={lookupTargetFieldId}
+                  onChange={(e) => setLookupTargetFieldId(e.target.value)}
+                  disabled={!lookupLinkedFieldId || loadingLinkedFields}
+                  className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
+                >
+                  <option value="">
+                    {loadingLinkedFields
+                      ? isPl
+                        ? 'Wczytywanie...'
+                        : 'Loading...'
+                      : isPl
+                        ? 'Wybierz pole...'
+                        : 'Select field...'}
+                  </option>
+                  {linkedTableFields.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-[9px] text-c-text-secondary">
+                  {isPl
+                    ? 'Wartość tego pola z powiązanej tabeli będzie wyświetlana tutaj'
+                    : 'This field’s value from the linked table will be displayed here'}
+                </p>
+              </div>
+            </div>
+          )}
+
           {fieldType === 'formula' && (
             <div>
               <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
@@ -791,9 +922,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
 
           {fieldType === 'rating' && (
             <div>
-              <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
-                Max
-              </label>
+              <label className="block text-[11px] font-bold text-c-text-secondary mb-1">Max</label>
               <input
                 type="number"
                 min={1}
@@ -835,7 +964,11 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
           </button>
           <button
             onClick={handleCreate}
-            disabled={!name.trim() || adding}
+            disabled={
+              !name.trim() ||
+              adding ||
+              (fieldType === 'lookup' && !(lookupLinkedFieldId && lookupTargetFieldId))
+            }
             className="px-4 py-2 rounded-xl text-xs font-semibold bg-c-text text-c-bg hover:bg-c-text-secondary transition-colors disabled:opacity-40"
           >
             {adding ? (

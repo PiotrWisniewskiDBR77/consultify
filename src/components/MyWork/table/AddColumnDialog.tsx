@@ -192,9 +192,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
       <div className="w-[480px] max-h-[85vh] overflow-auto rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
-          <h3 className="text-sm font-bold text-c-text">
-            {isPl ? 'Dodaj kolumnę' : 'Add Column'}
-          </h3>
+          <h3 className="text-sm font-bold text-c-text">{isPl ? 'Dodaj kolumnę' : 'Add Column'}</h3>
           <button
             onClick={onClose}
             className="p-1 rounded-lg hover:bg-c-surface-raised transition-colors"
