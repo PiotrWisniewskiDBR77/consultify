@@ -12,6 +12,74 @@ env:
   CI: true
 
 jobs:
+  # ═══════════════════════════════════════════════════════════════
+  # M06 MIND MAP NIGHTLY (deterministic Playwright subset)
+  # 11 spec files / ~52 specs (≈40 executing + honest-skips) from
+  # tests/e2e/m06/. Excluded by policy: [MANUAL] (m06-06 drag,
+  # m06-21 large-map perf), [REAL-AI] (m06-11, m06-12), 2-context
+  # collab (m06-16) and DB/affordance-probe files (m06-08, 13, 14,
+  # 17, 18, 19, 20, 22, 23, 24) pending selector hardening.
+  # PR-critical 5-spec subset also gates merges via test-suite.yml
+  # → e2e-m06-gate.
+  # ═══════════════════════════════════════════════════════════════
+  m06-mindmap:
+    name: 🧠 M06 Mind Map Nightly (deterministic subset)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run M06 nightly subset
+        # Base playwright.config.ts webServer builds the frontend itself
+        # (npm run build && vite preview) — no separate build step needed.
+        run: npm run test:e2e:m06:nightly
+        env:
+          NODE_ENV: test
+          TEST_SUPPORT_KEY: local-test-support-key-change-me
+
+      - name: Upload M06 artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-m06-nightly-${{ github.run_number }}
+          path: |
+            e2e-results.xml
+            test-results/
+            tests/e2e/screenshots/m06/
+          retention-days: 30
+
+      - name: M06 nightly summary
+        if: always()
+        run: |
+          echo "# 🧠 Nightly M06 Mind Map — deterministic subset" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f e2e-results.xml ]; then
+            TESTS=$(grep -oP 'tests="\K[0-9]+' e2e-results.xml 2>/dev/null | head -1 || echo "0")
+            FAILURES=$(grep -oP 'failures="\K[0-9]+' e2e-results.xml 2>/dev/null | head -1 || echo "0")
+            ERRORS=$(grep -oP 'errors="\K[0-9]+' e2e-results.xml 2>/dev/null | head -1 || echo "0")
+            SKIPPED=$(grep -oP 'skipped="\K[0-9]+' e2e-results.xml 2>/dev/null | head -1 || echo "0")
+            echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Total | ${TESTS} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Failed | ${FAILURES} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Errors | ${ERRORS} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Skipped (honest-skip) | ${SKIPPED} |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ No JUnit report found (e2e-results.xml missing)" >> $GITHUB_STEP_SUMMARY
+          fi
+
   e2e-full:
     name: 🌙 E2E Tier-1 Full Regression
     runs-on: ubuntu-latest
