@@ -121,6 +121,8 @@ export interface NodeComment {
   id: string;
   text: string;
   author: string;
+  /** Author's user id — used to gate edit/delete to the comment's own author. */
+  authorId?: string;
   createdAt: string;
   editedAt?: string;
   /** @mention display names parsed from comment text */
