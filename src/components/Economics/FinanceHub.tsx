@@ -23,12 +23,15 @@ import {
   BarChart3,
   Calculator,
   ChevronDown,
+  Copy,
+  ExternalLink,
   FileText,
   GitBranch,
   MessageCircle,
   Plus,
   Sparkles,
   Target,
+  Trash2,
   TrendingUp,
 } from 'lucide-react';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
@@ -37,7 +40,14 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
-import { MetaChip } from '@/components/ui/primitives/chips';
+import {
+  StandardPreview,
+  standardPreviewShortcuts,
+  type StandardPreviewActions,
+  type StandardRowMenu,
+  StandardTable,
+} from '@/components/standard';
+import { MetaChip, statusChipTone } from '@/components/ui/primitives/chips';
 import { usePolicySnapshot } from '@/contexts/AccessPolicyContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useV8FeatureFlag } from '@/hooks/useV8FeatureFlag';
@@ -71,12 +81,16 @@ import {
 import { getMenu3AiButtonClass } from '../shared/ModuleHub/menu3ActionButtonStyles';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import {
+  MENU_3_ACTION_DANGER,
   MENU_3_ALL_DOT_CLASS,
   MENU_3_BADGE_ACTIVE,
   MENU_3_BADGE_INACTIVE,
   MENU_3_CHIP_ACTIVE,
   MENU_3_CHIP_INACTIVE,
+  MENU_3_INNER_CLASS,
   MENU_3_LEFT_CLASS,
+  MENU_3_RIGHT_CLASS,
+  Menu3Chip,
 } from '../shared/ModuleMenu3';
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
@@ -169,6 +183,9 @@ export const FinanceHub: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
+  // Triada standard (canon A3/A6): checkbox selection on the 'statements' tab
+  // switches Menu 3 into bulk mode (1:1 markup with AssessmentHub 'list').
+  const [selectedStatementIds, setSelectedStatementIds] = useState<Set<string>>(new Set());
 
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
     useModuleOpenDocuments('finance');
@@ -225,6 +242,14 @@ export const FinanceHub: React.FC = () => {
       ['statements', 'models', 'analysis', 'prediction', 'valuation', 'investment'] as ModuleTab[],
     []
   );
+
+  // Clear bulk-selection when leaving the Statements tab (Triada standard scope).
+  useEffect(() => {
+    if (activeTab !== 'statements' && selectedStatementIds.size > 0) {
+      setSelectedStatementIds(new Set());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   // ---- Extracted hooks ----
   const {
@@ -691,7 +716,7 @@ export const FinanceHub: React.FC = () => {
   );
 
   // ---- Row actions ----
-  const { getRowActions } = useFinanceRowActions({
+  const { getRowActions, handleDelete: handleFinanceDelete } = useFinanceRowActions({
     handleOpenFull,
     handleOpenPreview: (row) => onSelectRow(row),
     handleExport,
@@ -1806,7 +1831,320 @@ export const FinanceHub: React.FC = () => {
     return messages[currentKind] || messages.models;
   }, [activeFilters, activeTab, t]);
 
-  // ---- Table + Preview ----
+  // ---- Statements tab (Triada standard, docs/ui-standards/TRIADA_KANON.md A4-A7) ----
+  // Statements is the only Finance tab wired to StandardTable + StandardPreview in
+  // this rollout wave. Models/Analysis/Prediction/Enterprise valuation/Investment
+  // analysis stay on the legacy FilterableTable + TableWithPreviewLayout below —
+  // out of scope for this change.
+  const statementRowsData = useMemo(
+    () => filteredRows.filter((row): row is FinanceStatementRow => row.kind === 'statements'),
+    [filteredRows]
+  );
+  const selectedStatementRow: FinanceStatementRow | null =
+    selectedId && selectedItem?.kind === 'statements' ? (selectedItem as FinanceStatementRow) : null;
+
+  const statementPreviewActions: StandardPreviewActions | undefined = useMemo(() => {
+    if (!selectedStatementRow) return undefined;
+    const isConfirmed = String(selectedStatementRow.rawStatus || '').toLowerCase() === 'confirmed';
+    return {
+      resolutions: [
+        ...(selectedStatementRow.isWorkable && !isConfirmed
+          ? [
+              {
+                id: 'confirm',
+                variant: 'positive' as const,
+                label: t('finance.row.confirmStatement', 'Potwierdź'),
+                onClick: async () => {
+                  try {
+                    await Api.post(`/api/finance-statements/${selectedStatementRow.id}/confirm`, {});
+                    await loadStatements();
+                    toast.success(t('finance.toast.statementConfirmed', 'Statement potwierdzony'));
+                  } catch (e: any) {
+                    toast.error(
+                      e?.response?.data?.error ||
+                        t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
+                    );
+                  }
+                },
+              },
+            ]
+          : []),
+        {
+          id: 'delete',
+          variant: 'destructive',
+          label: t('common.delete', 'Delete'),
+          onClick: () => void handleFinanceDelete(selectedStatementRow),
+        },
+      ],
+      informational: [
+        {
+          id: 'open',
+          variant: 'neutral',
+          label: t('common.open', 'Open'),
+          icon: ExternalLink,
+          shortcut: 'O',
+          onClick: () => handleOpenFull(selectedStatementRow),
+        },
+        ...(selectedStatementRow.isWorkable
+          ? [
+              {
+                id: 'createModel',
+                variant: 'neutral' as const,
+                label: t('finance.row.createModelFromStatement', 'Utwórz model'),
+                icon: TrendingUp,
+                onClick: () => handleCreateModelFromStatement(selectedStatementRow),
+              },
+              {
+                id: 'createAnalysis',
+                variant: 'neutral' as const,
+                label: t('finance.row.createAnalysisFromStatement', 'Utwórz analizę'),
+                onClick: () => handleCreateAnalysisFromStatements(selectedStatementRow),
+              },
+            ]
+          : []),
+      ],
+    };
+  }, [
+    selectedStatementRow,
+    t,
+    loadStatements,
+    handleFinanceDelete,
+    handleOpenFull,
+    handleCreateModelFromStatement,
+    handleCreateAnalysisFromStatements,
+  ]);
+
+  // Esc closes preview; single-key shortcuts (O) active while preview open (kanon B.24/B.31).
+  useEffect(() => {
+    if (activeTab !== 'statements' || !selectedStatementRow) return;
+    const shortcuts = standardPreviewShortcuts(statementPreviewActions);
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable)
+        return;
+      if (e.key === 'Escape') {
+        deselectRow();
+        return;
+      }
+      const handler = shortcuts[e.key.toUpperCase()];
+      if (handler) {
+        e.preventDefault();
+        handler();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [activeTab, selectedStatementRow, statementPreviewActions, deselectRow]);
+
+  const handleBulkDeleteStatements = useCallback(async () => {
+    if (selectedStatementIds.size === 0) return;
+    const confirmMsg = isPl
+      ? `Czy na pewno chcesz usunąć ${selectedStatementIds.size} pozycji? Tej operacji nie można cofnąć.`
+      : `Are you sure you want to delete ${selectedStatementIds.size} statement(s)? This cannot be undone.`;
+    if (!window.confirm(confirmMsg)) return;
+    const ids = Array.from(selectedStatementIds);
+    for (const id of ids) {
+      const row = statementRowsData.find((r) => r.id === id);
+      if (row) await handleFinanceDelete(row);
+    }
+    setSelectedStatementIds(new Set());
+  }, [selectedStatementIds, statementRowsData, handleFinanceDelete, isPl]);
+
+  const statementsBulkCommandRowContent =
+    activeTab === 'statements' && selectedStatementIds.size > 0 ? (
+      <div className={MENU_3_INNER_CLASS}>
+        <div className={MENU_3_LEFT_CLASS}>
+          <span className="inline-flex h-7 items-center rounded-full px-2.5 text-[11px] font-semibold text-c-text whitespace-nowrap">
+            {`${selectedStatementIds.size} selected`}
+          </span>
+          <Menu3Chip
+            onClick={() => setSelectedStatementIds(new Set(statementRowsData.map((r) => r.id)))}
+          >
+            {t('common.selectAll', 'Select all')}
+          </Menu3Chip>
+          <Menu3Chip onClick={() => setSelectedStatementIds(new Set())}>
+            {t('common.clear', 'Clear')}
+          </Menu3Chip>
+        </div>
+        <div className={MENU_3_RIGHT_CLASS}>
+          <button
+            type="button"
+            onClick={() => void handleBulkDeleteStatements()}
+            className={MENU_3_ACTION_DANGER}
+          >
+            <Trash2 size={12} />
+            {t('common.delete', 'Delete')}
+          </button>
+        </div>
+      </div>
+    ) : null;
+
+  const statementsTableWithPreview = useMemo(
+    () => (
+      <div className="h-full flex overflow-hidden">
+        <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
+          <StandardTable
+            columns={columnsForActiveTab}
+            data={statementRowsData as unknown as Array<Record<string, unknown> & { id: string }>}
+            selectedRowId={selectedId}
+            onRowClick={(row) => onSelectRow(row as unknown as FinanceStatementRow)}
+            onRowDoubleClick={(row) => handleOpenFull(row as unknown as FinanceStatementRow)}
+            rowDescription={() => null}
+            defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
+            persistKey="finance.statements.list"
+            selection={{ selectedIds: selectedStatementIds, onChange: setSelectedStatementIds }}
+            activeFilters={activeFilters}
+            onFilterChange={setActiveFilters}
+            empty={{
+              icon: FileText,
+              title: t('finance.empty.statementsTitle', 'No statements yet'),
+              description: emptyMessage,
+              actionLabel: t('finance.cta.importStatement', 'Import statement'),
+              onAction: () => setShowImportWizard(true),
+            }}
+            rowMenu={(row): StandardRowMenu => {
+              const statementRow = row as unknown as FinanceStatementRow;
+              const isConfirmed = String(statementRow.rawStatus || '').toLowerCase() === 'confirmed';
+              return {
+                primary: [
+                  {
+                    id: 'open',
+                    label: t('common.open', 'Open'),
+                    icon: ExternalLink,
+                    onClick: () => handleOpenFull(statementRow),
+                  },
+                  ...(statementRow.isWorkable
+                    ? [
+                        {
+                          id: 'createModel',
+                          label: t('finance.row.createModelFromStatement', 'Utwórz model'),
+                          icon: TrendingUp,
+                          onClick: () => handleCreateModelFromStatement(statementRow),
+                        },
+                      ]
+                    : []),
+                ],
+                statusTransitions:
+                  statementRow.isWorkable && !isConfirmed
+                    ? [
+                        {
+                          id: 'confirm',
+                          label: t('finance.row.confirmStatement', 'Potwierdź'),
+                          onClick: async () => {
+                            try {
+                              await Api.post(`/api/finance-statements/${statementRow.id}/confirm`, {});
+                              await loadStatements();
+                              toast.success(
+                                t('finance.toast.statementConfirmed', 'Statement potwierdzony')
+                              );
+                            } catch (e: any) {
+                              toast.error(
+                                e?.response?.data?.error ||
+                                  t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
+                              );
+                            }
+                          },
+                        },
+                      ]
+                    : undefined,
+                universalHandlers: {
+                  preview: () => onSelectRow(statementRow),
+                  edit: () => handleOpenFull(statementRow),
+                  // Brak API archiwizacji statementu — pozycja disabled z notą (StandardTable dokłada ją sama).
+                },
+                destructive: {
+                  onClick: () => void handleFinanceDelete(statementRow),
+                },
+              };
+            }}
+          />
+        </div>
+
+        {selectedStatementRow ? (
+          <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+            <StandardPreview
+              title={selectedStatementRow.title}
+              onClose={() => deselectRow()}
+              onOpenFull={() => handleOpenFull(selectedStatementRow)}
+              meta={{
+                pills: [
+                  {
+                    label: String(selectedStatementRow.status || 'DRAFT'),
+                    tone: statusChipTone(selectedStatementRow.status),
+                  },
+                  {
+                    label: selectedStatementRow.completenessLabel || '—',
+                    tone: 'neutral',
+                  },
+                ],
+                trailing: (
+                  <span className="text-[11px] font-semibold text-c-text-secondary">
+                    {selectedStatementRow.periodLabel ||
+                      `${selectedStatementRow.periodStart} → ${selectedStatementRow.periodEnd}`}
+                  </span>
+                ),
+              }}
+              details={{
+                text: [
+                  `${t('common.currency', 'Currency')}: ${selectedStatementRow.currency}`,
+                  `${t('finance.columns.mappedLines', 'Docs')}: ${
+                    selectedStatementRow.sourceStatementCount ??
+                    selectedStatementRow.statementIds?.length ??
+                    0
+                  }`,
+                  `${t('finance.statements.mappedLines', 'Mapped lines')}: ${selectedStatementRow.mappedLineCount ?? 0} / ${selectedStatementRow.totalLineCount ?? 0}`,
+                  selectedStatementRow.readinessSummary
+                    ? `${t('finance.statements.previewTitle', 'Pack health')}: ${selectedStatementRow.readinessSummary}`
+                    : '',
+                ]
+                  .filter(Boolean)
+                  .join('\n\n'),
+                onCopy: () => {
+                  void navigator.clipboard?.writeText(
+                    `${selectedStatementRow.title} — ${selectedStatementRow.status} (${selectedStatementRow.completenessLabel || ''})`
+                  );
+                },
+              }}
+              ai={{
+                hints: [
+                  t('finance.preview.aiSummarize', 'Summarize statement'),
+                  t('finance.preview.aiRisks', 'Flag data risks'),
+                ],
+                disabled: true,
+                disabledTooltip: t('common.comingSoon', 'Coming soon'),
+              }}
+              relations={
+                (selectedStatementRow.childStatements || []).map((child) => ({
+                  label: `${child.statementType || 'STM'} · ${child.rawStatus || '—'}`,
+                  onClick: () => handleOpenFull(selectedStatementRow),
+                })) || []
+              }
+              actions={statementPreviewActions}
+            />
+          </aside>
+        ) : null}
+      </div>
+    ),
+    [
+      columnsForActiveTab,
+      statementRowsData,
+      selectedId,
+      selectedStatementRow,
+      onSelectRow,
+      handleOpenFull,
+      activeFilters,
+      emptyMessage,
+      t,
+      selectedStatementIds,
+      handleCreateModelFromStatement,
+      handleFinanceDelete,
+      loadStatements,
+      deselectRow,
+      statementPreviewActions,
+    ]
+  );
+
+  // ---- Table + Preview (legacy — Models/Analysis/Prediction/Valuation/Investment) ----
   const tableWithPreview = useMemo(
     () => (
       <TableWithPreviewLayout
@@ -2233,7 +2571,12 @@ export const FinanceHub: React.FC = () => {
         </>
       );
     if (activeDocumentId && activeDocument) return fullView;
-    const _baseView = viewMode === 'grid' ? gridView : tableWithPreview;
+    const _baseView =
+      viewMode === 'grid'
+        ? gridView
+        : activeTab === 'statements'
+          ? statementsTableWithPreview
+          : tableWithPreview;
     const _showInvest = isFinanceFlagEnabled('investmentAppraisal') && activeTab === 'investment';
     const _showValue = isFinanceFlagEnabled('valueOffice') && activeTab === 'models';
     const _showDriver = isFinanceFlagEnabled('driverPlanner') && activeTab === 'models';
@@ -2269,6 +2612,7 @@ export const FinanceHub: React.FC = () => {
     viewMode,
     gridView,
     tableWithPreview,
+    statementsTableWithPreview,
     showImportWizard,
     handleImportWizardComplete,
   ]);
@@ -2326,7 +2670,7 @@ export const FinanceHub: React.FC = () => {
         onClearFilters={handleClearFilters}
         availableViewModes={['table', 'grid']}
         primaryCta={primaryCta}
-        commandRowContent={commandRowContent}
+        commandRowContent={statementsBulkCommandRowContent ?? commandRowContent}
       >
         {isFinanceRuntimeV8 && (
           <FinanceDegradedBanner

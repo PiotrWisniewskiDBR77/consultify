@@ -73,6 +73,14 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { InitiativeWizardModal } from '@/components/Initiatives/Wizard/InitiativeWizardModal';
 import {
+  StandardPreview,
+  standardPreviewShortcuts,
+  type StandardPreviewActions,
+  type StandardRowMenu,
+  StandardTable,
+  type TableColumn as StandardTableColumn,
+} from '@/components/standard';
+import {
   MENU_3_ACTION_NEUTRAL,
   MENU_3_ALL_DOT_CLASS,
   MENU_3_BADGE_ACTIVE,
@@ -97,6 +105,7 @@ import {
   EntityStatusChip,
   PriorityChip,
   type PriorityLevel,
+  statusChipTone,
 } from '@/components/ui/primitives/chips';
 import {
   type ColumnDef,
@@ -12281,6 +12290,306 @@ Return ONLY the answer text (no markdown fences).`;
       );
     }
 
+    // Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7): Interview
+    // Inbox (my_assignments, list mode) → StandardTable + StandardPreview.
+    // Moduł deklaruje TYLKO dane + kontrakt kebaba/akcji; chrome pochodzi
+    // z fasad Standard* (wzorzec 1:1 z AssessmentHub 'list' — 6fb79511fe).
+    if (activeTab === 'my_assignments' && assignmentsViewMode === 'list') {
+      const rows = filteredMyAssignments || [];
+      const selectedRow = previewAssignmentId
+        ? (rows.find((a) => a.id === previewAssignmentId) ?? null)
+        : null;
+
+      const inboxColumns: StandardTableColumn[] = [
+        {
+          id: 'template',
+          label: isPolish ? 'Typ' : 'Type',
+          width: '160px',
+          render: (row: InterviewAssignment) => (
+            <span className="text-xs font-semibold text-c-text-secondary">
+              {row.template?.name || (isPolish ? 'Wywiad' : 'Interview')}
+            </span>
+          ),
+        },
+        {
+          id: 'name',
+          label: isPolish ? 'Nazwa' : 'Name',
+          render: (row: InterviewAssignment) => (
+            <span className="text-sm font-semibold text-c-text">{getAssignmentTitle(row)}</span>
+          ),
+        },
+        {
+          id: 'status',
+          label: isPolish ? 'Status' : 'Status',
+          width: '150px',
+          filterable: true,
+          filterOptions: [
+            { value: 'assigned', label: isPolish ? 'Przydzielony' : 'Assigned' },
+            { value: 'in_progress', label: isPolish ? 'W trakcie' : 'In progress' },
+            { value: 'submitted', label: isPolish ? 'Wysłany' : 'Submitted' },
+            { value: 'sent_back', label: isPolish ? 'Do poprawy' : 'Sent back' },
+            { value: 'approved', label: isPolish ? 'Zatwierdzony' : 'Approved' },
+            { value: 'completed', label: isPolish ? 'Zakończony' : 'Completed' },
+          ],
+          render: (row: InterviewAssignment) => (
+            <EntityStatusChip status={row.status} label={getAssignmentStatusLabel(row.status)} />
+          ),
+        },
+        {
+          id: 'progress',
+          label: isPolish ? 'Postęp' : 'Progress',
+          width: '130px',
+          align: 'right',
+          render: (row: InterviewAssignment) => (
+            <ProgressCell value={row.session?.completenessPercent ?? 0} />
+          ),
+        },
+        {
+          id: 'dueAt',
+          label: isPolish ? 'Dni do terminu' : 'Days to due',
+          width: '160px',
+          sortable: true,
+          sortAccessor: (row: InterviewAssignment) => (row.dueAt ? new Date(row.dueAt).getTime() : 0),
+          render: (row: InterviewAssignment) => {
+            const dtd = getAssignmentDaysToDue(row.dueAt);
+            if (!dtd) return <span className="text-c-text-muted">—</span>;
+            return (
+              <DueChip
+                label={dtd.label}
+                risk={dtd.days < 0 ? 'overdue' : dtd.days <= 3 ? 'soon' : 'none'}
+              />
+            );
+          },
+        },
+        {
+          id: 'assignee',
+          label: isPolish ? 'Przypisany' : 'Assignee',
+          width: '170px',
+          render: (row: InterviewAssignment) => (
+            <AssigneeCell
+              name={row.assignee?.name || row.assignee?.email || null}
+              unassignedLabel={isPolish ? 'Nieprzypisane' : 'Unassigned'}
+            />
+          ),
+        },
+      ];
+
+      const inboxPreviewActions: StandardPreviewActions | undefined = selectedRow
+        ? {
+            resolutions:
+              selectedRow.status === 'assigned'
+                ? [
+                    {
+                      id: 'start',
+                      variant: 'positive',
+                      label: isPolish ? 'Rozpocznij' : 'Start',
+                      icon: Sparkles,
+                      onClick: () => startInterviewAssignment(selectedRow),
+                    },
+                  ]
+                : selectedRow.status === 'sent_back' &&
+                    (selectedRow.sessionId || selectedRow.session?.id)
+                  ? [
+                      {
+                        id: 'fix',
+                        variant: 'positive',
+                        label: isPolish ? 'Popraw' : 'Fix & Resubmit',
+                        icon: RotateCcw,
+                        onClick: () => void openInterviewAssignmentFull(selectedRow, false),
+                      },
+                    ]
+                  : selectedRow.status === 'in_progress' &&
+                      (selectedRow.sessionId || selectedRow.session?.id)
+                    ? [
+                        {
+                          id: 'continue',
+                          variant: 'positive',
+                          label: isPolish ? 'Kontynuuj' : 'Continue',
+                          icon: ChevronRight,
+                          onClick: () => void openInterviewAssignmentFull(selectedRow, false),
+                        },
+                      ]
+                    : undefined,
+            informational: [
+              {
+                id: 'open',
+                variant: 'neutral',
+                label: isPolish ? 'Otwórz' : 'Open',
+                icon: ExternalLink,
+                shortcut: 'O',
+                onClick: () => void openInterviewAssignmentFull(selectedRow, false),
+              },
+            ],
+            time: [1, 3, 7].map((d) => ({
+              id: `delay-${d}`,
+              variant: 'warning' as const,
+              label: isPolish ? `+${d} ${d === 1 ? 'dzień' : 'dni'}` : `+${d}d`,
+              icon: Clock,
+              onClick: () => void handleDelayAssignment(selectedRow, d),
+            })),
+          }
+        : undefined;
+
+      // Esc closes preview; single-key shortcuts active while preview open (kanon B.24/B.31).
+      // (registered via effect below, mirroring AssessmentHub 'list')
+
+      return (
+        <div className="h-full flex flex-col">
+          {renderDegradedBanner()}
+          <div className="flex-1 min-h-0 flex overflow-hidden">
+            <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
+              <StandardTable
+                columns={inboxColumns}
+                data={rows as unknown as Array<Record<string, unknown> & { id: string }>}
+                selectedRowId={previewAssignmentId}
+                onRowClick={(row) => {
+                  setPreviewAssignmentId(String((row as any).id));
+                  setPreviewAssignmentOpen(true);
+                }}
+                onRowDoubleClick={(row) => void openInterviewAssignmentFull(row as any, false)}
+                rowDescription={() => null}
+                defaultSort={{ columnId: 'dueAt', direction: 'asc' }}
+                persistKey="interview.inbox.list"
+                selection={{ selectedIds: selectedAssignmentIds, onChange: setSelectedAssignmentIds }}
+                empty={{
+                  icon: Inbox,
+                  title: isPolish ? 'Brak przydziałów' : 'No assignments',
+                  description: isPolish
+                    ? 'Nie masz jeszcze żadnych przydzielonych wywiadów.'
+                    : 'You have no interview assignments yet.',
+                }}
+                rowMenu={(row): StandardRowMenu => {
+                  const a = row as unknown as InterviewAssignment;
+                  return {
+                    primary: [
+                      ...(a.status === 'assigned'
+                        ? [
+                            {
+                              id: 'start',
+                              label: isPolish ? 'Rozpocznij' : 'Start',
+                              icon: Sparkles,
+                              onClick: () => startInterviewAssignment(a),
+                            },
+                          ]
+                        : []),
+                      ...(a.status === 'in_progress' && a.sessionId
+                        ? [
+                            {
+                              id: 'continue',
+                              label: isPolish ? 'Kontynuuj' : 'Continue',
+                              icon: ChevronRight,
+                              onClick: () => void openInterviewAssignmentFull(a, false),
+                            },
+                          ]
+                        : []),
+                      ...(a.status === 'sent_back' && a.sessionId
+                        ? [
+                            {
+                              id: 'fix',
+                              label: isPolish ? 'Popraw' : 'Fix & Resubmit',
+                              icon: RotateCcw,
+                              onClick: () => void openInterviewAssignmentFull(a, false),
+                            },
+                          ]
+                        : []),
+                    ],
+                    timeActions: [
+                      {
+                        id: 'delay',
+                        label: isPolish ? 'Odłóż termin' : 'Delay',
+                        icon: Clock,
+                        submenu: [1, 3, 7].map((d) => ({
+                          id: `delay-${d}`,
+                          label: isPolish ? `+${d} ${d === 1 ? 'dzień' : 'dni'}` : `+${d}d`,
+                          icon: Clock,
+                          onClick: () => void handleDelayAssignment(a, d),
+                        })),
+                      },
+                    ],
+                    universalHandlers: {
+                      preview: () => {
+                        setPreviewAssignmentId(a.id);
+                        setPreviewAssignmentOpen(true);
+                      },
+                      edit: () => startInterviewAssignment(a),
+                      // Brak API archiwizacji dla widoku pracownika (Inbox) — disabled z notą (StandardTable dokłada ją sama).
+                    },
+                    destructive: {
+                      // Brak endpointu delete dla assignmentu — disabled z notą (StandardTable dokłada ją sama).
+                    },
+                  };
+                }}
+              />
+            </div>
+
+            {selectedRow ? (
+              <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+                <StandardPreview
+                  title={getAssignmentTitle(selectedRow)}
+                  onClose={() => {
+                    setPreviewAssignmentId(null);
+                    setPreviewAssignmentOpen(false);
+                  }}
+                  onOpenFull={() => void openInterviewAssignmentFull(selectedRow, false)}
+                  meta={{
+                    pills: [
+                      {
+                        label: getAssignmentStatusLabel(selectedRow.status),
+                        tone: statusChipTone(selectedRow.status),
+                      },
+                      {
+                        label: `${isPolish ? 'Postęp' : 'Progress'}: ${selectedRow.session?.completenessPercent ?? 0}%`,
+                        tone: 'neutral',
+                      },
+                    ],
+                    trailing: (() => {
+                      const dtd = getAssignmentDaysToDue(selectedRow.dueAt);
+                      return dtd ? (
+                        <span className="text-[11px] font-semibold text-c-text-secondary">
+                          {dtd.label}
+                        </span>
+                      ) : (
+                        <span className="text-[11px] font-semibold text-c-text-muted">—</span>
+                      );
+                    })(),
+                  }}
+                  details={{
+                    text:
+                      String(previewDetailsOverride ?? selectedRow.template?.description ?? '').trim() ||
+                      (isPolish ? 'Brak opisu.' : 'No description.'),
+                    onCopy: () => {
+                      const text = String(
+                        previewDetailsOverride ?? selectedRow.template?.description ?? ''
+                      ).trim();
+                      copyToClipboard(text || getAssignmentTitle(selectedRow));
+                    },
+                  }}
+                  ai={{
+                    hints: isPolish
+                      ? ['Podsumuj', 'Ryzyka', 'Następne kroki']
+                      : ['Summarize', 'Risks', 'Next steps'],
+                    disabled: true,
+                    disabledTooltip: isPolish ? 'Wkrótce' : 'Coming soon',
+                  }}
+                  relations={
+                    selectedRow.sessionId || selectedRow.session?.id
+                      ? [
+                          {
+                            label: `${isPolish ? 'Sesja' : 'Session'}: ${(selectedRow.sessionId || selectedRow.session?.id || '').slice(0, 8)}…`,
+                            onClick: () => void openInterviewAssignmentFull(selectedRow, false),
+                          },
+                        ]
+                      : []
+                  }
+                  actions={inboxPreviewActions}
+                />
+              </aside>
+            ) : null}
+          </div>
+        </div>
+      );
+    }
+
     if (activeTab === 'my_assignments') {
       const rows = filteredMyAssignments || [];
       const selected = previewAssignmentId ? rows.find((a) => a.id === previewAssignmentId) : null;
@@ -12704,6 +13013,52 @@ Return ONLY the answer text (no markdown fences).`;
 
     return null;
   };
+
+  // Triada standard (canon B.24): Esc closes the Inbox (my_assignments, list
+  // mode) StandardPreview; [O] shortcut opens the full assignment. Mirrors
+  // AssessmentHub 'list' — renderContent() is a plain function, not a
+  // component, so this hook must live at top level (rules-of-hooks).
+  useEffect(() => {
+    if (activeTab !== 'my_assignments' || assignmentsViewMode !== 'list' || !previewAssignmentId)
+      return;
+    const rows = filteredMyAssignments || [];
+    const row = rows.find((a) => a.id === previewAssignmentId);
+    if (!row) return;
+    const shortcuts = standardPreviewShortcuts({
+      informational: [
+        {
+          id: 'open',
+          variant: 'neutral',
+          label: 'Open',
+          shortcut: 'O',
+          onClick: () => void openInterviewAssignmentFull(row, false),
+        },
+      ],
+    });
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable)
+        return;
+      if (e.key === 'Escape') {
+        setPreviewAssignmentId(null);
+        setPreviewAssignmentOpen(false);
+        return;
+      }
+      const handler = shortcuts[e.key.toUpperCase()];
+      if (handler) {
+        e.preventDefault();
+        handler();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [
+    activeTab,
+    assignmentsViewMode,
+    previewAssignmentId,
+    filteredMyAssignments,
+    openInterviewAssignmentFull,
+  ]);
 
   // Render content based on state
   const renderContent = () => {
