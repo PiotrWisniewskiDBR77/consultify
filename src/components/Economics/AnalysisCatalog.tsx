@@ -283,7 +283,7 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
 
           {/* Compare Button */}
           {selectedIds.length >= 2 && (
-            <button className="px-4 py-2.5 bg-primary-600 text-white rounded-xl text-sm font-medium hover:bg-primary-500 transition-colors">
+            <button className="px-4 py-2.5 bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 rounded-xl text-sm font-medium hover:bg-navy-800 dark:hover:bg-[#DDE5EF] transition-colors">
               Compare ({selectedIds.length})
             </button>
           )}
