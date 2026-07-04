@@ -27,11 +27,53 @@ export const CellStyleSchema = z.object({
   border: z.enum(['thin', 'medium', 'thick', 'none']).optional(),
 });
 
+// ---------------------------------------------------------------------------
+// Data validation (Excel dropdowns / numeric bounds on input cells)
+//
+// Applied to Assumptions-style input cells so a reviewer can only enter valid
+// values. Two kinds cover the finance-model needs:
+//   - list    → dropdown of allowed string values (e.g. scenario names)
+//   - decimal → numeric bound (e.g. tax rate between 0 and 1)
+// ---------------------------------------------------------------------------
+
+export const DataValidationSchema = z.object({
+  type: z.enum(['list', 'decimal', 'whole']),
+  /** For `list`: the allowed values shown in the dropdown. */
+  values: z.array(z.string()).optional(),
+  /** For `decimal`/`whole`: comparison operator (default 'between'). */
+  operator: z
+    .enum([
+      'between',
+      'notBetween',
+      'equal',
+      'notEqual',
+      'greaterThan',
+      'lessThan',
+      'greaterThanOrEqual',
+      'lessThanOrEqual',
+    ])
+    .optional(),
+  /** For `decimal`/`whole`: lower / single bound. */
+  min: z.number().optional(),
+  /** For `decimal`/`whole`: upper bound (used with between/notBetween). */
+  max: z.number().optional(),
+  /** Show a red error stop on invalid entry (default true). */
+  allowBlank: z.boolean().optional(),
+  /** Prompt tooltip title/text shown when the cell is selected. */
+  promptTitle: z.string().optional(),
+  prompt: z.string().optional(),
+  /** Error-box title/text shown on an invalid entry. */
+  errorTitle: z.string().optional(),
+  error: z.string().optional(),
+});
+
 export const CellSchema = z.object({
   value: z.union([z.string(), z.number(), z.boolean(), z.null()]).optional(),
   formula: z.string().optional(),
   style: CellStyleSchema.optional(),
   comment: z.string().optional(),
+  /** Data validation (dropdown / numeric bound) — used on input cells. */
+  validation: DataValidationSchema.optional(),
 });
 
 // ---------------------------------------------------------------------------
@@ -47,6 +89,9 @@ export const ColumnDefSchema = z.object({
     .optional(),
   numberFormat: z.string().optional(),
   style: CellStyleSchema.optional(),
+  /** Column-wide data validation applied to every data cell in the column
+   *  (cell-level `validation` still wins for a specific cell). */
+  validation: DataValidationSchema.optional(),
 });
 
 // ---------------------------------------------------------------------------
@@ -157,6 +202,21 @@ export const SheetSchema = z.object({
   tabColor: z.string().optional(),
   /** X2 — Conditional formatting blocks (per range). */
   conditionalFormatting: z.array(ConditionalFormattingBlockSchema).optional(),
+  /**
+   * P3 — mark this sheet as the workbook's assumptions/input sheet. When true
+   * (or when the sheet name reads as "Assumptions"/"Założenia"), the builder
+   * emits workbook-level named ranges for each input row so formulas elsewhere
+   * can reference `TaxRate` instead of `Assumptions!$B$5`. Purely additive —
+   * existing A1/cross-sheet formulas are never rewritten.
+   */
+  isAssumptions: z.boolean().optional(),
+  /**
+   * P3 — which column key holds the row's stable name/key (defaults to the
+   * first column) and which holds the value the name should point at (defaults
+   * to the first numeric/currency/percent column, else the 2nd column).
+   */
+  nameKeyColumn: z.string().optional(),
+  nameValueColumn: z.string().optional(),
 });
 
 // ---------------------------------------------------------------------------
@@ -176,6 +236,7 @@ export const WorkbookSchemaValidator = z.object({
 // ---------------------------------------------------------------------------
 
 export type CellStyle = z.infer<typeof CellStyleSchema>;
+export type DataValidation = z.infer<typeof DataValidationSchema>;
 export type Cell = z.infer<typeof CellSchema>;
 export type ColumnDef = z.infer<typeof ColumnDefSchema>;
 export type Row = z.infer<typeof RowSchema>;
