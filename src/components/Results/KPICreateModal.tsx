@@ -332,7 +332,7 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
             <button
               type="submit"
               disabled={!name.trim() || saving}
-              className="h-9 px-5 text-sm font-medium rounded-full bg-primary-500 text-white hover:bg-primary-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="h-9 px-5 text-sm font-medium rounded-full bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {saving
                 ? t('common.saving', 'Saving...')
