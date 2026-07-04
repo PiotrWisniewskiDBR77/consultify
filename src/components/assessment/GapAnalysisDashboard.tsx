@@ -146,7 +146,7 @@ export const GapAnalysisDashboard: React.FC<GapAnalysisDashboardProps> = ({
             <button
               onClick={generateInitiatives}
               disabled={!hasMultipleAssessments || generating}
-              className="px-6 py-3 bg-white/20 border border-white/30 text-white rounded-lg hover:bg-white/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium transition-colors"
+              className="px-6 py-3 bg-white/20 border border-c-border text-white rounded-lg hover:bg-white/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium transition-colors"
             >
               {generating ? (
                 <>

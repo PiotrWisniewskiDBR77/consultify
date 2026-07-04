@@ -3768,7 +3768,7 @@ export const InterviewHub: React.FC = () => {
       const badgeInactive = MENU_3_BADGE_INACTIVE;
       const badgeActive = MENU_3_BADGE_ACTIVE;
       const bulkGhostPill =
-        'inline-flex h-8 items-center gap-1 rounded-full border border-slate-200/80 px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100/70 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/[0.06]';
+        'inline-flex h-8 items-center gap-1 rounded-full border border-slate-200/80 px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100/70 dark:border-c-border-subtle dark:text-slate-300 dark:hover:bg-white/[0.06]';
 
       const buttons: Array<{
         id: 'all' | 'answered' | 'approved' | 'sent_back';
@@ -3902,7 +3902,7 @@ export const InterviewHub: React.FC = () => {
       const badgeInactive = MENU_3_BADGE_INACTIVE;
       const badgeActive = MENU_3_BADGE_ACTIVE;
       const bulkGhostPill =
-        'inline-flex h-8 items-center gap-1 rounded-full border border-slate-200/80 px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100/70 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/[0.06]';
+        'inline-flex h-8 items-center gap-1 rounded-full border border-slate-200/80 px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100/70 dark:border-c-border-subtle dark:text-slate-300 dark:hover:bg-white/[0.06]';
 
       const buttons: Array<{
         id: 'all' | 'to-approve' | 'overdue' | 'sent_back';
@@ -4109,7 +4109,7 @@ export const InterviewHub: React.FC = () => {
       const badgeInactive = MENU_3_BADGE_INACTIVE;
       const badgeActive = MENU_3_BADGE_ACTIVE;
       const bulkGhostPill =
-        'inline-flex h-8 items-center gap-1 rounded-full border border-slate-200/80 px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100/70 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/[0.06]';
+        'inline-flex h-8 items-center gap-1 rounded-full border border-slate-200/80 px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100/70 dark:border-c-border-subtle dark:text-slate-300 dark:hover:bg-white/[0.06]';
 
       const allCount = sessions.length;
       const inProgressCount = sessions.filter(
@@ -4365,7 +4365,7 @@ export const InterviewHub: React.FC = () => {
       const badgeInactive = MENU_3_BADGE_INACTIVE;
       const badgeActive = MENU_3_BADGE_ACTIVE;
       const bulkGhostPill =
-        'inline-flex h-8 items-center gap-1 rounded-full border border-slate-200/80 px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100/70 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/[0.06]';
+        'inline-flex h-8 items-center gap-1 rounded-full border border-slate-200/80 px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100/70 dark:border-c-border-subtle dark:text-slate-300 dark:hover:bg-white/[0.06]';
 
       const buttons: Array<{
         id: 'all' | 'draft' | 'in_review' | 'approved' | 'archived';

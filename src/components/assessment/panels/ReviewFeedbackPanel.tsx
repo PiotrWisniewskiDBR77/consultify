@@ -279,7 +279,7 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
                                                     ${
                                                       recommendation === rec.id
                                                         ? rec.bgColor + ' border-current'
-                                                        : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
+                                                        : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-c-border'
                                                     }
                                                 `}
                       >

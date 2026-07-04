@@ -46,7 +46,7 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
                             ${isCompact ? 'p-3' : 'flex items-start gap-4 p-3'}
                             ${
                               isActual || isTarget
-                                ? 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/10 shadow-lg'
+                                ? 'bg-white dark:bg-navy-900 border-slate-200 dark:border-c-border-subtle shadow-lg'
                                 : isInGap
                                   ? 'bg-navy-900/40 border-primary-500/10'
                                   : 'bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-navy-800/20 active:bg-white/10'
@@ -86,7 +86,7 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
                                                 ${
                                                   isActual
                                                     ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-600/20'
-                                                    : 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 dark:text-slate-500 active:bg-blue-600/20 active:border-blue-500/50'
+                                                    : 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-c-border-subtle text-slate-500 dark:text-slate-400 dark:text-slate-500 active:bg-blue-600/20 active:border-blue-500/50'
                                                 }
                                             `}
                     >
@@ -104,7 +104,7 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
                                                 ${
                                                   isTarget
                                                     ? 'bg-c-text border-c-text text-c-bg shadow-lg shadow-black/10'
-                                                    : 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 dark:text-slate-500 active:bg-primary-600/20 active:border-primary-500/50'
+                                                    : 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-c-border-subtle text-slate-500 dark:text-slate-400 dark:text-slate-500 active:bg-primary-600/20 active:border-primary-500/50'
                                                 }
                                             `}
                     >
@@ -140,7 +140,7 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
                     <button
                       onClick={() => onSelect('actual', levelNum)}
                       disabled={readOnly}
-                      className={`px-3 py-1 text-xs font-bold rounded-full border transition-all flex items-center gap-1 ${isActual ? getAssessmentButtonClasses('actual', true).replace('px-6 py-3', 'px-3 py-1').replace('text-sm', 'text-xs') : 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:border-blue-500/50 hover:text-blue-400 opacity-0 group-hover:opacity-100'}`}
+                      className={`px-3 py-1 text-xs font-bold rounded-full border transition-all flex items-center gap-1 ${isActual ? getAssessmentButtonClasses('actual', true).replace('px-6 py-3', 'px-3 py-1').replace('text-sm', 'text-xs') : 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-c-border-subtle text-slate-500 dark:text-slate-400 hover:border-blue-500/50 hover:text-blue-400 opacity-0 group-hover:opacity-100'}`}
                     >
                       {isActual && <Check size={12} />}
                       ACTUAL
@@ -150,7 +150,7 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
                     <button
                       onClick={() => onSelect('target', levelNum)}
                       disabled={readOnly}
-                      className={`px-3 py-1 text-xs font-bold rounded-full border transition-all flex items-center gap-1 ${isTarget ? getAssessmentButtonClasses('target', true).replace('px-6 py-3', 'px-3 py-1').replace('text-sm', 'text-xs') : 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:border-primary-500/50 hover:text-primary-400 opacity-0 group-hover:opacity-100'}`}
+                      className={`px-3 py-1 text-xs font-bold rounded-full border transition-all flex items-center gap-1 ${isTarget ? getAssessmentButtonClasses('target', true).replace('px-6 py-3', 'px-3 py-1').replace('text-sm', 'text-xs') : 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-c-border-subtle text-slate-500 dark:text-slate-400 hover:border-primary-500/50 hover:text-primary-400 opacity-0 group-hover:opacity-100'}`}
                     >
                       {isTarget && <Check size={12} />}
                       TARGET

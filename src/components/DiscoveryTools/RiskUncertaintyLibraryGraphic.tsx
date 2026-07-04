@@ -49,8 +49,8 @@ export function RiskUncertaintyLibraryGraphic({
       };
 
   return (
-    <div className="overflow-hidden rounded-[30px] border border-slate-200/70 bg-[radial-gradient(circle_at_top_left,rgba(245,158,11,0.16),transparent_26%),radial-gradient(circle_at_90%_10%,rgba(239,68,68,0.1),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.98))] shadow-[0_20px_70px_-35px_rgba(15,23,42,0.35)] dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(245,158,11,0.18),transparent_26%),radial-gradient(circle_at_90%_10%,rgba(239,68,68,0.12),transparent_22%),linear-gradient(180deg,#0b1020,#0a0f1b)]">
-      <div className="border-b border-slate-200/70 px-5 py-5 dark:border-white/10">
+    <div className="overflow-hidden rounded-[30px] border border-slate-200/70 bg-[radial-gradient(circle_at_top_left,rgba(245,158,11,0.16),transparent_26%),radial-gradient(circle_at_90%_10%,rgba(239,68,68,0.1),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.98))] shadow-[0_20px_70px_-35px_rgba(15,23,42,0.35)] dark:border-c-border-subtle dark:bg-[radial-gradient(circle_at_top_left,rgba(245,158,11,0.18),transparent_26%),radial-gradient(circle_at_90%_10%,rgba(239,68,68,0.12),transparent_22%),linear-gradient(180deg,#0b1020,#0a0f1b)]">
+      <div className="border-b border-slate-200/70 px-5 py-5 dark:border-c-border-subtle">
         <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-600 dark:text-amber-300">
           {labels.eyebrow}
         </div>
@@ -72,7 +72,7 @@ export function RiskUncertaintyLibraryGraphic({
               {labels.mission}
             </p>
           </div>
-          <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]">
+          <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-c-border-subtle dark:bg-white/[0.04]">
             <div className="space-y-2">
               {labels.stages.map((stage, index) => (
                 <div
@@ -96,7 +96,7 @@ export function RiskUncertaintyLibraryGraphic({
             {labels.cards.map(([title, text]) => (
               <div
                 key={title}
-                className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]"
+                className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-c-border-subtle dark:bg-white/[0.04]"
               >
                 <div className="text-sm font-semibold text-slate-900 dark:text-white">{title}</div>
                 <div className="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-300">

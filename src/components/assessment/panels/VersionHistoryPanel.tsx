@@ -282,7 +282,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                                                 ${
                                                   index === 0
                                                     ? 'bg-primary-50 dark:bg-primary-900/10 border-primary-200 dark:border-primary-500/30'
-                                                    : 'bg-white dark:bg-navy-950 border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
+                                                    : 'bg-white dark:bg-navy-950 border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-c-border'
                                                 }
                                             `}
                       >

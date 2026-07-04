@@ -308,7 +308,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
           onClick={() => setShowFilters(!showFilters)}
           className={`flex items-center gap-2 px-4 py-2.5 border rounded-lg transition-colors ${
             showFilters || statusFilter !== 'ALL' || typeFilter !== 'ALL'
-              ? 'bg-slate-100 border-slate-300 text-slate-900 dark:bg-white/10 dark:border-white/20 dark:text-slate-100'
+              ? 'bg-slate-100 border-slate-300 text-slate-900 dark:bg-white/10 dark:border-c-border dark:text-slate-100'
               : 'bg-white border-slate-200 text-slate-700 dark:bg-navy-900 dark:border-navy-700 dark:text-slate-300'
           }`}
         >

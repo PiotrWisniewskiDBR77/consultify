@@ -185,8 +185,8 @@ export const RequestAccessModal: React.FC<RequestAccessModalProps> = ({
                       p-4 rounded-lg border-2 text-left transition-all
                       ${
                         isSelected
-                          ? 'border-slate-500 dark:border-white/40 bg-slate-100/60 dark:bg-white/[0.07]'
-                          : 'border-slate-200 dark:border-navy-700 hover:border-slate-400 dark:hover:border-white/30'
+                          ? 'border-slate-500 dark:border-c-border bg-slate-100/60 dark:bg-white/[0.07]'
+                          : 'border-slate-200 dark:border-navy-700 hover:border-slate-400 dark:hover:border-c-border'
                       }
                     `}
                   >

@@ -119,7 +119,7 @@ function QuadrantCard({
             {isPolish ? meta.subtitle.pl : meta.subtitle.en}
           </div>
         </div>
-        <div className="rounded-full border border-white/70 bg-white/70 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200">
+        <div className="rounded-full border border-c-border-strong bg-white/70 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-c-border-subtle dark:bg-white/[0.04] dark:text-slate-200">
           {items.length}
         </div>
       </div>
@@ -135,7 +135,7 @@ function QuadrantCard({
             }
           }}
           placeholder={isPolish ? 'Dodaj punkt...' : 'Add point...'}
-          className="h-10 flex-1 rounded-lg border border-white/70 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-900"
+          className="h-10 flex-1 rounded-lg border border-c-border-strong bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-900"
         />
         <button
           type="button"
@@ -149,14 +149,14 @@ function QuadrantCard({
 
       <div className="space-y-2">
         {items.length === 0 ? (
-          <div className="rounded-xl border-2 border-dashed border-white/70 bg-white/40 p-5 text-center text-sm text-slate-500 dark:border-navy-700 dark:bg-navy-950/30 dark:text-slate-400">
+          <div className="rounded-xl border-2 border-dashed border-c-border-strong bg-white/40 p-5 text-center text-sm text-slate-500 dark:border-navy-700 dark:bg-navy-950/30 dark:text-slate-400">
             {isPolish ? 'Brak punktów w tej ćwiartce.' : 'No points in this quadrant yet.'}
           </div>
         ) : (
           items.map((item) => (
             <div
               key={item.id}
-              className="rounded-2xl border border-white/80 bg-white/90 p-3 shadow-[0_8px_24px_-18px_rgba(15,23,42,0.45)] dark:border-navy-700 dark:bg-navy-950/50"
+              className="rounded-2xl border border-c-border-strong bg-white/90 p-3 shadow-[0_8px_24px_-18px_rgba(15,23,42,0.45)] dark:border-navy-700 dark:bg-navy-950/50"
             >
               <div className="mb-2 flex items-start justify-between gap-2">
                 <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">
@@ -182,7 +182,7 @@ function QuadrantCard({
       </div>
 
       {proposals.length > 0 ? (
-        <div className="mt-4 space-y-2 border-t border-white/60 pt-4 dark:border-white/10">
+        <div className="mt-4 space-y-2 border-t border-c-border-strong pt-4 dark:border-c-border-subtle">
           <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
             {isPolish ? 'Propozycje AI' : 'AI proposals'}
           </div>
@@ -237,7 +237,7 @@ function QuadrantCard({
                 <button
                   type="button"
                   onClick={() => onRejectProposal(proposal.id)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/70 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/70 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-c-border-subtle dark:bg-white/[0.04] dark:text-slate-200"
                 >
                   <X className="h-3.5 w-3.5" />
                   {isPolish ? 'Odrzuć' : 'Reject'}

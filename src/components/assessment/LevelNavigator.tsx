@@ -67,7 +67,7 @@ export const LevelNavigator: React.FC<LevelNavigatorProps> = ({
                                     min-w-[60px] px-3 py-2 rounded-xl border transition-all touch-ripple
                                     ${
                                       isActive
-                                        ? 'bg-navy-900 dark:bg-white/15 border-navy-800 dark:border-white/30 text-white shadow-lg shadow-navy-900/20 dark:shadow-black/20'
+                                        ? 'bg-navy-900 dark:bg-white/15 border-navy-800 dark:border-c-border text-white shadow-lg shadow-navy-900/20 dark:shadow-black/20'
                                         : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 active:bg-slate-100 dark:active:bg-white/10'
                                     }
                                 `}
@@ -152,7 +152,7 @@ export const LevelNavigator: React.FC<LevelNavigatorProps> = ({
               onClick={() => onSelectLevel(levelNum)}
               className={`w-full text-left px-4 py-3 rounded-xl border transition-all relative group ${
                 isActive
-                  ? 'bg-slate-100 dark:bg-white/10 border-slate-200 dark:border-white/20 shadow-sm dark:shadow-lg'
+                  ? 'bg-slate-100 dark:bg-white/10 border-slate-200 dark:border-c-border shadow-sm dark:shadow-lg'
                   : 'bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-white/5 text-slate-500 dark:text-slate-400'
               }`}
             >
@@ -163,7 +163,7 @@ export const LevelNavigator: React.FC<LevelNavigatorProps> = ({
                   <span
                     className={`w-6 h-6 rounded-full flex items-center justify-center text-xs border ${
                       isActive
-                        ? 'border-primary-200 dark:border-white/30 bg-primary-50 dark:bg-white/10 text-primary-700 dark:text-white'
+                        ? 'border-primary-200 dark:border-c-border bg-primary-50 dark:bg-white/10 text-primary-700 dark:text-white'
                         : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-500 dark:text-slate-400'
                     }`}
                   >

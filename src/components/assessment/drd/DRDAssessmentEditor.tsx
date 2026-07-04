@@ -702,7 +702,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
         {/* MATRIX VIEW (enterprise / BCG-style)                                  */}
         {/* ===================================================================== */}
         {viewMode === 'matrix' && (
-          <div className="relative overflow-hidden rounded-2xl border border-c-border dark:border-white/10 bg-c-surface dark:bg-c-bg shadow-lg dark:shadow-2xl">
+          <div className="relative overflow-hidden rounded-2xl border border-c-border dark:border-c-border-subtle bg-c-surface dark:bg-c-bg shadow-lg dark:shadow-2xl">
             {/* Background glow */}
             <div className="pointer-events-none absolute -top-40 -right-40 h-[420px] w-[420px] rounded-full bg-[color-mix(in_srgb,var(--c-tag-5)_15%,transparent)] blur-3xl hidden dark:block" />
             <div className="pointer-events-none absolute -bottom-48 -left-40 h-[460px] w-[460px] rounded-full bg-[color-mix(in_srgb,var(--c-tag-1)_10%,transparent)] blur-3xl hidden dark:block" />
@@ -741,7 +741,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                           type="checkbox"
                           checked={!matrixCompact}
                           onChange={(e) => setMatrixCompact(!e.target.checked)}
-                          className="h-4 w-4 rounded border-c-border dark:border-white/20 bg-c-surface-raised dark:bg-white/5 text-c-accent focus:ring-[color:var(--c-focus)]"
+                          className="h-4 w-4 rounded border-c-border dark:border-c-border bg-c-surface-raised dark:bg-white/5 text-c-accent focus:ring-[color:var(--c-focus)]"
                         />
                         Spacious
                       </label>
@@ -751,7 +751,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                   <button
                     type="button"
                     onClick={() => setIsMatrixFullscreen(true)}
-                    className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-c-border dark:border-white/10 bg-c-surface-raised dark:bg-white/5 text-c-text text-xs font-semibold hover:bg-c-surface-raised dark:hover:bg-white/10 transition-colors"
+                    className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-c-border dark:border-c-border-subtle bg-c-surface-raised dark:bg-white/5 text-c-text text-xs font-semibold hover:bg-c-surface-raised dark:hover:bg-white/10 transition-colors"
                     title="Open matrix in full screen"
                   >
                     <Maximize2 className="w-4 h-4" />
@@ -784,7 +784,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                     return (
                       <React.Fragment key={`row-${level}`}>
                         {/* Row label */}
-                        <div className="sticky left-0 z-10 rounded-xl border border-white/10 bg-c-surface-raised backdrop-blur p-3 shadow-[10px_0_30px_rgba(0,0,0,0.18)]">
+                        <div className="sticky left-0 z-10 rounded-xl border border-c-border-subtle bg-c-surface-raised backdrop-blur p-3 shadow-[10px_0_30px_rgba(0,0,0,0.18)]">
                           <div className="flex items-center justify-between gap-3">
                             <div className="text-white font-bold">
                               <span className="text-c-accent">{level}.</span> {label}
@@ -822,7 +822,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                 matrixCompact ? 'p-2' : 'p-2.5'
                               } ${
                                 isSelected
-                                  ? 'border-white/60 bg-white/20 ring-2 ring-white/30 scale-[1.02] z-10'
+                                  ? 'border-c-border-strong bg-white/20 ring-2 ring-c-border scale-[1.02] z-10'
                                   : hasActivePopup
                                     ? 'opacity-40'
                                     : ''
@@ -832,7 +832,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                   : !isSelected && !hasActivePopup && isTarget
                                     ? 'border-c-tag-1 bg-[color-mix(in_srgb,var(--c-tag-1)_15%,transparent)] hover:bg-[color-mix(in_srgb,var(--c-tag-1)_25%,transparent)]'
                                     : !isSelected && !hasActivePopup
-                                      ? 'border-white/10 bg-white/[0.02] hover:bg-white/[0.06]'
+                                      ? 'border-c-border-subtle bg-white/[0.02] hover:bg-white/[0.06]'
                                       : ''
                               }`}
                               onClick={(e) => {
@@ -909,7 +909,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                   })}
 
                   {/* Bottom X-axis strip (process areas) */}
-                  <div className="sticky bottom-0 left-0 z-30 rounded-xl border border-white/10 bg-c-bg backdrop-blur p-2 shadow-[0_-10px_30px_rgba(0,0,0,0.35)]">
+                  <div className="sticky bottom-0 left-0 z-30 rounded-xl border border-c-border-subtle bg-c-bg backdrop-blur p-2 shadow-[0_-10px_30px_rgba(0,0,0,0.35)]">
                     <div className="text-[10px] font-semibold text-c-text-secondary uppercase tracking-wider">
                       Area
                     </div>
@@ -927,7 +927,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                           onAreaChange?.(area.id);
                           setViewMode('surveys');
                         }}
-                        className="sticky bottom-0 z-20 rounded-xl border border-white/10 bg-gradient-to-b from-white/10 to-white/6 backdrop-blur p-2 text-left hover:from-white/14 hover:to-white/8 transition-colors shadow-[0_-10px_30px_rgba(0,0,0,0.22)]"
+                        className="sticky bottom-0 z-20 rounded-xl border border-c-border-subtle bg-gradient-to-b from-white/10 to-white/6 backdrop-blur p-2 text-left hover:from-white/14 hover:to-white/8 transition-colors shadow-[0_-10px_30px_rgba(0,0,0,0.22)]"
                       >
                         {/* Top line: ID + badges */}
                         <div className="flex items-center justify-between gap-1 mb-1">
@@ -987,7 +987,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
 
                 return (
                   <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div className="rounded-xl border border-c-border dark:border-white/10 bg-c-surface-raised dark:bg-white/5 p-4">
+                    <div className="rounded-xl border border-c-border dark:border-c-border-subtle bg-c-surface-raised dark:bg-white/5 p-4">
                       <div className="text-3xl font-extrabold text-c-text tabular-nums">
                         {avgActual}
                       </div>
@@ -995,7 +995,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                         Avg. Current Level
                       </div>
                     </div>
-                    <div className="rounded-xl border border-c-border dark:border-white/10 bg-c-surface-raised dark:bg-white/5 p-4">
+                    <div className="rounded-xl border border-c-border dark:border-c-border-subtle bg-c-surface-raised dark:bg-white/5 p-4">
                       <div className="text-3xl font-extrabold text-c-text tabular-nums">
                         {avgTarget}
                       </div>
@@ -1003,7 +1003,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                         Avg. Target Level
                       </div>
                     </div>
-                    <div className="rounded-xl border border-c-border dark:border-white/10 bg-c-surface-raised dark:bg-white/5 p-4">
+                    <div className="rounded-xl border border-c-border dark:border-c-border-subtle bg-c-surface-raised dark:bg-white/5 p-4">
                       <div className="text-3xl font-extrabold text-c-text tabular-nums">
                         {avgGap}
                       </div>
@@ -1011,7 +1011,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                         Avg. Gap
                       </div>
                     </div>
-                    <div className="rounded-xl border border-c-border dark:border-white/10 bg-c-surface-raised dark:bg-white/5 p-4">
+                    <div className="rounded-xl border border-c-border dark:border-c-border-subtle bg-c-surface-raised dark:bg-white/5 p-4">
                       <div className="text-3xl font-extrabold text-c-text tabular-nums">
                         {stats.assessed}/{axisAreas.length}
                       </div>
@@ -1051,9 +1051,9 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                       transform: 'translate(-50%, -100%)',
                     }}
                   >
-                    <div className="rounded-xl border border-c-border dark:border-white/20 bg-white/95 dark:bg-c-bg backdrop-blur-lg shadow-xl px-3 py-2 max-w-[240px]">
+                    <div className="rounded-xl border border-c-border dark:border-c-border bg-white/95 dark:bg-c-bg backdrop-blur-lg shadow-xl px-3 py-2 max-w-[240px]">
                       {/* Arrow */}
-                      <div className="absolute left-1/2 -bottom-1.5 -translate-x-1/2 w-3 h-3 rotate-45 bg-white/95 dark:bg-c-bg border-r border-b border-c-border dark:border-white/20" />
+                      <div className="absolute left-1/2 -bottom-1.5 -translate-x-1/2 w-3 h-3 rotate-45 bg-white/95 dark:bg-c-bg border-r border-b border-c-border dark:border-c-border" />
 
                       <div className="text-xs font-semibold text-c-text mb-1">
                         {tooltipLevelInfo?.title || `Level ${hoverCell.level}`}
@@ -1093,31 +1093,31 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
             {popupCell && popupPosition && (
               <div
                 ref={popupRef}
-                className="fixed z-[200] w-[360px] rounded-2xl border border-c-border dark:border-white/20 bg-white/98 dark:bg-c-bg backdrop-blur-xl shadow-[0_25px_60px_rgba(0,0,0,0.15)] dark:shadow-[0_25px_60px_rgba(0,0,0,0.5)] animate-in fade-in zoom-in-95 duration-200"
+                className="fixed z-[200] w-[360px] rounded-2xl border border-c-border dark:border-c-border bg-white/98 dark:bg-c-bg backdrop-blur-xl shadow-[0_25px_60px_rgba(0,0,0,0.15)] dark:shadow-[0_25px_60px_rgba(0,0,0,0.5)] animate-in fade-in zoom-in-95 duration-200"
                 style={{ top: popupPosition.top, left: popupPosition.left }}
               >
                 {/* Arrow indicator */}
                 {popupPosition.arrowPosition === 'top' && (
                   <div
-                    className="absolute -top-2 w-4 h-4 rotate-45 bg-white/98 dark:bg-c-bg border-l border-t border-c-border dark:border-white/20"
+                    className="absolute -top-2 w-4 h-4 rotate-45 bg-white/98 dark:bg-c-bg border-l border-t border-c-border dark:border-c-border"
                     style={{ left: popupPosition.arrowOffset - 8 }}
                   />
                 )}
                 {popupPosition.arrowPosition === 'bottom' && (
                   <div
-                    className="absolute -bottom-2 w-4 h-4 rotate-45 bg-white/98 dark:bg-c-bg border-r border-b border-c-border dark:border-white/20"
+                    className="absolute -bottom-2 w-4 h-4 rotate-45 bg-white/98 dark:bg-c-bg border-r border-b border-c-border dark:border-c-border"
                     style={{ left: popupPosition.arrowOffset - 8 }}
                   />
                 )}
                 {popupPosition.arrowPosition === 'left' && (
                   <div
-                    className="absolute -left-2 w-4 h-4 rotate-45 bg-white/98 dark:bg-c-bg border-l border-b border-c-border dark:border-white/20"
+                    className="absolute -left-2 w-4 h-4 rotate-45 bg-white/98 dark:bg-c-bg border-l border-b border-c-border dark:border-c-border"
                     style={{ top: popupPosition.arrowOffset - 8 }}
                   />
                 )}
                 {popupPosition.arrowPosition === 'right' && (
                   <div
-                    className="absolute -right-2 w-4 h-4 rotate-45 bg-white/98 dark:bg-c-bg border-r border-t border-c-border dark:border-white/20"
+                    className="absolute -right-2 w-4 h-4 rotate-45 bg-white/98 dark:bg-c-bg border-r border-t border-c-border dark:border-c-border"
                     style={{ top: popupPosition.arrowOffset - 8 }}
                   />
                 )}
@@ -1139,7 +1139,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                   return (
                     <>
                       {/* Header */}
-                      <div className="p-4 border-b border-c-border dark:border-white/10">
+                      <div className="p-4 border-b border-c-border dark:border-c-border-subtle">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex items-center gap-3">
                             <div
@@ -1192,7 +1192,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             className={`text-[10px] font-semibold px-2 py-1 rounded-full ${
                               isPopupAchieved
                                 ? 'bg-[color-mix(in_srgb,var(--c-tag-5)_30%,transparent)] text-c-tag-5 ring-1 ring-c-tag-5'
-                                : 'bg-c-surface-raised dark:bg-white/5 text-c-text-muted ring-1 ring-slate-200 dark:ring-white/10'
+                                : 'bg-c-surface-raised dark:bg-white/5 text-c-text-muted ring-1 ring-slate-200 dark:ring-c-border'
                             }`}
                           >
                             {isPopupAchieved ? 'AS-IS (Achieved)' : 'Not achieved'}
@@ -1259,7 +1259,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                     className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
                                       isKey
                                         ? 'bg-[color-mix(in_srgb,var(--c-warning)_20%,transparent)] text-c-warning border border-c-warning'
-                                        : 'bg-c-surface-raised dark:bg-white/5 text-c-text-secondary border border-c-border dark:border-white/10'
+                                        : 'bg-c-surface-raised dark:bg-white/5 text-c-text-secondary border border-c-border dark:border-c-border-subtle'
                                     }`}
                                   >
                                     {t}
@@ -1272,7 +1272,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                       </div>
 
                       {/* Actions */}
-                      <div className="p-4 border-t border-c-border dark:border-white/10">
+                      <div className="p-4 border-t border-c-border dark:border-c-border-subtle">
                         {/* Quick actions row - toggleable buttons */}
                         <div className="flex items-center gap-2">
                           <button
@@ -1599,7 +1599,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             className={`inline-flex items-center gap-2 h-9 px-3 rounded-lg border text-xs font-semibold transition-colors ${
                               activeCardPanel === 'questions'
                                 ? 'bg-c-surface border-c-border text-c-text shadow-sm'
-                                : 'bg-white/70 dark:bg-white/5 border-c-border dark:border-white/15 text-c-text-secondary shadow-sm hover:bg-c-surface dark:hover:bg-white/8 hover:border-c-border-strong dark:hover:border-white/25'
+                                : 'bg-white/70 dark:bg-white/5 border-c-border dark:border-c-border-subtle text-c-text-secondary shadow-sm hover:bg-c-surface dark:hover:bg-white/8 hover:border-c-border-strong dark:hover:border-c-border'
                             }`}
                           >
                             <HelpCircle className="w-4 h-4" />
@@ -1614,7 +1614,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             className={`inline-flex items-center gap-2 h-9 px-3 rounded-lg border text-xs font-semibold transition-colors ${
                               activeCardPanel === 'comment'
                                 ? 'bg-c-surface border-c-border text-c-text shadow-sm'
-                                : 'bg-white/70 dark:bg-white/5 border-c-border dark:border-white/15 text-c-text-secondary shadow-sm hover:bg-c-surface dark:hover:bg-white/8 hover:border-c-border-strong dark:hover:border-white/25'
+                                : 'bg-white/70 dark:bg-white/5 border-c-border dark:border-c-border-subtle text-c-text-secondary shadow-sm hover:bg-c-surface dark:hover:bg-white/8 hover:border-c-border-strong dark:hover:border-c-border'
                             }`}
                           >
                             <MessageSquare className="w-4 h-4" />
@@ -1631,7 +1631,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             className={`inline-flex items-center gap-2 h-9 px-3 rounded-lg border text-xs font-semibold transition-colors ${
                               activeCardPanel === 'attachments'
                                 ? 'bg-c-surface border-c-border text-c-text shadow-sm'
-                                : 'bg-white/70 dark:bg-white/5 border-c-border dark:border-white/15 text-c-text-secondary shadow-sm hover:bg-c-surface dark:hover:bg-white/8 hover:border-c-border-strong dark:hover:border-white/25'
+                                : 'bg-white/70 dark:bg-white/5 border-c-border dark:border-c-border-subtle text-c-text-secondary shadow-sm hover:bg-c-surface dark:hover:bg-white/8 hover:border-c-border-strong dark:hover:border-c-border'
                             }`}
                           >
                             <Paperclip className="w-4 h-4" />
@@ -1646,7 +1646,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             className={`inline-flex items-center gap-2 h-9 px-3 rounded-lg border text-xs font-semibold transition-colors ${
                               activeCardPanel === 'links'
                                 ? 'bg-c-surface border-c-border text-c-text shadow-sm'
-                                : 'bg-white/70 dark:bg-white/5 border-c-border dark:border-white/15 text-c-text-secondary shadow-sm hover:bg-c-surface dark:hover:bg-white/8 hover:border-c-border-strong dark:hover:border-white/25'
+                                : 'bg-white/70 dark:bg-white/5 border-c-border dark:border-c-border-subtle text-c-text-secondary shadow-sm hover:bg-c-surface dark:hover:bg-white/8 hover:border-c-border-strong dark:hover:border-c-border'
                             }`}
                           >
                             <Link2 className="w-4 h-4" />
@@ -1929,7 +1929,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                 </div>
 
                                 <div className="flex items-center justify-end gap-2">
-                                  <div className="inline-flex overflow-hidden rounded-xl border border-c-border dark:border-white/15 bg-white/80 dark:bg-white/5 shadow-sm">
+                                  <div className="inline-flex overflow-hidden rounded-xl border border-c-border dark:border-c-border-subtle bg-white/80 dark:bg-white/5 shadow-sm">
                                     <button
                                       type="button"
                                       disabled={!prev}
@@ -1976,7 +1976,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => setIsMatrixFullscreen(false)}
-                  className="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-c-border dark:border-white/10 bg-c-surface-raised dark:bg-white/5 text-c-text text-sm font-semibold hover:bg-c-surface-raised dark:hover:bg-white/10 transition-colors"
+                  className="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-c-border dark:border-c-border-subtle bg-c-surface-raised dark:bg-white/5 text-c-text text-sm font-semibold hover:bg-c-surface-raised dark:hover:bg-white/10 transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   Back
@@ -1988,7 +1988,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
               </div>
 
               {/* Re-render the same Matrix panel */}
-              <div className="relative overflow-hidden rounded-2xl border border-c-border dark:border-white/10 bg-c-surface dark:bg-c-bg shadow-lg dark:shadow-2xl">
+              <div className="relative overflow-hidden rounded-2xl border border-c-border dark:border-c-border-subtle bg-c-surface dark:bg-c-bg shadow-lg dark:shadow-2xl">
                 <div className="pointer-events-none absolute -top-40 -right-40 h-[420px] w-[420px] rounded-full bg-[color-mix(in_srgb,var(--c-tag-5)_15%,transparent)] blur-3xl hidden dark:block" />
                 <div className="pointer-events-none absolute -bottom-48 -left-40 h-[460px] w-[460px] rounded-full bg-[color-mix(in_srgb,var(--c-tag-1)_10%,transparent)] blur-3xl hidden dark:block" />
 
@@ -2025,7 +2025,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             type="checkbox"
                             checked={!matrixCompact}
                             onChange={(e) => setMatrixCompact(!e.target.checked)}
-                            className="h-4 w-4 rounded border-c-border dark:border-white/20 bg-c-surface-raised dark:bg-white/5 text-c-accent focus:ring-[color:var(--c-focus)]"
+                            className="h-4 w-4 rounded border-c-border dark:border-c-border bg-c-surface-raised dark:bg-white/5 text-c-accent focus:ring-[color:var(--c-focus)]"
                           />
                           Spacious
                         </label>
@@ -2057,7 +2057,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                         return (
                           <React.Fragment key={`row-fs-${level}`}>
                             {/* Row label */}
-                            <div className="sticky left-0 z-10 rounded-xl border border-white/10 bg-c-surface-raised backdrop-blur p-3 shadow-[10px_0_30px_rgba(0,0,0,0.18)]">
+                            <div className="sticky left-0 z-10 rounded-xl border border-c-border-subtle bg-c-surface-raised backdrop-blur p-3 shadow-[10px_0_30px_rgba(0,0,0,0.18)]">
                               <div className="text-white font-bold">
                                 <span className="text-c-accent">{level}.</span> {label}
                               </div>
@@ -2089,7 +2089,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                       ? 'border-c-tag-5 bg-[color-mix(in_srgb,var(--c-tag-5)_25%,transparent)] hover:bg-[color-mix(in_srgb,var(--c-tag-5)_35%,transparent)]'
                                       : isTarget
                                         ? 'border-c-tag-1 bg-[color-mix(in_srgb,var(--c-tag-1)_15%,transparent)] hover:bg-[color-mix(in_srgb,var(--c-tag-1)_25%,transparent)]'
-                                        : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.06]'
+                                        : 'border-c-border-subtle bg-white/[0.02] hover:bg-white/[0.06]'
                                   }`}
                                   onClick={(e) => {
                                     if (e.shiftKey && !readOnly) {
@@ -2165,7 +2165,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                       })}
 
                       {/* Bottom X-axis strip (process areas) */}
-                      <div className="sticky bottom-0 left-0 z-30 rounded-xl border border-white/10 bg-c-bg backdrop-blur p-2 shadow-[0_-10px_30px_rgba(0,0,0,0.35)]">
+                      <div className="sticky bottom-0 left-0 z-30 rounded-xl border border-c-border-subtle bg-c-bg backdrop-blur p-2 shadow-[0_-10px_30px_rgba(0,0,0,0.35)]">
                         <div className="text-[10px] font-semibold text-c-text-secondary uppercase tracking-wider">
                           Area
                         </div>
@@ -2184,7 +2184,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                               setViewMode('surveys');
                               setIsMatrixFullscreen(false);
                             }}
-                            className="sticky bottom-0 z-20 rounded-xl border border-white/10 bg-gradient-to-b from-white/10 to-white/6 backdrop-blur p-2 text-left hover:from-white/14 hover:to-white/8 transition-colors shadow-[0_-10px_30px_rgba(0,0,0,0.22)]"
+                            className="sticky bottom-0 z-20 rounded-xl border border-c-border-subtle bg-gradient-to-b from-white/10 to-white/6 backdrop-blur p-2 text-left hover:from-white/14 hover:to-white/8 transition-colors shadow-[0_-10px_30px_rgba(0,0,0,0.22)]"
                           >
                             {/* Top line: ID + badges */}
                             <div className="flex items-center justify-between gap-1 mb-1">
@@ -2250,7 +2250,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
 
                     return (
                       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <div className="rounded-xl border border-c-border dark:border-white/10 bg-c-surface-raised dark:bg-white/5 p-4">
+                        <div className="rounded-xl border border-c-border dark:border-c-border-subtle bg-c-surface-raised dark:bg-white/5 p-4">
                           <div className="text-4xl font-extrabold text-c-text tabular-nums">
                             {avgActual}
                           </div>
@@ -2258,7 +2258,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             Avg. Current Level
                           </div>
                         </div>
-                        <div className="rounded-xl border border-c-border dark:border-white/10 bg-c-surface-raised dark:bg-white/5 p-4">
+                        <div className="rounded-xl border border-c-border dark:border-c-border-subtle bg-c-surface-raised dark:bg-white/5 p-4">
                           <div className="text-4xl font-extrabold text-c-text tabular-nums">
                             {avgTarget}
                           </div>
@@ -2266,7 +2266,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             Avg. Target Level
                           </div>
                         </div>
-                        <div className="rounded-xl border border-c-border dark:border-white/10 bg-c-surface-raised dark:bg-white/5 p-4">
+                        <div className="rounded-xl border border-c-border dark:border-c-border-subtle bg-c-surface-raised dark:bg-white/5 p-4">
                           <div className="text-4xl font-extrabold text-c-text tabular-nums">
                             {avgGap}
                           </div>
@@ -2274,7 +2274,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             Avg. Gap
                           </div>
                         </div>
-                        <div className="rounded-xl border border-c-border dark:border-white/10 bg-c-surface-raised dark:bg-white/5 p-4">
+                        <div className="rounded-xl border border-c-border dark:border-c-border-subtle bg-c-surface-raised dark:bg-white/5 p-4">
                           <div className="text-4xl font-extrabold text-c-text tabular-nums">
                             {stats.assessed}/{axisAreas.length}
                           </div>

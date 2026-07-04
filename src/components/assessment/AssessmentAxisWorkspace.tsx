@@ -569,7 +569,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                   </span>
 
                   {/* Dropdown Trigger */}
-                  <div className="flex items-center gap-2 cursor-pointer text-navy-900 dark:text-white font-bold text-sm bg-slate-100 dark:bg-navy-950/50 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20 transition-all">
+                  <div className="flex items-center gap-2 cursor-pointer text-navy-900 dark:text-white font-bold text-sm bg-slate-100 dark:bg-navy-950/50 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-c-border transition-all">
                     {activeArea?.title || workspaceT.selectArea || 'Select Area'}
                     <ChevronDown size={14} className="text-slate-500 dark:text-slate-400" />
                   </div>

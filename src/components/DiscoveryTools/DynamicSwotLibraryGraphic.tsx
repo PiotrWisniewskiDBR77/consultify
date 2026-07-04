@@ -276,18 +276,18 @@ export function DynamicSwotLibraryGraphic({
   ];
 
   return (
-    <div className="overflow-hidden rounded-[30px] border border-slate-200/70 bg-[radial-gradient(circle_at_top_left,rgba(165,28,48,0.1),transparent_24%),radial-gradient(circle_at_88%_12%,rgba(34,197,94,0.08),transparent_20%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.98))] shadow-[0_20px_70px_-35px_rgba(15,23,42,0.35)] dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(165,28,48,0.18),transparent_24%),radial-gradient(circle_at_88%_12%,rgba(16,185,129,0.12),transparent_20%),linear-gradient(180deg,#0b1020,#0a0f1b)]">
-      <div className="border-b border-slate-200/70 px-5 py-5 dark:border-white/10">
+    <div className="overflow-hidden rounded-[30px] border border-slate-200/70 bg-[radial-gradient(circle_at_top_left,rgba(165,28,48,0.1),transparent_24%),radial-gradient(circle_at_88%_12%,rgba(34,197,94,0.08),transparent_20%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.98))] shadow-[0_20px_70px_-35px_rgba(15,23,42,0.35)] dark:border-c-border-subtle dark:bg-[radial-gradient(circle_at_top_left,rgba(165,28,48,0.18),transparent_24%),radial-gradient(circle_at_88%_12%,rgba(16,185,129,0.12),transparent_20%),linear-gradient(180deg,#0b1020,#0a0f1b)]">
+      <div className="border-b border-slate-200/70 px-5 py-5 dark:border-c-border-subtle">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center rounded-full border border-primary-400/20 bg-primary-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary-700 dark:text-primary-200">
               {labels.eyebrow}
             </span>
-            <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300">
+            <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:border-c-border-subtle dark:bg-white/[0.04] dark:text-slate-300">
               {labels.flow}
             </span>
           </div>
-          <span className="inline-flex rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
+          <span className="inline-flex rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-c-border-subtle dark:bg-white/[0.05] dark:text-slate-200">
             Tool
           </span>
         </div>
@@ -299,8 +299,8 @@ export function DynamicSwotLibraryGraphic({
         </div>
       </div>
 
-      <div className="grid gap-4 border-b border-slate-200/70 px-5 py-4 dark:border-white/10 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-[22px] border border-slate-200/70 bg-white/85 p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
+      <div className="grid gap-4 border-b border-slate-200/70 px-5 py-4 dark:border-c-border-subtle lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="rounded-[22px] border border-slate-200/70 bg-white/85 p-4 shadow-sm dark:border-c-border-subtle dark:bg-white/[0.04]">
           <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
             {labels.scenario}
           </div>
@@ -321,7 +321,7 @@ export function DynamicSwotLibraryGraphic({
 
       <div className="space-y-5 p-5">
         {/* Process spine — compact horizontal flow */}
-        <div className="rounded-[26px] border border-slate-200/70 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+        <div className="rounded-[26px] border border-slate-200/70 bg-white/70 p-4 dark:border-c-border-subtle dark:bg-white/[0.03]">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
@@ -331,7 +331,7 @@ export function DynamicSwotLibraryGraphic({
                 {labels.stagesSubtitle}
               </div>
             </div>
-            <span className="inline-flex shrink-0 rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
+            <span className="inline-flex shrink-0 rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-c-border-subtle dark:bg-white/[0.05] dark:text-slate-200">
               Process
             </span>
           </div>
@@ -344,7 +344,7 @@ export function DynamicSwotLibraryGraphic({
             {stages.slice(0, 3).map((stage) => (
               <div
                 key={stage.id}
-                className={`rounded-2xl border border-slate-200/70 bg-gradient-to-br ${stage.tone} p-3 shadow-sm dark:border-white/10`}
+                className={`rounded-2xl border border-slate-200/70 bg-gradient-to-br ${stage.tone} p-3 shadow-sm dark:border-c-border-subtle`}
               >
                 <div className="flex items-center gap-2">
                   <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-900 text-[10px] font-bold text-white dark:bg-white dark:text-slate-950">
@@ -367,7 +367,7 @@ export function DynamicSwotLibraryGraphic({
             {stages.slice(3).map((stage) => (
               <div
                 key={stage.id}
-                className={`rounded-2xl border border-slate-200/70 bg-gradient-to-br ${stage.tone} p-3 shadow-sm ring-1 ring-white/30 dark:border-white/10 dark:ring-primary-400/20`}
+                className={`rounded-2xl border border-slate-200/70 bg-gradient-to-br ${stage.tone} p-3 shadow-sm ring-1 ring-c-border dark:border-c-border-subtle dark:ring-primary-400/20`}
               >
                 <div className="flex items-center gap-2">
                   <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-900 text-[10px] font-bold text-white dark:bg-white dark:text-slate-950">
@@ -377,7 +377,7 @@ export function DynamicSwotLibraryGraphic({
                     {stage.title}
                   </div>
                   {stage.badge ? (
-                    <span className="ml-auto inline-flex shrink-0 rounded-full border border-white/50 bg-white/60 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.14em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
+                    <span className="ml-auto inline-flex shrink-0 rounded-full border border-c-border-strong bg-white/60 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.14em] text-slate-600 dark:border-c-border-subtle dark:bg-white/[0.05] dark:text-slate-200">
                       {stage.badge}
                     </span>
                   ) : null}
@@ -394,13 +394,13 @@ export function DynamicSwotLibraryGraphic({
         </div>
 
         {/* SWOT Matrix — classic 2x2 grid, full width */}
-        <div className="rounded-[26px] border border-slate-200/70 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+        <div className="rounded-[26px] border border-slate-200/70 bg-slate-50/70 p-4 dark:border-c-border-subtle dark:bg-white/[0.03]">
           <div className="mb-3">
             <div className="flex items-center justify-between gap-3">
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
                 {labels.signals}
               </div>
-              <span className="inline-flex shrink-0 rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
+              <span className="inline-flex shrink-0 rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-c-border-subtle dark:bg-white/[0.05] dark:text-slate-200">
                 Matrix
               </span>
             </div>
@@ -437,7 +437,7 @@ export function DynamicSwotLibraryGraphic({
             ))}
           </div>
 
-          <div className="mt-4 rounded-[22px] border border-slate-200/70 bg-white/85 p-4 dark:border-white/10 dark:bg-white/[0.04]">
+          <div className="mt-4 rounded-[22px] border border-slate-200/70 bg-white/85 p-4 dark:border-c-border-subtle dark:bg-white/[0.04]">
             <div className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
               {labels.matrixNote}
             </div>
@@ -505,7 +505,7 @@ export function DynamicSwotLibraryGraphic({
             {outputs.map((item) => (
               <span
                 key={item}
-                className="inline-flex rounded-full border border-emerald-200/70 bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-700 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
+                className="inline-flex rounded-full border border-emerald-200/70 bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-700 shadow-sm dark:border-c-border-subtle dark:bg-white/[0.04] dark:text-slate-200"
               >
                 {item}
               </span>
@@ -521,7 +521,7 @@ export function DynamicSwotLibraryGraphic({
           </ul>
         </div>
 
-        <div className="rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-3 text-[11px] uppercase tracking-[0.16em] text-slate-500 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300">
+        <div className="rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-3 text-[11px] uppercase tracking-[0.16em] text-slate-500 dark:border-c-border-subtle dark:bg-white/[0.04] dark:text-slate-300">
           {labels.legend}
         </div>
       </div>

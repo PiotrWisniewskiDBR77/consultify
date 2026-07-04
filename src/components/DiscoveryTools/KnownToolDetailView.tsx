@@ -371,7 +371,7 @@ export function KnownToolDetailView(props: {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]">
+          <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-c-border-subtle dark:bg-white/[0.04]">
             <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
               {isPolish ? 'Co przygotować przed startem' : 'What to prepare before starting'}
             </div>
@@ -543,8 +543,8 @@ export function KnownToolDetailView(props: {
                 key={step.id}
                 className={`rounded-2xl border transition-all duration-200 ${
                   isOpen
-                    ? `border-slate-300/70 bg-gradient-to-br ${step.tone} shadow-sm dark:border-white/15`
-                    : 'border-slate-200/50 bg-slate-50/50 hover:border-slate-300/70 hover:bg-slate-50/80 dark:border-white/5 dark:bg-white/[0.02] dark:hover:border-white/10'
+                    ? `border-slate-300/70 bg-gradient-to-br ${step.tone} shadow-sm dark:border-c-border-subtle`
+                    : 'border-slate-200/50 bg-slate-50/50 hover:border-slate-300/70 hover:bg-slate-50/80 dark:border-c-border-subtle dark:bg-white/[0.02] dark:hover:border-c-border-subtle'
                 }`}
               >
                 <button
@@ -583,11 +583,11 @@ export function KnownToolDetailView(props: {
                   </svg>
                 </button>
                 {isOpen && (
-                  <div className="border-t border-slate-200/50 px-3 pb-4 pt-3 dark:border-white/5">
+                  <div className="border-t border-slate-200/50 px-3 pb-4 pt-3 dark:border-c-border-subtle">
                     <div className="pl-10">
                       {bullets(step.items)}
                       {step.note ? (
-                        <div className="mt-3 rounded-xl border border-slate-200/70 bg-white/70 px-3 py-2 text-sm text-slate-600 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300">
+                        <div className="mt-3 rounded-xl border border-slate-200/70 bg-white/70 px-3 py-2 text-sm text-slate-600 dark:border-c-border-subtle dark:bg-white/[0.04] dark:text-slate-300">
                           {step.note}
                         </div>
                       ) : null}
@@ -608,7 +608,7 @@ export function KnownToolDetailView(props: {
             <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
               {isPolish ? 'Logika pracy' : 'Work logic'}
             </h2>
-            <span className="inline-flex shrink-0 rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
+            <span className="inline-flex shrink-0 rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-c-border-subtle dark:bg-white/[0.05] dark:text-slate-200">
               Process
             </span>
           </div>
@@ -939,7 +939,7 @@ export function KnownToolDetailView(props: {
             <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
               {isPolish ? 'Co wychodzi z sesji' : 'What the session produces'}
             </h2>
-            <span className="inline-flex shrink-0 rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
+            <span className="inline-flex shrink-0 rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-c-border-subtle dark:bg-white/[0.05] dark:text-slate-200">
               Output
             </span>
           </div>
@@ -1403,7 +1403,7 @@ export function KnownToolDetailView(props: {
           ).map(([title, text], index) => (
             <div
               key={title}
-              className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]"
+              className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-c-border-subtle dark:bg-white/[0.04]"
             >
               <div className="flex items-start gap-3">
                 <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-[11px] font-bold text-white">
@@ -1648,7 +1648,7 @@ export function KnownToolDetailView(props: {
           ).map(([title, text], index) => (
             <div
               key={title}
-              className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]"
+              className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-c-border-subtle dark:bg-white/[0.04]"
             >
               <div className="flex items-start gap-3">
                 <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-navy-900 text-[11px] font-bold text-white">

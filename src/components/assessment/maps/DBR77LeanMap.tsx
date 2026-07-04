@@ -1233,7 +1233,7 @@ export const DBR77LeanMap: React.FC<DBR77LeanMapProps> = ({
               {!readOnly && (
                 <button
                   onClick={addProcess}
-                  className="w-full p-4 border-2 border-dashed border-slate-300 dark:border-white/20 rounded-xl flex items-center justify-center gap-2 text-slate-500 dark:text-slate-400 hover:border-blue-500 hover:text-blue-500 transition-all"
+                  className="w-full p-4 border-2 border-dashed border-slate-300 dark:border-c-border rounded-xl flex items-center justify-center gap-2 text-slate-500 dark:text-slate-400 hover:border-blue-500 hover:text-blue-500 transition-all"
                 >
                   <Plus size={20} />
                   <span>Dodaj Proces</span>
@@ -1258,7 +1258,7 @@ export const DBR77LeanMap: React.FC<DBR77LeanMapProps> = ({
               {!readOnly && (
                 <button
                   onClick={addWorkstation}
-                  className="w-full p-4 border-2 border-dashed border-slate-300 dark:border-white/20 rounded-xl flex items-center justify-center gap-2 text-slate-500 dark:text-slate-400 hover:border-primary-500 hover:text-primary-500 transition-all"
+                  className="w-full p-4 border-2 border-dashed border-slate-300 dark:border-c-border rounded-xl flex items-center justify-center gap-2 text-slate-500 dark:text-slate-400 hover:border-primary-500 hover:text-primary-500 transition-all"
                 >
                   <Plus size={20} />
                   <span>Dodaj Stanowisko</span>
@@ -1270,7 +1270,7 @@ export const DBR77LeanMap: React.FC<DBR77LeanMapProps> = ({
 
         {/* Summary Closure */}
         {(data.processes.length > 0 || data.workstations.length > 0) && (
-          <div className="space-y-4 mt-6 border-t border-slate-200 dark:border-white/10 pt-6">
+          <div className="space-y-4 mt-6 border-t border-slate-200 dark:border-c-border-subtle pt-6">
             <div className="bg-gradient-to-r from-blue-500/10 to-blue-500/10 dark:from-blue-500/20 dark:to-blue-500/20 rounded-xl p-5">
               <div className="flex items-center gap-2 mb-4">
                 <BarChart3 className="text-blue-500" size={20} />
@@ -1308,7 +1308,7 @@ export const DBR77LeanMap: React.FC<DBR77LeanMapProps> = ({
             </div>
 
             {stats.topWastes.length > 0 && (
-              <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-5">
+              <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-c-border-subtle p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <AlertTriangle className="text-amber-500" size={18} />
                   <h3 className="font-bold text-slate-900 dark:text-white">
@@ -1348,7 +1348,7 @@ export const DBR77LeanMap: React.FC<DBR77LeanMapProps> = ({
                 .slice(0, 5);
               if (!qw.length) return null;
               return (
-                <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-5">
+                <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-c-border-subtle p-5">
                   <div className="flex items-center gap-2 mb-3">
                     <Star className="text-yellow-500" size={18} />
                     <h3 className="font-bold text-slate-900 dark:text-white">
@@ -1390,7 +1390,7 @@ export const DBR77LeanMap: React.FC<DBR77LeanMapProps> = ({
                 .slice(0, 5);
               if (!ao.length) return null;
               return (
-                <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-5">
+                <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-c-border-subtle p-5">
                   <div className="flex items-center gap-2 mb-3">
                     <Cpu className="text-primary-500" size={18} />
                     <h3 className="font-bold text-slate-900 dark:text-white">
@@ -1431,7 +1431,7 @@ export const DBR77LeanMap: React.FC<DBR77LeanMapProps> = ({
               );
             })()}
 
-            <div className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-navy-800 dark:to-navy-700 rounded-xl p-5 border border-slate-200 dark:border-white/10">
+            <div className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-navy-800 dark:to-navy-700 rounded-xl p-5 border border-slate-200 dark:border-c-border-subtle">
               <div className="flex items-center gap-2 mb-3">
                 <CheckCircle2 className="text-green-500" size={18} />
                 <h3 className="font-bold text-slate-900 dark:text-white">
@@ -1472,7 +1472,7 @@ export const DBR77LeanMap: React.FC<DBR77LeanMapProps> = ({
                   </div>
                 </div>
               </div>
-              <div className="mt-4 pt-3 border-t border-slate-200 dark:border-white/10 text-xs text-slate-500">
+              <div className="mt-4 pt-3 border-t border-slate-200 dark:border-c-border-subtle text-xs text-slate-500">
                 {t(
                   'assessment.lean.closureNote',
                   'Next steps: Generate report, create roadmap, materialize initiatives.'

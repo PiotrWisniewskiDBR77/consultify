@@ -317,7 +317,7 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                                                     ${
                                                       isSelected
                                                         ? 'border-c-accent bg-c-accent-soft'
-                                                        : 'border-c-border-subtle hover:border-c-border dark:hover:border-white/20'
+                                                        : 'border-c-border-subtle hover:border-c-border dark:hover:border-c-border'
                                                     }
                                                 `}
                       >

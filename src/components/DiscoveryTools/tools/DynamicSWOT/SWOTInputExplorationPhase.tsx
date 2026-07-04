@@ -809,18 +809,18 @@ export function SWOTInputExplorationPhase({
 
   return (
     <div className="mx-auto max-w-5xl space-y-4">
-      <div className="overflow-hidden rounded-[30px] border border-slate-200/70 bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.08),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.98))] shadow-[0_20px_70px_-35px_rgba(15,23,42,0.25)] dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.18),transparent_24%),linear-gradient(180deg,#0b1020,#0a0f1b)]">
-        <div className="border-b border-slate-200/70 px-6 py-5 dark:border-white/10">
+      <div className="overflow-hidden rounded-[30px] border border-slate-200/70 bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.08),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.98))] shadow-[0_20px_70px_-35px_rgba(15,23,42,0.25)] dark:border-c-border-subtle dark:bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.18),transparent_24%),linear-gradient(180deg,#0b1020,#0a0f1b)]">
+        <div className="border-b border-slate-200/70 px-6 py-5 dark:border-c-border-subtle">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center rounded-full border border-sky-400/20 bg-sky-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-700 dark:text-sky-200">
                 Input & Exploration
               </span>
-              <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300">
+              <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:border-c-border-subtle dark:bg-white/[0.04] dark:text-slate-300">
                 {labels.consultantProposal}
               </span>
             </div>
-            <span className="inline-flex rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
+            <span className="inline-flex rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-c-border-subtle dark:bg-white/[0.05] dark:text-slate-200">
               {labels.draft}
             </span>
           </div>
@@ -836,8 +836,8 @@ export function SWOTInputExplorationPhase({
           </div>
         </div>
 
-        <div className="grid gap-3 border-b border-slate-200/70 px-6 py-5 dark:border-white/10 md:grid-cols-4">
-          <div className="rounded-[24px] border border-slate-200/70 bg-white/85 p-4 dark:border-white/10 dark:bg-white/[0.04]">
+        <div className="grid gap-3 border-b border-slate-200/70 px-6 py-5 dark:border-c-border-subtle md:grid-cols-4">
+          <div className="rounded-[24px] border border-slate-200/70 bg-white/85 p-4 dark:border-c-border-subtle dark:bg-white/[0.04]">
             <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
               {labels.totalAccepted}
             </div>
@@ -911,16 +911,16 @@ export function SWOTInputExplorationPhase({
                       {isPolish ? meta.subtitle.pl : meta.subtitle.en}
                     </div>
                   </div>
-                  <span className="inline-flex rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
+                  <span className="inline-flex rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-c-border-subtle dark:bg-white/[0.05] dark:text-slate-200">
                     {meta.badge}
                   </span>
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
-                  <span className="inline-flex rounded-full border border-white/70 bg-white/70 px-2.5 py-1 font-semibold uppercase tracking-[0.16em] dark:border-white/10 dark:bg-white/[0.04]">
+                  <span className="inline-flex rounded-full border border-c-border-strong bg-white/70 px-2.5 py-1 font-semibold uppercase tracking-[0.16em] dark:border-c-border-subtle dark:bg-white/[0.04]">
                     {labels.accepted}: {acceptedCount}/5
                   </span>
-                  <span className="inline-flex rounded-full border border-white/70 bg-white/70 px-2.5 py-1 font-semibold uppercase tracking-[0.16em] dark:border-white/10 dark:bg-white/[0.04]">
+                  <span className="inline-flex rounded-full border border-c-border-strong bg-white/70 px-2.5 py-1 font-semibold uppercase tracking-[0.16em] dark:border-c-border-subtle dark:bg-white/[0.04]">
                     {labels.attempts}: {attemptCountByStream[streamId]}
                   </span>
                   {isConfirmed && (
@@ -930,7 +930,7 @@ export function SWOTInputExplorationPhase({
                   )}
                 </div>
 
-                <div className="mt-4 rounded-[24px] border border-white/70 bg-white/75 p-4 dark:border-white/10 dark:bg-white/[0.04]">
+                <div className="mt-4 rounded-[24px] border border-c-border-strong bg-white/75 p-4 dark:border-c-border-subtle dark:bg-white/[0.04]">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
                     {labels.acceptedList}
                   </div>
@@ -943,7 +943,7 @@ export function SWOTInputExplorationPhase({
                       {acceptedSignals.map((signal) => (
                         <div
                           key={signal.id}
-                          className="rounded-2xl border border-slate-200/70 bg-white/85 p-4 dark:border-white/10 dark:bg-white/[0.04]"
+                          className="rounded-2xl border border-slate-200/70 bg-white/85 p-4 dark:border-c-border-subtle dark:bg-white/[0.04]"
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0 flex-1">
@@ -963,12 +963,12 @@ export function SWOTInputExplorationPhase({
                             </div>
                           </div>
 
-                          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200/70 pt-3 dark:border-white/10">
+                          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200/70 pt-3 dark:border-c-border-subtle">
                             <div className="flex flex-wrap items-center gap-2">
                               <button
                                 type="button"
                                 onClick={() => toggleAcceptedDetails(signal.id)}
-                                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/70 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
+                                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/70 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-c-border-subtle dark:bg-white/[0.04] dark:text-slate-200"
                               >
                                 <ChevronDown
                                   className={`h-3.5 w-3.5 transition-transform ${
@@ -984,7 +984,7 @@ export function SWOTInputExplorationPhase({
                                 onClick={() => removeSWOTSignal(signal.id)}
                                 aria-label={labels.remove}
                                 title={labels.remove}
-                                className="inline-flex items-center justify-center rounded-full border border-slate-200/70 bg-white p-2 text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
+                                className="inline-flex items-center justify-center rounded-full border border-slate-200/70 bg-white p-2 text-slate-700 transition-colors hover:bg-slate-50 dark:border-c-border-subtle dark:bg-white/[0.04] dark:text-slate-200"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </button>
@@ -1002,7 +1002,7 @@ export function SWOTInputExplorationPhase({
                                   });
                                   setFeedbackInput('');
                                 }}
-                                className="inline-flex items-center rounded-full border border-slate-200/70 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
+                                className="inline-flex items-center rounded-full border border-slate-200/70 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-c-border-subtle dark:bg-white/[0.04] dark:text-slate-200"
                               >
                                 {labels.comment}
                               </button>
@@ -1028,7 +1028,7 @@ export function SWOTInputExplorationPhase({
                           {activeAction?.target === 'accepted' &&
                             activeAction.signalId === signal.id &&
                             activeAction.streamId === streamId && (
-                              <div className="mt-4 rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]">
+                              <div className="mt-4 rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-c-border-subtle dark:bg-white/[0.04]">
                                 <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
                                   {activeAction.mode === 'comment' ? labels.comment : labels.deepen}
                                 </div>
@@ -1062,7 +1062,7 @@ export function SWOTInputExplorationPhase({
                                           className={`rounded-2xl border px-4 py-3 text-left transition-colors ${
                                             active
                                               ? 'border-primary-300 bg-primary-50 text-primary-900 dark:border-primary-800 dark:bg-primary-950/30 dark:text-primary-100'
-                                              : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]'
+                                              : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-c-border-subtle dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]'
                                           }`}
                                         >
                                           <div className="text-sm font-semibold">
@@ -1133,7 +1133,7 @@ export function SWOTInputExplorationPhase({
                             <button
                               type="button"
                               onClick={() => moveToNextProposal(streamId)}
-                              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/70 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
+                              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/70 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-c-border-subtle dark:bg-white/[0.04] dark:text-slate-200"
                             >
                               <ChevronRight className="h-3.5 w-3.5" />
                               {labels.continueAdding}
@@ -1186,7 +1186,7 @@ export function SWOTInputExplorationPhase({
                         <button
                           type="button"
                           onClick={() => moveToNextProposal(streamId)}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/70 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
+                          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/70 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-c-border-subtle dark:bg-white/[0.04] dark:text-slate-200"
                         >
                           <ChevronRight className="h-3.5 w-3.5" />
                           {labels.nextProposal}
@@ -1200,7 +1200,7 @@ export function SWOTInputExplorationPhase({
                             setActiveAction({ streamId, mode: 'comment', target: 'proposal' });
                             setFeedbackInput('');
                           }}
-                          className="inline-flex items-center rounded-full border border-slate-200/70 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
+                          className="inline-flex items-center rounded-full border border-slate-200/70 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-c-border-subtle dark:bg-white/[0.04] dark:text-slate-200"
                         >
                           {labels.comment}
                         </button>
@@ -1219,7 +1219,7 @@ export function SWOTInputExplorationPhase({
                     </div>
 
                     {activeAction?.streamId === streamId && activeAction.target === 'proposal' && (
-                      <div className="mt-4 rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]">
+                      <div className="mt-4 rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-c-border-subtle dark:bg-white/[0.04]">
                         <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
                           {activeAction.mode === 'comment' ? labels.comment : labels.deepen}
                         </div>
@@ -1250,7 +1250,7 @@ export function SWOTInputExplorationPhase({
                                   className={`rounded-2xl border px-4 py-3 text-left transition-colors ${
                                     active
                                       ? 'border-primary-300 bg-primary-50 text-primary-900 dark:border-primary-800 dark:bg-primary-950/30 dark:text-primary-100'
-                                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]'
+                                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-c-border-subtle dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]'
                                   }`}
                                 >
                                   <div className="text-sm font-semibold">

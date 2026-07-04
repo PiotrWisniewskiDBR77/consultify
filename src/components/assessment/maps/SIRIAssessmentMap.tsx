@@ -151,7 +151,7 @@ const SIRIBuildingBlockCard: React.FC<{
       className={`bg-white dark:bg-navy-950/50 rounded-xl border-2 transition-all ${
         expanded
           ? `${colors.border500} shadow-lg ${colors.shadow}`
-          : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
+          : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-c-border'
       }`}
     >
       {/* Header */}
