@@ -12,7 +12,7 @@ import {
   RefreshCw,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -49,10 +49,13 @@ export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
   const isPl = i18n.language?.startsWith('pl');
 
   const [spots, setSpots] = useState<BlindSpot[]>([]);
+  const [rationale, setRationale] = useState('');
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
-  const [lastCheck, setLastCheck] = useState<number>(0);
+  /** True once a detection run completed (even with zero results) — honest empty state, no retry loop. */
+  const [checked, setChecked] = useState(false);
+  const [emptyDismissed, setEmptyDismissed] = useState(false);
 
   const branchCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -75,11 +78,6 @@ export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
 
     setLoading(true);
     try {
-      const existingLabels = nodes
-        .filter((n) => n.id !== 'root' && !n.id.startsWith('branch-'))
-        .map((n) => n.data?.label)
-        .filter(Boolean);
-
       const res = await Api.getMyIdeaGapAnalysis(ideaId, {
         seedText: ideaTitle,
         mapNodes: nodes.map((n) => ({
@@ -91,21 +89,28 @@ export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
         language: i18n.language,
       });
 
-      if (res?.gaps && Array.isArray(res.gaps)) {
-        setSpots(
-          res.gaps.slice(0, 5).map((g: any, idx: number) => ({
-            id: g.id || `bs-${idx}`,
-            area: g.area || g.text || 'Missing area',
-            description: g.description || g.detail || '',
-            branchKey: g.branchKey || 'options',
-            severity:
-              g.severity ||
-              (g.confidence && g.confidence > 0.7 ? 'high' : g.confidence > 0.4 ? 'medium' : 'low'),
-          }))
-        );
-        setExpanded(true);
-      }
-      setLastCheck(Date.now());
+      // Backend contract (my-work.routes.ts /map/gap-analysis):
+      // { proposal: { add: { nodes: [{ id, data: { label, branchKey, ... } }], edges }, rationale } }
+      const proposalNodes: any[] = Array.isArray(res?.proposal?.add?.nodes)
+        ? res.proposal.add.nodes
+        : [];
+      const mapped: BlindSpot[] = proposalNodes
+        .map((n: any, idx: number) => ({
+          id: String(n?.id || `bs-${idx}`),
+          area: String(n?.data?.label || '').trim(),
+          description: '',
+          branchKey: String(n?.data?.branchKey || 'options'),
+          severity: 'medium' as const,
+        }))
+        .filter((s) => s.area)
+        .slice(0, 5);
+
+      setSpots(mapped);
+      setRationale(String(res?.proposal?.rationale || ''));
+      setDismissed(new Set());
+      if (mapped.length > 0) setExpanded(true);
+      setChecked(true);
+      setEmptyDismissed(false);
     } catch {
       // silently fail
     } finally {
@@ -113,17 +118,25 @@ export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
     }
   }, [branchCounts, i18n.language, ideaId, ideaNodeCount, ideaTitle, locked, nodes, persistence]);
 
-  // Auto-detect after map has enough nodes and 60s since last check
-  useEffect(() => {
-    if (ideaNodeCount < 5) return;
-    if (Date.now() - lastCheck < 60_000) return;
-    if (persistence !== 'online') return;
+  // Auto-detect ONCE per map open (when the map first has enough nodes).
+  // No recurring background re-checks — re-runs are user-triggered via "Re-check".
+  const detectRef = useRef(detectBlindSpots);
+  detectRef.current = detectBlindSpots;
+  const autoRanRef = useRef(false);
+  const autoTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-    const timer = setTimeout(() => {
-      detectBlindSpots();
+  useEffect(() => {
+    if (autoRanRef.current) return;
+    if (ideaNodeCount < 5) return;
+    if (persistence !== 'online' || locked) return;
+
+    autoRanRef.current = true;
+    autoTimerRef.current = setTimeout(() => {
+      void detectRef.current();
     }, 3000);
-    return () => clearTimeout(timer);
-  }, [ideaNodeCount]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ideaNodeCount, persistence, locked]);
+
+  useEffect(() => () => clearTimeout(autoTimerRef.current), []);
 
   const visibleSpots = useMemo(() => {
     return spots.filter((s) => !dismissed.has(s.id));
@@ -142,7 +155,30 @@ export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
     [handleDismiss, isPl, onAddBlindSpot]
   );
 
-  if (visibleSpots.length === 0 && !loading) return null;
+  // All suggestions handled (added/dismissed) by the user → nothing left to show.
+  const allHandled = spots.length > 0 && visibleSpots.length === 0;
+
+  if (visibleSpots.length === 0 && !loading) {
+    // Honest empty state: a completed run found no gaps — say so once, no retry loop.
+    if (!checked || allHandled || emptyDismissed) return null;
+    return (
+      <div className="absolute bottom-16 right-3 z-[88] w-[320px] max-w-[90vw]">
+        <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-white/90 dark:bg-navy-900/90 backdrop-blur-xl border border-amber-400/30 dark:border-amber-500/20 shadow-2xl">
+          <Eye size={14} className="text-amber-500 shrink-0" />
+          <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300 flex-1">
+            {isPl ? 'Nie znaleziono luk w mapie' : 'No blind spots found'}
+          </span>
+          <button
+            onClick={() => setEmptyDismissed(true)}
+            aria-label={isPl ? 'Zamknij' : 'Close'}
+            className="p-1 rounded-lg text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          >
+            <X size={11} />
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const severityColor = {
     high: 'text-danger-500',
@@ -174,6 +210,11 @@ export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
         {/* Content */}
         {expanded && (
           <div className="px-3 pb-3 space-y-1.5 max-h-[240px] overflow-y-auto">
+            {rationale && (
+              <div className="px-2.5 py-2 rounded-xl bg-amber-500/5 text-[10px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                {rationale}
+              </div>
+            )}
             {visibleSpots.map((spot) => (
               <div
                 key={spot.id}
