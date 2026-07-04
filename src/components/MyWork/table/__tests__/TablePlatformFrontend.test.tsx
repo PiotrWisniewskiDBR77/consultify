@@ -303,6 +303,11 @@ function makeIntegration(
     createPlatformView: vi.fn(async () => null),
     activeViewConfig: {},
     removeMissingFieldFromView: noopAsync,
+    // R5: conditional-formatting rules — always an array in production (see
+    // useTablePlatformIntegration.ts), must be present on the mock too or
+    // getConditionalStyle() throws ("rules is not iterable") and ViewErrorBoundary
+    // swallows the whole grid render.
+    formatRules: [],
     ...overrides,
   };
   return base;
@@ -921,8 +926,11 @@ describe('IdeaTableTool P15 integration', () => {
       </TableDataProvider>
     );
     expect(screen.getByText(/\[Missing: Deleted Col\]/)).toBeInTheDocument();
-    const amberHeaders = container.querySelectorAll('th.bg-amber-50');
-    expect(amberHeaders.length).toBeGreaterThanOrEqual(1);
+    // 2026-07-03 re-skin (9d8300f18b) moved missing-field header styling off the
+    // hardcoded `bg-amber-50` utility onto the c-warning token via color-mix();
+    // assert on the token-based class instead of the retired amber literal.
+    const warningHeaders = container.querySelectorAll('th.text-c-warning');
+    expect(warningHeaders.length).toBeGreaterThanOrEqual(1);
   });
 
   it('passes locale to ViewErrorBoundary', () => {
