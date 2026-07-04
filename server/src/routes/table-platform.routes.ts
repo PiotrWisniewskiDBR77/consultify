@@ -917,61 +917,71 @@ router.post(
 // RECORDS API
 // ==========================================
 
-router.get('/tables/:tableId/records', requireTableAccess, async (req: Request, res: Response) => {
-  try {
-    const { tableId } = req.params;
-    const { viewId, pageSize, cursor, filters, sorts, fields, filterByFormula } = req.query;
-    if (!tableId) {
-      return res.status(400).json({ error: 'tableId is required' });
-    }
+router.get(
+  '/tables/:tableId/records',
+  requireTableAccess,
+  requireRoles(...ALL_ROLES),
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      // Base role resolved by requireRoles → drives field-level + row-level perms.
+      const userRole = authReq.userRole;
+      const { tableId } = req.params;
+      const { viewId, pageSize, cursor, filters, sorts, fields, filterByFormula } = req.query;
+      if (!tableId) {
+        return res.status(400).json({ error: 'tableId is required' });
+      }
 
-    if (typeof filterByFormula === 'string' && filterByFormula.trim()) {
-      const ViewQueryEngine = (await import('../services/tablePlatform/ViewQueryEngine.js'))
-        .default;
-      const result = await ViewQueryEngine.executeQuery({
-        tableId,
-        viewId: typeof viewId === 'string' ? viewId : undefined,
-        filterByFormula,
-        pageSize: pageSize !== undefined ? parseInt(String(pageSize), 10) : undefined,
-        cursor: typeof cursor === 'string' ? cursor : undefined,
-      });
+      if (typeof filterByFormula === 'string' && filterByFormula.trim()) {
+        const ViewQueryEngine = (await import('../services/tablePlatform/ViewQueryEngine.js'))
+          .default;
+        const result = await ViewQueryEngine.executeQuery({
+          tableId,
+          viewId: typeof viewId === 'string' ? viewId : undefined,
+          filterByFormula,
+          pageSize: pageSize !== undefined ? parseInt(String(pageSize), 10) : undefined,
+          cursor: typeof cursor === 'string' ? cursor : undefined,
+          ...(userRole ? { userRole } : {}),
+        });
+        return res.status(200).json(result);
+      }
+
+      const options: NonNullable<Parameters<typeof RecordsService.listRecords>[1]> = {};
+      if (typeof viewId === 'string') options.viewId = viewId;
+      if (pageSize !== undefined) options.pageSize = parseInt(String(pageSize), 10);
+      if (typeof cursor === 'string') options.cursor = cursor;
+      if (userRole) options.userRole = userRole;
+      if (typeof filters === 'string') {
+        try {
+          options.filters = JSON.parse(filters);
+        } catch {
+          /* ignore */
+        }
+      }
+      if (typeof sorts === 'string') {
+        try {
+          options.sorts = JSON.parse(sorts);
+        } catch {
+          /* ignore */
+        }
+      }
+      if (typeof fields === 'string') {
+        try {
+          options.fields = JSON.parse(fields);
+        } catch {
+          options.fields = fields
+            .split(',')
+            .map((f) => f.trim())
+            .filter(Boolean);
+        }
+      }
+      const result = await RecordsService.listRecords(tableId, options);
       return res.status(200).json(result);
+    } catch (err) {
+      handleRouteError(err, res, 'listRecords');
     }
-
-    const options: NonNullable<Parameters<typeof RecordsService.listRecords>[1]> = {};
-    if (typeof viewId === 'string') options.viewId = viewId;
-    if (pageSize !== undefined) options.pageSize = parseInt(String(pageSize), 10);
-    if (typeof cursor === 'string') options.cursor = cursor;
-    if (typeof filters === 'string') {
-      try {
-        options.filters = JSON.parse(filters);
-      } catch {
-        /* ignore */
-      }
-    }
-    if (typeof sorts === 'string') {
-      try {
-        options.sorts = JSON.parse(sorts);
-      } catch {
-        /* ignore */
-      }
-    }
-    if (typeof fields === 'string') {
-      try {
-        options.fields = JSON.parse(fields);
-      } catch {
-        options.fields = fields
-          .split(',')
-          .map((f) => f.trim())
-          .filter(Boolean);
-      }
-    }
-    const result = await RecordsService.listRecords(tableId, options);
-    return res.status(200).json(result);
-  } catch (err) {
-    handleRouteError(err, res, 'listRecords');
   }
-});
+);
 
 router.post(
   '/tables/:tableId/records',
@@ -1001,21 +1011,29 @@ router.post(
   }
 );
 
-router.get('/records/:recordId', requireRecordAccess, async (req: Request, res: Response) => {
-  try {
-    const { recordId } = req.params;
-    if (!recordId) {
-      return res.status(400).json({ error: 'recordId is required' });
+router.get(
+  '/records/:recordId',
+  requireRecordAccess,
+  requireRoles(...ALL_ROLES),
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      // Base role resolved by requireRoles → drives field-level read filtering.
+      const userRole = authReq.userRole;
+      const { recordId } = req.params;
+      if (!recordId) {
+        return res.status(400).json({ error: 'recordId is required' });
+      }
+      const record = await RecordsService.getRecord(recordId, userRole);
+      if (!record) {
+        return res.status(404).json({ error: 'Record not found' });
+      }
+      return res.status(200).json(record);
+    } catch (err) {
+      handleRouteError(err, res, 'getRecord');
     }
-    const record = await RecordsService.getRecord(recordId);
-    if (!record) {
-      return res.status(404).json({ error: 'Record not found' });
-    }
-    return res.status(200).json(record);
-  } catch (err) {
-    handleRouteError(err, res, 'getRecord');
   }
-});
+);
 
 router.patch(
   '/records/:recordId',
@@ -1025,6 +1043,8 @@ router.patch(
     try {
       const authReq = req as AuthRequest;
       const userId = authReq.userId;
+      // Base role resolved by requireRoles → drives field-level write enforcement.
+      const userRole = authReq.userRole;
       const { recordId } = req.params;
       const { data } = req.body ?? {};
       if (!recordId) {
@@ -1033,7 +1053,7 @@ router.patch(
       if (!data || typeof data !== 'object') {
         return res.status(400).json({ error: 'data is required' });
       }
-      const record = await RecordsService.updateRecord(recordId, data, userId);
+      const record = await RecordsService.updateRecord(recordId, data, userId, undefined, userRole);
       if (!record) {
         return res.status(404).json({ error: 'Record not found' });
       }
@@ -1346,8 +1366,12 @@ router.get(
 router.post(
   '/tables/:tableId/records/query',
   requireTableAccess,
+  requireRoles(...ALL_ROLES),
   async (req: Request, res: Response) => {
     try {
+      const authReq = req as AuthRequest;
+      // Base role resolved by requireRoles → drives row-level policy filtering.
+      const userRole = authReq.userRole;
       const { tableId } = req.params;
       const { filters, filterByFormula, sorts, groupBy, fields, pageSize, cursor, search, viewId } =
         req.body ?? {};
@@ -1364,6 +1388,7 @@ router.post(
         pageSize,
         cursor,
         search,
+        ...(userRole ? { userRole } : {}),
       });
       res.json(result);
     } catch (e) {
