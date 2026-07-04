@@ -5,6 +5,7 @@
 
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
+import notificationInboxService from './NotificationInboxService.js';
 
 export interface RecordComment {
   id: string;
@@ -46,7 +47,20 @@ const recordCommentService = {
           JSON.stringify(mentionPayload),
         ]
       );
-      return result.rows[0] as RecordComment;
+      const comment = result.rows[0] as RecordComment;
+
+      // Fan out 'mention' notifications to mentioned users (excluding the
+      // author). Best-effort: a notification failure never fails the comment.
+      if (mentionPayload.length > 0) {
+        void this.notifyMentions(recordId, tableId, authorId, mentionPayload).catch((err) => {
+          logger.warn('[RecordCommentService] notifyMentions failed', {
+            recordId,
+            error: (err as Error).message,
+          });
+        });
+      }
+
+      return comment;
     } catch (e) {
       logger.error('[RecordCommentService] addComment failed', {
         recordId,
@@ -54,6 +68,56 @@ const recordCommentService = {
         error: (e as Error).message,
       });
       throw e;
+    }
+  },
+
+  /**
+   * Insert 'mention' inbox rows for each mentioned user (excluding the author).
+   * Resolves org_id + base_id from the table. Best-effort; swallows errors.
+   */
+  async notifyMentions(
+    recordId: string,
+    tableId: string,
+    authorId: string,
+    mentions: string[]
+  ): Promise<void> {
+    const db = getDatabase();
+    let orgId: string | null = null;
+    let baseId: string | null = null;
+    try {
+      const ctx = await db.query(
+        `SELECT b.organization_id AS org_id, t.base_id AS base_id
+         FROM tp_tables t
+         JOIN tp_bases b ON b.id = t.base_id
+         WHERE t.id = $1`,
+        [tableId]
+      );
+      const row = ctx.rows[0] as { org_id?: string; base_id?: string } | undefined;
+      orgId = row?.org_id ?? null;
+      baseId = row?.base_id ?? null;
+    } catch (e) {
+      logger.warn('[RecordCommentService] failed to resolve org/base for mention', {
+        recordId,
+        tableId,
+        error: (e as Error).message,
+      });
+    }
+    if (!orgId) return;
+
+    const seen = new Set<string>();
+    for (const mention of mentions) {
+      const userId = String(mention).trim();
+      if (!userId || userId === authorId || seen.has(userId)) continue;
+      seen.add(userId);
+      await notificationInboxService.create({
+        orgId,
+        userId,
+        type: 'mention',
+        baseId,
+        tableId,
+        recordId,
+        payload: { actorId: authorId },
+      });
     }
   },
 

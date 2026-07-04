@@ -5,6 +5,7 @@
 
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
+import notificationInboxService from './NotificationInboxService.js';
 
 export interface RecordWatch {
   id: string;
@@ -122,6 +123,28 @@ const recordWatchService = {
       const watchers = await this.getWatchers(recordId);
       if (watchers.length === 0) return;
 
+      // Resolve org_id + base_id once (best-effort) for the inbox read-model.
+      let orgId: string | null = null;
+      let baseId: string | null = null;
+      try {
+        const ctx = await db.query(
+          `SELECT b.organization_id AS org_id, t.base_id AS base_id
+           FROM tp_tables t
+           JOIN tp_bases b ON b.id = t.base_id
+           WHERE t.id = $1`,
+          [changeEvent.tableId]
+        );
+        const row = ctx.rows[0] as { org_id?: string; base_id?: string } | undefined;
+        orgId = row?.org_id ?? null;
+        baseId = row?.base_id ?? null;
+      } catch (ctxErr) {
+        logger.warn('[RecordWatchService] failed to resolve org/base for notification', {
+          recordId,
+          tableId: changeEvent.tableId,
+          error: (ctxErr as Error).message,
+        });
+      }
+
       for (const watcher of watchers) {
         if (watcher.user_id === changeEvent.actorId) continue;
 
@@ -146,6 +169,23 @@ const recordWatchService = {
             recordId,
             userId: watcher.user_id,
             error: (notifyErr as Error).message,
+          });
+        }
+
+        // Readable inbox row (best-effort; never throws to the caller).
+        if (orgId) {
+          await notificationInboxService.create({
+            orgId,
+            userId: watcher.user_id,
+            type: 'record_changed',
+            baseId,
+            tableId: changeEvent.tableId,
+            recordId,
+            payload: {
+              action: changeEvent.action,
+              actorId: changeEvent.actorId ?? null,
+              changes: changeEvent.changes ?? {},
+            },
           });
         }
       }
