@@ -2157,6 +2157,19 @@ export async function getReconciliationOverview(
   // KPI/realization can never bleed into another org's variance. When the
   // reconciliation ENGINE has persisted a unit-normalised deviation (+ CONCLUSION
   // layer), those columns are preferred over the legacy monetary heuristic.
+  //
+  // SPLIT-BRAIN FIX (2026-07-04): `r.kpi_id` holds a LEGACY `initiative_kpis.id`
+  // (what POST /reconciliations validates + initiateReconciliation stores), NOT a
+  // `v8_kpi_definitions.kpi_id`. The old join to v8_kpi_definitions therefore
+  // hydrated NULL name/unit/target/initiative for every real reconciliation,
+  // zeroing the M15/M16 surface. Join `initiative_kpis` — the canonical family the
+  // id belongs to. Org-scoping stays entirely on `r.organization_id` (the
+  // reconciliation row carries its own org, written by initiateReconciliation), so
+  // the KPI join needs no org predicate — a foreign-org kpi_id could never have been
+  // reconciled under this org in the first place (POST route validates ownership).
+  // The realized-side subquery stays on v8_roi_realization_entries: it is empty for
+  // legacy KPIs, so realized_value is NULL and the reader's monetary branch already
+  // treats that as "no realized side yet" (no fabrication).
   const rows = await dbAll<ReconciliationVarianceRow>(
     `SELECT
        r.reconciliation_id,
@@ -2176,8 +2189,8 @@ export async function getReconciliationOverview(
          WHERE e.organization_id = r.organization_id AND e.kpi_id = r.kpi_id
        ) AS realized_value${engineSelect}
      FROM v8_kpi_finance_reconciliations r
-     LEFT JOIN v8_kpi_definitions k
-       ON k.kpi_id = r.kpi_id AND k.organization_id = r.organization_id
+     LEFT JOIN initiative_kpis k
+       ON k.id = r.kpi_id
      WHERE r.organization_id = ?${filters.join('')}
      ORDER BY r.created_at DESC`,
     params,

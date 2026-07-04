@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm -v)",
+      "Bash(cat)",
+      "Read(//tmp/**)",
+      "Bash(npx tsc *)",
+      "WebSearch",
+      "WebFetch(domain:reactflow.dev)",
+      "Bash(npm run *)",
+      "Bash(npm install *)",
+      "Bash(awk -F: '$1>1500 && $1<1920')",
+      "Bash(awk -F: '$1>1900 && $1<2600')",
+      "Bash(awk 'NR>=425 && NR<=1175 && /async [a-zA-Z]+\\\\\\(|^\\\\s*[a-zA-Z]+\\\\\\(.*\\\\\\):|generate|complete|chat/' server/src/services/ai/llmService.ts)",
+      "Bash(nohup rm -rf ~/.Trash/* ~/.Trash/.[!.]*)",
+      "Bash(echo \"rm -rf wystartowany w tle \\(PID $!\\)\")"
+    ]
+  }
+}
