@@ -35,6 +35,20 @@ interface AuditTrailPanelProps {
   onClose: () => void;
   recordId: string | null;
   tableId: string;
+  /**
+   * Whether `tableId` is a real `tp_tables.id` row (table-platform mode).
+   *
+   * TODO(tp): backend/handoff — legacy idea-tables (map/blob persistence, no
+   * table-platform row) currently pass the idea id here, which the audit
+   * endpoint (`requireTableAccess` → `canAccessTable`) always rejects with
+   * 403 because no `tp_tables` row matches. Until the caller resolves and
+   * passes the real platform table id (see IdeaTableTool.tsx `platformTableId`,
+   * used for every other platform-scoped panel except this one and
+   * ActivityFeed — handoff for whoever owns that file), we hide this panel
+   * rather than show an affordance that always errors.
+   * Defaults to `false` (hidden) until the caller opts in explicitly.
+   */
+  isPlatformTable?: boolean;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -80,9 +94,7 @@ const ACTION_STYLES: Record<string, string> = {
 const FieldDiff = React.memo(function FieldDiff({ change }: { change: FieldChange }) {
   return (
     <div className="ml-9 mt-1 text-[11px] leading-relaxed">
-      <span className="font-medium text-c-text-muted">
-        {change.fieldName || change.fieldId}
-      </span>
+      <span className="font-medium text-c-text-muted">{change.fieldName || change.fieldId}</span>
       <div className="flex items-start gap-1.5 mt-0.5">
         <span className="inline-block px-1.5 py-0.5 rounded bg-danger-500/10 text-danger-600 dark:text-danger-400 line-through max-w-[45%] truncate">
           {formatValue(change.oldValue)}
@@ -156,6 +168,7 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
   onClose,
   recordId,
   tableId,
+  isPlatformTable = false,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -173,7 +186,7 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
 
   const fetchRevisions = useCallback(
     async (reset = false) => {
-      if (!recordId) return;
+      if (!recordId || !isPlatformTable) return;
       setLoading(true);
       try {
         const newOffset = reset ? 0 : offset;
@@ -197,17 +210,17 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
         setLoading(false);
       }
     },
-    [recordId, tableId, offset]
+    [recordId, tableId, offset, isPlatformTable]
   );
 
   useEffect(() => {
-    if (open && recordId) {
+    if (open && recordId && isPlatformTable) {
       setRevisions([]);
       setOffset(0);
       setHasMore(true);
       fetchRevisions(true);
     }
-  }, [open, recordId]);
+  }, [open, recordId, isPlatformTable]);
 
   const filtered = useMemo(() => {
     let items = revisions;
@@ -221,7 +234,10 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
     return items;
   }, [revisions, filterUser, filterAction]);
 
-  if (!open) return null;
+  // TODO(tp): backend/handoff — hidden in legacy (non-platform) tables; see
+  // isPlatformTable doc comment above. Remove this gate once the caller
+  // passes the real tp_tables id + isPlatformTable=true.
+  if (!open || !isPlatformTable) return null;
 
   return (
     <div className="w-80 border-l border-c-border-subtle bg-c-surface flex flex-col h-full overflow-hidden flex-shrink-0">
@@ -281,7 +297,9 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
             compact
             title={isPl ? 'Wybierz rekord' : 'Select a record'}
             description={
-              isPl ? 'Wybierz rekord, aby zobaczyć historię zmian.' : 'Select a record to view its change history.'
+              isPl
+                ? 'Wybierz rekord, aby zobaczyć historię zmian.'
+                : 'Select a record to view its change history.'
             }
           />
         ) : loading && revisions.length === 0 ? (
