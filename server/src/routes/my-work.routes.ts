@@ -3445,6 +3445,34 @@ function parseOptionalVersion(value: unknown): number | null | 'invalid' {
   return parsed;
 }
 
+/**
+ * A1 (D-WB-2): shared canonical board write for idea maps (multiplayer persistence).
+ *
+ * The canonical idea-map document is the ROW OWNED BY THE IDEA'S OWNER. Any member of
+ * the same organization write-throughs to that owner's row (mirrors the GET read-fallback
+ * at "M09 L-01"). This keeps optimistic locking (version + baseVersion 409) meaningful:
+ * two different users writing the same idea contend on ONE row, not two per-user rows.
+ *
+ * Returns the owner user_id (org-scoped). Returns null when the idea does not exist in the
+ * org — callers must respond 404, exactly as the previous ownership-gated SELECT did.
+ *
+ * Note: node-pg returns text/uuid columns as strings, so ownerUserId is always a string.
+ * We intentionally do NOT delete any historical per-requester ("orphan") rows; the owner's
+ * row is authoritative and orphans are simply ignored (consistent with the read-fallback).
+ */
+async function resolveCanonicalMapOwner(
+  ideaId: string,
+  orgId: string
+): Promise<string | null> {
+  const idea = await queryHelpers.queryOne<{ ownerUserId?: string | null }>(
+    `SELECT user_id as "ownerUserId" FROM my_ideas WHERE id = ? AND organization_id = ? LIMIT 1`,
+    [ideaId, orgId]
+  );
+  if (!idea) return null;
+  const ownerUserId = idea.ownerUserId != null ? String(idea.ownerUserId) : '';
+  return ownerUserId || null;
+}
+
 function buildMapConflictPayload(
   existing:
     | {
@@ -3827,11 +3855,10 @@ router.put(
     const normalizedNodes = validation.normalized.nodes;
     const normalizedEdges = validation.normalized.edges;
 
-    const ideaOk = await queryHelpers.queryOne<any>(
-      `SELECT id FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
-    );
-    if (!ideaOk) return res.status(404).json({ error: 'Idea not found' });
+    // A1 (D-WB-2): write to the canonical (idea-owner's) row so org members' edits
+    // persist even when the owner is offline. Org-scoped existence check → 404 if absent.
+    const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
+    if (!canonicalUserId) return res.status(404).json({ error: 'Idea not found' });
 
     const baseVersionRaw = req.body?.baseVersion ?? req.body?.version ?? null;
     const baseVersionParsed = parseOptionalVersion(baseVersionRaw);
@@ -3849,7 +3876,7 @@ router.put(
     const schemaVersionSelect = mapCols.has('schema_version') ? ', schema_version' : '';
     const existing = await queryHelpers.queryOne<any>(
       `SELECT id, version, nodes_json, edges_json${extColSelect}${preferredToolSelect}${schemaVersionSelect} FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
+      [ideaId, canonicalUserId, orgId]
     );
 
     const currentVersion = existing ? Number(existing.version || 1) : 1;
@@ -3876,7 +3903,7 @@ router.put(
           },
           {
             id: ideaId,
-            title: String((ideaOk as any)?.title || ''),
+            title: '',
             isPl: false,
           }
         )
@@ -3947,7 +3974,7 @@ router.put(
         insertParams.push(val);
       };
       add('idea_id', ideaId);
-      add('user_id', userId);
+      add('user_id', canonicalUserId);
       add('organization_id', orgId);
       add('nodes_json', JSON.stringify(normalizedNodes));
       add('edges_json', JSON.stringify(normalizedEdges));
@@ -3976,7 +4003,7 @@ router.put(
       if (preferredTool !== null) set('preferred_tool', preferredTool);
       if (mergedExtensions !== null) set('extensions_json', JSON.stringify(mergedExtensions));
       set('updated_at', now);
-      params.push(ideaId, userId, orgId);
+      params.push(ideaId, canonicalUserId, orgId);
       if (baseVersion !== null) {
         params.push(baseVersion);
       }
@@ -3995,7 +4022,7 @@ router.put(
           }${mapCols.has('extensions_json') ? ', extensions_json as "extensionsJson"' : ''}${
             mapCols.has('schema_version') ? ', schema_version as "schemaVersion"' : ''
           } FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-          [ideaId, userId, orgId]
+          [ideaId, canonicalUserId, orgId]
         );
         return res.status(409).json(
           buildMapConflictPayload(latest, {
@@ -4095,11 +4122,9 @@ router.post(
       });
     }
 
-    const ideaOk = await queryHelpers.queryOne<any>(
-      `SELECT id FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
-    );
-    if (!ideaOk) return res.status(404).json({ error: 'Idea not found' });
+    // A1 (D-WB-2): canonical (owner) row write-through — see resolveCanonicalMapOwner.
+    const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
+    if (!canonicalUserId) return res.status(404).json({ error: 'Idea not found' });
 
     const mapCols = await getTableColumns('my_idea_maps');
     const preferredToolSelect = mapCols.has('preferred_tool')
@@ -4116,7 +4141,7 @@ router.post(
        FROM my_idea_maps
        WHERE idea_id = ? AND user_id = ? AND organization_id = ?
        LIMIT 1`,
-      [ideaId, userId, orgId]
+      [ideaId, canonicalUserId, orgId]
     );
 
     const currentVersion = existing ? Number(existing.version || 1) : 1;
@@ -4199,7 +4224,7 @@ router.post(
         insertParams.push(val);
       };
       add('idea_id', ideaId);
-      add('user_id', userId);
+      add('user_id', canonicalUserId);
       add('organization_id', orgId);
       add('nodes_json', JSON.stringify(normalizedNodes));
       add('edges_json', JSON.stringify(normalizedEdges));
@@ -4228,7 +4253,7 @@ router.post(
       if (preferredTool !== null) set('preferred_tool', preferredTool);
       if (mergedExtensions !== null) set('extensions_json', JSON.stringify(mergedExtensions));
       set('updated_at', now);
-      params.push(ideaId, userId, orgId);
+      params.push(ideaId, canonicalUserId, orgId);
       await queryHelpers.queryRun(
         `UPDATE my_idea_maps
          SET ${setParts.join(', ')}
@@ -5220,10 +5245,14 @@ router.post(
 
     if (!(await requireTables(res, ['my_idea_maps']))) return;
 
+    // A1 (D-WB-2): resolve canonical (owner) row so org members can attach artifacts.
+    const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
+    if (!canonicalUserId) return res.status(404).json({ error: 'Idea map not found' });
+
     const map = await queryHelpers.queryOne<any>(
       `SELECT id, version, nodes_json, edges_json, preferred_tool as "preferredTool", extensions_json as "extensionsJson", schema_version as "schemaVersion"
        FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
+      [ideaId, canonicalUserId, orgId]
     );
     if (!map) return res.status(404).json({ error: 'Idea map not found' });
     const currentVersion = Number(map.version || 1);
@@ -5305,7 +5334,7 @@ router.post(
       const latest = await queryHelpers.queryOne<any>(
         `SELECT id, version, nodes_json as "nodesJson", edges_json as "edgesJson", preferred_tool as "preferredTool", extensions_json as "extensionsJson", schema_version as "schemaVersion"
          FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-        [ideaId, userId, orgId]
+        [ideaId, canonicalUserId, orgId]
       );
       return res.status(409).json(
         buildMapConflictPayload(latest, {
@@ -5361,10 +5390,14 @@ router.delete(
 
     if (!(await requireTables(res, ['my_idea_maps']))) return;
 
+    // A1 (D-WB-2): resolve canonical (owner) row so org members can detach artifacts.
+    const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
+    if (!canonicalUserId) return res.status(404).json({ error: 'Idea map not found' });
+
     const map = await queryHelpers.queryOne<any>(
       `SELECT id, version, nodes_json, edges_json, preferred_tool as "preferredTool", extensions_json as "extensionsJson", schema_version as "schemaVersion"
        FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
+      [ideaId, canonicalUserId, orgId]
     );
     if (!map) return res.status(404).json({ error: 'Idea map not found' });
     const currentVersion = Number(map.version || 1);
@@ -5440,7 +5473,7 @@ router.delete(
       const latest = await queryHelpers.queryOne<any>(
         `SELECT id, version, nodes_json as "nodesJson", edges_json as "edgesJson", preferred_tool as "preferredTool", extensions_json as "extensionsJson", schema_version as "schemaVersion"
          FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-        [ideaId, userId, orgId]
+        [ideaId, canonicalUserId, orgId]
       );
       return res.status(409).json(
         buildMapConflictPayload(latest, {
@@ -5669,15 +5702,13 @@ router.post(
       return res.status(400).json({ error: 'clusters array is required' });
     }
 
-    const idea = await queryHelpers.queryOne<any>(
-      `SELECT id FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
-    );
-    if (!idea) return res.status(404).json({ error: 'Idea not found' });
+    // A1 (D-WB-2): canonical (owner) row write-through so org members can materialize clusters.
+    const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
+    if (!canonicalUserId) return res.status(404).json({ error: 'Idea not found' });
 
     const mapRow = await queryHelpers.queryOne<any>(
       `SELECT id, nodes_json as "nodesJson", edges_json as "edgesJson", version FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
+      [ideaId, canonicalUserId, orgId]
     );
     if (!mapRow) return res.status(404).json({ error: 'Idea map not found' });
 
@@ -5725,7 +5756,7 @@ router.post(
         nextVersion,
         now,
         ideaId,
-        userId,
+        canonicalUserId,
         orgId,
       ]
     );
@@ -5772,15 +5803,13 @@ router.post(
     }
     if (!label) return res.status(400).json({ error: 'label is required' });
 
-    const idea = await queryHelpers.queryOne<any>(
-      `SELECT id FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
-    );
-    if (!idea) return res.status(404).json({ error: 'Idea not found' });
+    // A1 (D-WB-2): canonical (owner) row write-through so org members can create outcomes.
+    const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
+    if (!canonicalUserId) return res.status(404).json({ error: 'Idea not found' });
 
     const mapRow = await queryHelpers.queryOne<any>(
       `SELECT id, nodes_json as "nodesJson", edges_json as "edgesJson", version FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
+      [ideaId, canonicalUserId, orgId]
     );
     if (!mapRow) return res.status(404).json({ error: 'Idea map not found' });
 
@@ -5833,7 +5862,7 @@ router.post(
         nextVersion,
         now,
         ideaId,
-        userId,
+        canonicalUserId,
         orgId,
       ]
     );
@@ -5876,15 +5905,20 @@ router.post(
         .json({ error: 'Invalid target — must be task, decision, or initiative' });
     }
 
+    // A1 (D-WB-2): canonical (owner) row write-through so org members can convert outcomes.
+    // Idea metadata (title/body/etc.) is org-scoped here; ownership only picks the map row.
+    const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
+    if (!canonicalUserId) return res.status(404).json({ error: 'Idea not found' });
+
     const idea = await queryHelpers.queryOne<any>(
-      `SELECT id, title, body, seed_text as "seedText", ai_expansion as "aiExpansion" FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
+      `SELECT id, title, body, seed_text as "seedText", ai_expansion as "aiExpansion" FROM my_ideas WHERE id = ? AND organization_id = ? LIMIT 1`,
+      [ideaId, orgId]
     );
     if (!idea) return res.status(404).json({ error: 'Idea not found' });
 
     const mapRow = await queryHelpers.queryOne<any>(
       `SELECT id, nodes_json as "nodesJson", edges_json as "edgesJson", version FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
+      [ideaId, canonicalUserId, orgId]
     );
     if (!mapRow) return res.status(404).json({ error: 'Idea map not found' });
 
@@ -6061,7 +6095,7 @@ router.post(
           nextVersion,
           now,
           ideaId,
-          userId,
+          canonicalUserId,
           orgId,
         ]
       );
