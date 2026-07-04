@@ -46,11 +46,10 @@ import {
 
 import {
   cancelDocumentStudioApproval,
-  createDocumentStudioComment,
   createDocumentStudioShareLink,
   exportDocumentStudioArtifact,
   getDocumentStudioAccessHistory,
-  getDocumentStudioCommentThreads,
+  getDocumentStudioCommentCounts,
   getDocumentStudioPolicy,
   getDocumentStudioSchemaDiff,
   getDocumentStudioVariant,
@@ -66,6 +65,7 @@ import {
   recordDocumentStudioApprovalDecision,
   requestDocumentStudioApproval,
 } from './api';
+import { DocumentCommentsPanel } from './DocumentCommentsPanel';
 import { DocumentExportSuccessNote } from './DocumentExportSuccessNote';
 import { DocumentSchemaDiffView } from './DocumentSchemaDiffView';
 import { DocumentStudioQaPanel } from './DocumentStudioQaPanel';
@@ -76,7 +76,7 @@ import type {
   DocumentApprovalQuorumPolicy,
   DocumentApprovalRequest,
   DocumentBlock,
-  DocumentCommentThread,
+  DocumentCommentSectionCounts,
   DocumentContentBlockTemplate,
   DocumentGenerationWarning,
   DocumentQaReport,
@@ -253,17 +253,6 @@ function renderSectionPreview(section: DocumentSection, idx: number): React.Reac
 function metadataLabel(value: string | string[] | undefined, notSet: string): string {
   if (Array.isArray(value)) return value.length > 0 ? value.join(', ') : notSet;
   return value && value.trim().length > 0 ? value : notSet;
-}
-
-/**
- * Render a comment author identifier in a human-friendly way. Comment threads
- * only carry the author id; when that id is a raw UUID we shorten it so the UI
- * never shows a full 36-char identifier.
- */
-function formatAuthorLabel(authorId: string | undefined | null): string {
-  const id = String(authorId || '').trim();
-  if (!id) return '—';
-  return id.length > 8 ? `${id.slice(0, 8)}…` : id;
 }
 
 function getConnectorState(
@@ -621,138 +610,6 @@ function ActivityPanel({ artifactId }: { artifactId: string }): React.ReactEleme
             <div className="mt-1 text-c-text-secondary">
               {entry.actorId} · {new Date(entry.occurredAt).toLocaleString()}
             </div>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function CommentsPanel({ artifactId }: { artifactId: string }): React.ReactElement {
-  const { t } = useTranslation();
-  const [threads, setThreads] = useState<DocumentCommentThread[]>([]);
-  const [draft, setDraft] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      setThreads(await getDocumentStudioCommentThreads(artifactId));
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('documentStudio.panel.commentsLoadFailed', 'Failed to load comments')
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [artifactId, t]);
-
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  const submit = async (): Promise<void> => {
-    if (!draft.trim()) return;
-    setSubmitting(true);
-    setError(null);
-    try {
-      setThreads(
-        await createDocumentStudioComment(artifactId, {
-          body: draft.trim(),
-          anchor: { kind: 'document' },
-        })
-      );
-      setDraft('');
-      toast.success(t('documentStudio.documentPanel.commentAdded', 'Comment added'));
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('documentStudio.panel.commentAddFailed', 'Failed to add comment')
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <div className="flex h-full flex-col overflow-y-auto p-4">
-      <div className="mb-3 flex items-start justify-between gap-2">
-        <div>
-          <h3 className="text-sm font-semibold text-c-text">
-            {t('documentStudio.panel.commentsTitle', 'Comments')}
-          </h3>
-          <p className="text-xs text-c-text-secondary">
-            {t(
-              'documentStudio.panel.commentsSubtitle',
-              'Document-level review threads. Block anchors stay visible in each thread.'
-            )}
-          </p>
-        </div>
-        <Button type="button" size="sm" variant="ghost" onClick={refresh} disabled={loading}>
-          {loading
-            ? t('documentStudio.panel.loading', 'Loading…')
-            : t('documentStudio.panel.refresh', 'Refresh')}
-        </Button>
-      </div>
-      <div className="mb-3 rounded-lg border border-c-border-subtle bg-c-surface p-3">
-        <textarea
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          placeholder={t(
-            'documentStudio.panel.commentPlaceholder',
-            'Add document-level review comment…'
-          )}
-          className="min-h-[80px] w-full resize-y rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text outline-none focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus"
-        />
-        <div className="mt-2 flex justify-end">
-          <Button type="button" size="sm" onClick={submit} disabled={submitting || !draft.trim()}>
-            {submitting
-              ? t('documentStudio.panel.commentAdding', 'Adding…')
-              : t('documentStudio.panel.commentAdd', 'Add comment')}
-          </Button>
-        </div>
-      </div>
-      {error ? (
-        <div className="mb-3 rounded-lg border border-danger-500/30 bg-danger-500/10 p-3 text-xs text-danger-700 dark:text-danger-300">
-          {error}
-        </div>
-      ) : null}
-      {!loading && threads.length === 0 ? (
-        <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs text-c-text-secondary">
-          {t('documentStudio.panel.commentsEmpty', 'No comments yet.')}
-        </div>
-      ) : null}
-      <ul className="space-y-2">
-        {threads.map((thread) => (
-          <li
-            key={thread.threadId}
-            className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div className="font-medium text-c-text">
-                {thread.root.body || t('documentStudio.panel.deletedComment', 'Deleted comment')}
-              </div>
-              <span className="rounded-full bg-c-surface-raised px-2 py-0.5 text-[10px] text-c-text-secondary">
-                {thread.status}
-              </span>
-            </div>
-            <div className="mt-1 text-c-text-secondary">
-              {formatAuthorLabel(thread.root.authorId)} · {thread.anchor.kind}
-            </div>
-            {thread.replies.length > 0 ? (
-              <div className="mt-2 border-l border-c-border-subtle pl-2">
-                {t('documentStudio.panel.repliesCount', {
-                  defaultValue: '{{count}} replies',
-                  count: thread.replies.length,
-                })}
-              </div>
-            ) : null}
           </li>
         ))}
       </ul>
@@ -2142,7 +1999,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       return <SchemaDiffPanel artifactId={artifactId} />;
     }
     if (activeToolId === 'comments') {
-      return <CommentsPanel artifactId={artifactId} />;
+      return <DocumentCommentsPanel artifactId={artifactId} sections={schema.sections} />;
     }
     if (activeToolId === 'share') {
       return <ShareLinksPanel artifactId={artifactId} />;

@@ -17,7 +17,9 @@ import type {
   DocumentApprovalRequest,
   DocumentAuditEntry,
   DocumentBlock,
+  DocumentComment,
   DocumentCommentAnchor,
+  DocumentCommentSectionCounts,
   DocumentCommentThread,
   DocumentContentBlockTemplate,
   DocumentEditorProposal,
@@ -614,6 +616,106 @@ export async function createDocumentStudioComment(
   });
   await handleResponse(res, 'DocumentStudio create comment');
   return getDocumentStudioCommentThreads(artifactId);
+}
+
+/**
+ * B5 — per-section / per-block unresolved-thread counts. Drives the
+ * right-rail Comments tool badge and the panel filter counters.
+ */
+export async function getDocumentStudioCommentCounts(
+  artifactId: string
+): Promise<DocumentCommentSectionCounts> {
+  const res = await fetchWithRetry(`${BASE}/${encodeURIComponent(artifactId)}/comments/counts`, {
+    method: 'GET',
+    headers: getHeaders(),
+  });
+  const json = await handleResponse<{ counts: DocumentCommentSectionCounts }>(
+    res,
+    'DocumentStudio comment counts'
+  );
+  return json.counts;
+}
+
+/** B5 — reply inside a thread (replies always target the thread root). */
+export async function replyToDocumentStudioComment(
+  artifactId: string,
+  commentId: string,
+  body: string
+): Promise<DocumentComment> {
+  const res = await fetchWithRetry(
+    `${BASE}/${encodeURIComponent(artifactId)}/comments/${encodeURIComponent(commentId)}/reply`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ body }),
+    }
+  );
+  const json = await handleResponse<{ comment: DocumentComment }>(
+    res,
+    'DocumentStudio reply to comment'
+  );
+  return json.comment;
+}
+
+/** B5 — resolve the whole thread (optional reason recorded on the root). */
+export async function resolveDocumentStudioComment(
+  artifactId: string,
+  commentId: string,
+  reason?: string
+): Promise<DocumentComment> {
+  const res = await fetchWithRetry(
+    `${BASE}/${encodeURIComponent(artifactId)}/comments/${encodeURIComponent(commentId)}/resolve`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(reason ? { reason } : {}),
+    }
+  );
+  const json = await handleResponse<{ comment: DocumentComment }>(
+    res,
+    'DocumentStudio resolve comment'
+  );
+  return json.comment;
+}
+
+/** B5 — reopen a resolved thread (optional reason). */
+export async function reopenDocumentStudioComment(
+  artifactId: string,
+  commentId: string,
+  reason?: string
+): Promise<DocumentComment> {
+  const res = await fetchWithRetry(
+    `${BASE}/${encodeURIComponent(artifactId)}/comments/${encodeURIComponent(commentId)}/reopen`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(reason ? { reason } : {}),
+    }
+  );
+  const json = await handleResponse<{ comment: DocumentComment }>(
+    res,
+    'DocumentStudio reopen comment'
+  );
+  return json.comment;
+}
+
+/** B5 — author-only soft-delete (backend blanks the body, keeps the row). */
+export async function deleteDocumentStudioComment(
+  artifactId: string,
+  commentId: string
+): Promise<DocumentComment> {
+  const res = await fetchWithRetry(
+    `${BASE}/${encodeURIComponent(artifactId)}/comments/${encodeURIComponent(commentId)}`,
+    {
+      method: 'DELETE',
+      headers: getHeaders(),
+    }
+  );
+  const json = await handleResponse<{ comment: DocumentComment }>(
+    res,
+    'DocumentStudio delete comment'
+  );
+  return json.comment;
 }
 
 export async function listDocumentStudioShareLinks(

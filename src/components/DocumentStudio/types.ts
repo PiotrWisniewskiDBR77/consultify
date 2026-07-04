@@ -479,6 +479,22 @@ export interface DocumentCommentThread {
   updatedAt: string;
 }
 
+/**
+ * B5 — frontend mirror of the server's `DocumentCommentSectionCounts`
+ * (GET /:artifactId/comments/counts). Powers the right-rail tool badge
+ * and the Open/Resolved filter counters.
+ */
+export interface DocumentCommentSectionCounts {
+  artifactId: string;
+  organizationId: string;
+  totalOpen: number;
+  totalResolved: number;
+  /** Per-section breakdown; sections with zero threads are omitted. */
+  perSection: Record<string, { open: number; resolved: number }>;
+  /** Per-block breakdown — only `'block'`-anchored threads contribute. */
+  perBlock: Record<string, { open: number; resolved: number }>;
+}
+
 export type DocumentAccessHistorySource = 'document_audit' | 'share_link' | 'approval';
 
 export interface DocumentAccessHistoryEntry {
