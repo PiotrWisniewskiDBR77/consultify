@@ -1091,8 +1091,8 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
       <div
         className={`
                 relative
-                bg-c-surface rounded-xl border transition-all duration-200
-                ${isFocused ? 'border-c-focus-solid' : 'border-c-border'}
+                bg-c-surface rounded-xl border border-c-border transition-all duration-200
+                focus-within:border-c-focus-solid focus-within:ring-2 focus-within:ring-c-focus
                 ${isRecordingAny ? 'ring-2 ring-c-focus' : ''}
                 ${isDisabled ? 'opacity-60' : ''}
             `}
@@ -1189,7 +1189,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
           className={`
                         w-full bg-transparent text-c-text
                         placeholder:text-c-text-muted
-                        px-4 ${variant === 'compact' ? 'pt-4 pb-2' : 'pt-4 pb-2'} resize-none focus:outline-none text-[15px]
+                        px-4 ${variant === 'compact' ? 'pt-4 pb-2' : 'pt-4 pb-2'} resize-none focus:outline-none focus:ring-0 border-0 text-[15px]
                     `}
         />
 
