@@ -19,9 +19,15 @@ import type {
 import { EMPTY_SELECTION } from '../ideaSelectionTypes';
 import type { FormatRule } from './ConditionalFormatting';
 import { evaluateFilterRule } from './filterEval';
-import { columnToField, fieldToColumn, recordToNode } from './tablePlatformMappers';
+import {
+  columnToField,
+  fieldToColumn,
+  PROVENANCE_DATA_KEYS,
+  recordToNode,
+} from './tablePlatformMappers';
 import type { ColumnDef, FilterGroup, SavedView, SortConfig, TableNode } from './tableTypes';
 import { DEFAULT_COLUMN_WIDTH } from './tableTypes';
+import { usePlatformRecordUndoRedo } from './useUndoRedo';
 import { useTablePlatformBridge } from './useTablePlatformBridge';
 import { useTablePlatformViews } from './useTablePlatformViews';
 import type { ViewLayout } from './useTableViews';
@@ -35,6 +41,7 @@ const EMPTY_NODES: TableNode[] = [];
 const DEFAULT_FILTERS: FilterGroup = { logic: 'and', rules: [] };
 const NOOP_FN = () => {};
 const NOOP_ASYNC = async () => {};
+const NOOP_ASYNC_FALSE = async () => false;
 
 function missingPlaceholderColumn(fieldId: string): ColumnDef {
   return {
@@ -166,6 +173,25 @@ export interface UseTablePlatformIntegrationReturn {
   formatRules: FormatRule[];
   /** R5: persist conditional-formatting rules into the active view's `config` JSONB */
   updateConditionalFormatting: (rules: FormatRule[]) => Promise<void>;
+
+  /** Undo/redo for platform record mutations (create/update/delete). v1: single-record ops only. */
+  platformUndo: () => Promise<boolean>;
+  platformRedo: () => Promise<boolean>;
+  platformCanUndo: boolean;
+  platformCanRedo: boolean;
+}
+
+/**
+ * Strip the bookkeeping keys `recordToNode` injects into `node.data` (the
+ * record's own `id`, plus `__`-prefixed provenance mirrors) before replaying a
+ * node's data as a `bridge.createRecord` payload — e.g. undo-of-delete
+ * re-creating a record from its last-known node snapshot. Without this, the
+ * old record's id/provenance would be sent as if they were field values.
+ */
+function nodeDataToCreatePayload(data: Record<string, unknown> | undefined): Record<string, unknown> {
+  const { id: _id, [PROVENANCE_DATA_KEYS.confidenceScore]: _cs, [PROVENANCE_DATA_KEYS.validationStatus]: _vs, ...rest } =
+    (data ?? {}) as Record<string, unknown>;
+  return rest;
 }
 
 // ---------------------------------------------------------------------------
@@ -260,6 +286,13 @@ export function useTablePlatformIntegration(
   const [localNodes, setLocalNodes] = useState<TableNode[]>([]);
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
+
+  // Client-side undo/redo command stack for record mutations. Each entry stores
+  // the inverse + forward operation as closures that replay through the same
+  // bridge.createRecord/updateRecord/deleteRecord calls used by the forward
+  // handlers below — so the realtime echo-protection (version gating in
+  // useTablePlatformBridge) applies identically and no dedup logic is needed here.
+  const recordUndoRedo = usePlatformRecordUndoRedo();
 
   const isActive = bridge.isNewPlatform && open && !bridge.platformFailed;
 
@@ -365,7 +398,7 @@ export function useTablePlatformIntegration(
   );
 
   const handleFieldChange = useCallback(
-    (nodeId: string, field: string, value: unknown) => {
+    (nodeId: string, field: string, value: unknown, opts?: { skipUndo?: boolean }) => {
       if (!isActive || locked) return;
       const prev = nodes.find((n) => n.id === nodeId);
       const prevData = prev?.data ? { ...prev.data } : {};
@@ -380,36 +413,80 @@ export function useTablePlatformIntegration(
           setLocalNodes((curr) =>
             curr.map((n) => (n.id === nodeId ? { ...n, data: prevData } : n))
           );
+          return;
+        }
+        // Undo/redo entries are pushed only for real (non-replay) edits — the
+        // undo/redo closures below call this same function with skipUndo so
+        // running them doesn't re-push a new entry onto the stack.
+        if (!opts?.skipUndo) {
+          const prevValue = prevData[field];
+          recordUndoRedo.pushCommand({
+            label: 'field-change',
+            undo: async () => {
+              handleFieldChange(nodeId, field, prevValue, { skipUndo: true });
+            },
+            redo: async () => {
+              handleFieldChange(nodeId, field, value, { skipUndo: true });
+            },
+          });
         }
       })();
     },
-    [isActive, locked, nodes, bridge]
+    [isActive, locked, nodes, bridge, recordUndoRedo]
   );
 
-  const handleAddRow = useCallback(() => {
-    if (!isActive || locked) return;
-    const tempId = `temp-${Date.now()}`;
-    const tempNode: TableNode = {
-      id: tempId,
-      type: 'idea',
-      data: { label: '', status: 'todo', created_time: new Date().toISOString() },
-      position: { x: 0, y: 0 },
-    };
-    setLocalNodes((curr) => [tempNode, ...curr]);
-    void (async () => {
-      const created = await bridge.createRecord({});
-      if (created) {
+  const handleAddRow = useCallback(
+    (opts?: { skipUndo?: boolean }) => {
+      if (!isActive || locked) return;
+      const tempId = `temp-${Date.now()}`;
+      const tempNode: TableNode = {
+        id: tempId,
+        type: 'idea',
+        data: { label: '', status: 'todo', created_time: new Date().toISOString() },
+        position: { x: 0, y: 0 },
+      };
+      setLocalNodes((curr) => [tempNode, ...curr]);
+      void (async () => {
+        const created = await bridge.createRecord({});
+        if (!created) {
+          setLocalNodes((curr) => curr.filter((n) => n.id !== tempId));
+          return;
+        }
         const newNode = recordToNode(created, bridge.fields);
         setLocalNodes((curr) => curr.map((n) => (n.id === tempId ? newNode : n)));
-      } else {
-        setLocalNodes((curr) => curr.filter((n) => n.id !== tempId));
-      }
-    })();
-  }, [isActive, locked, bridge]);
+
+        if (!opts?.skipUndo) {
+          // Boxed so a later undo(delete)->redo(re-create) cycle can update the
+          // id this command points at without re-registering a new stack entry.
+          const idBox = { current: created.id };
+          recordUndoRedo.pushCommand({
+            label: 'add-row',
+            undo: async () => {
+              await bridge.deleteRecord(idBox.current);
+              setLocalNodes((curr) => curr.filter((n) => n.id !== idBox.current));
+            },
+            redo: async () => {
+              const recreated = await bridge.createRecord({});
+              if (!recreated) return;
+              idBox.current = recreated.id;
+              const recreatedNode = recordToNode(recreated, bridge.fields);
+              setLocalNodes((curr) => [recreatedNode, ...curr]);
+            },
+          });
+        }
+      })();
+    },
+    [isActive, locked, bridge, recordUndoRedo]
+  );
 
   const handleBulkDelete = useCallback(() => {
     if (!isActive || locked || selectedRowIds.size === 0) return;
     const ids = Array.from(selectedRowIds);
+    // v1 undo/redo scope is single-record ops only; a multi-row bulk delete is
+    // still executed but does not push an undo entry (documented limitation —
+    // see useTablePlatformIntegration undo/redo tests).
+    const isSingleRowDelete = ids.length === 1;
+    const deletedNode = isSingleRowDelete ? nodes.find((n) => n.id === ids[0]) : undefined;
     setLocalNodes((curr) => curr.filter((n) => !selectedRowIds.has(n.id)));
     setSelectedRowIds(new Set());
     onSelectionChange?.(EMPTY_SELECTION);
@@ -422,9 +499,28 @@ export function useTablePlatformIntegration(
       if (anyFailed) {
         await bridge.refresh();
         // useEffect will sync localNodes from bridge.nodes
+        return;
+      }
+      if (isSingleRowDelete && deletedNode) {
+        const deletedData = nodeDataToCreatePayload(deletedNode.data);
+        const idBox = { current: deletedNode.id };
+        recordUndoRedo.pushCommand({
+          label: 'delete-row',
+          undo: async () => {
+            const recreated = await bridge.createRecord(deletedData);
+            if (!recreated) return;
+            idBox.current = recreated.id;
+            const recreatedNode = recordToNode(recreated, bridge.fields);
+            setLocalNodes((curr) => [recreatedNode, ...curr]);
+          },
+          redo: async () => {
+            await bridge.deleteRecord(idBox.current);
+            setLocalNodes((curr) => curr.filter((n) => n.id !== idBox.current));
+          },
+        });
       }
     })();
-  }, [isActive, locked, selectedRowIds, bridge, onSelectionChange]);
+  }, [isActive, locked, selectedRowIds, nodes, bridge, onSelectionChange, recordUndoRedo]);
 
   const handleSave = useCallback(async () => {
     if (!isActive) return;
@@ -540,6 +636,10 @@ export function useTablePlatformIntegration(
       removeMissingFieldFromView: NOOP_ASYNC,
       formatRules: [],
       updateConditionalFormatting: NOOP_ASYNC,
+      platformUndo: NOOP_ASYNC_FALSE,
+      platformRedo: NOOP_ASYNC_FALSE,
+      platformCanUndo: false,
+      platformCanRedo: false,
     };
   }
 
@@ -601,5 +701,9 @@ export function useTablePlatformIntegration(
     removeMissingFieldFromView,
     formatRules,
     updateConditionalFormatting,
+    platformUndo: recordUndoRedo.undo,
+    platformRedo: recordUndoRedo.redo,
+    platformCanUndo: recordUndoRedo.canUndo,
+    platformCanRedo: recordUndoRedo.canRedo,
   };
 }

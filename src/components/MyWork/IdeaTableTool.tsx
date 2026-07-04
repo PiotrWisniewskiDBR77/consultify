@@ -375,6 +375,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const nodesUndo = useUndoRedo<TableNode[]>([]);
   // Bridge for the canvas rail undo (CanvasLeftToolbar emits tbl_undo before handlePlatformUndo is defined).
   const platformUndoRef = useRef<() => void | Promise<void>>(() => nodesUndo.undo());
+  // Same forward-reference bridge for redo (quick-actions hook is wired before
+  // handlePlatformRedo exists further down the component body).
+  const platformRedoRef = useRef<() => void | Promise<void>>(() => nodesUndo.redo());
   const [formatRules, setFormatRules] = useState<FormatRule[]>([]);
   const [matrixAxisXKey, setMatrixAxisXKey] = useState<string | null>(null);
   const [matrixAxisYKey, setMatrixAxisYKey] = useState<string | null>(null);
@@ -896,7 +899,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       setShowCrossRelations,
       setShowHeatmap,
       onUndo: () => platformUndoRef.current(),
-      onRedo: () => nodesUndo.redo(),
+      onRedo: () => platformRedoRef.current(),
     },
   });
 
@@ -1173,7 +1176,16 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       nodesUndo.undo();
       return;
     }
+    // Prefer the client-side command stack (covers create/update/delete, single
+    // ops v1 — see useTablePlatformIntegration.ts). Fall back to the legacy
+    // server-side endpoint (update-only, no redo) when our stack is empty, e.g.
+    // right after a fresh page load before any mutation has been made locally.
     try {
+      const undone = await platformIntegration.platformUndo();
+      if (undone) {
+        toast.success(isPl ? 'Cofnięto zmianę' : 'Undo successful');
+        return;
+      }
       const result = await TablePlatformApi.undoRecordEdit(ideaId);
       if (result) {
         toast.success(isPl ? 'Cofnięto zmianę' : 'Undo successful');
@@ -1186,29 +1198,55 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     }
   }, [usePlatform, ideaId, isPl, nodesUndo, platformIntegration]);
 
-  // Keep the rail-undo bridge pointed at the live platform-aware undo handler.
+  const handlePlatformRedo = useCallback(async () => {
+    if (!usePlatform) {
+      nodesUndo.redo();
+      return;
+    }
+    try {
+      const redone = await platformIntegration.platformRedo();
+      if (redone) {
+        toast.success(isPl ? 'Ponowiono zmianę' : 'Redo successful');
+      } else {
+        toast(isPl ? 'Brak zmian do ponowienia' : 'Nothing to redo');
+      }
+    } catch {
+      toast.error(isPl ? 'Nie udało się ponowić' : 'Redo failed');
+    }
+  }, [usePlatform, isPl, nodesUndo, platformIntegration]);
+
+  // Keep the rail-undo bridge pointed at the live platform-aware undo/redo handlers.
   platformUndoRef.current = handlePlatformUndo;
+  platformRedoRef.current = handlePlatformRedo;
 
   // Feed the canvas rail's Undo/Redo enabled state (CanvasLeftToolbar reads it via
-  // IdeaMapWorkspace). Platform mode has no client stack, so Undo stays enabled there.
+  // IdeaMapWorkspace). Platform mode's own command stack drives canUndo/canRedo;
+  // canUndo also stays enabled when the stack is empty because the legacy
+  // server-side undo endpoint remains available as a fallback (see above).
   useEffect(() => {
     if (!open) return;
     window.dispatchEvent(
       new CustomEvent('tbl-undo-state', {
         detail: {
-          canUndo: usePlatform || nodesUndo.canUndo,
-          canRedo: nodesUndo.canRedo,
+          canUndo: usePlatform ? true : nodesUndo.canUndo,
+          canRedo: usePlatform ? platformIntegration.platformCanRedo : nodesUndo.canRedo,
         },
       })
     );
-  }, [open, usePlatform, nodesUndo.canUndo, nodesUndo.canRedo]);
+  }, [
+    open,
+    usePlatform,
+    nodesUndo.canUndo,
+    nodesUndo.canRedo,
+    platformIntegration.platformCanRedo,
+  ]);
 
   // ── Keyboard ───────────────────────────────────────────────────────────────
   useTableKeyboard({
     rowCount: processedRowsWithRollups.length,
     colCount: _visCols.length,
     onUndo: handlePlatformUndo,
-    onRedo: nodesUndo.redo,
+    onRedo: usePlatform ? handlePlatformRedo : nodesUndo.redo,
     onDelete: _bulkDel,
     onEscape: () => {
       setDetailNodeId(null);
@@ -1369,7 +1407,15 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           {usePlatform ? (
             <P15TableToolbar
               ideaId={ideaId}
-              nodesUndo={nodesUndo}
+              nodesUndo={{
+                // Platform mode: redo must drive the command stack (create/
+                // update/delete), not the legacy client-array stack (which is
+                // never pushed to here and would leave Redo permanently dead).
+                canUndo: true,
+                canRedo: platformIntegration.platformCanRedo,
+                undo: handlePlatformUndo,
+                redo: handlePlatformRedo,
+              }}
               onPlatformUndo={handlePlatformUndo}
               onCSVImport={handleCSVImport}
               onExportCSV={() => {
