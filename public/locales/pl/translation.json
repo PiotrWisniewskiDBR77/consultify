@@ -13517,7 +13517,8 @@
       "source": "Źródło",
       "slides": "Slajdy",
       "reportType": "Typ",
-      "mode": "Tryb"
+      "mode": "Tryb",
+      "quality": "Jakość"
     },
     "filters": {
       "type": "Typ",
