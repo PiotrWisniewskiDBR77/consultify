@@ -71,5 +71,8 @@
     "@types/pdf-parse": "^1.1.5",
     "@types/ws": "^8.18.1",
     "tsx": "^4.21.0"
+  },
+  "optionalDependencies": {
+    "sharp": "^0.33.5"
   }
 }
