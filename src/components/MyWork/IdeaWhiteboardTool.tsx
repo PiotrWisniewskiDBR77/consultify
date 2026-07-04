@@ -669,7 +669,8 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       locked,
     });
   // M09 L-02: realtime graph sync (org-scoped WS, mirrors M06 Mind Map).
-  const collab = useWhiteboardCollab({ currentUserId, setNodes, setEdges });
+  // DP-3 (T6): shared useIdeaCollab under the hood; ideaId scopes remote events.
+  const collab = useWhiteboardCollab({ ideaId, currentUserId, setNodes, setEdges });
   const lastSnapshotRef = useRef<WhiteboardCanvasSnapshot | null>(null);
   const undoStackRef = useRef<WhiteboardCanvasSnapshot[]>([]);
   const redoStackRef = useRef<WhiteboardCanvasSnapshot[]>([]);

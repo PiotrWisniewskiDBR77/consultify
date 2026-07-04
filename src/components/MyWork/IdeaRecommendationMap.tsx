@@ -56,6 +56,7 @@ import TeresaMark from '../shared/TeresaMark';
 import { useConfirmDialog } from './shared/ConfirmDialog';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
 import { getCanvasBg } from './canvas/canvasBackground';
+import { useIdeaCollab } from './canvas/useIdeaCollab';
 import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import {
   IDEA_STAGE_COLORS,
@@ -2013,17 +2014,16 @@ function MindMapInner({
   }, [nodesInitialized, nodes.length, ideaId, fitView, setViewport, locked]);
 
   // ── Graph CRUD collaboration ──────────────────────────────────────────────
-  const collabSendRef = useRef<((msg: any) => void) | null>(null);
-
-  const registerCollabSend = useCallback((sendFn: (msg: any) => void) => {
-    collabSendRef.current = sendFn;
-  }, []);
-
-  const broadcastGraphPatch = useCallback((operations: Array<{ op: string; data: any }>) => {
-    if (collabSendRef.current && operations.length > 0) {
-      collabSendRef.current({ type: 'graph_patch', operations });
-    }
-  }, []);
+  // DP-3 (T6): shared useIdeaCollab (same hook as the whiteboard) applies
+  // collaborators' graph_patch ops to the live canvas via functional
+  // setNodes/setEdges — remote-apply without re-hydration or canvas remount.
+  const { registerCollabSend } = useIdeaCollab({
+    ideaId,
+    tool: 'mindmap',
+    currentUserId: currentUser?.id || 'anonymous',
+    setNodes,
+    setEdges,
+  });
 
   const updateNodeDataById = useCallback(
     (nodeId: string, updater: (data: any) => any) => {
@@ -2852,41 +2852,8 @@ function MindMapInner({
   }, [contextMenu, drawerNodeId, remoteLockedNodeIds, setNodes]);
 
   // ── Apply incoming graph patches from collaborators ──────────────────────
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      if (!detail?.operations || detail.userId === currentUser?.id) return;
-
-      for (const op of detail.operations) {
-        switch (op.op) {
-          case 'add_node':
-            setNodes((prev: Node[]) => [...prev, op.data]);
-            break;
-          case 'remove_node':
-            setNodes((prev: Node[]) => prev.filter((n: Node) => n.id !== op.data.id));
-            break;
-          case 'update_node':
-            setNodes((prev: Node[]) =>
-              prev.map((n: Node) => (n.id === op.data.id ? { ...n, ...op.data } : n))
-            );
-            break;
-          case 'add_edge':
-            setEdges((prev: Edge[]) => [...prev, op.data]);
-            break;
-          case 'remove_edge':
-            setEdges((prev: Edge[]) => prev.filter((e: Edge) => e.id !== op.data.id));
-            break;
-          case 'update_edge':
-            setEdges((prev: Edge[]) =>
-              prev.map((e: Edge) => (e.id === op.data.id ? { ...e, ...op.data } : e))
-            );
-            break;
-        }
-      }
-    };
-    window.addEventListener('idea-collab-graph-patch', handler);
-    return () => window.removeEventListener('idea-collab-graph-patch', handler);
-  }, [currentUser?.id, setNodes, setEdges]);
+  // DP-3 (T6): handled by the shared useIdeaCollab hook above (guarded by
+  // applyingRemoteRef, idempotent adds, functional updates — no remount).
 
   // Node operations (findParentId, findChildrenIds, addChildNode, addSiblingNode,
   // deleteSelected, duplicateSelected, focusSelectedNode, reparentSelectedPromote,

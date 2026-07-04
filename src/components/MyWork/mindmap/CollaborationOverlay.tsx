@@ -173,7 +173,17 @@ function useCollaboration(
             case 'lock_rejected':
               break;
             case 'graph_patch':
-              window.dispatchEvent(new CustomEvent('idea-collab-graph-patch', { detail: msg }));
+              window.dispatchEvent(
+                new CustomEvent('idea-collab-graph-patch', { detail: { ...msg, ideaId } })
+              );
+              break;
+            case 'graph_version':
+              // DP-3 (T6): canonical version confirmed by the gateway persist.
+              // Consumed ref-only (useIdeaMapSync / useMindMapPersistence) —
+              // silent adoption, never a re-hydration or canvas remount.
+              window.dispatchEvent(
+                new CustomEvent('idea-collab-graph-version', { detail: { ...msg, ideaId } })
+              );
               break;
             case 'graph_sync_request':
               window.dispatchEvent(new CustomEvent('idea-collab-sync-request', { detail: msg }));

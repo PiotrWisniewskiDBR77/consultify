@@ -339,6 +339,28 @@ export function useIdeaMapSync({
     [draftMs, flushNow, idleMs, locked, open, persistDraft]
   );
 
+  // DP-3 (T6): `graph_version` — the WS gateway persisted a graph_patch into
+  // the canonical row and broadcast the new version to the whole room (author
+  // included). Adopt it SILENTLY, refs only: our canvas already carries the
+  // corresponding live patch, so the next POST /map/sync must send the fresh
+  // baseVersion instead of tripping a spurious 409. No state updates here —
+  // this must never re-render, re-hydrate, or remount the canvas (26a2a896ef).
+  // Flag OFF ⇒ the server never emits graph_version ⇒ exactly today's behavior.
+  useEffect(() => {
+    if (!hasWindow()) return;
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail) return;
+      if (detail.ideaId && detail.ideaId !== ideaId) return;
+      const version = Number(detail.version || 0);
+      if (!Number.isFinite(version) || version <= serverVersionRef.current) return;
+      serverVersionRef.current = version;
+      globalIdeaVersions.set(ideaId, version); // L-03
+    };
+    window.addEventListener('idea-collab-graph-version', handler);
+    return () => window.removeEventListener('idea-collab-graph-version', handler);
+  }, [ideaId]);
+
   const primeServerVersion = useCallback(
     (version: number | null | undefined) => {
       serverVersionRef.current = Math.max(1, Number(version || 1));
