@@ -269,6 +269,33 @@ describe('golden-path probes — read-only liveness', () => {
     expect(result.status).toBe('pass');
     expect(result.detail).toMatchObject({ reportCount: 0, routeLoaded: true });
   });
+
+  // Anti-false-green (BUG A): the Assessment→Initiative probe MUST watch the REAL
+  // sink. The live handoff (AssessmentInitiativeService.persistInitiatives) writes
+  // to the canonical `initiatives` table with source_type IN
+  // ('assessment','assessment_report') — NOT to `generated_initiatives` (a separate
+  // /api/initiative-generator surface whose `source` defaults to 'manual'). The old
+  // probe queried `generated_initiatives WHERE source = 'assessment'`, so it could
+  // pass while the real Assessment→Initiative sink was empty/broken. These asserts
+  // are RED on the old query (wrong table + wrong column) and GREEN after the fix.
+  it('assessment→initiatives probe reads the REAL initiatives sink by source_type', async () => {
+    (DbPromise.all as any).mockResolvedValue([{ id: 'a1' }, { id: 'a2' }]);
+    const result = await runProbe(getProbeById('gp_assessment_to_initiatives_live')!, CTX);
+    expect(result.status).toBe('pass');
+    expect(result.detail).toEqual({ assessmentSourcedCount: 2 });
+
+    const [sql, params, opts] = (DbPromise.all as any).mock.calls[0];
+    // Reads the canonical initiatives table (the live persistInitiatives sink)…
+    expect(sql).toMatch(/FROM\s+initiatives\b/i);
+    // …filtered by the REAL provenance column + values…
+    expect(sql).toMatch(/source_type\s+IN\s*\(\s*'assessment',\s*'assessment_report'\s*\)/i);
+    // …and must NOT hit the wrong table/column the false-green probe used.
+    expect(sql).not.toMatch(/generated_initiatives/i);
+    expect(sql).not.toMatch(/\bsource\s*=\s*'assessment'/i);
+    // Org-scoped, fail-soft (empty org = pass).
+    expect(params).toEqual([CTX.organizationId]);
+    expect(opts).toEqual({ fallback: true });
+  });
 });
 
 describe('probe (a) — M15 KPI round-trip', () => {

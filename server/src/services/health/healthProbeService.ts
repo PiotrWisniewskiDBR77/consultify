@@ -467,17 +467,25 @@ const probeInitiativesList: HealthProbe = {
   },
 };
 
-/** (i) Assessment → Inicjatywy — assessment-sourced generated initiatives read. */
+/** (i) Assessment → Inicjatywy — assessment-sourced initiatives read.
+ *  The LIVE handoff (AssessmentInitiativeService.persistInitiatives, both the
+ *  funnel and legacy branches) writes to the canonical `initiatives` table with
+ *  source_type IN ('assessment','assessment_report') — NOT to `generated_initiatives`
+ *  (which is the separate /api/initiative-generator surface, source defaults to
+ *  'manual'). Reading the wrong table made this probe a false-green: it could pass
+ *  while the real Assessment→Initiative sink was empty/broken. This probe now reads
+ *  the REAL sink, consistent with the honest gp4_tools_to_initiative_round_trip
+ *  probe which also asserts against `initiatives.source_type`. */
 const probeAssessmentToInitiatives: HealthProbe = {
   id: 'gp_assessment_to_initiatives_live',
   module: 'Assessment→M13',
-  title: 'Assessment → generated initiatives live',
+  title: 'Assessment → initiatives live',
   description:
-    'Reads generated_initiatives org-scoped (the Assessment→Initiative handoff sink), assessment-source slice.',
+    "Reads initiatives org-scoped (the Assessment→Initiative handoff sink), source_type IN ('assessment','assessment_report').",
   run: async ({ organizationId }) => {
     const count = await countOrgScoped(
-      `SELECT id FROM generated_initiatives
-        WHERE organization_id = ? AND source = 'assessment'
+      `SELECT id FROM initiatives
+        WHERE organization_id = ? AND source_type IN ('assessment', 'assessment_report')
         ORDER BY created_at DESC LIMIT 25`,
       [organizationId]
     );
