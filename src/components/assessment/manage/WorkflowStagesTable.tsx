@@ -654,7 +654,7 @@ const WorkflowStageRow: FC<{
                 <button
                   onClick={() => handleAction('request')}
                   disabled={actionBusy}
-                  className="px-3 py-1.5 rounded-lg bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-xs font-semibold transition-colors"
+                  className="px-3 py-1.5 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:bg-navy-900/40 dark:disabled:bg-[#F4F7FB]/50 text-white dark:text-navy-950 text-xs font-semibold transition-colors"
                 >
                   {actionBusy ? (
                     <Loader2 size={12} className="animate-spin" />

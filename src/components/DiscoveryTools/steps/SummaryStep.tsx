@@ -686,7 +686,7 @@ function DynamicSwotOutputs({
                 <button
                   onClick={() => setPresCreated(true)}
                   disabled={presSections.size === 0}
-                  className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-primary-700 disabled:opacity-40 dark:bg-primary-500 dark:hover:bg-primary-600"
+                  className="inline-flex items-center gap-2 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] px-4 py-2 text-xs font-semibold text-white dark:text-navy-950 shadow-sm transition-all hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:opacity-40"
                 >
                   <Presentation className="h-3.5 w-3.5" />
                   {isPolish ? 'Generuj prezentację' : 'Generate presentation'}

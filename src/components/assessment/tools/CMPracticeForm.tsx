@@ -598,7 +598,7 @@ export const CMPracticeForm: React.FC<CMMIFormProps> = ({
             <button
               onClick={() => goToCategory('next')}
               className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-                bg-primary-500 text-white hover:bg-primary-400
+                bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF]
                 transition-colors"
             >
               Next Category

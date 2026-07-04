@@ -825,7 +825,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
                     <div className="flex gap-2">
                       <button
                         onClick={handleAddWorkstation}
-                        className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-400"
+                        className="px-4 py-2 bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 rounded-lg hover:bg-navy-800 dark:hover:bg-[#DDE5EF]"
                       >
                         Add Workstation
                       </button>
@@ -885,7 +885,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
             <button
               onClick={() => goToPhase('next')}
               className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-                bg-primary-500 text-white hover:bg-primary-400
+                bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF]
                 transition-colors"
             >
               Next Phase

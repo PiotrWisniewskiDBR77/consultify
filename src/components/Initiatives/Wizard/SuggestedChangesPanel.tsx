@@ -113,7 +113,7 @@ export const SuggestedChangesPanel: React.FC<SuggestedChangesPanelProps> = ({
                   <button
                     type="button"
                     onClick={() => onAccept?.(change)}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-primary-500"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] px-3 py-1.5 text-xs font-semibold text-white dark:text-navy-950 transition-colors hover:bg-navy-800 dark:hover:bg-[#DDE5EF]"
                   >
                     <Check size={13} />
                     {tr('Akceptuj', 'Accept')}

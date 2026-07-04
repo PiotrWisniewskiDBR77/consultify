@@ -1090,7 +1090,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                                     }
                                     ${
                                       isActive
-                                        ? 'bg-primary-600 text-white shadow-md shadow-primary-600/20'
+                                        ? 'bg-slate-900/[0.07] text-slate-900 border border-slate-300 dark:bg-white/10 dark:text-slate-100 dark:border-white/25'
                                         : 'bg-white dark:bg-navy-900 text-c-text-secondary active:bg-slate-100 dark:active:bg-white/10 border border-c-border-subtle'
                                     }
                                 `}
@@ -1126,7 +1126,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                                         ${isCompact ? 'px-2.5 py-1' : 'px-3 py-1'} text-xs
                                         ${
                                           selectedAxis === 'dashboard'
-                                            ? 'bg-primary-600 text-white shadow-sm shadow-primary-600/20'
+                                            ? 'bg-slate-900/[0.07] text-slate-900 border border-slate-300 dark:bg-white/10 dark:text-slate-100 dark:border-white/25'
                                             : 'bg-white dark:bg-navy-900 text-c-text-secondary active:bg-primary-50 dark:active:bg-primary-900/20 border border-c-border-subtle'
                                         }
                                     `}
@@ -1142,7 +1142,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
 
                     // Determine indicator styles based on progress
                     const getIndicatorClasses = () => {
-                      if (isActive) return 'bg-white/20 text-white';
+                      if (isActive) return 'bg-slate-900/10 text-slate-900 dark:bg-white/20 dark:text-white';
                       switch (progressStatus) {
                         case 'complete':
                           return 'bg-green-500 text-white';
@@ -1163,7 +1163,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                                                 ${isCompact ? 'px-2.5 py-1' : 'px-3 py-1'} text-xs
                                                 ${
                                                   isActive
-                                                    ? 'bg-primary-600 text-white shadow-sm shadow-primary-600/20'
+                                                    ? 'bg-slate-900/[0.07] text-slate-900 border border-slate-300 dark:bg-white/10 dark:text-slate-100 dark:border-white/25'
                                                     : progressStatus === 'complete'
                                                       ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-500/30'
                                                       : progressStatus === 'partial'

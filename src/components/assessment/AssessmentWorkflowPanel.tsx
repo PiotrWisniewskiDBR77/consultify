@@ -272,7 +272,7 @@ export const AssessmentWorkflowPanel: React.FC<Props> = ({
               });
               loadWorkflowData();
             }}
-            className="mt-3 px-4 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700"
+            className="mt-3 px-4 py-2 bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 text-sm rounded-lg hover:bg-navy-800 dark:hover:bg-[#DDE5EF]"
           >
             Initialize Workflow
           </button>

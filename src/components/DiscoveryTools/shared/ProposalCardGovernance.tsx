@@ -102,7 +102,7 @@ export function ProposalCardActions({
           <button
             type="button"
             onClick={submitRethink}
-            className="self-end rounded-lg bg-primary-600 px-2 py-1 text-xs text-white hover:bg-primary-700"
+            className="self-end rounded-lg bg-navy-900 dark:bg-[#F4F7FB] px-2 py-1 text-xs text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF]"
           >
             {isPolish ? 'Wyślij' : 'Send'}
           </button>

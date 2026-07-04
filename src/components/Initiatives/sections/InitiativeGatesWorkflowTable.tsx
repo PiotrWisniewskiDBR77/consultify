@@ -1007,7 +1007,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                                 requestGateDecision(gateKey, stage);
                               }}
                               disabled={requestBusyGate === gateKey || isMutating}
-                              className="flex-shrink-0 px-2 py-1 rounded-lg bg-primary-500 hover:bg-primary-600 disabled:opacity-40 text-white text-[10px] font-semibold transition-colors"
+                              className="flex-shrink-0 px-2 py-1 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:opacity-40 text-white dark:text-navy-950 text-[10px] font-semibold transition-colors"
                             >
                               {requestBusyGate === gateKey ? (
                                 <Loader2 size={11} className="animate-spin" />
@@ -1503,7 +1503,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                           await fetchAll();
                         }}
                         disabled={savingEdit || savingRoles}
-                        className="px-5 py-2 rounded-xl bg-primary-500 hover:bg-primary-600 disabled:opacity-40 text-white text-sm font-semibold transition-colors"
+                        className="px-5 py-2 rounded-xl bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:opacity-40 text-white dark:text-navy-950 text-sm font-semibold transition-colors"
                       >
                         {savingEdit || savingRoles ? (
                           <Loader2 size={14} className="animate-spin" />

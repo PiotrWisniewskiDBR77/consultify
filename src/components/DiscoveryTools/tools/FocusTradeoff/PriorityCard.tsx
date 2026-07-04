@@ -218,7 +218,7 @@ export const PriorityCard: React.FC<PriorityCardProps> = ({
             type="button"
             onClick={handleAddDriver}
             disabled={!newDriver.trim()}
-            className="rounded-lg bg-primary-500 px-3 py-2 text-white transition-colors hover:bg-primary-600 disabled:opacity-50"
+            className="rounded-lg bg-navy-900 dark:bg-[#F4F7FB] px-3 py-2 text-white dark:text-navy-950 transition-colors hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:opacity-50"
           >
             <Plus className="h-4 w-4" />
           </button>

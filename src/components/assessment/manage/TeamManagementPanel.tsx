@@ -648,7 +648,7 @@ const AddMemberModal: FC<{
           <button
             onClick={handleAdd}
             disabled={!selectedUser || adding}
-            className="px-5 py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-semibold transition-colors flex items-center gap-2"
+            className="px-5 py-2.5 rounded-xl bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:bg-navy-900/40 dark:disabled:bg-[#F4F7FB]/50 text-white dark:text-navy-950 text-sm font-semibold transition-colors flex items-center gap-2"
           >
             {adding ? (
               <>
@@ -1008,7 +1008,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
               {canManageTeam && (
                 <button
                   onClick={() => setShowAddModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950 text-sm font-semibold transition-colors"
                 >
                   <Plus size={16} />
                   Add Member
@@ -1121,7 +1121,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
                           {canManageTeam && (
                             <button
                               onClick={() => setShowAddModal(true)}
-                              className="mt-2 flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold transition-colors"
+                              className="mt-2 flex items-center gap-2 px-4 py-2 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950 text-sm font-semibold transition-colors"
                             >
                               <Plus size={16} />
                               Add First Member

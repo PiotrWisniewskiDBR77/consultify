@@ -209,7 +209,7 @@ export const InitiativeProposalBoard: React.FC<InitiativeProposalBoardProps> = (
                       <button
                         type="button"
                         onClick={() => onAcceptNew?.(p)}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-primary-500"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] px-3 py-1.5 text-xs font-semibold text-white dark:text-navy-950 transition-colors hover:bg-navy-800 dark:hover:bg-[#DDE5EF]"
                       >
                         {tr('Utwórz draft', 'Create draft')}
                         <ArrowRight size={13} />

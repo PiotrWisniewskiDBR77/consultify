@@ -350,7 +350,7 @@ const TechnologyCard: React.FC<{
           {onSelect && (
             <button
               onClick={onSelect}
-              className="w-full mt-2 px-3 py-2 bg-primary-500 text-white text-sm rounded-lg hover:bg-primary-600 transition-colors"
+              className="w-full mt-2 px-3 py-2 bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 text-sm rounded-lg hover:bg-navy-800 dark:hover:bg-[#DDE5EF] transition-colors"
             >
               {isPolish ? 'Dodaj do planu' : 'Add to plan'}
             </button>

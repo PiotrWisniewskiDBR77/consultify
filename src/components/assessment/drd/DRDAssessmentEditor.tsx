@@ -1309,7 +1309,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             }}
                             className={`flex-1 h-9 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 ${
                               isPopupAchieved
-                                ? 'bg-primary-500 text-white hover:bg-primary-600'
+                                ? 'bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF]'
                                 : 'bg-primary-500/20 text-primary-300 hover:bg-primary-500/30'
                             }`}
                           >
@@ -1782,7 +1782,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                   addLevelLink(lvl.level, linkDraft);
                                   setLinkDraft('');
                                 }}
-                                className="h-10 px-4 rounded-lg bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-semibold"
+                                className="h-10 px-4 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:bg-navy-900/40 dark:disabled:bg-[#F4F7FB]/50 text-white dark:text-navy-950 text-sm font-semibold"
                               >
                                 Add
                               </button>

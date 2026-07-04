@@ -746,7 +746,7 @@ export const KpiQueueView: React.FC<KpiQueueViewProps> = ({
                 type="button"
                 disabled={selectedKpiIds.length === 0}
                 onClick={handleCreateSheet}
-                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-full bg-primary-500 px-4 text-sm font-medium text-white hover:bg-primary-400 disabled:opacity-50"
+                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-full bg-navy-900 dark:bg-[#F4F7FB] px-4 text-sm font-medium text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:opacity-50"
               >
                 <Plus size={14} />
                 {t('results.kpi.signals.createAction', 'Create sheet')}

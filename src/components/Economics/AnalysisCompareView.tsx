@@ -128,8 +128,8 @@ export const AnalysisCompareView: React.FC = () => {
         {selectedAnalyses.length < 4 && (
           <button
             onClick={() => setShowSelector(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500
-                            text-white rounded-xl font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF]
+                            text-white dark:text-navy-950 rounded-xl font-medium transition-colors"
           >
             <Plus size={16} />
             Dodaj analysis
@@ -151,8 +151,8 @@ export const AnalysisCompareView: React.FC = () => {
           </p>
           <button
             onClick={() => setShowSelector(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500
-                            text-white rounded-xl font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF]
+                            text-white dark:text-navy-950 rounded-xl font-medium transition-colors"
           >
             <Plus size={16} />
             Dodaj analysis

@@ -456,7 +456,7 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
                     <button
                       type="submit"
                       disabled={!newAmount || submitting}
-                      className="w-full h-9 text-sm font-medium rounded-full bg-primary-500 text-white hover:bg-primary-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="w-full h-9 text-sm font-medium rounded-full bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       {submitting
                         ? t('common.saving', 'Saving...')

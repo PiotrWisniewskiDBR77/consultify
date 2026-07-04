@@ -496,7 +496,7 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
                   <button
                     type="button"
                     onClick={() => handlePickTemplate(suggestion.templateId)}
-                    className="text-xs px-2.5 py-1 rounded-md bg-primary-600 hover:bg-primary-700 text-white font-medium transition-colors"
+                    className="text-xs px-2.5 py-1 rounded-md bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950 font-medium transition-colors"
                   >
                     {t('rap.outputs.launcher.suggestAccept', 'Use this template')}
                   </button>

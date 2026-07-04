@@ -912,7 +912,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                                     handleSaveChanges(f.initiativeId);
                                   }}
                                   disabled={saving}
-                                  className="px-4 py-2 text-xs font-medium rounded-lg bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 transition-colors"
+                                  className="px-4 py-2 text-xs font-medium rounded-lg bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:opacity-50 transition-colors"
                                 >
                                   {saving ? 'Saving...' : 'Save changes'}
                                 </button>

@@ -211,7 +211,7 @@ export const FinanceLanePanel: React.FC<FinanceLanePanelProps> = ({
                             <div className="flex items-center gap-2">
                               <button
                                 type="button"
-                                className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-md bg-primary-500 text-white hover:bg-primary-600 transition-colors"
+                                className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-md bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF] transition-colors"
                                 onClick={() => setAdvanceOpen(!advanceOpen)}
                               >
                                 {t('finance.lane.advance', 'Advance')} <ChevronDown size={12} />
