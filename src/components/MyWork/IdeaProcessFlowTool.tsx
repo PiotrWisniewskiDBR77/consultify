@@ -62,11 +62,7 @@ import TeresaMark from '../shared/TeresaMark';
 import { getCanvasBg } from './canvas/canvasBackground';
 import { type ProcessFlowSemanticKit } from './canvas/canvasOsContract';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
-import {
-  formatIdeaMapSyncLabel,
-  resolveIdeaMapHydration,
-  useIdeaMapSync,
-} from './canvas/useIdeaMapSync';
+import { formatIdeaMapSyncLabel, resolveIdeaMapHydration } from './canvas/useIdeaMapSync';
 import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import {
   type CanvasToolType,
@@ -126,6 +122,10 @@ import { useProcessFlowAIProposal } from './processflow/useProcessFlowAIProposal
 import { type ChangeOrigin, useProcessFlowCollab } from './processflow/useProcessFlowCollab';
 import { useProcessFlowExport } from './processflow/useProcessFlowExport';
 import { useProcessFlowNodes } from './processflow/useProcessFlowNodes';
+import {
+  type ProcessFlowExternalRuntime,
+  useProcessFlowPersistence,
+} from './processflow/useProcessFlowPersistence';
 import { useConfirmDialog } from './shared/ConfirmDialog';
 import { useProcessFlowQuickActions } from './processflow/useProcessFlowQuickActions';
 import { useProcessFlowReadback } from './processflow/useProcessFlowReadback';
@@ -264,6 +264,10 @@ interface IdeaProcessFlowToolProps {
     edges: any[];
     extensions?: Record<string, unknown>;
   }) => void;
+  /** M07 F4: shared workspace graph runtime. When supplied, persistence is
+   *  delegated to it (one runtime per ideaId across tools). When absent, the
+   *  adapter falls back to the legacy per-tool useIdeaMapSync. */
+  externalRuntime?: ProcessFlowExternalRuntime;
 }
 
 export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
@@ -281,6 +285,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   onOpenChat,
   onQuickAction,
   onGraphChange,
+  externalRuntime,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -354,13 +359,23 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const [metricsDraft, setMetricsDraft] = useState<Record<string, string>>({});
   const [savingsLoading, setSavingsLoading] = useState(false);
   const [dragOverLaneId, setDragOverLaneId] = useState<string | null>(null);
-  const { saving, syncState, lastSavedAt, queueSync, flushNow, primeServerVersion } =
-    useIdeaMapSync({
-      ideaId,
-      tool: 'process_flow',
-      open,
-      locked,
-    });
+  // M07 F4: `hydrate` is defined below; the persistence adapter's onExternalChange
+  // (peer save / conflict) needs it, so route through a ref to avoid TDZ.
+  const hydrateRef = useRef<() => void>(() => {});
+  const {
+    saving,
+    syncState,
+    lastSavedAt,
+    save: persistSave,
+    scheduleSave,
+    primeServerVersion,
+  } = useProcessFlowPersistence({
+    ideaId,
+    open,
+    locked,
+    externalRuntime,
+    onExternalChange: () => hydrateRef.current(),
+  });
 
   // V5-IDEA-21: Flow mode
   const [flowMode, setFlowMode] = useState<ProcessFlowMode>('classic');
@@ -511,8 +526,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   // ── M07 F3: realtime edit-sync (org-scoped WS, mirrors whiteboard model) ──
   // Origin of the last state change: 'remote' means a peer's patch produced it,
   // so the autosave effect must NOT re-persist it (the author persists via its
-  // own useIdeaMapSync). The collab receive handler flips this to 'remote'
-  // before mutating; the queueSync effect below resets it to 'local'.
+  // own runtime). The collab receive handler flips this to 'remote' before
+  // mutating; the scheduleSave effect below resets it to 'local'.
   const lastChangeOriginRef = useRef<ChangeOrigin>('local');
   const collab = useProcessFlowCollab({
     currentUserId: currentUser?.id || 'anonymous',
@@ -542,8 +557,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
   // ── M07 F2: AI proposal (real backend via /my-ideas/:id/ai-generate) ────
   // Decision 5: accepting a proposal applies the whole patch as ONE undo
-  // step, then persists via the autosave effect (queueSync fires from the
-  // nodes/edges/lanes → buildPersistPayload → queueSync effect below).
+  // step, then persists via the autosave effect (scheduleSave fires from the
+  // nodes/edges/lanes → buildPersistPayload → scheduleSave effect below).
   const handleApplyAIProposal = useCallback(
     (result: ApplyPatchResult) => {
       if (locked) return;
@@ -845,14 +860,38 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
   // ── Hydrate ────────────────────────────────────────────────────────────
 
+  // M07 F4: keep a stable ref to the runtime graph so hydrate (in runtime mode)
+  // reads the latest snapshot without re-creating its identity every save cycle.
+  const externalRuntimeRef = useRef(externalRuntime);
+  externalRuntimeRef.current = externalRuntime;
+
   const hydrate = useCallback(async () => {
     if (!open) return;
     setLoading(true);
     setLoadError(null);
     try {
-      const res = await Api.getMyIdeaMap(ideaId, { language: i18n.language });
-      const hydration = resolveIdeaMapHydration(ideaId, res?.map || {});
-      const map = hydration.map || {};
+      // M07 F4: in runtime mode read from the shared workspace graph runtime
+      // instead of a second Api.getMyIdeaMap round-trip. The runtime is the
+      // single owner of hydration for this ideaId; the parent's refresh() primes
+      // it. Fallback (no runtime) keeps the legacy per-tool API path.
+      const runtime = externalRuntimeRef.current;
+      let map: any;
+      if (runtime) {
+        map = {
+          version: runtime.version,
+          nodes: Array.isArray(runtime.nodes) ? runtime.nodes : [],
+          edges: Array.isArray(runtime.edges) ? runtime.edges : [],
+          extensions:
+            runtime.extensions && typeof runtime.extensions === 'object' ? runtime.extensions : {},
+          // Runtime does not carry preferredTool; skip the preferred-tool
+          // back-write below (the workspace runtime owns preferredTool).
+          preferredTool: 'process_flow',
+        };
+      } else {
+        const res = await Api.getMyIdeaMap(ideaId, { language: i18n.language });
+        const hydration = resolveIdeaMapHydration(ideaId, res?.map || {});
+        map = hydration.map || {};
+      }
       primeServerVersion(Number(map?.version || 1));
       const rawNodes = Array.isArray(map.nodes) ? (map.nodes as any[]) : [];
       const rawEdges = Array.isArray(map.edges) ? (map.edges as any[]) : [];
@@ -923,7 +962,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
       resetUndo();
 
-      if (!didPersistRef.current) {
+      // Legacy preferred-tool back-write only in fallback mode. In runtime mode
+      // the shared workspace runtime owns preferredTool — no back-write here.
+      if (!externalRuntimeRef.current && !didPersistRef.current) {
         didPersistRef.current = true;
         const preferred = map?.preferredTool ? String(map.preferredTool) : null;
         if (preferred !== 'process_flow') {
@@ -948,6 +989,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       setLoading(false);
     }
   }, [i18n.language, ideaId, isPl, locked, open, setEdges, setNodes]);
+
+  // Keep the ref current so the persistence adapter's onExternalChange (peer
+  // save / conflict) can re-hydrate without a TDZ on `hydrate`.
+  hydrateRef.current = hydrate;
 
   useEffect(() => {
     if (!open) return;
@@ -1545,7 +1590,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const handleSave = useCallback(async () => {
     if (locked) return;
     try {
-      await flushNow(buildPersistPayload(), {
+      await persistSave(buildPersistPayload(), {
         reason: 'manual',
         createSnapshot: true,
         snapshotLabel: isPl ? 'Process flow checkpoint' : 'Process flow checkpoint',
@@ -1555,15 +1600,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     } catch (err: any) {
       toast.error(err?.message || (isPl ? 'Nie udało się zapisać' : 'Failed to save'));
     }
-  }, [buildPersistPayload, flushNow, isPl, locked, onSaved]);
+  }, [buildPersistPayload, persistSave, isPl, locked, onSaved]);
 
   useEffect(() => {
     if (!open || locked || loading) return;
-    // F3 autosave styk (binding decision): a remote patch must NOT trigger the
-    // recipient's autosave — the author persists it via their own useIdeaMapSync.
-    // The collab receive handler flips lastChangeOriginRef to 'remote' before
-    // mutating; here we skip the sync and reset to 'local' so the NEXT genuine
-    // local edit persists normally.
+    // F3 autosave styk (binding decision, preserved verbatim through F4): a
+    // remote patch must NOT trigger the recipient's autosave — the author
+    // persists it via their own runtime. The collab receive handler flips
+    // lastChangeOriginRef to 'remote' before mutating; here we skip the sync and
+    // reset to 'local' so the NEXT genuine local edit persists normally.
     // Known v1 limitation: if the recipient then makes their own edit, their
     // autosave sends the merged state under their baseVersion — last-writer-wins
     // blob semantics, identical to the whiteboard.
@@ -1571,8 +1616,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       lastChangeOriginRef.current = 'local';
       return;
     }
-    queueSync(buildPersistPayload(), { reason: 'draft' });
-  }, [buildPersistPayload, loading, locked, open, queueSync]);
+    scheduleSave(buildPersistPayload(), { reason: 'draft' });
+  }, [buildPersistPayload, loading, locked, open, scheduleSave]);
 
   // ── Lane backgrounds ──────────────────────────────────────────────────
 
