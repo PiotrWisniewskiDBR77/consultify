@@ -408,7 +408,7 @@ export function AuditLogViewer() {
                 type="checkbox"
                 checked={filters.flaggedOnly}
                 onChange={(e) => setFilters({ ...filters, flaggedOnly: e.target.checked })}
-                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
+                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-c-focus"
               />
               <span className="text-sm text-slate-700 dark:text-slate-300">Flagged Only</span>
             </label>

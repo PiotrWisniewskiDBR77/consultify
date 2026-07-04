@@ -401,7 +401,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                   className="
                     w-full h-11 px-4 bg-c-surface-raised border border-c-border rounded-lg
                     text-c-text placeholder-c-text-muted
-                    focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/25
+                    focus:outline-none focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus
                     transition-colors
                   "
                 />
@@ -435,7 +435,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                   className="
                     w-full px-4 py-3 bg-c-surface-raised border border-c-border rounded-lg
                     text-c-text placeholder-c-text-muted resize-none
-                    focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/25
+                    focus:outline-none focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus
                     transition-colors
                   "
                 />

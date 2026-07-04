@@ -186,7 +186,7 @@ export const GoalsExpectationsModule: React.FC = () => {
                   >
                     <input
                       type="checkbox"
-                      className="w-5 h-5 text-primary-600 rounded focus:ring-primary-500 peer"
+                      className="w-5 h-5 text-primary-600 rounded focus:ring-c-focus peer"
                       checked={goals.topPriorities.includes(p.id)}
                       onChange={(e) => {
                         const newPriorities = e.target.checked

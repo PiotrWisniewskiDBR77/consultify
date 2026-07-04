@@ -470,7 +470,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                         value={profile.logoUrl || ''}
                         onChange={(e) => updateProfile('logoUrl', e.target.value)}
                         placeholder="/images/org-logos/plastmetcentrum.png"
-                        className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-c-focus focus:border-transparent"
                       />
                       <p className="text-xs text-c-text-muted mt-1">
                         {t(
@@ -489,7 +489,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                         onChange={(e) => updateProfile('description', e.target.value)}
                         rows={3}
                         placeholder="Brief description of your organization..."
-                        className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-c-focus focus:border-transparent"
                       />
                     </div>
                   </div>
@@ -510,7 +510,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                     <select
                       value={profile.industry || ''}
                       onChange={(e) => updateProfile('industry', e.target.value)}
-                      className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-c-focus"
                     >
                       {INDUSTRIES.map((industry) => (
                         <option key={industry} value={industry}>
@@ -526,7 +526,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                     <select
                       value={profile.companySize || ''}
                       onChange={(e) => updateProfile('companySize', e.target.value as CompanySize)}
-                      className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-c-focus"
                     >
                       {COMPANY_SIZES.map((size) => (
                         <option key={size.value} value={size.value}>
@@ -549,7 +549,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                         value={profile.website || ''}
                         onChange={(e) => updateProfile('website', e.target.value)}
                         placeholder="https://example.com"
-                        className="w-full pl-10 pr-4 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-primary-500"
+                        className="w-full pl-10 pr-4 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-c-focus"
                       />
                     </div>
                   </div>
@@ -576,7 +576,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                         value={profile.linkedinUrl || ''}
                         onChange={(e) => updateProfile('linkedinUrl', e.target.value)}
                         placeholder="https://linkedin.com/company/..."
-                        className="w-full pl-10 pr-4 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-primary-500"
+                        className="w-full pl-10 pr-4 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-c-focus"
                       />
                     </div>
                   </div>
@@ -594,7 +594,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                         value={profile.twitterUrl || ''}
                         onChange={(e) => updateProfile('twitterUrl', e.target.value)}
                         placeholder="https://twitter.com/..."
-                        className="w-full pl-10 pr-4 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-primary-500"
+                        className="w-full pl-10 pr-4 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-c-focus"
                       />
                     </div>
                   </div>
@@ -743,7 +743,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                     <select
                       value={profile.defaultTimezone || 'UTC'}
                       onChange={(e) => updateProfile('defaultTimezone', e.target.value)}
-                      className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-c-focus"
                     >
                       {TIMEZONES.map((tz) => (
                         <option key={tz} value={tz}>
@@ -760,7 +760,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                     <select
                       value={profile.defaultLanguage || 'en'}
                       onChange={(e) => updateProfile('defaultLanguage', e.target.value)}
-                      className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-c-focus"
                     >
                       {LANGUAGES.map((lang) => (
                         <option key={lang.code} value={lang.code}>
@@ -777,7 +777,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                     <select
                       value={profile.dateFormat || 'DD/MM/YYYY'}
                       onChange={(e) => updateProfile('dateFormat', e.target.value as DateFormat)}
-                      className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-c-focus"
                     >
                       <option value="DD/MM/YYYY">DD/MM/YYYY (31/12/2025)</option>
                       <option value="MM/DD/YYYY">MM/DD/YYYY (12/31/2025)</option>
@@ -792,7 +792,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                     <select
                       value={profile.timeFormat || '24h'}
                       onChange={(e) => updateProfile('timeFormat', e.target.value as TimeFormat)}
-                      className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-c-focus"
                     >
                       <option value="24h">24-hour (14:30)</option>
                       <option value="12h">12-hour (2:30 PM)</option>
@@ -806,7 +806,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                     <select
                       value={profile.currency || 'USD'}
                       onChange={(e) => updateProfile('currency', e.target.value)}
-                      className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-c-focus"
                     >
                       {CURRENCIES.map((curr) => (
                         <option key={curr.code} value={curr.code}>
@@ -844,7 +844,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                     value={profile.customDomain || ''}
                     onChange={(e) => updateProfile('customDomain', e.target.value)}
                     placeholder="pmo.yourcompany.com"
-                    className="flex-1 px-4 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-primary-500"
+                    className="flex-1 px-4 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-c-focus"
                   />
                   <button
                     onClick={handleVerifyDomain}

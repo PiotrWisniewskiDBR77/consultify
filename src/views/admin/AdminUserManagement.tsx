@@ -367,7 +367,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               disabled={!!loadError}
-              className="pl-10 pr-4 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-navy-900 dark:text-white focus:border-primary-500 outline-none w-64"
+              className="pl-10 pr-4 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-navy-900 dark:text-white focus:border-c-focus-solid outline-none w-64"
             />
           </div>
 
@@ -376,7 +376,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
             disabled={!!loadError}
-            className="px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-navy-900 dark:text-white text-sm focus:border-primary-500 outline-none"
+            className="px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-navy-900 dark:text-white text-sm focus:border-c-focus-solid outline-none"
           >
             <option value="all">All Account Types</option>
             <option value="OWNER">Owner</option>
@@ -389,7 +389,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             disabled={!!loadError}
-            className="px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-navy-900 dark:text-white text-sm focus:border-primary-500 outline-none"
+            className="px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-navy-900 dark:text-white text-sm focus:border-c-focus-solid outline-none"
           >
             <option value="all">All Status</option>
             <option value="active">Active</option>

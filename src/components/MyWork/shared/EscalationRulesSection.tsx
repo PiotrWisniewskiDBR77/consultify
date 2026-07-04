@@ -65,9 +65,9 @@ const RECIPIENT_OPTIONS = [
 
 // Consistent input styles
 const INPUT_CLASS =
-  'w-full h-9 px-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400';
+  'w-full h-9 px-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid';
 const SELECT_CLASS =
-  'w-full h-9 px-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400 cursor-pointer';
+  'w-full h-9 px-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid cursor-pointer';
 const LABEL_CLASS = 'text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5 block';
 
 export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({

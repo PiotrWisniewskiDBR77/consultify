@@ -452,7 +452,7 @@ export const SecuritySettings: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, passwordRequireUppercase: e.target.checked })
                   }
-                  className="w-5 h-5 rounded bg-c-surface-raised border-slate-600 text-primary-500 focus:ring-primary-500"
+                  className="w-5 h-5 rounded bg-c-surface-raised border-slate-600 text-primary-500 focus:ring-c-focus"
                 />
                 <span className="text-slate-300">Require uppercase letter (A-Z)</span>
               </label>
@@ -464,7 +464,7 @@ export const SecuritySettings: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, passwordRequireNumber: e.target.checked })
                   }
-                  className="w-5 h-5 rounded bg-c-surface-raised border-slate-600 text-primary-500 focus:ring-primary-500"
+                  className="w-5 h-5 rounded bg-c-surface-raised border-slate-600 text-primary-500 focus:ring-c-focus"
                 />
                 <span className="text-slate-300">Require number (0-9)</span>
               </label>
@@ -476,7 +476,7 @@ export const SecuritySettings: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, passwordRequireSpecial: e.target.checked })
                   }
-                  className="w-5 h-5 rounded bg-c-surface-raised border-slate-600 text-primary-500 focus:ring-primary-500"
+                  className="w-5 h-5 rounded bg-c-surface-raised border-slate-600 text-primary-500 focus:ring-c-focus"
                 />
                 <span className="text-slate-300">Require special character (!@#$%^&*)</span>
               </label>

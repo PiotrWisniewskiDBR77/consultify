@@ -349,7 +349,7 @@ export const PartnerCodeInput: React.FC<PartnerCodeInputProps> = ({ className })
                   placeholder={t('admin.billing.codePlaceholder', 'e.g., PARTNER-ABC123')}
                   className={cn(
                     'w-full px-4 py-2.5 rounded-lg border text-navy-900 dark:text-white bg-white dark:bg-navy-900',
-                    'focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
+                    'focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid',
                     validationResult?.valid === true && 'border-emerald-500',
                     validationResult?.valid === false && 'border-danger-500',
                     !validationResult && 'border-slate-200 dark:border-navy-700'

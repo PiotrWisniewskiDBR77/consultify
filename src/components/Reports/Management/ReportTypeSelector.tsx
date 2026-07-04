@@ -290,7 +290,7 @@ export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
             <select
               value={selectedProjectId || ''}
               onChange={(e) => onProjectChange(e.target.value || undefined)}
-              className="w-full appearance-none px-4 py-3 pr-10 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full appearance-none px-4 py-3 pr-10 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-c-focus"
             >
               <option value="">Choose a project...</option>
               {projects.map((project) => (
@@ -317,7 +317,7 @@ export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
           <select
             value={periodDays}
             onChange={(e) => onPeriodChange(parseInt(e.target.value))}
-            className="w-full appearance-none px-4 py-3 pr-10 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full appearance-none px-4 py-3 pr-10 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-c-focus"
           >
             {periodOptions.map((option) => (
               <option key={option.value} value={option.value}>

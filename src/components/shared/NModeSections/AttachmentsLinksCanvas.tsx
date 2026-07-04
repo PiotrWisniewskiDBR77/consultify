@@ -313,7 +313,7 @@ const FormField: React.FC<{
 );
 
 const inputClass =
-  'w-full px-3 py-2 rounded-lg text-sm bg-slate-50 dark:bg-navy-800/60 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500/50 transition-colors';
+  'w-full px-3 py-2 rounded-lg text-sm bg-slate-50 dark:bg-navy-800/60 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid transition-colors';
 
 /** Shared action button for modals */
 const ModalActions: React.FC<{
@@ -1510,7 +1510,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                         : 'Add context, reason, or notes about this link...'
                     }
                     rows={2}
-                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400/60 focus:outline-none focus:ring-2 focus:ring-primary-400/20 focus:border-primary-400 transition-all resize-none"
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400/60 focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid transition-all resize-none"
                   />
                 </div>
 
@@ -1577,7 +1577,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                             ? 'Szukaj task, decision, initiative...'
                             : 'Search tasks, decisions, initiatives...'
                         }
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400/60 focus:outline-none focus:ring-2 focus:ring-primary-400/20 focus:border-primary-400 transition-all"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400/60 focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid transition-all"
                         autoFocus
                       />
                     </div>

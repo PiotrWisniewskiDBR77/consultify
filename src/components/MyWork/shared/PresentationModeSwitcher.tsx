@@ -99,7 +99,7 @@ export const PresentationModeSwitcher: React.FC<PresentationModeSwitcherProps> =
             className={`
               relative flex items-center justify-center p-1.5 rounded-md
               text-xs font-medium transition-colors
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 focus-visible:ring-offset-1
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1
               disabled:opacity-50 disabled:cursor-not-allowed
               ${
                 isActive

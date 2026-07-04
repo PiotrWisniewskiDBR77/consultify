@@ -348,7 +348,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                             handleSearch(e.target.value);
                           }}
                           placeholder={isPolish ? 'Szukaj elementów...' : 'Search items...'}
-                          className="w-full pl-10 pr-4 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 outline-none"
+                          className="w-full pl-10 pr-4 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-c-focus-solid outline-none"
                           autoFocus
                         />
                         {searching && (
@@ -413,7 +413,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                             placeholder={
                               isPolish ? 'Np. Dokumentacja projektu' : 'e.g., Project documentation'
                             }
-                            className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 outline-none"
+                            className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-c-focus-solid outline-none"
                             autoFocus
                           />
                         </div>
@@ -426,7 +426,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                             value={externalUrl}
                             onChange={(e) => setExternalUrl(e.target.value)}
                             placeholder={isPolish ? 'https://example.com' : 'https://example.com'}
-                            className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 outline-none"
+                            className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-c-focus-solid outline-none"
                           />
                         </div>
                         <div className="flex items-center gap-2">

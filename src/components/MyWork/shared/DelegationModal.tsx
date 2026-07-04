@@ -343,7 +343,7 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
                       ? 'np. Nieobecność, brak kompetencji...'
                       : 'e.g., Absence, lack of expertise...'
                   }
-                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-500"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-c-focus-solid"
                 />
               </div>
             )}
@@ -366,7 +366,7 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
                       ? 'Dodatkowe informacje dla odbiorcy...'
                       : 'Additional information for the recipient...'
                 }
-                className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-500 resize-none"
+                className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-c-focus-solid resize-none"
               />
             </div>
           </div>

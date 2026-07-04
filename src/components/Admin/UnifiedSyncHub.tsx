@@ -3037,7 +3037,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t('integrations.syncHub.search', 'Search integrations…')}
-            className="w-full h-9 pl-9 pr-4 bg-c-surface-raised border border-c-border rounded-lg text-sm text-c-text placeholder-slate-500 focus:outline-none focus:border-primary-500/50"
+            className="w-full h-9 pl-9 pr-4 bg-c-surface-raised border border-c-border rounded-lg text-sm text-c-text placeholder-slate-500 focus:outline-none focus:border-c-focus-solid"
           />
         </div>
         <button
@@ -3790,7 +3790,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             value={usersSearchQuery}
             onChange={(e) => setUsersSearchQuery(e.target.value)}
             placeholder={t('integrations.syncHub.usersSearch', 'Search users, connectors, status…')}
-            className="w-full h-9 pl-9 pr-4 bg-c-surface-raised border border-c-border rounded-lg text-sm text-c-text placeholder-slate-500 focus:outline-none focus:border-primary-500/50"
+            className="w-full h-9 pl-9 pr-4 bg-c-surface-raised border border-c-border rounded-lg text-sm text-c-text placeholder-slate-500 focus:outline-none focus:border-c-focus-solid"
           />
         </div>
         <button

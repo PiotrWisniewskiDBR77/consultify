@@ -269,7 +269,7 @@ export const IPAccessRulesPanel: React.FC = () => {
           <select
             value={selectedOrgId}
             onChange={(e) => setSelectedOrgId(e.target.value)}
-            className="px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-primary-500/50 outline-none min-w-[200px]"
+            className="px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-c-focus-solid outline-none min-w-[200px]"
           >
             <option value="" disabled>
               Select Organization
@@ -339,7 +339,7 @@ export const IPAccessRulesPanel: React.FC = () => {
                   value={addForm.ipAddress}
                   onChange={(e) => setAddForm((prev) => ({ ...prev, ipAddress: e.target.value }))}
                   placeholder="192.168.1.1 or 192.168.0.0/24"
-                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none font-mono"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-c-focus-solid outline-none font-mono"
                 />
               </div>
 
@@ -382,7 +382,7 @@ export const IPAccessRulesPanel: React.FC = () => {
                   value={addForm.description}
                   onChange={(e) => setAddForm((prev) => ({ ...prev, description: e.target.value }))}
                   placeholder="e.g., Office network, VPN"
-                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-c-focus-solid outline-none"
                 />
               </div>
 
@@ -394,7 +394,7 @@ export const IPAccessRulesPanel: React.FC = () => {
                   type="datetime-local"
                   value={addForm.expiresAt}
                   onChange={(e) => setAddForm((prev) => ({ ...prev, expiresAt: e.target.value }))}
-                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-c-focus-solid outline-none"
                 />
               </div>
             </div>

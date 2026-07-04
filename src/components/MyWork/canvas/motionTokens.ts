@@ -35,7 +35,7 @@ export const EXIT_ANIMATION = {
 } as const;
 
 export const FOCUS_RING =
-  'focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 focus-visible:outline-none';
+  'focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 focus-visible:outline-none';
 
 export const TRANSITION_COLORS = `transition-colors ${MOTION.normal}`;
 export const TRANSITION_ALL = `transition-all ${MOTION.smooth}`;

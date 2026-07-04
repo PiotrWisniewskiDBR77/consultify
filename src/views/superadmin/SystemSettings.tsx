@@ -322,7 +322,7 @@ export const SystemSettings: React.FC = () => {
                 type="text"
                 value={settings['app_name'] || ''}
                 onChange={(e) => setSettings((prev) => ({ ...prev, app_name: e.target.value }))}
-                className="flex-1 px-3.5 py-2.5 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-white/[0.06] rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:border-primary-500/50 focus:outline-none"
+                className="flex-1 px-3.5 py-2.5 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-white/[0.06] rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:border-c-focus-solid focus:outline-none"
                 placeholder="Consultify"
               />
               <button
@@ -343,7 +343,7 @@ export const SystemSettings: React.FC = () => {
                 value={settings['default_language'] || 'EN'}
                 onChange={(e) => handleSaveSetting('default_language', e.target.value)}
                 disabled={isSavingSetting('default_language')}
-                className="flex-1 px-3.5 py-2.5 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-white/[0.06] rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:border-primary-500/50 focus:outline-none"
+                className="flex-1 px-3.5 py-2.5 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-white/[0.06] rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:border-c-focus-solid focus:outline-none"
               >
                 <option value="EN">English</option>
                 <option value="PL">Polish</option>
@@ -393,7 +393,7 @@ export const SystemSettings: React.FC = () => {
               onChange={(e) =>
                 setSettings((prev) => ({ ...prev, system_announcement: e.target.value }))
               }
-              className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-slate-100 focus:border-primary-500 outline-none"
+              className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-slate-100 focus:border-c-focus-solid outline-none"
               placeholder="e.g. Scheduled maintenance at 22:00"
             />
             <button
@@ -448,7 +448,7 @@ export const SystemSettings: React.FC = () => {
                 onChange={(e) =>
                   setSettings((prev) => ({ ...prev, session_timeout_mins: e.target.value }))
                 }
-                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-slate-100 focus:border-primary-500 outline-none"
+                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-slate-100 focus:border-c-focus-solid outline-none"
               />
               <button
                 onClick={() =>
@@ -482,7 +482,7 @@ export const SystemSettings: React.FC = () => {
                 type="text"
                 value={settings['smtp_host'] || ''}
                 onChange={(e) => setSettings((prev) => ({ ...prev, smtp_host: e.target.value }))}
-                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-slate-100 focus:border-primary-500 outline-none"
+                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-slate-100 focus:border-c-focus-solid outline-none"
                 placeholder="smtp.example.com"
               />
               <button
@@ -504,7 +504,7 @@ export const SystemSettings: React.FC = () => {
                   type="text"
                   value={settings['smtp_port'] || ''}
                   onChange={(e) => setSettings((prev) => ({ ...prev, smtp_port: e.target.value }))}
-                  className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-slate-100 focus:border-primary-500 outline-none"
+                  className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-slate-100 focus:border-c-focus-solid outline-none"
                   placeholder="587"
                 />
                 <button
@@ -525,7 +525,7 @@ export const SystemSettings: React.FC = () => {
                   type="text"
                   value={settings['smtp_from'] || ''}
                   onChange={(e) => setSettings((prev) => ({ ...prev, smtp_from: e.target.value }))}
-                  className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-slate-100 focus:border-primary-500 outline-none"
+                  className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-slate-100 focus:border-c-focus-solid outline-none"
                   placeholder="noreply@consultify.com"
                 />
                 <button
@@ -561,7 +561,7 @@ export const SystemSettings: React.FC = () => {
                 onChange={(e) =>
                   setSettings((prev) => ({ ...prev, legal_tos_url: e.target.value }))
                 }
-                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-slate-100 focus:border-primary-500 outline-none"
+                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-slate-100 focus:border-c-focus-solid outline-none"
                 placeholder="https://..."
               />
               <button
@@ -584,7 +584,7 @@ export const SystemSettings: React.FC = () => {
                 onChange={(e) =>
                   setSettings((prev) => ({ ...prev, legal_privacy_url: e.target.value }))
                 }
-                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-slate-100 focus:border-primary-500 outline-none"
+                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-slate-100 focus:border-c-focus-solid outline-none"
                 placeholder="https://..."
               />
               <button

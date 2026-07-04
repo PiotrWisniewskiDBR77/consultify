@@ -169,7 +169,7 @@ const FilterDropdown: React.FC<{
                     type="checkbox"
                     checked={selected.includes(option.value)}
                     onChange={() => handleToggle(option.value)}
-                    className="rounded border-navy-600 bg-slate-200 dark:bg-navy-700 text-primary-500 focus:ring-primary-500"
+                    className="rounded border-navy-600 bg-slate-200 dark:bg-navy-700 text-primary-500 focus:ring-c-focus"
                   />
                   {option.color && <span className={`w-2 h-2 rounded-full ${option.color}`} />}
                   <span className="text-sm text-slate-700 dark:text-slate-200">{option.label}</span>
@@ -458,7 +458,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                               selection!.selectAllLabel ??
                               t('common.selectAll', isPolish ? 'Zaznacz wszystko' : 'Select all')
                             }
-                            className="h-4 w-4 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500 cursor-pointer"
+                            className="h-4 w-4 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-c-focus cursor-pointer"
                           />
                         </div>
                       ) : (

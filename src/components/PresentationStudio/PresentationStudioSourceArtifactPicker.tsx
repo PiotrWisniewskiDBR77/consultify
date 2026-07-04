@@ -116,7 +116,7 @@ function ArtifactRow({
         disabled={disabled}
         aria-label={`Select source artifact ${artifact.label}`}
         data-testid={`psstudio-artifact-checkbox-${artifact.id}`}
-        className="mt-1 h-4 w-4 cursor-pointer rounded border-slate-300 text-primary-600 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600"
+        className="mt-1 h-4 w-4 cursor-pointer rounded border-slate-300 text-primary-600 focus:ring-c-focus disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600"
       />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">

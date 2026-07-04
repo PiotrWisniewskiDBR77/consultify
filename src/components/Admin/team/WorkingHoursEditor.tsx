@@ -241,7 +241,7 @@ export const WorkingHoursEditor: React.FC<WorkingHoursEditorProps> = ({
             <select
               value={config.timezone}
               onChange={(e) => updateTimezone(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-c-focus"
             >
               {TIMEZONES.map((tz) => (
                 <option key={tz.value} value={tz.value}>
@@ -298,7 +298,7 @@ export const WorkingHoursEditor: React.FC<WorkingHoursEditorProps> = ({
                     <select
                       value={schedule.start}
                       onChange={(e) => updateDaySchedule(day.key, { start: e.target.value })}
-                      className="px-2 py-1.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded text-sm text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500"
+                      className="px-2 py-1.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded text-sm text-navy-900 dark:text-white focus:ring-2 focus:ring-c-focus"
                     >
                       {TIME_OPTIONS.map((time) => (
                         <option key={time} value={time}>
@@ -310,7 +310,7 @@ export const WorkingHoursEditor: React.FC<WorkingHoursEditorProps> = ({
                     <select
                       value={schedule.end}
                       onChange={(e) => updateDaySchedule(day.key, { end: e.target.value })}
-                      className="px-2 py-1.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded text-sm text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500"
+                      className="px-2 py-1.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded text-sm text-navy-900 dark:text-white focus:ring-2 focus:ring-c-focus"
                     >
                       {TIME_OPTIONS.map((time) => (
                         <option key={time} value={time}>

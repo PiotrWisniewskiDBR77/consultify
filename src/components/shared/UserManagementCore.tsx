@@ -847,7 +847,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               disabled={!!loadError}
-              className="pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-white focus:border-primary-500 outline-none w-full md:w-64"
+              className="pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-white focus:border-c-focus-solid outline-none w-full md:w-64"
             />
           </div>
           {mode === 'platform' && (
@@ -856,7 +856,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
                 value={selectedOrganizationId}
                 onChange={(e) => onSelectedOrganizationChange?.(e.target.value)}
                 disabled={!!loadError}
-                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-white focus:border-primary-500 outline-none min-w-[220px]"
+                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-white focus:border-c-focus-solid outline-none min-w-[220px]"
               >
                 <option value="">All organizations</option>
                 {organizations.map((org) => (
@@ -869,7 +869,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
                 disabled={!!loadError}
-                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-white focus:border-primary-500 outline-none min-w-[160px]"
+                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-white focus:border-c-focus-solid outline-none min-w-[160px]"
               >
                 <option value="">All roles</option>
                 {roleOptions.map((role) => (
@@ -882,7 +882,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
                 value={selectedProjectRole}
                 onChange={(e) => setSelectedProjectRole(e.target.value)}
                 disabled={!!loadError}
-                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-white focus:border-primary-500 outline-none min-w-[180px]"
+                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-white focus:border-c-focus-solid outline-none min-w-[180px]"
               >
                 <option value="">All project roles</option>
                 {projectRoleOptions.map((projectRole) => (
@@ -895,7 +895,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
                 disabled={!!loadError}
-                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-white focus:border-primary-500 outline-none min-w-[160px]"
+                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-white focus:border-c-focus-solid outline-none min-w-[160px]"
               >
                 <option value="">All statuses</option>
                 {statusOptions.map((status) => (

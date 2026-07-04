@@ -84,7 +84,7 @@ export const NModePropertiesStrip: React.FC<NModePropertiesStripProps> = ({
                   disabled={field.readOnly}
                   className={`w-full h-8 px-2.5 rounded-lg text-xs font-medium bg-white dark:bg-navy-800 border ${
                     field.alertBorderClass || 'border-slate-300/60 dark:border-navy-600/40'
-                  } text-slate-800 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors disabled:opacity-60`}
+                  } text-slate-800 dark:text-slate-200 focus:outline-none focus:border-c-focus-solid transition-colors disabled:opacity-60`}
                 >
                   {(field.options || []).map((opt) => (
                     <option key={opt.value} value={opt.value}>
@@ -101,7 +101,7 @@ export const NModePropertiesStrip: React.FC<NModePropertiesStripProps> = ({
                   readOnly={field.readOnly}
                   className={`w-full h-8 px-2.5 rounded-lg text-xs bg-white dark:bg-navy-800 border ${
                     field.alertBorderClass || 'border-slate-300/60 dark:border-navy-600/40'
-                  } text-slate-800 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors`}
+                  } text-slate-800 dark:text-slate-200 focus:outline-none focus:border-c-focus-solid transition-colors`}
                 />
               ) : (
                 /* Text field */
@@ -119,7 +119,7 @@ export const NModePropertiesStrip: React.FC<NModePropertiesStripProps> = ({
                   }
                   className={`w-full h-8 px-2.5 rounded-lg text-xs bg-white dark:bg-navy-800 border ${
                     field.alertBorderClass || 'border-slate-300/60 dark:border-navy-600/40'
-                  } text-slate-800 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors`}
+                  } text-slate-800 dark:text-slate-200 focus:outline-none focus:border-c-focus-solid transition-colors`}
                 />
               )}
             </div>

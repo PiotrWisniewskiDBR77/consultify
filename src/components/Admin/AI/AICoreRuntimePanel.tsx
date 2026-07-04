@@ -614,7 +614,7 @@ export const AICoreRuntimePanel: React.FC = () => {
                   placeholder={t('superadmin.aiCoreRuntime.snapshotPlaceholder', {
                     defaultValue: 'Enter snapshot id',
                   })}
-                  className="h-9 min-w-[220px] rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-primary-400 dark:border-c-border-subtle dark:bg-navy-950 dark:text-white"
+                  className="h-9 min-w-[220px] rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-c-focus-solid dark:border-c-border-subtle dark:bg-navy-950 dark:text-white"
                   aria-label={t('superadmin.aiCoreRuntime.snapshotLabel', {
                     defaultValue: 'Snapshot id',
                   })}

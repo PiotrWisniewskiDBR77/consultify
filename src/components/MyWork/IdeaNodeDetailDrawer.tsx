@@ -802,7 +802,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                 onNodeDataChange(nodeId, { semanticType: e.target.value || undefined })
               }
               disabled={locked}
-              className="w-full h-9 px-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400 transition-colors"
+              className="w-full h-9 px-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid transition-colors"
             >
               <option value="">{isPl ? '— Brak —' : '— None —'}</option>
               {[

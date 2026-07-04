@@ -208,7 +208,7 @@ export const SourceStep: React.FC<SourceStepProps> = ({
                   setShowDrafts(event.target.checked);
                   setVisibleCount(12);
                 }}
-                className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500/40 dark:border-navy-600"
+                className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-navy-600"
               />
               {t('presentations.sources.showDrafts', 'Pokaż robocze')}
             </label>
@@ -226,7 +226,7 @@ export const SourceStep: React.FC<SourceStepProps> = ({
               'presentations.sources.searchArtifacts',
               'Search project, study, report, initiative...'
             )}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200"
           />
           <select
             value={typeFilter}
@@ -234,7 +234,7 @@ export const SourceStep: React.FC<SourceStepProps> = ({
               setTypeFilter(event.target.value);
               setVisibleCount(12);
             }}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200"
           >
             {artifactTypes.map((type) => (
               <option key={type} value={type}>

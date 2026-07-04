@@ -53,7 +53,7 @@ export const DataGovernancePanel: React.FC = () => {
                   type="checkbox"
                   checked={policy.autoDelete}
                   onChange={(e) => updatePolicy(index, { autoDelete: e.target.checked })}
-                  className="rounded border-slate-600 bg-c-surface-raised text-primary-500 focus:ring-primary-500"
+                  className="rounded border-slate-600 bg-c-surface-raised text-primary-500 focus:ring-c-focus"
                 />
                 Auto-delete
               </label>

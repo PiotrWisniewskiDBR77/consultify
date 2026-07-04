@@ -393,7 +393,7 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
                   ? 'Np. za mocno akcentujemy marżę; dodaj perspektywę rynku niemieckiego i pokaż to bardziej jak decyzję zarządczą.'
                   : 'E.g. we are over-weighting margin; add the German market perspective and frame this more like a leadership decision.'
               }
-              className="mt-3 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-900 placeholder-slate-400 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-navy-700 dark:bg-navy-800 dark:text-white"
+              className="mt-3 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-900 placeholder-slate-400 focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-800 dark:text-white"
             />
             <button
               onClick={onOpenChat}

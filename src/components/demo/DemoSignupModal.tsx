@@ -146,7 +146,7 @@ export const DemoSignupModal: React.FC<DemoSignupModalProps> = ({
                         required
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                        className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white focus:ring-2 focus:ring-c-focus focus:border-transparent outline-none"
                         placeholder="Jane Doe"
                       />
                     </div>
@@ -160,7 +160,7 @@ export const DemoSignupModal: React.FC<DemoSignupModalProps> = ({
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                        className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white focus:ring-2 focus:ring-c-focus focus:border-transparent outline-none"
                         placeholder="jane@company.com"
                       />
                     </div>
@@ -175,7 +175,7 @@ export const DemoSignupModal: React.FC<DemoSignupModalProps> = ({
                         minLength={6}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                        className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white focus:ring-2 focus:ring-c-focus focus:border-transparent outline-none"
                         placeholder="Min. 6 characters"
                       />
                     </div>

@@ -607,7 +607,7 @@ const ChipSelector: React.FC<{
 );
 
 const inputCls =
-  'w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none text-sm';
+  'w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg focus:ring-2 focus:ring-c-focus focus:outline-none text-sm';
 const labelCls = 'block text-sm font-medium text-c-text-secondary mb-1.5';
 
 // ─── Main Component ───

@@ -180,7 +180,7 @@ export const PillarCard: React.FC<PillarCardProps> = ({
             value={newProof}
             onChange={(e) => setNewProof(e.target.value)}
             placeholder={isPolish ? 'Dodaj dowód...' : 'Add a proof point...'}
-            className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+            className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-white"
             onKeyDown={(e) => e.key === 'Enter' && handleAddProof()}
           />
           <button
@@ -228,7 +228,7 @@ export const PillarCard: React.FC<PillarCardProps> = ({
             value={newDriver}
             onChange={(e) => setNewDriver(e.target.value)}
             placeholder={isPolish ? 'Dodaj czynnik...' : 'Add a driver...'}
-            className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+            className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-white"
             onKeyDown={(e) => e.key === 'Enter' && handleAddDriver()}
           />
           <button

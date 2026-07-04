@@ -595,7 +595,7 @@ const ALink: React.FC<{
     className={[
       'group/alink inline-flex items-center gap-1 text-left font-medium transition-colors',
       'text-slate-900 hover:text-primary-500 dark:text-white dark:hover:text-primary-400',
-      'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-500/40 rounded-sm',
+      'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-c-focus rounded-sm',
       className,
     ].join(' ')}
     title={`Open ${type}`}

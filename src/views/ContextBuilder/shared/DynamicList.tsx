@@ -134,7 +134,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
                       <select
                         value={(formData[col.key] as string) || ''}
                         onChange={(e) => handleChange(col.key, e.target.value)}
-                        className="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-navy-800 text-sm focus:ring-1 focus:ring-primary-500"
+                        className="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-navy-800 text-sm focus:ring-1 focus:ring-c-focus"
                       >
                         <option value="" disabled>
                           Select...
@@ -151,7 +151,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
                         value={(formData[col.key] as string) || ''}
                         onChange={(e) => handleChange(col.key, e.target.value)}
                         placeholder={col.placeholder || col.label}
-                        className="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-navy-800 text-sm focus:ring-1 focus:ring-primary-500"
+                        className="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-navy-800 text-sm focus:ring-1 focus:ring-c-focus"
                       />
                     )}
                   </div>
@@ -224,7 +224,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
                   <select
                     value={(formData[col.key] as string) || ''}
                     onChange={(e) => handleChange(col.key, e.target.value)}
-                    className="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-navy-800 text-sm focus:ring-1 focus:ring-primary-500"
+                    className="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-navy-800 text-sm focus:ring-1 focus:ring-c-focus"
                   >
                     <option value="" disabled>
                       Select...
@@ -241,7 +241,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
                     value={(formData[col.key] as string) || ''}
                     onChange={(e) => handleChange(col.key, e.target.value)}
                     placeholder={col.placeholder || col.label}
-                    className="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-navy-800 text-sm focus:ring-1 focus:ring-primary-500"
+                    className="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-navy-800 text-sm focus:ring-1 focus:ring-c-focus"
                   />
                 )}
               </div>

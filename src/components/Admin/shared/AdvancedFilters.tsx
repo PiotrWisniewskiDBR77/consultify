@@ -344,7 +344,7 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
             value={presetName}
             onChange={(e) => setPresetName(e.target.value)}
             placeholder={t('admin.filters.presetNamePlaceholder', 'e.g., Active users this month')}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500"
+            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-c-focus"
           />
 
           <div className="p-3 bg-slate-50 dark:bg-navy-900 rounded-lg">
@@ -416,7 +416,7 @@ const FilterFieldEditor: React.FC<FilterFieldEditorProps> = ({
           <select
             value={localValue as string}
             onChange={(e) => setLocalValue(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500"
+            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-c-focus"
           >
             <option value="">{field.placeholder || 'Select...'}</option>
             {field.options.map((opt) => (
@@ -447,7 +447,7 @@ const FilterFieldEditor: React.FC<FilterFieldEditorProps> = ({
                         setLocalValue((localValue as string[]).filter((v) => v !== opt.value));
                       }
                     }}
-                    className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
+                    className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-c-focus"
                   />
                   <span className="text-sm text-navy-900 dark:text-white">{opt.label}</span>
                 </label>
@@ -463,7 +463,7 @@ const FilterFieldEditor: React.FC<FilterFieldEditorProps> = ({
             value={localValue as string}
             onChange={(e) => setLocalValue(e.target.value)}
             placeholder={field.placeholder}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500"
+            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-c-focus"
           />
         )}
 
@@ -473,7 +473,7 @@ const FilterFieldEditor: React.FC<FilterFieldEditorProps> = ({
             type="date"
             value={localValue as string}
             onChange={(e) => setLocalValue(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500"
+            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-c-focus"
           />
         )}
 
@@ -491,7 +491,7 @@ const FilterFieldEditor: React.FC<FilterFieldEditorProps> = ({
                   end: typeof localValue === 'object' && 'end' in localValue ? localValue.end : '',
                 })
               }
-              className="flex-1 px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500"
+              className="flex-1 px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-c-focus"
             />
             <span className="text-slate-400 dark:text-slate-500">-</span>
             <input
@@ -504,7 +504,7 @@ const FilterFieldEditor: React.FC<FilterFieldEditorProps> = ({
                   end: e.target.value,
                 })
               }
-              className="flex-1 px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500"
+              className="flex-1 px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-c-focus"
             />
           </div>
         )}

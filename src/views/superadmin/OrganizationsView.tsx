@@ -1057,7 +1057,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                     setNewCodeData({ ...newCodeData, code: e.target.value.toUpperCase() })
                   }
                   placeholder="Leave empty for random"
-                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded text-slate-900 dark:text-white focus:border-primary-500 outline-none text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded text-slate-900 dark:text-white focus:border-c-focus-solid outline-none text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
               </div>
 
@@ -1073,7 +1073,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                     onChange={(e) =>
                       setNewCodeData({ ...newCodeData, maxUses: Number(e.target.value) || 1 })
                     }
-                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded text-slate-900 dark:text-white focus:border-primary-500 outline-none text-sm"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded text-slate-900 dark:text-white focus:border-c-focus-solid outline-none text-sm"
                   />
                 </div>
                 <div>
@@ -1083,7 +1083,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                   <select
                     value={newCodeData.role}
                     onChange={(e) => setNewCodeData({ ...newCodeData, role: e.target.value })}
-                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded text-slate-900 dark:text-white focus:border-primary-500 outline-none text-sm"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded text-slate-900 dark:text-white focus:border-c-focus-solid outline-none text-sm"
                   >
                     <option value="USER">User</option>
                     <option value="ADMIN">Admin</option>
@@ -1100,7 +1100,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                   type="date"
                   value={newCodeData.expiresAt}
                   onChange={(e) => setNewCodeData({ ...newCodeData, expiresAt: e.target.value })}
-                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded text-slate-900 dark:text-white focus:border-primary-500 outline-none text-sm"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded text-slate-900 dark:text-white focus:border-c-focus-solid outline-none text-sm"
                 />
               </div>
 

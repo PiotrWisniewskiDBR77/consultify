@@ -811,7 +811,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                   value={newCampaign.name}
                   onChange={(e) => setNewCampaign((prev) => ({ ...prev, name: e.target.value }))}
                   placeholder="e.g., LinkedIn Q1"
-                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus"
                 />
               </div>
               <div>
@@ -825,7 +825,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                     setNewCampaign((prev) => ({ ...prev, utmSource: e.target.value }))
                   }
                   placeholder="e.g., linkedin"
-                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus"
                 />
               </div>
               <div>
@@ -839,7 +839,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                     setNewCampaign((prev) => ({ ...prev, utmMedium: e.target.value }))
                   }
                   placeholder="e.g., social"
-                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus"
                 />
               </div>
               <div>
@@ -853,7 +853,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                     setNewCampaign((prev) => ({ ...prev, utmCampaign: e.target.value }))
                   }
                   placeholder="e.g., partner-q1-2026"
-                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus"
                 />
               </div>
             </div>

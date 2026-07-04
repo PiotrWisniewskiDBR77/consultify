@@ -178,7 +178,7 @@ export const DataExportPanel: React.FC = () => {
             onChange={(e) => setFilterOrgId(e.target.value)}
             disabled
             title={dataExportWorkflowUnavailableReason}
-            className="px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+            className="px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-c-focus-solid outline-none"
           >
             <option value="">All Organizations</option>
             {organizations.map((org) => (
@@ -193,7 +193,7 @@ export const DataExportPanel: React.FC = () => {
             onChange={(e) => setFilterStatus(e.target.value)}
             disabled
             title={dataExportWorkflowUnavailableReason}
-            className="px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+            className="px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-c-focus-solid outline-none"
           >
             <option value="">All Status</option>
             <option value="pending">Pending</option>

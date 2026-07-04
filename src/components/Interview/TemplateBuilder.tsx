@@ -1869,7 +1869,7 @@ ${sourceText || '(none)'}`;
                   className={`w-full h-9 px-3 rounded-md bg-white dark:bg-navy-950 border text-slate-900 dark:text-white placeholder-slate-400 focus:ring-1 transition-all ${
                     errors.name
                       ? 'border-danger-500 focus:border-danger-500 focus:ring-danger-500/50'
-                      : 'border-slate-300 dark:border-navy-700 focus:border-primary-500 focus:ring-primary-500/50'
+                      : 'border-slate-300 dark:border-navy-700 focus:border-c-focus-solid focus:ring-c-focus'
                   }`}
                 />
                 {errors.name && <p className="text-xs text-danger-400 mt-1">{errors.name}</p>}
@@ -1892,7 +1892,7 @@ ${sourceText || '(none)'}`;
                       : 'Describe the survey goal, business context, expected answer precision, and what AI should optimize in the questions...'
                   }
                   rows={6}
-                  className="w-full px-3 py-2 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all resize-none"
+                  className="w-full px-3 py-2 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-500 focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus transition-all resize-none"
                 />
               </div>
 
@@ -1967,7 +1967,7 @@ ${sourceText || '(none)'}`;
                   type="button"
                   onClick={() => setIsAnswerTypeMenuOpen((prev) => !prev)}
                   disabled={isApplicationTemplate}
-                  className="w-full h-10 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all flex items-center justify-between gap-3"
+                  className="w-full h-10 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus transition-all flex items-center justify-between gap-3"
                 >
                   <span className="truncate text-left text-sm">{allowedAnswerTypesLabel}</span>
                   <ChevronDown
@@ -1989,7 +1989,7 @@ ${sourceText || '(none)'}`;
                             checked={checked}
                             onChange={() => toggleAllowedAnswerType(type.id)}
                             disabled={isApplicationTemplate}
-                            className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                            className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-c-focus"
                           />
                           <span>{isPolish ? type.labelPl : type.labelEn}</span>
                         </label>
@@ -2007,7 +2007,7 @@ ${sourceText || '(none)'}`;
                   type="button"
                   onClick={() => setIsAreaTagsMenuOpen((prev) => !prev)}
                   disabled={isApplicationTemplate}
-                  className="w-full h-10 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all flex items-center justify-between gap-3"
+                  className="w-full h-10 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus transition-all flex items-center justify-between gap-3"
                 >
                   <span className="truncate text-left text-sm">{areaTagsLabel}</span>
                   <ChevronDown
@@ -2029,7 +2029,7 @@ ${sourceText || '(none)'}`;
                             checked={checked}
                             onChange={() => toggleAreaTag(tag)}
                             disabled={isApplicationTemplate}
-                            className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                            className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-c-focus"
                           />
                           <span>{getTemplateAreaTagLabel(tag, isPolish)}</span>
                         </label>
@@ -2053,7 +2053,7 @@ ${sourceText || '(none)'}`;
                       setTargetQuestionCount(Math.max(1, Number(e.target.value) || 1))
                     }
                     disabled={isApplicationTemplate}
-                    className="w-full h-9 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
+                    className="w-full h-9 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus transition-all"
                   />
                 </div>
                 <div>
@@ -2069,7 +2069,7 @@ ${sourceText || '(none)'}`;
                       setQuestionCountTolerance(Math.max(0, Number(e.target.value) || 0))
                     }
                     disabled={isApplicationTemplate}
-                    className="w-full h-9 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
+                    className="w-full h-9 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus transition-all"
                   />
                 </div>
               </div>
@@ -2091,7 +2091,7 @@ ${sourceText || '(none)'}`;
                       }))
                     }
                     disabled={isApplicationTemplate}
-                    className="w-full h-9 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
+                    className="w-full h-9 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus transition-all"
                   />
                 </div>
 
@@ -2330,7 +2330,7 @@ ${sourceText || '(none)'}`;
                                   [String(item.questionId)]: event.target.checked,
                                 }))
                               }
-                              className="mt-1 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                              className="mt-1 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-c-focus"
                             />
                             <div className="min-w-0 flex-1 space-y-2">
                               <div className="text-xs text-slate-500 dark:text-slate-400">
@@ -2387,7 +2387,7 @@ ${sourceText || '(none)'}`;
                                 [index]: event.target.checked,
                               }))
                             }
-                            className="mt-1 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                            className="mt-1 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-c-focus"
                           />
                           <div className="min-w-0 flex-1 space-y-1.5">
                             <p className="text-sm font-medium text-slate-900 dark:text-white">
@@ -2435,7 +2435,7 @@ ${sourceText || '(none)'}`;
                                   [String(item.questionId)]: event.target.checked,
                                 }))
                               }
-                              className="mt-1 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                              className="mt-1 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-c-focus"
                             />
                             <div className="min-w-0 flex-1 space-y-1.5">
                               <p className="text-sm font-medium text-slate-900 dark:text-white">
@@ -2458,7 +2458,7 @@ ${sourceText || '(none)'}`;
                       type="checkbox"
                       checked={applySuggestedOrder}
                       onChange={(event) => setApplySuggestedOrder(event.target.checked)}
-                      className="mt-1 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                      className="mt-1 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-c-focus"
                     />
                     <div className="space-y-1">
                       <div className="text-sm font-medium text-slate-900 dark:text-white">
@@ -2792,7 +2792,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   const [showSectionInput, setShowSectionInput] = useState(false);
   const questionTextRef = useRef<HTMLTextAreaElement | null>(null);
   const fieldClassName =
-    'w-full h-10 px-3 rounded-lg bg-white dark:bg-navy-900 border border-slate-300 dark:border-navy-600 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all';
+    'w-full h-10 px-3 rounded-lg bg-white dark:bg-navy-900 border border-slate-300 dark:border-navy-600 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus transition-all';
 
   const handleAddOption = () => {
     if (!newOption.trim()) return;
@@ -2938,7 +2938,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               className={`w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border text-slate-900 dark:text-white placeholder-slate-500 focus:ring-1 transition-all resize-none ${
                 error
                   ? 'border-danger-500 focus:border-danger-500 focus:ring-danger-500/50'
-                  : 'border-slate-300 dark:border-navy-600 focus:border-primary-500 focus:ring-primary-500/50'
+                  : 'border-slate-300 dark:border-navy-600 focus:border-c-focus-solid focus:ring-c-focus'
               }`}
             />
           </div>
@@ -3108,7 +3108,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 onChange={(e) => onUpdate({ guidance: e.target.value })}
                 disabled={readOnly}
                 rows={2}
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-c-focus"
                 placeholder={
                   isPolish
                     ? 'Statyczna instrukcja widoczna przy pytaniu w formularzu odpowiedzi...'
@@ -3125,7 +3125,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 onChange={(e) => onUpdate({ exampleAnswer: e.target.value })}
                 disabled={readOnly}
                 rows={2}
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-c-focus"
                 placeholder={
                   isPolish
                     ? 'np. „W 2023 OEE wyniosło 72%, głównie przez przestoje linii 3."'
@@ -3145,7 +3145,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               onChange={(e) => onUpdate({ description: e.target.value })}
               disabled={readOnly}
               rows={2}
-              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-c-focus"
               placeholder={
                 isPolish
                   ? 'Dodatkowy kontekst wyświetlany pod pytaniem...'
@@ -3164,7 +3164,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               value={question.evidencePrompt || ''}
               onChange={(e) => onUpdate({ evidencePrompt: e.target.value })}
               disabled={readOnly}
-              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-c-focus"
               placeholder={
                 isPolish
                   ? 'np. Załącz raport lub link do dokumentacji'

@@ -247,7 +247,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                                 value={alt.title}
                                 onChange={(e) => onUpdate(alt.id, { title: e.target.value })}
                                 placeholder={isPolish ? 'Nazwa opcji...' : 'Option name...'}
-                                className="w-full font-semibold text-slate-800 dark:text-white bg-transparent focus:outline-none focus:ring-2 focus:ring-primary-500/20 rounded px-1 -mx-1"
+                                className="w-full font-semibold text-slate-800 dark:text-white bg-transparent focus:outline-none focus:ring-2 focus:ring-c-focus rounded px-1 -mx-1"
                               />
                               <div className="flex items-center gap-2 mt-1">
                                 {alt.isRecommended && (
@@ -294,7 +294,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                           onChange={(e) => onUpdate(alt.id, { description: e.target.value })}
                           placeholder={isPolish ? 'Opis opcji...' : 'Option description...'}
                           rows={2}
-                          className="w-full mb-3 px-2 py-1.5 rounded-lg text-sm bg-white/50 dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 placeholder-slate-400 focus:outline-none focus:border-primary-400 resize-none"
+                          className="w-full mb-3 px-2 py-1.5 rounded-lg text-sm bg-white/50 dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 placeholder-slate-400 focus:outline-none focus:border-c-focus-solid resize-none"
                         />
 
                         {/* Pros & Cons */}

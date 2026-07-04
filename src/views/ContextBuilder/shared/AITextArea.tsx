@@ -46,7 +46,7 @@ export const AITextArea: React.FC<AITextAreaProps> = ({
   return (
     <div className="relative group">
       <textarea
-        className={`w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900/50 text-sm focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-all placeholder:text-slate-400 dark:text-slate-500 pb-10 ${className} ${isRefining ? 'animate-pulse bg-primary-50 dark:bg-primary-900/20' : ''}`}
+        className={`w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900/50 text-sm focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid transition-all placeholder:text-slate-400 dark:text-slate-500 pb-10 ${className} ${isRefining ? 'animate-pulse bg-primary-50 dark:bg-primary-900/20' : ''}`}
         value={props.value}
         onChange={props.onChange}
         disabled={isRefining}

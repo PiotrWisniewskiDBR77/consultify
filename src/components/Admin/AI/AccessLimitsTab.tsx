@@ -309,7 +309,7 @@ export const AccessLimitsTab: React.FC = () => {
                     onChange={(e) =>
                       updateSetting('monthlyBudgetUSD', parseFloat(e.target.value) || 0)
                     }
-                    className="w-full bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-navy-900 dark:text-white focus:border-primary-500 outline-none"
+                    className="w-full bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-navy-900 dark:text-white focus:border-c-focus-solid outline-none"
                     placeholder="0 = unlimited"
                   />
                 </div>
@@ -321,7 +321,7 @@ export const AccessLimitsTab: React.FC = () => {
                     type="number"
                     value={settings.hardLimitUSD}
                     onChange={(e) => updateSetting('hardLimitUSD', parseFloat(e.target.value) || 0)}
-                    className="w-full bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-navy-900 dark:text-white focus:border-primary-500 outline-none"
+                    className="w-full bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-navy-900 dark:text-white focus:border-c-focus-solid outline-none"
                     placeholder="0 = no hard limit"
                   />
                 </div>

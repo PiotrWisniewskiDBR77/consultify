@@ -1115,7 +1115,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
             type="button"
             onClick={() => !readOnly && setDropdownOpen((p) => !p)}
             disabled={readOnly}
-            className="w-full flex items-center justify-between rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-4 py-3 text-base text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full flex items-center justify-between rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-4 py-3 text-base text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-c-focus"
           >
             <span className={answerDraft ? '' : 'text-slate-600 dark:text-slate-500'}>
               {answerDraft || (isPolish ? 'Wybierz opcję...' : 'Select an option...')}
@@ -1163,7 +1163,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
               setAnswerDraft(event.target.value);
             }}
             disabled={readOnly}
-            className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-4 py-3 text-base text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-4 py-3 text-base text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-c-focus"
           />
         </div>
       );
@@ -1179,7 +1179,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
             setAnswerDraft(event.target.value);
           }}
           disabled={readOnly}
-          className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-4 py-3 text-base text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-4 py-3 text-base text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-c-focus"
           placeholder={isPolish ? 'Wpisz wartość' : 'Enter a value'}
         />
       );
@@ -1196,7 +1196,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
         onPaste={handleAnswerPaste}
         disabled={readOnly}
         rows={QUESTION_INPUT_TYPES.shortText.has(normalizedType) ? 2 : immersive ? 5 : 7}
-        className={`w-full rounded-xl border px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+        className={`w-full rounded-xl border px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-c-focus ${
           immersive
             ? 'border-slate-300 bg-slate-50 dark:border-white/[0.06] dark:bg-white/[0.02] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500'
             : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white'
@@ -2531,7 +2531,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                     onChange={(event) => setContextDraft(event.target.value)}
                     disabled={readOnly}
                     rows={1}
-                    className={`w-full rounded-xl border px-3 py-2 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-primary-500 ${
+                    className={`w-full rounded-xl border px-3 py-2 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-c-focus ${
                       immersive
                         ? 'border-slate-300 bg-slate-50 dark:border-white/[0.06] dark:bg-white/[0.03] text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500'
                         : 'border-slate-200/70 dark:border-navy-700/70 bg-white dark:bg-navy-950 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500'
@@ -2589,14 +2589,14 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         type="text"
                         value={linkName}
                         onChange={(event) => setLinkName(event.target.value)}
-                        className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                        className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-c-focus"
                         placeholder={isPolish ? 'Nazwa linku' : 'Link title'}
                       />
                       <input
                         type="url"
                         value={linkUrl}
                         onChange={(event) => setLinkUrl(event.target.value)}
-                        className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                        className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-c-focus"
                         placeholder="https://"
                       />
                       <div className="md:col-span-2 flex justify-end">

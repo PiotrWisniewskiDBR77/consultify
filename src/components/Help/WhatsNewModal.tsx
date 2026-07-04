@@ -321,7 +321,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
                   type="checkbox"
                   checked={dontShowAgain}
                   onChange={(e) => setDontShowAgain(e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-primary-600 focus:ring-primary-500"
+                  className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-primary-600 focus:ring-c-focus"
                 />
                 <span className="text-sm text-slate-600 dark:text-slate-400">
                   {tTrans.dontShow}

@@ -136,7 +136,7 @@ export const DocsHomeView: React.FC = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t('docs.home.searchPlaceholder', 'Search documentation...')}
-                  className="w-full pl-12 pr-4 py-4 rounded-xl bg-c-surface border border-c-border-subtle text-lg shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                  className="w-full pl-12 pr-4 py-4 rounded-xl bg-c-surface border border-c-border-subtle text-lg shadow-lg focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-transparent transition-all"
                 />
                 <button
                   type="submit"

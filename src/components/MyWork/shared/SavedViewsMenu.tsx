@@ -163,7 +163,7 @@ export const SavedViewsMenu: React.FC<SavedViewsMenuProps> = ({ currentState, on
                       if (e.key === 'Escape') setIsNaming(false);
                     }}
                     placeholder={t('myWork.savedViews.namePlaceholder', 'View name…')}
-                    className="flex-1 h-7 px-2 text-sm rounded-lg border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+                    className="flex-1 h-7 px-2 text-sm rounded-lg border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-c-focus"
                   />
                   <button
                     onClick={handleSave}

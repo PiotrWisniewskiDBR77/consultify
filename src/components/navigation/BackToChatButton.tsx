@@ -98,7 +98,7 @@ export const BackToChatButton: React.FC<BackToChatButtonProps> = ({
       onClick={handleClick}
       aria-label="Back to active conversation"
       title="Back to active conversation"
-      className="fixed top-14 right-3 z-[80] inline-flex items-center gap-1.5 rounded-full border border-primary-200 bg-white/90 backdrop-blur px-3 py-1.5 text-[12px] font-semibold text-primary-700 shadow-md hover:bg-primary-50 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-400/50 dark:border-primary-700/60 dark:bg-navy-900/85 dark:text-primary-200 dark:hover:bg-navy-800"
+      className="fixed top-14 right-3 z-[80] inline-flex items-center gap-1.5 rounded-full border border-primary-200 bg-white/90 backdrop-blur px-3 py-1.5 text-[12px] font-semibold text-primary-700 shadow-md hover:bg-primary-50 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-primary-700/60 dark:bg-navy-900/85 dark:text-primary-200 dark:hover:bg-navy-800"
     >
       <ArrowLeft size={12} strokeWidth={2.25} aria-hidden />
       <MessageSquare size={12} strokeWidth={2.25} aria-hidden />

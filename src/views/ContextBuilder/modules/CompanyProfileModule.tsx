@@ -179,7 +179,7 @@ export const CompanyProfileModule: React.FC = () => {
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full appearance-none px-4 py-2.5 rounded-xl border border-c-border-subtle bg-c-surface text-sm font-medium text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-shadow"
+          className="w-full appearance-none px-4 py-2.5 rounded-xl border border-c-border-subtle bg-c-surface text-sm font-medium text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid transition-shadow"
         >
           <option value="" disabled>
             Select...

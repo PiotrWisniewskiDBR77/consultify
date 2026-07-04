@@ -298,7 +298,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                       value={replyContent}
                       onChange={(e) => setReplyContent(e.target.value)}
                       placeholder={isPolish ? 'Napisz odpowiedź...' : 'Write a reply...'}
-                      className="flex-1 px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 outline-none transition-all"
+                      className="flex-1 px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus outline-none transition-all"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault();
@@ -469,7 +469,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                       onChange={(e) => setNewComment(e.target.value)}
                       placeholder={isPolish ? 'Napisz komentarz...' : 'Write a comment...'}
                       rows={1}
-                      className="flex-1 px-4 py-2 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 outline-none transition-all resize-none"
+                      className="flex-1 px-4 py-2 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus outline-none transition-all resize-none"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault();

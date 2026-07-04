@@ -473,7 +473,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                 onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
                 maxLength={6}
                 placeholder="000000"
-                className="w-32 px-4 py-2 text-center text-lg font-mono tracking-widest border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500"
+                className="w-32 px-4 py-2 text-center text-lg font-mono tracking-widest border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-c-focus"
               />
               <button
                 onClick={regenerateBackupCodes}
@@ -735,7 +735,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               placeholder="+1234567890"
-              className="w-full px-4 py-3 border border-slate-200 dark:border-navy-700 rounded-xl bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 placeholder-slate-400"
+              className="w-full px-4 py-3 border border-slate-200 dark:border-navy-700 rounded-xl bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-c-focus placeholder-slate-400"
             />
             <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
               {t(
@@ -812,7 +812,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
               onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
               maxLength={6}
               placeholder="000000"
-              className="w-40 px-4 py-3 text-center text-xl font-mono tracking-[0.5em] border border-slate-200 dark:border-navy-700 rounded-xl bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500"
+              className="w-40 px-4 py-3 text-center text-xl font-mono tracking-[0.5em] border border-slate-200 dark:border-navy-700 rounded-xl bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-c-focus"
               onKeyDown={(e) => e.key === 'Enter' && verifySMSAndEnable()}
             />
             <button
@@ -926,7 +926,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                 <div className="flex gap-3">
                   <input
                     type="text"
-                    className="w-40 px-4 py-3 text-center text-xl font-mono tracking-[0.5em] border border-slate-200 dark:border-navy-700 rounded-xl bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500"
+                    className="w-40 px-4 py-3 text-center text-xl font-mono tracking-[0.5em] border border-slate-200 dark:border-navy-700 rounded-xl bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-c-focus"
                     placeholder="000000"
                     maxLength={6}
                     value={verificationCode}

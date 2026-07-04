@@ -2667,7 +2667,7 @@ const ProfileSection: React.FC<{
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid"
               />
             </div>
             <div>
@@ -2678,7 +2678,7 @@ const ProfileSection: React.FC<{
                 type="text"
                 value={formData.taxId}
                 onChange={(e) => setFormData((prev) => ({ ...prev, taxId: e.target.value }))}
-                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid"
               />
             </div>
             <div>
@@ -2689,7 +2689,7 @@ const ProfileSection: React.FC<{
                 type="email"
                 value={formData.contactEmail}
                 onChange={(e) => setFormData((prev) => ({ ...prev, contactEmail: e.target.value }))}
-                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid"
               />
             </div>
             <div>
@@ -2700,7 +2700,7 @@ const ProfileSection: React.FC<{
                 type="tel"
                 value={formData.contactPhone}
                 onChange={(e) => setFormData((prev) => ({ ...prev, contactPhone: e.target.value }))}
-                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid"
               />
             </div>
             <div className="md:col-span-2">
@@ -2712,7 +2712,7 @@ const ProfileSection: React.FC<{
                 value={formData.website}
                 onChange={(e) => setFormData((prev) => ({ ...prev, website: e.target.value }))}
                 placeholder="https://"
-                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid"
               />
             </div>
           </div>
@@ -2814,7 +2814,7 @@ const ProfileSection: React.FC<{
                   type="checkbox"
                   checked={selectedRegions.includes(region)}
                   onChange={() => toggleRegion(region)}
-                  className="rounded text-primary-600 focus:ring-primary-500"
+                  className="rounded text-primary-600 focus:ring-c-focus"
                 />
                 <span className="text-c-text-secondary">{region}</span>
               </label>
@@ -3260,7 +3260,7 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
                       'partner.connect.companyNamePlaceholder',
                       'np. DBR77 Consulting'
                     )}
-                    className="mt-2 w-full rounded-lg border border-c-border-subtle bg-c-surface px-4 py-2 text-sm text-c-text focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+                    className="mt-2 w-full rounded-lg border border-c-border-subtle bg-c-surface px-4 py-2 text-sm text-c-text focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus outline-none transition-all dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                   />
                 </label>
 

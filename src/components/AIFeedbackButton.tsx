@@ -113,7 +113,7 @@ export const AIFeedbackButton: React.FC<AIFeedbackButtonProps> = ({
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="Tell us more about your experience... (optional)"
-              className="w-full bg-navy-950 border border-c-border-subtle rounded-lg p-3 text-sm text-white focus:border-primary-500 outline-none h-24 mb-4 resize-none"
+              className="w-full bg-navy-950 border border-c-border-subtle rounded-lg p-3 text-sm text-white focus:border-c-focus-solid outline-none h-24 mb-4 resize-none"
             />
 
             <div className="flex justify-end">

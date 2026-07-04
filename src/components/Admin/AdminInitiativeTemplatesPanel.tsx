@@ -627,7 +627,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search initiative templates..."
                 autoFocus
-                className="w-full pl-10 pr-10 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
+                className="w-full pl-10 pr-10 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus transition-all"
               />
               {searchQuery && (
                 <button

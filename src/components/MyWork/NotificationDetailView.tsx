@@ -1517,7 +1517,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   value={descriptionDraft}
                   onChange={(e) => setDescriptionDraft(e.target.value)}
                   rows={3}
-                  className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[48px]"
+                  className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-c-focus-solid transition-colors min-h-[48px]"
                   placeholder={
                     isPolish
                       ? 'Opis powiadomienia — co się wydarzyło...'
@@ -1550,7 +1550,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   value={whyImportantDraft}
                   onChange={(e) => setWhyImportantDraft(e.target.value)}
                   rows={2}
-                  className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[36px]"
+                  className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-c-focus-solid transition-colors min-h-[36px]"
                   placeholder={
                     isPolish
                       ? 'Wyjaśnij wpływ i konsekwencje...'
@@ -1569,7 +1569,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     value={blockedDraft}
                     onChange={(e) => setBlockedDraft(e.target.value)}
                     rows={2}
-                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[36px]"
+                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-c-focus-solid transition-colors min-h-[36px]"
                     placeholder={
                       isPolish
                         ? 'Co jest blokowane przez ten problem...'
@@ -1728,7 +1728,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   value={expectedActionDraft}
                   onChange={(e) => setExpectedActionDraft(e.target.value)}
                   rows={2}
-                  className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[36px]"
+                  className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-c-focus-solid transition-colors min-h-[36px]"
                   placeholder={isPolish ? 'Oczekiwana akcja...' : 'Expected action...'}
                 />
               </div>
@@ -1895,7 +1895,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       ? 'Napisz komentarz... (Cmd+Enter aby wysłać)'
                       : 'Write a comment... (Cmd+Enter to send)'
                   }
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 dark:focus:border-primary-500 transition-all"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid dark:focus:border-c-focus-solid transition-all"
                   rows={3}
                 />
                 <div className="flex justify-end">
@@ -2773,7 +2773,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                               value={expectedActionDraft}
                               onChange={(e) => setExpectedActionDraft(e.target.value)}
                               rows={3}
-                              className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors"
+                              className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-c-focus-solid transition-colors"
                               placeholder={isPolish ? 'Oczekiwana akcja...' : 'Expected action...'}
                             />
 

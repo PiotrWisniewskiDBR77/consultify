@@ -223,14 +223,14 @@ export const SubscriptionsPanel: React.FC = () => {
               placeholder="Search subscriptions..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none w-64"
+              className="pl-10 pr-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-c-focus-solid outline-none w-64"
             />
           </div>
 
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+            className="px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-c-focus-solid outline-none"
           >
             <option value="all">All Status</option>
             <option value="active">Active</option>
@@ -354,7 +354,7 @@ export const SubscriptionsPanel: React.FC = () => {
                   onChange={(e) =>
                     setCreateForm((prev) => ({ ...prev, organizationId: e.target.value }))
                   }
-                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-c-focus-solid outline-none"
                 >
                   <option value="">Select organization</option>
                   {organizations.map((org) => (
@@ -370,7 +370,7 @@ export const SubscriptionsPanel: React.FC = () => {
                 <select
                   value={createForm.planId}
                   onChange={(e) => setCreateForm((prev) => ({ ...prev, planId: e.target.value }))}
-                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-c-focus-solid outline-none"
                 >
                   <option value="">Select plan</option>
                   {plans
@@ -417,7 +417,7 @@ export const SubscriptionsPanel: React.FC = () => {
                   onChange={(e) =>
                     setCreateForm((prev) => ({ ...prev, trialDays: parseInt(e.target.value) || 0 }))
                   }
-                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-c-focus-solid outline-none"
                 />
               </div>
             </div>
@@ -471,7 +471,7 @@ export const SubscriptionsPanel: React.FC = () => {
                       handleChangePlan(selectedSubscription.id, e.target.value);
                     }
                   }}
-                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-c-focus-solid outline-none"
                 >
                   {plans
                     .filter((p) => p.is_active)

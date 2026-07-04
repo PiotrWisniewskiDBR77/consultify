@@ -383,7 +383,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder={isPolish ? 'Szukaj szablonów...' : 'Search templates...'}
-                      className="w-full pl-10 pr-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-500"
+                      className="w-full pl-10 pr-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-c-focus-solid"
                     />
                   </div>
                   <button
@@ -505,7 +505,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                     type="text"
                     value={formData.name || ''}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-500"
+                    className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid"
                     placeholder={isPolish ? 'np. Tygodniowy raport' : 'e.g., Weekly report'}
                   />
                 </div>
@@ -519,7 +519,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                     type="text"
                     value={formData.category || ''}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-500"
+                    className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid"
                     placeholder={isPolish ? 'np. Raporty' : 'e.g., Reports'}
                   />
                 </div>
@@ -538,7 +538,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                       type="text"
                       value={formData.title || ''}
                       onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-500"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid"
                     />
                   </div>
 
@@ -551,7 +551,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                       <select
                         value={formData.priority || 'medium'}
                         onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                        className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-500"
+                        className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid"
                       >
                         {PRIORITY_OPTIONS.map((opt) => (
                           <option key={opt.value} value={opt.value}>
@@ -575,7 +575,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                             estimatedHours: e.target.value ? parseFloat(e.target.value) : undefined,
                           })
                         }
-                        className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-500"
+                        className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid"
                       />
                     </div>
                   </div>

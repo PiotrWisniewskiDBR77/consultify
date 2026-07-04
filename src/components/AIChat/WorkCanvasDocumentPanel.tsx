@@ -2803,7 +2803,7 @@ function WorkCanvasMarkdownDocumentPanel({
           onChange={(event) => setSelectionEditDraft(event.target.value)}
           aria-label="Selection edit replacement"
           placeholder="Write the replacement Markdown here..."
-          className="mt-3 min-h-24 w-full resize-y rounded-2xl border border-primary-200 bg-white p-3 text-sm leading-6 text-slate-800 outline-none focus:border-primary-400 dark:border-primary-300/20 dark:bg-navy-950 dark:text-slate-100"
+          className="mt-3 min-h-24 w-full resize-y rounded-2xl border border-primary-200 bg-white p-3 text-sm leading-6 text-slate-800 outline-none focus:border-c-focus-solid dark:border-primary-300/20 dark:bg-navy-950 dark:text-slate-100"
         />
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <button
@@ -2847,7 +2847,7 @@ function WorkCanvasMarkdownDocumentPanel({
             }}
             data-testid="canvas-active-title"
             aria-label="Canvas document title"
-            className="w-full min-w-0 rounded-lg border border-transparent bg-transparent px-1 py-0.5 text-[15px] font-semibold text-slate-950 outline-none transition-colors hover:border-slate-200 hover:bg-white/60 focus:border-primary-300 focus:bg-white dark:text-white dark:hover:border-c-border-subtle dark:hover:bg-white/[0.04] dark:focus:border-primary-500/50 dark:focus:bg-white/[0.06]"
+            className="w-full min-w-0 rounded-lg border border-transparent bg-transparent px-1 py-0.5 text-[15px] font-semibold text-slate-950 outline-none transition-colors hover:border-slate-200 hover:bg-white/60 focus:border-c-focus-solid focus:bg-white dark:text-white dark:hover:border-c-border-subtle dark:hover:bg-white/[0.04] dark:focus:border-c-focus-solid dark:focus:bg-white/[0.06]"
           />
         </div>
 
@@ -3206,7 +3206,7 @@ function WorkCanvasMarkdownDocumentPanel({
                       onChange={(event) => setQuickAddPrompt(event.target.value)}
                       placeholder={t('canvas.panel.addElement.promptPlaceholder', 'Describe to Teresa what to add...')}
                       aria-label="Element instruction for Teresa"
-                      className="min-h-16 w-full resize-y rounded-xl border border-slate-200 bg-white p-2.5 text-xs leading-5 text-slate-800 outline-none focus:border-primary-400 dark:border-c-border-subtle dark:bg-navy-950 dark:text-slate-100"
+                      className="min-h-16 w-full resize-y rounded-xl border border-slate-200 bg-white p-2.5 text-xs leading-5 text-slate-800 outline-none focus:border-c-focus-solid dark:border-c-border-subtle dark:bg-navy-950 dark:text-slate-100"
                     />
                     <button
                       type="button"
@@ -3263,7 +3263,7 @@ function WorkCanvasMarkdownDocumentPanel({
                       onChange={(event) => setSelectionAiPrompt(event.target.value)}
                       aria-label="Selection AI instruction"
                       placeholder={t('canvas.panel.selection.promptPlaceholder', 'Instruction for Teresa on the selected fragment...')}
-                      className="min-h-16 w-full resize-y rounded-xl border border-slate-200 bg-white p-2.5 text-xs leading-5 text-slate-800 outline-none focus:border-primary-400 dark:border-c-border-subtle dark:bg-navy-950 dark:text-slate-100"
+                      className="min-h-16 w-full resize-y rounded-xl border border-slate-200 bg-white p-2.5 text-xs leading-5 text-slate-800 outline-none focus:border-c-focus-solid dark:border-c-border-subtle dark:bg-navy-950 dark:text-slate-100"
                     />
                     <div className="mt-2 flex gap-2">
                       <button
@@ -3326,21 +3326,21 @@ function WorkCanvasMarkdownDocumentPanel({
                         onChange={(event) => setTemplateBuilderName(event.target.value)}
                         placeholder={t('canvas.panel.templates.namePlaceholder', 'Template name')}
                         aria-label="Template name"
-                        className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-primary-400 dark:border-c-border-subtle dark:bg-navy-950 dark:text-slate-100"
+                        className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-c-focus-solid dark:border-c-border-subtle dark:bg-navy-950 dark:text-slate-100"
                       />
                       <input
                         value={templateBuilderGoal}
                         onChange={(event) => setTemplateBuilderGoal(event.target.value)}
                         placeholder={t('canvas.panel.templates.goalPlaceholder', 'Template goal in one sentence')}
                         aria-label="Template goal"
-                        className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-primary-400 dark:border-c-border-subtle dark:bg-navy-950 dark:text-slate-100"
+                        className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-c-focus-solid dark:border-c-border-subtle dark:bg-navy-950 dark:text-slate-100"
                       />
                       <input
                         value={templateBuilderSections}
                         onChange={(event) => setTemplateBuilderSections(event.target.value)}
                         placeholder={t('canvas.panel.templates.sectionsPlaceholder', 'Sections (comma-separated)')}
                         aria-label="Template sections"
-                        className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-primary-400 dark:border-c-border-subtle dark:bg-navy-950 dark:text-slate-100"
+                        className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-c-focus-solid dark:border-c-border-subtle dark:bg-navy-950 dark:text-slate-100"
                       />
                       <div className="flex gap-2">
                         <button
@@ -4368,7 +4368,7 @@ function WorkCanvasMarkdownDocumentPanel({
                   onSelect={captureMarkdownSelection}
                   onKeyUp={captureMarkdownSelection}
                   data-testid="canvas-md-view"
-                  className="min-h-[680px] flex-1 resize-y rounded-[1.35rem] border border-slate-200 bg-white p-6 font-mono text-sm leading-6 text-slate-800 shadow-[0_24px_80px_rgba(15,23,42,0.08)] outline-none transition-colors focus:border-primary-300 dark:border-c-border-subtle dark:bg-navy-900 dark:text-slate-100"
+                  className="min-h-[680px] flex-1 resize-y rounded-[1.35rem] border border-slate-200 bg-white p-6 font-mono text-sm leading-6 text-slate-800 shadow-[0_24px_80px_rgba(15,23,42,0.08)] outline-none transition-colors focus:border-c-focus-solid dark:border-c-border-subtle dark:bg-navy-900 dark:text-slate-100"
                   spellCheck={false}
                 />
               </div>

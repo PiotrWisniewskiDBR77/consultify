@@ -429,7 +429,7 @@ export const DataHostingSettings: React.FC<DataHostingSettingsProps> = ({
               value={confirmText}
               onChange={(e) => setConfirmText(e.target.value)}
               placeholder="MIGRATE"
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl text-navy-900 dark:text-white focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid"
             />
           </div>
         </div>

@@ -309,7 +309,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
                 placeholder={t('admin.initiativeCreator.searchPlaceholder', 'Szukaj oceny...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-white/5 border border-c-border-subtle text-c-text placeholder-slate-500 focus:outline-none focus:border-primary-500/50"
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-white/5 border border-c-border-subtle text-c-text placeholder-slate-500 focus:outline-none focus:border-c-focus-solid"
               />
             </div>
 
@@ -419,7 +419,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
                 max={100}
                 value={requestedCount}
                 onChange={(e) => setRequestedCount(parseInt(e.target.value) || 20)}
-                className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-c-border-subtle text-c-text focus:outline-none focus:border-primary-500/50"
+                className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-c-border-subtle text-c-text focus:outline-none focus:border-c-focus-solid"
               />
             </div>
 
@@ -430,7 +430,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
                   type="checkbox"
                   checked={includeChatContext}
                   onChange={(e) => setIncludeChatContext(e.target.checked)}
-                  className="w-4 h-4 rounded border-c-border bg-white/5 text-primary-500 focus:ring-primary-500"
+                  className="w-4 h-4 rounded border-c-border bg-white/5 text-primary-500 focus:ring-c-focus"
                 />
                 <span className="text-sm text-slate-300">
                   {t('admin.initiativeCreator.includeContext', 'Uwzględnij kontekst z czatu')}
@@ -451,7 +451,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
                   'admin.initiativeCreator.consultantBriefPlaceholder',
                   'Np. skup się na automatyzacji procesów...'
                 )}
-                className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-c-border-subtle text-c-text placeholder-slate-500 focus:outline-none focus:border-primary-500/50 resize-none"
+                className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-c-border-subtle text-c-text placeholder-slate-500 focus:outline-none focus:border-c-focus-solid resize-none"
               />
             </div>
 

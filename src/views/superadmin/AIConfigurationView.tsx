@@ -1020,7 +1020,7 @@ Help leaders develop change management competencies.`,
                           onChange={(e) =>
                             updateGlobalSetting('defaultProvider', e.target.value || null)
                           }
-                          className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-primary-500 outline-none"
+                          className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-c-focus-solid outline-none"
                         >
                           <option value="">Auto (First Available)</option>
                           {providers
@@ -1047,7 +1047,7 @@ Help leaders develop change management competencies.`,
                                 failureThreshold: parseInt(e.target.value) || 5,
                               })
                             }
-                            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-primary-500 outline-none"
+                            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-c-focus-solid outline-none"
                           />
                           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                             Failures before circuit opens
@@ -1066,7 +1066,7 @@ Help leaders develop change management competencies.`,
                                 cooldownSeconds: parseInt(e.target.value) || 60,
                               })
                             }
-                            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-primary-500 outline-none"
+                            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-c-focus-solid outline-none"
                           />
                           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                             Wait before retry
@@ -1133,7 +1133,7 @@ Help leaders develop change management competencies.`,
                                 requestsPerMinute: parseInt(e.target.value) || 60,
                               })
                             }
-                            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-primary-500 outline-none"
+                            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-c-focus-solid outline-none"
                           />
                         </div>
                         <div>
@@ -1149,7 +1149,7 @@ Help leaders develop change management competencies.`,
                                 requestsPerHour: parseInt(e.target.value) || 1000,
                               })
                             }
-                            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-primary-500 outline-none"
+                            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-c-focus-solid outline-none"
                           />
                         </div>
                       </div>
@@ -1211,7 +1211,7 @@ Help leaders develop change management competencies.`,
                           onChange={(e) =>
                             updateGlobalSetting('dataResidency', e.target.value || null)
                           }
-                          className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-primary-500 outline-none"
+                          className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-c-focus-solid outline-none"
                         >
                           <option value="">No Restriction</option>
                           <option value="eu">European Union</option>

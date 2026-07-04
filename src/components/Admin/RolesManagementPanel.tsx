@@ -756,7 +756,7 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
                                   type="checkbox"
                                   checked={isSelected}
                                   onChange={() => togglePermission(permission.key)}
-                                  className="w-4 h-4 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500"
+                                  className="w-4 h-4 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-c-focus"
                                 />
                                 <div className="flex-1">
                                   <span className="font-medium text-slate-900 dark:text-white text-sm">

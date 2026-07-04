@@ -212,7 +212,7 @@ export const FiscalYearSettings: React.FC<FiscalYearSettingsProps> = ({
             <select
               value={formData.startMonth}
               onChange={(e) => updateStartMonth(Number(e.target.value))}
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-900 border border-transparent rounded-xl text-navy-900 dark:text-white transition-all duration-150 outline-none focus:ring-2 focus:border-primary-500 focus:ring-primary-500/20"
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-900 border border-transparent rounded-xl text-navy-900 dark:text-white transition-all duration-150 outline-none focus:ring-2 focus:border-c-focus-solid focus:ring-c-focus"
             >
               {MONTHS.map((month) => (
                 <option key={month.value} value={month.value}>

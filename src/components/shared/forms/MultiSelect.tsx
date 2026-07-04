@@ -44,7 +44,7 @@ const TRIGGER_CLASS =
   'border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] ' +
   'px-3 py-1.5 text-left text-sm transition-colors ' +
   'hover:border-slate-300 dark:hover:border-c-border ' +
-  'focus:outline-none focus:ring-2 focus:ring-primary-500/40 ' +
+  'focus:outline-none focus:ring-2 focus:ring-c-focus ' +
   'disabled:cursor-not-allowed disabled:opacity-60';
 
 const PANEL_CLASS =
@@ -168,7 +168,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
                     className={cn(
                       'h-9 w-full rounded-lg border border-slate-200/70 bg-slate-50 pl-8 pr-3',
                       'text-sm text-slate-900 placeholder-slate-400 focus:outline-none',
-                      'focus:ring-2 focus:ring-primary-500/40',
+                      'focus:ring-2 focus:ring-c-focus',
                       'dark:border-white/[0.08] dark:bg-navy-900 dark:text-white'
                     )}
                   />

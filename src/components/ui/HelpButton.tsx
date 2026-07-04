@@ -51,7 +51,7 @@ const HelpButton: React.FC<HelpButtonProps> = ({ onClick }) => {
       <style>{playbookAnimationStyle}</style>
       <button
         onClick={onClick}
-        className="fixed bottom-6 right-6 z-30 flex items-center justify-center w-14 h-14 text-white rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:focus:ring-primary-800"
+        className="fixed bottom-6 right-6 z-30 flex items-center justify-center w-14 h-14 text-white rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-c-focus dark:focus:ring-c-focus"
         style={{
           animation: 'playbookColorPulse 4.5s ease-in-out infinite',
         }}

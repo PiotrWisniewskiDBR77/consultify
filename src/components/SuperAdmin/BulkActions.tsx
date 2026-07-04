@@ -539,7 +539,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
             <select
               value={selectedCategoryId}
               onChange={(e) => setSelectedCategoryId(e.target.value)}
-              className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+              className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-c-focus"
             >
               <option value="">Select a category...</option>
               {availableCategories.map((cat) => (

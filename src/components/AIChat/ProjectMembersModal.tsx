@@ -264,7 +264,7 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
                     if (e.key === 'Enter') void handleInvite();
                   }}
                   placeholder={t('aiChat.members.emailPlaceholder', 'name@company.com')}
-                  className="flex-1 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-sm outline-none focus:border-primary-500"
+                  className="flex-1 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-sm outline-none focus:border-c-focus-solid"
                 />
                 <select
                   value={inviteRole}
@@ -387,7 +387,7 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
                   value={snippetTitle}
                   onChange={(e) => setSnippetTitle(e.target.value)}
                   placeholder={t('aiChat.knowledge.notePlaceholderTitle', 'Note title (optional)')}
-                  className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2.5 py-1.5 text-xs outline-none focus:border-primary-500"
+                  className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2.5 py-1.5 text-xs outline-none focus:border-c-focus-solid"
                 />
                 <div className="flex items-end gap-2">
                   <textarea
@@ -398,7 +398,7 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
                       'aiChat.knowledge.notePlaceholder',
                       'Add a note Teresa should always know in this project…'
                     )}
-                    className="flex-1 resize-none rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2.5 py-1.5 text-xs outline-none focus:border-primary-500"
+                    className="flex-1 resize-none rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2.5 py-1.5 text-xs outline-none focus:border-c-focus-solid"
                   />
                   <button
                     onClick={() => void handleAddSnippet()}

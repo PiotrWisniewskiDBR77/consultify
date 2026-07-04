@@ -166,7 +166,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
             placeholder="Search projects..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-navy-900 dark:text-white focus:border-primary-500 outline-none"
+            className="w-full pl-10 pr-4 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-navy-900 dark:text-white focus:border-c-focus-solid outline-none"
           />
         </div>
       </div>
@@ -424,7 +424,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full bg-c-surface-raised border border-c-border-subtle rounded-xl p-4 text-navy-900 dark:text-white focus:border-primary-500 outline-none transition-all placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary"
+                  className="w-full bg-c-surface-raised border border-c-border-subtle rounded-xl p-4 text-navy-900 dark:text-white focus:border-c-focus-solid outline-none transition-all placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary"
                   placeholder="e.g. Intelligent Factory Optimization"
                 />
               </div>
@@ -436,7 +436,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full bg-c-surface-raised border border-c-border-subtle rounded-xl p-4 text-navy-900 dark:text-white focus:border-primary-500 outline-none transition-all h-24 resize-none placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary"
+                  className="w-full bg-c-surface-raised border border-c-border-subtle rounded-xl p-4 text-navy-900 dark:text-white focus:border-c-focus-solid outline-none transition-all h-24 resize-none placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary"
                   placeholder="Briefly describe the project transformation scope..."
                 />
               </div>
@@ -449,7 +449,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                 <input
                   value={formData.goal}
                   onChange={(e) => setFormData({ ...formData, goal: e.target.value })}
-                  className="w-full bg-c-surface-raised border border-c-border-subtle rounded-xl p-4 text-navy-900 dark:text-white focus:border-primary-500 outline-none transition-all placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary"
+                  className="w-full bg-c-surface-raised border border-c-border-subtle rounded-xl p-4 text-navy-900 dark:text-white focus:border-c-focus-solid outline-none transition-all placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary"
                   placeholder="e.g. Reduce operational waste by 25% by Q4"
                 />
               </div>

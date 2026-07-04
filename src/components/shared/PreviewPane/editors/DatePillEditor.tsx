@@ -38,7 +38,7 @@ export const DatePillEditor: React.FC<DatePillEditorProps> = ({
         value={value}
         min={min}
         onChange={handleChange}
-        className="w-full h-8 px-2 rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+        className="w-full h-8 px-2 rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-c-focus"
         autoFocus
       />
     </div>

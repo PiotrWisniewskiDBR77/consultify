@@ -61,7 +61,7 @@ export const PreviewPaneShell: React.FC<PreviewPaneShellProps> = ({
           {onClose ? (
             <button
               onClick={onClose}
-              className="inline-flex items-center justify-center h-9 w-9 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+              className="inline-flex items-center justify-center h-9 w-9 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
               aria-label={t('common.close', 'Close')}
               title={t('common.close', 'Close')}
             >

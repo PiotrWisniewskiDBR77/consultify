@@ -778,7 +778,7 @@ Rules:
                           <textarea
                             value={editNotes}
                             onChange={(e) => setEditNotes(e.target.value)}
-                            className="w-full p-3 text-sm border border-slate-200 dark:border-navy-700 rounded-xl bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none min-h-[72px]"
+                            className="w-full p-3 text-sm border border-slate-200 dark:border-navy-700 rounded-xl bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-c-focus resize-none min-h-[72px]"
                             rows={3}
                             placeholder={
                               isPolish
@@ -1291,7 +1291,7 @@ Rules:
             <div className="p-4 bg-white dark:bg-navy-900 border-t border-slate-200 dark:border-navy-700 space-y-3">
               <div className="flex gap-2">
                 <input
-                  className="flex-1 bg-slate-100 dark:bg-navy-950 border border-transparent focus:border-primary-500 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500/30 transition-all dark:text-white text-sm"
+                  className="flex-1 bg-slate-100 dark:bg-navy-950 border border-transparent focus:border-c-focus-solid rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-c-focus transition-all dark:text-white text-sm"
                   placeholder={isPolish ? 'Wpisz odpowiedź...' : 'Type your response...'}
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}

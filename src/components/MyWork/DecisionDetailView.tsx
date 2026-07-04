@@ -4473,7 +4473,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                       <select
                         value={deciderId}
                         onChange={(e) => setDeciderId(e.target.value)}
-                        className="w-full px-2.5 py-1.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600/60 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors"
+                        className="w-full px-2.5 py-1.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600/60 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-c-focus-solid transition-colors"
                       >
                         <option value="">—</option>
                         {users.map((u) => (
@@ -4776,7 +4776,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                 }
                                 readOnly={isDecisionStageLocked}
                                 rows={isDescriptionExpanded ? 10 : 6}
-                                className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors"
+                                className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-c-focus-solid transition-colors"
                                 placeholder={
                                   t('decisions.detail.scope.descriptionPlaceholder', 'Describe the decision scope (what exactly is being decided)...')
                                 }
@@ -4828,7 +4828,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                 }
                                 readOnly={isDecisionStageLocked}
                                 rows={isContextExpanded ? 8 : 5}
-                                className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors"
+                                className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-c-focus-solid transition-colors"
                                 placeholder={
                                   t('decisions.detail.scope.contextPlaceholder', 'Additional explanation, assumptions, constraints (optional)...')
                                 }
@@ -4998,7 +4998,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                               addAlternativePro(alt.id, altProsDraft[alt.id] || '');
                                             }
                                           }}
-                                          className="flex-1 text-[11px] bg-transparent border-b border-slate-200 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400"
+                                          className="flex-1 text-[11px] bg-transparent border-b border-slate-200 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-c-focus-solid"
                                           placeholder={
                                             t('decisions.detail.options.addProPlaceholder', '+ Add pro')
                                           }
@@ -5059,7 +5059,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                               addAlternativeCon(alt.id, altConsDraft[alt.id] || '');
                                             }
                                           }}
-                                          className="flex-1 text-[11px] bg-transparent border-b border-slate-200 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400"
+                                          className="flex-1 text-[11px] bg-transparent border-b border-slate-200 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-c-focus-solid"
                                           placeholder={
                                             t('decisions.detail.options.addConPlaceholder', '+ Add con')
                                           }

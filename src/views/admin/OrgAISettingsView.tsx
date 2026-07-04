@@ -493,7 +493,7 @@ export const OrgAISettingsView: React.FC = () => {
                         type="checkbox"
                         checked={settings.activeRoles.includes(role.id)}
                         onChange={() => toggleRole(role.id)}
-                        className="w-4 h-4 rounded border-slate-600 text-primary-500 focus:ring-primary-500 bg-c-surface-raised"
+                        className="w-4 h-4 rounded border-slate-600 text-primary-500 focus:ring-c-focus bg-c-surface-raised"
                       />
                       <div>
                         <span className="font-medium text-c-text">{role.title}</span>
@@ -512,7 +512,7 @@ export const OrgAISettingsView: React.FC = () => {
                   <select
                     value={settings.defaultRole}
                     onChange={(e) => updateSetting('defaultRole', e.target.value as AIRole)}
-                    className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-primary-500 outline-none"
+                    className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-c-focus-solid outline-none"
                   >
                     {AI_ROLES.filter((r) => settings.activeRoles.includes(r.id)).map((r) => (
                       <option key={r.id} value={r.id}>
@@ -594,7 +594,7 @@ export const OrgAISettingsView: React.FC = () => {
                         onChange={(e) =>
                           updateSetting('monthlyBudgetUSD', parseFloat(e.target.value) || 0)
                         }
-                        className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-primary-500 outline-none"
+                        className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-c-focus-solid outline-none"
                         placeholder="0 = unlimited"
                       />
                     </div>
@@ -608,7 +608,7 @@ export const OrgAISettingsView: React.FC = () => {
                         onChange={(e) =>
                           updateSetting('hardLimitUSD', parseFloat(e.target.value) || 0)
                         }
-                        className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-primary-500 outline-none"
+                        className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-c-focus-solid outline-none"
                         placeholder="0 = no hard limit"
                       />
                     </div>

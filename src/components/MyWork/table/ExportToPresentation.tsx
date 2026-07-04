@@ -296,7 +296,7 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
                   type="checkbox"
                   checked={slide.enabled}
                   onChange={() => toggleSlide(slide.type)}
-                  className="w-4 h-4 rounded border-slate-300 text-primary-500 focus:ring-primary-500"
+                  className="w-4 h-4 rounded border-slate-300 text-primary-500 focus:ring-c-focus"
                 />
                 <span className="text-slate-500">{slide.icon}</span>
                 <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300">
