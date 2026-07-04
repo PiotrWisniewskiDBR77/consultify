@@ -14,9 +14,11 @@ import type {
   ColumnDef,
   ConditionalFormattingBlock,
   ConditionalFormattingRule,
+  DataValidation,
   WorkbookSchema,
 } from './WorkbookSchema.js';
 import {
+  accountingCurrencyFormat,
   addAutoFilter,
   addInfoSheet,
   addSubtleColorScale,
@@ -25,7 +27,6 @@ import {
   classifyStatus,
   colLetter as colLetterLocal,
   colorScaleColumns,
-  currencyFormat,
   FONT_FAMILY,
   FONT_SIZE_BODY,
   FONT_SIZE_HEADER,
@@ -109,6 +110,59 @@ function applyStyle(cell: ExcelJS.Cell, style?: CellStyle): void {
 
   const border = mapBorder(style.border);
   if (border) cell.border = border;
+}
+
+// ---------------------------------------------------------------------------
+// P4 — Data validation → ExcelJS cell.dataValidation
+// ---------------------------------------------------------------------------
+
+/**
+ * Map our DataValidation schema to an ExcelJS DataValidation object. `list`
+ * becomes a dropdown (comma-joined quoted formula, Excel's inline-list form);
+ * `decimal`/`whole` become numeric bounds. Returns null for an unusable spec
+ * (e.g. a list with no values) so the caller can skip it.
+ */
+function mapDataValidation(v: DataValidation): ExcelJS.DataValidation | null {
+  const allowBlank = v.allowBlank ?? true;
+  if (v.type === 'list') {
+    if (!v.values || v.values.length === 0) return null;
+    // Excel inline list: "\"A,B,C\"" — escape any embedded quotes/commas by
+    // trusting Excel's quoted-list convention (commas inside are separators).
+    const joined = v.values.map((s) => String(s).replace(/"/g, '')).join(',');
+    return {
+      type: 'list',
+      allowBlank,
+      formulae: [`"${joined}"`],
+      showErrorMessage: true,
+      showInputMessage: Boolean(v.prompt || v.promptTitle),
+      ...(v.promptTitle ? { promptTitle: v.promptTitle } : {}),
+      ...(v.prompt ? { prompt: v.prompt } : {}),
+      ...(v.errorTitle ? { errorTitle: v.errorTitle } : {}),
+      ...(v.error ? { error: v.error } : {}),
+    };
+  }
+  // decimal | whole
+  const operator = v.operator ?? 'between';
+  const formulae: string[] = [];
+  if (operator === 'between' || operator === 'notBetween') {
+    if (v.min === undefined || v.max === undefined) return null;
+    formulae.push(String(v.min), String(v.max));
+  } else {
+    if (v.min === undefined) return null;
+    formulae.push(String(v.min));
+  }
+  return {
+    type: v.type,
+    operator,
+    allowBlank,
+    formulae,
+    showErrorMessage: true,
+    showInputMessage: Boolean(v.prompt || v.promptTitle),
+    ...(v.promptTitle ? { promptTitle: v.promptTitle } : {}),
+    ...(v.prompt ? { prompt: v.prompt } : {}),
+    ...(v.errorTitle ? { errorTitle: v.errorTitle } : {}),
+    ...(v.error ? { error: v.error } : {}),
+  } as ExcelJS.DataValidation;
 }
 
 // ---------------------------------------------------------------------------
@@ -257,6 +311,280 @@ function cellTextWidth(value: unknown): number {
 }
 
 // ---------------------------------------------------------------------------
+// P1 — Cached formula results for TRIVIAL, same-sheet, constant-input formulas
+//
+// ExcelJS writes `{ formula }` with no cached `<v>` result, so viewers that do
+// not recalculate (Google Sheets preview, quick-look, some server renderers)
+// show blanks for every formula cell. We set `workbook.calcProperties
+// .fullCalcOnLoad = true` so Excel recomputes on open, AND — for a safe subset
+// of formulas whose value we can compute deterministically from literal numeric
+// constants on the SAME sheet — we attach the cached `result` so previews are
+// correct immediately. We NEVER guess: cross-sheet refs, non-constant inputs,
+// or any unsupported construct fall back to a bare `{ formula }` (no result).
+// ---------------------------------------------------------------------------
+
+/** Literal-numeric grid for one sheet: "B2" → 100000. Only cells whose schema
+ *  value is a finite number are indexed; formula cells & text are excluded so
+ *  we never fold a formula whose inputs are themselves formulas or strings. */
+type NumericGrid = Map<string, number>;
+
+/** A1 ref parser: "B2" → { col: 2, row: 2 }. Returns null on anything with a
+ *  sheet qualifier (contains "!") or absolute markers we don't need here. */
+function parseA1(ref: string): { col: number; row: number } | null {
+  const m = /^([A-Z]+)(\d+)$/.exec(ref.trim().toUpperCase());
+  if (!m) return null;
+  let col = 0;
+  for (const ch of m[1]) col = col * 26 + (ch.charCodeAt(0) - 64);
+  return { col, row: parseInt(m[2], 10) };
+}
+
+/** Expand an A1 range "B2:B4" into the list of contained refs (row-major). */
+function expandRange(a: string, b: string): string[] | null {
+  const pa = parseA1(a);
+  const pb = parseA1(b);
+  if (!pa || !pb) return null;
+  const refs: string[] = [];
+  const r1 = Math.min(pa.row, pb.row);
+  const r2 = Math.max(pa.row, pb.row);
+  const c1 = Math.min(pa.col, pb.col);
+  const c2 = Math.max(pa.col, pb.col);
+  for (let r = r1; r <= r2; r++) {
+    for (let c = c1; c <= c2; c++) {
+      let col = '';
+      let n = c;
+      while (n > 0) {
+        const rem = (n - 1) % 26;
+        col = String.fromCharCode(65 + rem) + col;
+        n = Math.floor((n - 1) / 26);
+      }
+      refs.push(`${col}${r}`);
+    }
+  }
+  return refs;
+}
+
+/** Look up every cell ref in a numeric grid; return the resolved numbers or
+ *  null if ANY ref is missing (i.e. not a literal number). */
+function resolveRefs(refs: string[], grid: NumericGrid): number[] | null {
+  const out: number[] = [];
+  for (const ref of refs) {
+    const v = grid.get(ref.toUpperCase());
+    if (v === undefined || !Number.isFinite(v)) return null;
+    out.push(v);
+  }
+  return out;
+}
+
+/**
+ * Attempt to compute the numeric result of a TRIVIAL formula against a
+ * same-sheet literal-number grid. Returns the number, or null when the formula
+ * is anything we can't be 100% certain about (cross-sheet, functions we don't
+ * whitelist, non-constant inputs, division by zero, etc.). Correctness over
+ * coverage: a wrong cache is worse than no cache.
+ */
+function tryComputeFormula(rawFormula: string, grid: NumericGrid): number | null {
+  let f = rawFormula.trim();
+  if (f.startsWith('=')) f = f.slice(1);
+  f = f.trim();
+  if (!f) return null;
+
+  // Reject anything touching another sheet (has "!") outright.
+  if (f.includes('!')) return null;
+
+  const upper = f.toUpperCase();
+
+  // --- Aggregate form: SUM/AVERAGE/MIN/MAX/PRODUCT/COUNT( <range|list> ) ---
+  const aggMatch = /^(SUM|AVERAGE|AVG|MIN|MAX|PRODUCT|COUNT)\(([^()]*)\)$/.exec(upper);
+  if (aggMatch) {
+    const fn = aggMatch[1];
+    const inner = aggMatch[2].trim();
+    if (!inner) return null;
+    // Collect operands: comma-separated, each either a range A:B or a single ref
+    // or a literal number.
+    const nums: number[] = [];
+    for (const partRaw of inner.split(',')) {
+      const part = partRaw.trim();
+      if (!part) return null;
+      if (part.includes(':')) {
+        const [a, b] = part.split(':');
+        const refs = expandRange(a, b);
+        if (!refs) return null;
+        const vals = resolveRefs(refs, grid);
+        if (!vals) return null;
+        nums.push(...vals);
+      } else if (/^-?\d+(\.\d+)?$/.test(part)) {
+        nums.push(parseFloat(part));
+      } else {
+        const single = resolveRefs([part], grid);
+        if (!single) return null;
+        nums.push(single[0]);
+      }
+    }
+    if (nums.length === 0) return null;
+    switch (fn) {
+      case 'SUM':
+        return nums.reduce((a, b) => a + b, 0);
+      case 'AVERAGE':
+      case 'AVG':
+        return nums.reduce((a, b) => a + b, 0) / nums.length;
+      case 'MIN':
+        return Math.min(...nums);
+      case 'MAX':
+        return Math.max(...nums);
+      case 'PRODUCT':
+        return nums.reduce((a, b) => a * b, 1);
+      case 'COUNT':
+        return nums.length;
+      default:
+        return null;
+    }
+  }
+
+  // --- Arithmetic form: only cell refs, numbers, + - * / ( ) and spaces ---
+  // (e.g. "B2-B3", "B2+B3+B4", "(B2-B3)/B2"). No function calls, no text.
+  if (!/^[A-Z0-9.+\-*/()\s]+$/.test(upper)) return null;
+  // Must reference at least one cell (pure-number formulas are pointless here
+  // but harmless — allow them too). Substitute each A1 ref with its literal.
+  const refTokens = upper.match(/[A-Z]+\d+/g) ?? [];
+  let expr = upper;
+  for (const token of refTokens) {
+    const val = grid.get(token);
+    if (val === undefined || !Number.isFinite(val)) return null;
+    // Replace the whole token; wrap negatives in parens to preserve precedence.
+    expr = expr.replace(
+      new RegExp(`\\b${token}\\b`, 'g'),
+      val < 0 ? `(${val})` : String(val)
+    );
+  }
+  // After substitution only numbers/operators/parens/spaces may remain.
+  if (!/^[0-9.+\-*/()\s]+$/.test(expr)) return null;
+  try {
+    // eslint-disable-next-line no-new-func
+    const result = Function(`"use strict"; return (${expr});`)() as unknown;
+    if (typeof result === 'number' && Number.isFinite(result)) return result;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/** Build the literal-numeric grid for a single sheet from its schema rows.
+ *  Header is row 1, so schema row index i maps to Excel row i+2. Only cells
+ *  whose resolved value is a finite number are indexed. */
+function buildNumericGrid(sheetDef: WorkbookSchema['sheets'][number]): NumericGrid {
+  const grid: NumericGrid = new Map();
+  const colLetters = sheetDef.columns.map((_, i) => colLetterLocal(i + 1));
+  for (let rowIdx = 0; rowIdx < sheetDef.rows.length; rowIdx++) {
+    const rowDef = sheetDef.rows[rowIdx];
+    const excelRow = rowIdx + 2;
+    sheetDef.columns.forEach((col, colIdx) => {
+      const cellDef = rowDef.cells[col.key];
+      if (!cellDef || cellDef.formula) return; // exclude formula cells
+      const raw = cellDef.value;
+      if (raw === undefined || raw === null) return;
+      const num = typeof raw === 'number' ? raw : parseFloat(String(raw));
+      if (!Number.isFinite(num)) return;
+      // Guard: only treat as numeric if the source really was numeric-ish
+      // (avoid indexing "10 units" → 10). parseFloat on a pure number string
+      // or a number is fine; reject strings with trailing non-numeric chars.
+      if (typeof raw === 'string' && !/^\s*-?\d+(\.\d+)?\s*$/.test(raw)) return;
+      grid.set(`${colLetters[colIdx]}${excelRow}`, num);
+    });
+  }
+  return grid;
+}
+
+// ---------------------------------------------------------------------------
+// P3 — Named ranges for Assumptions inputs
+//
+// Emits workbook-level defined names (e.g. `TaxRate` → 'Assumptions'!$B$5) for
+// each input row of an assumptions sheet. ADDITIVE: it never rewrites existing
+// formulas — a formula author *may* now use the friendly name, but every
+// existing A1/cross-sheet reference stays valid. We only create a name when the
+// label sanitizes to a valid, unique Excel name.
+// ---------------------------------------------------------------------------
+
+/** Does this sheet read as the assumptions/input sheet? */
+const ASSUMPTIONS_HINT = /assumption|założen|zalozen|inputs?|dane\s?wej|parametr/i;
+
+function isAssumptionsSheet(sheetDef: WorkbookSchema['sheets'][number]): boolean {
+  if (sheetDef.isAssumptions) return true;
+  return ASSUMPTIONS_HINT.test(sheetDef.name);
+}
+
+/**
+ * Turn an arbitrary label ("Tax rate (%)", "Stopa podatku") into a valid Excel
+ * defined-name: letters/digits/underscore only, must not start with a digit,
+ * cannot look like a cell reference. Returns null when nothing usable remains.
+ */
+function sanitizeDefinedName(label: string): string | null {
+  // Strip diacritics, then keep word chars, collapse the rest to underscores.
+  const ascii = label
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^A-Za-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  if (!ascii) return null;
+  let name = ascii;
+  // Excel names may not start with a digit and may not equal a cell ref.
+  if (/^\d/.test(name)) name = `_${name}`;
+  if (/^[A-Za-z]{1,3}\d+$/.test(name)) name = `${name}_`;
+  // Reserved single letters R and C are illegal defined names in Excel.
+  if (/^[RC]$/i.test(name)) name = `${name}_`;
+  if (name.length > 255) name = name.slice(0, 255);
+  return name;
+}
+
+/**
+ * Build the [name, ref] pairs for an assumptions sheet. `ref` is a fully
+ * qualified, absolute, quoted reference: 'Sheet Name'!$B$5. Uses the configured
+ * (or inferred) key/value columns. Deduplicates names within the sheet.
+ */
+function assumptionNameRefs(
+  sheetDef: WorkbookSchema['sheets'][number]
+): Array<{ name: string; ref: string }> {
+  const cols = sheetDef.columns;
+  if (cols.length < 2) return [];
+
+  const keyColKey = sheetDef.nameKeyColumn ?? cols[0].key;
+  // Default value column: first numeric-ish column, else the 2nd column.
+  const numericCol = cols.find(
+    (c) => c.type === 'number' || c.type === 'currency' || c.type === 'percent' || c.type === 'rating'
+  );
+  const valueColKey = sheetDef.nameValueColumn ?? numericCol?.key ?? cols[1].key;
+
+  const valueColIdx = cols.findIndex((c) => c.key === valueColKey);
+  if (valueColIdx < 0) return [];
+  const valueColLetter = colLetterLocal(valueColIdx + 1);
+
+  const quotedSheet = `'${sheetDef.name.replace(/'/g, "''")}'`;
+  const seen = new Set<string>();
+  const out: Array<{ name: string; ref: string }> = [];
+
+  for (let rowIdx = 0; rowIdx < sheetDef.rows.length; rowIdx++) {
+    const rowDef = sheetDef.rows[rowIdx];
+    // Skip summary/total rows — they aren't inputs.
+    if (rowDef.isSummary) continue;
+    const keyCell = rowDef.cells[keyColKey];
+    const valCell = rowDef.cells[valueColKey];
+    if (!keyCell || valCell === undefined) continue;
+    const label = keyCell.value;
+    if (label === undefined || label === null || String(label).trim() === '') continue;
+
+    const name = sanitizeDefinedName(String(label));
+    if (!name) continue;
+    const nameKey = name.toLowerCase();
+    if (seen.has(nameKey)) continue; // first wins, keep it deterministic
+    seen.add(nameKey);
+
+    const excelRow = rowIdx + 2; // header on row 1
+    const ref = `${quotedSheet}!$${valueColLetter}$${excelRow}`;
+    out.push({ name, ref });
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------
 // Builder
 // ---------------------------------------------------------------------------
 
@@ -288,7 +616,15 @@ export async function buildWorkbookBuffer(
   wb.creator = schema.author || 'Consultify';
   wb.created = new Date();
 
+  // P1 — force Excel to recalculate every formula on open, so cells whose
+  // cached result we could not compute still render (never blank) in Excel.
+  // Additive & harmless for viewers that ignore it.
+  wb.calcProperties = { ...(wb.calcProperties ?? {}), fullCalcOnLoad: true };
+
   for (const sheetDef of schema.sheets) {
+    // P1 — literal-number grid for THIS sheet, used to fold trivial formulas
+    // into a cached numeric result (same-sheet, constant inputs only).
+    const numericGrid = buildNumericGrid(sheetDef);
     const ws = wb.addWorksheet(sheetDef.name, {
       views: [
         {
@@ -391,7 +727,15 @@ export async function buildWorkbookBuffer(
         const cell = excelRow.getCell(col.key);
 
         if (cellDef.formula) {
-          cell.value = { formula: cellDef.formula } as ExcelJS.CellFormulaValue;
+          // P1 — try to fold a cached numeric result for trivial, same-sheet,
+          // constant-input formulas. Correctness over coverage: only attach a
+          // `result` when we can compute it deterministically; otherwise leave a
+          // bare `{ formula }` (fullCalcOnLoad will make Excel fill it on open).
+          const cached = tryComputeFormula(cellDef.formula, numericGrid);
+          cell.value =
+            cached !== null
+              ? ({ formula: cellDef.formula, result: cached } as ExcelJS.CellFormulaValue)
+              : ({ formula: cellDef.formula } as ExcelJS.CellFormulaValue);
           // W7.7 — track formula width estimate
           const fw = cellTextWidth(cellDef.formula);
           const prev = colWidths.get(col.key) ?? 0;
@@ -418,10 +762,12 @@ export async function buildWorkbookBuffer(
         }
 
         // Number format: cell-level > column-level > (locale-aware) type default.
-        // When styling is on, currency columns get the locale format (zł/€/$).
+        // When styling is on, currency columns get the ACCOUNTING locale format
+        // (McKinsey-grade: negatives in red parentheses, zero as an en-dash) —
+        // this connects WorkbookStyler.accountingCurrencyFormat(). Off → plain.
         const typeDefaultFmt =
           applyStyling && col.type === 'currency'
-            ? currencyFormat(styleCtx.currency)
+            ? accountingCurrencyFormat(styleCtx.currency)
             : col.type
               ? TYPE_FORMATS[col.type]
               : undefined;
@@ -479,6 +825,18 @@ export async function buildWorkbookBuffer(
 
         if (cellDef.comment) {
           cell.note = cellDef.comment;
+        }
+
+        // P4 — Data validation (dropdown / numeric bound). Cell-level wins over
+        // column-level. Fail-soft: a bad spec never breaks the export.
+        const valSpec = cellDef.validation ?? col.validation;
+        if (valSpec) {
+          try {
+            const dv = mapDataValidation(valSpec);
+            if (dv) cell.dataValidation = dv;
+          } catch (e) {
+            logger.warn(`[WorkbookBuilder] dataValidation failed for ${col.key}`, e);
+          }
         }
       }
 
@@ -579,6 +937,18 @@ export async function buildWorkbookBuffer(
     if (applyStyling) {
       addAutoFilter(ws, sheetDef.columns.length, sheetDef.rows.length);
       applyPrintSetup(ws, sheetDef.name);
+    }
+
+    // P3 — Named ranges for assumptions inputs. Additive: never rewrites an
+    // existing formula. Fail-soft: a bad name never breaks the export.
+    if (isAssumptionsSheet(sheetDef)) {
+      for (const { name, ref } of assumptionNameRefs(sheetDef)) {
+        try {
+          wb.definedNames.add(ref, name);
+        } catch (e) {
+          logger.warn(`[WorkbookBuilder] definedName failed: ${name} → ${ref}`, e);
+        }
+      }
     }
   }
 
