@@ -904,6 +904,46 @@ function functionToSql(
   }
 }
 
+/**
+ * Mask fields the given role is not allowed to read.
+ *
+ * The list-by-view path is the MAIN read path for records, yet it historically
+ * applied only the row policy — never the FIELD-read policy — so a role without
+ * read permission on a column still received that column's value. This mirrors
+ * RecordsService.listRecords: only mask when a userRole is present (internal /
+ * service callers pass no role and must see everything) and only when the table
+ * actually declares field permissions.
+ */
+async function applyFieldReadMasking(
+  records: unknown[],
+  tableId: string,
+  userRole: string | undefined
+): Promise<void> {
+  if (!userRole || !records.length) return;
+  try {
+    const { fieldPermissionService } = await import('./FieldPermissionService.js');
+    const hasPerms = await fieldPermissionService.tableHasFieldPermissions(tableId);
+    if (!hasPerms) return;
+    for (const record of records as Array<{ data?: Record<string, unknown> }>) {
+      if (record.data) {
+        record.data = await fieldPermissionService.filterRecordFields(
+          record as { data: Record<string, unknown> },
+          tableId,
+          userRole
+        );
+      }
+    }
+  } catch (permErr) {
+    // Fail CLOSED semantics are handled by callers of the individual services;
+    // here we log and leave records unmasked ONLY if the permission subsystem
+    // itself is unavailable — matching RecordsService.listRecords behaviour.
+    logger.warn('[ViewQueryEngine] field permission filtering failed', {
+      tableId,
+      error: (permErr as Error).message,
+    });
+  }
+}
+
 function buildFormulaFilterClause(
   formula: string,
   params: unknown[],
@@ -915,13 +955,19 @@ function buildFormulaFilterClause(
   try {
     ast = parseFormula(formula);
   } catch (e) {
-    // Genuine parse/syntax errors (bad formula text) fall back to a no-op
-    // TRUE filter, same as before — the formula is simply not applied.
+    // A syntax error (e.g. an unbalanced paren like `LOWER({Name}`) must NOT
+    // degrade to a no-op TRUE filter: that would silently return the ENTIRE
+    // table, leaking every row past a filter the caller believes is active.
+    // Surface a controlled ValidationError (400) instead — same posture as the
+    // unsupported-function branch in astToSql.
+    const reason = (e as Error).message;
     logger.warn('[ViewQueryEngine] filterByFormula parse failed', {
       formula,
-      error: (e as Error).message,
+      error: reason,
     });
-    return { sql: 'TRUE', nextIdx: startIdx };
+    throw new ValidationError(
+      `invalid filterByFormula (parse error): ${reason} — formula: ${formula}`
+    );
   }
 
   // Deliberately NOT wrapped in try/catch: astToSql throws a ValidationError
@@ -1246,6 +1292,8 @@ const viewQueryEngine = {
         const records = listResult.rows || [];
         const hasMore = offset + records.length < total;
 
+        await applyFieldReadMasking(records, options.tableId, options.userRole);
+
         return { records, total, hasMore, page, pageSize };
       }
 
@@ -1306,6 +1354,8 @@ const viewQueryEngine = {
         const last = records[records.length - 1] as Record<string, unknown>;
         nextCursor = `${last.created_at}${CURSOR_DELIM}${last.id}`;
       }
+
+      await applyFieldReadMasking(records, options.tableId, options.userRole);
 
       return { records, total, cursor: nextCursor, hasMore };
     } catch (e) {
