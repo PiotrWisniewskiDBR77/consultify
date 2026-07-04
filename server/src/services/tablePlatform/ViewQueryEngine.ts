@@ -989,7 +989,8 @@ async function buildGroupQuery(
   fields: string[] | undefined,
   pageSize: number,
   fieldTypes: Map<string, string>,
-  aggregates?: GroupAggregate[]
+  aggregates?: GroupAggregate[],
+  userRole?: string
 ): Promise<GroupResult[]> {
   const db = getDatabase();
   const params: unknown[] = [tableId];
@@ -1084,18 +1085,27 @@ async function buildGroupQuery(
     const sortStartIdx = recParams.length + 1;
     const { sql: sortSql } = buildSortClause(sorts || [], recParams, sortStartIdx);
 
+    // FIELD ALLOW-LIST PROJECTION (anti-data-leak):
+    // When `fields` is provided we must project ONLY those fields into `data`,
+    // exactly like the flat offset/cursor paths (jsonb_build_object). The pre-fix
+    // code aliased each allow-listed field BUT still appended the raw `r.data`
+    // column, so the full record — including fields outside the allow-list —
+    // leaked back to the caller in `data`. Building a trimmed jsonb object keeps
+    // the same field-filtering guarantee here as on the flat paths.
     const fieldParamStart = recParams.length + 1;
     const selectFields =
       fields?.length && fields.length > 0
-        ? fields
-            .map((f, i) => {
-              const safe = sanitizeFieldKey(f);
-              return safe
-                ? `r.data->>$${fieldParamStart + i} AS "${safe.replace(/"/g, '""')}"`
-                : null;
-            })
-            .filter(Boolean)
-            .join(', ') + ', r.id, r.table_id, r.data, r.created_at, r.updated_at, r.created_by'
+        ? (() => {
+            const projectionParts = fields
+              .map((f, i) => {
+                const safe = sanitizeFieldKey(f);
+                if (!safe) return null;
+                return `$${fieldParamStart + i}, r.data->$${fieldParamStart + i}`;
+              })
+              .filter(Boolean);
+            const projectedData = `jsonb_build_object(${projectionParts.join(', ')})`;
+            return `r.id, r.table_id, ${projectedData} AS data, r.created_at, r.updated_at, r.created_by`;
+          })()
         : 'r.*';
 
     if (fields?.length) recParams.push(...fields);
@@ -1111,10 +1121,19 @@ async function buildGroupQuery(
     `;
 
     const recResult = await (db as any).query(recSql, recParams);
+    const groupRecords = recResult.rows || [];
+
+    // FIELD-READ MASKING (anti-data-leak): the flat offset/cursor paths run
+    // applyFieldReadMasking on their records; the grouped path must do the same
+    // so a role without read permission on a column never receives it inside
+    // groups[].records. No-op when userRole is absent (service callers) or when
+    // the table declares no field permissions — matching the flat paths.
+    await applyFieldReadMasking(groupRecords, tableId, userRole);
+
     const groupResult: GroupResult = {
       value: groupValue,
       count,
-      records: recResult.rows || [],
+      records: groupRecords,
     };
     if (groupAggregates) {
       groupResult.aggregates = groupAggregates;
@@ -1221,7 +1240,8 @@ const viewQueryEngine = {
         fields,
         pageSize,
         fieldTypes,
-        options.groupAggregates
+        options.groupAggregates,
+        options.userRole
       );
       const total = groups.reduce((sum, g) => sum + g.count, 0);
       return {
