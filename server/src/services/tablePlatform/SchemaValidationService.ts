@@ -73,6 +73,193 @@ export const MAX_TABLES_PER_BASE = 100;
 const FIELD_NAME_REGEX = /^[a-zA-Z][a-zA-Z0-9_\s]*$/;
 
 // ---------------------------------------------------------------------------
+// CURRENCY field type — options + value helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Reasonable ISO-4217 currency code allow-list. Not exhaustive (ISO-4217 has
+ * ~180 active codes); covers the currencies already referenced elsewhere in
+ * the repo (`currencyService.ts` DEFAULT_CURRENCIES, `AddColumnDialog.tsx`
+ * dropdown) plus the other majors/regional currencies a consulting-focused
+ * product is likely to need. Extend here if a legitimate code is missing —
+ * do not loosen the shape check (3 uppercase letters) below.
+ */
+export const SUPPORTED_CURRENCY_CODES = [
+  'USD', 'EUR', 'GBP', 'PLN', 'CHF', 'JPY', 'CAD', 'AUD', 'NZD',
+  'CNY', 'HKD', 'SGD', 'INR', 'BRL', 'MXN', 'ZAR', 'SEK', 'NOK', 'DKK',
+  'CZK', 'HUF', 'RON', 'TRY', 'RUB', 'UAH', 'AED', 'SAR', 'ILS', 'KRW',
+] as const;
+
+export const DEFAULT_CURRENCY_CODE = 'USD';
+export const DEFAULT_CURRENCY_PRECISION = 2;
+export const MIN_CURRENCY_PRECISION = 0;
+export const MAX_CURRENCY_PRECISION = 4;
+
+const CURRENCY_CODE_SHAPE_REGEX = /^[A-Z]{3}$/;
+
+/**
+ * Validates the `currencyCode` / `precision` options of a `currency` field.
+ * Absent options are always valid (backward compatible with pre-existing
+ * currency fields that behaved like a plain `number`).
+ */
+export function validateCurrencyOptions(options: Record<string, unknown>): {
+  valid: boolean;
+  errors: string[];
+} {
+  const errors: string[] = [];
+
+  if (options.currencyCode != null) {
+    const code = String(options.currencyCode).trim();
+    if (!CURRENCY_CODE_SHAPE_REGEX.test(code)) {
+      errors.push(
+        `currency.currencyCode must be a 3-letter ISO-4217 code (got: '${options.currencyCode}')`
+      );
+    } else if (!(SUPPORTED_CURRENCY_CODES as readonly string[]).includes(code)) {
+      errors.push(
+        `currency.currencyCode '${code}' is not a supported currency code (supported: ${SUPPORTED_CURRENCY_CODES.join(', ')})`
+      );
+    }
+  }
+
+  if (options.precision != null) {
+    const precision = Number(options.precision);
+    if (
+      !Number.isInteger(precision) ||
+      precision < MIN_CURRENCY_PRECISION ||
+      precision > MAX_CURRENCY_PRECISION
+    ) {
+      errors.push(
+        `currency.precision must be an integer between ${MIN_CURRENCY_PRECISION} and ${MAX_CURRENCY_PRECISION} (got: ${String(
+          options.precision
+        )})`
+      );
+    }
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
+function resolveCurrencyPrecision(options: unknown): number {
+  const opts = (options ?? {}) as Record<string, unknown>;
+  const raw = opts.precision;
+  const precision = Number(raw);
+  if (
+    raw != null &&
+    Number.isInteger(precision) &&
+    precision >= MIN_CURRENCY_PRECISION &&
+    precision <= MAX_CURRENCY_PRECISION
+  ) {
+    return precision;
+  }
+  return DEFAULT_CURRENCY_PRECISION;
+}
+
+/**
+ * Rounds a currency value to the field's configured precision (default 2).
+ * Does not validate the value's type — call `checkCurrencyValue` first.
+ */
+export function normalizeCurrencyValue(value: number, options: unknown): number {
+  const precision = resolveCurrencyPrecision(options);
+  const factor = 10 ** precision;
+  return Math.round(value * factor) / factor;
+}
+
+/**
+ * Validates a `currency` cell value. Behaves like `number` (finite,
+ * non-NaN) — currency is still fundamentally a number — but additionally
+ * exposes the precision-normalised value so callers can persist a
+ * consistently-rounded amount.
+ */
+export function checkCurrencyValue(
+  value: unknown,
+  options: unknown
+): { ok: boolean; message?: string; normalized?: number } {
+  if (typeof value !== 'number' || Number.isNaN(value) || !Number.isFinite(value)) {
+    return { ok: false, message: 'must be a finite number' };
+  }
+  return { ok: true, normalized: normalizeCurrencyValue(value, options) };
+}
+
+// ---------------------------------------------------------------------------
+// DURATION field type — options + value helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Supported duration display formats. `format` is the legacy option key
+ * (still honoured for existing fields / templates, e.g. `TemplateService`
+ * seeds); `durationFormat` is the new, explicit key going forward. Both are
+ * validated the same way. `h:mm:ss.S` is kept for backward compatibility
+ * with the pre-existing FE contract (`src/types/tablePlatform.ts`
+ * `DurationFieldOptions.format`); `d h:mm` is the new Airtable-parity format.
+ */
+export const DURATION_FORMATS = ['h:mm', 'h:mm:ss', 'h:mm:ss.S', 'd h:mm'] as const;
+export type DurationFormat = (typeof DURATION_FORMATS)[number];
+
+export function validateDurationOptions(options: Record<string, unknown>): {
+  valid: boolean;
+  errors: string[];
+} {
+  const errors: string[] = [];
+  const format = options.durationFormat ?? options.format;
+  if (format != null && !(DURATION_FORMATS as readonly string[]).includes(String(format))) {
+    errors.push(`duration.durationFormat must be one of: ${DURATION_FORMATS.join(', ')}`);
+  }
+  return { valid: errors.length === 0, errors };
+}
+
+const DURATION_STRING_REGEX = /^(?:(\d+)d\s*)?(\d{1,2}):(\d{2})(?::(\d{2}(?:\.\d+)?))?$/;
+
+/**
+ * Normalises a duration value to seconds.
+ *  - A finite, non-negative `number` is returned unchanged (already seconds).
+ *  - A `string` matching `[Nd] h:mm[:ss]` is parsed and converted to seconds.
+ *  - Anything else (garbage strings, negative numbers, NaN, etc.) → `null`.
+ */
+export function normalizeDurationValue(value: unknown): number | null {
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value) || value < 0) return null;
+    return value;
+  }
+  if (typeof value !== 'string') return null;
+
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return null;
+
+  const match = DURATION_STRING_REGEX.exec(trimmed);
+  if (!match) return null;
+
+  const days = match[1] != null ? parseInt(match[1], 10) : 0;
+  const hours = parseInt(match[2], 10);
+  const minutes = parseInt(match[3], 10);
+  const seconds = match[4] != null ? parseFloat(match[4]) : 0;
+
+  if (minutes > 59) return null;
+  if (seconds >= 60) return null;
+
+  const total = days * 86400 + hours * 3600 + minutes * 60 + seconds;
+  return Number.isFinite(total) ? total : null;
+}
+
+/**
+ * Validates a `duration` cell value, accepting either a raw seconds number
+ * or a formatted duration string, normalising to seconds either way.
+ */
+export function checkDurationValue(value: unknown): {
+  ok: boolean;
+  message?: string;
+  normalized?: number;
+} {
+  const normalized = normalizeDurationValue(value);
+  if (normalized === null) {
+    return {
+      ok: false,
+      message: 'must be a non-negative number of seconds, or a valid duration string (e.g. "1:30")',
+    };
+  }
+  return { ok: true, normalized };
+}
+
+// ---------------------------------------------------------------------------
 // Service
 // ---------------------------------------------------------------------------
 
@@ -235,6 +422,12 @@ const schemaValidationService = {
       }
     }
 
+    if (normalizedType === 'barcode') {
+      if (options.symbology != null && typeof options.symbology !== 'string') {
+        errors.push('barcode symbology must be a string');
+      }
+    }
+
     if (normalizedType === 'rating') {
       if (options.max != null) {
         const max = Number(options.max);
@@ -244,11 +437,14 @@ const schemaValidationService = {
       }
     }
 
+    if (normalizedType === 'currency') {
+      const currencyResult = validateCurrencyOptions(options);
+      if (!currencyResult.valid) errors.push(...currencyResult.errors);
+    }
+
     if (normalizedType === 'duration') {
-      const validFormats = ['h:mm', 'h:mm:ss', 'h:mm:ss.S'];
-      if (options.format != null && !validFormats.includes(String(options.format))) {
-        errors.push(`duration format must be one of: ${validFormats.join(', ')}`);
-      }
+      const durationResult = validateDurationOptions(options);
+      if (!durationResult.valid) errors.push(...durationResult.errors);
     }
 
     // EPIC-T7 specialised types — dispatch to dedicated validators.
@@ -462,11 +658,16 @@ const schemaValidationService = {
           }
           break;
 
-        case 'currency':
-          if (typeof value !== 'number' || isNaN(value) || !isFinite(value)) {
-            errors.push({ fieldId: field.id, message: `'${field.name}' must be a finite number` });
+        case 'currency': {
+          const currencyCheck = checkCurrencyValue(value, field.options);
+          if (!currencyCheck.ok) {
+            errors.push({
+              fieldId: field.id,
+              message: `'${field.name}' ${currencyCheck.message ?? 'must be a finite number'}`,
+            });
           }
           break;
+        }
 
         case 'percent':
           if (typeof value !== 'number' || isNaN(value) || !isFinite(value)) {
@@ -642,18 +843,31 @@ const schemaValidationService = {
           break;
         }
 
-        case 'duration':
-          if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+        case 'duration': {
+          const durationCheck = checkDurationValue(value);
+          if (!durationCheck.ok) {
             errors.push({
               fieldId: field.id,
-              message: `'${field.name}' must be a non-negative number (seconds)`,
+              message: `'${field.name}' ${durationCheck.message ?? 'must be a non-negative number (seconds)'}`,
             });
           }
           break;
+        }
 
         case 'barcode':
-          if (typeof value !== 'string') {
-            errors.push({ fieldId: field.id, message: `'${field.name}' must be a string` });
+          if (typeof value !== 'string' || value.trim().length === 0) {
+            errors.push({
+              fieldId: field.id,
+              message: `'${field.name}' must be a non-empty string`,
+            });
+          } else {
+            const symbology = (field.options as { symbology?: unknown } | null)?.symbology;
+            if (symbology != null && typeof symbology !== 'string') {
+              errors.push({
+                fieldId: field.id,
+                message: `'${field.name}' has an invalid symbology configuration`,
+              });
+            }
           }
           break;
 
@@ -751,6 +965,14 @@ const schemaValidationService = {
 
     return { valid: errors.length === 0, errors };
   },
+
+  // CURRENCY / DURATION helpers exposed on the service surface so callers
+  // (e.g. RecordsService, cell renderers) can normalise values without
+  // re-implementing the parsing logic.
+  normalizeCurrencyValue,
+  checkCurrencyValue,
+  normalizeDurationValue,
+  checkDurationValue,
 };
 
 export default schemaValidationService;
