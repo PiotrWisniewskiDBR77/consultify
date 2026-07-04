@@ -25,6 +25,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import type { WorkspacePanelKey } from '@/components/shared/WorkspacePanelStrip';
 import { LoadingState } from '@/components/shared/states';
+import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { Api, getMapVersionFromPayload } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
@@ -47,6 +48,11 @@ import { type ShortcutHelp, useKeyboardShortcuts } from './hooks/useKeyboardShor
 import { IdeaAISuggestionsPanel } from './IdeaAISuggestionsPanel';
 import { IdeaContextPanel } from './IdeaContextPanel';
 import {
+  IDEA_CONVERT_TARGETS,
+  type IdeaConvertTarget,
+  isLiveConvertTarget,
+} from './ideaConvertTargets';
+import {
   composeIdeaBodyFromSeedIntent,
   deriveIdeaTitleFromSeedIntent,
   IDEA_STAGE_LABELS,
@@ -56,18 +62,13 @@ import {
   normalizePreferredSystem,
   normalizeStageToV5,
 } from './ideaEntryTypes';
-import { ideaMapToMarkdown } from './ideaMapToMarkdown';
 import { IdeaExportMenu } from './IdeaExportMenu';
 import { IdeaGhostCards } from './IdeaGhostCards';
+import { ideaMapToMarkdown } from './ideaMapToMarkdown';
 import { type ExtendedNodeData, IdeaNodeDetailDrawer } from './IdeaNodeDetailDrawer';
 import { IdeaProcessFlowTool } from './IdeaProcessFlowTool';
 import { IdeaProposalReview } from './IdeaProposalReview';
 import { IdeaRecommendationMap } from './IdeaRecommendationMap';
-import {
-  IDEA_CONVERT_TARGETS,
-  type IdeaConvertTarget,
-  isLiveConvertTarget,
-} from './ideaConvertTargets';
 import type { CanvasToolType, MindMapInteractionMode } from './ideaSelectionTypes';
 import {
   type AIProposal,
@@ -244,6 +245,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const { i18n } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  // DP-5: heuristic AI overlays (see DEFAULT_FLAGS in useFeatureFlags)
+  const { isEnabled: isFeatureEnabled } = useFeatureFlagsContext();
+  const heuristicAiOverlaysEnabled = isFeatureEnabled('mindmapHeuristicAiOverlays');
   const deepLinkedTableId = searchParams.get('tpTable');
   const deepLinkedViewId = searchParams.get('tpView');
   const isPolish = useMemo(() => i18n.language?.startsWith('pl'), [i18n.language]);
@@ -2994,6 +2998,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           canvasContainerRef={canvasContainerRef}
           canUndo={mmCanUndo}
           canRedo={mmCanRedo}
+          heuristicAiEnabled={heuristicAiOverlaysEnabled}
           onAction={(action) => handleQuickAction(action)}
           onOpenChat={() => {
             setChatKickoffMessage('');

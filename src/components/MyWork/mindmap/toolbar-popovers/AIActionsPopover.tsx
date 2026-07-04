@@ -21,7 +21,16 @@ interface AIActionsPopoverProps {
   onOpenChat: () => void;
   onClose: () => void;
   sidekickHint?: string;
+  /**
+   * DP-5: when false (default), heuristic AI actions (mm_ai_cluster) render
+   * disabled with a "Wkrótce / Coming soon" badge. Controlled by the
+   * mindmapHeuristicAiOverlays feature flag upstream.
+   */
+  heuristicAiEnabled?: boolean;
 }
+
+/** DP-5: actions whose displayed result is a client-side heuristic, not real LLM output. */
+const HEURISTIC_ACTIONS = new Set(['mm_ai_cluster']);
 
 const GENERAL_GENERATORS = [
   { action: 'mm_ai_expand', iconEl: Zap, labelPl: 'Rozwiń mapę (AI)', labelEn: 'Expand map (AI)' },
@@ -81,6 +90,7 @@ export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
   onOpenChat,
   onClose,
   sidekickHint: sidekickHintProp,
+  heuristicAiEnabled = false,
 }) => {
   const [eventCtx, setEventCtx] = useState<SidekickContext | null>(null);
 
@@ -160,14 +170,25 @@ export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
         </div>
         {GENERAL_GENERATORS.map((a) => {
           const Icon = a.iconEl;
+          const comingSoon = !heuristicAiEnabled && HEURISTIC_ACTIONS.has(a.action);
           return (
             <button
               key={a.action}
+              disabled={comingSoon}
               onClick={() => dispatch(a.action)}
-              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
+              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] transition-colors ${
+                comingSoon
+                  ? 'text-c-text-secondary/60 dark:text-c-text-secondary/60 cursor-not-allowed'
+                  : 'text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
+              }`}
             >
               <Icon size={12} className="text-c-text-secondary shrink-0" />
-              {isPl ? a.labelPl : a.labelEn}
+              <span className="flex-1 text-left">{isPl ? a.labelPl : a.labelEn}</span>
+              {comingSoon && (
+                <span className="text-[9px] italic text-c-text-secondary dark:text-c-text-secondary shrink-0">
+                  {isPl ? 'Wkrótce' : 'Coming soon'}
+                </span>
+              )}
             </button>
           );
         })}
