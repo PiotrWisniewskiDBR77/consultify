@@ -38,3 +38,10 @@ export {
   type MetaPill,
   type RelationItem,
 } from './StandardPreview';
+export {
+  StandardKanban,
+  type StandardKanbanProps,
+  type StandardKanbanColumn,
+  type StandardKanbanCard,
+  type StandardKanbanUrgency,
+} from './StandardKanban';
