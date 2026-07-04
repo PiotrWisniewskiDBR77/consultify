@@ -16544,7 +16544,10 @@
       "insertIntoDocument": "Insert into document",
       "teresaSubtitle": "AI document co-editor. Use source/methodology prompts here for governed proposal flows; all changes still require review and approval before execution.",
       "exportedWithOverride": "Exported with QA override. The override has been recorded in the audit trail.",
-      "exportPending": "{{format}} export is pending finalization. Markdown is available now.",
+      "exportSuccess": "{{format}} exported — the download has started.",
+      "exportShareHint": "Want to share it? Open “Share links” in the right-hand panel.",
+      "exportFailedWithDetail": "{{format}} export failed: {{detail}}",
+      "exportFailedFormat": "{{format}} export failed. Please try again.",
       "exportNoContent": "Export returned no content.",
       "exportQaBlocked": "Export blocked by Quality QA. Resolve the findings below or use the audited override.",
       "overrideUnauthorized": "You are not authorized to override the export QA gate. Ask a privileged reviewer.",
@@ -16610,6 +16613,8 @@
     "generationWarnings": {
       "summary_one": "Generated with limitations ({{count}})",
       "summary_other": "Generated with limitations ({{count}})",
+      "exportSummary_one": "Exported with limitations ({{count}})",
+      "exportSummary_other": "Exported with limitations ({{count}})",
       "codes": {
         "llm_prose_fallback": "AI prose unavailable",
         "citation_fallback": "Citations unavailable",

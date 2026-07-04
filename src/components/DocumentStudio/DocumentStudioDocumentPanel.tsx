@@ -65,6 +65,7 @@ import {
   recordDocumentStudioApprovalDecision,
   requestDocumentStudioApproval,
 } from './api';
+import { DocumentExportSuccessNote } from './DocumentExportSuccessNote';
 import { DocumentStudioQaPanel } from './DocumentStudioQaPanel';
 import { DocumentTipTapEditor } from './editor';
 import type {
@@ -111,7 +112,13 @@ type TFn = TFunction;
  */
 export const DocumentGenerationWarningsChip: React.FC<{
   warnings: DocumentGenerationWarning[];
-}> = ({ warnings }) => {
+  /**
+   * B4 — override for the collapsed-summary i18n key so the chip can be
+   * reused for export-time warnings ("Exported with limitations") without
+   * duplicating the component. Defaults to the generation-time summary.
+   */
+  summaryKey?: string;
+}> = ({ warnings, summaryKey = 'documentStudio.generationWarnings.summary' }) => {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   if (warnings.length === 0) return null;
@@ -137,7 +144,7 @@ export const DocumentGenerationWarningsChip: React.FC<{
       >
         <span className="flex items-center gap-1.5 font-medium text-c-text">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-c-warning" aria-hidden />
-          {t('documentStudio.generationWarnings.summary', { count: warnings.length })}
+          {t(summaryKey, { count: warnings.length })}
         </span>
         <ChevronDown
           className={`h-3.5 w-3.5 shrink-0 text-c-text-muted transition-transform ${
@@ -1753,6 +1760,10 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
   const [exporting, setExporting] = useState<'markdown' | 'docx' | 'pdf' | null>(null);
   const [exportNote, setExportNote] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
+  /** B4 — last successfully exported format; drives the inline success note. */
+  const [exportSuccess, setExportSuccess] = useState<'markdown' | 'docx' | 'pdf' | null>(null);
+  /** B4 — export-time warnings (chart raster / logo fallbacks) from the last export. */
+  const [exportWarnings, setExportWarnings] = useState<DocumentGenerationWarning[]>([]);
   const [openingBuilder, setOpeningBuilder] = useState(false);
   /** When set, the previous export attempt was QA-blocked. The user can resolve findings or invoke the audited override. */
   const [qaBlock, setQaBlock] = useState<{
@@ -1836,54 +1847,56 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       setExporting(format);
       setExportError(null);
       setExportNote(null);
+      setExportSuccess(null);
+      setExportWarnings([]);
       if (!options.qaOverride) setQaBlock(null);
       try {
         const payload = await exportDocumentStudioArtifact(artifactId, format, {
           qaOverride: options.qaOverride === true,
         });
         const manifest = (payload.manifest ?? {}) as Record<string, unknown>;
-        const pending = manifest.pendingRendering as string | undefined;
-        const pendingNote = manifest.pendingRenderingNote as string | undefined;
 
-        if (typeof payload.contentBase64 === 'string' && payload.contentBase64.length > 0) {
-          triggerBinaryDownload(payload.filename, payload.contentBase64, mimeForFormat(format));
-          if (manifest.qaOverride === true) {
-            setExportNote(
-              t(
-                'documentStudio.panel.exportedWithOverride',
-                'Exported with QA override. The override has been recorded in the audit trail.'
-              )
-            );
-          }
-          setQaBlock(null);
+        const hasBinary =
+          typeof payload.contentBase64 === 'string' && payload.contentBase64.length > 0;
+        const hasText = typeof payload.contentText === 'string' && payload.contentText.length > 0;
+        if (!hasBinary && !hasText) {
+          setExportNote(t('documentStudio.panel.exportNoContent', 'Export returned no content.'));
           return;
         }
-        if (typeof payload.contentText === 'string' && payload.contentText.length > 0) {
-          triggerTextDownload(payload.filename, payload.contentText, mimeForFormat(format));
-          if (pending) {
-            // Backwards-compatible fallback: if a deployment still returns the
-            // pending tag, surface its note rather than failing silently.
-            setExportNote(
-              pendingNote ??
-                t('documentStudio.panel.exportPending', {
-                  defaultValue:
-                    '{{format}} export is pending finalization. Markdown is available now.',
-                  format: format.toUpperCase(),
-                })
-            );
-          }
-          if (manifest.qaOverride === true) {
-            setExportNote(
-              t(
-                'documentStudio.panel.exportedWithOverride',
-                'Exported with QA override. The override has been recorded in the audit trail.'
-              )
-            );
-          }
-          setQaBlock(null);
-          return;
+
+        if (hasBinary) {
+          triggerBinaryDownload(
+            payload.filename,
+            payload.contentBase64 as string,
+            mimeForFormat(format)
+          );
+        } else {
+          triggerTextDownload(
+            payload.filename,
+            payload.contentText as string,
+            mimeForFormat(format)
+          );
         }
-        setExportNote(t('documentStudio.panel.exportNoContent', 'Export returned no content.'));
+
+        setQaBlock(null);
+        setExportSuccess(format);
+        // B4 — export-time warnings (e.g. chart_raster_failed, logo_unavailable)
+        // were previously dropped on the floor; surface them next to the note.
+        setExportWarnings(payload.generationWarnings ?? []);
+        toast.success(
+          t('documentStudio.panel.exportSuccess', {
+            defaultValue: '{{format}} exported — the download has started.',
+            format: format.toUpperCase(),
+          })
+        );
+        if (manifest.qaOverride === true) {
+          setExportNote(
+            t(
+              'documentStudio.panel.exportedWithOverride',
+              'Exported with QA override. The override has been recorded in the audit trail.'
+            )
+          );
+        }
       } catch (err) {
         if (err instanceof QaBlockingError) {
           setQaBlock({ format, report: err.report });
@@ -1909,10 +1922,20 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           );
           return;
         }
+        // B4 — readable i18n framing instead of a bare technical message;
+        // the underlying detail is kept as context when available.
+        const detail = err instanceof Error && err.message.trim().length > 0 ? err.message : null;
         setExportError(
-          err instanceof Error
-            ? err.message
-            : t('documentStudio.panel.exportFailed', 'Export failed')
+          detail
+            ? t('documentStudio.panel.exportFailedWithDetail', {
+                defaultValue: '{{format}} export failed: {{detail}}',
+                format: format.toUpperCase(),
+                detail,
+              })
+            : t('documentStudio.panel.exportFailedFormat', {
+                defaultValue: '{{format}} export failed. Please try again.',
+                format: format.toUpperCase(),
+              })
         );
       } finally {
         setExporting(null);
@@ -2177,8 +2200,25 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           <DocumentGenerationWarningsChip warnings={generationWarnings} />
         </div>
       )}
-      {(exportNote || exportError || qaBlock) && (
+      {(exportSuccess || exportWarnings.length > 0 || exportNote || exportError || qaBlock) && (
         <div className="space-y-3 px-6 pt-4">
+          {exportSuccess ? (
+            <DocumentExportSuccessNote
+              format={exportSuccess}
+              onDismiss={() => {
+                setExportSuccess(null);
+                setExportWarnings([]);
+              }}
+            />
+          ) : null}
+
+          {exportWarnings.length > 0 ? (
+            <DocumentGenerationWarningsChip
+              warnings={exportWarnings}
+              summaryKey="documentStudio.generationWarnings.exportSummary"
+            />
+          ) : null}
+
           {exportNote ? (
             <div className="rounded-md border border-amber-400/30 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
               {exportNote}
