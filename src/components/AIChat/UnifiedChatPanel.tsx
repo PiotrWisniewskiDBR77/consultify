@@ -5456,7 +5456,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               >
                 {t('aiChat.teresaWelcome', "Let's start your transformation")}
                 {currentUser?.firstName && (
-                  <span className="text-c-accent">
+                  // Imię w kolorze tytułu (wzorzec 2026-07-04: czerwień TYLKO
+                  // dla semantyki krytycznej, nie jako akcent ozdobny).
+                  <span className="text-c-text">
                     , {currentUser.firstName}
                   </span>
                 )}
@@ -5475,7 +5477,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                   type="button"
                   onClick={() => void teresaVoice.handleVoiceToggle()}
                   data-testid="welcome-voice-cta"
-                  className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-crimson-600 px-3.5 py-1.5 text-xs font-medium text-white shadow-sm shadow-crimson-600/20 transition-colors duration-200 hover:bg-crimson-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-crimson-500/40"
+                  className="mt-5 inline-flex items-center gap-1.5 rounded-full border border-navy-700/20 bg-navy-900 px-3.5 py-1.5 text-xs font-medium text-white transition-colors duration-200 hover:bg-navy-800 dark:border-white/20 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
                   {teresaVoice.voiceStatus === 'connecting' ? (
                     <Loader2 size={13} className="animate-spin" />
