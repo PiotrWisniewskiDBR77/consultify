@@ -1,0 +1,38 @@
+-- ============================================================================
+-- 20260704 — M15 (Rezultaty) ↔ M16 (Finanse) split-brain fix:
+--            reconciliation.kpi_id references LEGACY initiative_kpis, not v8_*
+-- ----------------------------------------------------------------------------
+-- ROOT CAUSE (Harvard "split-brain Rezultaty/Finanse"):
+--   `v8_kpi_finance_reconciliations.kpi_id` carried a FOREIGN KEY to
+--   `v8_kpi_definitions(kpi_id)` (see 20260323_v8_results_roi.sql:159). But the
+--   ONLY live producer of reconciliation rows — POST /api/v8/results/reconciliations
+--   → initiateReconciliation — validates and stores an `initiative_kpis.id`
+--   (the LEGACY, canonical KPI family that the closure handoff, demo seeds and
+--   getResultsKpiCatalog all use). The v8_kpi_definitions table is an ORPHAN read
+--   model: its ONLY writers are createKPI/recordROIRealization, called solely by
+--   the synthetic, self-cleaning healthProbeService (gated off production). No
+--   live flow, no auto-seed, and no customer org ever populates it.
+--
+--   Consequence: inserting a real (legacy) KPI id into the reconciliation table
+--   violated the FK → 500 on every genuine reconciliation, and the M15/M16
+--   dashboard read paths (which joined v8_kpi_definitions) returned NULL/zero
+--   even though the initiative closure was live and correct.
+--
+-- FIX (this migration): drop the orphan-pointing FK so `kpi_id` can hold a
+--   legacy `initiative_kpis.id`. We do NOT add a replacement FK to
+--   `initiative_kpis`: the POST route already validates KPI ownership against
+--   initiative_kpis (COALESCE org from initiatives) before the write, and a hard
+--   FK would re-introduce a cross-family coupling that differs across the
+--   public/v8 schema split. The reconciliation reader
+--   (resultsROIService.getReconciliationOverview) is switched in the same change
+--   to LEFT JOIN initiative_kpis, so KPI name/unit/target/initiative hydrate from
+--   the family the id actually belongs to.
+--
+-- Idempotent (DROP CONSTRAINT IF EXISTS); auto-applied by DatabaseInitializer
+-- (pattern ^(7\d{2}|\d{8})_.*\.sql$) and tracked in tp_migration_history.
+-- ============================================================================
+
+-- Postgres auto-names an inline `FOREIGN KEY (kpi_id) REFERENCES ...` as
+-- `<table>_<column>_fkey`. Drop that (and any explicitly-named variant) if present.
+ALTER TABLE v8_kpi_finance_reconciliations
+  DROP CONSTRAINT IF EXISTS v8_kpi_finance_reconciliations_kpi_id_fkey;

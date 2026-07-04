@@ -1,0 +1,18 @@
+{"numTotalTestSuites":4,"numPassedTestSuites":4,"numFailedTestSuites":0,"numPendingTestSuites":0,"numTotalTests":6,"numPassedT    <testsuite name="server/src/services/v8/__tests__/reconciliationFkMigration.test.ts" timestamp="2026-07-04T06:26:06.582Z" hostname="MacBook-Pro-Piotr-2.local" tests="4" failures="0" errors="0" skipped="0" time="0.093108834">
+        <testcase classname="server/src/services/v8/__tests__/reconciliationFkMigration.test.ts" name="reconciliation FK → legacy migration (split-brain 500 fix) &gt; the drop-FK migration file exists" time="0.087538167">
+        </testcase>
+        <testcase classname="server/src/services/v8/__tests__/reconciliationFkMigration.test.ts" name="reconciliation FK → legacy migration (split-brain 500 fix) &gt; drops the orphan-pointing FK idempotently" time="0.001465958">
+        </testcase>
+        <testcase classname="server/src/services/v8/__tests__/reconciliationFkMigration.test.ts" name="reconciliation FK → legacy migration (split-brain 500 fix) &gt; does NOT re-introduce a FK to v8_kpi_definitions (would re-break real demo KPIs)" time="0.00052475">
+        </testcase>
+        <testcase classname="server/src/services/v8/__tests__/reconciliationFkMigration.test.ts" name="reconciliation FK → legacy migration (split-brain 500 fix) &gt; has a filename the migration runner will pick up (^\d{8}_.*\.sql$)" time="0.00024475">
+        </testcase>
+    </testsuite>
+    <testsuite name="server/src/services/v8/__tests__/reconciliationOverview.splitbrain.test.ts" timestamp="2026-07-04T06:26:06.584Z" hostname="MacBook-Pro-Piotr-2.local" tests="2" failures="0" errors="0" skipped="0" time="0.072349791">
+        <testcase classname="server/src/services/v8/__tests__/reconciliationOverview.splitbrain.test.ts" name="M15/M16 split-brain: reconciliation reader hydrates from LEGACY initiative_kpis &gt; returns a NON-ZERO, fully-hydrated reconciliation for a demo (legacy) KPI" time="0.067394416">
+        </testcase>
+        <testcase classname="server/src/services/v8/__tests__/reconciliationOverview.splitbrain.test.ts" name="M15/M16 split-brain: reconciliation reader hydrates from LEGACY initiative_kpis &gt; joins LEGACY initiative_kpis on its TEXT id and NOT the orphan v8_kpi_definitions" time="0.00158925">
+        </testcase>
+    </testsuite>
+</testsuites>
+rates from LEGACY initiative_kpis"],"fullName":"M15/M16 split-brain: reconciliation reader hydrates from LEGACY initiative_kpis returns a NON-ZERO, fully-hydrated reconciliation for a demo (legacy) KPI","status":"passed","title":"returns a NON-ZERO, fully-hydrated reconciliation for a demo (legacy) KPI","duration":67.39441599999986,"failureMessages":[],"meta":{},"tags":[]},{"ancestorTitles":["M15/M16 split-brain: reconciliation reader hydrates from LEGACY initiative_kpis"],"fullName":"M15/M16 split-brain: reconciliation reader hydrates from LEGACY initiative_kpis joins LEGACY initiative_kpis on its TEXT id and NOT the orphan v8_kpi_definitions","status":"passed","title":"joins LEGACY initiative_kpis on its TEXT id and NOT the orphan v8_kpi_definitions","duration":1.5892499999999927,"failureMessages":[],"meta":{},"tags":[]}],"startTime":1783146366485,"endTime":1783146366554.5894,"status":"passed","message":"","name":"/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/.claude/worktrees/agent-afed84388a353c419/server/src/services/v8/__tests__/reconciliationOverview.splitbrain.test.ts"}]}

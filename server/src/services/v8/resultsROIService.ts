@@ -714,30 +714,46 @@ function emptyReconciliationStatusCounts(): Partial<Record<ReconciliationStatus,
 
 /**
  * KPI scorecard: counts, status/category breakdown, average capped achievement vs target.
+ *
+ * SOURCE: legacy `initiative_kpis` (the canonical KPI family the whole closure flow
+ * writes to). The v8 `v8_kpi_definitions` table is an orphan read-model written only
+ * by the health-probe (create-and-delete, never on prod), so reading it here made the
+ * M15 scorecard report `totalKpis=0` for real orgs. Org-scoping mirrors
+ * `getResultsKpiCatalog`: KPIs carry `organization_id` (backfilled + written for
+ * initiative-bound rows since migration 612); a `LEFT JOIN initiatives` supplies the
+ * fallback for any row whose own `organization_id` was never stamped. Column aliases
+ * (`status`, `metric_type`) are preserved so the output contract — and the existing
+ * mock-order-driven tests — stay byte-identical; only the underlying table changes.
+ * `category` is legacy's metric-type column, aliased to `metric_type`.
  */
 export async function getKPIScorecard(
   organizationId: string,
   initiativeId?: string
 ): Promise<KPIScorecardSummary> {
-  const initiativeClause = initiativeId ? ` AND initiative_id = ?` : '';
+  const initiativeClause = initiativeId ? ` AND k.initiative_id = ?` : '';
   const initiativeParams: unknown[] = initiativeId ? [initiativeId] : [];
+  const orgScope = `COALESCE(k.organization_id, i.organization_id) = ?`;
   const totalRow = await dbGet<{ total: number }>(
-    `SELECT COUNT(*) AS total FROM v8_kpi_definitions WHERE organization_id = ?${initiativeClause}`,
+    `SELECT COUNT(*) AS total FROM initiative_kpis k
+     LEFT JOIN initiatives i ON i.id = k.initiative_id
+     WHERE ${orgScope}${initiativeClause}`,
     [organizationId, ...initiativeParams],
     { fallback: true }
   );
   const totalKpis = Number(totalRow?.total ?? 0);
 
   const statusRows = await dbAll<{ status: string; cnt: number }>(
-    `SELECT status, COUNT(*) AS cnt FROM v8_kpi_definitions
-     WHERE organization_id = ?${initiativeClause} GROUP BY status`,
+    `SELECT k.status AS status, COUNT(*) AS cnt FROM initiative_kpis k
+     LEFT JOIN initiatives i ON i.id = k.initiative_id
+     WHERE ${orgScope}${initiativeClause} GROUP BY k.status`,
     [organizationId, ...initiativeParams],
     { fallback: true }
   );
 
   const categoryRows = await dbAll<{ metric_type: string; cnt: number }>(
-    `SELECT metric_type, COUNT(*) AS cnt FROM v8_kpi_definitions
-     WHERE organization_id = ?${initiativeClause} GROUP BY metric_type`,
+    `SELECT k.category AS metric_type, COUNT(*) AS cnt FROM initiative_kpis k
+     LEFT JOIN initiatives i ON i.id = k.initiative_id
+     WHERE ${orgScope}${initiativeClause} GROUP BY k.category`,
     [organizationId, ...initiativeParams],
     { fallback: true }
   );
@@ -756,7 +772,9 @@ export async function getKPIScorecard(
          ELSE NULL
        END
      ) AS avg_rate
-     FROM v8_kpi_definitions WHERE organization_id = ?${initiativeClause}`,
+     FROM initiative_kpis k
+     LEFT JOIN initiatives i ON i.id = k.initiative_id
+     WHERE ${orgScope}${initiativeClause}`,
     [organizationId, ...initiativeParams],
     { fallback: true }
   );
@@ -1209,6 +1227,29 @@ interface LegacyDeviationActionRow {
 
 /**
  * ROI realization aggregates for dashboards.
+ *
+ * SOURCE: legacy `roi_realized_values` (realized side) + `roi_assumptions` (projected
+ * side) — the same canonical ROI tables `getROIPortfolioSummary` reads and the tables
+ * the closure flow + demo seed actually populate. The v8 `v8_roi_realization_entries`
+ * table is an orphan read-model (health-probe writes only, never prod), so reading it
+ * here made the M15 ROI dashboard report `totalEntries=0` for real orgs.
+ *
+ * Field mapping (money logic — no fabrication):
+ *  - `totalEntries`   = COUNT(*) of realized monthly data-points in `roi_realized_values`.
+ *  - `totalRealized`  = SUM(realized_revenue_delta + realized_cost_delta + realized_savings),
+ *                       the identical realized-benefit formula used by getROIPortfolioSummary.
+ *  - `projectedFromKpiTargets` = SUM(expected_revenue_delta + expected_cost_delta) from
+ *                       `roi_assumptions`, gated to initiatives that HAVE at least one
+ *                       realized row (mirrors the v8 EXISTS-gated projection: only
+ *                       initiatives with realized entries contribute to the projected base).
+ *                       This is the canonical legacy projection basis (assumptions), the
+ *                       same one getROIPortfolioSummary trusts; the field name is retained
+ *                       for contract stability even though the basis is assumption- rather
+ *                       than KPI-target-derived.
+ *  - `byInitiative`   = per-initiative entry_count + realized_sum from `roi_realized_values`.
+ * Output aliases (total_entries/total_realized/projected/initiative_id/entry_count/
+ * realized_sum) and the 3-query order are preserved so the contract + existing
+ * mock-order-driven tests stay byte-identical.
  */
 export async function getROIDashboard(
   organizationId: string,
@@ -1217,21 +1258,27 @@ export async function getROIDashboard(
   const initiativeClause = initiativeId ? ` AND initiative_id = ?` : '';
   const initiativeParams: unknown[] = initiativeId ? [initiativeId] : [];
   const totalRow = await dbGet<{ total_entries: number; total_realized: number }>(
-    `SELECT COUNT(*) AS total_entries, COALESCE(SUM(realized_value), 0) AS total_realized
-     FROM v8_roi_realization_entries WHERE organization_id = ?${initiativeClause}`,
+    `SELECT COUNT(*) AS total_entries,
+            COALESCE(SUM(
+              COALESCE(realized_revenue_delta, 0)
+              + COALESCE(realized_cost_delta, 0)
+              + COALESCE(realized_savings, 0)
+            ), 0) AS total_realized
+     FROM roi_realized_values WHERE organization_id = ?${initiativeClause}`,
     [organizationId, ...initiativeParams],
     { fallback: true }
   );
 
   const projectedRow = await dbGet<{ projected: number | null }>(
-    `SELECT COALESCE(SUM(k.target_value), 0) AS projected
-     FROM v8_kpi_definitions k
-     WHERE k.organization_id = ?
-       ${initiativeId ? ` AND k.initiative_id = ?` : ''}
-       AND k.target_value IS NOT NULL
+    `SELECT COALESCE(SUM(
+              COALESCE(a.expected_revenue_delta, 0) + COALESCE(a.expected_cost_delta, 0)
+            ), 0) AS projected
+     FROM roi_assumptions a
+     WHERE a.organization_id = ?
+       ${initiativeId ? ` AND a.initiative_id = ?` : ''}
        AND EXISTS (
-         SELECT 1 FROM v8_roi_realization_entries r
-         WHERE r.organization_id = k.organization_id AND r.kpi_id = k.kpi_id
+         SELECT 1 FROM roi_realized_values r
+         WHERE r.organization_id = a.organization_id AND r.initiative_id = a.initiative_id
            ${initiativeId ? `AND r.initiative_id = ?` : ''}
        )`,
     [organizationId, ...initiativeParams, ...initiativeParams],
@@ -1239,8 +1286,13 @@ export async function getROIDashboard(
   );
 
   const initiativeRows = await dbAll<RoiInitiativeAggRow>(
-    `SELECT initiative_id, COUNT(*) AS entry_count, COALESCE(SUM(realized_value), 0) AS realized_sum
-     FROM v8_roi_realization_entries
+    `SELECT initiative_id, COUNT(*) AS entry_count,
+            COALESCE(SUM(
+              COALESCE(realized_revenue_delta, 0)
+              + COALESCE(realized_cost_delta, 0)
+              + COALESCE(realized_savings, 0)
+            ), 0) AS realized_sum
+     FROM roi_realized_values
      WHERE organization_id = ?${initiativeClause}
      GROUP BY initiative_id`,
     [organizationId, ...initiativeParams],
@@ -2157,6 +2209,19 @@ export async function getReconciliationOverview(
   // KPI/realization can never bleed into another org's variance. When the
   // reconciliation ENGINE has persisted a unit-normalised deviation (+ CONCLUSION
   // layer), those columns are preferred over the legacy monetary heuristic.
+  //
+  // SPLIT-BRAIN FIX (2026-07-04): `r.kpi_id` holds a LEGACY `initiative_kpis.id`
+  // (what POST /reconciliations validates + initiateReconciliation stores), NOT a
+  // `v8_kpi_definitions.kpi_id`. The old join to v8_kpi_definitions therefore
+  // hydrated NULL name/unit/target/initiative for every real reconciliation,
+  // zeroing the M15/M16 surface. Join `initiative_kpis` — the canonical family the
+  // id belongs to. Org-scoping stays entirely on `r.organization_id` (the
+  // reconciliation row carries its own org, written by initiateReconciliation), so
+  // the KPI join needs no org predicate — a foreign-org kpi_id could never have been
+  // reconciled under this org in the first place (POST route validates ownership).
+  // The realized-side subquery stays on v8_roi_realization_entries: it is empty for
+  // legacy KPIs, so realized_value is NULL and the reader's monetary branch already
+  // treats that as "no realized side yet" (no fabrication).
   const rows = await dbAll<ReconciliationVarianceRow>(
     `SELECT
        r.reconciliation_id,
@@ -2176,8 +2241,8 @@ export async function getReconciliationOverview(
          WHERE e.organization_id = r.organization_id AND e.kpi_id = r.kpi_id
        ) AS realized_value${engineSelect}
      FROM v8_kpi_finance_reconciliations r
-     LEFT JOIN v8_kpi_definitions k
-       ON k.kpi_id = r.kpi_id AND k.organization_id = r.organization_id
+     LEFT JOIN initiative_kpis k
+       ON k.id = r.kpi_id
      WHERE r.organization_id = ?${filters.join('')}
      ORDER BY r.created_at DESC`,
     params,

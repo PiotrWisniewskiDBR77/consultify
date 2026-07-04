@@ -607,7 +607,8 @@ describe('getReconciliationHealth', () => {
 describe('getResultsDashboard', () => {
   it('composes scorecard, deviations, ROI, reconciliation, and recent packs', async () => {
     mockDbGet.mockImplementation(async (sql: string) => {
-      if (sql.includes('COUNT(*) AS total FROM v8_kpi_definitions')) {
+      // Scorecard now sources legacy initiative_kpis (canonical KPI family).
+      if (sql.includes('COUNT(*) AS total FROM initiative_kpis')) {
         return { total: 1 };
       }
       if (sql.includes('AS avg_rate')) {
@@ -626,10 +627,10 @@ describe('getResultsDashboard', () => {
     });
 
     mockDbAll.mockImplementation(async (sql: string) => {
-      if (sql.includes('v8_kpi_definitions') && sql.includes('GROUP BY status')) {
+      if (sql.includes('initiative_kpis') && sql.includes('GROUP BY k.status')) {
         return [{ status: 'active', cnt: 1 }];
       }
-      if (sql.includes('GROUP BY metric_type')) {
+      if (sql.includes('initiative_kpis') && sql.includes('GROUP BY k.category')) {
         return [{ metric_type: 'count', cnt: 1 }];
       }
       if (sql.includes('v8_deviation_records') && sql.includes('resolved_at IS NULL')) {
