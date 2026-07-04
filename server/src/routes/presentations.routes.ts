@@ -1280,6 +1280,31 @@ router.post(
     if (!ensurePresentationCapability(req, res, 'presentation_create')) return;
     const orgId = getOrgId(req);
     const { deckId, outline, setup } = req.body;
+
+    // P0.3-b — legacy route parity: deckId comes from a prior /generate/outline
+    // call, which already INSERTs the row (status='draft'). generateDeck() itself
+    // does an unconditional UPDATE status='generating' with no guard, so two
+    // concurrent /generate/deck POSTs for the same deckId both proceed and race
+    // each other. Mirror the deliverablesGenerationService.start() atomic-lock
+    // pattern: a conditional UPDATE wins exactly one request; the loser gets 409
+    // instead of duplicating generateDeck(). Fail-open when deckId is absent —
+    // that shape doesn't correspond to the outline→deck flow this lock protects.
+    if (deckId) {
+      const lock = await dbRun(
+        `UPDATE presentation_decks SET status = 'generating', updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND organization_id = ? AND status != 'generating'
+         RETURNING id`,
+        [deckId, orgId]
+      );
+      if (!lock.success || !lock.changes) {
+        return res.status(409).json({
+          success: false,
+          error: `Generacja ${deckId} już trwa — odpytuj status zamiast startować ponownie`,
+          code: 'PRESENTATION_GENERATION_IN_PROGRESS',
+        });
+      }
+    }
+
     const result = await generateDeck(deckId, outline, setup, orgId);
     res.json({ success: true, data: result });
   })
