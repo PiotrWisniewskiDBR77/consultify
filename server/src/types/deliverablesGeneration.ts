@@ -13,8 +13,17 @@
  * zwraca `not_implemented` aż do faz L2/L3.
  */
 
-/** Klasa artefaktu generowanego przez lekki runtime. */
-export type DeliverableFormat = 'deck' | 'doc' | 'sheet';
+/**
+ * Klasa artefaktu generowanego przez lekki runtime.
+ *
+ * `mindmap` (M06 Fala 2 · 2.3, ff_teresaMindmap): mapa myśli NIE przechodzi przez
+ * DB-bound runtime deck/doc/sheet (`deliverablesGenerationService`). Zamiast wiersza
+ * `presentation_decks` handler generuje graf {nodes,edges} inline i emituje go do
+ * frontu, który montuje mapę w Ideas (workspace M06). Dlatego `mindmap` jest w tym
+ * typie tylko jako etykieta formatu deliverable — nie jest obsługiwany przez
+ * plan()/start()/status() serwisu generacji (tam pozostają deck/doc/sheet).
+ */
+export type DeliverableFormat = 'deck' | 'doc' | 'sheet' | 'mindmap';
 
 /**
  * Stan generacji — podzbiór cyklu życia artefaktu z V8.1 §7, rozszerzony o checkpoint
