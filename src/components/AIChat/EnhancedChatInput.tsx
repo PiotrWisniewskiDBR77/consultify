@@ -1077,7 +1077,13 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
         className={`
                 relative
                 bg-white dark:bg-navy-900 rounded-xl border transition-all duration-200
-                ${isFocused ? 'border-c-focus-solid' : 'border-slate-200 dark:border-navy-700'}
+                ${
+                  /* Bez kolorowej obwódki focusa na composerze (decyzja Piotra
+                     2026-07-04: „irytująca ramka przy pisaniu — wyłącz").
+                     Fokus sygnalizuje caret; przy fokusie tylko minimalnie
+                     jaśniejsza neutralna ramka. */
+                  isFocused ? 'border-slate-300 dark:border-navy-600' : 'border-slate-200 dark:border-navy-700'
+                }
                 ${isRecordingAny ? 'ring-2 ring-blue-500/50' : ''}
                 ${isDisabled ? 'opacity-60' : ''}
             `}
