@@ -37,8 +37,21 @@ interface StoredField {
   options: Record<string, unknown> | null;
 }
 
+interface StoredRowPolicy {
+  id: string;
+  table_id: string;
+  role: string;
+  permission: 'none' | 'read' | 'write';
+  condition_field_id: string | null;
+  condition_operator: string | null;
+  condition_value: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
 const store = new Map<string, StoredRow>();
 const fields: StoredField[] = [];
+const rowPolicies: StoredRowPolicy[] = [];
 
 function clone<T>(v: T): T {
   return JSON.parse(JSON.stringify(v)) as T;
@@ -140,6 +153,15 @@ const fakePool = {
       return { rows: [], rowCount: existed ? 1 : 0 };
     }
 
+    // --- RowPolicyService.evaluateAccess (used by deleteRecord's role gate)
+    if (s.startsWith('SELECT * FROM tp_row_policies')) {
+      const [tableId, role] = params as [string, string];
+      const rows = rowPolicies.filter(
+        (p) => p.table_id === tableId && p.is_active === true && p.role === role
+      );
+      return { rows: rows.map(clone), rowCount: rows.length };
+    }
+
     throw new Error(`Unexpected SQL in fakePool: ${s}`);
   }),
 };
@@ -220,9 +242,25 @@ function seedFieldsWithSalaryRestrictedToOwner(): void {
   );
 }
 
+function seedNonePolicyForViewer(): void {
+  rowPolicies.length = 0;
+  rowPolicies.push({
+    id: 'pol-1',
+    table_id: TABLE,
+    role: 'viewer',
+    permission: 'none',
+    condition_field_id: null, // unconditional deny for this role
+    condition_operator: null,
+    condition_value: null,
+    is_active: true,
+    created_at: new Date().toISOString(),
+  });
+}
+
 describe('Table Platform · field-level permission enforcement (anty-false-green)', () => {
   beforeEach(() => {
     store.clear();
+    rowPolicies.length = 0;
     fakePool.query.mockClear();
     seedFieldsWithSalaryRestrictedToOwner();
   });
@@ -283,5 +321,96 @@ describe('Table Platform · field-level permission enforcement (anty-false-green
     // BEZ userRole (stan sprzed fixu) — brak egzekucji, zapis przechodzi.
     const unguarded = await recordsService.updateRecord(rec.id, { salary: 42 }, 'user-1');
     expect(unguarded.data.salary).toBe(42);
+  });
+
+  it('createRecord: zapis do `salary` przez "viewer" → PermissionError; przez "base_owner" → OK', async () => {
+    await expect(
+      recordsService.createRecord(TABLE, { name: 'A', salary: 999 }, 'user-1', 'viewer')
+    ).rejects.toBeInstanceOf(PermissionError);
+    // Rejected create must not have persisted a row.
+    expect([...store.values()].some((r) => r.data.name === 'A')).toBe(false);
+
+    const ok = await recordsService.createRecord(
+      TABLE,
+      { name: 'B', salary: 500 },
+      'user-1',
+      'base_owner'
+    );
+    expect(ok.data.salary).toBe(500);
+
+    // BEZ userRole (stan sprzed fixu) — brak egzekucji, zapis przechodzi.
+    const unguarded = await recordsService.createRecord(TABLE, { name: 'C', salary: 1 }, 'user-1');
+    expect(unguarded.data.salary).toBe(1);
+  });
+
+  it('batch create op: zapis do `salary` przez "viewer" → odrzucony (error w wyniku, brak wiersza)', async () => {
+    const resp = await recordsService.batchRecords(
+      TABLE,
+      [{ type: 'create', data: { name: 'Batched', salary: 777 } }],
+      'user-1',
+      true, // continueOnError — errors collected instead of thrown
+      'viewer'
+    );
+
+    expect(resp.errors.length).toBe(1);
+    expect(resp.errors[0].error).toMatch(/Write denied/);
+    expect(resp.results.length).toBe(0);
+    expect([...store.values()].some((r) => r.data.name === 'Batched')).toBe(false);
+  });
+
+  it('batch create op: "base_owner" scope przechodzi i wiersz jest zapisany', async () => {
+    const resp = await recordsService.batchRecords(
+      TABLE,
+      [{ type: 'create', data: { name: 'Batched2', salary: 777 } }],
+      'user-1',
+      true,
+      'base_owner'
+    );
+
+    expect(resp.errors.length).toBe(0);
+    expect(resp.results.length).toBe(1);
+    expect([...store.values()].some((r) => r.data.name === 'Batched2')).toBe(true);
+  });
+
+  it('deleteRecord: row-policy "none" dla "viewer" → PermissionError; rola bez policy → OK', async () => {
+    seedNonePolicyForViewer();
+    const rec = await recordsService.createRecord(TABLE, { name: 'ToDelete' }, 'user-1');
+
+    await expect(
+      recordsService.deleteRecord(rec.id, 'user-1', 'viewer')
+    ).rejects.toBeInstanceOf(PermissionError);
+    // Rejected delete must not have removed the row.
+    expect(store.has(rec.id)).toBe(true);
+
+    // rola bez restrykcyjnej policy przechodzi
+    const ok = await recordsService.deleteRecord(rec.id, 'user-1', 'base_owner');
+    expect(ok).toBe(true);
+    expect(store.has(rec.id)).toBe(false);
+  });
+
+  it('deleteRecord: BEZ userRole (stan sprzed fixu) — brak egzekucji, delete przechodzi mimo policy "none"', async () => {
+    seedNonePolicyForViewer();
+    const rec = await recordsService.createRecord(TABLE, { name: 'Unguarded' }, 'user-1');
+
+    const ok = await recordsService.deleteRecord(rec.id, 'user-1');
+    expect(ok).toBe(true);
+    expect(store.has(rec.id)).toBe(false);
+  });
+
+  it('batch delete op: row-policy "none" dla "viewer" → odrzucony (error w wyniku, wiersz zostaje)', async () => {
+    seedNonePolicyForViewer();
+    const rec = await recordsService.createRecord(TABLE, { name: 'BatchDelete' }, 'user-1');
+
+    const resp = await recordsService.batchRecords(
+      TABLE,
+      [{ type: 'delete', recordId: rec.id }],
+      'user-1',
+      true,
+      'viewer'
+    );
+
+    expect(resp.errors.length).toBe(1);
+    expect(resp.errors[0].error).toMatch(/Delete denied/);
+    expect(store.has(rec.id)).toBe(true);
   });
 });

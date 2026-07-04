@@ -19,6 +19,7 @@ import { recomputeAffectedFields } from './formulaEngine.js';
 import { tablePlatformRealtime } from './RealtimeService.js';
 import recordWatchService from './RecordWatchService.js';
 import relationService from './RelationService.js';
+import rowPolicyService from './RowPolicyService.js';
 import schemaValidationService from './SchemaValidationService.js';
 import { webhookDispatcher } from './WebhookDispatcherService.js';
 import { webhookRelayService } from './WebhookRelayService.js';
@@ -400,11 +401,41 @@ const recordsService = {
   async createRecord(
     tableId: string,
     data: Record<string, unknown>,
-    createdBy?: string
+    createdBy?: string,
+    userRole?: string
   ): Promise<any> {
     const db = getDatabase();
     const id = uuidv4();
     try {
+      // Field-level write permission gate (#1): same contract as updateRecord —
+      // when userRole is supplied and the table has field-level permissions
+      // configured, deny creating a record that writes to a field the role
+      // cannot write to. Fail-soft on lookup errors so a permission-check bug
+      // never blocks record creation for tables without permissions.
+      if (userRole) {
+        try {
+          const hasPerms = await fieldPermissionService.tableHasFieldPermissions(tableId);
+          if (hasPerms) {
+            const writeCheck = await fieldPermissionService.validateWritePermissions(
+              data,
+              tableId,
+              userRole
+            );
+            if (!writeCheck.allowed) {
+              throw new PermissionError(
+                `Write denied for fields: ${writeCheck.deniedFields.join(', ')}`
+              );
+            }
+          }
+        } catch (e) {
+          if (e instanceof PermissionError) throw e;
+          logger.warn('[RecordsService] field permission check failed', {
+            tableId,
+            error: (e as Error).message,
+          });
+        }
+      }
+
       // Apply default values before validation
       const allFieldsResult = await db.query('SELECT * FROM tp_fields WHERE table_id = $1', [
         tableId,
@@ -520,6 +551,34 @@ const recordsService = {
         logger.warn('[RecordsService] cross-record recompute after create failed', {
           recordId: id,
           error: (crossRecomputeErr as Error).message,
+        });
+      }
+
+      // Auto-trigger date dependency cascade (#3) on create: a newly created
+      // record can itself be a predecessor with pre-filled dates (e.g. import,
+      // duplicate, or seeded via API) — its successors must recompute too.
+      // Fail-soft inside triggerDateCascade.
+      try {
+        const changedFieldIds = Object.keys(enrichedData);
+        const cascaded = await triggerDateCascade(tableId, changedFieldIds);
+        for (const recId of cascaded) {
+          if (recId === id) continue; // this record's realtime emits below
+          try {
+            const cRow = (await db.query('SELECT * FROM tp_records WHERE id = $1', [recId]))
+              .rows[0];
+            if (cRow) tablePlatformRealtime.notifyRecordUpdated(tableId, recId, cRow);
+          } catch {
+            /* realtime is best-effort */
+          }
+        }
+        // Re-read the created record if the cascade also moved its own dates.
+        if (cascaded.includes(id)) {
+          row = (await db.query('SELECT * FROM tp_records WHERE id = $1', [id])).rows[0];
+        }
+      } catch (dateCascadeErr) {
+        logger.warn('[RecordsService] date cascade after create failed', {
+          recordId: id,
+          error: (dateCascadeErr as Error).message,
         });
       }
 
@@ -898,12 +957,39 @@ const recordsService = {
     }
   },
 
-  async deleteRecord(recordId: string, deletedBy?: string): Promise<boolean> {
+  async deleteRecord(recordId: string, deletedBy?: string, userRole?: string): Promise<boolean> {
     const db = getDatabase();
     try {
       const before = (await db.query('SELECT * FROM tp_records WHERE id = $1', [recordId])).rows[0];
       if (!before) return false;
       const tableId = (before as { table_id: string }).table_id;
+      const beforeData = (before as { data?: Record<string, unknown> }).data ?? {};
+
+      // Row-level policy gate (#1): same contract as updateRecord's
+      // field-permission check — when userRole is supplied, deny the delete
+      // if a row policy resolves this role's access to the record to 'none'.
+      // Fail-soft: a lookup error must never block a delete that would
+      // otherwise be allowed.
+      if (userRole) {
+        try {
+          const access = await rowPolicyService.evaluateAccess(
+            tableId,
+            beforeData,
+            deletedBy ?? '',
+            userRole
+          );
+          if (access === 'none') {
+            throw new PermissionError(`Delete denied for role: ${userRole}`);
+          }
+        } catch (e) {
+          if (e instanceof PermissionError) throw e;
+          logger.warn('[RecordsService] row policy check failed', {
+            recordId,
+            error: (e as Error).message,
+          });
+        }
+      }
+
       await relationService.onRecordDeleted(recordId);
       await db.query('DELETE FROM tp_records WHERE id = $1', [recordId]);
       await auditService.logEvent(
@@ -920,6 +1006,32 @@ const recordsService = {
         tablePlatformRealtime.notifyRecordDeleted(tableId, recordId);
       } catch {
         /* non-blocking */
+      }
+
+      // Auto-trigger date dependency cascade (#3): deleting a predecessor
+      // must recompute its successors' dates (the dependency graph lost a
+      // node). Treat this like a change to any date-controlling field this
+      // record held — triggerDateCascade re-reads the (now-deleted) row's
+      // dependents from the remaining records, so a removed predecessor's
+      // successors fall back to their own stored dates/lag. Fail-soft inside
+      // triggerDateCascade.
+      try {
+        const changedFieldIds = Object.keys(beforeData);
+        const cascaded = await triggerDateCascade(tableId, changedFieldIds);
+        for (const recId of cascaded) {
+          try {
+            const cRow = (await db.query('SELECT * FROM tp_records WHERE id = $1', [recId]))
+              .rows[0];
+            if (cRow) tablePlatformRealtime.notifyRecordUpdated(tableId, recId, cRow);
+          } catch {
+            /* realtime is best-effort */
+          }
+        }
+      } catch (dateCascadeErr) {
+        logger.warn('[RecordsService] date cascade after delete failed', {
+          recordId,
+          error: (dateCascadeErr as Error).message,
+        });
       }
 
       getBaseIdForTable(tableId)
@@ -1118,7 +1230,8 @@ const recordsService = {
     tableId: string,
     operations: BatchOperation[],
     userId?: string,
-    continueOnError = false
+    continueOnError = false,
+    userRole?: string
   ): Promise<BatchRecordsResponse> {
     const totalOps = operations.length;
     if (totalOps > MAX_BATCH_SIZE) {
@@ -1138,7 +1251,7 @@ const recordsService = {
         await db.query('BEGIN');
         for (let i = 0; i < operations.length; i++) {
           const op = operations[i];
-          const result = await this._executeSingleOp(tableId, op, userId);
+          const result = await this._executeSingleOp(tableId, op, userId, userRole);
           response.results.push({ index: i, result });
         }
         await db.query('COMMIT');
@@ -1154,7 +1267,7 @@ const recordsService = {
       for (let i = 0; i < operations.length; i++) {
         const op = operations[i];
         try {
-          const result = await this._executeSingleOp(tableId, op, userId);
+          const result = await this._executeSingleOp(tableId, op, userId, userRole);
           response.results.push({ index: i, result });
         } catch (e) {
           response.errors.push({
@@ -1169,16 +1282,21 @@ const recordsService = {
     return response;
   },
 
-  async _executeSingleOp(tableId: string, op: BatchOperation, userId?: string): Promise<unknown> {
+  async _executeSingleOp(
+    tableId: string,
+    op: BatchOperation,
+    userId?: string,
+    userRole?: string
+  ): Promise<unknown> {
     switch (op.type) {
       case 'create':
-        return this.createRecord(tableId, op.data ?? {}, userId);
+        return this.createRecord(tableId, op.data ?? {}, userId, userRole);
       case 'update':
         if (!op.recordId) throw new ValidationError('recordId required for update');
-        return this.updateRecord(op.recordId, op.data ?? {}, userId);
+        return this.updateRecord(op.recordId, op.data ?? {}, userId, undefined, userRole);
       case 'delete':
         if (!op.recordId) throw new ValidationError('recordId required for delete');
-        return this.deleteRecord(op.recordId, userId);
+        return this.deleteRecord(op.recordId, userId, userRole);
       default:
         throw new ValidationError(`Unknown operation type: ${(op as any).type}`);
     }
@@ -1187,35 +1305,41 @@ const recordsService = {
   async batchCreate(
     tableId: string,
     records: Array<{ data: Record<string, unknown> }>,
-    createdBy?: string
+    createdBy?: string,
+    userRole?: string
   ): Promise<unknown[]> {
     const ops: BatchOperation[] = records.map((r) => ({ type: 'create' as const, data: r.data }));
-    const resp = await this.batchRecords(tableId, ops, createdBy, false);
+    const resp = await this.batchRecords(tableId, ops, createdBy, false, userRole);
     return resp.results.map((r) => r.result);
   },
 
   async batchUpdate(
     records: Array<{ id: string; data: Record<string, unknown> }>,
-    updatedBy?: string
+    updatedBy?: string,
+    userRole?: string
   ): Promise<unknown[]> {
     if (records.length > MAX_BATCH_SIZE) {
       throw new ValidationError(`batchUpdate: max ${MAX_BATCH_SIZE} records allowed`);
     }
     const results: unknown[] = [];
     for (const rec of records) {
-      const updated = await this.updateRecord(rec.id, rec.data, updatedBy);
+      const updated = await this.updateRecord(rec.id, rec.data, updatedBy, undefined, userRole);
       results.push(updated);
     }
     return results;
   },
 
-  async batchDelete(recordIds: string[], deletedBy?: string): Promise<boolean[]> {
+  async batchDelete(
+    recordIds: string[],
+    deletedBy?: string,
+    userRole?: string
+  ): Promise<boolean[]> {
     if (recordIds.length > MAX_BATCH_SIZE) {
       throw new ValidationError(`batchDelete: max ${MAX_BATCH_SIZE} records allowed`);
     }
     const results: boolean[] = [];
     for (const id of recordIds) {
-      const ok = await this.deleteRecord(id, deletedBy);
+      const ok = await this.deleteRecord(id, deletedBy, userRole);
       results.push(ok);
     }
     return results;

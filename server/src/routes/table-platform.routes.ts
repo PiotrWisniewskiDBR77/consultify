@@ -1002,6 +1002,8 @@ router.post(
     try {
       const authReq = req as AuthRequest;
       const userId = authReq.userId;
+      // Base role resolved by requireRoles → drives field-level write enforcement.
+      const userRole = authReq.userRole;
       const { tableId } = req.params;
       const { data } = req.body ?? {};
       if (!tableId) {
@@ -1010,7 +1012,7 @@ router.post(
       if (!data || typeof data !== 'object') {
         return res.status(400).json({ error: 'data is required' });
       }
-      const record = await RecordsService.createRecord(tableId, data, userId);
+      const record = await RecordsService.createRecord(tableId, data, userId, userRole);
       if (!record) {
         return res.status(500).json({ error: 'Failed to create record' });
       }
@@ -1082,11 +1084,13 @@ router.delete(
     try {
       const authReq = req as AuthRequest;
       const userId = authReq.userId;
+      // Base role resolved by requireRoles → drives row-level policy enforcement.
+      const userRole = authReq.userRole;
       const { recordId } = req.params;
       if (!recordId) {
         return res.status(400).json({ error: 'recordId is required' });
       }
-      const ok = await RecordsService.deleteRecord(recordId, userId);
+      const ok = await RecordsService.deleteRecord(recordId, userId, userRole);
       if (!ok) {
         return res.status(404).json({ error: 'Record not found' });
       }
@@ -1417,6 +1421,8 @@ router.post(
     try {
       const authReq = req as AuthRequest;
       const userId = authReq.userId;
+      // Base role resolved by requireRoles → drives field/row-level enforcement.
+      const userRole = authReq.userRole;
       const { tableId } = req.params;
       const { operations } = req.body ?? {};
       if (!tableId) {
@@ -1434,7 +1440,7 @@ router.post(
               results.push({ type: 'create', error: 'data required for create' });
               continue;
             }
-            const created = await RecordsService.createRecord(tableId, data, userId);
+            const created = await RecordsService.createRecord(tableId, data, userId, userRole);
             results.push({ type: 'create', recordId: (created as any)?.id, data: created });
           } else if (type === 'update') {
             if (!recordId || !data || typeof data !== 'object') {
@@ -1445,14 +1451,20 @@ router.post(
               });
               continue;
             }
-            const updated = await RecordsService.updateRecord(recordId, data, userId);
+            const updated = await RecordsService.updateRecord(
+              recordId,
+              data,
+              userId,
+              undefined,
+              userRole
+            );
             results.push({ type: 'update', recordId, data: updated });
           } else if (type === 'delete') {
             if (!recordId) {
               results.push({ type: 'delete', error: 'recordId required for delete' });
               continue;
             }
-            const ok = await RecordsService.deleteRecord(recordId, userId);
+            const ok = await RecordsService.deleteRecord(recordId, userId, userRole);
             results.push({ type: 'delete', recordId, data: ok });
           } else {
             results.push({ type: type ?? 'unknown', error: 'Unknown operation type' });
@@ -2014,6 +2026,8 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const authReq = req as AuthRequest;
+      // Base role resolved by requireRoles → drives row-level policy enforcement.
+      const userRole = authReq.userRole;
       const { tableId } = req.params;
       const { recordIds } = req.body ?? {};
       if (!Array.isArray(recordIds) || recordIds.length === 0) {
@@ -2026,7 +2040,7 @@ router.post(
       const results: { id: string; deleted: boolean; error?: string }[] = [];
       for (const id of recordIds) {
         try {
-          await RecordsService.deleteRecord(id, authReq.userId);
+          await RecordsService.deleteRecord(id, authReq.userId, userRole);
           results.push({ id, deleted: true });
         } catch (e) {
           results.push({ id, deleted: false, error: (e as Error).message });
@@ -2052,6 +2066,8 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const authReq = req as AuthRequest;
+      // Base role resolved by requireRoles → drives field-level write enforcement.
+      const userRole = authReq.userRole;
       const { tableId } = req.params;
       const { updates } = req.body ?? {};
       if (!Array.isArray(updates) || updates.length === 0) {
@@ -2064,7 +2080,7 @@ router.post(
       const results: { id: string; updated: boolean; error?: string }[] = [];
       for (const { recordId, data } of updates) {
         try {
-          await RecordsService.updateRecord(recordId, data, authReq.userId);
+          await RecordsService.updateRecord(recordId, data, authReq.userId, undefined, userRole);
           results.push({ id: recordId, updated: true });
         } catch (e) {
           results.push({ id: recordId, updated: false, error: (e as Error).message });
