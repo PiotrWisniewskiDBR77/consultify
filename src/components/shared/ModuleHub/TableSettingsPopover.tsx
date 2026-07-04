@@ -10,7 +10,7 @@
  * hand-rolling their own column-settings dropdowns.
  */
 
-import { Settings2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, RotateCcw, Settings2 } from 'lucide-react';
 import React, { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -39,6 +39,14 @@ export interface TableSettingsPopoverProps {
   showDescription: boolean;
   /** Fired when the "show row description" switch is toggled. */
   onToggleDescription: (value: boolean) => void;
+  /**
+   * Optional column reordering (mechanika My Work / ColumnSelector 1:1):
+   * renders ▲/▼ per row. Omit to hide the affordance.
+   */
+  onMove?: (columnId: string, direction: 'up' | 'down') => void;
+  /** Optional "reset to defaults" row at the bottom of the popover. */
+  onReset?: () => void;
+  resetLabel?: string;
   /** Accessible label / tooltip for the trigger button. */
   label?: string;
   /** Optional heading rendered at the top of the columns group. */
@@ -81,6 +89,9 @@ export const TableSettingsPopover: React.FC<TableSettingsPopoverProps> = ({
   onToggle,
   showDescription,
   onToggleDescription,
+  onMove,
+  onReset,
+  resetLabel = 'Reset columns',
   label = 'Table settings',
   columnsHeading = 'Columns',
   descriptionLabel = 'Show row description',
@@ -188,7 +199,7 @@ export const TableSettingsPopover: React.FC<TableSettingsPopoverProps> = ({
             >
               <div className={HEADING_CLASS}>{columnsHeading}</div>
               <div className="max-h-64 overflow-y-auto">
-                {columns.map((column) => (
+                {columns.map((column, idx) => (
                   <label key={column.id} className={ROW_CLASS}>
                     <input
                       type="checkbox"
@@ -201,6 +212,34 @@ export const TableSettingsPopover: React.FC<TableSettingsPopoverProps> = ({
                     {column.required ? (
                       <span className="shrink-0 text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
                         Locked
+                      </span>
+                    ) : null}
+                    {onMove ? (
+                      <span className="flex shrink-0 items-center gap-0.5">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            onMove(column.id, 'up');
+                          }}
+                          disabled={idx === 0}
+                          className="inline-flex h-5 w-5 items-center justify-center rounded text-c-text-muted transition-colors hover:bg-c-accent-soft hover:text-c-text disabled:opacity-30"
+                          aria-label={`Move ${column.label} up`}
+                        >
+                          <ChevronUp size={12} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            onMove(column.id, 'down');
+                          }}
+                          disabled={idx === columns.length - 1}
+                          className="inline-flex h-5 w-5 items-center justify-center rounded text-c-text-muted transition-colors hover:bg-c-accent-soft hover:text-c-text disabled:opacity-30"
+                          aria-label={`Move ${column.label} down`}
+                        >
+                          <ChevronDown size={12} />
+                        </button>
                       </span>
                     ) : null}
                   </label>
@@ -219,6 +258,20 @@ export const TableSettingsPopover: React.FC<TableSettingsPopoverProps> = ({
                   onChange={(event) => onToggleDescription(event.target.checked)}
                 />
               </label>
+
+              {onReset ? (
+                <>
+                  <div className="my-1 h-px bg-c-border-subtle" />
+                  <button
+                    type="button"
+                    onClick={onReset}
+                    className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm text-c-text-muted transition-colors hover:bg-c-accent-soft hover:text-c-text"
+                  >
+                    <RotateCcw size={13} className="shrink-0" />
+                    <span className="min-w-0 flex-1 truncate text-left">{resetLabel}</span>
+                  </button>
+                </>
+              ) : null}
             </div>,
             document.body
           )

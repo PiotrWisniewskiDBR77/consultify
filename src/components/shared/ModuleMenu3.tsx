@@ -2,6 +2,23 @@ import React from 'react';
 
 import { cn } from '@/utils/cn';
 
+/**
+ * MENU 1 — top module row (breadcrumb/title on the left + ONE primary CTA on
+ * the right). CTA = neutral inverted (navy-on-light / white-on-dark), NIGDY
+ * crimson (primary-* = crimson #85182F, tylko semantyka krytyczna).
+ * Wzorzec: MyWorkHub topbar + ModuleNavBar "New item" CTA.
+ */
+export const MENU_1_ROW_CLASS =
+  'flex items-center justify-between gap-3 px-4 py-3 bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.05]';
+
+export const MENU_1_PRIMARY_CTA =
+  'inline-flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+
+export const MENU_1_BREADCRUMB_LINK =
+  'text-sm font-medium text-c-text-muted hover:text-c-text transition-colors truncate';
+
+export const MENU_1_BREADCRUMB_CURRENT = 'text-sm font-semibold text-c-text truncate';
+
 export const MENU_2_TAB_BASE =
   'inline-flex h-9 items-center gap-2 rounded-full border px-3 text-sm font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
 

@@ -1,0 +1,47 @@
+/**
+ * Triada Standard — JEDYNE komponenty Menu / Tabela / Preview dla list encji.
+ *
+ * SSOT: Harvard/wdrozenie-100/_STANDARD_TRIADA_NOTATKA.md (+ aneksy #2-#5)
+ * + żywy ekran My Work Tasks/Decisions. Moduły używają WYŁĄCZNIE tych fasad;
+ * własny chrome / własne tabele / własne preview = błąd implementacji.
+ */
+export {
+  StandardModuleBar,
+  type StandardModuleBarProps,
+  type StandardBreadcrumb,
+  type StandardModuleTab,
+  type StandardCounterChip,
+  type StandardBulkAction,
+  type StandardBulkState,
+  type StandardPrimaryCta,
+} from './StandardModuleBar';
+export {
+  StandardTable,
+  type StandardTableProps,
+  type StandardTableEmpty,
+  type StandardTableSelection,
+  type StandardRowMenu,
+  type StandardRowMenuAction,
+  type TableColumn,
+  type TableRow,
+  type RowAction,
+  type RowActionSection,
+} from './StandardTable';
+export {
+  StandardPreview,
+  standardPreviewShortcuts,
+  type StandardPreviewProps,
+  type StandardPreviewAction,
+  type StandardPreviewActions,
+  type StandardPreviewMeta,
+  type StandardPreviewDetails,
+  type MetaPill,
+  type RelationItem,
+} from './StandardPreview';
+export {
+  StandardKanban,
+  type StandardKanbanProps,
+  type StandardKanbanColumn,
+  type StandardKanbanCard,
+  type StandardKanbanUrgency,
+} from './StandardKanban';

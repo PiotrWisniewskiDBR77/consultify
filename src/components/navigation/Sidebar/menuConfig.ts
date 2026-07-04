@@ -107,6 +107,17 @@ export function getMenuStructure(t: TranslationFn, _journeyState?: string): Menu
       viewId: AppView.BENEFITS_REALIZATION,
       badge: 'beta',
     },
+    // 7.5 Wnioski (Conclusions) — HIDDEN from sidebar (owner decision 2026-07-04:
+    // added without consent). Route/AppView.CONCLUSIONS stays wired; only the nav
+    // entry is removed so there is zero trace in the sidebar. Restore by
+    // un-commenting when the owner explicitly approves the module.
+    // {
+    //   id: 'MODULE_CONCLUSIONS',
+    //   label: t('sidebar.conclusions', 'Conclusions'),
+    //   icon: React.createElement(Gavel, { size: 20 }),
+    //   viewId: AppView.CONCLUSIONS,
+    //   badge: 'beta',
+    // },
     // 8. Finanse - Financial Analysis v3
     {
       id: 'MODULE_ECONOMICS',
@@ -134,7 +145,7 @@ export function getMenuStructure(t: TranslationFn, _journeyState?: string): Menu
     // / route gates stay intact.
     {
       id: 'MODULE_PRESENTATIONS',
-      label: t('sidebar.materialy', 'Materiały'),
+      label: t('sidebar.materialy', 'Materials'),
       icon: React.createElement(FolderOutput, { size: 20 }),
       viewId: AppView.PRESENTATIONS,
       badge: 'beta',
@@ -274,7 +285,8 @@ export function getViewName(view: AppView, t: TranslationFn): string {
     [AppView.MY_WORK]: t('myWork.title', 'My Work'),
     [AppView.MCP_IRIS_COMING_SOON]: t('sidebar.mcpIris', 'MCP IRIS'),
     [AppView.MCP_MARKETPLACE_COMING_SOON]: t('sidebar.mcpMarketplace', 'MCP Marketplace'),
-    [AppView.PRESENTATIONS]: t('sidebar.materialy', 'Materiały'),
+    [AppView.CONCLUSIONS]: t('sidebar.conclusions', 'Conclusions'),
+    [AppView.PRESENTATIONS]: t('sidebar.materialy', 'Materials'),
     [AppView.PREZENTACJE_GEN]: t('sidebar.prezentacje', 'Presentation Studio'),
     [AppView.WORDY]: t('sidebar.wordy', 'Documents'),
     [AppView.EXCELE]: t('sidebar.tabele', 'Table Studio'),

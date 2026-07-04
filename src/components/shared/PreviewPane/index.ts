@@ -5,6 +5,11 @@ export {
   type PreviewActionBarProps,
 } from './PreviewActionBar';
 export {
+  PreviewActionButton,
+  type PreviewActionButtonProps,
+  type PreviewActionVariant,
+} from './PreviewActionButton';
+export {
   type ActivityEvent,
   PreviewActivityStrip,
   type PreviewActivityStripProps,

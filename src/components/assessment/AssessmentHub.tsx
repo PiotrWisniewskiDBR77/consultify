@@ -11,9 +11,11 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
+  Copy,
   Cpu,
   Database,
   Download,
+  ExternalLink,
   FileText,
   Globe,
   Layers,
@@ -22,6 +24,7 @@ import {
   MessageSquare,
   Monitor,
   Presentation,
+  Trash2,
   Upload,
   Workflow,
   X,
@@ -31,13 +34,21 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { ErrorState } from '@/components/ui/primitives';
+import {
+  StandardPreview,
+  standardPreviewShortcuts,
+  type StandardPreviewActions,
+  type StandardRowMenu,
+  StandardTable,
+} from '@/components/standard';
 import { LoadingState as SharedLoadingState } from '@/components/shared/states';
+import { ErrorState } from '@/components/ui/primitives';
 import {
   MetaChip,
   PriorityChip,
   type PriorityLevel,
   StatusChip,
+  statusChipTone,
   type StatusTone,
 } from '@/components/ui/primitives/chips';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
@@ -66,9 +77,14 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
-import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
-import { type AssessmentItem, AssessmentItemPreview } from './AssessmentItemPreview';
 import { AssessmentMenu3ActionBar } from './AssessmentMenu3ActionBar';
+import {
+  MENU_3_ACTION_DANGER,
+  MENU_3_INNER_CLASS,
+  MENU_3_LEFT_CLASS,
+  MENU_3_RIGHT_CLASS,
+  Menu3Chip,
+} from '../shared/ModuleMenu3';
 import { ImportedReportDetailView } from './ImportedReportDetailView';
 import { InitiativesGenerationWizardModal } from './InitiativesGenerationWizardModal';
 import { NewAssessmentReportModal } from './modals/NewAssessmentReportModal';
@@ -320,6 +336,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   const [slideOverReportOpen, setSlideOverReportOpen] = useState(false);
   // canon §7.1: selected row for side-preview (assessment 'list' tab)
   const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(null);
+  // Triada standard §A4/§A6: checkbox selection on the 'list' tab → Menu 3 bulk mode.
+  const [selectedListIds, setSelectedListIds] = useState<Set<string>>(new Set());
 
   // API data state
   const [assessments, setAssessments] = useState<AssessmentFromAPI[]>([]);
@@ -1313,14 +1331,125 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     [handleOpenHubChat, isHubChatActive, isLoading, thirdHubAction]
   );
 
+  // Triada standard (canon A3/A6): checkbox selection on the 'list' tab
+  // switches Menu 3 into bulk mode (1:1 markup with StandardModuleBar.bulk).
+  const handleBulkDeleteList = useCallback(async () => {
+    if (selectedListIds.size === 0) return;
+    if (
+      !window.confirm(
+        `Are you sure you want to delete ${selectedListIds.size} assessment(s)? This cannot be undone.`
+      )
+    )
+      return;
+    const ids = Array.from(selectedListIds);
+    for (const id of ids) {
+      const row = currentData.find((r: any) => r.id === id);
+      if (row) await handleRowAction('delete', row);
+    }
+    setSelectedListIds(new Set());
+  }, [selectedListIds, currentData, handleRowAction]);
+
+  const bulkCommandRowContent =
+    activeTab === 'list' && selectedListIds.size > 0 ? (
+      <div className={MENU_3_INNER_CLASS}>
+        <div className={MENU_3_LEFT_CLASS}>
+          <span className="inline-flex h-7 items-center rounded-full px-2.5 text-[11px] font-semibold text-c-text whitespace-nowrap">
+            {`${selectedListIds.size} selected`}
+          </span>
+          <Menu3Chip onClick={() => setSelectedListIds(new Set(currentData.map((r: any) => r.id)))}>
+            Select all
+          </Menu3Chip>
+          <Menu3Chip onClick={() => setSelectedListIds(new Set())}>Clear</Menu3Chip>
+        </div>
+        <div className={MENU_3_RIGHT_CLASS}>
+          <button
+            type="button"
+            onClick={() => void handleBulkDeleteList()}
+            className={MENU_3_ACTION_DANGER}
+          >
+            <Trash2 size={12} />
+            Delete
+          </button>
+        </div>
+      </div>
+    ) : null;
+
   const hubCommandRowContent = useMemo(
-    () => <AssessmentMenu3ActionBar chips={hubMenu3Chips} actions={hubMenu3Actions} />,
-    [hubMenu3Actions, hubMenu3Chips]
+    () =>
+      bulkCommandRowContent ?? (
+        <AssessmentMenu3ActionBar chips={hubMenu3Chips} actions={hubMenu3Actions} />
+      ),
+    [bulkCommandRowContent, hubMenu3Actions, hubMenu3Chips]
   );
 
   // NOTE: right-side actions are rendered by AssessmentMenu3ActionBar (inside hubCommandRowContent)
   // via MENU_3_INNER_CLASS (flex items-center justify-between). ModuleNavBar voids
   // commandRowRightContent, so all Menu 3 content lives in commandRowContent.
+
+  // Triada standard (StandardPreview, canon A7): selected row + actions for the
+  // 'list' tab preview pane. Computed at top level so the Esc/shortcut effect
+  // below can depend on it (renderContent() is a plain render function, not a
+  // component — hooks cannot live inside it).
+  const selectedListRow: any = selectedAssessmentId
+    ? (currentData.find((r: any) => r.id === selectedAssessmentId) ?? null)
+    : null;
+
+  const listPreviewActions: StandardPreviewActions | undefined = useMemo(
+    () =>
+      selectedListRow
+        ? {
+            resolutions: [
+              {
+                id: 'delete',
+                variant: 'destructive',
+                label: t('common.delete', 'Delete'),
+                icon: Trash2,
+                onClick: () => void handleRowAction('delete', selectedListRow),
+              },
+            ],
+            informational: [
+              {
+                id: 'open',
+                variant: 'neutral',
+                label: t('common.open', 'Open'),
+                icon: ExternalLink,
+                shortcut: 'O',
+                onClick: () => handleOpenDocument(selectedListRow),
+              },
+              {
+                id: 'duplicate',
+                variant: 'neutral',
+                label: t('common.duplicate', 'Duplicate'),
+                icon: Copy,
+                onClick: () => void handleRowAction('duplicate', selectedListRow),
+              },
+            ],
+          }
+        : undefined,
+    [selectedListRow, t, handleRowAction, handleOpenDocument]
+  );
+
+  // Esc closes preview; single-key shortcuts (O) active while preview open (kanon B.24/B.31).
+  useEffect(() => {
+    if (activeTab !== 'list' || !selectedAssessmentId) return;
+    const shortcuts = standardPreviewShortcuts(listPreviewActions);
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable)
+        return;
+      if (e.key === 'Escape') {
+        setSelectedAssessmentId(null);
+        return;
+      }
+      const handler = shortcuts[e.key.toUpperCase()];
+      if (handler) {
+        e.preventDefault();
+        handler();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [activeTab, selectedAssessmentId, listPreviewActions]);
 
   // Render content based on active document or list
   const renderContent = () => {
@@ -1474,56 +1603,118 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
       );
     }
 
-    // canon §2+§7.1: Assessment 'list' tab → TableWithPreviewLayout + side preview
+    // Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7): Assessment
+    // 'list' tab → StandardTable + StandardPreview. Moduł deklaruje TYLKO
+    // dane + kontrakt kebaba/akcji; cały chrome pochodzi z fasad Standard*.
     if (activeTab === 'list') {
-      type AssessmentItemWithTitle = AssessmentItem & { title: string };
-      const toItem = (row: any): AssessmentItemWithTitle => ({
-        ...(row as AssessmentItem),
-        title: (row.name as string) || 'Assessment',
-      });
-      const selectedRow = selectedAssessmentId
-        ? (currentData.find((r: any) => r.id === selectedAssessmentId) ?? null)
-        : null;
-      const selectedItem: AssessmentItemWithTitle | null = selectedRow ? toItem(selectedRow) : null;
+      const selectedRow = selectedListRow;
+      const previewActions = listPreviewActions;
 
       return (
-        <TableWithPreviewLayout<AssessmentItemWithTitle>
-          selectedId={selectedAssessmentId}
-          selectedItem={selectedItem}
-          onSelect={setSelectedAssessmentId}
-          onOpenFull={(id) => {
-            const row = currentData.find((r: any) => r.id === id);
-            if (row) handleOpenDocument(row);
-          }}
-          itemIds={currentData.map((r: any) => r.id as string)}
-          getItemById={(id) => {
-            const r = currentData.find((x: any) => x.id === id);
-            return r ? toItem(r) : null;
-          }}
-          renderPreview={(item) => (
-            <AssessmentItemPreview
-              item={item as AssessmentItem}
-              onOpen={() => {
-                const row = currentData.find((r: any) => r.id === item.id);
-                if (row) handleOpenDocument(row);
-              }}
-              onClose={() => setSelectedAssessmentId(null)}
-            />
-          )}
-        >
-          <div className="pl-4 pr-1.5 pt-3 pb-4">
-            <FilterableTable
+        <div className="h-full flex overflow-hidden">
+          <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
+            <StandardTable
               columns={tableColumns}
               data={currentData}
-              onRowClick={(row) => setSelectedAssessmentId((row as any).id as string)}
-              onRowDoubleClick={handleOpenDocument}
-              onRowAction={handleRowAction}
-              activeFilters={activeFilters}
-              onFilterChange={setActiveFilters}
-              emptyMessage={emptyStateMessage}
+              selectedRowId={selectedAssessmentId}
+              onRowClick={(row) => setSelectedAssessmentId(String((row as any).id))}
+              onRowDoubleClick={(row) => handleOpenDocument(row as any)}
+              rowDescription={() => null}
+              defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
+              persistKey="assessment.hub.list"
+              selection={{ selectedIds: selectedListIds, onChange: setSelectedListIds }}
+              empty={{
+                icon: FileText,
+                title: t('assessment.emptyState.title', 'No assessments yet'),
+                description: emptyStateMessage,
+                actionLabel: t('assessment.emptyState.createFirst', 'Create First Assessment'),
+                onAction: handleNewAssessment,
+              }}
+              rowMenu={(row): StandardRowMenu => ({
+                primary: [
+                  {
+                    id: 'open',
+                    label: t('common.open', 'Open'),
+                    icon: ExternalLink,
+                    onClick: () => handleOpenDocument(row as any),
+                  },
+                  {
+                    id: 'duplicate',
+                    label: t('common.duplicate', 'Duplicate'),
+                    icon: Copy,
+                    onClick: () => void handleRowAction('duplicate', row as any),
+                  },
+                ],
+                universalHandlers: {
+                  preview: () => setSelectedAssessmentId(String((row as any).id)),
+                  edit: () => handleOpenDocument(row as any),
+                  // Brak API archiwizacji assessmentu — pozycja disabled z notą (StandardTable dokłada ją sama).
+                },
+                destructive: {
+                  onClick: () => void handleRowAction('delete', row as any),
+                },
+              })}
             />
           </div>
-        </TableWithPreviewLayout>
+
+          {selectedRow ? (
+            <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+              <StandardPreview
+                title={selectedRow.name || 'Assessment'}
+                onClose={() => setSelectedAssessmentId(null)}
+                onOpenFull={() => handleOpenDocument(selectedRow)}
+                meta={{
+                  pills: [
+                    {
+                      label: String(selectedRow.status || 'DRAFT'),
+                      tone: statusChipTone(selectedRow.status),
+                    },
+                    {
+                      label: `${selectedRow.progress ?? 0}%`,
+                      tone: 'neutral',
+                    },
+                  ],
+                  trailing: (
+                    <span className="text-[11px] font-semibold text-c-text-secondary">
+                      {selectedRow.updatedAt
+                        ? new Date(selectedRow.updatedAt).toLocaleDateString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })
+                        : '—'}
+                    </span>
+                  ),
+                }}
+                details={{
+                  text: [
+                    `${t('assessment.table.type', 'Type')}: ${
+                      FRAMEWORK_META[selectedRow.framework as AssessmentFramework]?.name ||
+                      selectedRow.framework ||
+                      '—'
+                    }`,
+                    `${t('assessment.table.progress', 'Progress')}: ${selectedRow.progress ?? 0}%`,
+                  ].join('\n\n'),
+                  onCopy: () => {
+                    void navigator.clipboard?.writeText(
+                      `${selectedRow.name} — ${selectedRow.status} (${selectedRow.progress ?? 0}%)`
+                    );
+                  },
+                }}
+                ai={{
+                  hints: [
+                    t('assessment.preview.aiSummarize', 'Summarize assessment'),
+                    t('assessment.preview.aiNextSteps', 'Suggest next steps'),
+                  ],
+                  disabled: true,
+                  disabledTooltip: t('common.comingSoon', 'Coming soon'),
+                }}
+                relations={[]}
+                actions={previewActions}
+              />
+            </aside>
+          ) : null}
+        </div>
       );
     }
 
