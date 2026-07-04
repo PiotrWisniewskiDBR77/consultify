@@ -46,7 +46,7 @@ export const AdminAIControlCenterPanel: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-c-border-subtle dark:bg-white/5">
           <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
             <Shield className="h-4 w-4" />
             Governance level
@@ -59,7 +59,7 @@ export const AdminAIControlCenterPanel: React.FC = () => {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-c-border-subtle dark:bg-white/5">
           <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
             <Cpu className="h-4 w-4" />
             Model posture
@@ -72,7 +72,7 @@ export const AdminAIControlCenterPanel: React.FC = () => {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-c-border-subtle dark:bg-white/5">
           <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
             <Brain className="h-4 w-4" />
             Context controls
@@ -87,7 +87,7 @@ export const AdminAIControlCenterPanel: React.FC = () => {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-2 dark:border-white/10 dark:bg-white/5">
+      <div className="rounded-2xl border border-slate-200 bg-white p-2 dark:border-c-border-subtle dark:bg-white/5">
         <div className="flex flex-wrap gap-2">
           {tabs.map((tab) => (
             <button
@@ -106,7 +106,7 @@ export const AdminAIControlCenterPanel: React.FC = () => {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-c-border-subtle dark:bg-white/5">
         <div className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
           <Sparkles className="h-5 w-5 text-primary-500" />
           AI Governance & AI Operations

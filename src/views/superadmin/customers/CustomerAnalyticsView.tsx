@@ -246,7 +246,7 @@ const CustomerAnalyticsView: React.FC = () => {
             ) : (
               <table /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */  className="w-full">
                 <thead>
-                  <tr className="text-left text-slate-500 dark:text-slate-400 text-sm border-b border-slate-200 dark:border-white/10">
+                  <tr className="text-left text-slate-500 dark:text-slate-400 text-sm border-b border-slate-200 dark:border-c-border-subtle">
                     <th className="pb-3">Organization</th>
                     <th className="pb-3">Users</th>
                     <th className="pb-3">AI Calls (30d)</th>
@@ -258,7 +258,7 @@ const CustomerAnalyticsView: React.FC = () => {
                   {sortedMetrics.map((org) => (
                     <tr
                       key={org.org_id}
-                      className="border-b border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5"
+                      className="border-b border-slate-200 dark:border-c-border-subtle hover:bg-slate-50 dark:hover:bg-white/5"
                     >
                       <td className="py-3 text-slate-900 dark:text-white font-medium">
                         {org.org_name}

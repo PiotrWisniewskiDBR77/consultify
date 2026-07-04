@@ -363,16 +363,16 @@ export const AdminLLMView: React.FC = () => {
     <div className="space-y-6 relative">
       <InfoButton cardId="admin-llm" position="top-right" />
       {/* TABS */}
-      <div className="flex gap-4 border-b border-white/5 pb-1">
+      <div className="flex gap-4 border-b border-c-border-subtle pb-1">
         <button
           onClick={() => setActiveTab('providers')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'providers' ? 'border-white/80 text-c-text' : 'border-transparent text-c-text-secondary hover:text-white'}`}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'providers' ? 'border-c-border-strong text-c-text' : 'border-transparent text-c-text-secondary hover:text-white'}`}
         >
           LLM Providers
         </button>
         <button
           onClick={() => setActiveTab('health')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'health' ? 'border-white/80 text-c-text' : 'border-transparent text-c-text-secondary hover:text-white'}`}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'health' ? 'border-c-border-strong text-c-text' : 'border-transparent text-c-text-secondary hover:text-white'}`}
         >
           <Activity size={14} />
           Health Dashboard
@@ -390,7 +390,7 @@ export const AdminLLMView: React.FC = () => {
         </button>
         <button
           onClick={() => setActiveTab('prompts')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'prompts' ? 'border-white/80 text-c-text' : 'border-transparent text-c-text-secondary hover:text-white'}`}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'prompts' ? 'border-c-border-strong text-c-text' : 'border-transparent text-c-text-secondary hover:text-white'}`}
         >
           System Personas (Prompts)
         </button>
@@ -408,7 +408,7 @@ export const AdminLLMView: React.FC = () => {
                 title="LLM provider configuration is read-only"
                 description="Provider management actions are not shown until the persistence and audit workflow is fully connected."
               />
-              <div className="rounded-xl border border-white/10 bg-c-surface/50 p-4">
+              <div className="rounded-xl border border-c-border-subtle bg-c-surface/50 p-4">
                 <p className="text-sm text-c-text-secondary">
                   Loaded providers:{' '}
                   <span className="font-semibold text-c-text">{providers.length}</span>
@@ -429,7 +429,7 @@ export const AdminLLMView: React.FC = () => {
                 title="System prompts are read-only"
                 description="Prompt editing is hidden until user attribution, persistence, and audit metadata are wired."
               />
-              <div className="rounded-xl border border-white/10 bg-c-surface/50 p-4">
+              <div className="rounded-xl border border-c-border-subtle bg-c-surface/50 p-4">
                 <p className="text-sm text-c-text-secondary">
                   Loaded prompts: <span className="font-semibold text-c-text">{prompts.length}</span>
                 </p>
@@ -448,7 +448,7 @@ export const AdminLLMView: React.FC = () => {
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="p-4 bg-c-surface/50 border border-white/10 rounded-xl">
+                <div className="p-4 bg-c-surface/50 border border-c-border-subtle rounded-xl">
                   <div className="flex justify-between items-start mb-2">
                     <div className="p-2 bg-blue-500/20 rounded-lg">
                       <Activity size={20} className="text-blue-400" />
@@ -463,7 +463,7 @@ export const AdminLLMView: React.FC = () => {
                   <div className="text-xs text-c-text-secondary">Total Requests</div>
                 </div>
 
-                <div className="p-4 bg-c-surface/50 border border-white/10 rounded-xl">
+                <div className="p-4 bg-c-surface/50 border border-c-border-subtle rounded-xl">
                   <div className="flex justify-between items-start mb-2">
                     <div className="p-2 bg-emerald-500/20 rounded-lg">
                       <Zap size={20} className="text-emerald-400" />
@@ -478,7 +478,7 @@ export const AdminLLMView: React.FC = () => {
                   <div className="text-xs text-c-text-secondary">Response Time</div>
                 </div>
 
-                <div className="p-4 bg-c-surface/50 border border-white/10 rounded-xl">
+                <div className="p-4 bg-c-surface/50 border border-c-border-subtle rounded-xl">
                   <div className="flex justify-between items-start mb-2">
                     <div className="p-2 bg-amber-500/20 rounded-lg">
                       <Coins size={20} className="text-amber-400" />
@@ -493,7 +493,7 @@ export const AdminLLMView: React.FC = () => {
                   <div className="text-xs text-c-text-secondary">Total Spend</div>
                 </div>
 
-                <div className="p-4 bg-c-surface/50 border border-white/10 rounded-xl">
+                <div className="p-4 bg-c-surface/50 border border-c-border-subtle rounded-xl">
                   <div className="flex justify-between items-start mb-2">
                     <div
                       className={`p-2 rounded-lg ${analytics?.error_rate > 0.05 ? 'bg-danger-500/20' : 'bg-primary-500/20'}`}
@@ -519,8 +519,8 @@ export const AdminLLMView: React.FC = () => {
               </div>
 
               {/* Logs Table */}
-              <div className="bg-c-surface/50 border border-white/10 rounded-xl overflow-hidden">
-                <div className="p-4 border-b border-white/10 flex justify-between items-center">
+              <div className="bg-c-surface/50 border border-c-border-subtle rounded-xl overflow-hidden">
+                <div className="p-4 border-b border-c-border-subtle flex justify-between items-center">
                   <h3 className="font-semibold text-c-text flex items-center gap-2">
                     <Terminal size={18} className="text-c-text-secondary" />
                     Recent Interactions
@@ -626,7 +626,7 @@ export const AdminLLMView: React.FC = () => {
                 </div>
                 <p className="text-3xl font-bold text-c-text">{llmStatus?.summary.unhealthy || 0}</p>
               </div>
-              <div className="bg-gradient-to-br from-slate-800/50 to-navy-900 border border-white/10 rounded-xl p-4">
+              <div className="bg-gradient-to-br from-slate-800/50 to-navy-900 border border-c-border-subtle rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Server size={18} className="text-c-text-secondary" />
                   <span className="text-xs uppercase tracking-wider text-c-text-secondary">
@@ -754,7 +754,7 @@ export const AdminLLMView: React.FC = () => {
 
                   {/* Circuit Breaker Status */}
                   {llmStatus.circuitBreakers[p.provider] && (
-                    <div className="mt-2 pt-2 border-t border-white/5">
+                    <div className="mt-2 pt-2 border-t border-c-border-subtle">
                       <div className="flex items-center gap-2 text-xs">
                         <Zap
                           size={10}
@@ -783,7 +783,7 @@ export const AdminLLMView: React.FC = () => {
 
             {/* Fallback Chains */}
             {llmStatus?.fallbackChains && (
-              <div className="bg-c-surface border border-white/5 rounded-xl p-6">
+              <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6">
                 <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
                   <ArrowRight size={18} className="text-primary-400" />
                   Fallback Chains

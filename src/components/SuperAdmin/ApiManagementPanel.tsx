@@ -80,7 +80,7 @@ export const ApiManagementPanel: React.FC = () => {
           apiKeys.map((key) => (
             <div
               key={key.id}
-              className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10"
+              className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-c-border-subtle"
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">

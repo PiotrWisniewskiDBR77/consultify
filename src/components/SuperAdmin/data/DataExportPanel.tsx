@@ -178,7 +178,7 @@ export const DataExportPanel: React.FC = () => {
             onChange={(e) => setFilterOrgId(e.target.value)}
             disabled
             title={dataExportWorkflowUnavailableReason}
-            className="px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+            className="px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-primary-500/50 outline-none"
           >
             <option value="">All Organizations</option>
             {organizations.map((org) => (
@@ -193,7 +193,7 @@ export const DataExportPanel: React.FC = () => {
             onChange={(e) => setFilterStatus(e.target.value)}
             disabled
             title={dataExportWorkflowUnavailableReason}
-            className="px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+            className="px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-primary-500/50 outline-none"
           >
             <option value="">All Status</option>
             <option value="pending">Pending</option>
@@ -321,7 +321,7 @@ export const DataExportPanel: React.FC = () => {
       {/* Create Export Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-c-surface border border-white/10 rounded-xl p-6 w-full max-w-lg">
+          <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6 w-full max-w-lg">
             <h3 className="text-lg font-semibold text-c-text mb-6">Request Data Export</h3>
 
             <div className="space-y-4">
@@ -336,7 +336,7 @@ export const DataExportPanel: React.FC = () => {
                       className={`flex-1 px-4 py-2.5 rounded-lg border transition-colors ${
                         formData.exportType === type
                           ? 'bg-primary-500/20 border-primary-500/50 text-primary-400'
-                          : 'bg-c-surface-raised border-white/10 text-slate-600 dark:text-slate-500 hover:border-white/20'
+                          : 'bg-c-surface-raised border-c-border-subtle text-slate-600 dark:text-slate-500 hover:border-c-border'
                       }`}
                     >
                       {type.charAt(0).toUpperCase() + type.slice(1)}

@@ -319,7 +319,7 @@ export const OrgAISettingsView: React.FC = () => {
       <InfoButton cardId="admin-ai-settings" position="top-right" />
 
       {/* Header */}
-      <div className="shrink-0 px-8 py-6 border-b border-white/10">
+      <div className="shrink-0 px-8 py-6 border-b border-c-border-subtle">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-lg shadow-primary-500/20">
@@ -367,7 +367,7 @@ export const OrgAISettingsView: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="shrink-0 px-8 py-3 border-b border-white/5 flex gap-2 overflow-x-auto">
+      <div className="shrink-0 px-8 py-3 border-b border-c-border-subtle flex gap-2 overflow-x-auto">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -430,7 +430,7 @@ export const OrgAISettingsView: React.FC = () => {
                                                     relative p-4 rounded-xl text-left transition-all
                                                     ${
                                                       isSelected
-                                                        ? `bg-gradient-to-br ${level.bgColor} border-2 border-white/30`
+                                                        ? `bg-gradient-to-br ${level.bgColor} border-2 border-c-border`
                                                         : 'bg-c-surface-raised/30 border border-c-border/50 hover:border-slate-600'
                                                     }
                                                     ${isDisabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}

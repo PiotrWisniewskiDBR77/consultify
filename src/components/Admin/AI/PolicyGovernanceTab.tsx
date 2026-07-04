@@ -217,7 +217,7 @@ export const PolicyGovernanceTab: React.FC = () => {
                     disabled={isDisabled}
                     className={`relative p-4 rounded-xl text-left transition-all ${
                       isSelected
-                        ? `bg-gradient-to-br ${level.bgColor} border-2 border-white/30`
+                        ? `bg-gradient-to-br ${level.bgColor} border-2 border-c-border`
                         : 'bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600'
                     } ${isDisabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                     whileHover={!isDisabled ? { scale: 1.02 } : {}}

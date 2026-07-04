@@ -231,7 +231,7 @@ export function OrganizationContextWorkerOperationsView() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+      <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-5 dark:border-c-border-subtle dark:bg-white/5">
         <div>
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
             Organization Context Worker Operations
@@ -265,7 +265,7 @@ export function OrganizationContextWorkerOperationsView() {
       {error ? (
         <DegradedState title="Worker operations unavailable" description={error} />
       ) : loading ? (
-        <div className="flex items-center gap-2 rounded-xl border border-slate-200 p-4 text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
+        <div className="flex items-center gap-2 rounded-xl border border-slate-200 p-4 text-sm text-slate-500 dark:border-c-border-subtle dark:text-slate-400">
           <RefreshCw size={16} className="animate-spin" />
           Loading worker operations...
         </div>

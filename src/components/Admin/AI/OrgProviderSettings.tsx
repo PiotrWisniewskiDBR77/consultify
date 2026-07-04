@@ -221,7 +221,7 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
       </div>
 
       {/* Enabled Providers */}
-      <div className="bg-white/5 rounded-xl border border-white/10 p-6">
+      <div className="bg-white/5 rounded-xl border border-c-border-subtle p-6">
         <h4 className="text-c-text font-medium mb-4 flex items-center gap-2">
           <CheckCircle size={18} className="text-emerald-400" />
           Enabled Providers ({enabledProviders.length})
@@ -266,7 +266,7 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
       </div>
 
       {/* Disabled Providers */}
-      <div className="bg-white/5 rounded-xl border border-white/10 p-6">
+      <div className="bg-white/5 rounded-xl border border-c-border-subtle p-6">
         <button
           onClick={() => setShowDisabled(!showDisabled)}
           className="w-full flex items-center justify-between text-left"
@@ -315,7 +315,7 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
       </div>
 
       {/* Available Models Preview */}
-      <div className="bg-white/5 rounded-xl border border-white/10 p-6">
+      <div className="bg-white/5 rounded-xl border border-c-border-subtle p-6">
         <h4 className="text-c-text font-medium mb-4">Available Models per Tier</h4>
         <p className="text-sm text-slate-600 dark:text-slate-500 mb-4">
           These are the models currently available to your users based on enabled providers.
@@ -327,7 +327,7 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
             const models = availableModels[tier] || [];
 
             return (
-              <div key={tier} className={`${config.bgClass} border border-white/10 rounded-xl p-4`}>
+              <div key={tier} className={`${config.bgClass} border border-c-border-subtle rounded-xl p-4`}>
                 <div className="flex items-center gap-2 mb-3">
                   <TierIcon size={18} className={config.textClass} />
                   <span className={`font-medium ${config.textClass}`}>{tier}</span>

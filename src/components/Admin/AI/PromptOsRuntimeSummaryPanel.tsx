@@ -107,7 +107,7 @@ export const PromptOsRuntimeSummaryPanel: React.FC = () => {
       </div>
 
       {error && (
-        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 p-4 shadow-sm">
+        <div className="rounded-xl border border-slate-200 dark:border-c-border-subtle bg-white dark:bg-navy-900 p-4 shadow-sm">
           <DegradedState title="Prompt OS runtime unavailable" description={error} />
         </div>
       )}
@@ -119,7 +119,7 @@ export const PromptOsRuntimeSummaryPanel: React.FC = () => {
       )}
 
       {summary && (
-        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 p-4 shadow-sm">
+        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-xl border border-slate-200 dark:border-c-border-subtle bg-white dark:bg-navy-900 p-4 shadow-sm">
           <div>
             <dt className="text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
               {t('superadmin.promptOsRuntime.fields.contract', { defaultValue: 'Contract' })}

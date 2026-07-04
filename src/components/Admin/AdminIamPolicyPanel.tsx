@@ -136,14 +136,14 @@ export const AdminIamPolicyPanel: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-slate-400">
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500 dark:border-c-border-subtle dark:bg-white/5 dark:text-slate-400">
         Loading IAM policy...
       </div>
     );
   }
 
   return (
-    <div className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+    <div className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 dark:border-c-border-subtle dark:bg-white/5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <div className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
@@ -166,7 +166,7 @@ export const AdminIamPolicyPanel: React.FC = () => {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <label className="rounded-xl border border-slate-200 p-4 text-sm dark:border-white/10">
+        <label className="rounded-xl border border-slate-200 p-4 text-sm dark:border-c-border-subtle">
           <div className="font-medium text-slate-900 dark:text-white">Access reviews</div>
           <div className="mt-1 text-slate-500 dark:text-slate-400">
             Require recurring recertification of privileged admin access.
@@ -181,7 +181,7 @@ export const AdminIamPolicyPanel: React.FC = () => {
           />
         </label>
 
-        <label className="rounded-xl border border-slate-200 p-4 text-sm dark:border-white/10">
+        <label className="rounded-xl border border-slate-200 p-4 text-sm dark:border-c-border-subtle">
           <div className="font-medium text-slate-900 dark:text-white">Context-aware access</div>
           <div className="mt-1 text-slate-500 dark:text-slate-400">
             Require stronger checks for privileged sessions and sensitive changes.
@@ -199,7 +199,7 @@ export const AdminIamPolicyPanel: React.FC = () => {
           />
         </label>
 
-        <label className="rounded-xl border border-slate-200 p-4 text-sm dark:border-white/10">
+        <label className="rounded-xl border border-slate-200 p-4 text-sm dark:border-c-border-subtle">
           <div className="font-medium text-slate-900 dark:text-white">Break-glass</div>
           <div className="mt-1 text-slate-500 dark:text-slate-400">
             Allow emergency elevation with explicit approvers and audit requirements.
@@ -228,7 +228,7 @@ export const AdminIamPolicyPanel: React.FC = () => {
                 accessReviewCadenceDays: Number(event.target.value || 90),
               }))
             }
-            className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white"
+            className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 dark:border-c-border-subtle dark:bg-navy-900 dark:text-white"
           />
         </label>
         <label className="text-sm text-slate-600 dark:text-slate-300">
@@ -243,7 +243,7 @@ export const AdminIamPolicyPanel: React.FC = () => {
                 privilegedSessionReauthMinutes: Number(event.target.value || 30),
               }))
             }
-            className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white"
+            className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 dark:border-c-border-subtle dark:bg-navy-900 dark:text-white"
           />
         </label>
         <label className="text-sm text-slate-600 dark:text-slate-300">
@@ -261,7 +261,7 @@ export const AdminIamPolicyPanel: React.FC = () => {
               }))
             }
             placeholder="owner@company.com, ciso@company.com"
-            className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white"
+            className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 dark:border-c-border-subtle dark:bg-navy-900 dark:text-white"
           />
         </label>
       </div>
@@ -283,7 +283,7 @@ export const AdminIamPolicyPanel: React.FC = () => {
           </h3>
           <button
             onClick={addRole}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 dark:border-white/10 dark:text-slate-200"
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 dark:border-c-border-subtle dark:text-slate-200"
           >
             <Plus className="h-4 w-4" />
             Add delegated role
@@ -293,13 +293,13 @@ export const AdminIamPolicyPanel: React.FC = () => {
         {policy.delegatedRoles.map((role, index) => (
           <div
             key={role.id}
-            className="grid gap-3 rounded-xl border border-slate-200 p-4 dark:border-white/10 lg:grid-cols-[180px,1fr,auto]"
+            className="grid gap-3 rounded-xl border border-slate-200 p-4 dark:border-c-border-subtle lg:grid-cols-[180px,1fr,auto]"
           >
             <input
               type="text"
               value={role.name}
               onChange={(event) => updateRole(index, { name: event.target.value })}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-c-border-subtle dark:bg-navy-900 dark:text-white"
             />
             <input
               type="text"
@@ -312,7 +312,7 @@ export const AdminIamPolicyPanel: React.FC = () => {
                     .filter(Boolean),
                 })
               }
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-c-border-subtle dark:bg-navy-900 dark:text-white"
             />
             <button
               onClick={() => removeRole(index)}
@@ -324,7 +324,7 @@ export const AdminIamPolicyPanel: React.FC = () => {
         ))}
       </div>
 
-      <div className="space-y-4 rounded-xl border border-slate-200 p-4 dark:border-white/10">
+      <div className="space-y-4 rounded-xl border border-slate-200 p-4 dark:border-c-border-subtle">
         <div className="text-sm font-semibold text-slate-900 dark:text-white">
           Delegated admin assignments
         </div>
@@ -336,7 +336,7 @@ export const AdminIamPolicyPanel: React.FC = () => {
               setAssignmentForm((current) => ({ ...current, userId: event.target.value }))
             }
             placeholder="user-id"
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-navy-900"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-c-border-subtle dark:bg-navy-900"
           />
           <input
             type="text"
@@ -345,7 +345,7 @@ export const AdminIamPolicyPanel: React.FC = () => {
               setAssignmentForm((current) => ({ ...current, roleName: event.target.value }))
             }
             placeholder="Role name"
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-navy-900"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-c-border-subtle dark:bg-navy-900"
           />
           <input
             type="text"
@@ -354,7 +354,7 @@ export const AdminIamPolicyPanel: React.FC = () => {
               setAssignmentForm((current) => ({ ...current, capabilities: event.target.value }))
             }
             placeholder="billing:read, billing:write"
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-navy-900"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-c-border-subtle dark:bg-navy-900"
           />
           <button
             onClick={() => void createAssignment()}
@@ -368,7 +368,7 @@ export const AdminIamPolicyPanel: React.FC = () => {
           {assignments.map((assignment) => (
             <div
               key={assignment.id}
-              className="grid gap-3 rounded-xl border border-slate-200 p-4 dark:border-white/10 lg:grid-cols-[1fr,1fr,auto]"
+              className="grid gap-3 rounded-xl border border-slate-200 p-4 dark:border-c-border-subtle lg:grid-cols-[1fr,1fr,auto]"
             >
               <div>
                 <div className="font-medium text-slate-900 dark:text-white">

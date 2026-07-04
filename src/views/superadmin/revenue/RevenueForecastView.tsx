@@ -275,7 +275,7 @@ export const RevenueForecastView: React.FC = () => {
           <div className="overflow-x-auto">
             <table /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */  className="w-full">
               <thead>
-                <tr className="border-b border-slate-200 dark:border-white/10">
+                <tr className="border-b border-slate-200 dark:border-c-border-subtle">
                   <th className="text-left py-3 px-4 text-slate-600 dark:text-slate-400 font-medium">
                     Period
                   </th>
@@ -303,7 +303,7 @@ export const RevenueForecastView: React.FC = () => {
                 {forecasts.map((forecast) => (
                   <tr
                     key={forecast.id}
-                    className="border-b border-slate-200/70 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
+                    className="border-b border-slate-200/70 dark:border-c-border-subtle hover:bg-slate-50 dark:hover:bg-white/[0.04]"
                   >
                     <td className="py-3 px-4">
                       <span className="text-slate-900 dark:text-white">

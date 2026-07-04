@@ -59,7 +59,7 @@ export const AdminTokenPackages = () => {
     );
 
   return (
-    <div className="bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-xl overflow-hidden shadow-lg p-6 relative">
+    <div className="bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-xl overflow-hidden shadow-lg p-6 relative">
       <div className="absolute top-0 left-0 p-32 bg-blue-500/5 rounded-full blur-3xl -ml-16 -mt-16 pointer-events-none" />
 
       <div className="flex justify-between items-center mb-8 relative z-10">
@@ -96,7 +96,7 @@ export const AdminTokenPackages = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <form
             onSubmit={handleSave}
-            className="bg-c-surface border border-c-border-subtle dark:border-white/10 p-6 rounded-xl shadow-2xl w-full max-w-2xl animate-fade-in-up"
+            className="bg-c-surface border border-c-border-subtle dark:border-c-border-subtle p-6 rounded-xl shadow-2xl w-full max-w-2xl animate-fade-in-up"
           >
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold text-c-text">
@@ -121,7 +121,7 @@ export const AdminTokenPackages = () => {
                   type="text"
                   value={editingPkg.name}
                   onChange={(e) => setEditingPkg({ ...editingPkg, name: e.target.value })}
-                  className="w-full bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg px-4 py-3 text-c-text focus:border-blue-500 outline-none transition-colors"
+                  className="w-full bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-lg px-4 py-3 text-c-text focus:border-blue-500 outline-none transition-colors"
                   placeholder="e.g. Starter, Pro"
                 />
               </div>
@@ -135,7 +135,7 @@ export const AdminTokenPackages = () => {
                   onChange={(e) =>
                     setEditingPkg({ ...editingPkg, stripe_price_id: e.target.value })
                   }
-                  className="w-full bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg px-4 py-3 text-c-text focus:border-blue-500 outline-none transition-colors font-mono text-sm"
+                  className="w-full bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-lg px-4 py-3 text-c-text focus:border-blue-500 outline-none transition-colors font-mono text-sm"
                   placeholder="price_..."
                 />
               </div>
@@ -149,7 +149,7 @@ export const AdminTokenPackages = () => {
                     type="number"
                     value={editingPkg.tokens}
                     onChange={(e) => setEditingPkg({ ...editingPkg, tokens: e.target.value })}
-                    className="w-full bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg pl-10 pr-4 py-3 text-c-text focus:border-blue-500 outline-none transition-colors font-mono"
+                    className="w-full bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-lg pl-10 pr-4 py-3 text-c-text focus:border-blue-500 outline-none transition-colors font-mono"
                   />
                   <Coins className="absolute left-3 top-3.5 text-c-text-muted w-4 h-4" />
                 </div>
@@ -165,7 +165,7 @@ export const AdminTokenPackages = () => {
                     step="0.01"
                     value={editingPkg.price_usd}
                     onChange={(e) => setEditingPkg({ ...editingPkg, price_usd: e.target.value })}
-                    className="w-full bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg pl-8 pr-4 py-3 text-c-text focus:border-blue-500 outline-none transition-colors font-mono"
+                    className="w-full bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-lg pl-8 pr-4 py-3 text-c-text focus:border-blue-500 outline-none transition-colors font-mono"
                   />
                   <span className="absolute left-3 top-3.5 text-c-text-muted text-sm">
                     $
@@ -180,7 +180,7 @@ export const AdminTokenPackages = () => {
                   type="number"
                   value={editingPkg.bonus_percent}
                   onChange={(e) => setEditingPkg({ ...editingPkg, bonus_percent: e.target.value })}
-                  className="w-full bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg px-4 py-3 text-c-text focus:border-blue-500 outline-none transition-colors"
+                  className="w-full bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-lg px-4 py-3 text-c-text focus:border-blue-500 outline-none transition-colors"
                 />
               </div>
               <div>
@@ -191,18 +191,18 @@ export const AdminTokenPackages = () => {
                   type="number"
                   value={editingPkg.sort_order || 0}
                   onChange={(e) => setEditingPkg({ ...editingPkg, sort_order: e.target.value })}
-                  className="w-full bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg px-4 py-3 text-c-text focus:border-blue-500 outline-none transition-colors"
+                  className="w-full bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-lg px-4 py-3 text-c-text focus:border-blue-500 outline-none transition-colors"
                 />
               </div>
             </div>
 
             <div className="mb-8">
-              <label className="flex items-center gap-3 p-4 bg-c-surface-raised/20 rounded-lg cursor-pointer hover:bg-c-surface-raised/40 transition-colors border border-c-border-subtle dark:border-white/10">
+              <label className="flex items-center gap-3 p-4 bg-c-surface-raised/20 rounded-lg cursor-pointer hover:bg-c-surface-raised/40 transition-colors border border-c-border-subtle dark:border-c-border-subtle">
                 <input
                   type="checkbox"
                   checked={!!editingPkg.is_popular}
                   onChange={(e) => setEditingPkg({ ...editingPkg, is_popular: e.target.checked })}
-                  className="w-5 h-5 rounded border-c-border dark:border-white/20 bg-c-surface text-blue-500 focus:ring-blue-500 focus:ring-offset-white dark:focus:ring-offset-navy-900"
+                  className="w-5 h-5 rounded border-c-border dark:border-c-border bg-c-surface text-blue-500 focus:ring-blue-500 focus:ring-offset-white dark:focus:ring-offset-navy-900"
                 />
                 <div>
                   <span className="text-c-text font-medium block">
@@ -215,7 +215,7 @@ export const AdminTokenPackages = () => {
               </label>
             </div>
 
-            <div className="flex gap-3 justify-end pt-4 border-t border-c-border-subtle dark:border-white/10">
+            <div className="flex gap-3 justify-end pt-4 border-t border-c-border-subtle dark:border-c-border-subtle">
               <button
                 type="button"
                 onClick={() => setEditingPkg(null)}
@@ -240,7 +240,7 @@ export const AdminTokenPackages = () => {
               className={`relative bg-c-surface-raised/20 rounded-xl p-6 border transition-all hover:-translate-y-1 hover:shadow-xl group ${
                 pkg.is_popular
                   ? 'border-blue-500/50 shadow-blue-500/10'
-                  : 'border-c-border-subtle dark:border-white/10 hover:border-c-border dark:hover:border-white/20'
+                  : 'border-c-border-subtle dark:border-c-border-subtle hover:border-c-border dark:hover:border-c-border'
               }`}
             >
               {pkg.is_popular === 1 && (
@@ -280,17 +280,17 @@ export const AdminTokenPackages = () => {
               </div>
 
               <div className="space-y-3 mb-6">
-                <div className="flex items-center justify-between text-sm py-2 border-b border-white/5">
+                <div className="flex items-center justify-between text-sm py-2 border-b border-c-border-subtle">
                   <span className="text-c-text-secondary">Tokens</span>
                   <span className="text-c-text font-mono">{pkg.tokens.toLocaleString()}</span>
                 </div>
-                <div className="flex items-center justify-between text-sm py-2 border-b border-white/5">
+                <div className="flex items-center justify-between text-sm py-2 border-b border-c-border-subtle">
                   <span className="text-c-text-secondary">Total Value</span>
                   <span className="text-emerald-400 font-mono font-medium">
                     {(pkg.tokens * (1 + pkg.bonus_percent / 100)).toLocaleString()}
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-sm py-2 border-b border-white/5">
+                <div className="flex items-center justify-between text-sm py-2 border-b border-c-border-subtle">
                   <span className="text-c-text-secondary">Sort Order</span>
                   <span className="text-c-text-muted">#{pkg.sort_order}</span>
                 </div>

@@ -524,7 +524,7 @@ const DashboardBuilderView: React.FC = () => {
               {/* Widgets Grid */}
               <div className="grid grid-cols-4 gap-4 min-h-[400px]">
                 {widgets.length === 0 ? (
-                  <div className="col-span-4 flex flex-col items-center justify-center h-64 border-2 border-dashed border-slate-300 dark:border-white/10 rounded-lg bg-slate-50/50 dark:bg-white/[0.02]">
+                  <div className="col-span-4 flex flex-col items-center justify-center h-64 border-2 border-dashed border-slate-300 dark:border-c-border-subtle rounded-lg bg-slate-50/50 dark:bg-white/[0.02]">
                     <Grid className="w-12 h-12 text-slate-600 dark:text-slate-400 mb-3" />
                     <p className="text-slate-600 dark:text-slate-400">No widgets yet</p>
                     {isEditing && (

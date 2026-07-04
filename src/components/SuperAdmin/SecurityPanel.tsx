@@ -67,7 +67,7 @@ export const SecurityPanel: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex gap-2 border-b border-white/10">
+      <div className="flex gap-2 border-b border-c-border-subtle">
         <button
           onClick={() => setActiveTab('events')}
           className={`px-4 py-2 font-medium transition-colors ${
@@ -94,19 +94,19 @@ export const SecurityPanel: React.FC = () => {
         <div className="space-y-4">
           {stats && (
             <div className="grid grid-cols-4 gap-4">
-              <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
+              <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-c-border-subtle">
                 <div className="text-sm text-slate-400 dark:text-slate-500">Total Events</div>
                 <div className="text-2xl font-bold text-c-text">{stats.total || 0}</div>
               </div>
-              <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
+              <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-c-border-subtle">
                 <div className="text-sm text-slate-400 dark:text-slate-500">Critical</div>
                 <div className="text-2xl font-bold text-danger-400">{stats.critical || 0}</div>
               </div>
-              <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
+              <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-c-border-subtle">
                 <div className="text-sm text-slate-400 dark:text-slate-500">High</div>
                 <div className="text-2xl font-bold text-amber-400">{stats.high || 0}</div>
               </div>
-              <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
+              <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-c-border-subtle">
                 <div className="text-sm text-slate-400 dark:text-slate-500">Unresolved</div>
                 <div className="text-2xl font-bold text-yellow-400">{stats.unresolved || 0}</div>
               </div>
@@ -122,7 +122,7 @@ export const SecurityPanel: React.FC = () => {
               events.map((event) => (
                 <div
                   key={event.id}
-                  className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10"
+                  className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-c-border-subtle"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
@@ -182,7 +182,7 @@ export const SecurityPanel: React.FC = () => {
               complianceRecords.map((record) => (
                 <div
                   key={record.id}
-                  className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10"
+                  className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-c-border-subtle"
                 >
                   <div className="flex items-center justify-between">
                     <div>

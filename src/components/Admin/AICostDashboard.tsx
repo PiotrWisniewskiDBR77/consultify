@@ -205,7 +205,7 @@ export const AICostDashboard: React.FC = () => {
       </div>
 
       {loadError ? (
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-6">
+        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-c-border-subtle p-6">
           <DegradedState title="AI cost analytics unavailable" description={loadError} />
         </div>
       ) : (
@@ -214,7 +214,7 @@ export const AICostDashboard: React.FC = () => {
             {metrics.map((metric, index) => (
               <div
                 key={index}
-                className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-4"
+                className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-c-border-subtle p-4"
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs text-slate-600 dark:text-slate-400">{metric.label}</span>
@@ -235,7 +235,7 @@ export const AICostDashboard: React.FC = () => {
             ))}
           </div>
 
-          <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-6">
+          <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-c-border-subtle p-6">
             <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-4">
               Cost Breakdown by Provider
             </h4>
@@ -269,13 +269,13 @@ export const AICostDashboard: React.FC = () => {
 
           {finOps ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-4">
+              <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-c-border-subtle p-4">
                 <div className="text-xs text-slate-600 dark:text-slate-400">Budget Utilization</div>
                 <div className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
                   {finOps.budgetUtilizationPct.toFixed(1)}%
                 </div>
               </div>
-              <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-4">
+              <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-c-border-subtle p-4">
                 <div className="text-xs text-slate-600 dark:text-slate-400">
                   Top Vendor Concentration
                 </div>
@@ -286,7 +286,7 @@ export const AICostDashboard: React.FC = () => {
                   {finOps.vendorConcentrationPct.toFixed(1)}% of MTD spend
                 </div>
               </div>
-              <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-4">
+              <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-c-border-subtle p-4">
                 <div className="text-xs text-slate-600 dark:text-slate-400">Spend Anomalies</div>
                 <div className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
                   {finOps.anomalies.length}

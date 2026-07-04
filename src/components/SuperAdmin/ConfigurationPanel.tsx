@@ -73,7 +73,7 @@ export const ConfigurationPanel: React.FC = () => {
           configs.map((config) => (
             <div
               key={config.config_key}
-              className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10"
+              className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-c-border-subtle"
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">
@@ -99,7 +99,7 @@ export const ConfigurationPanel: React.FC = () => {
                         type={config.config_type === 'number' ? 'number' : 'text'}
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
-                        className="flex-1 px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-c-text"
+                        className="flex-1 px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-c-border-subtle rounded-lg text-c-text"
                       />
                       <button
                         onClick={() => handleSave(config.config_key, editValue, config.config_type)}

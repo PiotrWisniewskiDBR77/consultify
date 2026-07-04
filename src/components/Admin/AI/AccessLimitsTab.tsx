@@ -437,7 +437,7 @@ export const AccessLimitsTab: React.FC = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="mt-3 pt-3 border-t border-white/5">
+                  <div className="mt-3 pt-3 border-t border-c-border-subtle">
                     <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">
                       Available models:
                     </p>
@@ -521,19 +521,19 @@ export const AccessLimitsTab: React.FC = () => {
               <div className="bg-black/20 rounded-lg p-4">
                 <h4 className="text-sm font-medium text-c-text mb-3">Token Thresholds</h4>
                 <div className="space-y-3 text-sm">
-                  <div className="flex justify-between items-center py-2 border-b border-white/5">
+                  <div className="flex justify-between items-center py-2 border-b border-c-border-subtle">
                     <span className="text-emerald-400">Budget</span>
                     <span className="text-slate-600 dark:text-slate-500">
                       0 - 1,000 tokens/month
                     </span>
                   </div>
-                  <div className="flex justify-between items-center py-2 border-b border-white/5">
+                  <div className="flex justify-between items-center py-2 border-b border-c-border-subtle">
                     <span className="text-blue-400">Standard</span>
                     <span className="text-slate-600 dark:text-slate-500">
                       1,001 - 50,000 tokens/month
                     </span>
                   </div>
-                  <div className="flex justify-between items-center py-2 border-b border-white/5">
+                  <div className="flex justify-between items-center py-2 border-b border-c-border-subtle">
                     <span className="text-amber-400">Premium</span>
                     <span className="text-slate-600 dark:text-slate-500">
                       50,001 - 200,000 tokens/month
@@ -546,7 +546,7 @@ export const AccessLimitsTab: React.FC = () => {
                     </span>
                   </div>
                 </div>
-                <div className="mt-4 pt-4 border-t border-white/5">
+                <div className="mt-4 pt-4 border-t border-c-border-subtle">
                   <button className="w-full px-4 py-2 bg-c-surface-raised hover:bg-c-surface-raised text-slate-600 text-sm rounded-lg transition-colors">
                     Preview Changes
                   </button>

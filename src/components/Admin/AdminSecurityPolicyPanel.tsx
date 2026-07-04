@@ -72,7 +72,7 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-c-border-subtle dark:bg-white/5">
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
             <KeyRound className="h-4 w-4 text-primary-500" />
             MFA enforcement
@@ -102,12 +102,12 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
                   mfaGracePeriodDays: Number(event.target.value || 0),
                 }))
               }
-              className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-white/10 dark:bg-navy-900 dark:text-white"
+              className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-c-border-subtle dark:bg-navy-900 dark:text-white"
             />
           </label>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-c-border-subtle dark:bg-white/5">
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
             <Shield className="h-4 w-4 text-primary-500" />
             SSO posture
@@ -153,7 +153,7 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
                 setPolicy((prev) => ({ ...prev, ssoProvider: event.target.value }))
               }
               placeholder="Okta"
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-white/10 dark:bg-navy-900 dark:text-white"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-c-border-subtle dark:bg-navy-900 dark:text-white"
             />
             <div className="grid gap-3 md:grid-cols-2">
               <select
@@ -161,7 +161,7 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
                 onChange={(event) =>
                   setPolicy((prev) => ({ ...prev, ssoProviderType: event.target.value }))
                 }
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-white/10 dark:bg-navy-900 dark:text-white"
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-c-border-subtle dark:bg-navy-900 dark:text-white"
               >
                 <option value="custom">Custom</option>
                 <option value="okta">Okta</option>
@@ -176,7 +176,7 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
                     ssoProtocol: event.target.value === 'oidc' ? 'oidc' : 'saml',
                   }))
                 }
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-white/10 dark:bg-navy-900 dark:text-white"
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-c-border-subtle dark:bg-navy-900 dark:text-white"
               >
                 <option value="saml">SAML</option>
                 <option value="oidc">OIDC</option>
@@ -185,7 +185,7 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-c-border-subtle dark:bg-white/5">
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
             <Lock className="h-4 w-4 text-primary-500" />
             Session and password
@@ -204,7 +204,7 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
                     sessionTimeoutMinutes: Number(event.target.value),
                   }))
                 }
-                className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-white/10 dark:bg-navy-900 dark:text-white"
+                className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-c-border-subtle dark:bg-navy-900 dark:text-white"
               >
                 <option value={15}>15 minutes</option>
                 <option value={30}>30 minutes</option>
@@ -220,7 +220,7 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
                 onChange={(event) =>
                   setPolicy((prev) => ({ ...prev, passwordPolicy: event.target.value }))
                 }
-                className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-white/10 dark:bg-navy-900 dark:text-white"
+                className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-c-border-subtle dark:bg-navy-900 dark:text-white"
               >
                 <option value="standard">Standard</option>
                 <option value="strong">Strong</option>

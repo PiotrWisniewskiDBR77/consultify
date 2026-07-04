@@ -724,7 +724,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                             ? 'border-[var(--admin-accent)] bg-[var(--admin-accent)]/5'
                             : billing?.plan === plan.name
                               ? 'border-slate-400 bg-c-bg dark:bg-c-surface/5'
-                              : 'border-c-border-subtle hover:border-c-border dark:hover:border-white/20'
+                              : 'border-c-border-subtle hover:border-c-border dark:hover:border-c-border'
                         }`}
                       >
                         {billing?.plan === plan.name && (
@@ -941,7 +941,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => setAddonQuantity(Math.max(1, addonQuantity - 1))}
-                            className="w-8 h-8 rounded-lg border border-c-border-subtle flex items-center justify-center text-c-text-muted hover:text-white hover:border-white/30"
+                            className="w-8 h-8 rounded-lg border border-c-border-subtle flex items-center justify-center text-c-text-muted hover:text-white hover:border-c-border"
                           >
                             -
                           </button>
@@ -950,7 +950,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                           </span>
                           <button
                             onClick={() => setAddonQuantity(Math.min(10, addonQuantity + 1))}
-                            className="w-8 h-8 rounded-lg border border-c-border-subtle flex items-center justify-center text-c-text-muted hover:text-white hover:border-white/30"
+                            className="w-8 h-8 rounded-lg border border-c-border-subtle flex items-center justify-center text-c-text-muted hover:text-white hover:border-c-border"
                           >
                             +
                           </button>

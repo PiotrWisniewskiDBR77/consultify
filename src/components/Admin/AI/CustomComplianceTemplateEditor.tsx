@@ -590,7 +590,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
             <button
               key={base.id}
               onClick={() => selectBaseTemplate(base.id)}
-              className="p-6 bg-c-surface/50 border border-white/10 rounded-xl text-left hover:border-c-accent/50 hover:bg-c-accent/5 transition-all"
+              className="p-6 bg-c-surface/50 border border-c-border-subtle rounded-xl text-left hover:border-c-accent/50 hover:bg-c-accent/5 transition-all"
             >
               <h3 className="font-semibold text-c-text mb-2">{base.name}</h3>
               <p className="text-sm text-slate-600 dark:text-slate-500">{base.description}</p>
@@ -598,7 +598,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
           ))}
         </div>
 
-        <div className="border-t border-white/10 pt-6">
+        <div className="border-t border-c-border-subtle pt-6">
           <p className="text-sm text-slate-600 dark:text-slate-500 mb-3">
             Or import an existing template:
           </p>
@@ -728,17 +728,17 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
 
       {/* Summary Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-c-surface/50 border border-white/10 rounded-lg p-4">
+        <div className="bg-c-surface/50 border border-c-border-subtle rounded-lg p-4">
           <p className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-1">Sections</p>
           <p className="text-2xl font-bold text-c-text">{template.sections.length}</p>
         </div>
-        <div className="bg-c-surface/50 border border-white/10 rounded-lg p-4">
+        <div className="bg-c-surface/50 border border-c-border-subtle rounded-lg p-4">
           <p className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-1">
             Total Checkpoints
           </p>
           <p className="text-2xl font-bold text-c-text">{totalCheckpoints}</p>
         </div>
-        <div className="bg-c-surface/50 border border-white/10 rounded-lg p-4">
+        <div className="bg-c-surface/50 border border-c-border-subtle rounded-lg p-4">
           <p className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-1">Required</p>
           <p className="text-2xl font-bold text-amber-400">{requiredCheckpoints}</p>
         </div>
@@ -764,7 +764,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="bg-c-surface/50 border border-white/10 rounded-xl overflow-hidden"
+              className="bg-c-surface/50 border border-c-border-subtle rounded-xl overflow-hidden"
             >
               {/* Section Header */}
               <div

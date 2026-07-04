@@ -81,7 +81,7 @@ export const AdminCollaborationControlsPanel: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-c-border-subtle dark:bg-white/5">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
           Collaboration Controls
         </h3>
@@ -95,7 +95,7 @@ export const AdminCollaborationControlsPanel: React.FC = () => {
             return (
               <div
                 key={card.key}
-                className="rounded-xl border border-slate-200 p-4 dark:border-white/10"
+                className="rounded-xl border border-slate-200 p-4 dark:border-c-border-subtle"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>

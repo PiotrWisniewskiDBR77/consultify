@@ -588,7 +588,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="p-3 border-t border-white/5 space-y-1">
+      <div className="p-3 border-t border-c-border-subtle space-y-1">
         <a
           href="/docs"
           target="_blank"

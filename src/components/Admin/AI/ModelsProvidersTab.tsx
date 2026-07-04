@@ -423,8 +423,8 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
             onClick={() => setShowInactive(!showInactive)}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors text-sm font-medium ${
               showInactive
-                ? 'bg-white/10 border-white/20 text-c-text'
-                : 'border-white/10 text-slate-600 dark:text-slate-500 hover:text-white'
+                ? 'bg-white/10 border-c-border text-c-text'
+                : 'border-c-border-subtle text-slate-600 dark:text-slate-500 hover:text-white'
             }`}
           >
             {showInactive ? <Eye size={16} /> : <EyeOff size={16} />}
@@ -517,7 +517,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
 
               {/* Circuit Breaker Status */}
               {llmStatus.circuitBreakers[p.provider] && (
-                <div className="mt-2 pt-2 border-t border-white/5">
+                <div className="mt-2 pt-2 border-t border-c-border-subtle">
                   <div className="flex items-center gap-2 text-xs">
                     <span
                       className={`w-1.5 h-1.5 rounded-full ${
@@ -738,7 +738,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                             ? 'bg-primary-500/5 border-primary-500/20'
                             : config.color === 'amber'
                               ? 'bg-amber-500/5 border-amber-500/20'
-                              : 'bg-white/5 border-white/10'
+                              : 'bg-white/5 border-c-border-subtle'
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-3">

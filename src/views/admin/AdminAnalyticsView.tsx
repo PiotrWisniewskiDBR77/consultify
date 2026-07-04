@@ -495,7 +495,7 @@ export const AdminAnalyticsView: React.FC = () => {
                   <p className="text-c-text-muted text-sm mb-4 line-clamp-3">
                     {idea.description}
                   </p>
-                  <div className="flex justify-between items-center pt-3 border-t border-white/5">
+                  <div className="flex justify-between items-center pt-3 border-t border-c-border-subtle">
                     <div className="flex space-x-2">
                       <button
                         onClick={() => handleVoteIdea(idea.id, 'approved')}
@@ -549,7 +549,7 @@ export const AdminAnalyticsView: React.FC = () => {
       {/* Observations Tab */}
       {activeTab === 'observations' && (
         <div className="bg-c-surface border border-c-border-subtle rounded-xl overflow-hidden">
-          <div className="p-5 border-b border-white/5">
+          <div className="p-5 border-b border-c-border-subtle">
             <h2 className="text-lg font-semibold text-navy-900 dark:text-white">
               {t('admin.analytics.observationsLog', 'System Observations Log')}
             </h2>

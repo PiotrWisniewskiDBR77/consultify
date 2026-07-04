@@ -104,7 +104,7 @@ export const AIIntelligenceView: React.FC = () => {
       <InfoButton cardId="superadmin-ai-intelligence" position="top-right" />
 
       {/* Header */}
-      <div className="shrink-0 px-8 py-6 border-b border-slate-200 dark:border-white/10">
+      <div className="shrink-0 px-8 py-6 border-b border-slate-200 dark:border-c-border-subtle">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-crimson-600 flex items-center justify-center shadow-lg shadow-primary-500/20">
@@ -127,7 +127,7 @@ export const AIIntelligenceView: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="shrink-0 px-8 py-3 border-b border-slate-200 dark:border-white/5 flex gap-2 overflow-x-auto">
+      <div className="shrink-0 px-8 py-3 border-b border-slate-200 dark:border-c-border-subtle flex gap-2 overflow-x-auto">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -238,7 +238,7 @@ export const AIIntelligenceView: React.FC = () => {
             </div>
 
             {/* Quick Actions */}
-            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
                 Quick Actions
               </h3>
@@ -317,7 +317,7 @@ const StatCard: React.FC<{ icon: any; label: string; value: string; color: strin
   value,
   color,
 }) => (
-  <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4">
+  <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-4">
     <div className="flex items-center gap-3 mb-2">
       <Icon size={18} className={color} />
       <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
@@ -334,7 +334,7 @@ const CapabilityCard: React.FC<{
   description: string;
   status: 'active' | 'beta' | 'coming';
 }> = ({ icon: Icon, title, description, status }) => (
-  <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4 hover:border-primary-500/30 transition-colors">
+  <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-4 hover:border-primary-500/30 transition-colors">
     <div className="flex items-start gap-4">
       <div className="p-2 rounded-lg bg-primary-500/20 shrink-0">
         <Icon size={20} className="text-primary-400" />
@@ -367,7 +367,7 @@ const QuickAction: React.FC<{ icon: any; label: string; onClick: () => void }> =
 }) => (
   <button
     onClick={onClick}
-    className="flex items-center gap-3 p-4 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-white/5 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-950 hover:border-primary-500/30 transition-all group"
+    className="flex items-center gap-3 p-4 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-c-border-subtle rounded-lg hover:bg-slate-50 dark:hover:bg-navy-950 hover:border-primary-500/30 transition-all group"
   >
     <Icon size={18} className="text-primary-400 group-hover:text-primary-300" />
     <span className="text-sm text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white">
@@ -439,7 +439,7 @@ const PromptTemplateManager: React.FC = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search templates..."
               disabled={!!loadError}
-              className="w-64 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg pl-10 pr-4 py-2 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
+              className="w-64 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg pl-10 pr-4 py-2 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
             />
           </div>
           <button
@@ -476,7 +476,7 @@ const PromptTemplateManager: React.FC = () => {
           displayTemplates.map((template, idx) => (
             <div
               key={template.code || idx}
-              className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4 hover:border-primary-500/30 transition-colors"
+              className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-4 hover:border-primary-500/30 transition-colors"
             >
               <div className="flex items-start justify-between mb-3">
                 <div>
@@ -681,7 +681,7 @@ const LearningSystemDashboard: React.FC = () => {
       </div>
 
       {/* Quality Score Trend Chart */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <TrendingUp size={18} className="text-primary-400" />
           Quality Score Trend
@@ -711,7 +711,7 @@ const LearningSystemDashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Learned Patterns */}
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <Lightbulb size={18} className="text-amber-400" />
             Learned Patterns
@@ -758,7 +758,7 @@ const LearningSystemDashboard: React.FC = () => {
         </div>
 
         {/* Recent Interactions */}
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <MessageSquare size={18} className="text-blue-400" />
             Recent Interactions
@@ -818,7 +818,7 @@ const MetricCard: React.FC<{ icon: any; label: string; value: string; color: str
   value,
   color,
 }) => (
-  <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4">
+  <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-4">
     <div className="flex items-center gap-2 mb-2">
       <Icon size={16} className={color} />
       <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">

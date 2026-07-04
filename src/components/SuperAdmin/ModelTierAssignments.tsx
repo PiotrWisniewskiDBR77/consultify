@@ -535,7 +535,7 @@ export const ModelTierAssignments: React.FC = () => {
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="border-t border-slate-200 dark:border-white/10"
+                    className="border-t border-slate-200 dark:border-c-border-subtle"
                   >
                     <div className="p-4 space-y-3">
                       {/* Assigned Models (Reorderable) */}
@@ -550,7 +550,7 @@ export const ModelTierAssignments: React.FC = () => {
                             <Reorder.Item
                               key={assignment.id}
                               value={assignment}
-                              className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-navy-800/50 border border-slate-200 dark:border-white/10 rounded-xl cursor-grab active:cursor-grabbing"
+                              className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-navy-800/50 border border-slate-200 dark:border-c-border-subtle rounded-xl cursor-grab active:cursor-grabbing"
                             >
                               <GripVertical
                                 size={16}
@@ -599,7 +599,7 @@ export const ModelTierAssignments: React.FC = () => {
                                 handleAddToTier(e.target.value, tier);
                               }
                             }}
-                            className="w-full px-4 py-3 bg-white dark:bg-navy-900/30 border border-dashed border-slate-300 dark:border-white/20 rounded-xl text-slate-700 dark:text-slate-300 text-sm cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+                            className="w-full px-4 py-3 bg-white dark:bg-navy-900/30 border border-dashed border-slate-300 dark:border-c-border rounded-xl text-slate-700 dark:text-slate-300 text-sm cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
                           >
                             <option value="">+ Add model to {tier}</option>
                             {unassignedProviders.map((p) => (
@@ -620,7 +620,7 @@ export const ModelTierAssignments: React.FC = () => {
       </div>
 
       {/* Available Providers Reference */}
-      <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 p-6">
+      <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-c-border-subtle p-6">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <Server size={20} className="text-slate-600 dark:text-slate-400" />
           Available Providers ({providers.length})
@@ -634,7 +634,7 @@ export const ModelTierAssignments: React.FC = () => {
             return (
               <div
                 key={p.id}
-                className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-900/30 rounded-lg border border-slate-200 dark:border-white/5"
+                className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-900/30 rounded-lg border border-slate-200 dark:border-c-border-subtle"
               >
                 <div className="flex items-center gap-2">
                   {getHealthIcon(p.health_status)}

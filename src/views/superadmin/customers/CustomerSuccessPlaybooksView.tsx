@@ -621,7 +621,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                           className={`p-3 rounded-lg cursor-pointer transition-colors ${
                             selectedPlaybook?.id === playbook.id
                               ? 'bg-blue-600/20 border border-blue-500'
-                              : 'bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10'
+                              : 'bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-c-border-subtle'
                           }`}
                         >
                           <div className="flex items-start justify-between">
@@ -726,7 +726,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                       <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         Trigger Conditions
                       </h4>
-                      <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3">
+                      <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-c-border-subtle rounded-lg p-3">
                         <pre className="text-xs text-slate-800 dark:text-slate-200 overflow-x-auto">
                           {JSON.stringify(
                             safeParseObject(selectedPlaybook.trigger_conditions_json),
@@ -753,7 +753,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                             actions.map((action, idx) => (
                               <div
                                 key={idx}
-                                className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg"
+                                className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-c-border-subtle rounded-lg"
                               >
                                 <span className="text-xl">{getActionIcon(action.type)}</span>
                                 <div>
@@ -791,7 +791,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                           .map((action) => (
                             <div
                               key={action.id}
-                              className="flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg"
+                              className="flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-c-border-subtle rounded-lg"
                             >
                               <div className="flex items-center gap-3">
                                 <Building2 className="w-4 h-4 text-blue-400" />
@@ -909,7 +909,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                   {newPlaybook.actions.map((action, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between p-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg"
+                      className="flex items-center justify-between p-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-c-border-subtle rounded-lg"
                     >
                       <div className="flex items-center gap-2">
                         <span>{getActionIcon(action.type)}</span>

@@ -47,7 +47,7 @@ const MetricCard: React.FC<{
   description: string;
   icon: React.ElementType;
 }> = ({ title, value, description, icon: Icon }) => (
-  <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+  <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-c-border-subtle dark:bg-white/5">
     <div className="flex items-start justify-between gap-4">
       <div>
         <div className="text-sm text-slate-500 dark:text-slate-400">{title}</div>
@@ -96,7 +96,7 @@ export const AdminRiskSummaryPanel: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-slate-400">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500 dark:border-c-border-subtle dark:bg-white/5 dark:text-slate-400">
         Loading risk summary...
       </div>
     );
@@ -144,7 +144,7 @@ export const AdminRiskSummaryPanel: React.FC = () => {
         />
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-c-border-subtle dark:bg-white/5">
         <div className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
           <FileText className="h-5 w-5 text-primary-500" />
           Risk follow-up queue
@@ -154,7 +154,7 @@ export const AdminRiskSummaryPanel: React.FC = () => {
           posture.
         </p>
         {summary.incidents.length === 0 ? (
-          <div className="mt-4 rounded-xl border border-slate-200 p-4 text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
+          <div className="mt-4 rounded-xl border border-slate-200 p-4 text-sm text-slate-500 dark:border-c-border-subtle dark:text-slate-400">
             No recent incidents returned by the risk service.
           </div>
         ) : (
@@ -162,7 +162,7 @@ export const AdminRiskSummaryPanel: React.FC = () => {
             {summary.incidents.map((incident) => (
               <div
                 key={incident.id}
-                className="rounded-xl border border-slate-200 p-4 text-sm dark:border-white/10"
+                className="rounded-xl border border-slate-200 p-4 text-sm dark:border-c-border-subtle"
               >
                 <div className="font-medium text-slate-900 dark:text-white">
                   {incident.provider || 'Unknown provider'} | {incident.severity || 'unknown'}

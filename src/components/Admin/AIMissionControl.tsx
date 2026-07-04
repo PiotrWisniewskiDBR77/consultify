@@ -166,16 +166,16 @@ export const AIMissionControl: React.FC = () => {
 
       {/* System Status Overview */}
       {loadError ? (
-        <div className="bg-white dark:bg-navy-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-white/10">
+        <div className="bg-white dark:bg-navy-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-c-border-subtle">
           <DegradedState title="AI mission control unavailable" description={loadError} />
         </div>
       ) : statusLoading && !status ? (
-        <div className="bg-white dark:bg-navy-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-white/10 text-sm text-slate-600 dark:text-slate-400">
+        <div className="bg-white dark:bg-navy-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-c-border-subtle text-sm text-slate-600 dark:text-slate-400">
           Loading AI mission status...
         </div>
       ) : status ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white dark:bg-navy-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-white/10">
+          <div className="bg-white dark:bg-navy-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-c-border-subtle">
             <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 uppercase">
               Success Rate (Last 50)
             </h3>
@@ -190,7 +190,7 @@ export const AIMissionControl: React.FC = () => {
               </span>
             </div>
           </div>
-          <div className="bg-white dark:bg-navy-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-white/10">
+          <div className="bg-white dark:bg-navy-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-c-border-subtle">
             <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 uppercase">
               Avg Latency
             </h3>
@@ -201,7 +201,7 @@ export const AIMissionControl: React.FC = () => {
               <span className="ml-2 text-sm text-slate-600 dark:text-slate-400">per request</span>
             </div>
           </div>
-          <div className="bg-white dark:bg-navy-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-white/10">
+          <div className="bg-white dark:bg-navy-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-c-border-subtle">
             <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 uppercase">
               Active Providers
             </h3>
@@ -230,8 +230,8 @@ export const AIMissionControl: React.FC = () => {
       ) : null}
 
       {/* Capability Tests */}
-      <div className="bg-white dark:bg-navy-900 rounded-xl shadow-sm border border-slate-200 dark:border-white/10 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-navy-800/60">
+      <div className="bg-white dark:bg-navy-900 rounded-xl shadow-sm border border-slate-200 dark:border-c-border-subtle overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-c-border-subtle bg-slate-50 dark:bg-navy-800/60">
           <h2 className="font-semibold text-slate-900 dark:text-white">
             AI Capability Diagnostics
           </h2>
@@ -282,8 +282,8 @@ export const AIMissionControl: React.FC = () => {
 
       {/* Detail Logs (Last Test) */}
       {Object.keys(results).length > 0 && (
-        <div className="bg-c-surface dark:bg-black/60 rounded-xl shadow-lg p-6 font-mono text-xs text-emerald-200 overflow-auto max-h-96 border border-white/10">
-          <h3 className="text-c-text-secondary mb-4 border-b border-white/5 pb-2 flex justify-between">
+        <div className="bg-c-surface dark:bg-black/60 rounded-xl shadow-lg p-6 font-mono text-xs text-emerald-200 overflow-auto max-h-96 border border-c-border-subtle">
+          <h3 className="text-c-text-secondary mb-4 border-b border-c-border-subtle pb-2 flex justify-between">
             <span>LATEST DIAGNOSTIC LOGS</span>
             <button
               onClick={() => setResults({})}

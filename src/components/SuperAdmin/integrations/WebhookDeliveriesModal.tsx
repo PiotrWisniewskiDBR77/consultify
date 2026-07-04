@@ -116,9 +116,9 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-c-surface border border-white/10 rounded-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-c-surface border border-c-border-subtle rounded-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
+        <div className="flex items-center justify-between p-6 border-b border-c-border-subtle">
           <div>
             <h3 className="text-lg font-semibold text-c-text">Delivery History</h3>
             <p className="text-sm text-slate-600 dark:text-slate-500 mt-1">

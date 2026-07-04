@@ -406,7 +406,7 @@ export function SLADashboard() {
       </div>
 
       {loadError ? (
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6">
           <DegradedState title="SLA metrics unavailable" description={loadError} />
         </div>
       ) : (
@@ -498,7 +498,7 @@ export function SLADashboard() {
           {/* Detailed Stats and Uptime Chart */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Request Statistics */}
-            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                 <Target size={18} className="text-blue-400" />
                 Request Statistics
@@ -520,7 +520,7 @@ export function SLADashboard() {
                   value={`${metrics.averageLatency.toFixed(2)}s`}
                   color="text-blue-400"
                 />
-                <div className="pt-3 border-t border-slate-200 dark:border-white/10">
+                <div className="pt-3 border-t border-slate-200 dark:border-c-border-subtle">
                   <StatRow
                     label="Success Rate"
                     value={`${
@@ -535,7 +535,7 @@ export function SLADashboard() {
             </div>
 
             {/* Uptime History Chart */}
-            <div className="lg:col-span-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+            <div className="lg:col-span-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                 <TrendingUp size={18} className="text-emerald-400" />
                 Uptime History
@@ -582,7 +582,7 @@ export function SLADashboard() {
           </div>
 
           {/* SLA Breach Alerts */}
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
               <Bell size={18} className="text-amber-400" />
               SLA Breach History
@@ -663,7 +663,7 @@ export function SLADashboard() {
           </div>
 
           {/* SLA Targets Reference */}
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
               <Target size={18} className="text-primary-400" />
               SLA Targets Reference
@@ -713,7 +713,7 @@ const SLAMetricCard: React.FC<{
 }> = ({ icon: Icon, label, value, target, status, color }) => (
   <div
     className={`bg-white dark:bg-navy-900 border rounded-xl p-4 ${
-      status === 'compliant' ? 'border-slate-200 dark:border-white/10' : 'border-danger-500/30'
+      status === 'compliant' ? 'border-slate-200 dark:border-c-border-subtle' : 'border-danger-500/30'
     }`}
   >
     <div className="flex items-center justify-between mb-3">

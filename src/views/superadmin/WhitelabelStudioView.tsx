@@ -303,7 +303,7 @@ export const WhitelabelStudioView: React.FC = () => {
     type: 'light' | 'dark' | 'icon' | 'favicon';
     currentUrl?: string;
   }> = ({ label, type, currentUrl }) => (
-    <div className="p-4 border border-dashed border-slate-300 dark:border-white/20 rounded-xl">
+    <div className="p-4 border border-dashed border-slate-300 dark:border-c-border rounded-xl">
       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
         {label}
       </label>

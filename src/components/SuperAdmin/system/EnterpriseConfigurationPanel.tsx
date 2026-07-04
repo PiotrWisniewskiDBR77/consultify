@@ -866,7 +866,7 @@ const ConfigAddModal: React.FC<{
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
-      <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-white/10 p-6 w-full max-w-lg">
+      <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-c-border-subtle p-6 w-full max-w-lg">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-c-text-secondary dark:text-white">Add Configuration</h3>
           <button
@@ -896,7 +896,7 @@ const ConfigAddModal: React.FC<{
               required
               value={formData.key}
               onChange={(e) => setFormData({ ...formData, key: e.target.value })}
-              className="w-full px-3 py-2 bg-c-surface/30 border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text-secondary dark:text-white font-mono"
+              className="w-full px-3 py-2 bg-c-surface/30 border border-c-border-subtle dark:border-c-border-subtle rounded-lg text-c-text-secondary dark:text-white font-mono"
               placeholder="my_config_key"
             />
           </div>
@@ -911,7 +911,7 @@ const ConfigAddModal: React.FC<{
                 onChange={(e) =>
                   setFormData({ ...formData, type: e.target.value as ConfigItem['type'] })
                 }
-                className="w-full px-3 py-2 bg-c-surface/30 border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text-secondary dark:text-white"
+                className="w-full px-3 py-2 bg-c-surface/30 border border-c-border-subtle dark:border-c-border-subtle rounded-lg text-c-text-secondary dark:text-white"
               >
                 <option value="string">String</option>
                 <option value="number">Number</option>
@@ -927,7 +927,7 @@ const ConfigAddModal: React.FC<{
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3 py-2 bg-c-surface/30 border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text-secondary dark:text-white"
+                className="w-full px-3 py-2 bg-c-surface/30 border border-c-border-subtle dark:border-c-border-subtle rounded-lg text-c-text-secondary dark:text-white"
               >
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
@@ -946,7 +946,7 @@ const ConfigAddModal: React.FC<{
               <select
                 value={formData.value}
                 onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                className="w-full px-3 py-2 bg-c-surface/30 border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text-secondary dark:text-white"
+                className="w-full px-3 py-2 bg-c-surface/30 border border-c-border-subtle dark:border-c-border-subtle rounded-lg text-c-text-secondary dark:text-white"
               >
                 <option value="">Select...</option>
                 <option value="true">True</option>
@@ -959,7 +959,7 @@ const ConfigAddModal: React.FC<{
                 value={formData.value}
                 aria-label="Configuration Value"
                 onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                className="w-full px-3 py-2 bg-c-surface/30 border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text-secondary dark:text-white"
+                className="w-full px-3 py-2 bg-c-surface/30 border border-c-border-subtle dark:border-c-border-subtle rounded-lg text-c-text-secondary dark:text-white"
               />
             )}
           </div>
@@ -972,7 +972,7 @@ const ConfigAddModal: React.FC<{
               type="text"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 bg-c-surface/30 border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text-secondary dark:text-white"
+              className="w-full px-3 py-2 bg-c-surface/30 border border-c-border-subtle dark:border-c-border-subtle rounded-lg text-c-text-secondary dark:text-white"
               placeholder="Optional description"
             />
           </div>
@@ -1021,7 +1021,7 @@ const ConfigHistoryModal: React.FC<{
   onClose: () => void;
 }> = ({ config, versions, loadError, onRollback, onClose }) => (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
-    <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-white/10 p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+    <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-c-border-subtle p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-xl font-bold text-c-text-secondary dark:text-white">Version History</h3>
@@ -1047,7 +1047,7 @@ const ConfigHistoryModal: React.FC<{
           {versions.map((version, index) => (
             <div
               key={version.id}
-              className="p-4 bg-c-surface/30 rounded-lg border border-c-border-subtle dark:border-white/10"
+              className="p-4 bg-c-surface/30 rounded-lg border border-c-border-subtle dark:border-c-border-subtle"
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">

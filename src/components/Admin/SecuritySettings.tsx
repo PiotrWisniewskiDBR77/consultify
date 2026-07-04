@@ -357,7 +357,7 @@ export const SecuritySettings: React.FC = () => {
       {activeTab === '2fa' && (
         <div className="space-y-6">
           {/* 2FA Requirement Toggle */}
-          <div className="p-6 bg-c-surface-raised/50 rounded-xl border border-white/5">
+          <div className="p-6 bg-c-surface-raised/50 rounded-xl border border-c-border-subtle">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold text-c-text">Require 2FA for All Users</h3>
@@ -380,8 +380,8 @@ export const SecuritySettings: React.FC = () => {
           </div>
 
           {/* 2FA Users List */}
-          <div className="bg-c-surface-raised/50 rounded-xl border border-white/5 overflow-hidden">
-            <div className="p-4 border-b border-white/5">
+          <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle overflow-hidden">
+            <div className="p-4 border-b border-c-border-subtle">
               <h3 className="text-lg font-semibold text-c-text">User 2FA Status</h3>
             </div>
             <div className="divide-y divide-white/5">
@@ -419,7 +419,7 @@ export const SecuritySettings: React.FC = () => {
       {/* Password Policy Tab */}
       {activeTab === 'password' && (
         <div className="space-y-6">
-          <div className="p-6 bg-c-surface-raised/50 rounded-xl border border-white/5 space-y-6">
+          <div className="p-6 bg-c-surface-raised/50 rounded-xl border border-c-border-subtle space-y-6">
             <h3 className="text-lg font-semibold text-c-text">Password Requirements</h3>
 
             {/* Minimum Length */}
@@ -495,13 +495,13 @@ export const SecuritySettings: React.FC = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, passwordExpiryDays: parseInt(e.target.value) })
                 }
-                className="w-full bg-c-text text-c-bg border border-white/10 rounded-lg p-3"
+                className="w-full bg-c-text text-c-bg border border-c-border-subtle rounded-lg p-3"
               />
             </div>
           </div>
 
           {/* Session Settings */}
-          <div className="p-6 bg-c-surface-raised/50 rounded-xl border border-white/5 space-y-6">
+          <div className="p-6 bg-c-surface-raised/50 rounded-xl border border-c-border-subtle space-y-6">
             <h3 className="text-lg font-semibold text-c-text">Session Settings</h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -517,7 +517,7 @@ export const SecuritySettings: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, sessionTimeoutMinutes: parseInt(e.target.value) })
                   }
-                  className="w-full bg-c-text text-c-bg border border-white/10 rounded-lg p-3"
+                  className="w-full bg-c-text text-c-bg border border-c-border-subtle rounded-lg p-3"
                 />
               </div>
 
@@ -533,7 +533,7 @@ export const SecuritySettings: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, maxSessionsPerUser: parseInt(e.target.value) })
                   }
-                  className="w-full bg-c-text text-c-bg border border-white/10 rounded-lg p-3"
+                  className="w-full bg-c-text text-c-bg border border-c-border-subtle rounded-lg p-3"
                 />
               </div>
             </div>
@@ -557,8 +557,8 @@ export const SecuritySettings: React.FC = () => {
       {activeTab === 'sessions' && (
         <div className="space-y-6">
           {/* All Organization Sessions */}
-          <div className="bg-c-surface-raised/50 rounded-xl border border-white/5 overflow-hidden">
-            <div className="p-4 border-b border-white/5 flex items-center justify-between">
+          <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle overflow-hidden">
+            <div className="p-4 border-b border-c-border-subtle flex items-center justify-between">
               <h3 className="text-lg font-semibold text-c-text">Active Sessions</h3>
               <button
                 onClick={fetchSessions}
@@ -630,8 +630,8 @@ export const SecuritySettings: React.FC = () => {
 
       {/* Login History Tab */}
       {activeTab === 'history' && (
-        <div className="bg-c-surface-raised/50 rounded-xl border border-white/5 overflow-hidden">
-          <div className="p-4 border-b border-white/5 flex items-center justify-between">
+        <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle overflow-hidden">
+          <div className="p-4 border-b border-c-border-subtle flex items-center justify-between">
             <h3 className="text-lg font-semibold text-c-text">Login History</h3>
             <button
               onClick={fetchLoginHistory}

@@ -316,7 +316,7 @@ export const PartnerCodeInput: React.FC<PartnerCodeInputProps> = ({ className })
                       className="px-3 py-1.5 bg-danger-600 hover:bg-danger-500 disabled:bg-danger-600/50 text-white rounded-lg text-sm font-medium flex items-center gap-2"
                     >
                       {removing && (
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <div className="w-4 h-4 border-2 border-c-border border-t-white rounded-full animate-spin" />
                       )}
                       <Trash2 className="w-4 h-4" />
                       {t('admin.billing.confirmRemoveBtn', 'Yes, Remove')}
@@ -377,7 +377,7 @@ export const PartnerCodeInput: React.FC<PartnerCodeInputProps> = ({ className })
                 className="px-4 py-2.5 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-medium flex items-center gap-2"
               >
                 {applying && (
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-c-border border-t-white rounded-full animate-spin" />
                 )}
                 {t('admin.billing.applyCode', 'Apply Code')}
               </button>

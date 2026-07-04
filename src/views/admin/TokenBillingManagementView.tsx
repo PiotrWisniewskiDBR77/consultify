@@ -79,7 +79,7 @@ export const TokenBillingManagementView = () => {
           <button
             onClick={loadStats}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 bg-c-surface-raised hover:bg-c-surface-raised text-c-text rounded-lg transition-colors text-sm font-medium border border-white/10"
+            className="flex items-center gap-2 px-4 py-2 bg-c-surface-raised hover:bg-c-surface-raised text-c-text rounded-lg transition-colors text-sm font-medium border border-c-border-subtle"
           >
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
             Refresh Data
@@ -157,7 +157,7 @@ const KPICard = ({
   loading: boolean;
   subtext?: string;
 }) => (
-  <div className="bg-c-surface border border-white/5 rounded-xl p-4 shadow-lg relative overflow-hidden group hover:border-white/10 transition-colors">
+  <div className="bg-c-surface border border-c-border-subtle rounded-xl p-4 shadow-lg relative overflow-hidden group hover:border-c-border-subtle transition-colors">
     <div className="absolute top-0 right-0 p-4 opacity-50 bg-gradient-to-br from-white/5 to-transparent w-24 h-24 rounded-bl-full -mr-10 -mt-10" />
     <div className="flex justify-between items-start mb-4 relative z-10">
       <h3 className="text-slate-600 dark:text-slate-500 text-xs font-medium uppercase tracking-wider">

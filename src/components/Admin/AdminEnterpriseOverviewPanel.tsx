@@ -55,7 +55,7 @@ const MetricCard: React.FC<{
     className={`rounded-2xl border p-5 ${
       unavailable
         ? 'border-amber-200 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10'
-        : 'border-slate-200 bg-white dark:border-white/10 dark:bg-white/5'
+        : 'border-slate-200 bg-white dark:border-c-border-subtle dark:bg-white/5'
     }`}
   >
     <div className="flex items-center justify-between">
@@ -110,7 +110,7 @@ export const AdminEnterpriseOverviewPanel: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-slate-400">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500 dark:border-c-border-subtle dark:bg-white/5 dark:text-slate-400">
         Loading enterprise admin overview...
       </div>
     );
@@ -224,7 +224,7 @@ export const AdminEnterpriseOverviewPanel: React.FC = () => {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-c-border-subtle dark:bg-white/5">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
             Enterprise command center posture
           </h3>
@@ -233,7 +233,7 @@ export const AdminEnterpriseOverviewPanel: React.FC = () => {
             and operational ownership in one place.
           </p>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-c-border-subtle dark:bg-white/5">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
             Immediate follow-up signals
           </h3>

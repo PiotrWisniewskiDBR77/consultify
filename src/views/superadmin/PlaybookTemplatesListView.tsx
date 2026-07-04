@@ -255,7 +255,7 @@ export const PlaybookTemplatesListView: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-50 dark:hover:bg-white/10 transition"
+            className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-c-border-subtle text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-50 dark:hover:bg-white/10 transition"
           >
             <Upload size={16} />
             {t('superadmin.playbookTemplates.importJson')}
@@ -279,7 +279,7 @@ export const PlaybookTemplatesListView: React.FC = () => {
 
       {/* Filters */}
       <div className="flex gap-2 mb-4 items-center">
-        <div className="flex items-center px-3 py-1.5 bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-white/10 rounded-lg w-64">
+        <div className="flex items-center px-3 py-1.5 bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-c-border-subtle rounded-lg w-64">
           <Search size={14} className="text-slate-500 dark:text-slate-400 mr-2" />
           <input
             value={searchTerm}
@@ -290,25 +290,25 @@ export const PlaybookTemplatesListView: React.FC = () => {
         </div>
         <button
           onClick={() => setStatusFilter('')}
-          className={`px-3 py-1.5 text-sm rounded-lg border transition ${!statusFilter ? 'bg-slate-100 dark:bg-white/[0.08] text-[var(--c-info)] border-c-info/30' : 'bg-white text-slate-600 dark:bg-white/5 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10'}`}
+          className={`px-3 py-1.5 text-sm rounded-lg border transition ${!statusFilter ? 'bg-slate-100 dark:bg-white/[0.08] text-[var(--c-info)] border-c-info/30' : 'bg-white text-slate-600 dark:bg-white/5 dark:text-slate-400 border-slate-200 dark:border-c-border-subtle hover:bg-slate-50 dark:hover:bg-white/10'}`}
         >
           {t('superadmin.playbookTemplates.filters.all')}
         </button>
         <button
           onClick={() => setStatusFilter('DRAFT')}
-          className={`px-3 py-1.5 text-sm rounded-lg border transition ${statusFilter === 'DRAFT' ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30' : 'bg-white text-slate-600 dark:bg-white/5 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10'}`}
+          className={`px-3 py-1.5 text-sm rounded-lg border transition ${statusFilter === 'DRAFT' ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30' : 'bg-white text-slate-600 dark:bg-white/5 dark:text-slate-400 border-slate-200 dark:border-c-border-subtle hover:bg-slate-50 dark:hover:bg-white/10'}`}
         >
           {t('superadmin.playbookTemplates.filters.drafts')}
         </button>
         <button
           onClick={() => setStatusFilter('PUBLISHED')}
-          className={`px-3 py-1.5 text-sm rounded-lg border transition ${statusFilter === 'PUBLISHED' ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30' : 'bg-white text-slate-600 dark:bg-white/5 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10'}`}
+          className={`px-3 py-1.5 text-sm rounded-lg border transition ${statusFilter === 'PUBLISHED' ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30' : 'bg-white text-slate-600 dark:bg-white/5 dark:text-slate-400 border-slate-200 dark:border-c-border-subtle hover:bg-slate-50 dark:hover:bg-white/10'}`}
         >
           {t('superadmin.playbookTemplates.filters.published')}
         </button>
         <button
           onClick={() => setStatusFilter('DEPRECATED')}
-          className={`px-3 py-1.5 text-sm rounded-lg border transition ${statusFilter === 'DEPRECATED' ? 'bg-slate-200 text-slate-800 dark:bg-slate-600/30 dark:text-slate-200 border-slate-300 dark:border-slate-500/50' : 'bg-white text-slate-600 dark:bg-white/5 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10'}`}
+          className={`px-3 py-1.5 text-sm rounded-lg border transition ${statusFilter === 'DEPRECATED' ? 'bg-slate-200 text-slate-800 dark:bg-slate-600/30 dark:text-slate-200 border-slate-300 dark:border-slate-500/50' : 'bg-white text-slate-600 dark:bg-white/5 dark:text-slate-400 border-slate-200 dark:border-c-border-subtle hover:bg-slate-50 dark:hover:bg-white/10'}`}
         >
           {t('superadmin.playbookTemplates.filters.deprecated')}
         </button>
@@ -320,7 +320,7 @@ export const PlaybookTemplatesListView: React.FC = () => {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-400"></div>
         </div>
       ) : filteredTemplates.length === 0 ? (
-        <div className="bg-white dark:bg-navy-900/20 rounded-lg border border-slate-200 dark:border-white/10 p-12 text-center">
+        <div className="bg-white dark:bg-navy-900/20 rounded-lg border border-slate-200 dark:border-c-border-subtle p-12 text-center">
           <FileText className="mx-auto h-12 w-12 text-slate-400 dark:text-slate-400 mb-4" />
           <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
             {t('superadmin.playbookTemplates.empty.title')}
@@ -337,7 +337,7 @@ export const PlaybookTemplatesListView: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className="bg-white dark:bg-navy-900/20 rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
+        <div className="bg-white dark:bg-navy-900/20 rounded-lg border border-slate-200 dark:border-c-border-subtle overflow-hidden">
           <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="min-w-full divide-y divide-slate-200 dark:divide-white/10">
             <thead className="bg-slate-50 dark:bg-navy-900/20">
               <tr>
@@ -468,7 +468,7 @@ export const PlaybookTemplatesListView: React.FC = () => {
       )}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-lg">
+          <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-c-border-subtle p-6 w-full max-w-lg">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                 {t('superadmin.playbookTemplates.modal.title')}
@@ -490,7 +490,7 @@ export const PlaybookTemplatesListView: React.FC = () => {
                   value={newTemplate.title}
                   onChange={(e) => setNewTemplate({ ...newTemplate, title: e.target.value })}
                   placeholder="e.g. Weekly Summary Report"
-                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-c-border-subtle rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400"
                 />
               </div>
               <div>
@@ -507,7 +507,7 @@ export const PlaybookTemplatesListView: React.FC = () => {
                     })
                   }
                   placeholder="e.g. weekly_summary"
-                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 font-mono"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-c-border-subtle rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 font-mono"
                 />
               </div>
               <div>
@@ -521,7 +521,7 @@ export const PlaybookTemplatesListView: React.FC = () => {
                     setNewTemplate({ ...newTemplate, triggerSignal: e.target.value })
                   }
                   placeholder="e.g. deadline_approaching"
-                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 font-mono"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-c-border-subtle rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 font-mono"
                 />
               </div>
               <div>
@@ -533,11 +533,11 @@ export const PlaybookTemplatesListView: React.FC = () => {
                   onChange={(e) => setNewTemplate({ ...newTemplate, description: e.target.value })}
                   placeholder="Brief description of this playbook template..."
                   rows={3}
-                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 resize-none"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-c-border-subtle rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 resize-none"
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-200 dark:border-white/10">
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-200 dark:border-c-border-subtle">
               <button
                 onClick={() => setShowCreateModal(false)}
                 className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"

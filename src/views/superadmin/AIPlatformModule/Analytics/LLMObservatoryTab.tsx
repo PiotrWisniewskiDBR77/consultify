@@ -104,7 +104,7 @@ const RANGE_OPTIONS: Array<{ id: TimeRange; label: string }> = [
 ];
 
 const cardClass =
-  'rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900';
+  'rounded-xl border border-slate-200 dark:border-c-border-subtle bg-white dark:bg-navy-900';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -401,7 +401,7 @@ export const LLMObservatoryTab: React.FC = () => {
             onChange={(event) => setSelectedProvider(event.target.value)}
             disabled={!!loadError}
             title={loadError || undefined}
-            className="h-9 px-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 text-sm text-slate-700 dark:text-slate-200"
+            className="h-9 px-3 rounded-lg border border-slate-200 dark:border-c-border-subtle bg-white dark:bg-navy-900 text-sm text-slate-700 dark:text-slate-200"
           >
             <option value="all">
               {t('superadmin.ai.observatory.allProviders', 'All providers')}
@@ -413,7 +413,7 @@ export const LLMObservatoryTab: React.FC = () => {
             ))}
           </select>
 
-          <div className="flex items-center gap-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 p-1">
+          <div className="flex items-center gap-1 rounded-lg border border-slate-200 dark:border-c-border-subtle bg-white dark:bg-navy-900 p-1">
             {RANGE_OPTIONS.map((option) => (
               <button
                 key={option.id}
@@ -434,7 +434,7 @@ export const LLMObservatoryTab: React.FC = () => {
             type="button"
             onClick={() => loadData(range)}
             disabled={refreshing}
-            className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-60"
+            className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-slate-200 dark:border-c-border-subtle bg-white dark:bg-navy-900 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-60"
           >
             <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
             {t('superadmin.ai.observatory.refresh', 'Refresh')}
@@ -621,7 +621,7 @@ export const LLMObservatoryTab: React.FC = () => {
                   filteredIncidents.map((incident, index) => (
                     <div
                       key={`${incident.provider}-${incident.start}-${index}`}
-                      className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/60 dark:bg-white/[0.03]"
+                      className="rounded-lg border border-slate-200 dark:border-c-border-subtle p-3 bg-slate-50/60 dark:bg-white/[0.03]"
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div className="text-sm font-medium text-slate-900 dark:text-white capitalize">
@@ -663,7 +663,7 @@ export const LLMObservatoryTab: React.FC = () => {
 
           <div className="grid grid-cols-1 xl:grid-cols-[1.3fr_1fr] gap-6">
             <div className={`${cardClass} overflow-hidden`}>
-              <div className="px-5 py-4 border-b border-slate-200 dark:border-white/10">
+              <div className="px-5 py-4 border-b border-slate-200 dark:border-c-border-subtle">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                   {t('superadmin.ai.observatory.providersTable', 'Provider historical health')}
                 </h3>
@@ -671,7 +671,7 @@ export const LLMObservatoryTab: React.FC = () => {
               <div className="overflow-x-auto">
                 <table /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */  className="w-full text-sm">
                   <thead>
-                    <tr className="text-left text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-white/10">
+                    <tr className="text-left text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-c-border-subtle">
                       <th className="px-5 py-3">
                         {t('superadmin.ai.observatory.provider', 'Provider')}
                       </th>
@@ -696,7 +696,7 @@ export const LLMObservatoryTab: React.FC = () => {
                     {providers.map((provider) => (
                       <tr
                         key={provider.provider}
-                        className={`border-b border-slate-200 dark:border-white/5 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.03] ${
+                        className={`border-b border-slate-200 dark:border-c-border-subtle cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.03] ${
                           selectedProvider === provider.provider
                             ? 'bg-indigo-50/60 dark:bg-indigo-500/10'
                             : ''

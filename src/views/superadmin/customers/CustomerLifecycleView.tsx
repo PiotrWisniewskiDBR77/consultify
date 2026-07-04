@@ -506,7 +506,7 @@ const CustomerLifecycleView: React.FC = () => {
                     return (
                       <React.Fragment key={stage.id}>
                         <div
-                          className="flex-shrink-0 w-48 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 relative group"
+                          className="flex-shrink-0 w-48 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-c-border-subtle rounded-lg p-4 relative group"
                           style={{ borderTop: `3px solid ${stage.color}` }}
                         >
                           {/* Stage Header */}
@@ -575,7 +575,7 @@ const CustomerLifecycleView: React.FC = () => {
                 {transitions.slice(0, 10).map((transition) => (
                   <div
                     key={transition.id}
-                    className="flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg"
+                    className="flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-c-border-subtle rounded-lg"
                   >
                     <div className="flex items-center gap-4">
                       <Building2 className="w-5 h-5 text-blue-400" />

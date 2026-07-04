@@ -149,7 +149,7 @@ export const CreditNotesPanel: React.FC = () => {
             placeholder="Search credit notes..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 pr-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none w-64"
+            className="pl-10 pr-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none w-64"
           />
         </div>
 
@@ -257,7 +257,7 @@ export const CreditNotesPanel: React.FC = () => {
       {/* Create Credit Note Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-c-surface border border-white/10 rounded-xl p-6 w-full max-w-md">
+          <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6 w-full max-w-md">
             <h3 className="text-lg font-semibold text-c-text mb-6">Issue Credit Note</h3>
 
             <div className="space-y-4">
@@ -270,7 +270,7 @@ export const CreditNotesPanel: React.FC = () => {
                   onChange={(e) =>
                     setCreateForm((prev) => ({ ...prev, organizationId: e.target.value }))
                   }
-                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-primary-500/50 outline-none"
                 >
                   <option value="">Select organization</option>
                   {organizations.map((org) => (
@@ -297,7 +297,7 @@ export const CreditNotesPanel: React.FC = () => {
                     value={createForm.amount}
                     onChange={(e) => setCreateForm((prev) => ({ ...prev, amount: e.target.value }))}
                     placeholder="0.00"
-                    className="w-full pl-10 pr-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none"
+                    className="w-full pl-10 pr-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none"
                   />
                 </div>
               </div>
@@ -309,7 +309,7 @@ export const CreditNotesPanel: React.FC = () => {
                   onChange={(e) => setCreateForm((prev) => ({ ...prev, reason: e.target.value }))}
                   placeholder="Enter reason for credit note..."
                   rows={3}
-                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none resize-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none resize-none"
                 />
               </div>
             </div>

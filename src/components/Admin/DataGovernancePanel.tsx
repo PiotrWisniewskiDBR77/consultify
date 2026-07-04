@@ -28,7 +28,7 @@ export const DataGovernancePanel: React.FC = () => {
   };
 
   return (
-    <div className="bg-c-surface-raised rounded-xl border border-white/10 p-6 space-y-6">
+    <div className="bg-c-surface-raised rounded-xl border border-c-border-subtle p-6 space-y-6">
       <div className="flex items-center gap-3">
         <Database className="w-5 h-5 text-primary-400" />
         <h3 className="text-lg font-semibold text-c-text">Data Governance</h3>
@@ -63,7 +63,7 @@ export const DataGovernancePanel: React.FC = () => {
                 onChange={(e) =>
                   updatePolicy(index, { retentionDays: parseInt(e.target.value) || 0 })
                 }
-                className="w-20 px-2 py-1 bg-c-surface-raised border border-white/10 rounded text-c-text text-sm"
+                className="w-20 px-2 py-1 bg-c-surface-raised border border-c-border-subtle rounded text-c-text text-sm"
               />
             </div>
           </div>

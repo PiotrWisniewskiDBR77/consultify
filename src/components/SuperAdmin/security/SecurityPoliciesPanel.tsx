@@ -210,7 +210,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
             max={32}
             value={policy.passwordMinLength}
             onChange={(e) => updatePolicy('passwordMinLength', parseInt(e.target.value))}
-            className="w-full px-4 py-2.5 bg-c-surface/50 border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+            className="w-full px-4 py-2.5 bg-c-surface/50 border border-c-border-subtle rounded-lg text-c-text focus:border-primary-500/50 outline-none"
           />
         </div>
         <div>
@@ -221,7 +221,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
             max={24}
             value={policy.passwordHistoryCount}
             onChange={(e) => updatePolicy('passwordHistoryCount', parseInt(e.target.value))}
-            className="w-full px-4 py-2.5 bg-c-surface/50 border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+            className="w-full px-4 py-2.5 bg-c-surface/50 border border-c-border-subtle rounded-lg text-c-text focus:border-primary-500/50 outline-none"
           />
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Prevent reuse of last N passwords
@@ -263,7 +263,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
           max={365}
           value={policy.passwordExpiryDays}
           onChange={(e) => updatePolicy('passwordExpiryDays', parseInt(e.target.value))}
-          className="w-full max-w-xs px-4 py-2.5 bg-c-surface/50 border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+          className="w-full max-w-xs px-4 py-2.5 bg-c-surface/50 border border-c-border-subtle rounded-lg text-c-text focus:border-primary-500/50 outline-none"
         />
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
           Set to 0 to disable password expiration
@@ -295,7 +295,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
             max={1440}
             value={policy.sessionTimeoutMinutes}
             onChange={(e) => updatePolicy('sessionTimeoutMinutes', parseInt(e.target.value))}
-            className="w-full px-4 py-2.5 bg-c-surface/50 border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+            className="w-full px-4 py-2.5 bg-c-surface/50 border border-c-border-subtle rounded-lg text-c-text focus:border-primary-500/50 outline-none"
           />
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             {Math.round(policy.sessionTimeoutMinutes / 60)} hours
@@ -311,7 +311,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
             max={10}
             value={policy.concurrentSessionsLimit}
             onChange={(e) => updatePolicy('concurrentSessionsLimit', parseInt(e.target.value))}
-            className="w-full px-4 py-2.5 bg-c-surface/50 border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+            className="w-full px-4 py-2.5 bg-c-surface/50 border border-c-border-subtle rounded-lg text-c-text focus:border-primary-500/50 outline-none"
           />
         </div>
       </div>
@@ -360,7 +360,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
             max={10}
             value={policy.maxLoginAttempts}
             onChange={(e) => updatePolicy('maxLoginAttempts', parseInt(e.target.value))}
-            className="w-full px-4 py-2.5 bg-c-surface/50 border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+            className="w-full px-4 py-2.5 bg-c-surface/50 border border-c-border-subtle rounded-lg text-c-text focus:border-primary-500/50 outline-none"
           />
         </div>
         <div>
@@ -373,7 +373,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
             max={1440}
             value={policy.lockoutDurationMinutes}
             onChange={(e) => updatePolicy('lockoutDurationMinutes', parseInt(e.target.value))}
-            className="w-full px-4 py-2.5 bg-c-surface/50 border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+            className="w-full px-4 py-2.5 bg-c-surface/50 border border-c-border-subtle rounded-lg text-c-text focus:border-primary-500/50 outline-none"
           />
         </div>
       </div>
@@ -455,7 +455,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
             max={90}
             value={policy.mfaRememberDeviceDays}
             onChange={(e) => updatePolicy('mfaRememberDeviceDays', parseInt(e.target.value))}
-            className="w-full max-w-xs px-4 py-2.5 bg-c-surface/50 border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+            className="w-full max-w-xs px-4 py-2.5 bg-c-surface/50 border border-c-border-subtle rounded-lg text-c-text focus:border-primary-500/50 outline-none"
           />
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Set to 0 to always require MFA
@@ -481,7 +481,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
           <select
             value={selectedOrgId}
             onChange={(e) => setSelectedOrgId(e.target.value)}
-            className="px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none min-w-[200px]"
+            className="px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-primary-500/50 outline-none min-w-[200px]"
           >
             <option value="default">Platform Defaults</option>
             {organizations.map((org) => (
@@ -495,7 +495,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
             <select
               value=""
               onChange={(e) => e.target.value && handleApplyPreset(e.target.value)}
-              className="px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+              className="px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-primary-500/50 outline-none"
             >
               <option value="">Apply Preset...</option>
               {presets.map((preset) => (

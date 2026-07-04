@@ -386,7 +386,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
           </div>
 
           {/* Right: + New Section */}
-          <button className="flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-medium bg-gradient-to-r from-primary-500 to-primary-600 text-white border border-white/20 hover:brightness-110 shadow-lg shadow-primary-500/25 transition-all duration-200">
+          <button className="flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-medium bg-gradient-to-r from-primary-500 to-primary-600 text-white border border-c-border hover:brightness-110 shadow-lg shadow-primary-500/25 transition-all duration-200">
             <Plus size={14} />
             <span>New Section</span>
           </button>

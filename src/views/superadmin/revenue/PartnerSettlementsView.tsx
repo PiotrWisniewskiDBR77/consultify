@@ -438,7 +438,7 @@ export const PartnerSettlementsView: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 p-1 bg-c-surface border border-c-border-subtle dark:border-white/5 rounded-lg w-fit">
+      <div className="flex items-center gap-1 p-1 bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-lg w-fit">
         <button
           onClick={() => setActiveTab('commissions')}
           className={cn(
@@ -505,7 +505,7 @@ export const PartnerSettlementsView: React.FC = () => {
 
       {/* Commissions Tab */}
       {activeTab === 'commissions' && (
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-white/5 p-4">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-c-border-subtle p-4">
           {/* Toolbar */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
@@ -514,10 +514,10 @@ export const PartnerSettlementsView: React.FC = () => {
                 <input
                   type="text"
                   placeholder="Search partners..."
-                  className="pl-9 pr-4 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-sm text-c-text-secondary dark:text-white w-64"
+                  className="pl-9 pr-4 py-2 bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-lg text-sm text-c-text-secondary dark:text-white w-64"
                 />
               </div>
-              <button className="flex items-center gap-2 px-3 py-2 text-sm text-c-text-secondary hover:text-c-text-secondary dark:hover:text-white border border-c-border-subtle dark:border-white/10 rounded-lg">
+              <button className="flex items-center gap-2 px-3 py-2 text-sm text-c-text-secondary hover:text-c-text-secondary dark:hover:text-white border border-c-border-subtle dark:border-c-border-subtle rounded-lg">
                 <Filter className="w-4 h-4" />
                 Filter
               </button>
@@ -538,7 +538,7 @@ export const PartnerSettlementsView: React.FC = () => {
           <div className="overflow-x-auto">
             <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full">
               <thead>
-                <tr className="border-b border-c-border-subtle dark:border-white/10">
+                <tr className="border-b border-c-border-subtle dark:border-c-border-subtle">
                   <th className="text-left px-3 py-2">
                     <input
                       type="checkbox"
@@ -645,7 +645,7 @@ export const PartnerSettlementsView: React.FC = () => {
           {payouts.map((payout) => (
             <div
               key={payout.id}
-              className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-white/5 p-4"
+              className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-c-border-subtle p-4"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -716,7 +716,7 @@ export const PartnerSettlementsView: React.FC = () => {
           ))}
 
           {payouts.length === 0 && (
-            <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-white/5 p-12 text-center">
+            <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-c-border-subtle p-12 text-center">
               <CheckCircle className="w-12 h-12 text-emerald-500/50 mx-auto mb-3" />
               <p className="text-c-text-secondary">No pending payouts to process</p>
             </div>
@@ -726,7 +726,7 @@ export const PartnerSettlementsView: React.FC = () => {
 
       {/* Attribution Tab */}
       {activeTab === 'attribution' && (
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-white/5 p-4">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-c-border-subtle p-4">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-lg font-semibold text-c-text-secondary dark:text-white">
@@ -754,7 +754,7 @@ export const PartnerSettlementsView: React.FC = () => {
                 placeholder="Search by organization or partner name..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-sm text-c-text-secondary dark:text-white"
+                className="w-full pl-9 pr-4 py-2 bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-lg text-sm text-c-text-secondary dark:text-white"
               />
             </div>
           </div>
@@ -764,7 +764,7 @@ export const PartnerSettlementsView: React.FC = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-c-border-subtle dark:border-white/10">
+                  <tr className="border-b border-c-border-subtle dark:border-c-border-subtle">
                     <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                       Organization
                     </th>
@@ -884,7 +884,7 @@ export const PartnerSettlementsView: React.FC = () => {
 
       {/* GAP-PARTNER-004: Expiring Attributions Tab */}
       {activeTab === 'expiring' && (
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-white/5 p-4">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-c-border-subtle p-4">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-lg font-semibold text-c-text-secondary dark:text-white flex items-center gap-2">
@@ -899,7 +899,7 @@ export const PartnerSettlementsView: React.FC = () => {
               <select
                 value={expiringDays}
                 onChange={(e) => setExpiringDays(Number(e.target.value))}
-                className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-sm text-c-text-secondary dark:text-white"
+                className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-lg text-sm text-c-text-secondary dark:text-white"
               >
                 <option value={7}>Next 7 days</option>
                 <option value={14}>Next 14 days</option>
@@ -909,7 +909,7 @@ export const PartnerSettlementsView: React.FC = () => {
               </select>
               <button
                 onClick={fetchData}
-                className="p-2 text-c-text-secondary hover:text-c-text-secondary dark:hover:text-white border border-c-border-subtle dark:border-white/10 rounded-lg"
+                className="p-2 text-c-text-secondary hover:text-c-text-secondary dark:hover:text-white border border-c-border-subtle dark:border-c-border-subtle rounded-lg"
               >
                 <RefreshCw className="w-4 h-4" />
               </button>
@@ -920,7 +920,7 @@ export const PartnerSettlementsView: React.FC = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-c-border-subtle dark:border-white/10">
+                  <tr className="border-b border-c-border-subtle dark:border-c-border-subtle">
                     <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                       Organization
                     </th>
@@ -1010,7 +1010,7 @@ export const PartnerSettlementsView: React.FC = () => {
 
       {/* GAP-PARTNER-003: Code Analytics Tab */}
       {activeTab === 'analytics' && (
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-white/5 p-4">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-c-border-subtle p-4">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-lg font-semibold text-c-text-secondary dark:text-white flex items-center gap-2">
@@ -1023,7 +1023,7 @@ export const PartnerSettlementsView: React.FC = () => {
             </div>
             <button
               onClick={fetchData}
-              className="p-2 text-c-text-secondary hover:text-c-text-secondary dark:hover:text-white border border-c-border-subtle dark:border-white/10 rounded-lg"
+              className="p-2 text-c-text-secondary hover:text-c-text-secondary dark:hover:text-white border border-c-border-subtle dark:border-c-border-subtle rounded-lg"
             >
               <RefreshCw className="w-4 h-4" />
             </button>
@@ -1033,7 +1033,7 @@ export const PartnerSettlementsView: React.FC = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-c-border-subtle dark:border-white/10">
+                  <tr className="border-b border-c-border-subtle dark:border-c-border-subtle">
                     <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                       Code
                     </th>
