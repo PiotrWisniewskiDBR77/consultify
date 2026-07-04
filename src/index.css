@@ -512,7 +512,9 @@ html[data-user-accent] {
   /* shadcn / semantic tokens that real components consume */
   --c-accent: var(--user-accent);
   --c-accent-soft: var(--user-accent-soft);
-  --c-focus: var(--user-accent-focus);
+  /* --c-focus CELOWO nie podąża za akcentem użytkownika (decyzja Piotra
+   * 2026-07-04: focus ZAWSZE niebieski, nigdy crimson/akcent — focus ≠ marka).
+   * To była przyczyna „czerwonej obwódki przy pisaniu" wracającej od tygodni. */
 }
 html[data-user-accent] .bg-primary-500,
 html[data-user-accent] .bg-primary-600,
