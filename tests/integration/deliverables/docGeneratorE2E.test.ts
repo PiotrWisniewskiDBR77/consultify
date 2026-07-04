@@ -16,15 +16,21 @@
  *     chartSeriesMax, minStyledCells, minCitations, chartKind, anyTextContains
  *     → poza zasięgiem B3; test liczy ile scenariuszy ich wymaga (need-content-gen)
  *
- * Dodatkowo: B3 używa innych nazw typów (kpi_strip/paragraph/bullet_list) niż
- * docScoring (kpi/text/bulletList) — test mapuje (realny gap integracyjny do
- * domknięcia przy wpięciu w żywy pipeline).
+ * Nazewnictwo typów bloków: KANON = rodzina B3/żywego pipeline'u
+ * (kpi_strip/paragraph/bullet_list; documentStudioTypes.DocumentBlockType).
+ * docScoring normalizuje OBIE rodziny na wejściu (scoring/
+ * blockTypeNormalization.ts), więc ten test scoruje SUROWE wyjście B3 —
+ * ręczne mapowanie usunięte (gap A3 domknięty).
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DOC_SCENARIOS } from './catalog/reports.js';
-import { scoreDoc, type DocumentArtifact, type DocBlockType } from './scoring/docScoring.js';
+import {
+  CANONICAL_DOC_BLOCK_TYPES,
+  normalizeBlockType,
+} from './scoring/blockTypeNormalization.js';
+import { scoreDoc, type AnyDocBlockType, type DocumentArtifact } from './scoring/docScoring.js';
 
 const llmCall = vi.fn();
 vi.mock('../../../server/src/services/ai/llmService.js', () => ({
@@ -41,38 +47,6 @@ vi.mock('../../../server/src/config/FeatureFlags.js', () => ({
     },
   },
 }));
-
-// ──────────────────────────────────────────────────────────────
-// Mapowanie typów: docScoring ↔ B3 (ALLOWED_BLOCK_TYPES)
-// ──────────────────────────────────────────────────────────────
-const SCORING_TO_B3: Record<string, string> = {
-  heading: 'heading',
-  text: 'paragraph',
-  bulletList: 'bullet_list',
-  numberedList: 'numbered_list',
-  quote: 'quote',
-  callout: 'callout',
-  chart: 'chart',
-  table: 'table',
-  kpi: 'kpi_strip',
-  image: 'image',
-  divider: 'paragraph', // brak odpowiednika w B3 → paragraph
-};
-const B3_TO_SCORING: Record<string, DocBlockType> = {
-  heading: 'heading',
-  paragraph: 'text',
-  bullet_list: 'bulletList',
-  numbered_list: 'numberedList',
-  quote: 'quote',
-  callout: 'callout',
-  chart: 'chart',
-  table: 'table',
-  risk_table: 'table',
-  kpi_strip: 'kpi',
-  image: 'image',
-  footnote: 'text',
-  citation: 'text',
-};
 
 // Kryteria TREŚCIOWE — poza zasięgiem B3 (content-gen).
 const CONTENT_KEYS = [
@@ -103,21 +77,30 @@ function structuralCriteria(criteria: any): any {
   return out;
 }
 
-/** mockPass (pełny artefakt) → B3 plan input (sekcje z typami bloków). */
+/**
+ * mockPass (pełny artefakt) → B3 plan input (sekcje z typami bloków).
+ * Mock symuluje ODPOWIEDŹ LLM, a LLM mówi słownikiem kanonicznym B3
+ * (ALLOWED_BLOCK_TYPES) — stąd normalizacja typów fixture'a (legacy → kanon).
+ * 'divider' nie ma odpowiednika w B3; jego wewnętrzna walidacja i tak
+ * sprowadzi nieznany typ do 'paragraph' (fail-open).
+ */
 function mockPassToB3Plan(doc: DocumentArtifact) {
   return {
     sections: doc.sections.map((s) => ({
       title: s.heading ?? '',
       purpose: '',
       blocks: s.blocks.map((b) => ({
-        type: SCORING_TO_B3[b.type] ?? 'paragraph',
+        type: normalizeBlockType(b.type),
         hint: `hint for ${b.type}`,
       })),
     })),
   };
 }
 
-/** B3 plan (po normalizacji) → DocumentArtifact (typy mapowane, treść pusta). */
+/**
+ * B3 plan → DocumentArtifact — typy SUROWE (kanoniczne), BEZ mapowania.
+ * docScoring normalizuje na wejściu, więc raw wyjście B3 scoruje się wprost.
+ */
 function b3PlanToArtifact(plan: any): DocumentArtifact {
   return {
     sections: (plan.sections ?? []).map((s: any, si: number) => ({
@@ -125,7 +108,7 @@ function b3PlanToArtifact(plan: any): DocumentArtifact {
       heading: s.title,
       blocks: (s.blocks ?? []).map((b: any, bi: number) => ({
         blockId: `b-${si}-${bi}`,
-        type: B3_TO_SCORING[b.type] ?? 'text',
+        type: b.type as AnyDocBlockType,
         content: {},
       })),
     })),
@@ -187,6 +170,15 @@ describe('B3 doc structure generator E2E — warstwa strukturalna', () => {
     );
     // Sanity: B3 sam pokrywa warstwę strukturalną wszystkich 30.
     expect(DOC_SCENARIOS).toHaveLength(30);
+  });
+
+  it('kanon normalizacji pokrywa wszystkie ALLOWED_BLOCK_TYPES B3 (drift guard)', async () => {
+    const mod = await import(
+      '../../../server/src/services/documentStudio/documentStructureGenerator.js'
+    );
+    for (const type of mod.ALLOWED_BLOCK_TYPES) {
+      expect(CANONICAL_DOC_BLOCK_TYPES, `typ B3 '${type}' nieznany kanonowi`).toContain(type);
+    }
   });
 
   it('STANDARD tier → fallback heading+paragraph, NIE woła LLM', async () => {

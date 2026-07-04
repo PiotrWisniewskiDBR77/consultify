@@ -8,12 +8,29 @@
  * - graficzne (KPI 3-5 itemów, chart palette ≤7, table headers wyróżnione)
  */
 
+import {
+  blockTypeClass,
+  type AnyDocBlockType,
+  type CanonicalDocBlockType,
+  type LegacyDocBlockType,
+} from './blockTypeNormalization.js';
 import { emptyReport, finalize, ReportBuilder, type ScoreReport } from './scoringTypes.js';
 
 // ──────────────────────────────────────────────────────────────
 // Minimal Document shape (mirror documentStudioTypes)
+//
+// KANON typów bloków = rodzina żywego pipeline'u (documentStudioTypes:
+// paragraph / bullet_list / kpi_strip / …). Historyczna rodzina scoringu
+// (text / bulletList / kpi / …) pozostaje AKCEPTOWANA jako alias — scoring
+// normalizuje obie formy na wejściu (blockTypeNormalization.ts) i liczy na
+// kanonicznej. Dzięki temu surowe wyjście B3 scoruje się bez ręcznego
+// mapowania, a katalog scenariuszy (legacy nazwy) działa bez zmian.
 // ──────────────────────────────────────────────────────────────
 
+/**
+ * Historyczna rodzina docScoring — utrzymana dla katalogu scenariuszy.
+ * NOWY kod powinien używać nazw kanonicznych ({@link CanonicalDocBlockType}).
+ */
 export type DocBlockType =
   | 'text'
   | 'heading'
@@ -27,9 +44,12 @@ export type DocBlockType =
   | 'image'
   | 'divider';
 
+export type { AnyDocBlockType, CanonicalDocBlockType, LegacyDocBlockType };
+
 export interface DocBlock {
   blockId: string;
-  type: DocBlockType;
+  /** Obie rodziny dozwolone — normalizacja na wejściu scoringu. */
+  type: AnyDocBlockType;
   content: any;
 }
 
@@ -55,10 +75,10 @@ export interface DocCriteria {
   maxSections: number;
   minBlocks?: number;
   maxBlocks?: number;
-  /** Wymagane typy bloków + min liczba wystąpień. */
-  requireBlockType?: Array<{ type: DocBlockType; min: number; chartKind?: string }>;
-  /** Typy bloków które NIE MOGĄ wystąpić (constraint test). */
-  forbidBlockType?: DocBlockType[];
+  /** Wymagane typy bloków + min liczba wystąpień (obie rodziny nazw OK). */
+  requireBlockType?: Array<{ type: AnyDocBlockType; min: number; chartKind?: string }>;
+  /** Typy bloków które NIE MOGĄ wystąpić (constraint test; obie rodziny OK). */
+  forbidBlockType?: AnyDocBlockType[];
   /** Sekcja z heading zawierającym jeden z keywords musi istnieć. */
   requireSectionHeading?: string[];
   /** Cytowanie ≥N. */
@@ -86,8 +106,15 @@ function allBlocks(doc: DocumentArtifact): DocBlock[] {
   return doc.sections.flatMap((s) => s.blocks);
 }
 
-function blocksOfType(doc: DocumentArtifact, type: DocBlockType): DocBlock[] {
-  return allBlocks(doc).filter((b) => b.type === type);
+/**
+ * Bloki danego typu — matchowanie na KANONICZNEJ klasie typu, więc artefakt
+ * może przyjść w dowolnej rodzinie nazw (raw B3: paragraph/kpi_strip/… lub
+ * legacy: text/kpi/…), a kryterium tak samo. risk_table liczy się jako table,
+ * footnote/citation jako paragraph (semantyka historycznego mapowania).
+ */
+function blocksOfType(doc: DocumentArtifact, type: AnyDocBlockType): DocBlock[] {
+  const wanted = blockTypeClass(type);
+  return allBlocks(doc).filter((b) => blockTypeClass(b.type) === wanted);
 }
 
 function allText(doc: DocumentArtifact): string {
@@ -263,7 +290,8 @@ export function scoreDoc(doc: DocumentArtifact, criteria: DocCriteria): ScoreRep
   }
 
   if (criteria.minDistinctBlockTypes) {
-    const distinct = new Set(blocks.map((b) => b.type)).size;
+    // Liczone na klasach kanonicznych — 'text' i 'paragraph' to JEDEN typ.
+    const distinct = new Set(blocks.map((b) => blockTypeClass(b.type))).size;
     b.expect(
       distinct >= criteria.minDistinctBlockTypes,
       'distinct block types',
