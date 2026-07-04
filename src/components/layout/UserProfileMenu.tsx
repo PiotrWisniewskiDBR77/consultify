@@ -460,10 +460,14 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                   <button
                     onClick={async (e) => {
                       e.stopPropagation();
+                      const enteringDemo = !isDemoMode;
                       await toggleDemoMode(undefined, { source: 'profile_menu' });
                       setIsOpen(false);
                       setTimeout(() => {
-                        window.location.href = window.location.pathname;
+                        // Entering the demo always lands on the Teresa hero (D1,
+                        // docs/demo/DEMO_JOURNEY_REDESIGN.md); exiting returns to
+                        // wherever the user was.
+                        window.location.href = enteringDemo ? '/chat' : window.location.pathname;
                       }, 450);
                     }}
                     disabled={isDemoLoading}

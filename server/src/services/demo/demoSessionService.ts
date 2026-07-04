@@ -144,7 +144,13 @@ export async function getActiveDemoSession(userId: string): Promise<DemoSessionR
 }
 
 async function expireDemoSession(session: DemoSessionRecord): Promise<void> {
-  await deleteDemoDatasetForOrganization(session.session_org_id);
+  // NEVER delete the curated base org: in DEMO_USE_BASE_ORG mode the session
+  // row points at DEMO_ORG_ID itself, and expiry must not wipe the hand-seeded
+  // dataset. Per-user copy orgs (the only thing safe to delete) always have a
+  // derived session org id distinct from DEMO_ORG_ID.
+  if (session.session_org_id && session.session_org_id !== DEMO_ORG_ID) {
+    await deleteDemoDatasetForOrganization(session.session_org_id);
+  }
   await dbRun(
     `UPDATE demo_sessions SET status = 'expired', ended_at = ? WHERE id = ?`,
     [nowIso(), session.id],
@@ -272,6 +278,63 @@ export async function resolveOrCreateDemoSession(
   options: { restartOnLocaleMismatch?: boolean } = {}
 ): Promise<DemoSessionRecord & { stats: Awaited<ReturnType<typeof getDemoDatasetStats>> }> {
   const locale = normalizeDemoLocale(requestedLocale);
+
+  // Curated read-only demo: serve the fully-seeded base org directly instead of
+  // provisioning a thin per-user copy. The base org (DEMO_ORG_ID) is the rich,
+  // hand-verified dataset (tools, insights, results KPIs, deliverables); a fresh
+  // template copy is missing those modules. Writes stay blocked because the org
+  // equals DEMO_ORG_ID (demoWriteProtection). Gated by env so only the demo env
+  // opts in. Only the SEEDING is skipped — the demo_sessions row is still
+  // persisted, because it carries the original entry `source`: /status derives
+  // workspace_demo vs sales_demo from it, and a per-call source ('status_refresh')
+  // would misclassify a presenter's session as a sales funnel on every reload.
+  if (String(process.env.DEMO_USE_BASE_ORG || '').toLowerCase() === 'true') {
+    await ensureDemoSessionTables();
+    const activeBase = await getActiveDemoSession(userId);
+    if (activeBase) {
+      return {
+        ...activeBase,
+        session_org_id: DEMO_ORG_ID,
+        stats: await getDemoDatasetStats(DEMO_ORG_ID),
+      };
+    }
+
+    const session: DemoSessionRecord = {
+      id: makeSessionId(userId),
+      user_id: userId,
+      base_org_id: DEMO_ORG_ID,
+      session_org_id: DEMO_ORG_ID,
+      locale,
+      source,
+      status: 'active',
+      anchor_date: nowIso(),
+      expires_at: new Date(Date.now() + DEMO_SESSION_DURATION_MS).toISOString(),
+    };
+    await dbRun(
+      `INSERT INTO demo_sessions (
+        id, user_id, base_org_id, session_org_id, locale, source, status, anchor_date, expires_at, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        session.id,
+        session.user_id,
+        session.base_org_id,
+        session.session_org_id,
+        session.locale,
+        session.source,
+        session.status,
+        session.anchor_date,
+        session.expires_at,
+        nowIso(),
+      ],
+      { fallback: false }
+    );
+    await persistSessionPreferences(session);
+    return {
+      ...session,
+      stats: await getDemoDatasetStats(DEMO_ORG_ID),
+    };
+  }
+
   const active = await getActiveDemoSession(userId);
   if (active) {
     if (options.restartOnLocaleMismatch && active.locale !== locale) {
@@ -297,7 +360,12 @@ export async function endDemoSession(userId: string): Promise<void> {
   );
 
   for (const session of sessions) {
-    await deleteDemoDatasetForOrganization(session.session_org_id);
+    // Same guard as expireDemoSession: session rows in DEMO_USE_BASE_ORG mode
+    // point at the curated base org itself — exiting the demo must never wipe
+    // the hand-seeded dataset. Only derived per-user copy orgs are deletable.
+    if (session.session_org_id && session.session_org_id !== DEMO_ORG_ID) {
+      await deleteDemoDatasetForOrganization(session.session_org_id);
+    }
     await dbRun(
       `UPDATE demo_sessions SET status = 'ended', ended_at = ? WHERE id = ?`,
       [nowIso(), session.id],
