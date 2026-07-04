@@ -4258,14 +4258,73 @@ publicFormRouter.get('/public/views/:token/records', async (req: Request, res: R
     }
 
     const { pageSize, cursor } = req.query;
-    const ViewQueryEngine = (await import('../services/tablePlatform/ViewQueryEngine.js')).default;
+    const { resolveView, default: ViewQueryEngine } = await import(
+      '../services/tablePlatform/ViewQueryEngine.js'
+    );
+
+    // Load all fields for the table so we can compute a hard visible-fields
+    // allow-list. Public shared views never carry a userRole, so the
+    // permission-based masking in ViewQueryEngine (applyFieldReadMasking) is a
+    // no-op here — this allow-list is the ONLY thing standing between a
+    // "hidden field" on the view and it leaking into the public response.
+    const db = (await import('../database/Database.js')).getDatabase();
+    const allFieldsResult = await db.query(
+      'SELECT id, name, field_type FROM tp_fields WHERE table_id = $1 ORDER BY field_order ASC',
+      [viewData.tableId]
+    );
+    const allFields = allFieldsResult.rows as Array<{
+      id: string;
+      name: string;
+      field_type: string;
+    }>;
+    const allFieldIds = allFields.map((f) => f.id);
+
+    // resolveView() reads config.filters/sorts/groupBy + visible_field_ids
+    // straight from tp_views — the same config the authenticated grid view
+    // uses (see ViewQueryEngine.resolveView, consumed by the /tables/:id/records
+    // route). An empty visible_field_ids means "no restriction configured" for
+    // the authenticated UI (all fields shown), so we mirror that default here
+    // rather than inventing a different semantic for the public route.
+    const viewConfig = await resolveView(viewData.viewId);
+    const visibleFieldIds =
+      viewConfig.fields && viewConfig.fields.length > 0 ? viewConfig.fields : allFieldIds;
+    const visibleFieldIdSet = new Set(visibleFieldIds);
+
     const result = await ViewQueryEngine.executeQuery({
       tableId: viewData.tableId,
       viewId: viewData.viewId,
+      fields: visibleFieldIds,
       pageSize: pageSize !== undefined ? parseInt(String(pageSize), 10) : 100,
       cursor: typeof cursor === 'string' ? cursor : undefined,
+      // Intentionally no userRole: public = no per-role permission model.
     });
-    return res.status(200).json(result);
+
+    // Defense in depth: strip anything outside the allow-list from r.data,
+    // whatever path produced the record. This also covers the grouped-query
+    // path in ViewQueryEngine (buildGroupQuery), which currently projects the
+    // full r.data column alongside the field projection regardless of the
+    // `fields` option.
+    const stripHiddenFields = (record: any) => {
+      if (record && record.data && typeof record.data === 'object') {
+        for (const key of Object.keys(record.data)) {
+          if (!visibleFieldIdSet.has(key)) delete record.data[key];
+        }
+      }
+      return record;
+    };
+    if (Array.isArray(result.records)) {
+      result.records = result.records.map(stripHiddenFields);
+    }
+    if (Array.isArray(result.groups)) {
+      result.groups = result.groups.map((g) => ({
+        ...g,
+        records: Array.isArray(g.records) ? g.records.map(stripHiddenFields) : g.records,
+      }));
+    }
+
+    const visibleFields = allFields.filter((f) => visibleFieldIdSet.has(f.id));
+
+    return res.status(200).json({ ...result, fields: visibleFields });
   } catch (err) {
     handleRouteError(err, res, 'getPublicSharedViewRecords');
   }
