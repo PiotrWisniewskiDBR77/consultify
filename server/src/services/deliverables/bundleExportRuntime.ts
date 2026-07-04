@@ -142,7 +142,14 @@ async function spinePptxViaPipeline(
     });
     return result.buffer ?? null;
   } catch (err) {
-    logger.warn(`${LOG} M19 pptx pipeline failed (fallback to minimal): ${err instanceof Error ? err.message : String(err)}`);
+    // P0.3 — bundle nie ma deckId/generationId (klucz = spine.meta.company); logujemy
+    // najlepszy dostępny identyfikator + pełny stack, żeby dało się debugować na produkcji
+    // zamiast tylko `.message` (fail-soft zachowany: caller spada na minimalny renderer).
+    logger.warn(`${LOG} M19 pptx pipeline failed (fallback to minimal)`, {
+      company: bundle.spine?.meta?.company,
+      themeId,
+      error: err instanceof Error ? (err.stack ?? err.message) : String(err),
+    });
     return null;
   }
 }
@@ -163,7 +170,10 @@ export async function exportBundleFiles(
       docx = await renderDocumentSchemaToDocxBuffer(schema);
     }
   } catch (err) {
-    logger.warn(`${LOG} docx render failed: ${err instanceof Error ? err.message : String(err)}`);
+    logger.warn(`${LOG} docx render failed`, {
+      company: bundle.spine?.meta?.company,
+      error: err instanceof Error ? (err.stack ?? err.message) : String(err),
+    });
   }
 
   let xlsx: Buffer | null = null;
@@ -185,7 +195,10 @@ export async function exportBundleFiles(
       });
     }
   } catch (err) {
-    logger.warn(`${LOG} xlsx render failed: ${err instanceof Error ? err.message : String(err)}`);
+    logger.warn(`${LOG} xlsx render failed`, {
+      company: bundle.spine?.meta?.company,
+      error: err instanceof Error ? (err.stack ?? err.message) : String(err),
+    });
   }
 
   let pptx: Buffer | null = null;
@@ -219,7 +232,11 @@ export async function exportBundleFiles(
       }
     }
   } catch (err) {
-    logger.warn(`${LOG} pptx render failed: ${err instanceof Error ? err.message : String(err)}`);
+    logger.warn(`${LOG} pptx render failed`, {
+      company: bundle.spine?.meta?.company,
+      themeId,
+      error: err instanceof Error ? (err.stack ?? err.message) : String(err),
+    });
   }
 
   return { docx, xlsx, pptx, pptxBoard };

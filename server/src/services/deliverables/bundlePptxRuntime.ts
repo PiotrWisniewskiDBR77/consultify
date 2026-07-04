@@ -564,7 +564,16 @@ export async function deckPlansToPptxBuffer(
     logger.info(`${LOG} pptx generated: ${n + 2} slides, theme=${theme.id}`);
     return buffer;
   } catch (err) {
-    logger.warn(`${LOG} pptx render failed: ${err instanceof Error ? err.message : String(err)}`);
+    // P0.3 — fail-soft zostaje (caller pomija PPTX), ale błąd musi być debugowalny
+    // na produkcji: brak deckId w tym zakresie (funkcja renderuje z gołych planów),
+    // więc logujemy najlepszy dostępny kontekst (tytuł/motyw/liczba slajdów) + pełny
+    // stack, nie tylko `.message` jak dotąd.
+    logger.warn(`${LOG} pptx render failed`, {
+      title: opts.title,
+      themeId: opts.themeId,
+      slideCount: plans?.length,
+      error: err instanceof Error ? (err.stack ?? err.message) : String(err),
+    });
     return null;
   }
 }
