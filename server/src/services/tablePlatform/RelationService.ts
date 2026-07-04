@@ -26,6 +26,24 @@ export interface ExpandedRecord {
   linkedRecords: Record<string, ExpandedRecord[]>;
 }
 
+/**
+ * Structural equality for computed cell values used by the transitive-cascade
+ * stop condition. Rollup/lookup outputs are scalars, arrays (lookup /
+ * arrayCompact / arrayUnique) or ISO date strings, so a stable JSON comparison
+ * is sufficient and cheap. `null` and `undefined` are treated as equal (both
+ * mean "no value") so a rollup that stays empty does not spuriously propagate.
+ */
+function valuesEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (a == null && b == null) return true;
+  if (a == null || b == null) return false;
+  try {
+    return JSON.stringify(a) === JSON.stringify(b);
+  } catch {
+    return false;
+  }
+}
+
 const relationService = {
   async getFieldOptions(
     fieldId: string
@@ -475,10 +493,19 @@ const relationService = {
    * cardinality, not on the source record's cell values, so a value change on
    * the source never moves a count.
    *
+   * Transitive cascade: a rollup/lookup on B can itself be the source for a
+   * rollup/lookup on C (chain A → B → C). After recomputing B we diff its
+   * computed cells before/after; only the fields that actually changed value are
+   * propagated onward via a recursive call with B as the new source. An
+   * unchanged value is the natural stop condition — no recursion is issued when
+   * nothing moved, so the cascade dies as soon as the graph converges.
+   *
    * Safety: a shared `visited` set (record ids already recomputed) plus a depth
-   * cap prevent infinite cascades / reciprocal-link loops. Returns the set of
-   * dependent record ids that were actually recomputed so the caller can emit
-   * realtime updates for them.
+   * cap prevent infinite cascades / reciprocal-link loops (e.g. A → B → A). The
+   * `maxDepth` is a hard cap; hitting it (or re-visiting a record) is logged at
+   * debug level. Returns the set of dependent record ids that were actually
+   * recomputed — including transitive ones — so the caller can emit realtime
+   * updates for the whole affected chain.
    */
   async recomputeDependentsOfSource(
     sourceRecordId: string,
@@ -489,7 +516,14 @@ const relationService = {
     const visited = opts.visited ?? new Set<string>([sourceRecordId]);
     const depth = opts.depth ?? 0;
     const maxDepth = opts.maxDepth ?? 5;
-    if (depth >= maxDepth) return [];
+    if (depth >= maxDepth) {
+      logger.debug('[RelationService] recomputeDependentsOfSource depth cap reached', {
+        sourceRecordId,
+        depth,
+        maxDepth,
+      });
+      return [];
+    }
     if (!changedFieldIds || changedFieldIds.length === 0) return [];
 
     const changedSet = new Set(changedFieldIds);
@@ -571,8 +605,36 @@ const relationService = {
 
         visited.add(dependentId);
         try {
-          await this.recomputeComputedFields(dependentId);
+          // Snapshot B's computed cells before recompute so we can tell which
+          // rollup/lookup values actually moved and only propagate those.
+          const beforeRow = (
+            await db.query('SELECT data FROM tp_records WHERE id = $1', [dependentId])
+          ).rows[0] as { data?: Record<string, unknown> } | undefined;
+          const beforeData = (beforeRow?.data ?? {}) as Record<string, unknown>;
+
+          const afterComputed = await this.recomputeComputedFields(dependentId);
           recomputed.push({ recordId: dependentId, tableId });
+
+          // Which of B's computed fields changed value? Only those can feed a
+          // downstream rollup/lookup, so only those are worth propagating.
+          const changedOnDependent: string[] = [];
+          for (const fieldId of Object.keys(afterComputed)) {
+            if (!valuesEqual(beforeData[fieldId], afterComputed[fieldId])) {
+              changedOnDependent.push(fieldId);
+            }
+          }
+
+          // Transitive cascade: propagate only when something moved (natural
+          // stop condition) and we still have depth budget. The shared `visited`
+          // set breaks reciprocal-link cycles (A → B → A).
+          if (changedOnDependent.length > 0) {
+            const transitive = await this.recomputeDependentsOfSource(
+              dependentId,
+              changedOnDependent,
+              { visited, depth: depth + 1, maxDepth }
+            );
+            for (const dep of transitive) recomputed.push(dep);
+          }
         } catch (e) {
           logger.error('[RelationService] recomputeDependentsOfSource recompute failed', {
             dependentId,
