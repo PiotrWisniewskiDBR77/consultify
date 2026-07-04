@@ -594,4 +594,81 @@ describe('ViewQueryEngine — filterByFormula function support (anti-false-green
     expect(clause).not.toContain('DROP TABLE');
     expect(params).toContain('acme-injected"; DROP TABLE tp_records;--');
   });
+
+  // -------------------------------------------------------------------------
+  // DEFECT 1 (data-leak): a SYNTAX/PARSE error in the formula must NOT
+  // degrade to a no-op `TRUE` filter. Before the fix, an unbalanced paren (or
+  // any parse failure) was caught in buildFormulaFilterClause and returned
+  // `{ sql: 'TRUE' }`, which dropped the filter entirely and returned the
+  // WHOLE table. Now it must throw a controlled ValidationError, exactly like
+  // the unsupported-function branch.
+  // -------------------------------------------------------------------------
+  describe('parse-error must fail closed (not return the whole table)', () => {
+    it('unbalanced paren `LOWER({Name}` throws ValidationError instead of degrading to TRUE', async () => {
+      mockFieldMetadata();
+      await expect(
+        viewQueryEngine.executeQuery({
+          tableId: TABLE_ID,
+          filterByFormula: 'LOWER({Name}',
+        })
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('the parse-error message names the offending formula and the reason', async () => {
+      mockFieldMetadata();
+      await expect(
+        viewQueryEngine.executeQuery({
+          tableId: TABLE_ID,
+          filterByFormula: 'LOWER({Name}',
+        })
+      ).rejects.toThrow(/parse error/i);
+      await expect(
+        viewQueryEngine.executeQuery({
+          tableId: TABLE_ID,
+          filterByFormula: 'LOWER({Name}',
+        })
+      ).rejects.toThrow(/LOWER\(\{Name\}/);
+    });
+
+    it('a malformed/garbage formula throws ValidationError', async () => {
+      mockFieldMetadata();
+      await expect(
+        viewQueryEngine.executeQuery({
+          tableId: TABLE_ID,
+          filterByFormula: ')(} = = = "',
+        })
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('does NOT emit a bare TRUE clause for a syntactically-broken formula — the whole table would leak otherwise', async () => {
+      // Prove the anti-leak property directly: capture every SQL string sent to
+      // the DB and assert none of them fell back to a filter-less `WHERE ... TRUE`
+      // no-op for the formula. Since the parse now throws before any list query
+      // runs, no list SQL should be issued at all.
+      mockFieldMetadata();
+      let threw = false;
+      try {
+        await viewQueryEngine.executeQuery({
+          tableId: TABLE_ID,
+          filterByFormula: 'CONCATENATE({Name}, "x"', // missing closing paren
+        });
+      } catch (e) {
+        threw = true;
+        expect(e).toBeInstanceOf(ValidationError);
+      }
+      expect(threw).toBe(true);
+
+      const listCalls = mockQuery.mock.calls.filter(
+        ([sql]) =>
+          typeof sql === 'string' &&
+          sql.includes('FROM tp_records r') &&
+          sql.includes('ORDER BY')
+      );
+      // No list query should have executed (we failed closed before querying),
+      // and certainly none should contain a bare `AND (TRUE)` formula no-op.
+      for (const [sql] of listCalls) {
+        expect(sql).not.toMatch(/AND \(TRUE\)/);
+      }
+    });
+  });
 });
