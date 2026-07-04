@@ -31,6 +31,9 @@ import { isMelsDeckBuilderEnabled } from '@/utils/melsDeckBuilderFlag';
 
 import type { CardBlock, Deck, DeckCard } from '../wizard/types';
 import { AgentActivityPanel } from './AgentActivityPanel';
+// STEP 1b — reuse the canonical composition normalizer so this builder's local
+// unifiedJson→Deck converter honours B1's composition identically to deckData.ts.
+import { normalizeSlideComposition } from './deckData';
 import { BlockToolbar } from './BlockToolbar';
 import { CardCanvas } from './CardCanvas';
 import { CommandPalette, useCommandPaletteShortcut } from './CommandPalette';
@@ -217,17 +220,29 @@ function deckFromUnifiedJson(params: {
 
     const hasRefreshable = blocks.some((b) => b.is_refreshable);
 
+    // STEP 1b — honour B1's per-slide composition when present. The renderer
+    // resolves `layout_id` (an archetype id) to a template and prefers the AI's
+    // region plan. Absent/malformed composition → the prior hardcoded
+    // intent→layout choice (byte-identical back-compat).
+    const composition = normalizeSlideComposition((slide as any)?.composition);
+    const heuristicLayoutId =
+      intent === 'cover'
+        ? 'cover_centered'
+        : intent === 'performance_overview'
+          ? 'data_grid'
+          : 'content_full';
+    const layoutId =
+      composition?.layoutVariantId && composition.layoutVariantId.trim()
+        ? composition.layoutVariantId.trim()
+        : heuristicLayoutId;
+
     return {
       card_id: cardId,
       deck_id: params.deckId,
       order_index: idx,
       intent,
-      layout_id:
-        intent === 'cover'
-          ? 'cover_centered'
-          : intent === 'performance_overview'
-            ? 'data_grid'
-            : 'content_full',
+      layout_id: layoutId,
+      composition: composition ?? null,
       title: String(headingText || 'Slide'),
       blocks,
       source_refs: [],

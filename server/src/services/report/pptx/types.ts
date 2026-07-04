@@ -73,6 +73,24 @@ export interface UnifiedSlide {
    * renderer treats `undefined`/empty arrays as "no marker".
    */
   auditFlags?: string[];
+  /**
+   * STEP 1b — per-slide composition plan carried from B1
+   * (`presentationLayoutDirectorService.SlideComposition`). Additive +
+   * back-compatible: legacy callers leave it unset, and the persisted
+   * `unifiedJson` simply omits it, so the FE renderer keeps its pure
+   * heuristic (today's behaviour). When present, it flows through the
+   * persisted deck to the FE (`deckFromUnifiedJson` → `DeckCard.composition`)
+   * where `layoutVariantId`/`regions` drive layout selection.
+   *
+   * Typed structurally (not against `SlideComposition`) to avoid a circular
+   * import between PPTX types ← generator ← layout director. The FE
+   * `normalizeSlideComposition` re-validates before use.
+   */
+  composition?: {
+    layoutVariantId?: string;
+    regions?: { area: string; blockTypes?: string[] }[];
+    emphasis?: string;
+  } | null;
 }
 
 export interface UnifiedReportJSON {
