@@ -52,7 +52,7 @@ export const KPIBadgeNode: React.FC<NodeProps> = ({ data, selected }) => {
   return (
     <div
       className={`relative w-[180px] p-3 rounded-2xl border-2 ${s.border} ${s.bg} shadow-md transition-all ${
-        selected ? 'ring-2 ring-slate-500/60 dark:ring-white/30 shadow-lg scale-105' : ''
+        selected ? 'ring-2 ring-slate-500/60 dark:ring-c-border shadow-lg scale-105' : ''
       }`}
     >
       <Handle type="target" position={Position.Top} className="!w-2 !h-2 !bg-slate-400 !-top-1" />
@@ -114,7 +114,7 @@ export const ScoreNode: React.FC<NodeProps> = ({ data, selected }) => {
   return (
     <div
       className={`relative w-[140px] h-[140px] rounded-full flex flex-col items-center justify-center shadow-lg transition-all ${
-        selected ? 'ring-4 ring-slate-400/50 dark:ring-white/20 scale-105' : ''
+        selected ? 'ring-4 ring-slate-400/50 dark:ring-c-border scale-105' : ''
       } bg-white dark:bg-navy-900 border-4 border-slate-200 dark:border-navy-700`}
     >
       <Handle type="target" position={Position.Top} className="!w-2 !h-2 !bg-slate-400 !-top-1" />
@@ -196,7 +196,7 @@ export const ProgressNode: React.FC<NodeProps> = ({ data, selected }) => {
     <div
       className={`relative w-[200px] p-3 rounded-xl border-2 transition-all ${
         selected
-          ? 'border-slate-500 dark:border-white/40 ring-2 ring-slate-400/40 dark:ring-white/10 shadow-lg'
+          ? 'border-slate-500 dark:border-c-border ring-2 ring-slate-400/40 dark:ring-c-border shadow-lg'
           : 'border-slate-200 dark:border-navy-700 shadow-md'
       } bg-white dark:bg-navy-900`}
     >

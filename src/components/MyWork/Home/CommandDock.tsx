@@ -50,7 +50,7 @@ export const CommandDock: React.FC<CommandDockProps> = ({ block, onAction }) => 
               <button
                 type="button"
                 onClick={() => onAction(primaryAction.action)}
-                className="inline-flex shrink-0 items-center gap-2 rounded-2xl border border-white/12 bg-white/[0.08] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.13]"
+                className="inline-flex shrink-0 items-center gap-2 rounded-2xl border border-c-border-subtle bg-white/[0.08] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.13]"
               >
                 {getPrimaryActionLabel(primaryAction.action.type, isPolish)}
                 <ArrowUpRight size={14} className="text-white/70" />
@@ -125,7 +125,7 @@ export const CommandDock: React.FC<CommandDockProps> = ({ block, onAction }) => 
                     });
                   }
                 }}
-                className="group inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm font-medium text-white transition hover:bg-white/[0.10] hover:-translate-y-0.5"
+                className="group inline-flex items-center gap-2 rounded-2xl border border-c-border-subtle bg-white/[0.05] px-4 py-3 text-sm font-medium text-white transition hover:bg-white/[0.10] hover:-translate-y-0.5"
               >
                 <Icon size={16} className="text-primary-200" />
                 {action.label}

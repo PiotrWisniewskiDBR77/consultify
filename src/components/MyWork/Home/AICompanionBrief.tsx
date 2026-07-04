@@ -79,7 +79,7 @@ export const AICompanionBrief: React.FC<AICompanionBriefProps> = ({
           <button
             key={item.id}
             onClick={() => onFocusItemClick?.(item.id, item.type)}
-            className="text-left p-4 bg-white/[0.03] dark:bg-white/[0.03] border border-white/[0.06] rounded-xl hover:bg-white/[0.06] hover:border-white/10 transition-all duration-150 hover:-translate-y-0.5 group"
+            className="text-left p-4 bg-white/[0.03] dark:bg-white/[0.03] border border-white/[0.06] rounded-xl hover:bg-white/[0.06] hover:border-c-border-subtle transition-all duration-150 hover:-translate-y-0.5 group"
           >
             <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500 mb-1.5 flex items-center gap-1">
               <span

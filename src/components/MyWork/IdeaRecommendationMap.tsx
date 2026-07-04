@@ -5398,7 +5398,7 @@ function MindMapInner({
               {/* AI Sidekick intent indicator */}
               {sidekickCtx && nodes.length > 1 && (
                 <Panel position="top-center">
-                  <div className="mt-2 px-3 py-1 rounded-full bg-white/80 dark:bg-navy-900/80 backdrop-blur-sm border border-slate-200/50 dark:border-white/10 text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 pointer-events-none select-none">
+                  <div className="mt-2 px-3 py-1 rounded-full bg-white/80 dark:bg-navy-900/80 backdrop-blur-sm border border-slate-200/50 dark:border-c-border-subtle text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 pointer-events-none select-none">
                     <Sparkles size={10} className="text-slate-500 shrink-0" />
                     <span>{isPolish ? sidekickCtx.promptHintPl : sidekickCtx.promptHint}</span>
                   </div>

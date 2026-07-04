@@ -95,7 +95,7 @@ const ChannelToggle: React.FC<{
             ${
               enabled
                 ? 'bg-slate-100 text-slate-900 dark:bg-white/[0.08] dark:text-white border border-slate-200 dark:border-white/[0.12]'
-                : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 border border-transparent hover:border-slate-200 dark:border-navy-700 dark:hover:border-white/10'
+                : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 border border-transparent hover:border-slate-200 dark:border-navy-700 dark:hover:border-c-border-subtle'
             }
         `}
     title={label}

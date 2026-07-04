@@ -78,7 +78,7 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
                     ? onAction({ type: 'open', target: openTarget, id: stream.entityId })
                     : undefined
                 }
-                className="flex w-full items-start gap-2 rounded-lg border border-white/10 bg-white/[0.04] p-2.5 text-left transition hover:bg-white/[0.08]"
+                className="flex w-full items-start gap-2 rounded-lg border border-c-border-subtle bg-white/[0.04] p-2.5 text-left transition hover:bg-white/[0.08]"
               >
                 <div className={`rounded-xl p-2 ${STATUS_META[stream.status].className}`}>
                   {STATUS_META[stream.status].icon}
@@ -93,7 +93,7 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
           })}
         </div>
         {orderedArtifactOutputs.length > 0 ? (
-          <div className="space-y-1.5 rounded-lg border border-white/10 bg-white/[0.03] p-2.5">
+          <div className="space-y-1.5 rounded-lg border border-c-border-subtle bg-white/[0.03] p-2.5">
             <div className="text-[11px] uppercase tracking-[0.18em] text-white/45">
               {t('myWork.radar.outputFlow')}
             </div>
@@ -119,7 +119,7 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
                       id: artifact.id,
                     })
                   }
-                  className="flex w-full items-start gap-2 rounded-lg border border-white/10 bg-white/[0.04] p-2.5 text-left transition hover:bg-white/[0.08]"
+                  className="flex w-full items-start gap-2 rounded-lg border border-c-border-subtle bg-white/[0.04] p-2.5 text-left transition hover:bg-white/[0.08]"
                 >
                   <div className="rounded-xl bg-primary-500/15 p-2 text-primary-200">
                     {artifact.originRuntime === 'presentation' ? (
@@ -139,7 +139,7 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
                         {t(VISIBILITY_I18N_KEY[artifact.visibilityScope])}
                       </span>
                       {reviewI18nKey ? (
-                        <span className="rounded-full border border-white/10 bg-white/[0.06] px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-slate-200">
+                        <span className="rounded-full border border-c-border-subtle bg-white/[0.06] px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-slate-200">
                           {t(reviewI18nKey)}
                           {artifact.reviewGateCount && artifact.reviewGateCount > 0
                             ? ` · ${artifact.reviewGateCount}`
@@ -189,7 +189,7 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
               },
             })
           }
-          className="rounded-lg border border-white/10 bg-white/[0.05] px-3 py-2 text-xs font-medium text-slate-100 transition hover:bg-white/[0.08]"
+          className="rounded-lg border border-c-border-subtle bg-white/[0.05] px-3 py-2 text-xs font-medium text-slate-100 transition hover:bg-white/[0.08]"
         >
           {t('myWork.radar.askAISequencing')}
         </button>

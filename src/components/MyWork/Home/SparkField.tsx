@@ -93,7 +93,7 @@ export const SparkField: React.FC<SparkFieldProps> = ({ block, onAction }) => {
             <button
               key={note.id}
               onClick={() => onAction({ type: 'open', target: 'note', id: note.id })}
-              className="rounded-lg border border-white/10 bg-white/[0.04] p-3 text-left transition hover:bg-white/[0.08]"
+              className="rounded-lg border border-c-border-subtle bg-white/[0.04] p-3 text-left transition hover:bg-white/[0.08]"
             >
               <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-white/40">
                 <FileText size={12} />
@@ -119,7 +119,7 @@ const IdeaCard: React.FC<{
   return (
     <button
       onClick={() => onAction({ type: 'open', target: 'idea', id: item.id })}
-      className="rounded-lg border border-white/10 bg-white/[0.04] p-3 text-left transition hover:bg-white/[0.08]"
+      className="rounded-lg border border-c-border-subtle bg-white/[0.04] p-3 text-left transition hover:bg-white/[0.08]"
     >
       <div className="flex items-center justify-between gap-3">
         <span

@@ -28,7 +28,7 @@ export const MomentumBlock: React.FC<MomentumBlockProps> = ({ block, onAction })
           {payload.stats.map((stat) => (
             <div
               key={stat.label}
-              className="rounded-lg border border-white/10 bg-white/[0.04] p-2.5"
+              className="rounded-lg border border-c-border-subtle bg-white/[0.04] p-2.5"
             >
               <div className="font-mono text-[9px] uppercase tracking-wider text-white/40">
                 {stat.label}
@@ -66,7 +66,7 @@ export const MomentumBlock: React.FC<MomentumBlockProps> = ({ block, onAction })
                   },
                 })
               }
-              className="flex w-full items-start gap-2 rounded-lg border border-white/10 bg-white/[0.04] p-2.5 text-left transition hover:bg-white/[0.08]"
+              className="flex w-full items-start gap-2 rounded-lg border border-c-border-subtle bg-white/[0.04] p-2.5 text-left transition hover:bg-white/[0.08]"
             >
               <div className="rounded-xl bg-emerald-500/15 p-2 text-emerald-300">
                 <TrendingUp size={15} />

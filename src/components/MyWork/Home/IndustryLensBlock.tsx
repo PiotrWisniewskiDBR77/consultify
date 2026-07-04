@@ -18,11 +18,11 @@ export const IndustryLensBlock: React.FC<IndustryLensBlockProps> = ({ block, onA
     <HomeBlockShell block={block}>
       <div className="grid gap-2.5">
         <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600/75">
-          <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1">
+          <span className="rounded-full border border-c-border-subtle bg-white/[0.05] px-3 py-1">
             <Factory size={12} className="mr-1 inline" />
             {payload.industryLabel}
           </span>
-          <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1">
+          <span className="rounded-full border border-c-border-subtle bg-white/[0.05] px-3 py-1">
             {payload.roleLens}
           </span>
         </div>
@@ -43,7 +43,7 @@ export const IndustryLensBlock: React.FC<IndustryLensBlockProps> = ({ block, onA
         </div>
 
         <div className="grid gap-2 md:grid-cols-2">
-          <div className="rounded-lg border border-white/10 bg-white/[0.04] p-3">
+          <div className="rounded-lg border border-c-border-subtle bg-white/[0.04] p-3">
             <div className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-wider text-white/45">
               <Scale size={12} className="text-emerald-200" />
               {t('myWork.radar.benchmark')}
@@ -79,7 +79,7 @@ export const IndustryLensBlock: React.FC<IndustryLensBlockProps> = ({ block, onA
                 },
               })
             }
-            className="rounded-lg border border-white/10 bg-white/[0.04] p-3 text-left transition hover:bg-white/[0.08]"
+            className="rounded-lg border border-c-border-subtle bg-white/[0.04] p-3 text-left transition hover:bg-white/[0.08]"
           >
             <div className="font-mono text-[9px] uppercase tracking-wider text-white/45">
               {t('myWork.radar.peerCase')}
@@ -131,7 +131,7 @@ const SignalCard: React.FC<{
           },
         })
       }
-      className="rounded-lg border border-white/10 bg-white/[0.04] p-3 text-left transition hover:bg-white/[0.08]"
+      className="rounded-lg border border-c-border-subtle bg-white/[0.04] p-3 text-left transition hover:bg-white/[0.08]"
     >
       <div className={`inline-flex rounded-lg p-1.5 ${toneClass}`}>{icon}</div>
       <div className="mt-2 text-sm font-semibold leading-snug text-white">{signal.title}</div>

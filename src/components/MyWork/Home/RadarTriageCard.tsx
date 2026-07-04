@@ -96,7 +96,7 @@ export function RadarTriageCard({ signal, onAction }: RadarTriageCardProps) {
 
       <div
         className={cn(
-          'rounded-xl border border-white/10 bg-white/[0.04] pl-3 pr-2.5 py-2.5 shadow-sm backdrop-blur-sm',
+          'rounded-xl border border-c-border-subtle bg-white/[0.04] pl-3 pr-2.5 py-2.5 shadow-sm backdrop-blur-sm',
           'border-l-[3px]',
           PRIORITY_BORDER[signal.priorityLevel]
         )}
@@ -113,7 +113,7 @@ export function RadarTriageCard({ signal, onAction }: RadarTriageCardProps) {
               {t(`${TK}.score`, { score: signal.score })}
             </span>
           </span>
-          <span className="rounded-md border border-white/10 bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-semibold text-slate-200">
+          <span className="rounded-md border border-c-border-subtle bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-semibold text-slate-200">
             {t(`${TK}.category.${signal.category}`)}
           </span>
           {hasHardGate && (
@@ -129,11 +129,11 @@ export function RadarTriageCard({ signal, onAction }: RadarTriageCardProps) {
           </div>
           <p className="text-xs leading-relaxed text-slate-200">{signal.whyNow.rationaleText}</p>
           <div className="flex flex-wrap gap-1">
-            <span className="inline-flex items-center gap-1 rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-slate-300">
+            <span className="inline-flex items-center gap-1 rounded border border-c-border-subtle bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-slate-300">
               <Clock className="size-3 opacity-70" aria-hidden />
               {t(`${TK}.timeWindow.${signal.whyNow.timeWindow}`)}
             </span>
-            <span className="rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-slate-300">
+            <span className="rounded border border-c-border-subtle bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-slate-300">
               {t(`${TK}.driver.${signal.whyNow.primaryDriver}`)}
             </span>
           </div>
@@ -223,7 +223,7 @@ export function RadarTriageCard({ signal, onAction }: RadarTriageCardProps) {
             <button
               type="button"
               onClick={handleHandoff}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.08] px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-white/[0.12]"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-c-border-subtle bg-white/[0.08] px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-white/[0.12]"
             >
               {t(`${TK}.goTo`, { module: signal.nextAction.targetModule })}
               <ArrowRight className="size-3.5 opacity-80" aria-hidden />

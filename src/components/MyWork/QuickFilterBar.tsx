@@ -81,7 +81,7 @@ export const QuickFilterBar: React.FC<QuickFilterBarProps> = ({
                                   isActive
                                     ? 'bg-slate-700 text-white dark:bg-slate-600 shadow-sm'
                                     : hasItems
-                                      ? 'bg-white dark:bg-navy-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
+                                      ? 'bg-white dark:bg-navy-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-c-border'
                                       : 'bg-slate-100 dark:bg-navy-800/50 text-slate-600 dark:text-slate-500 border border-transparent cursor-not-allowed opacity-50'
                                 }
                             `}
