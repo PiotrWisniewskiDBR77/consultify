@@ -258,7 +258,7 @@ export const InitiativeCalendar: React.FC<InitiativeCalendarProps> = ({
               onClick={() => setView(m)}
               className={`px-2.5 py-1 text-xs ${
                 view === m
-                  ? 'bg-primary-500 text-white'
+                  ? 'bg-slate-900/[0.07] text-slate-900 dark:bg-white/10 dark:text-slate-100'
                   : 'bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700'
               }`}
             >

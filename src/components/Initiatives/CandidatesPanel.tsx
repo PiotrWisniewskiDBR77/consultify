@@ -279,7 +279,7 @@ export function CandidatesPanel({ onAccept }: CandidatesPanelProps) {
                       type="button"
                       onClick={() => void handleAccept(c.id)}
                       disabled={busy}
-                      className="inline-flex items-center gap-1.5 rounded-md bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700 disabled:opacity-60"
+                      className="inline-flex items-center gap-1.5 rounded-md bg-navy-900 dark:bg-[#F4F7FB] px-3 py-1.5 text-xs font-medium text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:opacity-60"
                     >
                       {busy ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
