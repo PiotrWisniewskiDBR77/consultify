@@ -379,6 +379,37 @@ const recordsService = {
         });
       }
 
+      // Cross-record recompute on create: normally a no-op (a fresh record has
+      // no inbound links yet), but kept for symmetry with update and to cover
+      // flows that pre-seed links before the row is fully materialized. The
+      // back-reference query short-circuits cheaply when there are none.
+      try {
+        const changedFieldIds = Object.keys(enrichedData);
+        if (changedFieldIds.length > 0) {
+          const dependents = await relationService.recomputeDependentsOfSource(
+            id,
+            changedFieldIds
+          );
+          for (const dep of dependents) {
+            try {
+              const depRow = (
+                await db.query('SELECT * FROM tp_records WHERE id = $1', [dep.recordId])
+              ).rows[0];
+              if (depRow) {
+                tablePlatformRealtime.notifyRecordUpdated(dep.tableId, dep.recordId, depRow);
+              }
+            } catch {
+              /* realtime is best-effort */
+            }
+          }
+        }
+      } catch (crossRecomputeErr) {
+        logger.warn('[RecordsService] cross-record recompute after create failed', {
+          recordId: id,
+          error: (crossRecomputeErr as Error).message,
+        });
+      }
+
       try {
         tablePlatformRealtime.notifyRecordCreated(tableId, row);
       } catch {
@@ -632,6 +663,39 @@ const recordsService = {
         logger.warn('[RecordsService] confidence recompute after update failed', {
           recordId,
           error: (provenanceErr as Error).message,
+        });
+      }
+
+      // Cross-record recompute (root fix for "tabele kłamią"): the formula/
+      // confidence passes above only refresh THIS record. Rollup/lookup fields
+      // on OTHER records that link this one must also refresh when the source
+      // cells they read change — otherwise dependent aggregates go stale until
+      // the next link/unlink/delete. `recomputeComputedFields` previously only
+      // ran on link mutations, never on a plain cell edit.
+      try {
+        const changedFieldIds = Object.keys(enrichedData);
+        if (changedFieldIds.length > 0) {
+          const dependents = await relationService.recomputeDependentsOfSource(
+            recordId,
+            changedFieldIds
+          );
+          for (const dep of dependents) {
+            try {
+              const depRow = (
+                await db.query('SELECT * FROM tp_records WHERE id = $1', [dep.recordId])
+              ).rows[0];
+              if (depRow) {
+                tablePlatformRealtime.notifyRecordUpdated(dep.tableId, dep.recordId, depRow);
+              }
+            } catch {
+              /* realtime is best-effort */
+            }
+          }
+        }
+      } catch (crossRecomputeErr) {
+        logger.warn('[RecordsService] cross-record recompute after update failed', {
+          recordId,
+          error: (crossRecomputeErr as Error).message,
         });
       }
 
