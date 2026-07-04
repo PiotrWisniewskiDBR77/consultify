@@ -11,18 +11,20 @@
  *   openChat({ entityType: 'initiative', entityId: id, entityName: 'My Initiative', ... });
  */
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { AppView } from '@/types';
 
+import type { SidekickContextEventDetail } from '../components/MyWork/mindmap/aiSidekickContext';
 import { getRouteFromAppView } from '../routes/routeConfig';
 import { useAppStore } from '../store/useAppStore';
 import { useConversationStore } from '../store/useConversationStore';
 
 export interface OpenChatOptions {
-  /** Type of entity: initiative, task, assessment, decision, report, etc. */
+  /** Type of entity: initiative, task, assessment, decision, report, idea, etc. */
   entityType: string;
   /** ID of the entity */
   entityId: string;
@@ -39,8 +41,13 @@ export interface OpenChatOptions {
     decisionId?: string;
     reportId?: string;
     kpiId?: string;
+    /** Ideas / Mind Map entity-context (M06 Fala 2 §2.1) */
+    ideaId?: string;
   };
 }
+
+/** window CustomEvent name for the mindmap AI-sidekick bridge — see aiSidekickContext.ts */
+const SIDEKICK_CONTEXT_EVENT = 'idea-mindmap-sidekick-context';
 
 // Burst guard (feedback f9fba1e0 — four "Notification: Skrzynka" conversations created
 // within 3 seconds): for entity types without pmoContext fields (e.g. 'notification'),
@@ -62,6 +69,22 @@ export function useOpenChatWithContext() {
   const navigateFn = useAppStore((s) => s.navigateFn);
   const navigate = useNavigate();
   const { isMobile, isTablet, isDesktop } = useDeviceType();
+  const { isEnabled } = useFeatureFlagsContext();
+  const mindmapBridgeEnabled = isEnabled('ENABLE_TERESA_MINDMAP');
+
+  // Sidekick→chat bridge (M06 Fala 2 §2.1): the mind map dispatches its latest
+  // intent/promptHint/ideaId on every relevant change. We only need the most
+  // recent value at the moment the caller opens chat for an 'idea' entity, so
+  // a ref (not state) avoids re-rendering consumers on every map edit.
+  const latestSidekickContextRef = useRef<SidekickContextEventDetail | null>(null);
+  useEffect(() => {
+    if (!mindmapBridgeEnabled) return;
+    const handler = (event: Event) => {
+      latestSidekickContextRef.current = (event as CustomEvent).detail || null;
+    };
+    window.addEventListener(SIDEKICK_CONTEXT_EVENT, handler);
+    return () => window.removeEventListener(SIDEKICK_CONTEXT_EVENT, handler);
+  }, [mindmapBridgeEnabled]);
 
   return useCallback(
     async (options: OpenChatOptions) => {
@@ -75,6 +98,7 @@ export function useOpenChatWithContext() {
         existingPmoCtx?.taskId === entityId ||
         existingPmoCtx?.decisionId === entityId ||
         existingPmoCtx?.reportId === entityId ||
+        (mindmapBridgeEnabled && entityType === 'idea' && existingPmoCtx?.ideaId === entityId) ||
         existingPmoCtx?.kpiId === entityId ||
         (existingPmoCtx?.initiativeIds || []).includes(entityId);
 
@@ -136,6 +160,7 @@ export function useOpenChatWithContext() {
             decisionId: entityType === 'decision' ? entityId : undefined,
             reportId: entityType === 'report' ? entityId : undefined,
             kpiId: entityType === 'kpi' ? entityId : undefined,
+            ideaId: mindmapBridgeEnabled && entityType === 'idea' ? entityId : undefined,
           },
         });
         recentEntityConversations.set(entityKey, { promise, ts: Date.now() });
@@ -160,7 +185,23 @@ export function useOpenChatWithContext() {
       // contextData.teresaPrompt. Stash them so the chat composer can pick them up as a
       // pre-filled opener instead of dropping them on the floor.
       try {
-        const teresaPrompt = (contextData as any)?.teresaPrompt;
+        let teresaPrompt = (contextData as any)?.teresaPrompt;
+
+        // Sidekick bridge (M06 Fala 2 §2.1): when opening chat for the idea the
+        // mind map is currently reporting on, append its detected intent/prompt
+        // hint so Teresa's kickoff reflects what the user was doing on the map
+        // (e.g. "expanding_branch" → "Expand this branch with more ideas").
+        // The graph itself is NOT carried here — that still flows exclusively
+        // through ideaMapToMarkdown at the "Discuss with Teresa" call site.
+        if (mindmapBridgeEnabled && entityType === 'idea') {
+          const sidekick = latestSidekickContextRef.current;
+          if (sidekick && sidekick.ideaId === entityId && sidekick.promptHint) {
+            teresaPrompt = teresaPrompt
+              ? `${teresaPrompt}\n\n(${sidekick.promptHint})`
+              : sidekick.promptHint;
+          }
+        }
+
         if (teresaPrompt && typeof teresaPrompt === 'string' && typeof window !== 'undefined') {
           window.sessionStorage.setItem(
             'consultify.teresa.pendingPrompt',
@@ -190,6 +231,7 @@ export function useOpenChatWithContext() {
       isDesktop,
       isMobile,
       isTablet,
+      mindmapBridgeEnabled,
       navigate,
       navigateFn,
       setCurrentViewState,

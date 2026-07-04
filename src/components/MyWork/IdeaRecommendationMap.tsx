@@ -2683,10 +2683,10 @@ function MindMapInner({
   useEffect(() => {
     window.dispatchEvent(
       new CustomEvent('idea-mindmap-sidekick-context', {
-        detail: sidekickCtx,
+        detail: { ...sidekickCtx, ideaId, ideaTitle },
       })
     );
-  }, [sidekickCtx]);
+  }, [sidekickCtx, ideaId, ideaTitle]);
 
   useEffect(() => {
     const handler = (event: Event) => {
