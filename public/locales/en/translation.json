@@ -2408,7 +2408,9 @@
         "voteSyncFailed": "Vote sync failed",
         "missingSessionId": "Missing sessionId",
         "voteSaveFailed": "Failed to save vote",
-        "selectAtLeastTwo": "Select at least 2 elements"
+        "selectAtLeastTwo": "Select at least 2 elements",
+        "objectLimitWarning": "You are approaching the object limit (200 objects). Consider archiving objects.",
+        "objectLimitReached": "Object limit reached (500 maximum). Please delete some objects or split into multiple whiteboards."
       },
       "drawingsCleared": "Drawings cleared",
       "boardMode": "Board mode",

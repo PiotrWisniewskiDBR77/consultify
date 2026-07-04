@@ -172,19 +172,22 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
     const rfEl = containerRef.current?.closest('.react-flow');
     if (!rfEl) return;
     const handler = (e: Event) => {
-      const vp = (e as CustomEvent).detail;
-      if (
-        vp &&
-        typeof vp.x === 'number' &&
-        typeof vp.y === 'number' &&
-        typeof vp.zoom === 'number'
+      const detail = (e as CustomEvent).detail;
+      // If fit flag is set, use fitView instead of setViewport
+      if (detail?.fit) {
+        fitView({ padding: detail.padding || 0.2, duration: detail.duration || 300 });
+      } else if (
+        detail &&
+        typeof detail.x === 'number' &&
+        typeof detail.y === 'number' &&
+        typeof detail.zoom === 'number'
       ) {
-        setViewport(vp, { duration: 600 });
+        setViewport(detail, { duration: 600 });
       }
     };
     rfEl.addEventListener('idea-whiteboard-set-viewport', handler);
     return () => rfEl.removeEventListener('idea-whiteboard-set-viewport', handler);
-  }, [setViewport]);
+  }, [setViewport, fitView]);
 
   // A6: zoom-to-fit shortcuts (Cmd/Ctrl+0 and Shift+1) — consistent with the
   // Mind Map and Process Flow tools. Whiteboard previously had neither.
@@ -1805,6 +1808,21 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   const addElement = useCallback(
     (kind: WbNodeKind, extraData?: Record<string, unknown>) => {
       if (locked) return;
+
+      // P13 Limit enforcement: warn at 200, block at 500
+      if (nodes.length >= 200) {
+        toast(t('myWork.whiteboard.errors.objectLimitWarning'), {
+          icon: '⚠️',
+          duration: 3000,
+        });
+      }
+      if (nodes.length >= 500) {
+        toast.error(t('myWork.whiteboard.errors.objectLimitReached'), {
+          duration: 3000,
+        });
+        return;
+      }
+
       pushUndoSnapshot();
       const newNode = createNode(kind, extraData, nodes.length);
       setNodes((prev: Node[]) => [...prev, newNode]);
@@ -1837,10 +1855,12 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       currentUserId,
       isPl,
       locked,
+      nodes,
       nodes.length,
       pushUndoSnapshot,
       registerOutcomeRecord,
       setNodes,
+      t,
     ]
   );
 
@@ -2680,7 +2700,16 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       onSelectAll: () => setNodes((nds) => nds.map((n) => ({ ...n, selected: true }))),
       onDeleteSelected: deleteSelected,
       onDuplicate: duplicateSelected,
-      onFitView: () => fitView({ padding: 0.2, duration: 300 }),
+      onFitView: () => {
+        // Dispatch viewport event to fit-to-view (fitView is not available outside ReactFlowProvider)
+        const rfContainer = document.querySelector('.react-flow');
+        if (rfContainer) {
+          const evt = new CustomEvent('idea-whiteboard-set-viewport', {
+            detail: { padding: 0.2, duration: 300, fit: true },
+          });
+          rfContainer.dispatchEvent(evt);
+        }
+      },
     },
   });
 

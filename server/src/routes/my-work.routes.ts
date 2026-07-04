@@ -3824,6 +3824,17 @@ router.put(
     const normalizedNodes = validation.normalized.nodes;
     const normalizedEdges = validation.normalized.edges;
 
+    // P13 Hard cap: reject if nodes > 500 (hard safety limit for whiteboard storage)
+    if (normalizedNodes.length > 500) {
+      return res.status(422).json({
+        error: 'Object limit exceeded',
+        code: 'WHITEBOARD_OBJECT_LIMIT_EXCEEDED',
+        details: `Whiteboard cannot exceed 500 objects; requested: ${normalizedNodes.length}`,
+        limit: 500,
+        current: normalizedNodes.length,
+      });
+    }
+
     const ideaOk = await queryHelpers.queryOne<any>(
       `SELECT id FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
       [ideaId, userId, orgId]
@@ -4089,6 +4100,17 @@ router.post(
       return res.status(400).json({
         error: 'Invalid graph schema',
         details: validation.errors,
+      });
+    }
+
+    // P13 Hard cap: reject if nodes > 500 (hard safety limit for whiteboard storage)
+    if (validation.normalized.nodes.length > 500) {
+      return res.status(422).json({
+        error: 'Object limit exceeded',
+        code: 'WHITEBOARD_OBJECT_LIMIT_EXCEEDED',
+        details: `Whiteboard cannot exceed 500 objects; requested: ${validation.normalized.nodes.length}`,
+        limit: 500,
+        current: validation.normalized.nodes.length,
       });
     }
 

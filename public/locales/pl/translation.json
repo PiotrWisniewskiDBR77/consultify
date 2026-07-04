@@ -1623,7 +1623,9 @@
         "voteSyncFailed": "Błąd synchronizacji głosów",
         "missingSessionId": "Brak sessionId",
         "voteSaveFailed": "Nie udało się zapisać głosu",
-        "selectAtLeastTwo": "Zaznacz co najmniej 2 elementy"
+        "selectAtLeastTwo": "Zaznacz co najmniej 2 elementy",
+        "objectLimitWarning": "Zbliżasz się do limitu obiektów (200 obiektów). Rozważ archiwizację.",
+        "objectLimitReached": "Osiągnięto limit obiektów (maksymalnie 500). Usuń elementy lub podziel na wiele tablic."
       },
       "drawingsCleared": "Rysunki wyczyszczone",
       "boardMode": "Tryb tablicy",
