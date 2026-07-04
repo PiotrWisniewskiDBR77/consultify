@@ -1,33 +1,28 @@
 /**
- * AssessmentTable
+ * AssessmentTable — ADOPTER TRIADY STANDARD (dowód API).
  *
- * Table view for assessments with status filtering:
- * - Draft (in progress)
- * - In Review
- * - Approved (can create report)
- * - All
+ * Lista assessmentów (hub „Tools > Licensed") przepięta W CAŁOŚCI na
+ * StandardModuleBar + StandardTable + StandardPreview
+ * (SSOT: Harvard/wdrozenie-100/_STANDARD_TRIADA_NOTATKA.md + aneksy #2-#5).
+ * Moduł deklaruje wyłącznie dane + akcje; cały chrome pochodzi z fasad.
+ * ZERO zmian w server/ — używa wyłącznie istniejących Api.*.
  */
 
-import {
-  AlertCircle,
-  CheckCircle2,
-  ChevronDown,
-  Clock,
-  Edit,
-  Eye,
-  FileOutput,
-  Filter,
-  Map,
-  MoreVertical,
-  Plus,
-  RefreshCw,
-  Search,
-} from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import { AlertCircle, FileOutput, FileText, Map, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { MENU_3_CHIP_ACTIVE, MENU_3_CHIP_INACTIVE, Menu3Badge } from '@/components/shared/ModuleMenu3';
-import { LoadingState } from '@/components/ui/primitives';
+import {
+  StandardModuleBar,
+  StandardPreview,
+  standardPreviewShortcuts,
+  type StandardPreviewActions,
+  StandardTable,
+  type StandardRowMenu,
+  type TableColumn,
+  type TableRow,
+} from '@/components/standard';
+import { statusChipTone } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
 
 import { WorkflowState } from '../../types';
@@ -55,50 +50,19 @@ interface AssessmentTableProps {
   onCreateReport: (assessmentId: string) => void;
 }
 
-const STATUS_CONFIG: Record<
-  WorkflowState,
-  { label: string; color: string; icon: React.ReactNode }
-> = {
-  DRAFT: {
-    label: 'Draft',
-    color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
-    icon: <Edit size={14} />,
-  },
-  IN_REVIEW: {
-    label: 'In Review',
-    color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-    icon: <Clock size={14} />,
-  },
-  AWAITING_APPROVAL: {
-    label: 'Awaiting Approval',
-    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    icon: <AlertCircle size={14} />,
-  },
-  APPROVED: {
-    label: 'Approved',
-    color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-    icon: <CheckCircle2 size={14} />,
-  },
-  REJECTED: {
-    label: 'Rejected',
-    color: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400',
-    icon: <AlertCircle size={14} />,
-  },
-  ARCHIVED: {
-    label: 'Archived',
-    color: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-500',
-    icon: <Clock size={14} />,
-  },
-  IN_PROGRESS: {
-    label: 'In Progress',
-    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    icon: <Edit size={14} />,
-  },
-  COMPLETED: {
-    label: 'Completed',
-    color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-    icon: <CheckCircle2 size={14} />,
-  },
+const STATUS_FILTER_OPTIONS = [
+  { value: 'DRAFT', label: 'Draft' },
+  { value: 'IN_REVIEW', label: 'In Review' },
+  { value: 'AWAITING_APPROVAL', label: 'Awaiting Approval' },
+  { value: 'APPROVED', label: 'Approved' },
+  { value: 'REJECTED', label: 'Rejected' },
+  { value: 'ARCHIVED', label: 'Archived' },
+];
+
+const formatDate = (dateStr: string) => {
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
 export const AssessmentTable: React.FC<AssessmentTableProps> = ({
@@ -107,304 +71,444 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
   onNewAssessment,
   onCreateReport,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPolish = !!i18n.language?.startsWith('pl');
 
-  // State
+  // ── Dane ─────────────────────────────────────────────────────────────────
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
-  const [showFilterMenu, setShowFilterMenu] = useState(false);
-  const [activeRowMenu, setActiveRowMenu] = useState<string | null>(null);
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  // Pin (kanon A7.1): przypięty preview nie podmienia się przy klikaniu wierszy.
+  const [previewPinned, setPreviewPinned] = useState(false);
+  const previewShortcutsRef = useRef<Record<string, () => void>>({});
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleteConfirmIds, setDeleteConfirmIds] = useState<string[] | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Fetch assessments
   const fetchAssessments = useCallback(async () => {
     setIsLoading(true);
+    setError(null);
     try {
-      const data = await Api.listAssessments({
-        projectId: projectId || undefined,
-      });
+      const data = await Api.listAssessments({ projectId: projectId || undefined });
       setAssessments((data.items || data.assessments || []) as Assessment[]);
-    } catch (err) {
+    } catch (err: any) {
       console.error('[AssessmentTable] Error:', err);
+      setError(
+        String(
+          err?.message ||
+            t('assessment.table.loadError', isPolish ? 'Nie udało się wczytać' : 'Failed to load')
+        )
+      );
     } finally {
       setIsLoading(false);
     }
-  }, [projectId]);
+  }, [projectId, t, isPolish]);
 
   useEffect(() => {
-    // Always fetch assessments, even without projectId (will return all user's assessments)
     fetchAssessments();
   }, [fetchAssessments]);
 
-  // Filter assessments
-  const filteredAssessments = assessments.filter((assessment) => {
-    // Status filter
-    if (filterStatus !== 'all') {
-      if (filterStatus === 'draft' && assessment.status !== 'DRAFT') return false;
-      if (
-        filterStatus === 'in_review' &&
-        !['IN_REVIEW', 'AWAITING_APPROVAL'].includes(assessment.status)
-      )
-        return false;
-      if (filterStatus === 'approved' && assessment.status !== 'APPROVED') return false;
+  // Esc zamyka preview; skróty akcji (R/O) wg standardPreviewShortcuts (kanon B.24/B.31).
+  useEffect(() => {
+    if (!previewId) return;
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable)
+        return;
+      if (e.key === 'Escape') {
+        setPreviewId(null);
+        setPreviewPinned(false);
+        return;
+      }
+      const handler = previewShortcutsRef.current[e.key.toUpperCase()];
+      if (handler) {
+        e.preventDefault();
+        handler();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [previewId]);
+
+  // ── Filtrowanie (chipy Menu 3 + lupa) ────────────────────────────────────
+  const filteredAssessments = useMemo(
+    () =>
+      assessments.filter((assessment) => {
+        if (filterStatus === 'draft' && assessment.status !== 'DRAFT') return false;
+        if (
+          filterStatus === 'in_review' &&
+          !['IN_REVIEW', 'AWAITING_APPROVAL'].includes(assessment.status)
+        )
+          return false;
+        if (filterStatus === 'approved' && assessment.status !== 'APPROVED') return false;
+        if (searchQuery) {
+          const query = searchQuery.toLowerCase();
+          return (
+            (assessment.name || '').toLowerCase().includes(query) ||
+            (assessment.projectName || '').toLowerCase().includes(query)
+          );
+        }
+        return true;
+      }),
+    [assessments, filterStatus, searchQuery]
+  );
+
+  const stats = useMemo(
+    () => ({
+      total: assessments.length,
+      draft: assessments.filter((a) => a.status === 'DRAFT').length,
+      inReview: assessments.filter((a) => ['IN_REVIEW', 'AWAITING_APPROVAL'].includes(a.status))
+        .length,
+      approved: assessments.filter((a) => a.status === 'APPROVED').length,
+    }),
+    [assessments]
+  );
+
+  const previewAssessment = previewId
+    ? (assessments.find((a) => a.id === previewId) ?? null)
+    : null;
+
+  // ── Delete (istniejące Api.deleteAssessment; potwierdzenie w modalu) ─────
+  const runDelete = useCallback(async () => {
+    if (!deleteConfirmIds?.length) return;
+    setIsDeleting(true);
+    try {
+      for (const id of deleteConfirmIds) {
+        await Api.deleteAssessment(id);
+      }
+      setSelectedIds(new Set());
+      setPreviewId((prev) => (prev && deleteConfirmIds.includes(prev) ? null : prev));
+      await fetchAssessments();
+    } catch (err) {
+      console.error('[AssessmentTable] Delete error:', err);
+    } finally {
+      setIsDeleting(false);
+      setDeleteConfirmIds(null);
     }
+  }, [deleteConfirmIds, fetchAssessments]);
 
-    // Search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      const name = assessment.name || '';
-      const projectName = assessment.projectName || '';
-      return name.toLowerCase().includes(query) || projectName.toLowerCase().includes(query);
-    }
+  // ── Kolumny StandardTable ────────────────────────────────────────────────
+  const columns = useMemo<TableColumn[]>(
+    () => [
+      {
+        id: 'name',
+        label: t('assessment.table.assessment', 'Assessment'),
+        width: '280px',
+        sortable: true,
+      },
+      {
+        id: 'status',
+        label: t('assessment.table.status', 'Status'),
+        width: '160px',
+        sortable: true,
+        filterable: true,
+        filterOptions: STATUS_FILTER_OPTIONS,
+      },
+      {
+        id: 'progress',
+        label: t('assessment.table.progress', 'Progress'),
+        width: '160px',
+        sortable: true,
+        sortAccessor: (row: TableRow) => Number(row.progress) || 0,
+      },
+      {
+        id: 'updatedAt',
+        label: t('assessment.table.updated', 'Updated'),
+        width: '140px',
+        sortable: true,
+        sortAccessor: (row: TableRow) => String(row.updatedAt || ''),
+      },
+    ],
+    [t]
+  );
 
-    return true;
-  });
+  // ── Kebab — kontrakt 5 bloków (moduł deklaruje TYLKO bloki 1-3) ──────────
+  const rowMenu = useCallback(
+    (row: TableRow): StandardRowMenu => {
+      const assessment = row as unknown as Assessment;
+      return {
+        primary: [
+          {
+            id: 'open-map',
+            label:
+              assessment.status === 'DRAFT'
+                ? t('assessment.table.editInMap', isPolish ? 'Edytuj w mapie' : 'Edit in Map')
+                : t('assessment.table.viewInMap', isPolish ? 'Otwórz w mapie' : 'View in Map'),
+            icon: Map,
+            onClick: () => onOpenInMap(assessment.id),
+          },
+          ...(assessment.status === 'APPROVED'
+            ? [
+                {
+                  id: 'create-report',
+                  label: t('assessment.table.createReport', 'Create Report'),
+                  icon: FileOutput,
+                  onClick: () => onCreateReport(assessment.id),
+                },
+              ]
+            : []),
+        ],
+        universalHandlers: {
+          preview: () => setPreviewId(assessment.id),
+          edit: () => onOpenInMap(assessment.id),
+          // Brak API archiwizacji assessmentu — pozycja disabled z notą (aneks #4).
+        },
+        destructive: {
+          onClick: () => setDeleteConfirmIds([assessment.id]),
+        },
+      };
+    },
+    [t, isPolish, onOpenInMap, onCreateReport]
+  );
 
-  // Format date
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
+  // ── Preview — 6 bloków (StandardPreview) ────────────────────────────────
+  const previewActions: StandardPreviewActions | undefined = previewAssessment
+    ? {
+        resolutions: [
+          {
+            id: 'create-report',
+            variant: 'positive',
+            label: t('assessment.table.createReport', 'Create Report'),
+            icon: FileOutput,
+            shortcut: 'R',
+            onClick: () => onCreateReport(previewAssessment.id),
+            disabled: previewAssessment.status !== 'APPROVED',
+          },
+          {
+            id: 'delete',
+            variant: 'destructive',
+            label: t('common.delete', isPolish ? 'Usuń' : 'Delete'),
+            icon: Trash2,
+            onClick: () => setDeleteConfirmIds([previewAssessment.id]),
+          },
+        ],
+        informational: [
+          {
+            id: 'open-map',
+            variant: 'neutral',
+            label: t('assessment.table.openInMap', isPolish ? 'Otwórz w mapie' : 'Open in Map'),
+            icon: Map,
+            shortcut: 'O',
+            onClick: () => onOpenInMap(previewAssessment.id),
+          },
+          {
+            id: 'refresh',
+            variant: 'neutral',
+            label: t('common.refresh', isPolish ? 'Odśwież' : 'Refresh'),
+            icon: RefreshCw,
+            onClick: () => void fetchAssessments(),
+          },
+        ],
+      }
+    : undefined;
 
-  // Stats
-  const stats = {
-    total: assessments.length,
-    draft: assessments.filter((a) => a.status === 'DRAFT').length,
-    inReview: assessments.filter((a) => ['IN_REVIEW', 'AWAITING_APPROVAL'].includes(a.status))
-      .length,
-    approved: assessments.filter((a) => a.status === 'APPROVED').length,
-  };
+  // Skróty klawiszowe preview (R/O) — aktywne, gdy preview otwarty.
+  previewShortcutsRef.current = standardPreviewShortcuts(previewActions);
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="shrink-0 px-6 py-4 border-b border-c-border-subtle">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-c-text">Assessments</h2>
-            <p className="text-sm text-c-text-muted">
-              Manage your digital maturity assessments
-            </p>
-          </div>
-          <button
-            onClick={onNewAssessment}
-            className="flex items-center gap-2 px-4 py-2.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-medium rounded-lg transition-colors"
-          >
-            <Plus size={18} />
-            New Assessment
-          </button>
+      {/* MENU 1/2/3 — wyłącznie przez fasadę */}
+      <StandardModuleBar
+        breadcrumbs={[
+          { label: t('nav.tools', 'Tools') },
+          { label: t('licensedTools.breadcrumb', 'Licensed') },
+          { label: t('assessment.table.title', 'Assessments') },
+        ]}
+        onSearch={setSearchQuery}
+        primaryCta={{
+          label: t('assessment.table.new', 'New Assessment'),
+          icon: Plus,
+          onClick: onNewAssessment,
+          testId: 'assessment-new-cta',
+        }}
+        chips={[
+          { id: 'all', label: t('common.all', 'All'), count: stats.total },
+          { id: 'draft', label: 'Draft', count: stats.draft },
+          { id: 'in_review', label: 'In Review', count: stats.inReview },
+          { id: 'approved', label: 'Approved', count: stats.approved },
+        ]}
+        activeChip={filterStatus}
+        onChipChange={(id) => setFilterStatus(id as FilterStatus)}
+        bulk={
+          selectedIds.size > 0
+            ? {
+                count: selectedIds.size,
+                selectedLabel: isPolish
+                  ? `Zaznaczono: ${selectedIds.size}`
+                  : `${selectedIds.size} selected`,
+                onSelectAll: () =>
+                  setSelectedIds(new Set(filteredAssessments.map((a) => String(a.id)))),
+                selectAllLabel: isPolish ? 'Zaznacz wszystko' : 'Select all',
+                onClear: () => setSelectedIds(new Set()),
+                clearLabel: isPolish ? 'Wyczyść' : 'Clear',
+                actions: [
+                  {
+                    id: 'bulk-delete',
+                    label: t('common.delete', isPolish ? 'Usuń' : 'Delete'),
+                    icon: Trash2,
+                    variant: 'danger',
+                    onClick: () => setDeleteConfirmIds(Array.from(selectedIds)),
+                  },
+                ],
+              }
+            : null
+        }
+      />
+
+      {/* TABELA + PREVIEW */}
+      <div className="flex-1 min-h-0 flex overflow-hidden">
+        <div className="flex-1 min-w-0 overflow-auto">
+          <StandardTable
+            columns={columns}
+            data={filteredAssessments as unknown as TableRow[]}
+            loading={isLoading}
+            error={error}
+            onRetry={fetchAssessments}
+            empty={{
+              icon: FileText,
+              title: t('assessment.emptyState.title', 'No assessments yet'),
+              description: t(
+                'assessment.emptyState.description',
+                isPolish
+                  ? 'Utwórz pierwszy assessment, aby rozpocząć diagnozę.'
+                  : 'Create your first assessment to start the diagnosis.'
+              ),
+              actionLabel: t('assessment.emptyState.createFirst', 'Create First Assessment'),
+              onAction: onNewAssessment,
+            }}
+            selectedRowId={previewId}
+            onRowClick={(row) => {
+              if (!previewPinned) setPreviewId(String(row.id));
+            }}
+            onRowDoubleClick={(row) => onOpenInMap(String(row.id))}
+            rowMenu={rowMenu}
+            rowDescription={(row) => (row.projectName ? String(row.projectName) : null)}
+            defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
+            persistKey="assessment.list"
+            selection={{ selectedIds, onChange: setSelectedIds }}
+          />
         </div>
 
-        {/* Stats — Menu 3 counter-chips (SPEC-L §14.1 F1, SSOT ModuleMenu3) */}
-        <div className="flex items-center gap-1 mt-4">
-          {(
-            [
-              { id: 'all', label: 'All', count: stats.total },
-              { id: 'draft', label: 'Draft', count: stats.draft },
-              { id: 'in_review', label: 'In Review', count: stats.inReview },
-              { id: 'approved', label: 'Approved', count: stats.approved },
-            ] as const
-          ).map((chip) => (
-            <button
-              key={chip.id}
-              type="button"
-              onClick={() => setFilterStatus(chip.id)}
-              className={filterStatus === chip.id ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
-              aria-pressed={filterStatus === chip.id}
-            >
-              <span>{chip.label}</span>
-              <Menu3Badge count={chip.count} active={filterStatus === chip.id} />
-            </button>
-          ))}
-        </div>
-
-        {/* Search & Filter */}
-        <div className="flex items-center gap-3 mt-4">
-          <div className="relative flex-1 max-w-md">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
-              size={18}
-            />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search assessments..."
-              className="w-full pl-10 pr-4 py-2 rounded-lg border border-c-border-subtle bg-white dark:bg-navy-950 text-c-text"
-            />
-          </div>
-          <button
-            onClick={fetchAssessments}
-            aria-label="Refresh assessments"
-            className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
-          >
-            <RefreshCw size={18} />
-          </button>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="flex-1 overflow-auto p-4">
-        {isLoading ? (
-          <LoadingState variant="spinner" className="h-64" />
-        ) : filteredAssessments.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-center">
-            <FileOutput className="w-12 h-12 text-slate-600 dark:text-slate-400 mb-3" />
-            <p className="text-c-text-muted mb-4">
-              {searchQuery
-                ? t('assessment.emptyState.noMatch', 'No assessments match your search')
-                : t('assessment.emptyState.title', 'No assessments yet')}
-            </p>
-            {!searchQuery && (
-              <button
-                onClick={onNewAssessment}
-                className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-medium rounded-lg"
-              >
-                <Plus size={16} />
-                {t('assessment.emptyState.createFirst', 'Create First Assessment')}
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="bg-c-surface border border-c-border-subtle rounded-xl overflow-hidden">
-            <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full">
-              <thead className="bg-slate-50 dark:bg-navy-900/50 sticky top-0">
-                <tr>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-c-text-muted uppercase tracking-wider">
-                    {t('assessment.table.assessment', 'Assessment')}
-                  </th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-c-text-muted uppercase tracking-wider">
-                    {t('assessment.table.status', 'Status')}
-                  </th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-c-text-muted uppercase tracking-wider">
-                    {t('assessment.table.progress', 'Progress')}
-                  </th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-c-text-muted uppercase tracking-wider">
-                    {t('assessment.table.updated', 'Updated')}
-                  </th>
-                  <th className="text-right px-6 py-3 text-xs font-semibold text-c-text-muted uppercase tracking-wider">
-                    {t('assessment.table.actions', 'Actions')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-white/10">
-                {filteredAssessments.map((assessment) => {
-                  const statusConfig = STATUS_CONFIG[assessment.status] || STATUS_CONFIG.DRAFT;
-
-                  return (
-                    <tr
-                      key={assessment.id}
-                      className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
-                    >
-                      <td className="px-6 py-4">
-                        <div>
-                          <p className="font-medium text-c-text">
-                            {assessment.name}
-                          </p>
-                          <p className="text-sm text-c-text-muted">
-                            {assessment.projectName}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig.color}`}
-                        >
-                          {statusConfig.icon}
-                          {statusConfig.label}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="w-32">
-                          <div className="flex items-center justify-between text-xs mb-1">
-                            <span className="text-c-text-muted">
-                              {assessment.completedAxes}/{assessment.totalAxes} axes
-                            </span>
-                            <span className="font-medium text-c-text">
-                              {assessment.progress}%
-                            </span>
-                          </div>
-                          <div className="h-1.5 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-navy-900 rounded-full"
-                              style={{ width: `${assessment.progress}%` }}
-                            />
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-c-text-muted">
-                        {formatDate(assessment.updatedAt)}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-end gap-2">
-                          {/* Open in Map */}
-                          <button
-                            onClick={() => onOpenInMap(assessment.id)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-c-text-secondary hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-                          >
-                            <Map size={14} />
-                            {assessment.status === 'DRAFT' ? 'Edit' : 'View'}
-                          </button>
-
-                          {/* Create Report - only for approved */}
-                          {assessment.status === 'APPROVED' && (
-                            <button
-                              onClick={() => onCreateReport(assessment.id)}
-                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
-                            >
-                              <FileOutput size={14} />
-                              Create Report
-                            </button>
-                          )}
-
-                          {/* More menu */}
-                          <div className="relative">
-                            <button
-                              onClick={() =>
-                                setActiveRowMenu(
-                                  activeRowMenu === assessment.id ? null : assessment.id
-                                )
-                              }
-                              className="p-1.5 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
-                            >
-                              <MoreVertical size={16} />
-                            </button>
-
-                            {activeRowMenu === assessment.id && (
-                              <div className="absolute right-0 top-full mt-1 w-48 bg-c-surface rounded-lg shadow-lg border border-c-border-subtle py-1 z-10">
-                                <button
-                                  onClick={() => {
-                                    onOpenInMap(assessment.id);
-                                    setActiveRowMenu(null);
-                                  }}
-                                  className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
-                                >
-                                  Open in Map
-                                </button>
-                                <button className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5">
-                                  Duplicate
-                                </button>
-                                <button className="w-full text-left px-4 py-2 text-sm text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/10">
-                                  Delete
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
+        {previewAssessment ? (
+          <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+            <StandardPreview
+              title={previewAssessment.name || 'Assessment'}
+              onClose={() => {
+                setPreviewId(null);
+                setPreviewPinned(false);
+              }}
+              onOpenFull={() => onOpenInMap(previewAssessment.id)}
+              pinned={previewPinned}
+              onTogglePin={() => setPreviewPinned((v) => !v)}
+              meta={{
+                pills: [
+                  {
+                    label: String(previewAssessment.status || 'DRAFT'),
+                    tone: statusChipTone(previewAssessment.status),
+                  },
+                  {
+                    label: `${previewAssessment.progress ?? 0}%`,
+                    tone: 'neutral',
+                  },
+                  ...(previewAssessment.projectName
+                    ? [
+                        {
+                          label: previewAssessment.projectName,
+                          tone: 'neutral' as const,
+                          className:
+                            'bg-transparent text-c-text-secondary truncate max-w-[120px]',
+                        },
+                      ]
+                    : []),
+                ],
+                trailing: (
+                  <span className="text-[11px] font-semibold text-c-text-secondary">
+                    {formatDate(previewAssessment.updatedAt)}
+                  </span>
+                ),
+              }}
+              details={{
+                text: [
+                  `${previewAssessment.completedAxes ?? 0}/${previewAssessment.totalAxes ?? 0} ${isPolish ? 'osi ukończonych' : 'axes completed'}`,
+                  previewAssessment.projectName
+                    ? `${isPolish ? 'Projekt' : 'Project'}: ${previewAssessment.projectName}`
+                    : '',
+                  `${isPolish ? 'Utworzono' : 'Created'}: ${formatDate(previewAssessment.createdAt)}`,
+                ]
+                  .filter(Boolean)
+                  .join('\n\n'),
+                onCopy: () => {
+                  void navigator.clipboard?.writeText(
+                    `${previewAssessment.name} — ${previewAssessment.status} (${previewAssessment.progress ?? 0}%)`
                   );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+                },
+              }}
+              ai={{
+                hints: [
+                  isPolish ? 'Podsumuj assessment' : 'Summarize assessment',
+                  isPolish ? 'Zaproponuj następne kroki' : 'Suggest next steps',
+                ],
+                disabled: true,
+                disabledTooltip: isPolish ? 'Wkrótce' : 'Coming soon',
+              }}
+              relations={
+                previewAssessment.projectName
+                  ? [{ label: previewAssessment.projectName, icon: FileText }]
+                  : []
+              }
+              actions={previewActions}
+            />
+          </aside>
+        ) : null}
       </div>
+
+      {/* Potwierdzenie usunięcia (wzór MyAssessmentsList; Api.deleteAssessment) */}
+      {deleteConfirmIds ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-c-surface rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-danger-100 dark:bg-danger-900/30 rounded-lg">
+                <AlertCircle className="w-6 h-6 text-danger-600 dark:text-danger-400" />
+              </div>
+              <h3 className="text-lg font-bold text-c-text">
+                {isPolish ? 'Potwierdź usunięcie' : 'Confirm Deletion'}
+              </h3>
+            </div>
+            <p className="text-slate-600 dark:text-slate-300 mb-6">
+              {isPolish
+                ? `Usunąć ${deleteConfirmIds.length > 1 ? `${deleteConfirmIds.length} assessmenty` : 'ten assessment'}? Tej operacji nie można cofnąć.`
+                : `Delete ${deleteConfirmIds.length > 1 ? `${deleteConfirmIds.length} assessments` : 'this assessment'}? This action cannot be undone.`}
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmIds(null)}
+                disabled={isDeleting}
+                className="flex-1 py-2.5 bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300 font-medium rounded-lg transition-colors"
+              >
+                {isPolish ? 'Anuluj' : 'Cancel'}
+              </button>
+              <button
+                type="button"
+                onClick={() => void runDelete()}
+                disabled={isDeleting}
+                className="flex-1 py-2.5 bg-danger-600 hover:bg-danger-500 text-white font-medium rounded-lg transition-colors disabled:opacity-60"
+              >
+                {isDeleting
+                  ? isPolish
+                    ? 'Usuwanie…'
+                    : 'Deleting…'
+                  : isPolish
+                    ? 'Usuń'
+                    : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };
