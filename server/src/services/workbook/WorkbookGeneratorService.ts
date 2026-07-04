@@ -179,19 +179,33 @@ const GENERATION_SYSTEM_PROMPT = `You are an expert spreadsheet architect. You r
 CRITICAL RULES — FOLLOW EXACTLY:
 1. Return ONLY valid JSON. No markdown fences, no explanation, no text before or after the JSON.
 2. Every calculated value MUST use a formula. NEVER hardcode a value that should be computed.
-3. Cross-sheet references use Excel syntax: ='SheetName'!CellRef (e.g. ='Assumptions'!B2)
-4. Column keys MUST be snake_case identifiers (no spaces, no special chars).
-5. Sheet names MUST be ≤31 characters.
-6. Include isSummary: true on totals/summary rows.
-7. Use realistic sample data when the user didn't provide specific numbers.
+3. Do NOT write a leading "=" in the "formula" field. Write the pure formula body, e.g. "SUM(B2:B10)", NOT "=SUM(B2:B10)". The builder adds the "=" itself; a leading "=" (or worse "==") corrupts the .xlsx.
+4. Cross-sheet references use Excel syntax WITHOUT the leading "=": 'SheetName'!CellRef (e.g. 'Assumptions'!B2).
+5. Column keys MUST be snake_case identifiers (no spaces, no special chars).
+6. Sheet names MUST be ≤31 characters.
+7. Include isSummary: true on totals/summary rows.
+8. Use realistic sample data when the user didn't provide specific numbers.
 
-FORMULA REFERENCE (use these in the "formula" field):
-- Sum: "=SUM(B2:B10)"
-- Cross-sheet: "='Assumptions'!B2"
-- Multiplication: "=B2*C2"
-- Growth: "=B2*(1+Config!B3)"
-- Conditional: "=IF(B2>0,B2*0.19,0)"
-- Percentage: "=B2/B$12"
+FORMULA-CHAIN DISCIPLINE (this is what separates a real model from a data dump):
+- ZERO magic numbers in computed cells. Any number that is DERIVED (a total, a subtotal, a growth-driven year, a margin, a share-of-total) MUST be a formula, never a literal. Only raw inputs are literals — and raw inputs live on the Assumptions sheet.
+- Keep drivers on a separate "Assumptions" sheet. Every other sheet references those inputs by cross-sheet reference ('Assumptions'!B2) instead of re-typing the number. Never duplicate an input value as a constant on two sheets.
+- Chain years/periods: year N+1 is computed FROM year N (e.g. "B2*(1+'Assumptions'!B2)"), not typed independently. This makes the whole model recalc when an assumption changes.
+- Totals sum EXACTLY the data rows above them — no gaps, no overshoot into headers or other totals.
+- Highlight driver/input cells so a user knows what is editable: give raw-input cells a distinct fill (e.g. style.bgColor "FFF2CC" — a soft yellow) and keep computed cells unstyled. This is the standard "blue-input / black-formula" model convention.
+
+FORMULA REFERENCE (write the BODY only — no leading "="):
+- Sum: "SUM(B2:B10)"
+- Cross-sheet: "'Assumptions'!B2"
+- Multiplication: "B2*C2"
+- Growth off an assumption: "B2*(1+'Assumptions'!B3)"
+- Conditional: "IF(B2>0,B2*'Assumptions'!B4,0)"
+- Percentage / share-of-total: "B2/B$12"
+- Scenario pick (paired with scenarioSwitch): "CHOOSE(MATCH($B$1,{\"Base\",\"Bull\",\"Bear\"},0),C4,D4,E4)"
+
+MODELING PRIMITIVES (prefer these over brute-force copies — they are what an equity-research-grade model uses):
+- scenarioSwitch: build ONE P&L/model sheet whose drivers flip with a dropdown, instead of 3 near-duplicate Base/Bull/Bear sheets. Put it on the sheet as "scenarioSwitch": list the scenarios, the driver rows (one value per scenario), the label/active/scenario columns, and the selector cell. The builder writes the dropdown + CHOOSE/MATCH selection formulas — you do NOT hand-write those.
+- sensitivityTables: a 1- or 2-D grid showing how an output moves as two inputs vary (e.g. growth × margin → EBITDA). Declare "sensitivityTables" on the sheet with the anchorCell, the colInputs / rowInputs variant values, and an outputFormulaTemplate using {col} and {row} placeholders (e.g. "Base_EBITDA*(1+{col})*(1-{row})"). The builder lays out the live formula grid + a readability color-scale.
+- dataValidation: put a dropdown / numeric bound on input cells (per-cell "validation", or per-column on the ColumnDef) so a reviewer can only enter valid values (e.g. a tax rate between 0 and 1, or the scenario name from a fixed list).
 
 SCHEMA FORMAT:
 {
@@ -212,7 +226,7 @@ SCHEMA FORMAT:
         },
         {
           "cells": {
-            "snake_case_key": { "formula": "=SUM(B2:B5)", "comment": "Sum of items" }
+            "snake_case_key": { "formula": "SUM(B2:B5)", "comment": "Sum of items" }
           },
           "isSummary": true
         }
@@ -240,10 +254,11 @@ EXAMPLE — a simple 2-sheet budget:
         { "key": "unit", "header": "Unit", "width": 10, "type": "text" }
       ],
       "rows": [
-        { "cells": { "parameter": { "value": "Revenue Growth Rate" }, "value": { "value": 0.08 }, "unit": { "value": "%" } } },
-        { "cells": { "parameter": { "value": "COGS Margin" }, "value": { "value": 0.35 }, "unit": { "value": "%" } } },
-        { "cells": { "parameter": { "value": "Tax Rate" }, "value": { "value": 0.19 }, "unit": { "value": "%" } } }
+        { "cells": { "parameter": { "value": "Revenue Growth Rate" }, "value": { "value": 0.08, "style": { "bgColor": "FFF2CC" } }, "unit": { "value": "%" } } },
+        { "cells": { "parameter": { "value": "COGS Margin" }, "value": { "value": 0.35, "style": { "bgColor": "FFF2CC" } }, "unit": { "value": "%" } } },
+        { "cells": { "parameter": { "value": "Tax Rate" }, "value": { "value": 0.19, "style": { "bgColor": "FFF2CC" } }, "unit": { "value": "%" } } }
       ],
+      "isAssumptions": true,
       "freezeRow": 1,
       "headerStyle": { "bold": true, "fontColor": "FFFFFF", "bgColor": "2F5496", "border": "thin" },
       "tabColor": "2F5496"
@@ -258,11 +273,11 @@ EXAMPLE — a simple 2-sheet budget:
         { "key": "q1_total", "header": "Q1 Total", "width": 15, "type": "currency", "numberFormat": "#,##0" }
       ],
       "rows": [
-        { "cells": { "item": { "value": "Revenue" }, "jan": { "value": 100000 }, "feb": { "formula": "=B2*(1+'Assumptions'!B2)" }, "q1_total": { "formula": "=SUM(B2:C2)" } } },
-        { "cells": { "item": { "value": "COGS" }, "jan": { "formula": "=B2*'Assumptions'!B3" }, "feb": { "formula": "=C2*'Assumptions'!B3" }, "q1_total": { "formula": "=SUM(B3:C3)" } } },
-        { "cells": { "item": { "value": "Gross Profit" }, "jan": { "formula": "=B2-B3" }, "feb": { "formula": "=C2-C3" }, "q1_total": { "formula": "=SUM(B4:C4)" } }, "isSummary": true },
-        { "cells": { "item": { "value": "Tax" }, "jan": { "formula": "=B4*'Assumptions'!B4" }, "feb": { "formula": "=C4*'Assumptions'!B4" }, "q1_total": { "formula": "=SUM(B5:C5)" } } },
-        { "cells": { "item": { "value": "Net Income" }, "jan": { "formula": "=B4-B5" }, "feb": { "formula": "=C4-C5" }, "q1_total": { "formula": "=SUM(B6:C6)" } }, "isSummary": true }
+        { "cells": { "item": { "value": "Revenue" }, "jan": { "value": 100000, "style": { "bgColor": "FFF2CC" } }, "feb": { "formula": "B2*(1+'Assumptions'!B2)" }, "q1_total": { "formula": "SUM(B2:C2)" } } },
+        { "cells": { "item": { "value": "COGS" }, "jan": { "formula": "B2*'Assumptions'!B3" }, "feb": { "formula": "C2*'Assumptions'!B3" }, "q1_total": { "formula": "SUM(B3:C3)" } } },
+        { "cells": { "item": { "value": "Gross Profit" }, "jan": { "formula": "B2-B3" }, "feb": { "formula": "C2-C3" }, "q1_total": { "formula": "SUM(B4:C4)" } }, "isSummary": true },
+        { "cells": { "item": { "value": "Tax" }, "jan": { "formula": "B4*'Assumptions'!B4" }, "feb": { "formula": "C4*'Assumptions'!B4" }, "q1_total": { "formula": "SUM(B5:C5)" } } },
+        { "cells": { "item": { "value": "Net Income" }, "jan": { "formula": "B4-B5" }, "feb": { "formula": "C4-C5" }, "q1_total": { "formula": "SUM(B6:C6)" } }, "isSummary": true }
       ],
       "freezeRow": 1,
       "alternateRowColor": "F2F7FB",
@@ -272,7 +287,69 @@ EXAMPLE — a simple 2-sheet budget:
   ]
 }
 
+MINIMAL PRIMITIVE EXAMPLE — one scenario-driven model sheet with a sensitivity grid
+(note: the "scenarioSwitch" and "sensitivityTables" blocks live on the SHEET; you do NOT
+hand-write the CHOOSE/MATCH formulas or the grid — the builder generates them):
+{
+  "name": "Model",
+  "purpose": "Scenario-driven drivers + EBITDA sensitivity",
+  "columns": [
+    { "key": "driver", "header": "Driver", "width": 24, "type": "text" },
+    { "key": "active", "header": "Active", "width": 14, "type": "percent", "numberFormat": "0.0%" },
+    { "key": "base", "header": "Base", "width": 12, "type": "percent", "numberFormat": "0.0%" },
+    { "key": "bull", "header": "Bull", "width": 12, "type": "percent", "numberFormat": "0.0%" },
+    { "key": "bear", "header": "Bear", "width": 12, "type": "percent", "numberFormat": "0.0%" }
+  ],
+  "rows": [],
+  "scenarioSwitch": {
+    "scenarios": ["Base", "Bull", "Bear"],
+    "active": "Base",
+    "labelColumn": "driver",
+    "activeColumn": "active",
+    "scenarioColumns": ["base", "bull", "bear"],
+    "selectorCell": "B1",
+    "selectorLabel": "Scenario",
+    "drivers": [
+      { "label": "Revenue growth %", "values": [0.08, 0.15, 0.02], "numberFormat": "0.0%" },
+      { "label": "Gross margin %", "values": [0.35, 0.42, 0.28], "numberFormat": "0.0%" }
+    ]
+  },
+  "sensitivityTables": [
+    {
+      "title": "EBITDA sensitivity: growth × margin",
+      "anchorCell": "H2",
+      "cornerLabel": "EBITDA",
+      "colInputs": [0.05, 0.10, 0.15],
+      "rowInputs": [0.30, 0.35, 0.40],
+      "outputFormulaTemplate": "1000000*(1+{col})*{row}",
+      "numberFormat": "#,##0"
+    }
+  ]
+}
+
 Now produce the WorkbookSchema JSON for the given plan. Return ONLY the JSON.`;
+
+// ---------------------------------------------------------------------------
+// Phase 5: DETERMINISTIC-CRITIC REPAIR LOOP
+//
+// The deterministic critic (critiqueWorkbook) is no longer just a report — when
+// it finds CRITICAL issues we feed the exact defect list back to the LLM and ask
+// for a corrected schema, then re-critique. Bounded by WORKBOOK_REPAIR_MAX_ITERS
+// (hard cap — no unbounded loop / cost). After the cap we build ANYWAY (fail-soft,
+// same as before) with the final quality report attached.
+// ---------------------------------------------------------------------------
+
+/** Hard cap on deterministic-critic repair passes. 0 = report-only (legacy). */
+const WORKBOOK_REPAIR_MAX_ITERS = 2;
+
+const REPAIR_SYSTEM_PROMPT = `You are an expert spreadsheet architect performing a targeted REPAIR. You receive a WorkbookSchema JSON and a list of DETERMINISTIC quality-gate defects found in it. Fix EVERY listed defect and return the corrected WorkbookSchema JSON.
+
+RULES:
+1. Return ONLY the corrected WorkbookSchema JSON. No markdown fences, no prose.
+2. Preserve everything that is already correct — change only what is needed to clear the defects.
+3. Do NOT write a leading "=" in any "formula" field (write "SUM(B2:B4)", never "=SUM(B2:B4)").
+4. A total/summary cell must be a formula summing exactly the data rows above it — no magic numbers, no gaps, no overshoot into headers or other totals.
+5. Keep the same title, sheet names, and column keys unless a defect explicitly requires changing them.`;
 
 // ---------------------------------------------------------------------------
 // Schema extraction from LLM response
@@ -716,15 +793,111 @@ class WorkbookGeneratorService {
       }
     }
 
-    // Deterministyczny krytyk arkusza (analog deckDesignCritic w decku). Fail-soft:
-    // NIGDY nie blokuje generacji — raportuje + loguje + wnosi issues do telemetrii.
-    let qualityReport: WorkbookQualityReport;
-    try {
-      qualityReport = critiqueWorkbook(schema!);
-    } catch (criticErr) {
-      logger.warn('[WorkbookGenerator] Phase 5: quality gate threw, continuing', criticErr);
-      qualityReport = { score: 100, issues: [], passed: true };
+    // Deterministyczny krytyk arkusza (analog deckDesignCritic w decku), teraz w PĘTLI
+    // NAPRAWY. Fail-soft: NIGDY nie blokuje generacji. Gdy krytyk znajdzie CRITICAL
+    // (passed=false), karmimy LLM listą defektów i prosimy o poprawiony schemat, po czym
+    // krytykujemy ponownie. Twardy limit iteracji (WORKBOOK_REPAIR_MAX_ITERS) — zero
+    // nieskończonej pętli/kosztu. Po wyczerpaniu prób build i tak powstaje (jak dotąd),
+    // z DOŁĄCZONYM finalnym qualityReport. Iteracje logowane w pipelineLog.
+    const critiqueSafe = (s: WorkbookSchema): WorkbookQualityReport => {
+      try {
+        return critiqueWorkbook(s);
+      } catch (criticErr) {
+        logger.warn('[WorkbookGenerator] Phase 5: quality gate threw, continuing', criticErr);
+        return { score: 100, issues: [], passed: true };
+      }
+    };
+
+    let qualityReport = critiqueSafe(schema!);
+
+    if (!qualityReport.passed && WORKBOOK_REPAIR_MAX_ITERS > 0) {
+      logger.info(
+        `[WorkbookGenerator] Phase 5 REPAIR: critic failed (score=${qualityReport.score}, ` +
+          `${qualityReport.issues.filter((i) => i.severity === 'CRITICAL').length} critical) — entering bounded repair loop`,
+      );
+
+      for (let iter = 1; iter <= WORKBOOK_REPAIR_MAX_ITERS && !qualityReport.passed; iter++) {
+        const repairStart = Date.now();
+        const criticalCount = qualityReport.issues.filter((i) => i.severity === 'CRITICAL').length;
+        const defectList = qualityReport.issues
+          .map(
+            (i) =>
+              `- [${i.severity}] ${i.code} on sheet "${i.sheet}"${i.cell ? ` cell ${i.cell}` : ''}: ${i.message}${i.fix ? ` → Fix: ${i.fix}` : ''}`,
+          )
+          .join('\n');
+
+        try {
+          const repairContent = await this.callLLM(
+            REPAIR_SYSTEM_PROMPT,
+            `WORKBOOK SCHEMA TO REPAIR:\n${JSON.stringify(schema!, null, 2)}\n\n` +
+              `DETERMINISTIC QUALITY-GATE DEFECTS (${criticalCount} critical of ${qualityReport.issues.length} total):\n${defectList}\n\n` +
+              `Return the corrected WorkbookSchema JSON. Return ONLY the JSON.`,
+            llmParams,
+            16000,
+          );
+          const repairParsed = extractJsonFromResponse(repairContent);
+          const repairValidated = repairParsed
+            ? WorkbookSchemaValidator.safeParse(repairParsed)
+            : null;
+
+          if (repairValidated?.success) {
+            const candidate = repairValidated.data;
+            const candidateReport = critiqueSafe(candidate);
+            // Zaakceptuj poprawkę tylko gdy NIE pogarsza (mniej/tyle samo issues LUB przechodzi).
+            const improved =
+              candidateReport.passed || candidateReport.issues.length < qualityReport.issues.length;
+            if (improved) {
+              schema = candidate;
+              qualityReport = candidateReport;
+              pipelineLog.push({
+                phase: `repair-${iter}`,
+                status: qualityReport.passed ? 'ok' : 'warning',
+                durationMs: Date.now() - repairStart,
+                detail: `Repair pass ${iter}/${WORKBOOK_REPAIR_MAX_ITERS}: score ${qualityReport.score}/100, ${qualityReport.issues.length} issue(s), passed=${qualityReport.passed}.`,
+              });
+              logger.info(
+                `[WorkbookGenerator] Phase 5 REPAIR pass ${iter}: score=${qualityReport.score}, passed=${qualityReport.passed}`,
+              );
+            } else {
+              pipelineLog.push({
+                phase: `repair-${iter}`,
+                status: 'warning',
+                durationMs: Date.now() - repairStart,
+                detail: `Repair pass ${iter}/${WORKBOOK_REPAIR_MAX_ITERS}: LLM output did not improve quality (kept prior schema).`,
+              });
+              logger.warn(`[WorkbookGenerator] Phase 5 REPAIR pass ${iter}: no improvement, keeping prior schema`);
+              break; // brak poprawy — nie marnujemy kolejnych iteracji
+            }
+          } else {
+            pipelineLog.push({
+              phase: `repair-${iter}`,
+              status: 'warning',
+              durationMs: Date.now() - repairStart,
+              detail: `Repair pass ${iter}/${WORKBOOK_REPAIR_MAX_ITERS}: LLM returned no valid schema (kept prior).`,
+            });
+            logger.warn(`[WorkbookGenerator] Phase 5 REPAIR pass ${iter}: invalid repair schema, keeping prior`);
+            break;
+          }
+        } catch (repairErr) {
+          pipelineLog.push({
+            phase: `repair-${iter}`,
+            status: 'failed',
+            durationMs: Date.now() - repairStart,
+            detail: `Repair pass ${iter}/${WORKBOOK_REPAIR_MAX_ITERS} threw: ${String(repairErr)} (kept prior schema).`,
+          });
+          logger.warn(`[WorkbookGenerator] Phase 5 REPAIR pass ${iter}: threw, keeping prior schema`, repairErr);
+          break;
+        }
+      }
+
+      if (!qualityReport.passed) {
+        logger.warn(
+          `[WorkbookGenerator] Phase 5 REPAIR: exhausted ${WORKBOOK_REPAIR_MAX_ITERS} pass(es), building fail-soft with ` +
+            `${qualityReport.issues.filter((i) => i.severity === 'CRITICAL').length} critical issue(s) remaining`,
+        );
+      }
     }
+
     for (const iss of qualityReport.issues) {
       // Klasyfikuj wg kanonu P23 (kod z krytyka), dołącz do telemetrii błędów.
       classifiedErrors.push(
