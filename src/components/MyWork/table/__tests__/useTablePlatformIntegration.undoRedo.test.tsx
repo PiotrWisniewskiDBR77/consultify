@@ -304,7 +304,14 @@ describe('useTablePlatformIntegration — platform record undo/redo', () => {
         result.current.handleAddRow();
       });
       await waitFor(() => expect(result.current.nodes.length).toBe(2));
-      expect(result.current.platformCanUndo).toBe(true);
+      // `nodes.length` reaches 2 as soon as the optimistic temp node is
+      // inserted (synchronous), which is BEFORE `bridge.createRecord()`
+      // resolves and `pushCommand` runs — asserting `platformCanUndo`
+      // immediately after the nodes waitFor is a race (it flakes under
+      // scheduler contention, e.g. when this suite runs alongside other
+      // test files in the same worker). Wait for it explicitly, same as
+      // every other assertion on platformCanUndo/platformCanRedo in this file.
+      await waitFor(() => expect(result.current.platformCanUndo).toBe(true));
     });
 
     it('undo deletes the created record', async () => {
