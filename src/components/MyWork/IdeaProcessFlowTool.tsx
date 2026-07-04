@@ -95,6 +95,7 @@ import {
   LANE_COLORS,
 } from './processflow/LaneSystem';
 import { LaneSystem } from './processflow/LaneSystem';
+import { isNodeInCollapsedLane, setLaneHeight, toggleLaneCollapsed } from './processflow/laneState';
 import { ActivityNode } from './processflow/nodes/ActivityNode';
 import { BPMNEndNode } from './processflow/nodes/BPMNEndNode';
 import { BPMNStartNode } from './processflow/nodes/BPMNStartNode';
@@ -688,6 +689,99 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     [collab, locked, pushUndo]
   );
 
+  // ── F5a A1: waypoint editing ───────────────────────────────────────────
+  // Waypoints live in edge.data.waypoints[] and persist through the existing
+  // graph blob (edges in the payload) — no persistence-layer change (F4 stands).
+  const screenToFlow = useCallback((clientX: number, clientY: number) => {
+    const inst = reactFlowInstanceRef.current as any;
+    if (inst?.screenToFlowPosition) return inst.screenToFlowPosition({ x: clientX, y: clientY });
+    if (inst?.project) {
+      const rect = flowContainerRef.current?.getBoundingClientRect();
+      return inst.project({ x: clientX - (rect?.left || 0), y: clientY - (rect?.top || 0) });
+    }
+    return { x: clientX, y: clientY };
+  }, []);
+
+  const handleEdgeAddWaypoint = useCallback(
+    (edgeId: string, info: { clientX: number; clientY: number }) => {
+      if (locked) return;
+      const pos = screenToFlow(info.clientX, info.clientY);
+      pushUndo();
+      setEdges((prev) =>
+        prev.map((e) => {
+          if (e.id !== edgeId) return e;
+          const existing = Array.isArray(e.data?.waypoints) ? e.data.waypoints : [];
+          const nextEdge = {
+            ...e,
+            data: {
+              ...e.data,
+              orthogonal: true,
+              waypoints: [...existing, { x: pos.x, y: pos.y }],
+            },
+          };
+          collab.broadcastEdgeUpdate(nextEdge);
+          return nextEdge;
+        })
+      );
+    },
+    [collab, locked, pushUndo, screenToFlow]
+  );
+
+  const handleEdgeWaypointDrag = useCallback(
+    (edgeId: string, index: number, ev: React.PointerEvent) => {
+      if (locked) return;
+      ev.preventDefault();
+      let moved = false;
+      const onMove = (moveEv: PointerEvent) => {
+        const pos = screenToFlow(moveEv.clientX, moveEv.clientY);
+        if (!moved) {
+          moved = true;
+          pushUndo();
+        }
+        setEdges((prev) =>
+          prev.map((e) => {
+            if (e.id !== edgeId) return e;
+            const wps = Array.isArray(e.data?.waypoints) ? [...e.data.waypoints] : [];
+            if (!wps[index]) return e;
+            wps[index] = { x: pos.x, y: pos.y };
+            return { ...e, data: { ...e.data, waypoints: wps } };
+          })
+        );
+      };
+      const onUp = () => {
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+        // Broadcast the committed edge once, at drag end (avoids flooding peers).
+        setEdges((prev) => {
+          const edge = prev.find((e) => e.id === edgeId);
+          if (edge) collab.broadcastEdgeUpdate(edge);
+          return prev;
+        });
+      };
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+    },
+    [collab, locked, pushUndo, screenToFlow]
+  );
+
+  const handleEdgeRemoveWaypoint = useCallback(
+    (edgeId: string, index: number) => {
+      if (locked) return;
+      pushUndo();
+      setEdges((prev) =>
+        prev.map((e) => {
+          if (e.id !== edgeId) return e;
+          const wps = Array.isArray(e.data?.waypoints) ? [...e.data.waypoints] : [];
+          wps.splice(index, 1);
+          const nextEdge = { ...e, data: { ...e.data, waypoints: wps } };
+          collab.broadcastEdgeUpdate(nextEdge);
+          return nextEdge;
+        })
+      );
+    },
+    [collab, locked, pushUndo]
+  );
+
   // ── Inject edge handlers into edge data ────────────────────────────────
   const nodeMap = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
 
@@ -704,10 +798,22 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             locked,
             onLabelChange: handleEdgeLabelChange,
             onConditionChange: handleEdgeConditionChange,
+            onAddWaypoint: handleEdgeAddWaypoint,
+            onWaypointDrag: handleEdgeWaypointDrag,
+            onRemoveWaypoint: handleEdgeRemoveWaypoint,
           },
         };
       }),
-    [edges, nodeMap, locked, handleEdgeLabelChange, handleEdgeConditionChange]
+    [
+      edges,
+      nodeMap,
+      locked,
+      handleEdgeLabelChange,
+      handleEdgeConditionChange,
+      handleEdgeAddWaypoint,
+      handleEdgeWaypointDrag,
+      handleEdgeRemoveWaypoint,
+    ]
   );
 
   // ── Focus mode: filter nodes/edges for display ──────────────────────────
@@ -753,8 +859,13 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   // ZERO new colors per Piotr's visual-acceptance protocol. Server does not
   // enforce these (advisory) — accepted per F3 spec §Locki.
   const displayNodes = useMemo(() => {
-    if (lockedByOthers.size === 0) return filteredNodes;
-    return filteredNodes.map((n) => {
+    // F5a A3: hide nodes whose lane is collapsed.
+    const anyCollapsed = lanes.some((l) => l.collapsed);
+    const visible = anyCollapsed
+      ? filteredNodes.filter((n) => !isNodeInCollapsedLane(n.data?.laneId, lanes))
+      : filteredNodes;
+    if (lockedByOthers.size === 0) return visible;
+    return visible.map((n) => {
       if (!lockedByOthers.has(n.id)) return n;
       return {
         ...n,
@@ -768,7 +879,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         data: { ...n.data, _lockedByOther: true, locked: true },
       };
     });
-  }, [filteredNodes, lockedByOthers]);
+  }, [filteredNodes, lockedByOthers, lanes]);
 
   // ── Node/Edge change handlers ──────────────────────────────────────────
   const onNodesChange = useCallback(
@@ -1430,6 +1541,32 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         variant: 'danger',
       }),
   });
+
+  // ── F5a A3: lane collapse / resize (state in lanes[].{collapsed,height}) ──
+  const handleLaneToggleCollapse = useCallback(
+    (laneId: string) => {
+      if (locked) return;
+      pushUndo();
+      setLanes((prev) => {
+        const next = toggleLaneCollapsed(prev, laneId);
+        collab.broadcastLanes?.(next);
+        return next;
+      });
+    },
+    [collab, locked, pushUndo, setLanes]
+  );
+
+  const handleLaneResize = useCallback(
+    (laneId: string, height: number) => {
+      if (locked) return;
+      setLanes((prev) => {
+        const next = setLaneHeight(prev, laneId, height);
+        collab.broadcastLanes?.(next);
+        return next;
+      });
+    },
+    [collab, locked, setLanes]
+  );
 
   // ── Quick action listener (extracted to useProcessFlowQuickActions) ─────
   useProcessFlowQuickActions({
@@ -2295,6 +2432,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               onColorChange={handleLaneColorChange}
               onMoveUp={handleLaneMoveUp}
               onMoveDown={handleLaneMoveDown}
+              onToggleCollapse={handleLaneToggleCollapse}
+              onResize={handleLaneResize}
               dragOverLaneId={dragOverLaneId}
             />
           </div>
@@ -2594,6 +2733,33 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             onEdgeLabelChange={(edgeId, label) => {
               setEdges((prev) =>
                 prev.map((e) => (e.id === edgeId ? { ...e, label, data: { ...e.data, label } } : e))
+              );
+            }}
+            onEdgeConditionChange={(edgeId, conditionType) =>
+              handleEdgeConditionChange(edgeId, conditionType)
+            }
+            onEdgeKindChange={(edgeId, kind) => {
+              if (locked) return;
+              pushUndo();
+              setEdges((prev) =>
+                prev.map((e) => {
+                  if (e.id !== edgeId) return e;
+                  const nextEdge = { ...e, data: { ...e.data, edgeKind: kind } };
+                  collab.broadcastEdgeUpdate(nextEdge);
+                  return nextEdge;
+                })
+              );
+            }}
+            onEdgeOrthogonalToggle={(edgeId, orthogonal) => {
+              if (locked) return;
+              pushUndo();
+              setEdges((prev) =>
+                prev.map((e) => {
+                  if (e.id !== edgeId) return e;
+                  const nextEdge = { ...e, data: { ...e.data, orthogonal } };
+                  collab.broadcastEdgeUpdate(nextEdge);
+                  return nextEdge;
+                })
               );
             }}
             onNodeMetricsChange={(nodeId, metrics) => {

@@ -10,6 +10,12 @@ export interface Lane {
   id: string;
   label: string;
   color: string;
+  /** F5a A3: swimlane collapsed — its nodes are hidden and the band shrinks. */
+  collapsed?: boolean;
+  /** F5a A3: user-resized lane band height (px). Falls back to LANE_HEIGHT. */
+  height?: number;
+  /** F5a A3: reserved for horizontal lane sizing (vertical-lane layouts). */
+  width?: number;
 }
 
 export interface UseProcessFlowNodesOpts {
