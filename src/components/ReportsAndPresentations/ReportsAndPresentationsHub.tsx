@@ -200,7 +200,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       },
       {
         id: 'outputs_data' as ModuleTab,
-        label: t('rap.outputs.tabs.data', 'Dane'),
+        label: t('rap.outputs.tabs.data', 'Data'),
         icon: <Database size={16} />,
       },
       {
@@ -379,13 +379,13 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         : activeTab === 'outputs_documents'
           ? (Object.entries(REPORT_STATUS_META).map(([value, meta]) => ({
               value: value as ReportStatus,
-              label: meta.labelPl || meta.label,
+              label: isPolish ? meta.labelPl || meta.label : meta.label,
               dotColor: meta.dotColor,
             })) as Array<{ value: ReportStatus; label: string; dotColor: string }>)
           : activeTab === 'presentations'
             ? (Object.entries(PRESENTATION_STATUS_META).map(([value, meta]) => ({
                 value: value as PresentationStatus,
-                label: meta.labelPl || meta.label,
+                label: isPolish ? meta.labelPl || meta.label : meta.label,
                 dotColor: meta.dotColor,
               })) as Array<{ value: PresentationStatus; label: string; dotColor: string }>)
             : isAggregateTab
@@ -407,7 +407,9 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                   },
                   {
                     value: 'ready',
-                    label: REPORT_STATUS_META.ready.labelPl || REPORT_STATUS_META.ready.label,
+                    label: isPolish
+                      ? REPORT_STATUS_META.ready.labelPl || REPORT_STATUS_META.ready.label
+                      : REPORT_STATUS_META.ready.label,
                     dotColor: 'bg-emerald-400',
                   },
                   {
@@ -432,7 +434,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       activeTab === 'presentations'
         ? (Object.entries(SOURCE_TYPE_META).map(([value, meta]) => ({
             value: value as PresentationSourceType,
-            label: meta.labelPl || meta.label,
+            label: isPolish ? meta.labelPl || meta.label : meta.label,
             color: meta.color,
           })) as Array<{ value: PresentationSourceType; label: string; color: string }>)
         : [];
@@ -902,12 +904,12 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         : activeTab === 'outputs_documents'
           ? (Object.entries(REPORT_STATUS_META).map(([value, meta]) => ({
               value,
-              label: meta.labelPl || meta.label,
+              label: isPolish ? meta.labelPl || meta.label : meta.label,
               dot: meta.dotColor,
             })) as Array<{ value: string; label: string; dot: string }>)
           : (Object.entries(PRESENTATION_STATUS_META).map(([value, meta]) => ({
               value,
-              label: meta.labelPl || meta.label,
+              label: isPolish ? meta.labelPl || meta.label : meta.label,
               dot: meta.dotColor,
             })) as Array<{ value: string; label: string; dot: string }>);
 

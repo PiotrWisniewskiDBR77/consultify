@@ -14,6 +14,7 @@ import {
   FlaskConical,
   HelpCircle,
   Lightbulb,
+  Route,
   X,
 } from 'lucide-react';
 import React, { useState } from 'react';
@@ -152,6 +153,16 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
 
             {/* Right: Actions */}
             <div className="flex items-center gap-2">
+              {/* Open the StoryRail guided path on demand (presenter-friendly:
+                   the rail never auto-opens in workspace demo). */}
+              <button
+                onClick={() => window.dispatchEvent(new Event('demo:open_story_rail'))}
+                className={`hidden md:flex ${buttonSecondaryClass}`}
+              >
+                <Route className="w-3.5 h-3.5" />
+                <span>{t('demo.banner.storyPath', 'Demo path')}</span>
+              </button>
+
               {/* Expand/collapse button — feedback #b85f5a91 wants a clear
                    "Limitations" label across all locales. The toggle flips
                    between "Limitations" / "Ograniczenia" when collapsed and

@@ -160,7 +160,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
       },
       {
         id: 'presentationMode',
-        label: t('rap.columns.mode', 'Tryb'),
+        label: t('rap.columns.mode', 'Mode'),
         width: '120px',
         filterable: true,
         filterOptions: [

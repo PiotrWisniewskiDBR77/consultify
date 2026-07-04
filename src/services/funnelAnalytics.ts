@@ -347,6 +347,10 @@ export type FunnelEventName =
   | 'demo_started'
   | 'demo_value_moment_reached'
   | 'demo_cta_clicked'
+  // StoryRail — the guided demo path (docs/demo/DEMO_JOURNEY_REDESIGN.md)
+  | 'demo_story_stop_viewed'
+  | 'demo_story_completed'
+  | 'demo_story_dismissed'
   | 'signup_started'
   | 'signup_completed'
   | 'trial_activated'
