@@ -310,6 +310,22 @@ function cellTextWidth(value: unknown): number {
   return String(value).length;
 }
 
+/**
+ * Defensive formula sanitizer — ExcelJS writes the formula string VERBATIM into
+ * the worksheet XML `<f>` element, and Excel requires that element WITHOUT a
+ * leading `=` (a valid formula in XML is `SUM(A1:A2)`, not `=SUM(A1:A2)`). Our
+ * generator prompt and schema convention emit `=`-prefixed formulas, so a raw
+ * passthrough produces `<f>=SUM(...)</f>` → Excel treats the file as corrupt /
+ * renders `#NAME?`. This strips any leading `=`/`==`(+) (after trimming) so the
+ * real file is always valid regardless of how many `=` the input carries.
+ *
+ * Correctness-only: a formula that is already `=`-free is returned unchanged
+ * (aside from trimming). This never alters the meaning of a valid formula.
+ */
+function sanitizeFormula(raw: string): string {
+  return raw.trim().replace(/^=+/, '');
+}
+
 // ---------------------------------------------------------------------------
 // P1 — Cached formula results for TRIVIAL, same-sheet, constant-input formulas
 //
@@ -732,12 +748,16 @@ export async function buildWorkbookBuffer(
           // `result` when we can compute it deterministically; otherwise leave a
           // bare `{ formula }` (fullCalcOnLoad will make Excel fill it on open).
           const cached = tryComputeFormula(cellDef.formula, numericGrid);
+          // Strip any leading `=` so the worksheet XML `<f>` element is valid
+          // (Excel corrupts on `<f>=…</f>`). tryComputeFormula already trims `=`
+          // internally, so the cached result is unaffected.
+          const safeFormula = sanitizeFormula(cellDef.formula);
           cell.value =
             cached !== null
-              ? ({ formula: cellDef.formula, result: cached } as ExcelJS.CellFormulaValue)
-              : ({ formula: cellDef.formula } as ExcelJS.CellFormulaValue);
+              ? ({ formula: safeFormula, result: cached } as ExcelJS.CellFormulaValue)
+              : ({ formula: safeFormula } as ExcelJS.CellFormulaValue);
           // W7.7 — track formula width estimate
-          const fw = cellTextWidth(cellDef.formula);
+          const fw = cellTextWidth(safeFormula);
           const prev = colWidths.get(col.key) ?? 0;
           if (fw > prev) colWidths.set(col.key, fw);
         } else if (cellDef.value !== undefined && cellDef.value !== null) {
