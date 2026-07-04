@@ -614,11 +614,194 @@ const ARCHETYPE_TO_TEMPLATE: Record<string, string> = {
 };
 
 /**
+ * W7 GUARD-SPLIT — heuristics that keep sparse content off multi-column
+ * templates (a split/two-column layout with too little content renders as a
+ * "half-empty second column", the slide1 regression seen on the P1.2 shots).
+ *
+ * A template is "split-like" when it exposes ≥2 content columns side by side
+ * (regions that share the same grid row across distinct columns). We detect
+ * that cheaply from the grid template string: a row with ≥2 named areas.
+ */
+export function countSideBySideColumns(layout: LayoutTemplate): number {
+  // gridTemplate rows look like `"heading heading" "left right"`. Split each
+  // quoted row into its area tokens; the widest row (most distinct non-`.`
+  // areas) is the column count of the busiest band.
+  const rows = layout.gridTemplate.match(/"[^"]*"/g) || [];
+  let maxCols = 1;
+  for (const row of rows) {
+    const areas = row
+      .replace(/"/g, '')
+      .trim()
+      .split(/\s+/)
+      .filter((a) => a && a !== '.');
+    const distinct = new Set(areas);
+    if (distinct.size > maxCols) maxCols = distinct.size;
+  }
+  return maxCols;
+}
+
+export function isSplitLikeLayout(layout: LayoutTemplate): boolean {
+  return countSideBySideColumns(layout) >= 2;
+}
+
+/**
+ * Estimate a block's rendered "weight" (rough vertical footprint, arbitrary
+ * units). Used only to compare relative column fill — not pixel-accurate.
+ * Heavier blocks (charts, KPIs, long lists) count for more than a one-line
+ * heading or callout.
+ */
+export function estimateBlockWeight(block: { type: string; content?: Record<string, unknown> }): number {
+  const c = (block.content || {}) as Record<string, unknown>;
+  const textLen = (v: unknown): number => (typeof v === 'string' ? v.length : 0);
+  const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
+  switch (block.type) {
+    case 'heading':
+      return 1;
+    case 'divider':
+    case 'icon_row':
+      return 0.6;
+    case 'paragraph':
+      return 1 + textLen(c.text) / 120;
+    case 'callout':
+    case 'quote_block':
+      return 1.4 + textLen(c.text) / 120;
+    case 'bullet_list':
+    case 'numbered_list':
+      return 0.6 + arr(c.items).length * 0.9;
+    case 'kpi_widget':
+      return 2.4;
+    case 'metric_strip':
+      return 1.8;
+    case 'chart':
+      return 4;
+    case 'table':
+      return 2 + arr(c.rows).length * 0.6;
+    case 'timeline_block':
+      return 1 + arr(c.events).length * 0.8;
+    case 'smart_diagram':
+    case 'smart_layout':
+      return 3;
+    case 'image':
+      return 4;
+    default:
+      return 1.2;
+  }
+}
+
+/**
+ * W7 GUARD-SPLIT decision. Given the blocks and a split-like candidate layout,
+ * project the blocks into that layout's regions (using the SAME assigner the
+ * renderer uses) and measure column balance + total fill. A split is REJECTED
+ * (→ fallback to stacked/full) when:
+ *   (a) any side-by-side column ends up EMPTY, or
+ *   (b) the lightest column carries < 35% of the heaviest column's weight
+ *       (i.e. one column is more than ~3× the other → half-empty look), or
+ *   (c) total content is too thin to justify two tracks (weight < 5 units), or
+ *   (d) BOTH columns are just short text (no tall-fill block like a chart/image)
+ *       AND the fullest column is still under the fills-a-column weight (~6) →
+ *       two short columns with dead bottoms (the slide1 two_column regression).
+ * Returns true when the split should be AVOIDED.
+ */
+export function shouldAvoidSplit(
+  blocks: { type: string; content?: Record<string, unknown>; position: { area: string } }[],
+  layout: LayoutTemplate,
+  composition?: AssignableComposition | null
+): boolean {
+  if (!isSplitLikeLayout(layout)) return false;
+
+  const cols = countSideBySideColumns(layout);
+  const totalWeight = blocks.reduce((s, b) => s + estimateBlockWeight(b), 0);
+
+  // (c) Too thin overall for a two-track layout.
+  if (totalWeight < 5) return true;
+
+  // Identify the side-by-side column areas (the busiest band's areas).
+  const rows = layout.gridTemplate.match(/"[^"]*"/g) || [];
+  let bandAreas: string[] = [];
+  for (const row of rows) {
+    const areas = Array.from(
+      new Set(
+        row
+          .replace(/"/g, '')
+          .trim()
+          .split(/\s+/)
+          .filter((a) => a && a !== '.')
+      )
+    );
+    if (areas.length === cols) {
+      bandAreas = areas;
+      break;
+    }
+  }
+  if (bandAreas.length < 2) return false;
+
+  // Project blocks into regions via the real assigner, then inspect columns.
+  const assigned = assignBlocksToRegions(
+    blocks.map((b) => ({ ...b })),
+    layout,
+    composition
+  );
+  const colBlocks = bandAreas.map((area) => assigned.get(area) || []);
+  const colWeights = colBlocks.map((bs) =>
+    bs.reduce((s, b) => s + estimateBlockWeight(b), 0)
+  );
+
+  // (a) any column empty → half-empty look.
+  if (colWeights.some((w) => w <= 0)) return true;
+
+  // (b) imbalance: lightest < 35% of heaviest.
+  const maxW = Math.max(...colWeights);
+  const minW = Math.min(...colWeights);
+  if (maxW > 0 && minW / maxW < 0.35) return true;
+
+  // (d) "TWO SHORT COLUMNS" — the slide1 case. A split is only justified when at
+  // least one column carries a TALL-FILL block (chart/image/diagram/kpi/table/
+  // timeline) that naturally fills the column height. When BOTH columns are just
+  // short text (heading/bullets/callout/paragraph) AND no column reaches the
+  // "fills-a-column" weight (~6), the split renders as two half-empty columns →
+  // stack it so W7 fill-canvas can spread the content down the full width.
+  const TALL_FILL = new Set([
+    'chart',
+    'image',
+    'smart_diagram',
+    'smart_layout',
+    'kpi_widget',
+    'table',
+    'timeline_block',
+    'metric_strip',
+  ]);
+  const anyColumnHasTallFill = colBlocks.some((bs) => bs.some((b) => TALL_FILL.has(b.type)));
+  const COLUMN_FILL_WEIGHT = 6;
+  if (!anyColumnHasTallFill && maxW < COLUMN_FILL_WEIGHT) return true;
+
+  return false;
+}
+
+/** Nearest stacked/full-width fallback for a rejected split, by intent. */
+function stackedFallbackFor(intent: CardIntent): LayoutTemplate {
+  const byIntent = LAYOUT_TEMPLATES.filter(
+    (l) => l.intents.includes(intent) && !isSplitLikeLayout(l)
+  );
+  // Prefer a full-width stacked layout for the intent; else global content_full.
+  const preferredIds = ['exec_full', 'content_full', 'quote_centered', 'recommendation_callout'];
+  for (const id of preferredIds) {
+    const hit = byIntent.find((l) => l.id === id);
+    if (hit) return hit;
+  }
+  if (byIntent.length) return byIntent[0];
+  return LAYOUT_TEMPLATES.find((l) => l.id === 'content_full')!;
+}
+
+/**
  * STEP 1b — resolve an explicit layout choice (from card.layout_id or
  * card.composition.layoutVariantId) to a concrete template. Tries, in order:
  *   1. a direct LAYOUT_TEMPLATES id match (exact),
  *   2. an archetype → template mapping (1:1 or approximated).
  * Returns undefined when nothing maps → caller keeps the heuristic.
+ *
+ * W7 GUARD-SPLIT — if the resolved template is split-like but the card's
+ * content is too sparse to fill two columns, downgrade to a stacked/full-width
+ * fallback so no slide renders a half-empty second column.
  */
 export function resolveExplicitLayout(card: DeckCard): LayoutTemplate | undefined {
   const candidates: string[] = [];
@@ -629,11 +812,13 @@ export function resolveExplicitLayout(card: DeckCard): LayoutTemplate | undefine
 
   for (const id of candidates) {
     const direct = LAYOUT_TEMPLATES.find((l) => l.id === id);
-    if (direct) return direct;
-    const mappedId = ARCHETYPE_TO_TEMPLATE[id];
-    if (mappedId) {
-      const mapped = LAYOUT_TEMPLATES.find((l) => l.id === mappedId);
-      if (mapped) return mapped;
+    const mapped =
+      direct || LAYOUT_TEMPLATES.find((l) => l.id === ARCHETYPE_TO_TEMPLATE[id]);
+    if (mapped) {
+      if (shouldAvoidSplit(card.blocks, mapped, card.composition)) {
+        return stackedFallbackFor(card.intent);
+      }
+      return mapped;
     }
   }
   return undefined;
@@ -684,7 +869,16 @@ export function selectLayout(card: DeckCard, recentLayoutIds: string[] = []): La
   });
 
   scored.sort((a, b) => b.score - a.score);
-  return scored[0].layout;
+
+  // W7 GUARD-SPLIT (heuristic path) — if the top pick is split-like but the
+  // content can't fill two columns, prefer the best-scoring stacked candidate.
+  const top = scored[0].layout;
+  if (isSplitLikeLayout(top) && shouldAvoidSplit(card.blocks, top, card.composition)) {
+    const stacked = scored.find((s) => !isSplitLikeLayout(s.layout));
+    if (stacked) return stacked.layout;
+    return stackedFallbackFor(card.intent);
+  }
+  return top;
 }
 
 /** STEP 1b — minimal shape of the per-card composition the assigner honours. */
@@ -769,6 +963,71 @@ export function assignBlocksToRegions<T extends { type: string; position: { area
   }
 
   return regionMap;
+}
+
+/**
+ * W7 FILL-CANVAS flag. ON by default in the app. The step1b/W7 render harness
+ * flips it OFF (via `setW7FillCanvas(false)` before mount, driven by ?mode=
+ * before) so a single codebase produces a truthful BEFORE (top-glued, dead
+ * bottom) vs AFTER (canvas filled) proof on identical content.
+ */
+let _w7FillCanvas = true;
+export function isW7FillCanvasEnabled(): boolean {
+  return _w7FillCanvas;
+}
+export function setW7FillCanvas(on: boolean): void {
+  _w7FillCanvas = on;
+}
+
+/**
+ * W7 FILL-CANVAS — decide how a column/stack of blocks should distribute
+ * itself down the available height, so sparse content is not glued to the top
+ * with a dead bottom (M17-DECK-PERFEKCJA §rytm pionowy, DoD#2). Pure function
+ * of the blocks; the renderer maps the result to `justify-content`.
+ *
+ *  - 'top'          : content is dense enough to (nearly) fill on its own —
+ *                     keep natural top-alignment (no change from today).
+ *  - 'center'       : one dominant block (e.g. a big KPI/quote) — center it
+ *                     vertically instead of pinning it to the top.
+ *  - 'space-between': several light blocks — spread them with breathing room so
+ *                     the first sits near the top and the last near the bottom.
+ *
+ * `capacity` is the rough weight that fills the region at a comfortable
+ * density; tuned so a full content slide (~2–3 substantial blocks) reads as
+ * 'top' and a 1–2 block sparse slide spreads/centers.
+ */
+export type VerticalFillMode = 'top' | 'center' | 'space-between';
+
+/**
+ * Intents whose design language GROUPS the title block (cover / section
+ * dividers). We never spread these — the accepted baseline keeps the title +
+ * subtitle together; stretching them floats an orphan subtitle mid-canvas.
+ * Fill-canvas targets content slides (the "dead bottom" problem), not covers.
+ */
+const GROUPED_INTENTS = new Set<string>(['cover', 'section_intro', 'section_divider']);
+
+export function verticalFillMode(
+  blocks: { type: string; content?: Record<string, unknown> }[],
+  capacity = 9,
+  intent?: string
+): VerticalFillMode {
+  if (!_w7FillCanvas) return 'top';
+  if (intent && GROUPED_INTENTS.has(intent)) return 'top';
+  const substantial = blocks.filter((b) => b.type !== 'divider' && b.type !== 'icon_row');
+  if (substantial.length === 0) return 'top';
+  const totalWeight = blocks.reduce((s, b) => s + estimateBlockWeight(b), 0);
+
+  // Dense enough — leave as-is (avoid stretching a full slide).
+  if (totalWeight >= capacity) return 'top';
+
+  // Sparse content — CENTER the block as a group. VisionQA (2026-07-04) showed
+  // that flinging blocks to opposite ends with `space-between` kills perceived
+  // hierarchy/readability (large voids read as broken grouping), which is worse
+  // than a dead bottom. Centering the grouped content removes the top-glue
+  // asymmetry (balanced top/bottom margins) WITHOUT breaking the reading order
+  // — the premium "sparse but composed" look (M17-DECK-PERFEKCJA §rytm pionowy:
+  // "rozłóż bloki, dodaj oddech" — NOT "rozciągaj absurdalnie").
+  return 'center';
 }
 
 export function getLayoutById(id: string): LayoutTemplate | undefined {
