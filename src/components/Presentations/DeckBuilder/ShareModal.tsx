@@ -44,11 +44,19 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   const [publicLink, setPublicLink] = useState(false);
   const [shareToken, setShareToken] = useState<string | null>(null);
   const [generatingLink, setGeneratingLink] = useState(false);
+  // P3.1 — invite state (Collaborate tab). Full per-user membership needs a DB
+  // schema (see report / separate ticket); until then invite = share-link +
+  // email hand-off, with the chosen permission captured for the message copy.
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [invitePermission, setInvitePermission] = useState<'view' | 'comment'>('view');
+  const [inviting, setInviting] = useState(false);
 
-  const generateShareLink = useCallback(async () => {
+  // Ensures a share token exists, returning it. Reuses the existing
+  // POST /decks/:id/share endpoint (org-scoped, audited, rate-limited).
+  const ensureShareToken = useCallback(async (): Promise<string | null> => {
     if (shareToken) {
       setPublicLink(true);
-      return;
+      return shareToken;
     }
     setGeneratingLink(true);
     try {
@@ -59,15 +67,61 @@ export const ShareModal: React.FC<ShareModalProps> = ({
       if (data?.shareToken) {
         setShareToken(data.shareToken);
         setPublicLink(true);
-      } else {
-        toast.error('Failed to generate share link');
+        return data.shareToken as string;
       }
+      toast.error('Failed to generate share link');
+      return null;
     } catch {
       toast.error('Failed to generate share link');
+      return null;
     } finally {
       setGeneratingLink(false);
     }
   }, [deckId, shareToken]);
+
+  const generateShareLink = useCallback(async () => {
+    await ensureShareToken();
+  }, [ensureShareToken]);
+
+  // P3.1 — real invite handler. Reuses the share-link model: mints (or reuses)
+  // a share token, builds the collaborator URL, and hands it to the invitee via
+  // the OS mail client (mailto:) plus clipboard fallback. This is a working
+  // invite with today's schema; per-user membership + accept flow is a
+  // follow-up ticket (needs presentation_deck_collaborators table).
+  const handleInvite = useCallback(async () => {
+    const email = inviteEmail.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error(t('presentations.builder.share.invalidEmail', 'Enter a valid email'));
+      return;
+    }
+    setInviting(true);
+    try {
+      const token = await ensureShareToken();
+      if (!token) return;
+      const url = `${window.location.origin}/presentations/shared/${token}`;
+      const roleLabel =
+        invitePermission === 'comment'
+          ? t('presentations.builder.share.permComment', 'view and comment on')
+          : t('presentations.builder.share.permView', 'view');
+      const subject = encodeURIComponent(`${deckTitle} — shared with you`);
+      const body = encodeURIComponent(
+        `You've been invited to ${roleLabel} the deck "${deckTitle}".\n\nOpen it here: ${url}`
+      );
+      // Copy link too, so the invite works even without a configured mail client.
+      try {
+        await navigator.clipboard.writeText(url);
+      } catch {
+        /* clipboard may be unavailable; mailto still fires */
+      }
+      window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+      toast.success(
+        t('presentations.builder.share.inviteSent', 'Invite ready — link copied and email opened')
+      );
+      setInviteEmail('');
+    } finally {
+      setInviting(false);
+    }
+  }, [inviteEmail, invitePermission, ensureShareToken, deckTitle, t]);
 
   if (!isOpen) return null;
 
@@ -147,33 +201,70 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 <div className="flex gap-2">
                   <input
                     type="email"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleInvite();
+                    }}
                     placeholder="email@example.com"
+                    data-testid="deck-invite-email"
                     className="flex-1 px-3 py-2 rounded-lg border border-c-border bg-c-surface text-sm"
                   />
-                  <button className="px-4 py-2 rounded-lg bg-c-surface text-c-text text-sm hover:bg-c-surface-raised">
-                    <Mail size={14} />
+                  <button
+                    onClick={handleInvite}
+                    disabled={inviting || !inviteEmail.trim()}
+                    data-testid="deck-invite-submit"
+                    className="px-4 py-2 rounded-lg bg-c-surface text-c-text text-sm hover:bg-c-surface-raised disabled:opacity-50"
+                  >
+                    {inviting ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
                   </button>
                 </div>
               </div>
               <div className="space-y-2">
-                <p className="text-xs font-medium text-c-text-secondary uppercase">Permissions</p>
+                <p className="text-xs font-medium text-c-text-secondary uppercase">
+                  {t('presentations.builder.share.permissions', 'Permissions')}
+                </p>
                 {[
-                  { icon: Eye, label: 'View', desc: 'Can view the deck' },
-                  { icon: MessageCircle, label: 'Comment', desc: 'Can view and comment' },
+                  {
+                    value: 'view' as const,
+                    icon: Eye,
+                    label: t('presentations.builder.share.viewLabel', 'View'),
+                    desc: t('presentations.builder.share.viewDesc', 'Can view the deck'),
+                  },
+                  {
+                    value: 'comment' as const,
+                    icon: MessageCircle,
+                    label: t('presentations.builder.share.commentLabel', 'Comment'),
+                    desc: t('presentations.builder.share.commentDesc', 'Can view and comment'),
+                  },
                 ].map((perm) => (
                   <button
-                    key={perm.label}
-                    className="w-full flex items-center gap-3 p-3 rounded-lg border border-c-border-subtle hover:border-c-accent text-left"
+                    key={perm.value}
+                    onClick={() => setInvitePermission(perm.value)}
+                    data-testid={`deck-invite-perm-${perm.value}`}
+                    aria-pressed={invitePermission === perm.value}
+                    className={`w-full flex items-center gap-3 p-3 rounded-lg border text-left transition-colors ${
+                      invitePermission === perm.value
+                        ? 'border-c-accent bg-c-accent-soft'
+                        : 'border-c-border-subtle hover:border-c-accent'
+                    }`}
                   >
                     <perm.icon size={16} className="text-c-text-secondary" />
                     <div>
-                      <p className="text-sm font-medium text-c-text">
-                        {perm.label}
-                      </p>
+                      <p className="text-sm font-medium text-c-text">{perm.label}</p>
                       <p className="text-[10px] text-c-text-secondary">{perm.desc}</p>
                     </div>
+                    {invitePermission === perm.value && (
+                      <Check size={14} className="ml-auto text-c-accent" />
+                    )}
                   </button>
                 ))}
+                <p className="text-[10px] text-c-text-secondary pt-1">
+                  {t(
+                    'presentations.builder.share.inviteNote',
+                    'Invite generates a share link and opens an email. Per-user access levels are coming soon.'
+                  )}
+                </p>
               </div>
             </div>
           )}
@@ -267,9 +358,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                     <exp.icon size={20} className="text-c-accent" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-c-text">
-                      {exp.label}
-                    </p>
+                    <p className="text-sm font-semibold text-c-text">{exp.label}</p>
                     <p className="text-[11px] text-c-text-secondary">{exp.desc}</p>
                   </div>
                   <Download size={16} className="ml-auto text-c-text-secondary" />
