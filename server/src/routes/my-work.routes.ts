@@ -3939,7 +3939,10 @@ router.put(
           },
           {
             id: ideaId,
-            title: String((ideaOk as any)?.title || ''),
+            // DP-3 (T4): the idea-existence probe above only SELECTs id (and in
+            // shared mode is replaced by a membership check), so no title is in
+            // scope here — matches pre-DP-3 behavior where title was always ''.
+            title: '',
             isPl: false,
           }
         )
