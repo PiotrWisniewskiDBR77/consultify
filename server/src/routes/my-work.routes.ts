@@ -34,6 +34,7 @@ import {
   validateTaskStatusTransition,
 } from '../services/taskWorkflowService.js';
 import { getCapacityOverview, getOverloadAlerts } from '../services/workloadCapacityService.js';
+import { assertIdeaMembership, selectCanonicalMapRow } from '../realtime/ideaMapAccess.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
@@ -3366,6 +3367,33 @@ router.delete(
 // T009 Enhancement — My Ideas Recommendation Map (per-idea working graph)
 // ============================================================================
 
+/**
+ * DP-3 (T4) — shared/canonical idea-map access.
+ *
+ * `ideaMapAccess.ts` (T3) exposes `assertIdeaMembership` / `selectCanonicalMapRow`
+ * over an `IDatabase`-shaped handle (its queries call `db.get(sql, params)`).
+ * The my-work routes read/write through `queryHelpers.queryOne`, which wraps the
+ * same underlying `getDatabase()`; this thin adapter lets the routes call the
+ * shared helper without bypassing the `queryHelpers` seam (kept so the contract
+ * tests can mock a single module). `queryHelpers.queryOne` returns `T | null`,
+ * exactly the promise overload `IDatabase.get` provides.
+ */
+const ideaMapAccessDb = {
+  get: <T = unknown>(sql: string, params: unknown[] = []): Promise<T | null> =>
+    queryHelpers.queryOne<T>(sql, params),
+} as unknown as import('../database/IDatabase.js').IDatabase;
+
+/**
+ * True when shared/canonical idea maps are BOTH enabled by flag AND physically
+ * available in this environment (the `is_canonical` column exists). When either
+ * is false the routes fall back to the exact per-user behavior shipped today.
+ * The column guard mirrors `selectCanonicalMapRow`, so an env with the flag on
+ * but schema not yet migrated degrades safely to the legacy path.
+ */
+function sharedIdeaMapsActive(mapCols: { has(col: string): boolean }): boolean {
+  return featureFlags.ENABLE_SHARED_IDEA_MAPS === true && mapCols.has('is_canonical');
+}
+
 type IdeaMapPayload = { nodes: any[]; edges: any[]; version?: number };
 
 function buildDefaultIdeaMap(idea: { id: string; title: string }, isPl: boolean): IdeaMapPayload {
@@ -3611,20 +3639,40 @@ router.get(
       ? `, schema_version as "schemaVersion"`
       : `, 1 as "schemaVersion"`;
 
-    const mapSelectSql = `
-      SELECT id, nodes_json as "nodesJson", edges_json as "edgesJson", version, updated_at as "updatedAt"${preferredToolSelect}${extensionsSelect}${schemaVersionSelect}
-      FROM my_idea_maps
-      WHERE idea_id = ? AND user_id = ? AND organization_id = ?
-      LIMIT 1
-    `;
+    let row: any = null;
 
-    // Own copy first (owner / single-player unchanged).
-    let row = await queryHelpers.queryOne<any>(mapSelectSql, [ideaId, userId, orgId]);
-    // M09 L-01: org-read fallback — a non-owner member reads the idea owner's
-    // canonical board so the shared whiteboard loads instead of 404'ing. Realtime
-    // graph_patch (L-02) then keeps both clients in sync. WRITE stays per-user.
-    if (!row && idea.ownerUserId && String(idea.ownerUserId) !== String(userId)) {
-      row = await queryHelpers.queryOne<any>(mapSelectSql, [ideaId, idea.ownerUserId, orgId]);
+    // DP-3 (T4) shared/canonical READ path — flag ON + is_canonical present.
+    if (sharedIdeaMapsActive(mapCols)) {
+      // Membership gate: an ACTIVE org member may read the shared board; a
+      // non-member gets the same 404 the legacy path returns for an unknown idea.
+      const membership = await assertIdeaMembership(ideaMapAccessDb, orgId, userId, ideaId);
+      if (!membership.canRead) return res.status(404).json({ error: 'Idea not found' });
+
+      // Canonical row is selected by is_canonical (not user_id) so every member
+      // reads the single shared board regardless of who last edited it.
+      const canonicalMapSelectSql = `
+        SELECT id, nodes_json as "nodesJson", edges_json as "edgesJson", version, updated_at as "updatedAt"${preferredToolSelect}${extensionsSelect}${schemaVersionSelect}
+        FROM my_idea_maps
+        WHERE idea_id = ? AND organization_id = ? AND is_canonical = TRUE
+        LIMIT 1
+      `;
+      row = await queryHelpers.queryOne<any>(canonicalMapSelectSql, [ideaId, orgId]);
+    } else {
+      const mapSelectSql = `
+        SELECT id, nodes_json as "nodesJson", edges_json as "edgesJson", version, updated_at as "updatedAt"${preferredToolSelect}${extensionsSelect}${schemaVersionSelect}
+        FROM my_idea_maps
+        WHERE idea_id = ? AND user_id = ? AND organization_id = ?
+        LIMIT 1
+      `;
+
+      // Own copy first (owner / single-player unchanged).
+      row = await queryHelpers.queryOne<any>(mapSelectSql, [ideaId, userId, orgId]);
+      // M09 L-01: org-read fallback — a non-owner member reads the idea owner's
+      // canonical board so the shared whiteboard loads instead of 404'ing. Realtime
+      // graph_patch (L-02) then keeps both clients in sync. WRITE stays per-user.
+      if (!row && idea.ownerUserId && String(idea.ownerUserId) !== String(userId)) {
+        row = await queryHelpers.queryOne<any>(mapSelectSql, [ideaId, idea.ownerUserId, orgId]);
+      }
     }
 
     if (!row) {
@@ -3816,11 +3864,21 @@ router.put(
     const normalizedNodes = validation.normalized.nodes;
     const normalizedEdges = validation.normalized.edges;
 
-    const ideaOk = await queryHelpers.queryOne<any>(
-      `SELECT id FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
-    );
-    if (!ideaOk) return res.status(404).json({ error: 'Idea not found' });
+    const mapCols = await getTableColumns('my_idea_maps');
+    const sharedMode = sharedIdeaMapsActive(mapCols);
+
+    // DP-3 (T4): shared mode gates WRITE by ACTIVE org membership (any member may
+    // edit the shared board); legacy mode keeps the owner-only ownership gate.
+    if (sharedMode) {
+      const membership = await assertIdeaMembership(ideaMapAccessDb, orgId, userId, ideaId);
+      if (!membership.canWrite) return res.status(404).json({ error: 'Idea not found' });
+    } else {
+      const ideaOk = await queryHelpers.queryOne<any>(
+        `SELECT id FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+        [ideaId, userId, orgId]
+      );
+      if (!ideaOk) return res.status(404).json({ error: 'Idea not found' });
+    }
 
     const baseVersionRaw = req.body?.baseVersion ?? req.body?.version ?? null;
     const baseVersionParsed = parseOptionalVersion(baseVersionRaw);
@@ -3832,14 +3890,21 @@ router.put(
     }
     const baseVersion = baseVersionParsed;
 
-    const mapCols = await getTableColumns('my_idea_maps');
     const extColSelect = mapCols.has('extensions_json') ? ', extensions_json' : '';
     const preferredToolSelect = mapCols.has('preferred_tool') ? ', preferred_tool' : '';
     const schemaVersionSelect = mapCols.has('schema_version') ? ', schema_version' : '';
-    const existing = await queryHelpers.queryOne<any>(
-      `SELECT id, version, nodes_json, edges_json${extColSelect}${preferredToolSelect}${schemaVersionSelect} FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
-    );
+    // DP-3 (T4): shared mode selects the single canonical row (by is_canonical),
+    // legacy mode keeps per-user row selection. Both keep the same SELECT columns
+    // so all downstream OCC / empty-reset logic is unchanged.
+    const existing = sharedMode
+      ? await queryHelpers.queryOne<any>(
+          `SELECT id, version, nodes_json, edges_json${extColSelect}${preferredToolSelect}${schemaVersionSelect} FROM my_idea_maps WHERE idea_id = ? AND organization_id = ? AND is_canonical = TRUE LIMIT 1`,
+          [ideaId, orgId]
+        )
+      : await queryHelpers.queryOne<any>(
+          `SELECT id, version, nodes_json, edges_json${extColSelect}${preferredToolSelect}${schemaVersionSelect} FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+          [ideaId, userId, orgId]
+        );
 
     const currentVersion = existing ? Number(existing.version || 1) : 1;
     if (existing && baseVersion === null) {
@@ -3944,12 +4009,41 @@ router.put(
       add('schema_version', 3);
       if (preferredTool) add('preferred_tool', preferredTool);
       if (mergedExtensions) add('extensions_json', JSON.stringify(mergedExtensions));
+      // DP-3 (T4): a brand-new map in shared mode is the canonical row from birth
+      // and records its creator as the last editor.
+      if (sharedMode) {
+        add('is_canonical', true);
+        add('last_editor_user_id', userId);
+      }
       add('created_at', now);
       add('updated_at', now);
-      await queryHelpers.queryRun(
-        `INSERT INTO my_idea_maps (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-        insertParams
-      );
+      try {
+        await queryHelpers.queryRun(
+          `INSERT INTO my_idea_maps (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+          insertParams
+        );
+      } catch (insertErr: any) {
+        // DP-3 (T4): partial unique uq_idea_maps_canonical (idea_id WHERE
+        // is_canonical=TRUE) means a concurrent request may have inserted the
+        // canonical row first. Recover by re-selecting it and returning a 409 so
+        // the client rehydrates — same OCC contract as a version mismatch.
+        if (sharedMode) {
+          const raced = await queryHelpers.queryOne<any>(
+            `SELECT id, version, nodes_json as "nodesJson", edges_json as "edgesJson"${
+              mapCols.has('preferred_tool') ? ', preferred_tool as "preferredTool"' : ''
+            }${mapCols.has('extensions_json') ? ', extensions_json as "extensionsJson"' : ''}${
+              mapCols.has('schema_version') ? ', schema_version as "schemaVersion"' : ''
+            } FROM my_idea_maps WHERE idea_id = ? AND organization_id = ? AND is_canonical = TRUE LIMIT 1`,
+            [ideaId, orgId]
+          );
+          if (raced) {
+            return res.status(409).json(
+              buildMapConflictPayload(raced, { id: ideaId, title: '', isPl: false })
+            );
+          }
+        }
+        throw insertErr;
+      }
     } else {
       const setParts: string[] = [];
       const params: any[] = [];
@@ -3964,28 +4058,43 @@ router.put(
       set('schema_version', 3);
       if (preferredTool !== null) set('preferred_tool', preferredTool);
       if (mergedExtensions !== null) set('extensions_json', JSON.stringify(mergedExtensions));
+      // DP-3 (T4): stamp the current editor on every shared-mode write.
+      if (sharedMode) set('last_editor_user_id', userId);
       set('updated_at', now);
-      params.push(ideaId, userId, orgId);
+      // DP-3 (T4): target the canonical row by is_canonical (shared) or by
+      // user_id (legacy). OCC `version` guard is preserved in both modes.
+      const whereSql = sharedMode
+        ? 'idea_id = ? AND organization_id = ? AND is_canonical = TRUE'
+        : 'idea_id = ? AND user_id = ? AND organization_id = ?';
+      if (sharedMode) {
+        params.push(ideaId, orgId);
+      } else {
+        params.push(ideaId, userId, orgId);
+      }
       if (baseVersion !== null) {
         params.push(baseVersion);
       }
       const updateResult = await queryHelpers.queryRun(
         `UPDATE my_idea_maps
          SET ${setParts.join(', ')}
-         WHERE idea_id = ? AND user_id = ? AND organization_id = ?${
-           baseVersion !== null ? ' AND version = ?' : ''
-         }`,
+         WHERE ${whereSql}${baseVersion !== null ? ' AND version = ?' : ''}`,
         params
       );
       if (baseVersion !== null && Number(updateResult?.changes || 0) === 0) {
-        const latest = await queryHelpers.queryOne<any>(
-          `SELECT id, version, nodes_json as "nodesJson", edges_json as "edgesJson"${
-            mapCols.has('preferred_tool') ? ', preferred_tool as "preferredTool"' : ''
-          }${mapCols.has('extensions_json') ? ', extensions_json as "extensionsJson"' : ''}${
-            mapCols.has('schema_version') ? ', schema_version as "schemaVersion"' : ''
-          } FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-          [ideaId, userId, orgId]
-        );
+        const latestSelectCols = `id, version, nodes_json as "nodesJson", edges_json as "edgesJson"${
+          mapCols.has('preferred_tool') ? ', preferred_tool as "preferredTool"' : ''
+        }${mapCols.has('extensions_json') ? ', extensions_json as "extensionsJson"' : ''}${
+          mapCols.has('schema_version') ? ', schema_version as "schemaVersion"' : ''
+        }`;
+        const latest = sharedMode
+          ? await queryHelpers.queryOne<any>(
+              `SELECT ${latestSelectCols} FROM my_idea_maps WHERE idea_id = ? AND organization_id = ? AND is_canonical = TRUE LIMIT 1`,
+              [ideaId, orgId]
+            )
+          : await queryHelpers.queryOne<any>(
+              `SELECT ${latestSelectCols} FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+              [ideaId, userId, orgId]
+            );
         return res.status(409).json(
           buildMapConflictPayload(latest, {
             id: ideaId,
@@ -4084,13 +4193,21 @@ router.post(
       });
     }
 
-    const ideaOk = await queryHelpers.queryOne<any>(
-      `SELECT id FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
-    );
-    if (!ideaOk) return res.status(404).json({ error: 'Idea not found' });
-
     const mapCols = await getTableColumns('my_idea_maps');
+    const sharedMode = sharedIdeaMapsActive(mapCols);
+
+    // DP-3 (T4): membership gate (shared) vs owner gate (legacy) — same 404 shape.
+    if (sharedMode) {
+      const membership = await assertIdeaMembership(ideaMapAccessDb, orgId, userId, ideaId);
+      if (!membership.canWrite) return res.status(404).json({ error: 'Idea not found' });
+    } else {
+      const ideaOk = await queryHelpers.queryOne<any>(
+        `SELECT id FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+        [ideaId, userId, orgId]
+      );
+      if (!ideaOk) return res.status(404).json({ error: 'Idea not found' });
+    }
+
     const preferredToolSelect = mapCols.has('preferred_tool')
       ? `, preferred_tool as "preferredTool"`
       : `, NULL as "preferredTool"`;
@@ -4100,13 +4217,22 @@ router.post(
     const schemaVersionSelect = mapCols.has('schema_version')
       ? `, schema_version as "schemaVersion"`
       : `, 1 as "schemaVersion"`;
-    const existing = await queryHelpers.queryOne<any>(
-      `SELECT id, version, nodes_json as "nodesJson", edges_json as "edgesJson"${preferredToolSelect}${extColSelect}${schemaVersionSelect}
+    // DP-3 (T4): canonical (shared) vs per-user (legacy) row selection.
+    const existing = sharedMode
+      ? await queryHelpers.queryOne<any>(
+          `SELECT id, version, nodes_json as "nodesJson", edges_json as "edgesJson"${preferredToolSelect}${extColSelect}${schemaVersionSelect}
+       FROM my_idea_maps
+       WHERE idea_id = ? AND organization_id = ? AND is_canonical = TRUE
+       LIMIT 1`,
+          [ideaId, orgId]
+        )
+      : await queryHelpers.queryOne<any>(
+          `SELECT id, version, nodes_json as "nodesJson", edges_json as "edgesJson"${preferredToolSelect}${extColSelect}${schemaVersionSelect}
        FROM my_idea_maps
        WHERE idea_id = ? AND user_id = ? AND organization_id = ?
        LIMIT 1`,
-      [ideaId, userId, orgId]
-    );
+          [ideaId, userId, orgId]
+        );
 
     const currentVersion = existing ? Number(existing.version || 1) : 1;
     if (existing && baseVersion === null) {
@@ -4196,12 +4322,36 @@ router.post(
       add('schema_version', 3);
       if (preferredTool) add('preferred_tool', preferredTool);
       if (mergedExtensions) add('extensions_json', JSON.stringify(mergedExtensions));
+      // DP-3 (T4): new shared map is canonical from birth + records its creator.
+      if (sharedMode) {
+        add('is_canonical', true);
+        add('last_editor_user_id', userId);
+      }
       add('created_at', now);
       add('updated_at', now);
-      await queryHelpers.queryRun(
-        `INSERT INTO my_idea_maps (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-        insertParams
-      );
+      try {
+        await queryHelpers.queryRun(
+          `INSERT INTO my_idea_maps (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+          insertParams
+        );
+      } catch (insertErr: any) {
+        // DP-3 (T4): partial-unique race on uq_idea_maps_canonical — another
+        // request created the canonical row first. Surface a 409 so the client
+        // rehydrates (same OCC contract as a stale baseVersion).
+        if (sharedMode) {
+          const raced = await queryHelpers.queryOne<any>(
+            `SELECT id, version, nodes_json as "nodesJson", edges_json as "edgesJson"${preferredToolSelect}${extColSelect}${schemaVersionSelect}
+             FROM my_idea_maps WHERE idea_id = ? AND organization_id = ? AND is_canonical = TRUE LIMIT 1`,
+            [ideaId, orgId]
+          );
+          if (raced) {
+            return res.status(409).json(
+              buildMapConflictPayload(raced, { id: ideaId, title: '', isPl: false })
+            );
+          }
+        }
+        throw insertErr;
+      }
     } else {
       const setParts: string[] = [];
       const params: any[] = [];
@@ -4216,14 +4366,29 @@ router.post(
       set('schema_version', 3);
       if (preferredTool !== null) set('preferred_tool', preferredTool);
       if (mergedExtensions !== null) set('extensions_json', JSON.stringify(mergedExtensions));
+      // DP-3 (T4): stamp editor on every shared-mode write.
+      if (sharedMode) set('last_editor_user_id', userId);
       set('updated_at', now);
-      params.push(ideaId, userId, orgId);
-      await queryHelpers.queryRun(
-        `UPDATE my_idea_maps
+      // DP-3 (T4): target canonical (shared) vs per-user (legacy). Sync has no
+      // UPDATE-time version guard — the OCC 409 is decided earlier via
+      // hasVersionConflict — so this WHERE stays version-free in both modes.
+      if (sharedMode) {
+        params.push(ideaId, orgId);
+        await queryHelpers.queryRun(
+          `UPDATE my_idea_maps
+         SET ${setParts.join(', ')}
+         WHERE idea_id = ? AND organization_id = ? AND is_canonical = TRUE`,
+          params
+        );
+      } else {
+        params.push(ideaId, userId, orgId);
+        await queryHelpers.queryRun(
+          `UPDATE my_idea_maps
          SET ${setParts.join(', ')}
          WHERE idea_id = ? AND user_id = ? AND organization_id = ?`,
-        params
-      );
+          params
+        );
+      }
     }
 
     res.json({ ok: true, version: nextVersion, updatedAt: now });
@@ -4254,17 +4419,38 @@ router.post(
     const language = String(req.body?.language || 'en').toLowerCase();
     const isPl = language.startsWith('pl');
 
-    const idea = await queryHelpers.queryOne<any>(
-      `SELECT id, title, body, seed_text as "seedText", ai_expansion as "aiExpansion" FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
-    );
+    const expandMapCols = await getTableColumns('my_idea_maps');
+    const expandSharedMode = sharedIdeaMapsActive(expandMapCols);
+
+    // DP-3 (T4): shared mode reads the idea ORG-scoped behind a membership gate
+    // (any ACTIVE member may expand the shared board); legacy mode keeps the
+    // owner-only read. This endpoint is read-only — it returns nodes/edges for
+    // the client to append; no persistence happens here.
+    const idea = expandSharedMode
+      ? await queryHelpers.queryOne<any>(
+          `SELECT id, title, body, seed_text as "seedText", ai_expansion as "aiExpansion" FROM my_ideas WHERE id = ? AND organization_id = ? LIMIT 1`,
+          [ideaId, orgId]
+        )
+      : await queryHelpers.queryOne<any>(
+          `SELECT id, title, body, seed_text as "seedText", ai_expansion as "aiExpansion" FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+          [ideaId, userId, orgId]
+        );
     if (!idea) return res.status(404).json({ error: 'Idea not found' });
+    if (expandSharedMode) {
+      const membership = await assertIdeaMembership(ideaMapAccessDb, orgId, userId, ideaId);
+      if (!membership.canRead) return res.status(404).json({ error: 'Idea not found' });
+    }
 
     // Load current map (or default skeleton)
-    const mapRow = await queryHelpers.queryOne<any>(
-      `SELECT nodes_json as "nodesJson", edges_json as "edgesJson" FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
-    );
+    const mapRow = expandSharedMode
+      ? await queryHelpers.queryOne<any>(
+          `SELECT nodes_json as "nodesJson", edges_json as "edgesJson" FROM my_idea_maps WHERE idea_id = ? AND organization_id = ? AND is_canonical = TRUE LIMIT 1`,
+          [ideaId, orgId]
+        )
+      : await queryHelpers.queryOne<any>(
+          `SELECT nodes_json as "nodesJson", edges_json as "edgesJson" FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+          [ideaId, userId, orgId]
+        );
     let nodes: any[] = [];
     let edges: any[] = [];
     if (mapRow) {
