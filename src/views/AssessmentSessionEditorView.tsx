@@ -1974,7 +1974,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                       onClick={() => setDrdViewMode(opt.id)}
                       className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors ${
                         drdViewMode === opt.id
-                          ? 'bg-c-accent-soft text-c-accent'
+                          ? 'bg-c-surface-raised text-c-text shadow-sm'
                           : 'text-c-text-secondary hover:bg-c-surface-raised'
                       }`}
                       title={opt.label}
@@ -1988,7 +1988,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                     onClick={() => setShowGovernance((v) => !v)}
                     className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors ${
                       showGovernance
-                        ? 'bg-c-accent-soft text-c-accent'
+                        ? 'bg-c-surface-raised text-c-text shadow-sm'
                         : 'text-c-text-secondary hover:bg-c-surface-raised'
                     }`}
                     title="Governance / Review lane (workbench)"

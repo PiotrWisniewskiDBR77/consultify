@@ -161,7 +161,7 @@ export const DRDMatrixSession: React.FC<Props> = ({
               <div
                 key={ax.id}
                 className={`rounded-lg border transition-colors ${
-                  isActive ? 'border-c-accent' : 'border-c-border'
+                  isActive ? 'border-c-border-strong' : 'border-c-border'
                 }`}
               >
                 <button
@@ -172,7 +172,7 @@ export const DRDMatrixSession: React.FC<Props> = ({
                   }}
                   className={`w-full flex items-center justify-between gap-2 px-3 py-2 text-left rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-c-accent-soft text-c-accent'
+                      ? 'bg-c-surface-raised text-c-text'
                       : 'text-c-text-secondary hover:bg-c-surface-raised'
                   }`}
                   title={isPl ? ax.namePL || ax.name : ax.name}
@@ -203,7 +203,7 @@ export const DRDMatrixSession: React.FC<Props> = ({
                           }}
                           className={`flex items-center justify-between rounded-lg px-2.5 py-1.5 border transition-colors duration-300 text-left ${cls} ${
                             isSelectedArea
-                              ? 'ring-2 ring-c-accent border-c-accent'
+                              ? 'ring-2 ring-c-focus border-c-border-strong'
                               : 'border-c-border'
                           }`}
                           title={isPl ? area.namePL || area.name : area.name}

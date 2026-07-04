@@ -222,7 +222,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
         key={area.id}
         className={`bg-white dark:bg-navy-900 rounded-xl border transition-all ${
           isExpanded
-            ? 'border-primary-300 dark:border-primary-500/50 shadow-lg'
+            ? 'border-slate-400 dark:border-navy-500 shadow-lg'
             : 'border-slate-200 dark:border-navy-700'
         }`}
       >
@@ -232,7 +232,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
           onClick={() => setActiveAreaId(isExpanded ? null : area.id)}
         >
           <div className="flex items-center gap-3">
-            <span className="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center text-sm font-bold">
+            <span className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 flex items-center justify-center text-sm font-bold">
               {area.id}
             </span>
             <span className="font-medium text-navy-900 dark:text-white">{area.name}</span>

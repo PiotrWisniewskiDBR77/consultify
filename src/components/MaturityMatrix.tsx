@@ -184,7 +184,7 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
                   <div className="mt-4">
                     <button
                       onClick={() => setShowAi(!showAi)}
-                      className="flex items-center gap-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300 transition-colors"
+                      className="flex items-center gap-1.5 text-xs font-medium text-navy-700 dark:text-slate-300 hover:text-navy-900 dark:hover:text-white transition-colors"
                     >
                       <Sparkles size={14} />
                       {showAi ? 'Close AI Assistant' : 'Not sure? Ask AI to Diagnose'}
@@ -205,7 +205,7 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
 
                             {!aiResult ? (
                               <>
-                                <p className="text-[10px] text-primary-600/70 dark:text-primary-200/70 mb-2">
+                                <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-2">
                                   Describe your current processes, tools, and challenges regarding{' '}
                                   {currentArea.name}.
                                 </p>
@@ -235,10 +235,10 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
                                     {aiResult.level}
                                   </div>
                                   <div>
-                                    <p className="text-xs text-primary-800 dark:text-primary-100 font-medium mb-0.5">
+                                    <p className="text-xs text-navy-900 dark:text-slate-100 font-medium mb-0.5">
                                       Recommended Level: {aiResult.level}
                                     </p>
-                                    <p className="text-[10px] text-primary-700 dark:text-primary-200 leading-relaxed italic">
+                                    <p className="text-[10px] text-slate-600 dark:text-slate-300 leading-relaxed italic">
                                       "{aiResult.justification}"
                                     </p>
                                   </div>
