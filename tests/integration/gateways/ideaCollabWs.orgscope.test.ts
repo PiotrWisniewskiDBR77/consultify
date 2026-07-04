@@ -13,8 +13,9 @@
  */
 import http from 'http';
 import net from 'net';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import jwt from 'jsonwebtoken';
+import WebSocket from 'ws';
 
 // ── Hoisted DB mock ───────────────────────────────────────────────────────────
 
@@ -159,6 +160,115 @@ describe('M07 L-02 — ideaCollabWs org-scope gate', () => {
       expect.stringContaining('SELECT id FROM my_ideas'),
       ['idea-1', 'org-a']
     );
+  });
+
+  // ── M07 F3 — graph_patch relay for the new PF-only ops ──────────────────
+  // The gateway forwards `operations` 1:1 with no validation (line ~379:
+  // `operations: msg.operations`), so update_lanes / graph_snapshot pass
+  // through untouched. Prove it with two real WS clients in the same room.
+  describe('graph_patch relay (update_lanes / graph_snapshot)', () => {
+    function openClient(token: string): Promise<WebSocket> {
+      return new Promise((resolve, reject) => {
+        const ws = new WebSocket(
+          `ws://127.0.0.1:${port}/ws/collab/idea-1?token=${encodeURIComponent(token)}`
+        );
+        ws.on('open', () => resolve(ws));
+        ws.on('error', reject);
+      });
+    }
+
+    function nextPatch(ws: WebSocket, timeoutMs = 2000): Promise<any> {
+      return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('no graph_patch received')), timeoutMs);
+        ws.on('message', (raw: WebSocket.RawData) => {
+          try {
+            const msg = JSON.parse(raw.toString());
+            if (msg.type === 'graph_patch') {
+              clearTimeout(timer);
+              resolve(msg);
+            }
+          } catch {
+            /* ignore non-JSON */
+          }
+        });
+      });
+    }
+
+    beforeEach(() => {
+      // Same-org idea so the upgrade gate passes for both clients.
+      mockDbGet.mockResolvedValue({ id: 'idea-1' });
+    });
+
+    it('relays update_lanes and graph_snapshot 1:1 from A to B', async () => {
+      const tokenA = signToken({ id: 'u-a', organizationId: 'org-a', name: 'A' });
+      const tokenB = signToken({ id: 'u-b', organizationId: 'org-a', name: 'B' });
+      const a = await openClient(tokenA);
+      const b = await openClient(tokenB);
+      try {
+        a.send(JSON.stringify({ type: 'join', userId: 'u-a', userName: 'A' }));
+        b.send(JSON.stringify({ type: 'join', userId: 'u-b', userName: 'B' }));
+
+        const lanes = [{ id: 'l1', label: 'Sales', color: '#111' }];
+        const received = nextPatch(b);
+        a.send(
+          JSON.stringify({
+            type: 'graph_patch',
+            operations: [
+              { op: 'update_lanes', data: { lanes } },
+              { op: 'update_node', data: { id: 'n1', data: { laneId: 'l1' } } },
+            ],
+          })
+        );
+        const patch = await received;
+        expect(patch.userId).toBe('u-a');
+        expect(patch.operations).toEqual([
+          { op: 'update_lanes', data: { lanes } },
+          { op: 'update_node', data: { id: 'n1', data: { laneId: 'l1' } } },
+        ]);
+
+        const snap = {
+          nodes: [{ id: 'n1', position: { x: 0, y: 0 }, data: {} }],
+          edges: [],
+          lanes,
+        };
+        const received2 = nextPatch(b);
+        a.send(
+          JSON.stringify({ type: 'graph_patch', operations: [{ op: 'graph_snapshot', data: snap }] })
+        );
+        const patch2 = await received2;
+        expect(patch2.operations[0].op).toBe('graph_snapshot');
+        expect(patch2.operations[0].data).toEqual(snap);
+      } finally {
+        a.close();
+        b.close();
+      }
+    });
+
+    it('does NOT echo a graph_patch back to its own sender', async () => {
+      const tokenA = signToken({ id: 'u-a', organizationId: 'org-a', name: 'A' });
+      const a = await openClient(tokenA);
+      try {
+        a.send(JSON.stringify({ type: 'join', userId: 'u-a', userName: 'A' }));
+        let echoed = false;
+        a.on('message', (raw: WebSocket.RawData) => {
+          try {
+            if (JSON.parse(raw.toString()).type === 'graph_patch') echoed = true;
+          } catch {
+            /* ignore */
+          }
+        });
+        a.send(
+          JSON.stringify({
+            type: 'graph_patch',
+            operations: [{ op: 'update_lanes', data: { lanes: [] } }],
+          })
+        );
+        await new Promise((r) => setTimeout(r, 300));
+        expect(echoed).toBe(false);
+      } finally {
+        a.close();
+      }
+    });
   });
 
   it('non-collab paths are ignored (gateway does not intercept)', async () => {

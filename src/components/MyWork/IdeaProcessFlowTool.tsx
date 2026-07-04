@@ -123,6 +123,7 @@ import {
 import { ProcessFlowToolbar } from './processflow/ProcessFlowToolbar';
 import { ReadbackPanel } from './processflow/ReadbackPanel';
 import { useProcessFlowAIProposal } from './processflow/useProcessFlowAIProposal';
+import { type ChangeOrigin, useProcessFlowCollab } from './processflow/useProcessFlowCollab';
 import { useProcessFlowExport } from './processflow/useProcessFlowExport';
 import { useProcessFlowNodes } from './processflow/useProcessFlowNodes';
 import { useConfirmDialog } from './shared/ConfirmDialog';
@@ -483,16 +484,61 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   }, [flowMode]);
 
   // ── Undo/Redo (via extracted hook) ──────────────────────────────────
-  const { pushUndo, undo, redo, resetUndo, canUndo, canRedo, undoRedoTick } =
-    useProcessFlowUndoRedo({
-      nodes,
-      edges,
-      lanes,
-      setNodes,
-      setEdges,
-      setLanes,
-    });
+  const {
+    pushUndo,
+    undo: undoRaw,
+    redo: redoRaw,
+    resetUndo,
+    canUndo,
+    canRedo,
+    undoRedoTick,
+  } = useProcessFlowUndoRedo({
+    nodes,
+    edges,
+    lanes,
+    setNodes,
+    setEdges,
+    setLanes,
+  });
   const dragSnapshotTakenRef = useRef(false);
+  // Latest state mirror — lets undo/redo (which setState async) read the just-
+  // restored snapshot on the next tick to broadcast it as a graph_snapshot.
+  const latestStateRef = useRef({ nodes, edges, lanes });
+  useEffect(() => {
+    latestStateRef.current = { nodes, edges, lanes };
+  }, [nodes, edges, lanes]);
+
+  // ── M07 F3: realtime edit-sync (org-scoped WS, mirrors whiteboard model) ──
+  // Origin of the last state change: 'remote' means a peer's patch produced it,
+  // so the autosave effect must NOT re-persist it (the author persists via its
+  // own useIdeaMapSync). The collab receive handler flips this to 'remote'
+  // before mutating; the queueSync effect below resets it to 'local'.
+  const lastChangeOriginRef = useRef<ChangeOrigin>('local');
+  const collab = useProcessFlowCollab({
+    currentUserId: currentUser?.id || 'anonymous',
+    setNodes,
+    setEdges,
+    setLanes,
+    lastChangeOriginRef,
+    // A peer's mass change (graph_snapshot) — record the CURRENT state as one
+    // undo step before it is overwritten, so the local user can consciously
+    // undo a collaborator's bulk change.
+    onRemoteSnapshot: () => {
+      pushUndo();
+    },
+  });
+  const lockedByOthers = collab.lockedByOthers;
+
+  // Undo/redo restore the whole state → mass change → emit graph_snapshot. The
+  // hook applies via setState, so we read the settled state on the next tick.
+  const undo = useCallback(() => {
+    undoRaw();
+    setTimeout(() => collab.broadcastSnapshot(latestStateRef.current), 0);
+  }, [collab, undoRaw]);
+  const redo = useCallback(() => {
+    redoRaw();
+    setTimeout(() => collab.broadcastSnapshot(latestStateRef.current), 0);
+  }, [collab, redoRaw]);
 
   // ── M07 F2: AI proposal (real backend via /my-ideas/:id/ai-generate) ────
   // Decision 5: accepting a proposal applies the whole patch as ONE undo
@@ -526,11 +572,18 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       );
       setEdges(result.edges);
       setLanes(result.lanes);
+      // F3: AI-accept is a mass change — emit the full state as a snapshot so
+      // peers converge without a per-node diff (Decision 5 + F3 spec §Snapshot).
+      collab.broadcastSnapshot({
+        nodes: result.nodes,
+        edges: result.edges,
+        lanes: result.lanes,
+      });
       toast.success(isPl ? 'Zastosowano propozycję AI' : 'AI proposal applied', {
         duration: 1200,
       });
     },
-    [isPl, locked, onNodeDetail, pushUndo, setEdges, setNodes]
+    [collab, isPl, locked, onNodeDetail, pushUndo, setEdges, setNodes]
   );
 
   const {
@@ -593,12 +646,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       if (locked) return;
       pushUndo();
       setEdges((eds) =>
-        eds.map((e) =>
-          e.id === edgeId ? { ...e, label: newLabel, data: { ...e.data, label: newLabel } } : e
-        )
+        eds.map((e) => {
+          if (e.id !== edgeId) return e;
+          const nextEdge = { ...e, label: newLabel, data: { ...e.data, label: newLabel } };
+          collab.broadcastEdgeUpdate(nextEdge);
+          return nextEdge;
+        })
       );
     },
-    [locked, pushUndo]
+    [collab, locked, pushUndo]
   );
 
   const handleEdgeConditionChange = useCallback(
@@ -606,10 +662,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       if (locked) return;
       pushUndo();
       setEdges((eds) =>
-        eds.map((e) => (e.id === edgeId ? { ...e, data: { ...e.data, conditionType } } : e))
+        eds.map((e) => {
+          if (e.id !== edgeId) return e;
+          const nextEdge = { ...e, data: { ...e.data, conditionType } };
+          collab.broadcastEdgeUpdate(nextEdge);
+          return nextEdge;
+        })
       );
     },
-    [locked, pushUndo]
+    [collab, locked, pushUndo]
   );
 
   // ── Inject edge handlers into edge data ────────────────────────────────
@@ -672,6 +733,28 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     };
   }, [nodes, ghostNodes, edgesWithHandlers, focusMode, focusObjectId]);
 
+  // ── F3 soft locks: nodes locked by other collaborators are non-draggable
+  // and get a subtle advisory ring + locker avatar. Tokens only (var(--c-*));
+  // ZERO new colors per Piotr's visual-acceptance protocol. Server does not
+  // enforce these (advisory) — accepted per F3 spec §Locki.
+  const displayNodes = useMemo(() => {
+    if (lockedByOthers.size === 0) return filteredNodes;
+    return filteredNodes.map((n) => {
+      if (!lockedByOthers.has(n.id)) return n;
+      return {
+        ...n,
+        draggable: false,
+        style: {
+          ...(n.style || {}),
+          outline: '2px solid var(--c-info)',
+          outlineOffset: '2px',
+          borderRadius: '10px',
+        },
+        data: { ...n.data, _lockedByOther: true, locked: true },
+      };
+    });
+  }, [filteredNodes, lockedByOthers]);
+
   // ── Node/Edge change handlers ──────────────────────────────────────────
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -714,7 +797,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             }
             return n;
           });
+          // F3: broadcast final positions (+ cross-lane laneId in node.data) and
+          // any removals from this batch. `updated` carries the resolved state.
+          collab.broadcastNodeChanges(changes, updated);
           return updated;
+        }
+
+        // Removals (delete via React Flow) with no accompanying position change.
+        if (changes.some((c: NodeChange) => c.type === 'remove')) {
+          collab.broadcastNodeChanges(changes, next);
         }
 
         // Live drag: show target lane highlight
@@ -738,16 +829,18 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         return next;
       });
     },
-    [handleSelectionUpdate, lanes, pushUndo]
+    [collab, handleSelectionUpdate, lanes, pushUndo]
   );
 
   const onEdgesChange = useCallback(
     (changes: EdgeChange[]) => {
       const mutating = changes.some((change) => change.type !== 'select');
       if (mutating) pushUndo();
+      // F3: propagate edge removals (add/update flow through their own handlers).
+      collab.broadcastEdgeChanges(changes);
       setEdges((eds) => applyEdgeChanges(changes, eds));
     },
-    [pushUndo]
+    [collab, pushUndo]
   );
 
   // ── Hydrate ────────────────────────────────────────────────────────────
@@ -868,8 +961,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     (connection: Connection) => {
       if (locked) return;
       pushUndo();
-      setEdges((eds: Edge[]) =>
-        addEdge(
+      setEdges((eds: Edge[]) => {
+        const nextEdges = addEdge(
           {
             ...connection,
             type: 'flowEdge',
@@ -877,10 +970,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             data: {},
           },
           eds
-        )
-      );
+        );
+        // F3: the new edge is the one addEdge appended that wasn't in eds.
+        const prevIds = new Set(eds.map((e) => e.id));
+        const added = (nextEdges as Edge[]).filter((e: Edge) => !prevIds.has(e.id));
+        if (added.length > 0) collab.broadcastEdgeAdd(added);
+        return nextEdges;
+      });
     },
-    [locked, pushUndo, setEdges]
+    [collab, locked, pushUndo, setEdges]
   );
 
   // ── Add node ───────────────────────────────────────────────────────────
@@ -927,6 +1025,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         },
       };
       setNodes((prev: Node[]) => [...prev, newNode]);
+      collab.broadcastNodeAdd(newNode); // F3: realtime add
 
       // Ghost nodes: AI suggests next steps
       if (!locked && shape !== 'end') {
@@ -973,6 +1072,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       }
     },
     [
+      collab,
       edges,
       i18n.language,
       ideaId,
@@ -1029,23 +1129,40 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       },
     };
 
+    const edgeA: Edge = { ...selectedEdge, id: `e-${selectedEdge.source}-${newId}`, target: newId };
+    const edgeB: Edge = {
+      id: `e-${newId}-${selectedEdge.target}`,
+      source: newId,
+      target: selectedEdge.target,
+      type: 'flowEdge',
+      data: {},
+    };
     setNodes((prev: Node[]) => [...prev, newNode]);
     setEdges((prev: Edge[]) => {
       const filtered = prev.filter((e) => e.id !== selectedEdge.id);
-      return [
-        ...filtered,
-        { ...selectedEdge, id: `e-${selectedEdge.source}-${newId}`, target: newId },
-        {
-          id: `e-${newId}-${selectedEdge.target}`,
-          source: newId,
-          target: selectedEdge.target,
-          type: 'flowEdge',
-          data: {},
-        },
-      ];
+      return [...filtered, edgeA, edgeB];
     });
+    // F3: emit the whole rewire as one batch (add node, drop old edge, add two).
+    collab.broadcastOps([
+      { op: 'add_node', data: newNode },
+      { op: 'remove_edge', data: { id: selectedEdge.id } },
+      { op: 'add_edge', data: edgeA },
+      { op: 'add_edge', data: edgeB },
+    ]);
     toast.success(isPl ? 'Wstawiono krok' : 'Step inserted', { duration: 800 });
-  }, [edges, flowMode, isPl, lanes, locked, nodes, onNodeDetail, pushUndo, setEdges, setNodes]);
+  }, [
+    collab,
+    edges,
+    flowMode,
+    isPl,
+    lanes,
+    locked,
+    nodes,
+    onNodeDetail,
+    pushUndo,
+    setEdges,
+    setNodes,
+  ]);
 
   // ── V5-IDEA-21: Split path (add parallel decision branch) ─────────────
   const splitPath = useCallback(() => {
@@ -1084,20 +1201,23 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       },
     };
 
+    const splitEdge: Edge = {
+      id: `e-${selected.id}-${newId}`,
+      source: selected.id,
+      target: newId,
+      type: 'flowEdge',
+      data: { conditionType: 'no' },
+      label: 'No',
+    };
     setNodes((prev: Node[]) => [...prev, newNode]);
-    setEdges((prev: Edge[]) => [
-      ...prev,
-      {
-        id: `e-${selected.id}-${newId}`,
-        source: selected.id,
-        target: newId,
-        type: 'flowEdge',
-        data: { conditionType: 'no' },
-        label: 'No',
-      },
+    setEdges((prev: Edge[]) => [...prev, splitEdge]);
+    // F3: emit the added branch node + its edge as one batch.
+    collab.broadcastOps([
+      { op: 'add_node', data: newNode },
+      { op: 'add_edge', data: splitEdge },
     ]);
     toast.success(isPl ? 'Ścieżka rozdzielona' : 'Path split', { duration: 800 });
-  }, [flowMode, isPl, lanes, locked, nodes, onNodeDetail, pushUndo, setEdges, setNodes]);
+  }, [collab, flowMode, isPl, lanes, locked, nodes, onNodeDetail, pushUndo, setEdges, setNodes]);
 
   // ── Add lane ───────────────────────────────────────────────────────────
 
@@ -1110,8 +1230,12 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       label: `Lane ${idx + 1}`,
       color: LANE_COLORS[idx % LANE_COLORS.length],
     };
-    setLanes((prev: Lane[]) => [...prev, newLane]);
-  }, [lanes.length, locked, pushUndo]);
+    setLanes((prev: Lane[]) => {
+      const nextLanes = [...prev, newLane];
+      collab.broadcastLanes(nextLanes); // F3: full Lane[] replacement
+      return nextLanes;
+    });
+  }, [collab, lanes.length, locked, pushUndo]);
 
   const insertAutomationTrigger = useCallback(() => {
     if (locked) return;
@@ -1151,27 +1275,28 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     if (locked || !metricsEditorNodeId) return;
     pushUndo();
     setNodes((prev) =>
-      prev.map((node) =>
-        node.id !== metricsEditorNodeId
-          ? node
-          : {
-              ...node,
-              data: {
-                ...node.data,
-                duration: metricsDraft.duration.trim() || undefined,
-                durationUnit: metricsDraft.durationUnit.trim() || 'h',
-                cost: metricsDraft.cost.trim() ? Number(metricsDraft.cost) : undefined,
-                fteCount: metricsDraft.fteCount.trim() ? Number(metricsDraft.fteCount) : undefined,
-                automationCandidate: metricsDraft.automationPotential.trim() !== 'low',
-                automationPotential: metricsDraft.automationPotential.trim() || undefined,
-                savingsEstimate: metricsDraft.savingsEstimate.trim() || undefined,
-              },
-            }
-      )
+      prev.map((node) => {
+        if (node.id !== metricsEditorNodeId) return node;
+        const nextNode = {
+          ...node,
+          data: {
+            ...node.data,
+            duration: metricsDraft.duration.trim() || undefined,
+            durationUnit: metricsDraft.durationUnit.trim() || 'h',
+            cost: metricsDraft.cost.trim() ? Number(metricsDraft.cost) : undefined,
+            fteCount: metricsDraft.fteCount.trim() ? Number(metricsDraft.fteCount) : undefined,
+            automationCandidate: metricsDraft.automationPotential.trim() !== 'low',
+            automationPotential: metricsDraft.automationPotential.trim() || undefined,
+            savingsEstimate: metricsDraft.savingsEstimate.trim() || undefined,
+          },
+        };
+        collab.broadcastNodeUpdate(nextNode); // F3: metrics edit → update_node
+        return nextNode;
+      })
     );
     setMetricsEditorNodeId(null);
     toast.success(isPl ? 'Zapisano metryki kroku' : 'Step metrics saved', { duration: 900 });
-  }, [isPl, locked, metricsDraft, metricsEditorNodeId, pushUndo]);
+  }, [collab, isPl, locked, metricsDraft, metricsEditorNodeId, pushUndo]);
 
   const runSavingsAnalysis = useCallback(async () => {
     if (locked || savingsLoading) return;
@@ -1243,6 +1368,12 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     isPl,
     pushUndo,
     onNodeDetail,
+    collab: {
+      broadcastNodeRemove: collab.broadcastNodeRemove,
+      broadcastEdgeRemove: collab.broadcastEdgeRemove,
+      broadcastOps: collab.broadcastOps,
+      broadcastLanes: collab.broadcastLanes,
+    },
     confirmBulkDelete: (count: number) =>
       confirmBulkDelete({
         title: isPl ? 'Usunąć węzły?' : 'Delete nodes?',
@@ -1296,10 +1427,12 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     pushUndo();
     const layouted = autoLayout(nodes, edges, lanes);
     setNodes(layouted);
+    // F3: auto-layout moves every node → mass change → graph_snapshot.
+    collab.broadcastSnapshot({ nodes: layouted, edges, lanes });
     toast.success(isPl ? 'Układ automatyczny zastosowany' : 'Auto-layout applied', {
       duration: 900,
     });
-  }, [edges, isPl, lanes, locked, nodes, pushUndo]);
+  }, [collab, edges, isPl, lanes, locked, nodes, pushUndo]);
 
   // ── AI Coach ──────────────────────────────────────────────────────────
 
@@ -1401,9 +1534,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       };
       setNodes((prev: Node[]) => [...prev, realNode]);
       setGhostNodes((prev) => prev.filter((g) => g.id !== ghostId));
+      collab.broadcastNodeAdd(realNode); // F3: accepted ghost → real add
       toast.success(isPl ? 'Krok zaakceptowany' : 'Step accepted', { duration: 800 });
     },
-    [ghostNodes, isPl, locked, onNodeDetail, pushUndo, setNodes]
+    [collab, ghostNodes, isPl, locked, onNodeDetail, pushUndo, setNodes]
   );
 
   // ── Save ───────────────────────────────────────────────────────────────
@@ -1425,6 +1559,18 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
   useEffect(() => {
     if (!open || locked || loading) return;
+    // F3 autosave styk (binding decision): a remote patch must NOT trigger the
+    // recipient's autosave — the author persists it via their own useIdeaMapSync.
+    // The collab receive handler flips lastChangeOriginRef to 'remote' before
+    // mutating; here we skip the sync and reset to 'local' so the NEXT genuine
+    // local edit persists normally.
+    // Known v1 limitation: if the recipient then makes their own edit, their
+    // autosave sends the merged state under their baseVersion — last-writer-wins
+    // blob semantics, identical to the whiteboard.
+    if (lastChangeOriginRef.current === 'remote') {
+      lastChangeOriginRef.current = 'local';
+      return;
+    }
     queueSync(buildPersistPayload(), { reason: 'draft' });
   }, [buildPersistPayload, loading, locked, open, queueSync]);
 
@@ -2138,7 +2284,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           <ReactFlowProvider>
             <ReactFlow
               nodes={[
-                ...filteredNodes,
+                ...displayNodes,
                 ...filteredGhostNodes.map((g) => ({
                   ...g,
                   style: { opacity: 0.4 },
@@ -2233,7 +2379,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             currentUserId={currentUser?.id || 'anonymous'}
             currentUserName={currentUserName}
             selectedNodeIds={selectedNodeIds}
-            onSessionStateChange={(_: CollaborationSessionState | null) => undefined}
+            onRegisterSend={collab.registerCollabSend}
+            onSessionStateChange={(state: CollaborationSessionState | null) =>
+              collab.onSessionState(state)
+            }
           />
 
           {selectedNode && !locked && (
