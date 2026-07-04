@@ -388,6 +388,15 @@ export function useIdeaMapSync({
     if (!open) return;
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden' && queuedPayloadRef.current) {
+        // M07 reload-race fix (2026-06-24, re-pinned DP-3 T7 2026-07-04): persist the
+        // draft SYNCHRONOUSLY first. The keepalive POST below is best-effort and can be
+        // dropped under load (or never settle at all); a synchronous localStorage write
+        // always survives teardown, so the next mount recovers the latest nodes via
+        // resolveIdeaMapHydration even if the POST never lands. Without this, edits made
+        // <draftMs before backgrounding/reload were lost — flushNow only calls
+        // persistDraft from its own async catch block, which never runs if the request
+        // is still in flight when the page unloads.
+        persistDraft(queuedPayloadRef.current, true);
         // M06 L-05: page may be backgrounded/closed — keepalive so the flush lands.
         void flushNow(null, { reason: 'draft', keepalive: true }).catch(() => null);
       }
@@ -399,6 +408,9 @@ export function useIdeaMapSync({
     };
     const handleBeforeUnload = () => {
       if (queuedPayloadRef.current) {
+        // M07 reload-race fix (2026-06-24, re-pinned DP-3 T7 2026-07-04): synchronous
+        // draft write BEFORE the keepalive POST — see handleVisibilityChange above.
+        persistDraft(queuedPayloadRef.current, true);
         // M06 L-05: document is unloading — a plain fetch would be cancelled; keepalive survives.
         void flushNow(null, { reason: 'draft', keepalive: true }).catch(() => null);
       }
@@ -421,7 +433,7 @@ export function useIdeaMapSync({
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [flushNow, open]);
+  }, [flushNow, open, persistDraft]);
 
   useEffect(() => {
     return () => {
@@ -451,6 +463,12 @@ export function useIdeaMapSync({
     [lastSavedAt, syncState]
   );
 
+  // DP-3 (T7 Part C): expose the freshest in-memory pending payload (updated
+  // synchronously on every queueSync — up to draftMs/800ms fresher than the
+  // localStorage draft) so a degraded→online reconnect can soft-merge it on
+  // top of the canonical GET instead of discarding it outright.
+  const getQueuedPayload = useCallback(() => queuedPayloadRef.current, []);
+
   return {
     saving,
     lastSavedAt,
@@ -462,6 +480,7 @@ export function useIdeaMapSync({
     flushNow,
     primeServerVersion,
     clearLocalDraft,
+    getQueuedPayload,
     currentVersionRef: serverVersionRef,
   };
 }

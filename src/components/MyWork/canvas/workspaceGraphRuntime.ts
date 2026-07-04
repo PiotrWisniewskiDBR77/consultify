@@ -138,6 +138,7 @@ export function useWorkspaceGraphRuntime({
     queueSync,
     flushNow,
     primeServerVersion,
+    getQueuedPayload,
     currentVersionRef,
   } = useIdeaMapSync({
     ideaId,
@@ -172,13 +173,41 @@ export function useWorkspaceGraphRuntime({
     setLoading(true);
     try {
       const res = await Api.getMyIdeaMap(ideaId, { language });
-      const hydration = resolveIdeaMapHydration(ideaId, res?.map || {});
-      const map = hydration.map || {};
+      const serverMap = res?.map || {};
+      const serverVersion = Math.max(1, Number(serverMap.version || 1));
+      // DP-3 (T7 Part C): degraded→online soft-merge. A hard reconnect
+      // (WS conflict, or a manual refresh after a version rejection) used to
+      // unconditionally overwrite local state with the canonical GET,
+      // silently dropping any edit that hadn't round-tripped through
+      // POST /map/sync yet. Prefer the freshest in-memory queued payload —
+      // it is always this client's OWN latest unsaved edit (queuedPayloadRef
+      // is cleared the instant a flush succeeds), so it is never stale
+      // relative to our own work; the same trust model resolveIdeaMapHydration
+      // already applies to the localStorage draft, just without the ~800ms
+      // debounce lag. Falls back to that localStorage-draft path for the
+      // normal cold-hydration path (nothing queued in memory yet), and to the
+      // plain canonical graph when there is no pending local work at all —
+      // i.e. today's behavior is preserved whenever there is nothing to merge.
+      const queued = getQueuedPayload();
+      let map: IdeaMapHydrationPayload = serverMap;
+      if (queued && Array.isArray(queued.nodes) && Array.isArray(queued.edges)) {
+        map = {
+          ...serverMap,
+          nodes: queued.nodes,
+          edges: queued.edges,
+          preferredTool: queued.preferredTool ?? serverMap.preferredTool ?? null,
+          extensions: queued.extensions ?? serverMap.extensions ?? {},
+          version: serverVersion,
+        };
+      } else {
+        const hydration = resolveIdeaMapHydration(ideaId, serverMap);
+        map = hydration.map || serverMap;
+      }
       const nextGraph: WorkspaceGraphState = {
         nodes: Array.isArray(map.nodes) ? (map.nodes as Node[]) : [],
         edges: Array.isArray(map.edges) ? (map.edges as Edge[]) : [],
         extensions: isPlainObject(map.extensions) ? map.extensions : {},
-        version: Number(map.version || 1),
+        version: Number(map.version || serverVersion),
       };
       setGraph(nextGraph);
       primeServerVersion(nextGraph.version);
@@ -195,7 +224,7 @@ export function useWorkspaceGraphRuntime({
     } finally {
       setLoading(false);
     }
-  }, [ideaId, language, open, primeServerVersion]);
+  }, [getQueuedPayload, ideaId, language, open, primeServerVersion]);
 
   useEffect(() => {
     if (!open) return;
