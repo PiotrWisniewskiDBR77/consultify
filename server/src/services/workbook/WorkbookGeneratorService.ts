@@ -22,6 +22,7 @@ import {
   validateWorkbookSchema,
 } from './WorkbookBuilder.js';
 import { type WorkbookSchema, WorkbookSchemaValidator } from './WorkbookSchema.js';
+import { critiqueWorkbook, type WorkbookQualityReport } from './workbookQualityGate.js';
 
 // ---------------------------------------------------------------------------
 // Phase prompts
@@ -331,6 +332,8 @@ export interface WorkbookGenerationResult {
   validationErrors: string[];
   classifiedErrors: P23ClassifiedError[];
   qualityScore: number | null;
+  /** Deterministyczny krytyk arkusza (analog deckDesignCritic). Fail-soft: raportuje, nie blokuje. */
+  qualityReport: WorkbookQualityReport;
   pipelineLog: PipelinePhaseLog[];
   generatedAt: string;
 }
@@ -713,6 +716,35 @@ class WorkbookGeneratorService {
       }
     }
 
+    // Deterministyczny krytyk arkusza (analog deckDesignCritic w decku). Fail-soft:
+    // NIGDY nie blokuje generacji — raportuje + loguje + wnosi issues do telemetrii.
+    let qualityReport: WorkbookQualityReport;
+    try {
+      qualityReport = critiqueWorkbook(schema!);
+    } catch (criticErr) {
+      logger.warn('[WorkbookGenerator] Phase 5: quality gate threw, continuing', criticErr);
+      qualityReport = { score: 100, issues: [], passed: true };
+    }
+    for (const iss of qualityReport.issues) {
+      // Klasyfikuj wg kanonu P23 (kod z krytyka), dołącz do telemetrii błędów.
+      classifiedErrors.push(
+        createP23Error(iss.canonCode, `${iss.code} [${iss.sheet}${iss.cell ? `!${iss.cell}` : ''}] ${iss.message}`),
+      );
+    }
+    if (qualityReport.issues.length > 0) {
+      pipelineLog.push({
+        phase: 'quality-gate',
+        status: qualityReport.passed ? 'warning' : 'failed',
+        durationMs: 0,
+        detail: `Quality ${qualityReport.score}/100 — ${qualityReport.issues.length} issue(s), ${
+          qualityReport.issues.filter((i) => i.severity === 'CRITICAL').length
+        } critical (fail-soft: reported, build continues).`,
+      });
+      logger.info(
+        `[WorkbookGenerator] Phase 5 QUALITY GATE: score=${qualityReport.score}, ${qualityReport.issues.length} issue(s), passed=${qualityReport.passed}`,
+      );
+    }
+
     let buffer: Buffer;
     try {
       buffer = await buildWorkbookBuffer(schema!, {
@@ -759,6 +791,7 @@ class WorkbookGeneratorService {
       validationErrors: structuralValidation.errors,
       classifiedErrors,
       qualityScore,
+      qualityReport,
       pipelineLog,
       generatedAt: new Date().toISOString(),
     };
