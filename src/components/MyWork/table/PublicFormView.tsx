@@ -148,8 +148,15 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
         await tablePlatformApi.submitPublicForm(slug, values);
         setSubmitted(true);
 
+        // Task 1: Redirect after success. Show success message ~1.5s first,
+        // then redirect. URL must start with http:// or https:// (reject javascript: etc)
         if (config?.redirectUrl) {
-          window.location.href = config.redirectUrl;
+          const redirectUrl = String(config.redirectUrl).trim();
+          if (redirectUrl.match(/^https?:\/\//)) {
+            setTimeout(() => {
+              window.location.assign(redirectUrl);
+            }, 1500);
+          }
         }
       } catch (err: any) {
         setError(err.message || 'Submission failed');
@@ -227,7 +234,17 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
       <div className="w-full max-w-lg">
         <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-8 shadow-sm">
           {/* Header */}
-          <h1 className="mb-1 text-2xl font-bold text-c-text">{form.name}</h1>
+          {config.styling?.logoUrl && (
+            <img
+              src={String(config.styling.logoUrl)}
+              alt="Logo"
+              style={{ maxHeight: '64px', marginBottom: '16px' }}
+              className="block"
+            />
+          )}
+          <h1 className="mb-1 text-2xl font-bold text-c-text" style={config.styling?.headerText ? { color: config.styling.headerText as string } : undefined}>
+            {form.name}
+          </h1>
           {form.description && (
             <p className="mb-8 text-sm text-c-text-muted">{form.description}</p>
           )}
@@ -260,7 +277,16 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
             <button
               type="submit"
               disabled={submitting}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white transition-colors disabled:opacity-50"
+              style={{
+                backgroundColor: (config.styling?.accentColor as string) || '#2563eb',
+                ...((config.styling?.accentColor as string) ? { 
+                  filter: 'brightness(1.1)' 
+                } : { 
+                  backgroundColor: '#2563eb',
+                  '&:hover': { backgroundColor: '#1d4ed8' }
+                })
+              }}
             >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
               Submit

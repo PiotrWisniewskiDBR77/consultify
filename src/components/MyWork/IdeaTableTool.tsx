@@ -177,6 +177,8 @@ import { ViewRouter as LegacyViewRouter } from './table/views/ViewRouter';
 import { VoiceImageInput } from './table/VoiceImageInput';
 import { WorkflowDashboard } from './table/WorkflowDashboard';
 
+const CONSULTIFY_LINK_ENABLED = false; // hidden: sync not implemented — decyzja D-A
+
 interface IdeaTableToolProps {
   open: boolean;
   ideaId: string;
@@ -3502,7 +3504,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       )}
 
       {/* Consultify Link Panel */}
-      {showConsultifyLink && (
+      {CONSULTIFY_LINK_ENABLED && showConsultifyLink && (
         <div
           className="fixed inset-0 z-[150] flex items-stretch justify-end bg-[color-mix(in_srgb,var(--c-text)_20%,transparent)] backdrop-blur-[2px]"
           onClick={() => setShowConsultifyLink(false)}
