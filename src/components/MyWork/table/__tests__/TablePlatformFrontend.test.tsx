@@ -1182,12 +1182,18 @@ describe('P15 App Integration', () => {
   });
 
   describe('ActivityFeed API path', () => {
-    it('fetches from /api/table-platform/tables/:id/audit', async () => {
+    it('fetches from /api/table-platform/tables/:id/audit when isPlatformTable is set', async () => {
       apiGetMock.mockResolvedValueOnce({ events: [] });
-      render(<ActivityFeed open onClose={vi.fn()} tableId="tbl-audit" />);
+      render(<ActivityFeed open onClose={vi.fn()} tableId="tbl-audit" isPlatformTable />);
       await waitFor(() => expect(apiGetMock).toHaveBeenCalled());
       const path = String(apiGetMock.mock.calls[0]?.[0] ?? '');
       expect(path).toContain('/table-platform/tables/tbl-audit/audit');
+    });
+
+    it('never fetches (and renders nothing) for legacy tables without a real tp_tables id', () => {
+      const { container } = render(<ActivityFeed open onClose={vi.fn()} tableId="tbl-audit" />);
+      expect(apiGetMock).not.toHaveBeenCalled();
+      expect(container).toBeEmptyDOMElement();
     });
   });
 });

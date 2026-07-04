@@ -32,6 +32,20 @@ interface ActivityFeedProps {
   tableId: string;
   compact?: boolean;
   onEventClick?: (entityId: string) => void;
+  /**
+   * Whether `tableId` is a real `tp_tables.id` row (table-platform mode).
+   *
+   * TODO(tp): backend/handoff — legacy idea-tables (map/blob persistence, no
+   * table-platform row) currently pass the idea id here, which the audit
+   * endpoint (`requireTableAccess` → `canAccessTable`) always rejects with
+   * 403 because no `tp_tables` row matches. Until the caller resolves and
+   * passes the real platform table id (see IdeaTableTool.tsx `platformTableId`,
+   * used for every other platform-scoped panel except this one and
+   * AuditTrailPanel — handoff for whoever owns that file), we hide this
+   * panel rather than show an affordance that always errors.
+   * Defaults to `false` (hidden) until the caller opts in explicitly.
+   */
+  isPlatformTable?: boolean;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -108,9 +122,7 @@ const EventItem = React.memo(function EventItem({
         {eventIcon(event.eventType)}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[11px] text-c-text leading-snug truncate">
-          {eventLabel(event, isPl)}
-        </p>
+        <p className="text-[11px] text-c-text leading-snug truncate">{eventLabel(event, isPl)}</p>
         {!compact && (
           <span className="text-[10px] text-c-text-secondary flex items-center gap-1 mt-0.5">
             <Clock size={9} />
@@ -136,6 +148,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
   tableId,
   compact = false,
   onEventClick,
+  isPlatformTable = false,
 }) => {
   const { i18n } = useTranslation();
   const isPl = !!i18n.language?.startsWith('pl');
@@ -146,7 +159,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   const fetchEvents = useCallback(
     async (since?: string) => {
-      if (!tableId) return;
+      if (!tableId || !isPlatformTable) return;
       setLoading(true);
       try {
         let path = `/table-platform/tables/${tableId}/audit?limit=50`;
@@ -179,20 +192,20 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
         setLoading(false);
       }
     },
-    [tableId]
+    [tableId, isPlatformTable]
   );
 
   useEffect(() => {
-    if (open && tableId) {
+    if (open && tableId && isPlatformTable) {
       fetchEvents();
     }
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [open, tableId]);
+  }, [open, tableId, isPlatformTable]);
 
   useEffect(() => {
-    if (!open || !tableId) return;
+    if (!open || !tableId || !isPlatformTable) return;
     pollRef.current = setInterval(() => {
       const latest = events[0]?.timestamp;
       fetchEvents(latest);
@@ -202,7 +215,10 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
     };
   }, [open, tableId, events]);
 
-  if (!open) return null;
+  // TODO(tp): backend/handoff — hidden in legacy (non-platform) tables; see
+  // isPlatformTable doc comment above. Remove this gate once the caller
+  // passes the real tp_tables id + isPlatformTable=true.
+  if (!open || !isPlatformTable) return null;
 
   const grouped = new Map<string, AuditEvent[]>();
   for (const ev of events) {
