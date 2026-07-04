@@ -1373,6 +1373,85 @@ router.get(
   }
 );
 
+// ==========================================
+// NOTIFICATIONS INBOX
+// ==========================================
+// Read-side for RecordWatchService.notifyWatchers() and RecordCommentService
+// @mention delivery — both write rows into tp_audit_events with
+// notified_user_id set; these routes are the first consumer that reads them
+// back for the current user (previously write-only, see finding in the tp-
+// notifications-inbox handoff).
+
+router.get('/notifications', async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const userId = authReq.userId;
+    if (!userId) return res.status(401).json({ error: 'Authentication required' });
+    const limit = parseInt(String(req.query.limit ?? '50'), 10);
+    const offset = parseInt(String(req.query.offset ?? '0'), 10);
+    const unreadOnly = String(req.query.unreadOnly ?? '') === 'true';
+    const NotificationInboxService = (
+      await import('../services/tablePlatform/NotificationInboxService.js')
+    ).default;
+    const result = await NotificationInboxService.listForUser(userId, {
+      limit,
+      offset,
+      unreadOnly,
+    });
+    return res.status(200).json(result);
+  } catch (err) {
+    handleRouteError(err, res, 'listNotifications');
+  }
+});
+
+router.get('/notifications/unread-count', async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const userId = authReq.userId;
+    if (!userId) return res.status(401).json({ error: 'Authentication required' });
+    const NotificationInboxService = (
+      await import('../services/tablePlatform/NotificationInboxService.js')
+    ).default;
+    const unread = await NotificationInboxService.getUnreadCount(userId);
+    return res.status(200).json({ unread });
+  } catch (err) {
+    handleRouteError(err, res, 'getUnreadNotificationCount');
+  }
+});
+
+router.post('/notifications/:id/read', async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const userId = authReq.userId;
+    const { id } = req.params;
+    if (!userId) return res.status(401).json({ error: 'Authentication required' });
+    if (!id) return res.status(400).json({ error: 'id is required' });
+    const NotificationInboxService = (
+      await import('../services/tablePlatform/NotificationInboxService.js')
+    ).default;
+    const ok = await NotificationInboxService.markAsRead(id, userId);
+    if (!ok) return res.status(404).json({ error: 'Notification not found' });
+    return res.status(200).json({ read: true });
+  } catch (err) {
+    handleRouteError(err, res, 'markNotificationRead');
+  }
+});
+
+router.post('/notifications/read-all', async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const userId = authReq.userId;
+    if (!userId) return res.status(401).json({ error: 'Authentication required' });
+    const NotificationInboxService = (
+      await import('../services/tablePlatform/NotificationInboxService.js')
+    ).default;
+    const count = await NotificationInboxService.markAllAsRead(userId);
+    return res.status(200).json({ updated: count });
+  } catch (err) {
+    handleRouteError(err, res, 'markAllNotificationsRead');
+  }
+});
+
 router.post(
   '/tables/:tableId/records/query',
   requireTableAccess,

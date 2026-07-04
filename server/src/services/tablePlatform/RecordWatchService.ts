@@ -5,6 +5,7 @@
 
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
+import { tablePlatformRealtime } from './RealtimeService.js';
 
 export interface RecordWatch {
   id: string;
@@ -126,21 +127,48 @@ const recordWatchService = {
         if (watcher.user_id === changeEvent.actorId) continue;
 
         try {
-          await db.query(
-            `INSERT INTO tp_audit_events (event_type, entity_type, entity_id, actor_id, metadata)
-             VALUES ($1, $2, $3, $4, $5)`,
+          const eventType = `watch_${changeEvent.action}`;
+          const metadata = {
+            table_id: changeEvent.tableId,
+            notified_user: watcher.user_id,
+            changes: changeEvent.changes ?? {},
+          };
+          const inserted = await db.query(
+            `INSERT INTO tp_audit_events (event_type, entity_type, entity_id, actor_id, metadata, notified_user_id)
+             VALUES ($1, $2, $3, $4, $5, $6)
+             RETURNING id, created_at`,
             [
-              `watch_${changeEvent.action}`,
+              eventType,
               'record',
               recordId,
               changeEvent.actorId ?? null,
-              JSON.stringify({
-                table_id: changeEvent.tableId,
-                notified_user: watcher.user_id,
-                changes: changeEvent.changes ?? {},
-              }),
+              JSON.stringify(metadata),
+              watcher.user_id,
             ]
           );
+
+          // Realtime push to the watcher's user-room. Fail-soft: emit errors
+          // must never roll back or block the notification write above —
+          // the row already landed and is readable via the inbox endpoint
+          // even if no socket is currently connected for this user.
+          try {
+            const row = inserted.rows[0] as { id?: string; created_at?: string } | undefined;
+            tablePlatformRealtime.notifyUser(watcher.user_id, {
+              id: row?.id,
+              eventType,
+              entityType: 'record',
+              entityId: recordId,
+              actorId: changeEvent.actorId ?? null,
+              metadata,
+              createdAt: row?.created_at,
+            });
+          } catch (emitErr) {
+            logger.warn('[RecordWatchService] realtime emit failed (notification still saved)', {
+              recordId,
+              userId: watcher.user_id,
+              error: (emitErr as Error).message,
+            });
+          }
         } catch (notifyErr) {
           logger.warn('[RecordWatchService] failed to create notification for watcher', {
             recordId,
