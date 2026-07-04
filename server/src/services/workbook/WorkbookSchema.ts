@@ -176,6 +176,120 @@ export const ConditionalFormattingBlockSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
+// EQ-A — Scenario switch ("equity-research grade" dynamic driver selection)
+//
+// Today a model emits 3 separate scenario sheets (Base / Bull / Bear). This
+// primitive collapses them into ONE P&L sheet whose driver values are selected
+// dynamically from the scenario named by a dropdown selector cell.
+//
+// The builder writes, for each driver:
+//   • a horizontal band of scenario columns (one literal per scenario), each
+//     covered by a workbook-level named range, and
+//   • an active-value cell whose formula is
+//       CHOOSE(MATCH(<selector>, {scenarios}, 0), <scen1>, <scen2>, <scen3>)
+//     so flipping the selector re-points every driver at a different column.
+//
+// Purely additive: nothing rewrites existing rows/formulas.
+// ---------------------------------------------------------------------------
+
+export const ScenarioDriverSchema = z.object({
+  /** Human label written into the label column (e.g. "Revenue growth %"). */
+  label: z.string(),
+  /**
+   * One value per scenario, in the SAME order as `scenarios`. Length must equal
+   * `scenarios.length`; the builder validates & fail-soft skips a bad driver.
+   */
+  values: z.array(z.number()),
+  /**
+   * Optional stable named-range base for this driver's scenario band. When set,
+   * ranges become `<namePrefix>_<Scenario>`; else derived from the label.
+   */
+  namePrefix: z.string().optional(),
+  /** Optional number format for the value cells (e.g. "0.0%"). */
+  numberFormat: z.string().optional(),
+});
+
+export const ScenarioSwitchSchema = z.object({
+  /** The scenario names shown in the selector dropdown, e.g. ["Base","Bull","Bear"]. */
+  scenarios: z.array(z.string()).min(2),
+  /** Which scenario is initially selected (must be one of `scenarios`). */
+  active: z.string().optional(),
+  /** Column key for the driver LABELS (must exist in the sheet's columns). */
+  labelColumn: z.string(),
+  /** Column key for the ACTIVE (selected) value — holds the CHOOSE formula. */
+  activeColumn: z.string(),
+  /**
+   * Column keys, one per scenario in order, that hold the per-scenario literal
+   * values (the "scenario band"). Length must equal `scenarios.length`.
+   */
+  scenarioColumns: z.array(z.string()).min(2),
+  /** The driver rows. */
+  drivers: z.array(ScenarioDriverSchema).min(1),
+  /**
+   * A1 address (on THIS sheet) of the selector cell that carries the dropdown.
+   * The builder writes the dropdown + the `active` value there and points every
+   * CHOOSE at it. Defaults to a cell just above the driver block if omitted.
+   */
+  selectorCell: z.string().optional(),
+  /** Optional label written next to the selector cell. */
+  selectorLabel: z.string().optional(),
+});
+
+// ---------------------------------------------------------------------------
+// EQ-B — Sensitivity table (1- or 2-D "data table" grid of output formulas)
+//
+// A grid whose top row and left column are input VARIANTS (e.g. revenue growth ×
+// margin) and whose interior cells are the recomputed OUTPUT metric. The builder
+// lays out the grid of real Excel formulas from `outputFormulaTemplate`, with
+// `{row}` / `{col}` placeholders substituted by the A1 address of the row/col
+// header cell for that interior cell — so the grid recalculates in Excel.
+// A subtle color-scale is auto-applied over the interior for readability.
+// ---------------------------------------------------------------------------
+
+export const SensitivityTableSchema = z.object({
+  /** Title written above the grid (merged banner). */
+  title: z.string().optional(),
+  /** Top-left corner (A1) where the grid's corner label cell is written. */
+  anchorCell: z.string(),
+  /** Label for the corner cell (e.g. "EBITDA →"). */
+  cornerLabel: z.string().optional(),
+  /** Column-input header values (across the top row). */
+  colInputs: z.array(z.number()).min(1),
+  /** Row-input header values (down the left column). 1-D table → omit/empty. */
+  rowInputs: z.array(z.number()).optional(),
+  /**
+   * Formula template for each interior cell. `{col}` → A1 of the column header
+   * above the cell, `{row}` → A1 of the row header left of the cell. Written as
+   * a normal formula string (a leading `=` is tolerated / stripped by builder).
+   * Example: "{col} * (1 - {row})" or "Base_EBITDA * (1+{col}) * (1-{row})".
+   */
+  outputFormulaTemplate: z.string(),
+  /** Number format for header + interior cells (e.g. "0.0%", "#,##0"). */
+  numberFormat: z.string().optional(),
+  /** Header number format override (defaults to `numberFormat`). */
+  headerNumberFormat: z.string().optional(),
+  /** 2- or 3-color scale for the interior grid (default subtle teal 3-stop). */
+  colorScale: z.array(z.string()).min(2).max(3).optional(),
+});
+
+// ---------------------------------------------------------------------------
+// EQ-C — Chart image mount point (see WorkbookBuilder: native charts are NOT
+// supported by exceljs 4.x — this carries a PRE-RENDERED PNG placed via
+// worksheet.addImage as the realistic alternative). Optional & additive.
+// ---------------------------------------------------------------------------
+
+export const ChartImageSchema = z.object({
+  /** PNG image, base64-encoded (no data-URI prefix) OR a raw base64 string. */
+  pngBase64: z.string(),
+  /** Top-left anchor cell (A1) for the image. */
+  anchorCell: z.string(),
+  /** Width in pixels (default 480). */
+  width: z.number().optional(),
+  /** Height in pixels (default 300). */
+  height: z.number().optional(),
+});
+
+// ---------------------------------------------------------------------------
 // Sheet
 // ---------------------------------------------------------------------------
 
@@ -208,6 +322,23 @@ export const SheetSchema = z.object({
    */
   nameKeyColumn: z.string().optional(),
   nameValueColumn: z.string().optional(),
+  /**
+   * EQ-A — Scenario switch: one P&L sheet whose driver values are selected
+   * dynamically from a scenario named by a dropdown. Builder writes the scenario
+   * band + CHOOSE/MATCH selection formulas + the selector dropdown. Additive.
+   */
+  scenarioSwitch: ScenarioSwitchSchema.optional(),
+  /**
+   * EQ-B — Sensitivity table(s): 1- or 2-D grid of output formulas over input
+   * variants, with an auto color-scale. Builder writes the grid of real
+   * formulas at the declared anchor. Additive (never shifts data rows).
+   */
+  sensitivityTables: z.array(SensitivityTableSchema).optional(),
+  /**
+   * EQ-C — Pre-rendered chart image(s) mounted via worksheet.addImage (exceljs
+   * has NO native chart API — this is the realistic alternative). Additive.
+   */
+  chartImages: z.array(ChartImageSchema).optional(),
 });
 
 // ---------------------------------------------------------------------------
@@ -241,3 +372,8 @@ export type CfIconSetRule = z.infer<typeof CfIconSetRuleSchema>;
 export type CfCellIsRule = z.infer<typeof CfCellIsRuleSchema>;
 export type ConditionalFormattingRule = z.infer<typeof ConditionalFormattingRuleSchema>;
 export type ConditionalFormattingBlock = z.infer<typeof ConditionalFormattingBlockSchema>;
+
+export type ScenarioDriver = z.infer<typeof ScenarioDriverSchema>;
+export type ScenarioSwitch = z.infer<typeof ScenarioSwitchSchema>;
+export type SensitivityTable = z.infer<typeof SensitivityTableSchema>;
+export type ChartImage = z.infer<typeof ChartImageSchema>;
