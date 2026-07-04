@@ -1002,6 +1002,9 @@
       }
     },
     "versionConflictDetectedRefreshingDeckTo": "Wykryto konflikt wersji. Odświeżam deck do najnowszej wersji.",
+    "versionConflictDetected": "Ten deck został zmieniony w innej sesji. Wybierz, jak to rozwiązać.",
+    "versionConflictReloaded": "Wczytano najnowszą wersję decka.",
+    "versionConflictKeptMine": "Zachowuję Twoją wersję — nadpisze ona pozostałe zmiany.",
     "exportFailed": "Eksport nie powiódł się",
     "versionRestored": "Przywrócono wersję",
     "couldNotRestoreThatVersion": "Nie udało się przywrócić wersji",
