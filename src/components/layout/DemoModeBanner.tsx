@@ -56,8 +56,8 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
   // Common button styles for uniform size
   const buttonBaseClass =
     'flex items-center gap-1.5 text-xs font-medium rounded-lg px-3 py-1.5 transition-colors';
-  const buttonPrimaryClass = `${buttonBaseClass} bg-navy-800/60 hover:bg-navy-800 border border-white/10 text-slate-200 hover:text-slate-100`;
-  const buttonSecondaryClass = `${buttonBaseClass} bg-navy-800/40 hover:bg-navy-800/60 border border-white/5 text-slate-600 hover:text-slate-200`;
+  const buttonPrimaryClass = `${buttonBaseClass} bg-navy-800/60 hover:bg-navy-800 border border-c-border-subtle text-slate-200 hover:text-slate-100`;
+  const buttonSecondaryClass = `${buttonBaseClass} bg-navy-800/40 hover:bg-navy-800/60 border border-c-border-subtle text-slate-600 hover:text-slate-200`;
 
   return (
     <AnimatePresence>
@@ -76,7 +76,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.18 }}
-        className={`relative z-0 bg-navy-900/95 dark:bg-navy-950 border-b border-white/5 text-slate-100 ${className}`}
+        className={`relative z-0 bg-navy-900/95 dark:bg-navy-950 border-b border-c-border-subtle text-slate-100 ${className}`}
       >
         {/* Main Banner Row */}
         <div className="px-4 py-2">
@@ -103,10 +103,10 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
               <div className="hidden md:flex items-center gap-2 text-xs">
                 {demoStats && (
                   <>
-                    <span className="bg-navy-800/50 rounded-lg px-3 py-1.5 text-slate-600 border border-white/5">
+                    <span className="bg-navy-800/50 rounded-lg px-3 py-1.5 text-slate-600 border border-c-border-subtle">
                       {demoStats.projects ?? 0} {t('demo.banner.projects', 'projects')}
                     </span>
-                    <span className="bg-navy-800/50 rounded-lg px-3 py-1.5 text-slate-600 border border-white/5">
+                    <span className="bg-navy-800/50 rounded-lg px-3 py-1.5 text-slate-600 border border-c-border-subtle">
                       {demoStats.initiatives ?? 0} {t('demo.banner.initiatives', 'initiatives')}
                     </span>
                   </>
@@ -116,7 +116,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                     className={`rounded-lg px-3 py-1.5 border ${
                       approachingAi
                         ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
-                        : 'bg-navy-800/50 text-slate-600 border-white/5'
+                        : 'bg-navy-800/50 text-slate-600 border-c-border-subtle'
                     }`}
                     title={t('demo.banner.aiUsageTooltip', 'AI calls used today / daily limit')}
                   >
@@ -138,7 +138,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                       className={`rounded-lg px-3 py-1.5 border ${
                         approachingTokens
                           ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
-                          : 'bg-navy-800/50 text-slate-600 border-white/5'
+                          : 'bg-navy-800/50 text-slate-600 border-c-border-subtle'
                       }`}
                       title={t('demo.banner.tokenUsageTooltip', 'Tokens used today / daily limit')}
                     >
@@ -180,7 +180,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                 className={`${buttonPrimaryClass} disabled:opacity-50`}
               >
                 {isDemoLoading ? (
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-c-border border-t-white rounded-full animate-spin" />
                 ) : (
                   <X className="w-4 h-4" />
                 )}
@@ -204,7 +204,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
               transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              <div className="px-4 py-3 bg-navy-900/80 border-t border-white/5">
+              <div className="px-4 py-3 bg-navy-900/80 border-t border-c-border-subtle">
                 <div className="max-w-7xl mx-auto">
                   <div className="flex flex-wrap items-center justify-between gap-4">
                     {/* Info Cards */}

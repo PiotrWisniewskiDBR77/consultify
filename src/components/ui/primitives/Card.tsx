@@ -47,7 +47,7 @@ const variantStyles: Record<CardVariant, string> = {
     dark:from-navy-900/80 dark:to-navy-900/60
     shadow-[0_4px_6px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.06)]
     dark:shadow-[0_4px_6px_rgba(0,0,0,0.25),0_2px_4px_rgba(0,0,0,0.3)]
-    border border-white/20 dark:border-navy-700
+    border border-c-border dark:border-navy-700
   `,
 };
 

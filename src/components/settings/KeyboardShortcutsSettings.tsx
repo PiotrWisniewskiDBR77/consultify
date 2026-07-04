@@ -439,7 +439,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                           'p-3 rounded-lg border-2 text-left transition-all duration-200',
                           isSelected
                             ? 'border-c-border-strong bg-c-surface-raised'
-                            : 'border-c-border-subtle hover:border-c-border dark:hover:border-white/20'
+                            : 'border-c-border-subtle hover:border-c-border dark:hover:border-c-border'
                         )}
                       >
                         <p
@@ -485,7 +485,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
               key={category}
               className="bg-c-surface-raised border border-c-border-subtle rounded-xl overflow-hidden"
             >
-              <div className="px-6 py-3 border-b border-white/5">
+              <div className="px-6 py-3 border-b border-c-border-subtle">
                 <h4 className="text-xs font-bold text-c-text-secondary uppercase tracking-wider">
                   {t(
                     `settings.shortcuts.categories.${category}`,

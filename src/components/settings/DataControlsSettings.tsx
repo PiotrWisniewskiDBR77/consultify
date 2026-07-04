@@ -503,7 +503,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                       'px-4 py-2.5 rounded-lg text-sm font-medium transition-all border',
                       retention.period === option.value
                         ? 'bg-navy-900 text-white border-navy-900 shadow-sm dark:border-c-accent'
-                        : 'bg-c-surface-raised text-c-text-secondary border-c-border-subtle hover:border-c-border dark:hover:border-white/20'
+                        : 'bg-c-surface-raised text-c-text-secondary border-c-border-subtle hover:border-c-border dark:hover:border-c-border'
                     )}
                   >
                     {t(option.labelKey, option.labelDefault)}
@@ -658,7 +658,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                           setDeleteConfirmText('');
                           setDeletePassword('');
                         }}
-                        className="px-4 py-2 bg-c-surface-raised border border-white/10 text-c-text-secondary rounded-lg text-sm font-medium hover:bg-c-surface-raised transition-colors"
+                        className="px-4 py-2 bg-c-surface-raised border border-c-border-subtle text-c-text-secondary rounded-lg text-sm font-medium hover:bg-c-surface-raised transition-colors"
                       >
                         {t('common.cancel', 'Cancel')}
                       </button>

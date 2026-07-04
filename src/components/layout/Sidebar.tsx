@@ -128,7 +128,7 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({
 
   const bgColor = theme === 'dark' ? 'bg-navy-900' : 'bg-white';
   const borderColor =
-    theme === 'dark' ? 'border-white/10' : 'border-slate-200 dark:border-navy-700';
+    theme === 'dark' ? 'border-c-border-subtle' : 'border-slate-200 dark:border-navy-700';
   const textColor = theme === 'dark' ? 'text-slate-600' : 'text-slate-600 dark:text-slate-400';
   const hoverBg =
     theme === 'dark' ? 'hover:bg-white/5' : 'hover:bg-slate-50 dark:hover:bg-navy-800/20';
@@ -153,7 +153,7 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({
       <div className="flex flex-col">
         {title && (
           <div
-            className={`px-4 py-3 text-sm font-bold ${hasItems ? 'border-b mb-1' : ''} ${theme === 'dark' ? 'border-white/10 text-white' : 'border-slate-200 dark:border-navy-700 text-slate-800 dark:text-slate-200'}`}
+            className={`px-4 py-3 text-sm font-bold ${hasItems ? 'border-b mb-1' : ''} ${theme === 'dark' ? 'border-c-border-subtle text-white' : 'border-slate-200 dark:border-navy-700 text-slate-800 dark:text-slate-200'}`}
           >
             {title}
           </div>

@@ -44,7 +44,7 @@ export const HubWorkAreaLoadError: React.FC<HubWorkAreaLoadErrorProps> = ({
           <button
             type="button"
             onClick={onDismiss}
-            className="h-9 rounded-lg border border-white/20 px-3 text-sm text-slate-200 hover:bg-white/10"
+            className="h-9 rounded-lg border border-c-border px-3 text-sm text-slate-200 hover:bg-white/10"
           >
             {dismissLabel}
           </button>

@@ -16,7 +16,7 @@ export const MENU_2_TAB_INACTIVE = cn(
 export const MENU_2_TAB_ACTIVE = cn(
   MENU_2_TAB_BASE,
   'border-c-border bg-c-surface-raised text-c-text',
-  'dark:border-white/25 dark:bg-white/10 dark:text-slate-100'
+  'dark:border-c-border dark:bg-white/10 dark:text-slate-100'
 );
 
 export const MENU_3_ROW_CLASS =

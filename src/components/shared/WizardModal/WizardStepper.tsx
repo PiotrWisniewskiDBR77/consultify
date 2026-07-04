@@ -88,7 +88,7 @@ export const WizardStepper: React.FC<WizardStepperProps> = ({
                     : isComplete
                       ? 'border-emerald-300/50 bg-white text-slate-600 dark:border-emerald-500/20 dark:bg-navy-900/70 dark:text-slate-300'
                       : 'border-slate-200 bg-slate-100/70 text-slate-500 dark:border-white/[0.08] dark:bg-navy-900/50 dark:text-slate-400'
-                } ${isReachable ? 'hover:border-slate-400/60 dark:hover:border-white/20' : 'cursor-not-allowed opacity-60'}`}
+                } ${isReachable ? 'hover:border-slate-400/60 dark:hover:border-c-border' : 'cursor-not-allowed opacity-60'}`}
                 style={isActive ? { borderColor: accentColor } : undefined}
               >
                 <div className="flex items-center gap-2">

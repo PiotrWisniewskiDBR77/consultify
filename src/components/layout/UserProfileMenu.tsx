@@ -482,7 +482,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                     }
                   >
                     {isDemoLoading ? (
-                      <span className="absolute top-0.5 left-0.5 w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span className="absolute top-0.5 left-0.5 w-4 h-4 border-2 border-c-border border-t-white rounded-full animate-spin" />
                     ) : (
                       <span
                         className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white dark:bg-navy-900 rounded-full shadow transition-transform ${

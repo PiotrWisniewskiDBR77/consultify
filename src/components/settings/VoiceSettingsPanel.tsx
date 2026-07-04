@@ -326,7 +326,7 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
                                 ${
                                   settings.inputMode === mode
                                     ? 'border-c-accent bg-c-accent-soft text-c-accent'
-                                    : 'border-c-border-subtle dark:border-navy-700 text-c-text-secondary hover:border-c-border dark:hover:border-white/20'
+                                    : 'border-c-border-subtle dark:border-navy-700 text-c-text-secondary hover:border-c-border dark:hover:border-c-border'
                                 }
                             `}
                   >
@@ -381,7 +381,7 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
                                 ${
                                   settings.ttsVoice === voice.id
                                     ? 'border-c-accent bg-c-accent-soft'
-                                    : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border dark:hover:border-white/20'
+                                    : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border dark:hover:border-c-border'
                                 }
                             `}
                 >

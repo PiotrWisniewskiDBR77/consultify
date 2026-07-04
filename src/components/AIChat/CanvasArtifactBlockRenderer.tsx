@@ -225,12 +225,12 @@ export function CanvasArtifactBlockRenderer({
 
     return (
       <section
-        className="mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/60 shadow-sm dark:border-white/10 dark:bg-white/[0.03]"
+        className="mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/60 shadow-sm dark:border-c-border-subtle dark:bg-white/[0.03]"
         data-testid={`canvas-artifact-block-${block.id}`}
       >
         <BlockHeader block={block} onCopy={copyProjection} onExport={downloadCsv} />
-        <div className="flex flex-wrap items-center gap-3 border-t border-slate-200 bg-white/70 px-4 py-3 dark:border-white/10 dark:bg-navy-950/40">
-          <label className="flex min-w-[220px] items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300">
+        <div className="flex flex-wrap items-center gap-3 border-t border-slate-200 bg-white/70 px-4 py-3 dark:border-c-border-subtle dark:bg-navy-950/40">
+          <label className="flex min-w-[220px] items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 dark:border-c-border-subtle dark:bg-white/[0.04] dark:text-slate-300">
             <Search size={14} />
             <input
               value={filter}
@@ -246,7 +246,7 @@ export function CanvasArtifactBlockRenderer({
           <button
             type="button"
             onClick={() => exportRows(filteredRows, 'filtered')}
-            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
+            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 dark:border-c-border-subtle dark:bg-white/[0.04] dark:text-slate-200"
           >
             Export filtered
           </button>
@@ -256,14 +256,14 @@ export function CanvasArtifactBlockRenderer({
               const selected = filteredRows.filter((entry) => selectedRows.has(entry.key));
               exportRows(selected.length > 0 ? selected : filteredRows, 'selected');
             }}
-            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
+            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 dark:border-c-border-subtle dark:bg-white/[0.04] dark:text-slate-200"
           >
             Export selected
           </button>
           <button
             type="button"
             onClick={() => setSelectedRows(new Set())}
-            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
+            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 dark:border-c-border-subtle dark:bg-white/[0.04] dark:text-slate-200"
           >
             Clear selection
           </button>
@@ -353,7 +353,7 @@ export function CanvasArtifactBlockRenderer({
     const recommendations = arrayFrom(data, 'recommendations');
     return (
       <section
-        className="mt-8 rounded-2xl border border-slate-200 bg-slate-50/60 p-5 dark:border-white/10 dark:bg-white/[0.03]"
+        className="mt-8 rounded-2xl border border-slate-200 bg-slate-50/60 p-5 dark:border-c-border-subtle dark:bg-white/[0.03]"
         data-testid={`canvas-artifact-block-${block.id}`}
       >
         <BlockHeader block={block} onCopy={copyProjection} />
@@ -392,7 +392,7 @@ export function CanvasArtifactBlockRenderer({
     const assumptions = arrayFrom(data, 'assumptions');
     return (
       <section
-        className="mt-8 rounded-2xl border border-slate-200 bg-slate-50/60 p-5 dark:border-white/10 dark:bg-white/[0.03]"
+        className="mt-8 rounded-2xl border border-slate-200 bg-slate-50/60 p-5 dark:border-c-border-subtle dark:bg-white/[0.03]"
         data-testid={`canvas-artifact-block-${block.id}`}
       >
         <BlockHeader block={block} onCopy={copyProjection} />
@@ -426,7 +426,7 @@ export function CanvasArtifactBlockRenderer({
     const limitations = arrayFrom(data, 'limitations');
     return (
       <section
-        className="mt-8 rounded-2xl border border-slate-200 bg-slate-50/60 p-5 dark:border-white/10 dark:bg-white/[0.03]"
+        className="mt-8 rounded-2xl border border-slate-200 bg-slate-50/60 p-5 dark:border-c-border-subtle dark:bg-white/[0.03]"
         data-testid={`canvas-artifact-block-${block.id}`}
       >
         <BlockHeader block={block} onCopy={copyProjection} />
@@ -436,7 +436,7 @@ export function CanvasArtifactBlockRenderer({
             return (
               <div
                 key={`kpi-${index}`}
-                className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-navy-900"
+                className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-c-border-subtle dark:bg-navy-900"
               >
                 <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                   {text(record.label, `KPI ${index + 1}`)}
@@ -466,7 +466,7 @@ export function CanvasArtifactBlockRenderer({
               return (
                 <div
                   key={`dashboard-chart-${index}`}
-                  className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-navy-900"
+                  className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-c-border-subtle dark:bg-navy-900"
                 >
                   <div className="text-sm font-semibold text-slate-900 dark:text-white">
                     {text(record.title, `Chart ${index + 1}`)}
@@ -557,7 +557,7 @@ function ChartBlockView({
 
   return (
     <section
-      className="mt-8 rounded-2xl border border-slate-200 bg-slate-50/60 p-5 dark:border-white/10 dark:bg-white/[0.03]"
+      className="mt-8 rounded-2xl border border-slate-200 bg-slate-50/60 p-5 dark:border-c-border-subtle dark:bg-white/[0.03]"
       data-testid={`canvas-artifact-block-${block.id}`}
       data-renderer={spec ? 'vega-lite-compatible' : 'fallback-bar-chart'}
     >
@@ -679,7 +679,7 @@ function DiagramBlockView({
 
   return (
     <section
-      className="mt-8 rounded-2xl border border-slate-200 bg-slate-50/60 p-5 dark:border-white/10 dark:bg-white/[0.03]"
+      className="mt-8 rounded-2xl border border-slate-200 bg-slate-50/60 p-5 dark:border-c-border-subtle dark:bg-white/[0.03]"
       data-testid={`canvas-artifact-block-${block.id}`}
       data-renderer={source && !renderError ? 'mermaid' : 'node-edge-fallback'}
     >
@@ -688,14 +688,14 @@ function DiagramBlockView({
         <button
           type="button"
           onClick={() => void copySource()}
-          className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:bg-white/10 dark:text-slate-200"
+          className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-c-border-subtle dark:bg-white/10 dark:text-slate-200"
         >
           Copy source
         </button>
         <button
           type="button"
           onClick={exportDiagram}
-          className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:bg-white/10 dark:text-slate-200"
+          className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-c-border-subtle dark:bg-white/10 dark:text-slate-200"
         >
           Export diagram
         </button>
@@ -732,7 +732,7 @@ function DiagramBlockView({
             {nodes.map((node) => (
               <div
                 key={node.id}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-navy-900"
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-c-border-subtle dark:bg-navy-900"
               >
                 {node.label}
               </div>
@@ -750,7 +750,7 @@ function DiagramBlockView({
             {edges.map((edge, index) => (
               <div
                 key={`${edge.from}-${edge.to}-${index}`}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-navy-900"
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-c-border-subtle dark:bg-navy-900"
               >
                 {edge.from} → {edge.to}
                 {edge.label ? <span className="text-slate-500"> · {edge.label}</span> : null}
@@ -777,7 +777,7 @@ function EvidenceList({
 }) {
   return (
     <div
-      className={`rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-navy-900 ${className}`}
+      className={`rounded-2xl border border-slate-200 bg-white p-4 dark:border-c-border-subtle dark:bg-navy-900 ${className}`}
     >
       <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
         {title}
@@ -827,7 +827,7 @@ function BlockHeader({
         <button
           type="button"
           onClick={onCopy}
-          className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-white dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10"
+          className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-white dark:border-c-border-subtle dark:text-slate-300 dark:hover:bg-white/10"
         >
           <Copy size={13} />
           Copy
@@ -836,7 +836,7 @@ function BlockHeader({
           <button
             type="button"
             onClick={onExport}
-            className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-white dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10"
+            className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-white dark:border-c-border-subtle dark:text-slate-300 dark:hover:bg-white/10"
           >
             <Download size={13} />
             CSV

@@ -162,7 +162,7 @@ export const OrgAIPolicy: React.FC<{
   if (!orgConfig) return null;
 
   return (
-    <div className="bg-navy-900 border border-white/5 rounded-xl p-6">
+    <div className="bg-navy-900 border border-c-border-subtle rounded-xl p-6">
       <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
         <Shield className="text-primary-500" size={20} />
         Organization AI Policy
@@ -175,7 +175,7 @@ export const OrgAIPolicy: React.FC<{
           <select
             value={orgConfig.activeProviderId || ''}
             onChange={(e) => onConfigChange({ activeProviderId: e.target.value || null })}
-            className="w-full bg-navy-950 border border-white/10 rounded-lg px-4 py-2 text-white"
+            className="w-full bg-navy-950 border border-c-border-subtle rounded-lg px-4 py-2 text-white"
           >
             <option value="">Let Users Choose</option>
             {orgConfig.availableProviders.map((p) => (

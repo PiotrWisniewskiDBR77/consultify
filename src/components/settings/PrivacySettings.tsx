@@ -282,7 +282,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
                         'p-4 rounded-lg border transition-all text-left',
                         isSelected
                           ? 'bg-c-surface-raised border-c-border-strong shadow-sm.06]'
-                          : 'bg-c-surface-raised border-c-border-subtle hover:border-c-border dark:hover:border-white/20'
+                          : 'bg-c-surface-raised border-c-border-subtle hover:border-c-border dark:hover:border-c-border'
                       )}
                     >
                       <Icon
@@ -332,7 +332,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
                         'p-4 rounded-lg border transition-all text-left',
                         isSelected
                           ? 'bg-c-surface-raised border-c-border-strong shadow-sm.06]'
-                          : 'bg-c-surface-raised border-c-border-subtle hover:border-c-border dark:hover:border-white/20'
+                          : 'bg-c-surface-raised border-c-border-subtle hover:border-c-border dark:hover:border-c-border'
                       )}
                     >
                       <Icon

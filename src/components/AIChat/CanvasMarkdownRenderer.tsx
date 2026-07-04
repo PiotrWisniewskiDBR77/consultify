@@ -39,7 +39,7 @@ export function CanvasMarkdownRenderer({ text }: { text: string }) {
             const raw = plainText(children);
             if (/^(Area|Purpose|Decision|Owner|Date):/i.test(raw.trim())) {
               return (
-                <p className="mb-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-300">
+                <p className="mb-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:border-c-border-subtle dark:bg-white/[0.03] dark:text-slate-300">
                   {children}
                 </p>
               );
@@ -67,7 +67,7 @@ export function CanvasMarkdownRenderer({ text }: { text: string }) {
             </blockquote>
           ),
           table: ({ children }) => (
-            <div className="my-6 overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/10">
+            <div className="my-6 overflow-x-auto rounded-2xl border border-slate-200 dark:border-c-border-subtle">
               <table /* §27-exempt: renderer artefaktu AI/markdown read-only, poza zakresem 1.2 */  className="min-w-full divide-y divide-slate-200 text-sm dark:divide-white/10">
                 {children}
               </table>
@@ -79,7 +79,7 @@ export function CanvasMarkdownRenderer({ text }: { text: string }) {
             </th>
           ),
           td: ({ children }) => (
-            <td className="border-t border-slate-200 px-4 py-3 align-top text-slate-700 dark:border-white/10 dark:text-slate-300">
+            <td className="border-t border-slate-200 px-4 py-3 align-top text-slate-700 dark:border-c-border-subtle dark:text-slate-300">
               {children}
             </td>
           ),

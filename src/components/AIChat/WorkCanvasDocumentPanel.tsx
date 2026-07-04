@@ -539,7 +539,7 @@ function renderFeedbackWithLinks(text: string): React.ReactNode {
 }
 
 const toolbarGroupClass =
-  'flex items-center gap-1 rounded-full border border-slate-200 px-1 dark:border-white/10';
+  'flex items-center gap-1 rounded-full border border-slate-200 px-1 dark:border-c-border-subtle';
 
 function createDocumentState(
   template: StarterTemplate,
@@ -2847,7 +2847,7 @@ function WorkCanvasMarkdownDocumentPanel({
             }}
             data-testid="canvas-active-title"
             aria-label="Canvas document title"
-            className="w-full min-w-0 rounded-lg border border-transparent bg-transparent px-1 py-0.5 text-[15px] font-semibold text-slate-950 outline-none transition-colors hover:border-slate-200 hover:bg-white/60 focus:border-primary-300 focus:bg-white dark:text-white dark:hover:border-white/10 dark:hover:bg-white/[0.04] dark:focus:border-primary-500/50 dark:focus:bg-white/[0.06]"
+            className="w-full min-w-0 rounded-lg border border-transparent bg-transparent px-1 py-0.5 text-[15px] font-semibold text-slate-950 outline-none transition-colors hover:border-slate-200 hover:bg-white/60 focus:border-primary-300 focus:bg-white dark:text-white dark:hover:border-c-border-subtle dark:hover:bg-white/[0.04] dark:focus:border-primary-500/50 dark:focus:bg-white/[0.06]"
           />
         </div>
 
@@ -2859,7 +2859,7 @@ function WorkCanvasMarkdownDocumentPanel({
                 setIsNewCanvasMenuOpen((open) => !open);
                 setIsDiagnosticsOpen(false);
               }}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950 dark:border-c-border-subtle dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
               aria-label={t('canvas.panel.newCanvas', 'New Canvas')}
               aria-expanded={isNewCanvasMenuOpen}
               title={t('canvas.panel.newCanvas', 'New Canvas')}
@@ -2867,7 +2867,7 @@ function WorkCanvasMarkdownDocumentPanel({
               <Plus size={15} />
             </button>
             {isNewCanvasMenuOpen ? (
-              <div className="absolute left-0 z-20 mt-2 w-[280px] rounded-2xl border border-slate-200 bg-white p-2 text-xs shadow-xl dark:border-white/10 dark:bg-navy-800">
+              <div className="absolute left-0 z-20 mt-2 w-[280px] rounded-2xl border border-slate-200 bg-white p-2 text-xs shadow-xl dark:border-c-border-subtle dark:bg-navy-800">
                 <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
                   New Canvas from template
                 </div>
@@ -2973,7 +2973,7 @@ function WorkCanvasMarkdownDocumentPanel({
 
           {pendingDataset ? (
             <div
-              className="absolute right-5 top-16 z-10 w-80 rounded-2xl border border-slate-200 bg-white p-3 text-xs shadow-xl dark:border-white/10 dark:bg-navy-800"
+              className="absolute right-5 top-16 z-10 w-80 rounded-2xl border border-slate-200 bg-white p-3 text-xs shadow-xl dark:border-c-border-subtle dark:bg-navy-800"
               data-testid="canvas-dataset-actions"
             >
               <div className="font-semibold text-slate-900 dark:text-white">
@@ -2994,7 +2994,7 @@ function WorkCanvasMarkdownDocumentPanel({
                         action.titlePrefix
                       )
                     }
-                    className="rounded-full border border-slate-200 px-3 py-1.5 font-medium text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10"
+                    className="rounded-full border border-slate-200 px-3 py-1.5 font-medium text-slate-600 hover:bg-slate-50 dark:border-c-border-subtle dark:text-slate-300 dark:hover:bg-white/10"
                   >
                     {action.label}
                   </button>
@@ -3025,10 +3025,10 @@ function WorkCanvasMarkdownDocumentPanel({
             </button>
             {isDiagnosticsOpen ? (
               <div
-                className="absolute right-0 z-20 mt-2 max-h-[80vh] w-[360px] overflow-auto rounded-2xl border border-slate-200 bg-white p-3 text-xs shadow-xl dark:border-white/10 dark:bg-navy-800"
+                className="absolute right-0 z-20 mt-2 max-h-[80vh] w-[360px] overflow-auto rounded-2xl border border-slate-200 bg-white p-3 text-xs shadow-xl dark:border-c-border-subtle dark:bg-navy-800"
                 data-testid="canvas-diagnostics-menu"
               >
-                <div className="space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
+                <div className="space-y-1.5 border-b border-slate-200 pb-3 dark:border-c-border-subtle">
                   <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
                     Widok canvas
                   </div>
@@ -3063,7 +3063,7 @@ function WorkCanvasMarkdownDocumentPanel({
                   </div>
                 </div>
 
-                <div className="mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
+                <div className="mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-c-border-subtle">
                   <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
                     {t('canvas.panel.common.title', 'Most common actions')}
                   </div>
@@ -3147,7 +3147,7 @@ function WorkCanvasMarkdownDocumentPanel({
                   ].map((hint) => (
                     <div
                       key={hint.title}
-                      className="rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-2 dark:border-white/10 dark:bg-white/[0.03]"
+                      className="rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-2 dark:border-c-border-subtle dark:bg-white/[0.03]"
                     >
                       <div className="text-xs font-semibold text-slate-800 dark:text-slate-100">
                         {hint.title}
@@ -3171,7 +3171,7 @@ function WorkCanvasMarkdownDocumentPanel({
                   ))}
                 </div>
 
-                <div className="mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
+                <div className="mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-c-border-subtle">
                   <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
                     {t('canvas.panel.addElement.title', 'Add element')}
                   </div>
@@ -3206,7 +3206,7 @@ function WorkCanvasMarkdownDocumentPanel({
                       onChange={(event) => setQuickAddPrompt(event.target.value)}
                       placeholder={t('canvas.panel.addElement.promptPlaceholder', 'Describe to Teresa what to add...')}
                       aria-label="Element instruction for Teresa"
-                      className="min-h-16 w-full resize-y rounded-xl border border-slate-200 bg-white p-2.5 text-xs leading-5 text-slate-800 outline-none focus:border-primary-400 dark:border-white/15 dark:bg-navy-950 dark:text-slate-100"
+                      className="min-h-16 w-full resize-y rounded-xl border border-slate-200 bg-white p-2.5 text-xs leading-5 text-slate-800 outline-none focus:border-primary-400 dark:border-c-border-subtle dark:bg-navy-950 dark:text-slate-100"
                     />
                     <button
                       type="button"
@@ -3218,7 +3218,7 @@ function WorkCanvasMarkdownDocumentPanel({
                   </div>
                 </div>
 
-                <div className="mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
+                <div className="mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-c-border-subtle">
                   <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
                     {t('canvas.panel.selection.title', 'AI on selection')}
                   </div>
@@ -3263,7 +3263,7 @@ function WorkCanvasMarkdownDocumentPanel({
                       onChange={(event) => setSelectionAiPrompt(event.target.value)}
                       aria-label="Selection AI instruction"
                       placeholder={t('canvas.panel.selection.promptPlaceholder', 'Instruction for Teresa on the selected fragment...')}
-                      className="min-h-16 w-full resize-y rounded-xl border border-slate-200 bg-white p-2.5 text-xs leading-5 text-slate-800 outline-none focus:border-primary-400 dark:border-white/15 dark:bg-navy-950 dark:text-slate-100"
+                      className="min-h-16 w-full resize-y rounded-xl border border-slate-200 bg-white p-2.5 text-xs leading-5 text-slate-800 outline-none focus:border-primary-400 dark:border-c-border-subtle dark:bg-navy-950 dark:text-slate-100"
                     />
                     <div className="mt-2 flex gap-2">
                       <button
@@ -3276,7 +3276,7 @@ function WorkCanvasMarkdownDocumentPanel({
                       <button
                         type="button"
                         onClick={() => setSelectionAiPrompt('')}
-                        className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
+                        className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:border-c-border-subtle dark:text-slate-200 dark:hover:bg-white/10"
                       >
                         {t('canvas.panel.selection.clear', 'Clear')}
                       </button>
@@ -3284,7 +3284,7 @@ function WorkCanvasMarkdownDocumentPanel({
                   </div>
                 </div>
 
-                <div className="mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
+                <div className="mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-c-border-subtle">
                   <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
                     {t('canvas.panel.manualEdit.title', 'Manual editing')}
                   </div>
@@ -3306,7 +3306,7 @@ function WorkCanvasMarkdownDocumentPanel({
                   </button>
                 </div>
 
-                <div className="mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
+                <div className="mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-c-border-subtle">
                   <div className="flex items-center justify-between gap-2 px-2.5 pb-1">
                     <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
                       {t('canvas.panel.templates.title', 'Starter templates')}
@@ -3314,33 +3314,33 @@ function WorkCanvasMarkdownDocumentPanel({
                     <button
                       type="button"
                       onClick={() => setIsTemplateBuilderOpen((open) => !open)}
-                      className="rounded-full border border-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-600 hover:bg-slate-100 dark:border-white/15 dark:text-slate-300 dark:hover:bg-white/10"
+                      className="rounded-full border border-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-600 hover:bg-slate-100 dark:border-c-border-subtle dark:text-slate-300 dark:hover:bg-white/10"
                     >
                       + {t('canvas.panel.templates.new', 'New template')}
                     </button>
                   </div>
                   {isTemplateBuilderOpen ? (
-                    <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-2.5 dark:border-white/10 dark:bg-white/[0.03]">
+                    <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-2.5 dark:border-c-border-subtle dark:bg-white/[0.03]">
                       <input
                         value={templateBuilderName}
                         onChange={(event) => setTemplateBuilderName(event.target.value)}
                         placeholder={t('canvas.panel.templates.namePlaceholder', 'Template name')}
                         aria-label="Template name"
-                        className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-primary-400 dark:border-white/15 dark:bg-navy-950 dark:text-slate-100"
+                        className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-primary-400 dark:border-c-border-subtle dark:bg-navy-950 dark:text-slate-100"
                       />
                       <input
                         value={templateBuilderGoal}
                         onChange={(event) => setTemplateBuilderGoal(event.target.value)}
                         placeholder={t('canvas.panel.templates.goalPlaceholder', 'Template goal in one sentence')}
                         aria-label="Template goal"
-                        className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-primary-400 dark:border-white/15 dark:bg-navy-950 dark:text-slate-100"
+                        className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-primary-400 dark:border-c-border-subtle dark:bg-navy-950 dark:text-slate-100"
                       />
                       <input
                         value={templateBuilderSections}
                         onChange={(event) => setTemplateBuilderSections(event.target.value)}
                         placeholder={t('canvas.panel.templates.sectionsPlaceholder', 'Sections (comma-separated)')}
                         aria-label="Template sections"
-                        className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-primary-400 dark:border-white/15 dark:bg-navy-950 dark:text-slate-100"
+                        className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-primary-400 dark:border-c-border-subtle dark:bg-navy-950 dark:text-slate-100"
                       />
                       <div className="flex gap-2">
                         <button
@@ -3353,7 +3353,7 @@ function WorkCanvasMarkdownDocumentPanel({
                         <button
                           type="button"
                           onClick={() => setIsTemplateBuilderOpen(false)}
-                          className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:border-white/15 dark:text-slate-300 dark:hover:bg-white/10"
+                          className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:border-c-border-subtle dark:text-slate-300 dark:hover:bg-white/10"
                         >
                           {t('canvas.panel.templates.close', 'Close')}
                         </button>
@@ -3385,7 +3385,7 @@ function WorkCanvasMarkdownDocumentPanel({
                   ))}
                 </div>
 
-                <div className="mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
+                <div className="mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-c-border-subtle">
                   <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
                     {t('canvas.panel.workspaceActions.title', 'Workspace actions')}
                   </div>
@@ -3406,7 +3406,7 @@ function WorkCanvasMarkdownDocumentPanel({
                     written by both backend writers). */}
                 {(documentState.materializedTo?.length || 0) > 0 ? (
                   <div
-                    className="mt-3 space-y-1 border-b border-slate-200 pb-3 dark:border-white/10"
+                    className="mt-3 space-y-1 border-b border-slate-200 pb-3 dark:border-c-border-subtle"
                     data-testid="canvas-materialized-to"
                   >
                     <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
@@ -3443,7 +3443,7 @@ function WorkCanvasMarkdownDocumentPanel({
                 ) : null}
 
                 {pendingDataset ? (
-                  <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs dark:border-white/10 dark:bg-white/[0.03]">
+                  <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs dark:border-c-border-subtle dark:bg-white/[0.03]">
                     <div className="font-semibold text-slate-900 dark:text-white">
                       Dataset ready: {pendingDataset.filename}
                     </div>
@@ -3462,7 +3462,7 @@ function WorkCanvasMarkdownDocumentPanel({
                               action.titlePrefix
                             )
                           }
-                          className="rounded-full border border-slate-200 px-3 py-1.5 font-medium text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10"
+                          className="rounded-full border border-slate-200 px-3 py-1.5 font-medium text-slate-600 hover:bg-slate-50 dark:border-c-border-subtle dark:text-slate-300 dark:hover:bg-white/10"
                         >
                           {action.label}
                         </button>
@@ -3633,7 +3633,7 @@ function WorkCanvasMarkdownDocumentPanel({
                   </button>
                 </div>
 
-                <div className="mt-3 border-t border-slate-200 pt-3 dark:border-white/10">
+                <div className="mt-3 border-t border-slate-200 pt-3 dark:border-c-border-subtle">
                   <button
                     type="button"
                     onClick={() => setIsMdPropertiesOpen((open) => !open)}
@@ -3691,7 +3691,7 @@ function WorkCanvasMarkdownDocumentPanel({
                   ) : null}
                 </div>
 
-                <div className="mt-3 space-y-2 border-t border-slate-200 pt-3 text-slate-600 dark:border-white/10 dark:text-slate-300">
+                <div className="mt-3 space-y-2 border-t border-slate-200 pt-3 text-slate-600 dark:border-c-border-subtle dark:text-slate-300">
                   <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
                     {t('canvas.panel.capabilities.title', 'Capabilities and workflow')}
                   </div>
@@ -3730,7 +3730,7 @@ function WorkCanvasMarkdownDocumentPanel({
                           setSelectedWorkflowTemplate(event.target.value as CanvasWorkflowTemplate)
                         }
                         aria-label={t('canvas.panel.workflowTemplate', 'Workflow template')}
-                        className="max-w-[190px] rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 outline-none hover:bg-slate-50 dark:border-white/10 dark:bg-white/10 dark:text-slate-200"
+                        className="max-w-[190px] rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 outline-none hover:bg-slate-50 dark:border-c-border-subtle dark:bg-white/10 dark:text-slate-200"
                       >
                         {workflowTemplateOptions.map((template) => (
                           <option key={template.id} value={template.id}>
@@ -3780,7 +3780,7 @@ function WorkCanvasMarkdownDocumentPanel({
                   ) : null}
                   {documentState.workflowRuns?.length ? (
                     <div
-                      className="mt-1 max-h-72 space-y-2 overflow-auto border-t border-slate-200 px-2.5 pt-3 dark:border-white/10"
+                      className="mt-1 max-h-72 space-y-2 overflow-auto border-t border-slate-200 px-2.5 pt-3 dark:border-c-border-subtle"
                       data-testid="canvas-workflow-ledger"
                     >
                       {documentState.workflowRuns.map((workflow) => {
@@ -3924,7 +3924,7 @@ function WorkCanvasMarkdownDocumentPanel({
                                 </ul>
                               </div>
                             ) : null}
-                            <div className="mt-3 space-y-2 border-t border-slate-200 pt-2 dark:border-white/10">
+                            <div className="mt-3 space-y-2 border-t border-slate-200 pt-2 dark:border-c-border-subtle">
                               <div className="flex flex-wrap items-center gap-2">
                                 <input
                                   value={
@@ -3943,8 +3943,8 @@ function WorkCanvasMarkdownDocumentPanel({
                                   aria-label={`Reviewer for ${workflow.title}`}
                                   className={
                                     isWorkflowReviewUpdating
-                                      ? 'min-w-[160px] cursor-not-allowed rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[11px] text-slate-600 outline-none dark:border-white/10 dark:bg-white/10 dark:text-slate-500'
-                                      : 'min-w-[160px] rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-700 outline-none dark:border-white/10 dark:bg-white/10 dark:text-slate-100'
+                                      ? 'min-w-[160px] cursor-not-allowed rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[11px] text-slate-600 outline-none dark:border-c-border-subtle dark:bg-white/10 dark:text-slate-500'
+                                      : 'min-w-[160px] rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-700 outline-none dark:border-c-border-subtle dark:bg-white/10 dark:text-slate-100'
                                   }
                                 />
                                 <button
@@ -3990,8 +3990,8 @@ function WorkCanvasMarkdownDocumentPanel({
                                   aria-label={`Comment for ${workflow.title}`}
                                   className={
                                     isWorkflowCommentAdding
-                                      ? 'min-w-[220px] flex-1 cursor-not-allowed rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[11px] text-slate-600 outline-none dark:border-white/10 dark:bg-white/10 dark:text-slate-500'
-                                      : 'min-w-[220px] flex-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-700 outline-none dark:border-white/10 dark:bg-white/10 dark:text-slate-100'
+                                      ? 'min-w-[220px] flex-1 cursor-not-allowed rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[11px] text-slate-600 outline-none dark:border-c-border-subtle dark:bg-white/10 dark:text-slate-500'
+                                      : 'min-w-[220px] flex-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-700 outline-none dark:border-c-border-subtle dark:bg-white/10 dark:text-slate-100'
                                   }
                                 />
                                 <button
@@ -4024,7 +4024,7 @@ function WorkCanvasMarkdownDocumentPanel({
                   ) : null}
                 </div>
 
-                <details className="mt-3 border-t border-slate-200 pt-3 dark:border-white/10">
+                <details className="mt-3 border-t border-slate-200 pt-3 dark:border-c-border-subtle">
                   <summary className="cursor-pointer select-none rounded-xl px-2.5 py-2 font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10">
                     Zaawansowane
                   </summary>
@@ -4072,7 +4072,7 @@ function WorkCanvasMarkdownDocumentPanel({
                 </details>
 
                 {isVersionsOpen ? (
-                  <div className="mt-3 max-h-56 space-y-2 overflow-auto border-t border-slate-200 pt-3 dark:border-white/10">
+                  <div className="mt-3 max-h-56 space-y-2 overflow-auto border-t border-slate-200 pt-3 dark:border-c-border-subtle">
                     {isVersionsLoading ? (
                       <div className="text-slate-500 dark:text-slate-400">Loading versions...</div>
                     ) : versions.length === 0 ? (
@@ -4308,7 +4308,7 @@ function WorkCanvasMarkdownDocumentPanel({
             {isHydrating ? (
               <div
                 data-testid="canvas-loading-skeleton"
-                className="min-h-[680px] flex-1 animate-pulse rounded-[1.35rem] border border-white/10 bg-navy-800 p-10"
+                className="min-h-[680px] flex-1 animate-pulse rounded-[1.35rem] border border-c-border-subtle bg-navy-800 p-10"
               >
                 <div className="h-8 w-2/3 rounded bg-white/10" />
                 <div className="mt-8 h-4 w-full rounded bg-white/10" />
@@ -4317,7 +4317,7 @@ function WorkCanvasMarkdownDocumentPanel({
               </div>
             ) : mode === 'rich' ? (
               <div
-                className="flex flex-1 flex-col min-h-[680px] rounded-[1.35rem] border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-navy-900 dark:shadow-none overflow-hidden"
+                className="flex flex-1 flex-col min-h-[680px] rounded-[1.35rem] border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.08)] dark:border-c-border-subtle dark:bg-navy-900 dark:shadow-none overflow-hidden"
                 data-testid="canvas-rich-editor"
               >
                 <CanvasRichEditor
@@ -4368,7 +4368,7 @@ function WorkCanvasMarkdownDocumentPanel({
                   onSelect={captureMarkdownSelection}
                   onKeyUp={captureMarkdownSelection}
                   data-testid="canvas-md-view"
-                  className="min-h-[680px] flex-1 resize-y rounded-[1.35rem] border border-slate-200 bg-white p-6 font-mono text-sm leading-6 text-slate-800 shadow-[0_24px_80px_rgba(15,23,42,0.08)] outline-none transition-colors focus:border-primary-300 dark:border-white/10 dark:bg-navy-900 dark:text-slate-100"
+                  className="min-h-[680px] flex-1 resize-y rounded-[1.35rem] border border-slate-200 bg-white p-6 font-mono text-sm leading-6 text-slate-800 shadow-[0_24px_80px_rgba(15,23,42,0.08)] outline-none transition-colors focus:border-primary-300 dark:border-c-border-subtle dark:bg-navy-900 dark:text-slate-100"
                   spellCheck={false}
                 />
               </div>
@@ -4378,7 +4378,7 @@ function WorkCanvasMarkdownDocumentPanel({
                 data-testid="canvas-document-view"
                 onMouseUp={captureDocumentSelection}
                 onKeyUp={captureDocumentSelection}
-                className="min-h-[680px] flex-1 rounded-[1.35rem] border border-slate-200 bg-white px-8 py-10 shadow-[0_24px_80px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-navy-900 dark:shadow-none md:px-12"
+                className="min-h-[680px] flex-1 rounded-[1.35rem] border border-slate-200 bg-white px-8 py-10 shadow-[0_24px_80px_rgba(15,23,42,0.08)] dark:border-c-border-subtle dark:bg-navy-900 dark:shadow-none md:px-12"
               >
                 {selectionBlockActions}
                 <CanvasMarkdownRenderer text={documentState.contentMd} />

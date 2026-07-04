@@ -282,7 +282,7 @@ export const VoiceSettings: React.FC<{ className?: string }> = ({ className = ''
                 <button
                   onClick={testing ? stopTest : testVoice}
                   className="flex items-center gap-2 px-4 py-2
-                    border border-white/10 text-c-text-secondary rounded-lg
+                    border border-c-border-subtle text-c-text-secondary rounded-lg
                     hover:bg-c-surface-raised hover:text-white transition-all duration-200"
                 >
                   {testing ? <Square size={16} /> : <Play size={16} />}

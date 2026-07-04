@@ -366,7 +366,7 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                   filteredPrompts.map((prompt) => (
                     <div
                       key={prompt.id}
-                      className="p-3 bg-c-surface-raised border border-c-border-subtle rounded-lg hover:border-c-border dark:hover:border-white/10 transition-colors group"
+                      className="p-3 bg-c-surface-raised border border-c-border-subtle rounded-lg hover:border-c-border dark:hover:border-c-border-subtle transition-colors group"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">

@@ -364,7 +364,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   ) : null;
 
   return (
-    <div className="bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/5">
+    <div className="bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-c-border-subtle">
       {/* Main Navigation Row */}
       <div className="flex items-center justify-between px-4 py-3">
         {/* Left: Search + Tabs + Status Filters */}
@@ -475,7 +475,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
 
           {/* View Mode Toggle — V3-A03: canonical order */}
           {orderedViewModes.length > 1 && (
-            <div className="flex items-center bg-slate-50 dark:bg-navy-950/70 border border-slate-200/60 dark:border-white/5 rounded-full p-1 h-9">
+            <div className="flex items-center bg-slate-50 dark:bg-navy-950/70 border border-slate-200/60 dark:border-c-border-subtle rounded-full p-1 h-9">
               {orderedViewModes.map((mode) => {
                 const config = viewModeConfig[mode];
                 const isActive = viewMode === mode;

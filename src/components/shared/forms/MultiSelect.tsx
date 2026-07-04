@@ -43,7 +43,7 @@ const TRIGGER_CLASS =
   'flex min-h-10 w-full items-center justify-between gap-2 rounded-xl border ' +
   'border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] ' +
   'px-3 py-1.5 text-left text-sm transition-colors ' +
-  'hover:border-slate-300 dark:hover:border-white/20 ' +
+  'hover:border-slate-300 dark:hover:border-c-border ' +
   'focus:outline-none focus:ring-2 focus:ring-primary-500/40 ' +
   'disabled:cursor-not-allowed disabled:opacity-60';
 
@@ -196,7 +196,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
                             'flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors',
                             isSelected
                               ? 'border-slate-500 bg-slate-700 dark:border-slate-400 dark:bg-slate-500 text-white'
-                              : 'border-slate-300 bg-white dark:border-white/20 dark:bg-navy-900'
+                              : 'border-slate-300 bg-white dark:border-c-border dark:bg-navy-900'
                           )}
                         >
                           {isSelected ? <Check size={12} /> : null}

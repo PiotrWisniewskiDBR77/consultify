@@ -211,7 +211,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                       'hover:scale-[1.02] active:scale-[0.98]',
                       isSelected
                         ? 'border-c-border-strong bg-c-surface-raised'
-                        : 'border-c-border-subtle hover:border-c-border dark:hover:border-white/20 bg-c-surface-raised'
+                        : 'border-c-border-subtle hover:border-c-border dark:hover:border-c-border bg-c-surface-raised'
                     )}
                   >
                     <div

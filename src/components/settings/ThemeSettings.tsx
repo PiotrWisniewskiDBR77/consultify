@@ -261,7 +261,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                       'hover:scale-[1.02] active:scale-[0.98]',
                       isSelected
                         ? 'border-c-border-strong bg-c-surface-raised'
-                        : 'border-c-border-subtle hover:border-c-border dark:hover:border-white/20 bg-c-surface-raised'
+                        : 'border-c-border-subtle hover:border-c-border dark:hover:border-c-border bg-c-surface-raised'
                     )}
                   >
                     <div
@@ -318,7 +318,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                       'group relative w-12 h-12 rounded-xl transition-all duration-200',
                       'hover:scale-110 active:scale-95',
                       color.class,
-                      isSelected && 'ring-2 ring-white/80 ring-offset-2 ring-offset-navy-900'
+                      isSelected && 'ring-2 ring-c-border ring-offset-2 ring-offset-navy-900'
                     )}
                     title={colorName}
                   >
@@ -401,7 +401,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                       'hover:scale-[1.02] active:scale-[0.98]',
                       isSelected
                         ? 'border-c-border-strong bg-c-surface-raised'
-                        : 'border-c-border-subtle hover:border-c-border dark:hover:border-white/20 bg-c-surface-raised'
+                        : 'border-c-border-subtle hover:border-c-border dark:hover:border-c-border bg-c-surface-raised'
                     )}
                   >
                     {/* Mini density preview */}

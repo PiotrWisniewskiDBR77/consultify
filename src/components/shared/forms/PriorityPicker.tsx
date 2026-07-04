@@ -66,7 +66,7 @@ const BASE_CHIP =
 
 const INACTIVE_CHIP =
   'border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] ' +
-  'text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-white/20';
+  'text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-c-border';
 
 export const PriorityPicker: React.FC<PriorityPickerProps> = ({
   value,

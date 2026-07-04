@@ -278,7 +278,7 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
                               'px-3 py-2 rounded-lg border-2 transition-all text-sm',
                               prefs.desktopPosition === opt.value
                                 ? 'border-c-accent bg-c-accent-soft text-c-accent'
-                                : 'border-white/5 text-c-text-secondary hover:border-c-accent'
+                                : 'border-c-border-subtle text-c-text-secondary hover:border-c-accent'
                             )}
                           >
                             {t(`settings.desktopSounds.pos_${opt.value}`, opt.label)}

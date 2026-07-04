@@ -711,7 +711,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                               className={`px-3 py-1.5 text-xs rounded-full border transition-all flex items-center gap-1.5 ${
                                 isSelected
                                   ? 'bg-primary-100 dark:bg-primary-600/20 border-primary-300 dark:border-primary-500 text-primary-700 dark:text-primary-200'
-                                  : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 hover:border-slate-300 dark:hover:border-white/20'
+                                  : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 hover:border-slate-300 dark:hover:border-c-border'
                               }`}
                             >
                               {option.label}
