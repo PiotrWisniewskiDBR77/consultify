@@ -443,7 +443,7 @@ function ObservationCard({
               type="button"
               onClick={handleSubmit}
               disabled={!selectedPrompt}
-              className="rounded-md bg-primary-600 px-3 py-1 text-[11px] font-medium text-white transition-colors hover:bg-primary-700 disabled:opacity-40 dark:bg-primary-500 dark:hover:bg-primary-600"
+              className="rounded-md bg-navy-900 dark:bg-[#F4F7FB] px-3 py-1 text-[11px] font-medium text-white dark:text-navy-950 transition-colors hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:opacity-40"
             >
               {isPolish ? 'Pogłęb' : 'Explore'}
             </button>
@@ -1229,7 +1229,7 @@ function RecommendationCard({
             ) : (
               <button
                 onClick={handleCreate}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-primary-700 hover:shadow-md dark:bg-primary-500 dark:hover:bg-primary-600"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] px-3 py-2 text-xs font-semibold text-white dark:text-navy-950 shadow-sm transition-all hover:bg-navy-800 dark:hover:bg-[#DDE5EF] hover:shadow-md"
               >
                 <Rocket className="h-3.5 w-3.5" />
                 {isPolish ? 'Utwórz inicjatywę' : 'Create initiative'}
