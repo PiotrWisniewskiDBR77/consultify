@@ -109,19 +109,30 @@ const keys = {
 
 export function useConnectors(workspaceId: string) {
   const qc = useQueryClient();
-  const base = `/workspaces/${workspaceId}/connectors`;
+  // Real backend mount: connector CRUD/test/run/schedule/auto-map lives under
+  // `/api/table-platform/connectors` (server/src/routes/data-collection.routes.ts),
+  // scoped by `workspaceId` as a query param (list) or body field (create) — NOT
+  // `/api/workspaces/:id/connectors`, which has no matching mount and always 404s.
+  const base = '/table-platform/connectors';
 
   /* ---- Queries ---- */
 
   const listQuery = useQuery<Connector[]>({
     queryKey: keys.all(workspaceId),
-    queryFn: () => Api.get(base),
+    queryFn: () => Api.get(`${base}?workspaceId=${encodeURIComponent(workspaceId)}`),
     enabled: !!workspaceId,
   });
 
   const scheduledQuery = useQuery<Connector[]>({
     queryKey: keys.scheduled(workspaceId),
-    queryFn: () => Api.get(`${base}/scheduled`),
+    queryFn: async () => {
+      const res = await Api.get(`${base}/scheduled`);
+      // Endpoint returns { connectors: [...] } (org-wide, not workspace-scoped).
+      const all: Connector[] = (res as any)?.connectors ?? [];
+      return all.filter(
+        (c) => c.workspaceId === workspaceId || (c as any).workspace_id === workspaceId
+      );
+    },
     enabled: !!workspaceId,
   });
 
@@ -136,7 +147,16 @@ export function useConnectors(workspaceId: string) {
       fieldMappings: FieldMapping[];
       schedule?: { interval: string } | null;
       runNow?: boolean;
-    }) => Api.post(base, payload),
+    }) =>
+      Api.post(base, {
+        workspaceId,
+        name: payload.name,
+        connectorType: payload.type,
+        config: payload.config,
+        targetTableId: payload.tableId,
+        fieldMapping: payload.fieldMappings,
+        schedule: payload.schedule,
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: keys.all(workspaceId) });
       qc.invalidateQueries({ queryKey: keys.scheduled(workspaceId) });
@@ -204,6 +224,14 @@ export function useConnectors(workspaceId: string) {
     [workspaceId, base]
   );
 
+  // TODO(tp): backend missing — there is no `/test-config` route on the server
+  // (server/src/routes/data-collection.routes.ts only exposes test/run/etc. for
+  // an already-created connector via `/connectors/:id/test`). Pre-creation
+  // connection testing against a draft config would need a new endpoint that
+  // dynamically validates csv/google_sheets/airtable/postgresql/jira/webhook
+  // configs before a `tp_connectors` row exists. Not built here — this call
+  // 404s, is caught, and surfaces as a normal "Connection failed" error in the
+  // wizard UI rather than an unhandled exception.
   const testConnection = useCallback(
     async (
       config: Record<string, unknown>,
