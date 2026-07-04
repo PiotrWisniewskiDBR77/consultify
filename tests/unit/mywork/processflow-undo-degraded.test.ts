@@ -1,9 +1,8 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import type { Node, Edge } from 'reactflow';
 
 import { useProcessFlowUndoRedo } from '../../../src/components/MyWork/processflow/useProcessFlowUndoRedo';
-import { useProcessFlowDegraded } from '../../../src/components/MyWork/processflow/useProcessFlowDegraded';
 
 describe('useProcessFlowUndoRedo', () => {
   const makeOpts = () => {
@@ -106,65 +105,7 @@ describe('useProcessFlowUndoRedo', () => {
   });
 });
 
-const originalFetch = global.fetch;
-const mockFetch = vi.fn();
-
-beforeEach(() => {
-  mockFetch.mockReset();
-  global.fetch = mockFetch as typeof fetch;
-});
-
-afterEach(() => {
-  global.fetch = originalFetch;
-});
-
-describe('useProcessFlowDegraded', () => {
-  it('checkHealth calls health endpoint and sets state', async () => {
-    const healthData = {
-      degraded: true,
-      scenario: 'offline_mode',
-      posture: 'offline',
-      recovery: 'Server unreachable',
-    };
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ data: healthData }) });
-
-    const { result } = renderHook(() => useProcessFlowDegraded({ processId: 'p1' }));
-
-    await act(async () => {
-      await result.current.checkHealth();
-    });
-
-    expect(result.current.isDegraded).toBe(true);
-    expect(result.current.activeScenarios).toHaveLength(1);
-    expect(result.current.activeScenarios[0].scenario).toBe('offline_mode');
-  });
-
-  it('handles empty scenarios gracefully', async () => {
-    const healthData = {
-      degraded: false,
-      scenario: null,
-    };
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ data: healthData }) });
-
-    const { result } = renderHook(() => useProcessFlowDegraded({ processId: 'p2' }));
-
-    await act(async () => {
-      await result.current.checkHealth();
-    });
-
-    expect(result.current.isDegraded).toBe(false);
-    expect(result.current.activeScenarios).toHaveLength(0);
-  });
-
-  it('handles fetch failure gracefully', async () => {
-    mockFetch.mockRejectedValueOnce(new Error('Network error'));
-
-    const { result } = renderHook(() => useProcessFlowDegraded({ processId: 'p3' }));
-
-    await act(async () => {
-      await result.current.checkHealth();
-    });
-
-    expect(result.current.isDegraded).toBe(true);
-  });
-});
+// Note: useProcessFlowDegraded (V8 health-poll no-op) was removed as dead code
+// (M07/F1, DP-7) — the canonical persistence path is blob-sync (my_idea_maps)
+// with no V8 mirror to be "degraded" from. Its degraded-mode banner in
+// IdeaProcessFlowTool.tsx was removed alongside it.

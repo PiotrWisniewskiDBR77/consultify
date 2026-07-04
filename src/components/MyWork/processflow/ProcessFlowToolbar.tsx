@@ -2,6 +2,7 @@ import {
   AlertTriangle,
   BarChart3,
   Copy,
+  GitBranch,
   GitMerge,
   LayoutGrid,
   Loader2,
@@ -10,6 +11,7 @@ import {
   Redo2,
   Rocket,
   Save,
+  Sparkles,
   Trash2,
   Undo2,
 } from 'lucide-react';
@@ -18,6 +20,14 @@ import React from 'react';
 import TeresaMark from '../../shared/TeresaMark';
 import { type ProcessFlowSemanticKit } from '../canvas/canvasOsContract';
 import { type FlowShape, SHAPE_CONFIG } from './FlowNodeComponent';
+
+// DP-5: "Propozycja AI" (AI Proposal panel) is hidden until F2 rewires
+// useProcessFlowAIProposal / AIProposalPanel from the dead V8
+// `/process-flow/:id/ai-proposals` route to a real AI endpoint
+// (e.g. /my-ideas/:id/ai-generate). The panel and hook are kept intact so F2
+// only needs to flip this constant once the backend exists.
+export const AI_PROPOSAL_ENABLED = false;
+
 // ── Re-export types ──────────────────────────────────────────────────────────
 
 export type ProcessFlowMode = 'classic' | 'automation' | 'vsm';
@@ -121,6 +131,10 @@ export interface ProcessFlowToolbarProps {
   generateSummary: () => void;
   showKPIDashboard: boolean;
   setShowKPIDashboard: React.Dispatch<React.SetStateAction<boolean>>;
+  showReadbackPanel?: boolean;
+  onOpenReadback?: () => void;
+  showAIPanel?: boolean;
+  onOpenAIProposal?: () => void;
   canUndo: boolean;
   canRedo: boolean;
   undo: () => void;
@@ -167,6 +181,10 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
   generateSummary,
   showKPIDashboard,
   setShowKPIDashboard,
+  showReadbackPanel,
+  onOpenReadback,
+  showAIPanel,
+  onOpenAIProposal,
   canUndo,
   canRedo,
   undo,
@@ -385,6 +403,37 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               )}
               {isPl ? 'Podsumuj' : 'Summary'}
             </button>
+            {onOpenReadback && (
+              <button
+                type="button"
+                onClick={onOpenReadback}
+                className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
+                  showReadbackPanel
+                    ? 'text-indigo-700 bg-indigo-50 dark:bg-indigo-900/20 dark:text-indigo-300'
+                    : 'text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
+                }`}
+                title={isPl ? 'Odczyt semantyczny' : 'Semantic readback'}
+              >
+                <GitBranch size={14} />
+                {isPl ? 'Odczyt' : 'Readback'}
+              </button>
+            )}
+            {AI_PROPOSAL_ENABLED && onOpenAIProposal && (
+              <button
+                type="button"
+                onClick={onOpenAIProposal}
+                disabled={locked}
+                className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors disabled:opacity-40 ${
+                  showAIPanel
+                    ? 'text-primary-700 bg-primary-50 dark:bg-primary-900/20 dark:text-primary-300'
+                    : 'text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20'
+                }`}
+                title={isPl ? 'Propozycja AI' : 'AI proposal'}
+              >
+                <Sparkles size={14} />
+                {isPl ? 'Propozycja AI' : 'AI Proposal'}
+              </button>
+            )}
           </div>
         </div>
 

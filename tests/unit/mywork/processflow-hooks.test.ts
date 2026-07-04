@@ -1,6 +1,7 @@
 import type { RefObject } from 'react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
+import type { Node, Edge } from 'reactflow';
 
 import { useProcessFlowValidation } from '../../../src/components/MyWork/processflow/useProcessFlowValidation';
 import { useProcessFlowAIProposal } from '../../../src/components/MyWork/processflow/useProcessFlowAIProposal';
@@ -19,48 +20,96 @@ afterEach(() => {
   global.fetch = originalFetch;
 });
 
-describe('useProcessFlowValidation', () => {
-  it('validate calls backend and stores result', async () => {
-    const validationResult = { valid: true, issues: [], validated_at: '2026-04-11T00:00:00Z' };
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ data: validationResult }) });
+// ── Client-side hooks (DP-7: V8 process-flow routes cut) ────────────────────
+// validate/fetchReadback/exportAs('json'|'readback') no longer hit the
+// network — they compute from the in-memory graph. These tests assert that
+// no fetch happens and the computed shape matches what the consumer panels
+// expect.
 
+const startNode: Node = {
+  id: 'n-start',
+  type: 'flowNode',
+  position: { x: 0, y: 0 },
+  data: { shape: 'start', label: 'Start' },
+};
+const endNode: Node = {
+  id: 'n-end',
+  type: 'flowNode',
+  position: { x: 200, y: 0 },
+  data: { shape: 'end', label: 'End' },
+};
+const edge1: Edge = { id: 'e1', source: 'n-start', target: 'n-end' };
+
+describe('useProcessFlowValidation (client-side)', () => {
+  it('validate computes a result locally without any fetch', async () => {
     const { result } = renderHook(() =>
-      useProcessFlowValidation({ processId: 'p1', nodes: [], edges: [], autoValidate: false })
+      useProcessFlowValidation({
+        processId: 'p1',
+        nodes: [startNode, endNode],
+        edges: [edge1],
+        semanticKit: 'classic' as any,
+        autoValidate: false,
+      })
     );
 
     await act(async () => {
       await result.current.validate();
     });
 
-    expect(result.current.result).toEqual(validationResult);
-    expect(mockFetch).toHaveBeenCalledWith(
-      '/api/v8/process-flow/p1/validate',
-      expect.objectContaining({ method: 'POST' })
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(result.current.result).not.toBeNull();
+    expect(result.current.result?.valid).toBe(true);
+    expect(result.current.result?.issues).toEqual([]);
+  });
+
+  it('reports a semantic_first error when Start node is missing', async () => {
+    const { result } = renderHook(() =>
+      useProcessFlowValidation({
+        processId: 'p1',
+        nodes: [endNode],
+        edges: [],
+        semanticKit: 'classic' as any,
+        autoValidate: false,
+      })
     );
+
+    await act(async () => {
+      await result.current.validate();
+    });
+
+    expect(result.current.result?.valid).toBe(false);
+    expect(
+      result.current.result?.issues.some((i) => i.layer === 'semantic_first' && i.severity === 'error')
+    ).toBe(true);
   });
 
   it('issuesForObject filters by object_id', async () => {
-    const validationResult = {
-      valid: false,
-      issues: [
-        { layer: 'semantic_first', severity: 'error', object_id: 'n1', rule: 'r1', message: 'err' },
-        { layer: 'semantic_first', severity: 'warning', object_id: 'n2', rule: 'r2', message: 'warn' },
-      ],
-      validated_at: '2026-04-11T00:00:00Z',
+    const decisionNode: Node = {
+      id: 'n-decision',
+      type: 'flowNode',
+      position: { x: 100, y: 0 },
+      data: { shape: 'decision', label: 'Decide' },
     };
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ data: validationResult }) });
-
     const { result } = renderHook(() =>
-      useProcessFlowValidation({ processId: 'p1', nodes: [], edges: [], autoValidate: false })
+      useProcessFlowValidation({
+        processId: 'p1',
+        nodes: [startNode, decisionNode, endNode],
+        edges: [
+          { id: 'e1', source: 'n-start', target: 'n-decision' },
+          { id: 'e2', source: 'n-decision', target: 'n-end' },
+        ],
+        semanticKit: 'classic' as any,
+        autoValidate: false,
+      })
     );
 
     await act(async () => {
       await result.current.validate();
     });
 
-    expect(result.current.issuesForObject('n1')).toHaveLength(1);
-    expect(result.current.issuesForObject('n2')).toHaveLength(1);
-    expect(result.current.issuesForObject('n3')).toHaveLength(0);
+    // Decision has only 1 outgoing edge -> should flag decision-exits issue on n-decision.
+    expect(result.current.issuesForObject('n-decision').length).toBeGreaterThan(0);
+    expect(result.current.issuesForObject('does-not-exist')).toHaveLength(0);
   });
 });
 
@@ -151,26 +200,25 @@ describe('useProcessFlowAIProposal', () => {
   });
 });
 
-describe('useProcessFlowReadback', () => {
-  it('fetchReadback gets readback data', async () => {
-    const readback = { paths: [{ type: 'start', label: 'Begin', object_id: 's1' }], warnings: [] };
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => readback });
-
-    const { result } = renderHook(() => useProcessFlowReadback({ processId: 'p1' }));
+describe('useProcessFlowReadback (client-side)', () => {
+  it('fetchReadback computes a traversal locally without any fetch', async () => {
+    const { result } = renderHook(() =>
+      useProcessFlowReadback({ processId: 'p1', nodes: [startNode, endNode], edges: [edge1] })
+    );
 
     await act(async () => {
       await result.current.fetchReadback();
     });
 
-    expect(result.current.result).toEqual(readback);
-    expect(mockFetch).toHaveBeenCalledWith(
-      '/api/v8/process-flow/p1/readback',
-      expect.objectContaining({ headers: expect.any(Object) })
-    );
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(result.current.result).not.toBeNull();
+    expect(result.current.result?.paths[0].type).toBe('start');
   });
 
   it('does nothing when processId is null', async () => {
-    const { result } = renderHook(() => useProcessFlowReadback({ processId: null }));
+    const { result } = renderHook(() =>
+      useProcessFlowReadback({ processId: null, nodes: [], edges: [] })
+    );
     await act(async () => {
       await result.current.fetchReadback();
     });
@@ -179,23 +227,65 @@ describe('useProcessFlowReadback', () => {
   });
 });
 
-describe('useProcessFlowExport', () => {
-  it('exports JSON format', async () => {
-    const exportData = { nodes: [], edges: [] };
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => exportData });
-
+describe('useProcessFlowExport (client-side JSON/readback, PNG untouched)', () => {
+  it('exports JSON without any fetch (serializes in-memory graph)', async () => {
     const canvasRef = { current: null };
     const { result } = renderHook(() =>
-      useProcessFlowExport({ processId: 'p1', canvasRef: canvasRef as RefObject<HTMLDivElement | null> })
+      useProcessFlowExport({
+        processId: 'p1',
+        canvasRef: canvasRef as RefObject<HTMLDivElement | null>,
+        nodes: [startNode, endNode],
+        edges: [edge1],
+        lanes: [{ id: 'l1', label: 'Lane 1' }],
+        flowMode: 'classic',
+        semanticKit: 'classic',
+      })
     );
 
-    // We can't fully test download behavior in jsdom, but we can verify the fetch
+    const createObjectURLSpy = vi
+      .spyOn(URL, 'createObjectURL')
+      .mockReturnValue('blob:mock');
+    const revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+
     await act(async () => {
       await result.current.exportAs('json');
     });
-    expect(mockFetch).toHaveBeenCalledWith(
-      '/api/v8/process-flow/p1/export/json',
-      expect.objectContaining({ headers: expect.any(Object) })
+
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(createObjectURLSpy).toHaveBeenCalled();
+    expect(revokeObjectURLSpy).toHaveBeenCalled();
+
+    createObjectURLSpy.mockRestore();
+    revokeObjectURLSpy.mockRestore();
+  });
+
+  it('exports readback-text without any fetch', async () => {
+    const canvasRef = { current: null };
+    const { result } = renderHook(() =>
+      useProcessFlowExport({
+        processId: 'p1',
+        canvasRef: canvasRef as RefObject<HTMLDivElement | null>,
+        nodes: [startNode, endNode],
+        edges: [edge1],
+        lanes: [],
+        flowMode: 'classic',
+        semanticKit: 'classic',
+      })
     );
+
+    const createObjectURLSpy = vi
+      .spyOn(URL, 'createObjectURL')
+      .mockReturnValue('blob:mock');
+    const revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+
+    await act(async () => {
+      await result.current.exportAs('readback');
+    });
+
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(createObjectURLSpy).toHaveBeenCalled();
+
+    createObjectURLSpy.mockRestore();
+    revokeObjectURLSpy.mockRestore();
   });
 });

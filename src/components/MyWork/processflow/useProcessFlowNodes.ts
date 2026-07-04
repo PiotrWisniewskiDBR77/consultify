@@ -23,7 +23,12 @@ export interface UseProcessFlowNodesOpts {
   isPl: boolean;
   pushUndo: () => void;
   onNodeDetail?: ((nodeId: string, data: any) => void) | undefined;
-  /** Fire-and-forget hook for persisting node deletions to the V8 tables. */
+  /**
+   * Optional callback fired with the ids of deleted nodes. Previously wired
+   * to useProcessFlowCRUD (V8 mirror persistence); that hook was removed as
+   * dead code (M07/F1, DP-7) since the V8 process-flow routes were cut. Kept
+   * as a generic extension point — no current caller passes it.
+   */
   onNodesDeleted?: ((nodeIds: string[]) => void) | undefined;
   /** Injected confirm for bulk deletes (≥2 nodes). Returns true = proceed. */
   confirmBulkDelete?: (count: number) => Promise<boolean>;

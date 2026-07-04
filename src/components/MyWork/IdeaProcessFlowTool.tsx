@@ -98,7 +98,6 @@ import {
   LANE_COLORS,
 } from './processflow/LaneSystem';
 import { LaneSystem } from './processflow/LaneSystem';
-import { MessageFlowEdge } from './processflow/MessageFlowEdge';
 import { ActivityNode } from './processflow/nodes/ActivityNode';
 import { BPMNEndNode } from './processflow/nodes/BPMNEndNode';
 import { BPMNStartNode } from './processflow/nodes/BPMNStartNode';
@@ -123,15 +122,13 @@ import {
 import { ProcessFlowToolbar } from './processflow/ProcessFlowToolbar';
 import { ReadbackPanel } from './processflow/ReadbackPanel';
 import { useProcessFlowAIProposal } from './processflow/useProcessFlowAIProposal';
-import { useProcessFlowCRUD } from './processflow/useProcessFlowCRUD';
-import { useV8 } from '@/providers/V8Provider';
-import { useProcessFlowDegraded } from './processflow/useProcessFlowDegraded';
 import { useProcessFlowExport } from './processflow/useProcessFlowExport';
 import { useProcessFlowNodes } from './processflow/useProcessFlowNodes';
 import { useConfirmDialog } from './shared/ConfirmDialog';
 import { useProcessFlowQuickActions } from './processflow/useProcessFlowQuickActions';
 import { useProcessFlowReadback } from './processflow/useProcessFlowReadback';
 import { useProcessFlowUndoRedo } from './processflow/useProcessFlowUndoRedo';
+import { type ValidationWarning, validateFlowWarnings } from './processflow/validateFlow';
 import { useProcessFlowValidation } from './processflow/useProcessFlowValidation';
 import { ValidationResultsPanel } from './processflow/ValidationResultsPanel';
 import { ProcessKPIDashboard } from './ProcessKPIDashboard';
@@ -205,189 +202,11 @@ const baseNodeTypes: RFNodeTypes = {
 
 const edgeTypes: RFEdgeTypes = {
   flowEdge: FlowEdgeComponent,
-  messageFlow: MessageFlowEdge,
 };
 
 // ── Validation ───────────────────────────────────────────────────────────────
-
-type ValidationWarning = { id: string; message: string; messagePl: string };
-
-function validateFlow(
-  nodes: Node[],
-  edges: Edge[],
-  semanticKit: ProcessFlowSemanticKit
-): ValidationWarning[] {
-  const warnings: ValidationWarning[] = [];
-  const flowNodes = nodes.filter((n: Node) => n.type === 'flowNode');
-
-  const startShapes =
-    semanticKit === 'bpmn'
-      ? ['start', 'bpmn_event']
-      : semanticKit === 'system' || semanticKit === 'org'
-        ? []
-        : ['start'];
-  const endShapes =
-    semanticKit === 'bpmn'
-      ? ['end', 'bpmn_event']
-      : semanticKit === 'system' || semanticKit === 'org'
-        ? []
-        : ['end'];
-  const hasStart =
-    startShapes.length === 0 ||
-    flowNodes.some((n: Node) => startShapes.includes(String(n.data?.shape || '')));
-  const hasEnd =
-    endShapes.length === 0 ||
-    flowNodes.some((n: Node) => endShapes.includes(String(n.data?.shape || '')));
-
-  if (startShapes.length > 0 && !hasStart) {
-    warnings.push({ id: 'no-start', message: 'Missing Start node', messagePl: 'Brak węzła Start' });
-  }
-  if (endShapes.length > 0 && !hasEnd) {
-    warnings.push({ id: 'no-end', message: 'Missing End node', messagePl: 'Brak węzła Koniec' });
-  }
-
-  if (semanticKit === 'bpmn') {
-    const hasGateway = flowNodes.some((n: Node) => n.data?.shape === 'bpmn_gateway');
-    const hasTask = flowNodes.some((n: Node) => n.data?.shape === 'bpmn_task');
-    if (!hasGateway) {
-      warnings.push({
-        id: 'bpmn-no-gateway',
-        message: 'BPMN kit: add at least one gateway',
-        messagePl: 'Kit BPMN: dodaj przynajmniej jedną bramkę',
-      });
-    }
-    if (!hasTask) {
-      warnings.push({
-        id: 'bpmn-no-task',
-        message: 'BPMN kit: add at least one task',
-        messagePl: 'Kit BPMN: dodaj przynajmniej jedno zadanie',
-      });
-    }
-  }
-
-  if (semanticKit === 'system') {
-    const hasActor = flowNodes.some((n: Node) => n.data?.shape === 'system_actor');
-    const hasService = flowNodes.some((n: Node) => n.data?.shape === 'system_service');
-    if (!hasActor) {
-      warnings.push({
-        id: 'system-no-actor',
-        message: 'System kit: missing actor boundary',
-        messagePl: 'Kit systemowy: brakuje granicy aktora',
-      });
-    }
-    if (!hasService) {
-      warnings.push({
-        id: 'system-no-service',
-        message: 'System kit: missing service node',
-        messagePl: 'Kit systemowy: brakuje węzła serwisu',
-      });
-    }
-  }
-
-  if (semanticKit === 'org') {
-    const hasRole = flowNodes.some((n: Node) => n.data?.shape === 'org_role');
-    const hasHandoff = flowNodes.some((n: Node) => n.data?.shape === 'org_handoff');
-    if (!hasRole) {
-      warnings.push({
-        id: 'org-no-role',
-        message: 'Org kit: add at least one role',
-        messagePl: 'Kit organizacyjny: dodaj przynajmniej jedną rolę',
-      });
-    }
-    if (!hasHandoff) {
-      warnings.push({
-        id: 'org-no-handoff',
-        message: 'Org kit: missing handoff marker',
-        messagePl: 'Kit organizacyjny: brakuje markera przekazania',
-      });
-    }
-  }
-
-  for (const node of flowNodes) {
-    const outgoing = edges.filter((e: Edge) => e.source === node.id);
-    const incoming = edges.filter((e: Edge) => e.target === node.id);
-
-    if (
-      ['decision', 'bpmn_gateway', 'org_handoff'].includes(String(node.data?.shape)) &&
-      outgoing.length < 2
-    ) {
-      warnings.push({
-        id: `decision-exits-${node.id}`,
-        message: `Decision "${node.data?.label || node.id}" needs at least 2 exits`,
-        messagePl: `Decyzja "${node.data?.label || node.id}" wymaga min. 2 wyjść`,
-      });
-    }
-
-    if (!startShapes.includes(String(node.data?.shape || '')) && incoming.length === 0) {
-      warnings.push({
-        id: `dangling-${node.id}`,
-        message: `"${node.data?.label || node.id}" has no incoming connections`,
-        messagePl: `"${node.data?.label || node.id}" nie ma połączeń wejściowych`,
-      });
-    }
-
-    if (!endShapes.includes(String(node.data?.shape || '')) && outgoing.length === 0) {
-      warnings.push({
-        id: `no-exit-${node.id}`,
-        message: `"${node.data?.label || node.id}" has no outgoing connections`,
-        messagePl: `"${node.data?.label || node.id}" nie ma połączeń wyjściowych`,
-      });
-    }
-  }
-
-  // V5-IDEA-23: VSM-specific validation
-  const vsmNodes = nodes.filter(
-    (n: Node) => n.data?.shape?.startsWith('vsm_') || n.type?.startsWith('vsm_')
-  );
-  if (vsmNodes.length > 0) {
-    const hasSupplier = vsmNodes.some(
-      (n) => n.data?.shape === 'vsm_supplier' || n.type === 'vsm_supplier'
-    );
-    const hasCustomer = vsmNodes.some(
-      (n) => n.data?.shape === 'vsm_customer' || n.type === 'vsm_customer'
-    );
-    const hasProcess = vsmNodes.some(
-      (n) => n.data?.shape === 'vsm_process' || n.type === 'vsm_process'
-    );
-
-    if (!hasSupplier) {
-      warnings.push({
-        id: 'vsm-no-supplier',
-        message: 'VSM: Missing Supplier node',
-        messagePl: 'VSM: Brak węzła Dostawca',
-      });
-    }
-    if (!hasCustomer) {
-      warnings.push({
-        id: 'vsm-no-customer',
-        message: 'VSM: Missing Customer node',
-        messagePl: 'VSM: Brak węzła Klient',
-      });
-    }
-    if (!hasProcess) {
-      warnings.push({
-        id: 'vsm-no-process',
-        message: 'VSM: Missing Process node',
-        messagePl: 'VSM: Brak węzła Proces',
-      });
-    }
-
-    const processNodes = vsmNodes.filter(
-      (n) => n.data?.shape === 'vsm_process' || n.type === 'vsm_process'
-    );
-    for (const pn of processNodes) {
-      if (!pn.data?.cycleTime) {
-        warnings.push({
-          id: `vsm-no-ct-${pn.id}`,
-          message: `VSM: "${pn.data?.label || pn.id}" missing Cycle Time`,
-          messagePl: `VSM: "${pn.data?.label || pn.id}" brak Czasu Cyklu`,
-        });
-      }
-    }
-  }
-
-  return warnings;
-}
+// validateFlow (warnings list) extracted to ./processflow/validateFlow
+// (validateFlowWarnings) — same rule set, now shared with useProcessFlowValidation.
 
 // LaneBackground replaced by LaneSystem import (./processflow/LaneSystem)
 // Undo/Redo replaced by useProcessFlowUndoRedo hook (./processflow/useProcessFlowUndoRedo)
@@ -552,7 +371,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     [flowMode]
   );
 
-  // ── New hooks: validation, AI proposal, readback, export, degraded ──────
+  // ── New hooks: validation, AI proposal, readback, export ────────────────
+  // Client-side since DP-7 (V8 process-flow routes cut) — no fetch involved.
   const processId = ideaId;
   const {
     result: validationResult,
@@ -563,6 +383,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     processId,
     nodes,
     edges,
+    semanticKit,
     autoValidate: false,
     onError: (message) =>
       toast.error(isPl ? 'Walidacja przepływu nie powiodła się. Spróbuj ponownie.' : message),
@@ -579,21 +400,17 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     result: readbackResult,
     isLoading: isReadbackLoading,
     fetchReadback,
-  } = useProcessFlowReadback({ processId });
+  } = useProcessFlowReadback({ processId, nodes, edges, lanes, isPl: !!isPl });
   const { isExporting, exportAs } = useProcessFlowExport({
     processId,
     canvasRef: flowContainerRef as React.RefObject<HTMLDivElement | null>,
+    nodes,
+    edges,
+    lanes,
+    flowMode,
+    semanticKit,
+    isPl: !!isPl,
   });
-  const {
-    isDegraded,
-    activeScenarios: degradedScenarios,
-    checkHealth,
-  } = useProcessFlowDegraded({ processId });
-
-  const { isV8Enabled } = useV8();
-  // Structural V8 CRUD — persists semantic nodes/edges alongside the blob.
-  // Only fires when V8 is globally enabled; otherwise silently disabled.
-  const pfCrud = useProcessFlowCRUD({ processId, enabled: !locked && isV8Enabled });
 
   // ── New UI state: panels, context menu, export dialog ─────────────────
   const [showValidationPanel, setShowValidationPanel] = useState(false);
@@ -1009,12 +826,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           eds
         )
       );
-      // Persist the structural edge to the V8 tables (fire-and-forget).
-      if (connection.source && connection.target) {
-        void pfCrud.createEdge({ source: connection.source, target: connection.target });
-      }
     },
-    [locked, pfCrud, pushUndo, setEdges]
+    [locked, pushUndo, setEdges]
   );
 
   // ── Add node ───────────────────────────────────────────────────────────
@@ -1061,14 +874,6 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         },
       };
       setNodes((prev: Node[]) => [...prev, newNode]);
-
-      // Persist the structural node to the V8 tables (fire-and-forget).
-      void pfCrud.createNode({
-        shape,
-        label: String(newNode.data?.label ?? ''),
-        position: newNode.position,
-        laneId: lane.id,
-      });
 
       // Ghost nodes: AI suggests next steps
       if (!locked && shape !== 'end') {
@@ -1123,7 +928,6 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       locked,
       nodes,
       onNodeDetail,
-      pfCrud,
       pushUndo,
       semanticKit,
       setNodes,
@@ -1386,7 +1190,6 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     isPl,
     pushUndo,
     onNodeDetail,
-    onNodesDeleted: (ids: string[]) => ids.forEach((id) => void pfCrud.deleteNode(id)),
     confirmBulkDelete: (count: number) =>
       confirmBulkDelete({
         title: isPl ? 'Usunąć węzły?' : 'Delete nodes?',
@@ -1428,7 +1231,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   // ── Validate ───────────────────────────────────────────────────────────
 
   const runValidation = useCallback(() => {
-    const w = validateFlow(nodes, edges, semanticKit);
+    const w = validateFlowWarnings(nodes, edges, semanticKit);
     setWarnings(w);
     setShowWarnings(true);
   }, [edges, nodes, semanticKit]);
@@ -1917,6 +1720,13 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         generateSummary={handleProcessSummary}
         showKPIDashboard={showKPIDashboard}
         setShowKPIDashboard={setShowKPIDashboard}
+        showReadbackPanel={showReadbackPanel}
+        onOpenReadback={() => {
+          setShowReadbackPanel(true);
+          void fetchReadback();
+        }}
+        showAIPanel={showAIPanel}
+        onOpenAIProposal={() => setShowAIPanel(true)}
         canUndo={canUndo}
         canRedo={canRedo}
         undo={undo}
@@ -2582,24 +2392,6 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           }
           onClose={() => setContextMenu(null)}
         />
-      )}
-
-      {/* ── Degraded state banner ── */}
-      {isDegraded && degradedScenarios.length > 0 && (
-        <div className="absolute top-14 left-4 right-4 z-30">
-          <div className="rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-4 py-2.5 flex items-center gap-2">
-            <AlertTriangle size={16} className="text-amber-600 dark:text-amber-400 flex-shrink-0" />
-            <div className="text-xs text-amber-800 dark:text-amber-300 flex-1">
-              {degradedScenarios.map((s) => s.scenario).join(', ')}
-            </div>
-            <button
-              onClick={checkHealth}
-              className="text-xs font-medium text-amber-700 dark:text-amber-300 hover:underline flex-shrink-0"
-            >
-              {isPl ? 'Sprawdź ponownie' : 'Retry'}
-            </button>
-          </div>
-        </div>
       )}
 
       {metricsEditorNode && (
