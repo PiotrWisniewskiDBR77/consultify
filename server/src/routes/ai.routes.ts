@@ -3183,8 +3183,14 @@ router.post(
           const initiativeIdMatch = wantsInitiative
             ? msg.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)
             : null;
+          // Teresa mind-map retrieval (ff_teresaMindmap) — co-gated on its own flag.
+          // PL stems: mapa/mapę/mapie myśli, "mind map/mindmap". Also match bare
+          // "mapa myśli" phrasing and English "mind map".
+          const wantsMindmap =
+            process.env.ENABLE_TERESA_MINDMAP === 'true' &&
+            /map[aeęy]\s*myśl\w*|mapa\s+myśli|mind[\s-]?map\w*|mapę?\s+myśli/i.test(msg);
 
-          if (wantsNotes || wantsInsights || initiativeIdMatch) {
+          if (wantsNotes || wantsInsights || initiativeIdMatch || wantsMindmap) {
             emitSSE({
               type: 'thought',
               step: 'org_retrieval',
@@ -3224,16 +3230,23 @@ router.post(
                 toolContext
               );
             }
+            if (wantsMindmap) {
+              toolResults.search_org_mindmaps = await mcpServer.execute(
+                'search_org_mindmaps',
+                { query: retrievalQuery, limit: 5 },
+                toolContext
+              );
+            }
 
             // Each tool already caps its payload at ~4KB; this is a hard backstop.
             const serialized = JSON.stringify(toolResults).slice(0, 13000);
             const orgRetrievalAddon =
               `[ORG CONTENT SEARCH — tool results]\n` +
               `The user referenced organization content by topic. The retrieval tools ` +
-              `(search_org_notes / search_insights / get_initiative) ran with the user's message as the query. ` +
+              `(search_org_notes / search_insights / get_initiative / search_org_mindmaps) ran with the user's message as the query. ` +
               `Use ONLY these results to identify the item: name the best match (title + id) and confirm with the user ` +
               `that it is the right one BEFORE acting on it. If several candidates fit, list up to 3 and ask the user to pick. ` +
-              `If results are empty, say so and ask for a more specific title or topic. Never invent note/insight/initiative content.\n` +
+              `If results are empty, say so and ask for a more specific title or topic. Never invent note/insight/initiative/mind-map content.\n` +
               `${serialized}`;
 
             pipelineRequest = {

@@ -234,6 +234,33 @@ export const ToolSchemas: Record<string, Omit<ToolEntry, 'handler'>> = {
       notFound: z.boolean().optional(),
     }),
   },
+  // ── Teresa mind-map retrieval (ff_teresaMindmap / ENABLE_TERESA_MINDMAP) ──
+  search_org_mindmaps: {
+    name: 'search_org_mindmaps',
+    description:
+      'Search the organization idea maps (mind maps) by topic. Org-scoped. ' +
+      'Use when the user references a mind map by subject, e.g. "znajdź mapę myśli o transformacji". ' +
+      'Returns each map title plus a markdown outline of its nodes.',
+    type: TOOL_TYPE.READ,
+    parameters: z.object({
+      query: z
+        .string()
+        .describe('Topic or phrase to search mind maps for (user language is fine)'),
+      limit: z.number().optional().default(5).describe('Max results to return (1-10)'),
+    }),
+    returns: z.object({
+      results: z.array(
+        z.object({
+          mapId: z.string(),
+          ideaId: z.string(),
+          title: z.string(),
+          outline: z.string(),
+          updatedAt: z.string().nullable(),
+        })
+      ),
+      truncated: z.boolean(),
+    }),
+  },
   update_assessment_score: {
     name: 'update_assessment_score',
     description: 'Update a maturity assessment score. REQUIRES USER APPROVAL before execution.',
