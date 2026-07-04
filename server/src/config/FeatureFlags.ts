@@ -34,6 +34,7 @@ const FeatureFlagsSchema = z.object({
   ENABLE_TERESA_RETRIEVAL: z.boolean().default(false),
   ENABLE_DELIVERABLES_DOC_STREAMING: z.boolean().default(false),
   ENABLE_DELIVERABLES_PREMIUM: z.boolean().default(false),
+  ENABLE_SHARED_IDEA_MAPS: z.boolean().default(false),
 });
 
 export type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
@@ -136,6 +137,12 @@ export function loadFeatureFlags(): FeatureFlags {
     // default OFF (live clients stay on STANDARD until quality is proven).
     // Fail-open: any resolution error falls back to STANDARD, never blocks.
     ENABLE_DELIVERABLES_PREMIUM: process.env.ENABLE_DELIVERABLES_PREMIUM === 'true',
+
+    // DP-3 (M06/M07/M09 Ideas): shared/canonical idea maps — one my_idea_maps
+    // row per idea_id instead of one per user_id, with membership-gated
+    // read/write and server-persisted WS graph_patch. OFF = full rollback to
+    // today's per-user reads/writes (Harvard/wdrozenie-100/_M06_DP3_MULTIPLAYER_PLAN_2026-07-04.md).
+    ENABLE_SHARED_IDEA_MAPS: process.env.ENABLE_SHARED_IDEA_MAPS === 'true',
   };
 
   // Validate configuration

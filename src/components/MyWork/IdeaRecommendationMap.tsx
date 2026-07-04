@@ -24,6 +24,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import ReactFlow, {
   addEdge,
+  applyNodeChanges,
   Background,
   type Connection,
   ConnectionMode,
@@ -56,6 +57,7 @@ import {
 import TeresaMark from '../shared/TeresaMark';
 import { getCanvasBg } from './canvas/canvasBackground';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
+import { useIdeaCollab } from './canvas/useIdeaCollab';
 import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import {
   IDEA_STAGE_COLORS,
@@ -1111,11 +1113,19 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
 
   const labelRef = useRef(data.label);
   labelRef.current = data.label;
-  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    setEditValue(String(labelRef.current || ''));
-    setEditing(true);
-  }, []);
+  // DP-3 (T7 Part B): a node locked by another collaborator cannot enter
+  // inline edit mode — the drawer/inline text editor stays read-only until
+  // the peer releases the lock.
+  const isRemoteLocked = !!data._remoteLocked;
+  const handleDoubleClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (isRemoteLocked) return;
+      setEditValue(String(labelRef.current || ''));
+      setEditing(true);
+    },
+    [isRemoteLocked]
+  );
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -1208,6 +1218,13 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
       <div
         onDoubleClick={handleDoubleClick}
         style={nodeSurfaceStyle}
+        title={
+          isRemoteLocked
+            ? isPl
+              ? 'Ten węzeł jest edytowany przez inną osobę'
+              : 'This node is being edited by another collaborator'
+            : undefined
+        }
         className={`group px-3 py-2 ${shapeClass} border-2 ${!accentColor && tagColor ? tagColor.borderClass : colors.border} ${!accentColor && tagColor ? tagColor.bgClass : colors.bg} ${depthOpacity} ${
           data._dropTarget
             ? 'ring-3 ring-slate-400 ring-offset-2 border-slate-500 shadow-lg shadow-slate-500/30'
@@ -1216,7 +1233,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
               : selected
                 ? `ring-2 ${colors.ring}`
                 : ''
-        } cursor-pointer min-w-[120px] max-w-[210px] relative transition-colors duration-150`}
+        } ${isRemoteLocked ? 'opacity-50 grayscale cursor-not-allowed' : 'cursor-pointer'} min-w-[120px] max-w-[210px] relative transition-colors duration-150`}
       >
         <Handle type="target" position={Position.Left} id="target-left" className={handleTarget} />
         <Handle type="target" position={Position.Top} id="target-top" className={handleTarget} />
@@ -1960,10 +1977,10 @@ function MindMapInner({
     React.Dispatch<React.SetStateAction<Node[]>>,
     (changes: unknown) => void,
   ];
-  const [edges, setEdges, onEdgesChange] = useEdgesState([] as Edge[]) as [
+  const [edges, setEdges, baseOnEdgesChange] = useEdgesState([] as Edge[]) as [
     Edge[],
     React.Dispatch<React.SetStateAction<Edge[]>>,
-    (changes: unknown) => void,
+    (changes: import('reactflow').EdgeChange[]) => void,
   ];
 
   // Initial viewport: restore this idea's saved viewport, otherwise fit the whole
@@ -2024,25 +2041,44 @@ function MindMapInner({
   }, [nodesInitialized, nodes.length, ideaId, fitView, setViewport, locked]);
 
   // ── Graph CRUD collaboration ──────────────────────────────────────────────
-  const collabSendRef = useRef<((msg: any) => void) | null>(null);
-
-  const registerCollabSend = useCallback((sendFn: (msg: any) => void) => {
-    collabSendRef.current = sendFn;
-  }, []);
-
-  const broadcastGraphPatch = useCallback((operations: Array<{ op: string; data: any }>) => {
-    if (collabSendRef.current && operations.length > 0) {
-      collabSendRef.current({ type: 'graph_patch', operations });
-    }
-  }, []);
+  // DP-3 (T6): shared useIdeaCollab (same hook as the whiteboard) applies
+  // collaborators' graph_patch ops to the live canvas via functional
+  // setNodes/setEdges — remote-apply without re-hydration or canvas remount.
+  // DP-3 (T7 Part A): the mind map now also EMITS local mutations through the
+  // same hook (previously only the whiteboard called broadcast* — the map
+  // defined but never invoked these, so local edits never reached peers).
+  // `broadcast*` internally no-ops while `applyingRemoteRef` is held, so
+  // applying a remote patch never echoes back onto the wire.
+  const {
+    registerCollabSend,
+    broadcastGraphPatch,
+    broadcastNodeChanges,
+    broadcastEdgeChanges,
+    broadcastNodeUpdate,
+    broadcastEdgeAdd,
+  } = useIdeaCollab({
+    ideaId,
+    tool: 'mindmap',
+    currentUserId: currentUser?.id || 'anonymous',
+    setNodes,
+    setEdges,
+  });
 
   const updateNodeDataById = useCallback(
     (nodeId: string, updater: (data: any) => any) => {
+      let nextData: any = null;
       setNodes((prev: Node[]) =>
-        prev.map((n) => (n.id === nodeId ? { ...n, data: updater(n.data) } : n))
+        prev.map((n) => {
+          if (n.id !== nodeId) return n;
+          nextData = updater(n.data);
+          return { ...n, data: nextData };
+        })
       );
+      // DP-3 (T7 Part A): broadcast style/priority/assignee/image/artifact
+      // patches applied through the floating toolbar (shared setter).
+      if (nextData) broadcastNodeUpdate({ id: nodeId, data: nextData } as any);
     },
-    [setNodes]
+    [broadcastNodeUpdate, setNodes]
   );
 
   // ── Collapse/Expand ──────────────────────────────────────────────────────
@@ -2183,18 +2219,24 @@ function MindMapInner({
     return focusFilteredNodes.map((n) => {
       const extra: Record<string, unknown> = {};
       if (simplifiedMode) extra._simplified = true;
+      // DP-3 (T7 Part B): flag nodes locked by another collaborator so the
+      // node components can grey out + block inline editing. Functional-only
+      // (data flag), no layout/remount — matches the existing _dropTarget /
+      // _justMoved pattern.
+      const remoteLocked = remoteLockedNodeIds.has(n.id);
+      if (remoteLocked !== !!n.data?._remoteLocked) extra._remoteLocked = remoteLocked;
       if (n.type === 'branch') {
         const count = structuralChildCount.get(n.id) || 0;
-        if (count !== n.data?.count || simplifiedMode) {
+        if (count !== n.data?.count || simplifiedMode || Object.keys(extra).length > 0) {
           return { ...n, data: { ...n.data, count, ...extra } };
         }
       }
-      if (simplifiedMode) {
+      if (Object.keys(extra).length > 0) {
         return { ...n, data: { ...n.data, ...extra } };
       }
       return n;
     });
-  }, [edges, focusFilteredNodes, simplifiedMode]);
+  }, [edges, focusFilteredNodes, remoteLockedNodeIds, simplifiedMode]);
 
   const visibleIdeaNodeCount = useMemo(
     () => enrichedNodes.filter((n) => n.type === 'idea' && !n.hidden).length,
@@ -2352,9 +2394,11 @@ function MindMapInner({
         setNodes((prev: Node[]) =>
           prev.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, ...dataPatch } } : n))
         );
+        // DP-3 (T7 Part A): broadcast drawer field edits (status/notes/context/…).
+        broadcastNodeUpdate({ id: nodeId, data: dataPatch } as any);
       }
     },
-    [setNodes]
+    [broadcastNodeUpdate, setNodes]
   );
 
   const handleConvertNode = useCallback(
@@ -2479,6 +2523,13 @@ function MindMapInner({
             source: 'handler',
           });
         }
+        // DP-3 (T7 Part A): emit final drag/resize positions + removals to
+        // collaborators — mirrors the proven whiteboard wiring (L-02). Only
+        // dragging===false / resizing===false / remove changes are sent
+        // (see useIdeaCollab.broadcastNodeChanges); selection churn and
+        // in-flight frames are filtered out there, so this is safe to call
+        // unconditionally on every change batch.
+        broadcastNodeChanges(changes, applyNodeChanges(changes, nodes));
         baseOnNodesChange(changes);
       } catch (err: any) {
         debugLog(`ERROR in onNodesChange: ${err?.message || err}`, {
@@ -2488,7 +2539,17 @@ function MindMapInner({
         console.error('[MindMap Debug] onNodesChange error:', err);
       }
     },
-    [baseOnNodesChange, debugLog]
+    [baseOnNodesChange, broadcastNodeChanges, debugLog, nodes]
+  );
+
+  // DP-3 (T7 Part A): broadcast edge removals (e.g. Delete on a selected edge)
+  // to collaborators — mirrors broadcastNodeChanges above / whiteboard L-02.
+  const onEdgesChange = useCallback(
+    (changes: import('reactflow').EdgeChange[]) => {
+      broadcastEdgeChanges(changes);
+      baseOnEdgesChange(changes);
+    },
+    [baseOnEdgesChange, broadcastEdgeChanges]
   );
 
   // ── GAP-3: Map structure type ─────────────────────────────────────
@@ -2590,6 +2651,9 @@ function MindMapInner({
     remoteLockedNodeIds,
     autoLayout,
     partialLayoutSubtree,
+    // DP-3 (T7 Part A): broadcast graph CRUD (add/remove node+edge, reparent)
+    // performed inside this hook so collaborators see them live.
+    broadcastGraphPatch,
     confirmSubtreeDelete: (childCount: number) =>
       confirmSubtreeDelete({
         title: isPolish ? 'Usunąć węzły?' : 'Delete nodes?',
@@ -2863,41 +2927,8 @@ function MindMapInner({
   }, [contextMenu, drawerNodeId, remoteLockedNodeIds, setNodes]);
 
   // ── Apply incoming graph patches from collaborators ──────────────────────
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      if (!detail?.operations || detail.userId === currentUser?.id) return;
-
-      for (const op of detail.operations) {
-        switch (op.op) {
-          case 'add_node':
-            setNodes((prev: Node[]) => [...prev, op.data]);
-            break;
-          case 'remove_node':
-            setNodes((prev: Node[]) => prev.filter((n: Node) => n.id !== op.data.id));
-            break;
-          case 'update_node':
-            setNodes((prev: Node[]) =>
-              prev.map((n: Node) => (n.id === op.data.id ? { ...n, ...op.data } : n))
-            );
-            break;
-          case 'add_edge':
-            setEdges((prev: Edge[]) => [...prev, op.data]);
-            break;
-          case 'remove_edge':
-            setEdges((prev: Edge[]) => prev.filter((e: Edge) => e.id !== op.data.id));
-            break;
-          case 'update_edge':
-            setEdges((prev: Edge[]) =>
-              prev.map((e: Edge) => (e.id === op.data.id ? { ...e, ...op.data } : e))
-            );
-            break;
-        }
-      }
-    };
-    window.addEventListener('idea-collab-graph-patch', handler);
-    return () => window.removeEventListener('idea-collab-graph-patch', handler);
-  }, [currentUser?.id, setNodes, setEdges]);
+  // DP-3 (T6): handled by the shared useIdeaCollab hook above (guarded by
+  // applyingRemoteRef, idempotent adds, functional updates — no remount).
 
   // Node operations (findParentId, findChildrenIds, addChildNode, addSiblingNode,
   // deleteSelected, duplicateSelected, focusSelectedNode, reparentSelectedPromote,
@@ -2962,6 +2993,8 @@ function MindMapInner({
           n.id === nodeId ? { ...n, data: { ...n.data, label, _startEditing: undefined } } : n
         )
       );
+      // DP-3 (T7 Part A): broadcast the committed label to collaborators.
+      broadcastNodeUpdate({ id: nodeId, data: { label } } as any);
 
       if (label !== originalLabel) {
         toast.success(isPolish ? 'Zmieniono nazwę' : 'Renamed', {
@@ -2972,7 +3005,7 @@ function MindMapInner({
     };
     window.addEventListener('idea-mindmap-node-edit', handler);
     return () => window.removeEventListener('idea-mindmap-node-edit', handler);
-  }, [debugLog, isPolish, nodes, pushUndo, setEdges, setNodes]);
+  }, [broadcastNodeUpdate, debugLog, isPolish, nodes, pushUndo, setEdges, setNodes]);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -3586,9 +3619,10 @@ function MindMapInner({
         },
       };
       setEdges((prev: Edge[]) => addEdge(newEdge, prev));
+      broadcastEdgeAdd(newEdge);
       updateInteractionMode('select');
     },
-    [locked, pushUndo, setEdges, updateInteractionMode]
+    [broadcastEdgeAdd, locked, pushUndo, setEdges, updateInteractionMode]
   );
 
   const onEdgeClick = useCallback(
@@ -5742,7 +5776,10 @@ function MindMapInner({
           nodeData={drawerNodeData}
           ideaId={ideaId}
           ideaTitle={ideaTitle}
-          locked={locked}
+          // DP-3 (T7 Part B): read-only while another collaborator holds the
+          // lock on this node (defense-in-depth alongside the drawer-close
+          // effect above, in case a lock arrives mid-edit).
+          locked={locked || remoteLockedNodeIds.has(drawerNodeId)}
           allNodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
           allEdges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
           onUpdateNode={handleUpdateNode}

@@ -383,6 +383,28 @@ export function useIdeaMapSync({
     [draftMs, flushNow, idleMs, locked, open, persistDraft]
   );
 
+  // DP-3 (T6): `graph_version` — the WS gateway persisted a graph_patch into
+  // the canonical row and broadcast the new version to the whole room (author
+  // included). Adopt it SILENTLY, refs only: our canvas already carries the
+  // corresponding live patch, so the next POST /map/sync must send the fresh
+  // baseVersion instead of tripping a spurious 409. No state updates here —
+  // this must never re-render, re-hydrate, or remount the canvas (26a2a896ef).
+  // Flag OFF ⇒ the server never emits graph_version ⇒ exactly today's behavior.
+  useEffect(() => {
+    if (!hasWindow()) return;
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail) return;
+      if (detail.ideaId && detail.ideaId !== ideaId) return;
+      const version = Number(detail.version || 0);
+      if (!Number.isFinite(version) || version <= serverVersionRef.current) return;
+      serverVersionRef.current = version;
+      globalIdeaVersions.set(ideaId, version); // L-03
+    };
+    window.addEventListener('idea-collab-graph-version', handler);
+    return () => window.removeEventListener('idea-collab-graph-version', handler);
+  }, [ideaId]);
+
   const primeServerVersion = useCallback(
     (version: number | null | undefined) => {
       serverVersionRef.current = Math.max(1, Number(version || 1));
@@ -410,11 +432,14 @@ export function useIdeaMapSync({
     if (!open) return;
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden' && queuedPayloadRef.current) {
-        // M07 reload-race fix (2026-06-24): persist the draft SYNCHRONOUSLY first.
-        // The keepalive POST below is best-effort and can be dropped under load; a
-        // synchronous localStorage write always survives teardown, so the next mount
-        // recovers the latest nodes via resolveIdeaMapHydration even if the POST never
-        // lands. Without this, edits made <draftMs before backgrounding were lost.
+        // M07 reload-race fix (2026-06-24, re-pinned DP-3 T7 2026-07-04): persist the
+        // draft SYNCHRONOUSLY first. The keepalive POST below is best-effort and can be
+        // dropped under load (or never settle at all); a synchronous localStorage write
+        // always survives teardown, so the next mount recovers the latest nodes via
+        // resolveIdeaMapHydration even if the POST never lands. Without this, edits made
+        // <draftMs before backgrounding/reload were lost — flushNow only calls
+        // persistDraft from its own async catch block, which never runs if the request
+        // is still in flight when the page unloads.
         persistDraft(queuedPayloadRef.current, true);
         // M06 L-05: page may be backgrounded/closed — keepalive so the flush lands.
         void flushNow(null, { reason: 'draft', keepalive: true }).catch(() => null);
@@ -427,12 +452,8 @@ export function useIdeaMapSync({
     };
     const handleBeforeUnload = () => {
       if (queuedPayloadRef.current) {
-        // M07 reload-race fix (2026-06-24): synchronous draft write BEFORE the keepalive
-        // POST. On a hard reload (F5) the React unmount cleanup does NOT run, and the
-        // keepalive flush can be dropped under load — so without this the user's most
-        // recent nodes (added <draftMs before reload) were gone after the reload. The
-        // localStorage write is synchronous and completes before navigation; the next
-        // mount recovers them via resolveIdeaMapHydration.
+        // M07 reload-race fix (2026-06-24, re-pinned DP-3 T7 2026-07-04): synchronous
+        // draft write BEFORE the keepalive POST — see handleVisibilityChange above.
         persistDraft(queuedPayloadRef.current, true);
         // M06 L-05: document is unloading — a plain fetch would be cancelled; keepalive survives.
         void flushNow(null, { reason: 'draft', keepalive: true }).catch(() => null);
@@ -486,6 +507,12 @@ export function useIdeaMapSync({
     [lastSavedAt, syncState]
   );
 
+  // DP-3 (T7 Part C): expose the freshest in-memory pending payload (updated
+  // synchronously on every queueSync — up to draftMs/800ms fresher than the
+  // localStorage draft) so a degraded→online reconnect can soft-merge it on
+  // top of the canonical GET instead of discarding it outright.
+  const getQueuedPayload = useCallback(() => queuedPayloadRef.current, []);
+
   return {
     saving,
     lastSavedAt,
@@ -497,6 +524,7 @@ export function useIdeaMapSync({
     flushNow,
     primeServerVersion,
     clearLocalDraft,
+    getQueuedPayload,
     currentVersionRef: serverVersionRef,
   };
 }

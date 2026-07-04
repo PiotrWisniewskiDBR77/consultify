@@ -542,6 +542,38 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runtimeVersion]);
 
+  // DP-3 (T6): `graph_version` = the WS gateway persisted a live graph_patch
+  // we have ALREADY applied to the canvas (the patch relay precedes the
+  // version broadcast; our own edits are in local state anyway). Treat it
+  // exactly like our own +1 save bumps: advance localVersionRef and mark the
+  // version as already-hydrated, so a later runtimeVersion jump caused by
+  // accumulated live versions does NOT re-trigger hydrate(). Ref-only —
+  // never a re-hydration, never a canvas remount (hard lesson 26a2a896ef).
+  // First hydration is untouched (lastHydratedRuntimeVersionRef === null),
+  // and versions never seen live (WS down ⇒ no graph_version) still
+  // re-hydrate through the >1-jump path above — today's conflict recovery.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail) return;
+      if (detail.ideaId && detail.ideaId !== ideaId) return;
+      const version = Number(detail.version || 0);
+      if (!Number.isFinite(version) || version <= 0) return;
+      if (version > localVersionRef.current) {
+        localVersionRef.current = version;
+      }
+      if (
+        lastHydratedRuntimeVersionRef.current !== null &&
+        version > lastHydratedRuntimeVersionRef.current
+      ) {
+        lastHydratedRuntimeVersionRef.current = version;
+      }
+    };
+    window.addEventListener('idea-collab-graph-version', handler);
+    return () => window.removeEventListener('idea-collab-graph-version', handler);
+  }, [ideaId]);
+
   useEffect(() => {
     const label = ideaTitle || (isPolish ? 'Mój pomysł' : 'My idea');
     const hint = isPolish ? 'Kliknij, aby edytować' : 'Click to edit';

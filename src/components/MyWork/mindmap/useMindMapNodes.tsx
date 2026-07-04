@@ -92,6 +92,13 @@ export interface UseMindMapNodesOpts {
   autoLayout?: (nodes: Node[], edges: Edge[]) => Node[];
   partialLayoutSubtree?: (nodes: Node[], edges: Edge[], subtreeRootId: string) => Node[];
   confirmSubtreeDelete?: (childCount: number) => Promise<boolean>;
+  /**
+   * DP-3 (T7 Part A): emit graph CRUD ops to collaborators. Optional so
+   * this hook keeps working with the flag off / callers that don't wire
+   * collaboration (broadcast is itself a no-op while a remote patch is
+   * being applied — see useIdeaCollab's applyingRemoteRef guard).
+   */
+  broadcastGraphPatch?: (operations: Array<{ op: string; data: any }>) => void;
 }
 
 export function useMindMapNodes(opts: UseMindMapNodesOpts) {
@@ -108,7 +115,12 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     autoLayout,
     partialLayoutSubtree,
     confirmSubtreeDelete,
+    broadcastGraphPatch,
   } = opts;
+  const broadcast = useCallback(
+    (operations: Array<{ op: string; data: any }>) => broadcastGraphPatch?.(operations),
+    [broadcastGraphPatch]
+  );
 
   const editingNodeIdRef = useRef<string | null>(null);
   // The id of the most recently created/anchored node. A freshly created node is
@@ -290,6 +302,10 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       setNodes(layoutedNodes.map((n) => (n.id === newId ? { ...n, selected: true } : n)));
       setEdges(updatedEdges);
       ensureCreatedNodePersists({ ...newNode, selected: true }, newEdge);
+      broadcast([
+        { op: 'add_node', data: { ...newNode, selected: true } },
+        { op: 'add_edge', data: newEdge },
+      ]);
 
       toast.success(isPolish ? 'Dodano gałąź' : 'Child added', { id: 'mm-op-cue', duration: 1500 });
 
@@ -302,6 +318,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       }, 150);
     },
     [
+      broadcast,
       edges,
       ensureCreatedNodePersists,
       fitView,
@@ -402,6 +419,10 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       setNodes(layoutedNodes.map((n) => (n.id === newId ? { ...n, selected: true } : n)));
       setEdges(updatedEdges);
       ensureCreatedNodePersists({ ...newNode, selected: true }, newEdge);
+      broadcast([
+        { op: 'add_node', data: { ...newNode, selected: true } },
+        { op: 'add_edge', data: newEdge },
+      ]);
 
       toast.success(isPolish ? 'Dodano sąsiada' : 'Sibling added', {
         id: 'mm-op-cue',
@@ -417,6 +438,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       }, 150);
     },
     [
+      broadcast,
       edges,
       ensureCreatedNodePersists,
       findChildrenIds,
@@ -507,6 +529,10 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
 
       pushUndo();
 
+      const removedEdgeIds = edges
+        .filter((e: Edge) => e.selected || removedIds.has(e.source) || removedIds.has(e.target))
+        .map((e) => e.id);
+
       setNodes((prev: Node[]) =>
         prev
           .filter((n: Node) => !removedIds.has(n.id))
@@ -517,6 +543,10 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
           (e: Edge) => !e.selected && !removedIds.has(e.source) && !removedIds.has(e.target)
         )
       );
+      broadcast([
+        ...Array.from(removedIds).map((id) => ({ op: 'remove_node', data: { id } })),
+        ...removedEdgeIds.map((id) => ({ op: 'remove_edge', data: { id } })),
+      ]);
 
       const deletedCount = removedIds.size;
       toast.success(
@@ -536,7 +566,18 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         }, 60);
       }
     },
-    [edges, fitView, getSubtreeNodeIds, isPolish, locked, nodes, pushUndo, setEdges, setNodes]
+    [
+      broadcast,
+      edges,
+      fitView,
+      getSubtreeNodeIds,
+      isPolish,
+      locked,
+      nodes,
+      pushUndo,
+      setEdges,
+      setNodes,
+    ]
   );
 
   const duplicateSelected = useCallback(() => {
@@ -570,7 +611,11 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
 
     setNodes((prev: Node[]) => [...prev, newNode]);
     setEdges((prev: Edge[]) => [...prev, newEdge]);
-  }, [findParentId, getSelectedNode, locked, pushUndo, setEdges, setNodes]);
+    broadcast([
+      { op: 'add_node', data: newNode },
+      { op: 'add_edge', data: newEdge },
+    ]);
+  }, [broadcast, findParentId, getSelectedNode, locked, pushUndo, setEdges, setNodes]);
 
   const focusSelectedNode = useCallback(() => {
     const selected = getSelectedNode();
@@ -623,24 +668,29 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       if (!newParent) return false;
 
       pushUndo();
+      const oldEdgeId = edges.find((e) => e.target === nodeId && isStructuralEdge(e))?.id;
+      const branchKey =
+        nodes.find((n) => n.id === nodeId)?.data?.branchKey ||
+        newParent.data?.branchKey ||
+        'uncategorized';
+      const colors = branchColor(branchKey);
+      const newEdge: Edge = {
+        id: `edge-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+        source: newParentId,
+        target: nodeId,
+        type: 'gradient',
+        style: { stroke: colors.edge, strokeWidth: 1.5, opacity: 0.5 },
+        animated: true,
+        data: { userCreated: true, edgeRole: 'structural' },
+      } as any;
       setEdges((prev: Edge[]) => {
         const without = prev.filter((e) => !(e.target === nodeId && isStructuralEdge(e)));
-        const branchKey =
-          nodes.find((n) => n.id === nodeId)?.data?.branchKey ||
-          newParent.data?.branchKey ||
-          'uncategorized';
-        const colors = branchColor(branchKey);
-        const newEdge: Edge = {
-          id: `edge-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
-          source: newParentId,
-          target: nodeId,
-          type: 'gradient',
-          style: { stroke: colors.edge, strokeWidth: 1.5, opacity: 0.5 },
-          animated: true,
-          data: { userCreated: true, edgeRole: 'structural' },
-        } as any;
         return [...without, newEdge];
       });
+      broadcast([
+        ...(oldEdgeId ? [{ op: 'remove_edge', data: { id: oldEdgeId } }] : []),
+        { op: 'add_edge', data: newEdge },
+      ]);
 
       setNodes((prev) =>
         prev.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, _justMoved: true } } : n))
@@ -665,6 +715,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       return true;
     },
     [
+      broadcast,
       edges,
       findParentId,
       focusSelectedNode,
@@ -723,27 +774,31 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       if (!parentId) return;
 
       pushUndo();
-      setEdges((prev: Edge[]) => {
-        const siblingEdges = prev.filter((e) => e.source === parentId && isStructuralEdge(e));
-        const siblingTargets = siblingEdges.map((e) => e.target);
-        const idx = siblingTargets.indexOf(nodeId);
-        if (idx < 0) return prev;
+      const siblingEdges = edges.filter((e) => e.source === parentId && isStructuralEdge(e));
+      const siblingTargets = siblingEdges.map((e) => e.target);
+      const idx = siblingTargets.indexOf(nodeId);
+      if (idx < 0) return;
 
-        const swapIdx = direction === 'left' ? idx - 1 : idx + 1;
-        if (swapIdx < 0 || swapIdx >= siblingTargets.length) return prev;
+      const swapIdx = direction === 'left' ? idx - 1 : idx + 1;
+      if (swapIdx < 0 || swapIdx >= siblingTargets.length) return;
 
-        const edgeA = siblingEdges[idx];
-        const edgeB = siblingEdges[swapIdx];
-        if (!edgeA || !edgeB) return prev;
+      const edgeA = siblingEdges[idx];
+      const edgeB = siblingEdges[swapIdx];
+      if (!edgeA || !edgeB) return;
 
-        return prev.map((e) => {
+      setEdges((prev: Edge[]) =>
+        prev.map((e) => {
           if (e.id === edgeA.id) return { ...e, target: edgeB.target };
           if (e.id === edgeB.id) return { ...e, target: edgeA.target };
           return e;
-        });
-      });
+        })
+      );
+      broadcast([
+        { op: 'update_edge', data: { id: edgeA.id, target: edgeB.target } },
+        { op: 'update_edge', data: { id: edgeB.id, target: edgeA.target } },
+      ]);
     },
-    [findParentId, isReparentable, locked, pushUndo, setEdges]
+    [broadcast, edges, findParentId, isReparentable, locked, pushUndo, setEdges]
   );
 
   const clearDropTargets = useCallback(() => {
@@ -878,6 +933,10 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       { ...newNode, selected: true },
     ]);
     setEdges((prev: Edge[]) => [...prev, newEdge]);
+    broadcast([
+      { op: 'add_node', data: { ...newNode, selected: true } },
+      { op: 'add_edge', data: newEdge },
+    ]);
     setTimeout(() => {
       try {
         fitView({ padding: 0.3, duration: 300 });
@@ -885,7 +944,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         /* ignore */
       }
     }, 60);
-  }, [fitView, isPolish, locked, nodes, pushUndo, setEdges, setNodes]);
+  }, [broadcast, fitView, isPolish, locked, nodes, pushUndo, setEdges, setNodes]);
 
   // ── Copy / Cut / Paste ────────────────────────────────────────────────────
 
@@ -954,10 +1013,17 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     for (const n of selected) {
       for (const tid of getSubtreeNodeIds(n.id)) removedIds.add(tid);
     }
+    const removedEdgeIds = edges
+      .filter((e) => removedIds.has(e.source) || removedIds.has(e.target))
+      .map((e) => e.id);
     setNodes((prev: Node[]) => prev.filter((n) => !removedIds.has(n.id)));
     setEdges((prev: Edge[]) =>
       prev.filter((e) => !removedIds.has(e.source) && !removedIds.has(e.target))
     );
+    broadcast([
+      ...Array.from(removedIds).map((id) => ({ op: 'remove_node', data: { id } })),
+      ...removedEdgeIds.map((id) => ({ op: 'remove_edge', data: { id } })),
+    ]);
 
     toast.success(
       isPolish
@@ -965,7 +1031,18 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         : `Cut ${removedIds.size} node${removedIds.size === 1 ? '' : 's'}`,
       { duration: 1200 }
     );
-  }, [copySelected, getSubtreeNodeIds, isPolish, locked, nodes, pushUndo, setEdges, setNodes]);
+  }, [
+    broadcast,
+    copySelected,
+    edges,
+    getSubtreeNodeIds,
+    isPolish,
+    locked,
+    nodes,
+    pushUndo,
+    setEdges,
+    setNodes,
+  ]);
 
   const pasteNodes = useCallback(
     (targetPosition?: { x: number; y: number }) => {
@@ -1058,6 +1135,10 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
 
       setNodes((prev: Node[]) => [...prev.map((n) => ({ ...n, selected: false })), ...newNodes]);
       setEdges((prev: Edge[]) => [...prev, ...newEdges]);
+      broadcast([
+        ...newNodes.map((n) => ({ op: 'add_node', data: n })),
+        ...newEdges.map((e) => ({ op: 'add_edge', data: e })),
+      ]);
 
       toast.success(
         isPolish
@@ -1074,7 +1155,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         }
       }, 60);
     },
-    [fitView, isPolish, locked, nodes, pushUndo, setEdges, setNodes]
+    [broadcast, fitView, isPolish, locked, nodes, pushUndo, setEdges, setNodes]
   );
 
   return {

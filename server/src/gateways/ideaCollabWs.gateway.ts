@@ -8,8 +8,10 @@ import jwt from 'jsonwebtoken';
 import { type WebSocket, WebSocketServer } from 'ws';
 
 import { config } from '../config/Config.js';
+import { featureFlags } from '../config/FeatureFlags.js';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
+import { applyGraphPatchToCanonical, assertIdeaMembership } from '../realtime/ideaMapAccess.js';
 import {
   isWsOrgContextFresh,
   resolveWsOrgContext,
@@ -49,9 +51,15 @@ interface CollabSocket extends WebSocket {
   __orgCtx?: WsOrgContext;
   /** Shared in-flight re-resolution so concurrent writes don't stampede the DB. */
   __orgCtxRefresh?: Promise<WsOrgContext> | null;
+  /** DP-3 (ENABLE_SHARED_IDEA_MAPS): whether this member may write to the
+   *  shared canonical map, decided once at upgrade via assertIdeaMembership.
+   *  Only meaningful when the flag is ON. */
+  __canWrite?: boolean;
 }
 
-/** Message types that mutate shared/org state — all must pass the org gate. */
+/** Message types that mutate shared/org state — all must pass the org gate.
+ *  DP-3: when ENABLE_SHARED_IDEA_MAPS is ON these additionally require
+ *  membership canWrite (a non-member is already rejected at upgrade with 403). */
 const WRITE_OPS = new Set([
   'lock_node',
   'unlock_node',
@@ -121,6 +129,20 @@ function broadcastSessionState(ideaId: string) {
   const state = sessionStates.get(ideaId);
   if (!room || !state) return;
   const payload = JSON.stringify({ type: 'session_state', ...serializeSessionState(state) });
+  room.forEach((_, ws) => {
+    if (ws.readyState === 1) ws.send(payload);
+  });
+}
+
+/**
+ * DP-3: broadcast the new canonical version to the WHOLE room (including the
+ * author) so every client can silently advance its serverVersionRef without a
+ * re-hydration (frontend T6). Sent only after a successful canonical persist.
+ */
+function broadcastGraphVersion(ideaId: string, version: number) {
+  const room = ideaRooms.get(ideaId);
+  if (!room) return;
+  const payload = JSON.stringify({ type: 'graph_version', version });
   room.forEach((_, ws) => {
     if (ws.readyState === 1) ws.send(payload);
   });
@@ -338,17 +360,33 @@ export function attachIdeaCollabWs(server: HttpServer): void {
     // same way HTTP does via demoContextMiddleware, then verify the idea
     // belongs to that active org — never blindly to the JWT org. A user inside
     // a demo session must not open a realtime write channel to their real org.
+    //
+    // DP-3 (ENABLE_SHARED_IDEA_MAPS ON): additionally require the user to be an
+    // ACTIVE org member (assertIdeaMembership) of the resolved active org.
+    // canRead=false → 403 (same shape as today's cross-org rejection). canWrite
+    // is stashed on the socket so WRITE_OPS can be gated per-message. Flag OFF →
+    // EXACTLY today's org-scope check against the active org, no membership req.
     resolveWsOrgContext(db, userId, organizationId)
       .then(async (orgCtx) => {
-        const idea = await db.get<{ id: string }>(
-          'SELECT id FROM my_ideas WHERE id = ? AND organization_id = ?',
-          [ideaId, orgCtx.organizationId]
-        );
-        if (!idea) {
-          if (orgCtx.demoMode && orgCtx.organizationId !== organizationId) {
+        const activeOrg = orgCtx.organizationId;
+        const sharedMaps = featureFlags.ENABLE_SHARED_IDEA_MAPS;
+        const gate = sharedMaps
+          ? await assertIdeaMembership(db, activeOrg, userId, ideaId).then((m) => ({
+              ok: m.canRead,
+              canWrite: m.canWrite,
+            }))
+          : await db
+              .get<{ id: string }>(
+                'SELECT id FROM my_ideas WHERE id = ? AND organization_id = ?',
+                [ideaId, activeOrg]
+              )
+              .then((idea) => ({ ok: !!idea, canWrite: true }));
+
+        if (!gate.ok) {
+          if (orgCtx.demoMode && activeOrg !== organizationId) {
             logger.warn(
               '[IdeaCollabWs] Cross-org WS join rejected: demo session active, idea not in active org',
-              { userId, ideaId, activeOrg: orgCtx.organizationId, jwtOrg: organizationId }
+              { userId, ideaId, activeOrg, jwtOrg: organizationId }
             );
           }
           socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
@@ -358,10 +396,11 @@ export function attachIdeaCollabWs(server: HttpServer): void {
         wss.handleUpgrade(request, socket, head, (ws) => {
           (ws as CollabSocket).__user = {
             userId,
-            organizationId: orgCtx.organizationId,
+            organizationId: activeOrg,
             userName,
           };
           (ws as CollabSocket).__orgCtx = orgCtx;
+          (ws as CollabSocket).__canWrite = gate.canWrite;
           wss.emit('connection', ws, request, ideaId);
         });
       })
@@ -458,6 +497,22 @@ export function attachIdeaCollabWs(server: HttpServer): void {
             }
             return;
           }
+
+          // DP-3 (ENABLE_SHARED_IDEA_MAPS ON): shared-map mutations require the
+          // member's write permission (decided at upgrade). A read-only member is
+          // told once and the op is dropped — never silently. Flag OFF → no gate
+          // (today's behavior). Non-members never reach here (403 at upgrade).
+          if (featureFlags.ENABLE_SHARED_IDEA_MAPS && !ws.__canWrite) {
+            logger.warn('[IdeaCollabWs] Write rejected: member lacks write permission', {
+              userId: user.id,
+              ideaId,
+              op: msg.type,
+            });
+            if (ws.readyState === 1) {
+              ws.send(JSON.stringify({ type: 'error', code: 'NOT_A_WRITER', op: msg.type }));
+            }
+            return;
+          }
         }
 
         switch (msg.type) {
@@ -535,6 +590,9 @@ export function attachIdeaCollabWs(server: HttpServer): void {
             state.lastActivity = Date.now();
             ws.__actionsCount = (ws.__actionsCount || 0) + 1;
 
+            // (a) Relay to the rest of the room — ALWAYS, flag on or off. Even
+            // if the canonical persist fails, peers apply the live patch and
+            // rehydration reconciles later (plan §3).
             const patchStr = JSON.stringify(patch);
             room.forEach((_, otherWs) => {
               if (otherWs !== ws && otherWs.readyState === 1) {
@@ -546,6 +604,32 @@ export function attachIdeaCollabWs(server: HttpServer): void {
               persistEvent(db, ws.__sessionId, 'graph_patch', {
                 opCount: Array.isArray(msg.operations) ? msg.operations.length : 0,
               });
+            }
+
+            // (b+c) DP-3: sequentially persist into the canonical row and
+            // broadcast the new version to the WHOLE room (author included).
+            // Flag OFF → relay-only, exactly today's behavior.
+            if (featureFlags.ENABLE_SHARED_IDEA_MAPS) {
+              const ops = Array.isArray(msg.operations) ? msg.operations : [];
+              try {
+                const { version } = await applyGraphPatchToCanonical(
+                  db,
+                  ideaId,
+                  user.organizationId || authUser?.organizationId || '',
+                  user.id,
+                  ops
+                );
+                broadcastGraphVersion(ideaId, version);
+              } catch (err) {
+                logger.warn('[IdeaCollabWs] Canonical graph_patch persist failed', {
+                  userId: user.id,
+                  ideaId,
+                  error: err instanceof Error ? err.message : String(err),
+                });
+                if (ws.readyState === 1) {
+                  ws.send(JSON.stringify({ type: 'error', code: 'GRAPH_PERSIST_FAILED' }));
+                }
+              }
             }
             break;
           }
