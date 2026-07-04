@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import { MENU_2_TAB_ACTIVE, MENU_2_TAB_INACTIVE } from '../ModuleMenu3';
 import { ActiveFilters, type FilterChip } from './ActiveFilters';
 import { DynamicTabs } from './DynamicTabs';
 import { StatusDropdown } from './StatusDropdown';
@@ -120,24 +121,14 @@ interface ModuleNavBarProps {
  * active = wypełniony pill z ramką (neutral, NIE crimson); inactive = przezroczysty,
  * hover rozjaśnia tło. Zgodne z red-budget (zero crimson).
  */
-const TAB_BASE = `
-  inline-flex items-center gap-2 h-9 px-3.5 rounded-full text-sm font-medium
-  transition-colors duration-150
-`;
-
-const TAB_INACTIVE = `
-  ${TAB_BASE}
-  border border-transparent
-  text-c-text-muted
-  hover:text-c-text hover:bg-c-surface-raised
-`;
-
-const TAB_ACTIVE = `
-  ${TAB_BASE}
-  border border-c-border
-  bg-c-surface-raised
-  text-c-text
-`;
+/*
+ * NOTATKA-PRAWO (Piotr, 2026-07-04): pigułki Menu 2 = zaokrąglone, Z WIDOCZNĄ
+ * RAMKĄ, aktywna = neutralne wypełnienie. SSOT klas = MENU_2_TAB_* w
+ * ModuleMenu3 (identyczne z żywym MyWorkHub) — wcześniejsze lokalne TAB_*
+ * (border-transparent w stanie inactive) były odstępstwem od wzorca.
+ */
+const TAB_INACTIVE = MENU_2_TAB_INACTIVE;
+const TAB_ACTIVE = MENU_2_TAB_ACTIVE;
 
 const BUTTON_BASE = `
   inline-flex items-center gap-2 h-9 px-3 rounded-full text-sm font-medium

@@ -3,7 +3,18 @@
  * Table with filterable column headers and row actions
  */
 
-import { ChevronDown, Columns, Copy, Edit, Eye, Maximize2, Trash2 } from 'lucide-react';
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  ChevronDown,
+  Columns,
+  Copy,
+  Edit,
+  Eye,
+  Maximize2,
+  Trash2,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -11,8 +22,9 @@ import { type ColumnConfig, ColumnSelector } from '@/components/Admin/shared/Col
 import { EntityStatusChip } from '@/components/ui/primitives/chips';
 import { ColumnResizer } from '@/components/ui/ResizableTable';
 
-import { type RowAction, RowActionsMenu } from '../RowActionsMenu';
+import { type RowAction, type RowActionSection, RowActionsMenu } from '../RowActionsMenu';
 import { FilterChip } from './ActiveFilters';
+import { TableSettingsPopover } from './TableSettingsPopover';
 
 // Column definition
 export interface TableColumn {
@@ -29,6 +41,11 @@ export interface TableColumn {
   filterable?: boolean;
   filterOptions?: { value: string; label: string; color?: string }[];
   sortable?: boolean;
+  /**
+   * Optional accessor used for sorting (Triada standard). Defaults to
+   * `row[column.id]`. Return a string / number / Date-parsable value.
+   */
+  sortAccessor?: (row: any) => unknown;
   /**
    * Canon §3.3 cell alignment by role: title/text = left (default),
    * counts/metrics = right, rare centered badges = center. Applied to both
@@ -58,6 +75,12 @@ interface FilterableTableProps {
   onRowAction?: (action: string, row: TableRow) => void;
   /** Optional: override the row actions menu contents. */
   getRowActions?: (row: TableRow) => RowAction[];
+  /**
+   * Triada standard: LONG contextual kebab as SECTIONS (status actions on top,
+   * Delete at the bottom — wzór: menu Decisions). Takes precedence over
+   * `getRowActions` when provided.
+   */
+  getRowActionSections?: (row: TableRow) => RowActionSection[];
   /** Optional: hide the row actions menu column. */
   hideRowActions?: boolean;
   activeFilters: FilterChip[];
@@ -89,6 +112,23 @@ interface FilterableTableProps {
     isIndeterminate: boolean;
     selectRowLabel?: string;
     selectAllLabel?: string;
+  };
+  /** Initial sort applied when columns declare `sortable` (Triada standard). */
+  defaultSort?: { columnId: string; direction: 'asc' | 'desc' } | null;
+  /**
+   * Triada standard: optional per-row description line rendered under the
+   * primary (first data) column, toggled via the canonical Settings2 →
+   * TableSettingsPopover ("Show row description"). Providing this prop also
+   * switches the column settings trigger from the legacy ColumnSelector to
+   * TableSettingsPopover.
+   */
+  rowDescription?: {
+    render: (row: TableRow) => React.ReactNode;
+    show: boolean;
+    onToggle: (value: boolean) => void;
+    label?: string;
+    columnsHeading?: string;
+    settingsLabel?: string;
   };
 }
 
@@ -205,6 +245,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   onRowDoubleClick,
   onRowAction,
   getRowActions,
+  getRowActionSections,
   hideRowActions = false,
   activeFilters,
   onFilterChange,
@@ -214,6 +255,8 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   enableColumnSettings = true,
   persistKey,
   selection,
+  defaultSort = null,
+  rowDescription,
 }) => {
   const { i18n, t } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
@@ -328,14 +371,56 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
       .sort((a, b) => (byId.get(a.id)?.order ?? 0) - (byId.get(b.id)?.order ?? 0));
   }, [columns, columnConfigs]);
 
+  // First data (non-select) column hosts the optional row-description line.
+  const firstDataColumnId = useMemo(
+    () => visibleColumns.find((c) => c.type !== 'select')?.id ?? null,
+    [visibleColumns]
+  );
+
+  /**
+   * Zero-sum resize (Triada standard, wzór MyTasksListContent): powiększenie
+   * kolumny zabiera szerokość SĄSIEDNIEJ (następnej widocznej) kolumnie, z
+   * klamrami min/max po obu stronach — całkowita szerokość tabeli stała.
+   */
   const handleColumnResize = useCallback(
     (columnId: string, newWidth: number) => {
-      setColumnWidths((prev) => ({ ...prev, [columnId]: newWidth }));
-      setColumnConfigs((prev) =>
-        prev.map((c) => (c.id === columnId ? { ...c, width: newWidth } : c))
+      const byId = new Map(columnConfigs.map((c) => [c.id, c]));
+      const cfg = byId.get(columnId);
+      const idx = visibleColumns.findIndex((c) => c.id === columnId);
+      const nextCol = idx >= 0 ? visibleColumns[idx + 1] : undefined;
+      // Last visible column or unknown → plain resize (legacy behaviour).
+      if (!cfg || !nextCol || nextCol.type === 'select') {
+        setColumnWidths((prev) => ({ ...prev, [columnId]: newWidth }));
+        setColumnConfigs((prev) =>
+          prev.map((c) => (c.id === columnId ? { ...c, width: newWidth } : c))
+        );
+        return;
+      }
+
+      const nextCfg = byId.get(nextCol.id);
+      const min = cfg.minWidth ?? 90;
+      const max = cfg.maxWidth ?? 520;
+      const nextMin = nextCfg?.minWidth ?? 90;
+      const nextMax = nextCfg?.maxWidth ?? 520;
+
+      const currentWidth = columnWidths[columnId] ?? cfg.width ?? 140;
+      const nextWidth = columnWidths[nextCol.id] ?? nextCfg?.width ?? 140;
+      const clampedWidth = Math.max(min, Math.min(max, newWidth));
+      const requestedDelta = clampedWidth - currentWidth;
+      const requestedNextWidth = nextWidth - requestedDelta;
+      const clampedNextWidth = Math.max(nextMin, Math.min(nextMax, requestedNextWidth));
+      const appliedDelta = nextWidth - clampedNextWidth;
+      const applied: Record<string, number> = {
+        ...columnWidths,
+        [columnId]: currentWidth + appliedDelta,
+        [nextCol.id]: clampedNextWidth,
+      };
+      setColumnWidths(applied);
+      setColumnConfigs((cfgs) =>
+        cfgs.map((c) => (applied[c.id] !== undefined ? { ...c, width: applied[c.id] } : c))
       );
     },
-    [setColumnWidths, setColumnConfigs]
+    [columnConfigs, columnWidths, visibleColumns]
   );
 
   const resetColumns = useCallback(() => {
@@ -400,6 +485,55 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
       });
     });
   }, [data, activeFilters]);
+
+  // ── Sorting (Triada standard) — click on a `sortable` header toggles asc/desc.
+  const [sort, setSort] = useState<{ columnId: string; direction: 'asc' | 'desc' } | null>(
+    defaultSort ?? null
+  );
+
+  const handleSort = useCallback((columnId: string) => {
+    setSort((prev) =>
+      prev?.columnId === columnId
+        ? { columnId, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
+        : { columnId, direction: 'asc' }
+    );
+  }, []);
+
+  const sortedData = useMemo(() => {
+    if (!sort) return filteredData;
+    const column = columns.find((c) => c.id === sort.columnId);
+    if (!column) return filteredData;
+    const accessor = column.sortAccessor ?? ((row: TableRow) => row[column.id]);
+    const dir = sort.direction === 'asc' ? 1 : -1;
+    return [...filteredData].sort((a, b) => {
+      const av = accessor(a);
+      const bv = accessor(b);
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1; // empty values sink to the bottom
+      if (bv == null) return -1;
+      if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
+      const as = String(av);
+      const bs = String(bv);
+      // Date-like strings sort chronologically.
+      const ad = Date.parse(as);
+      const bd = Date.parse(bs);
+      if (!Number.isNaN(ad) && !Number.isNaN(bd) && /\d{4}-\d{2}/.test(as)) {
+        return (ad - bd) * dir;
+      }
+      return as.localeCompare(bs, undefined, { numeric: true, sensitivity: 'base' }) * dir;
+    });
+  }, [filteredData, sort, columns]);
+
+  const SortIcon: React.FC<{ columnId: string }> = ({ columnId }) =>
+    sort?.columnId === columnId ? (
+      sort.direction === 'asc' ? (
+        <ArrowUp size={12} className="shrink-0" />
+      ) : (
+        <ArrowDown size={12} className="shrink-0" />
+      )
+    ) : (
+      <ArrowUpDown size={12} className="shrink-0 opacity-40" />
+    );
 
   // Format relative time
   const formatRelativeTime = (date: Date | string) => {
@@ -471,7 +605,19 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                                 : ''
                           }`}
                         >
-                          <span>{column.label}</span>
+                          {column.sortable ? (
+                            <button
+                              type="button"
+                              onClick={() => handleSort(column.id)}
+                              className="inline-flex items-center gap-1 uppercase tracking-wider transition-colors hover:text-c-text-secondary"
+                              aria-label={`Sort by ${column.label}`}
+                            >
+                              <span>{column.label}</span>
+                              <SortIcon columnId={column.id} />
+                            </button>
+                          ) : (
+                            <span>{column.label}</span>
+                          )}
                           {column.filterable && (
                             <FilterDropdown
                               column={column}
@@ -497,7 +643,45 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                   <th
                     className={`${cellPadding} text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-20`}
                   >
-                    {enableColumnSettings ? (
+                    {enableColumnSettings && rowDescription ? (
+                      /* Triada standard: Settings2 → TableSettingsPopover
+                       * (kolumny + „Show row description") w prawym górnym rogu. */
+                      <div className="flex justify-end normal-case tracking-normal">
+                        <TableSettingsPopover
+                          columns={columnConfigs
+                            .filter((c) => c.id !== '__select')
+                            .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+                            .map((c) => ({
+                              id: c.id,
+                              label: c.label,
+                              required: !!c.required,
+                              visible: c.visible !== false,
+                            }))}
+                          onToggle={(columnId, visible) =>
+                            setColumnConfigs((prev) =>
+                              prev.map((c) => (c.id === columnId ? { ...c, visible } : c))
+                            )
+                          }
+                          showDescription={rowDescription.show}
+                          onToggleDescription={rowDescription.onToggle}
+                          label={
+                            rowDescription.settingsLabel ??
+                            t('common.viewSettings', isPolish ? 'Ustawienia widoku' : 'View settings')
+                          }
+                          columnsHeading={
+                            rowDescription.columnsHeading ??
+                            t('common.visibleColumns', isPolish ? 'Widoczne kolumny' : 'Visible columns')
+                          }
+                          descriptionLabel={
+                            rowDescription.label ??
+                            t(
+                              'common.showRowDescription',
+                              isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'
+                            )
+                          }
+                        />
+                      </div>
+                    ) : enableColumnSettings ? (
                       <div className="flex justify-end">
                         <ColumnSelector
                           columns={columnConfigs}
@@ -521,7 +705,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200/60 dark:divide-white/[0.03]">
-              {filteredData.length === 0 ? (
+              {sortedData.length === 0 ? (
                 <tr>
                   <td
                     colSpan={visibleColumns.length + (hideRowActions ? 0 : 1)}
@@ -533,7 +717,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                   </td>
                 </tr>
               ) : (
-                filteredData.map((row) => (
+                sortedData.map((row) => (
                   <tr
                     key={row.id}
                     onClick={() => onRowClick?.(row)}
@@ -594,12 +778,30 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                             </span>
                           </div>
                         )}
+                        {rowDescription?.show &&
+                        column.type !== 'select' &&
+                        column.id === firstDataColumnId
+                          ? (() => {
+                              const desc = rowDescription.render(row);
+                              return desc ? (
+                                <div className="mt-0.5 text-xs text-c-text-muted line-clamp-2">
+                                  {desc}
+                                </div>
+                              ) : null;
+                            })()
+                          : null}
                       </td>
                     ))}
                     {!hideRowActions ? (
                       <td className={`${cellPadding} text-right`}>
                         <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
                           {(() => {
+                            // Triada standard: LONG contextual kebab as sections.
+                            const sections = getRowActionSections?.(row);
+                            if (sections) {
+                              if (!sections.length) return null;
+                              return <RowActionsMenu iconVariant="vertical" sections={sections} />;
+                            }
                             const actions: RowAction[] =
                               getRowActions?.(row) ??
                               ([
