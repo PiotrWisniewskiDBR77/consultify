@@ -15932,6 +15932,7 @@
     "viewTable": "Wyświetl tabelę",
     "viewUnavailable": "Widok niedostępny",
     "sharedViewReadOnly": "Widok udostępniony — tylko do odczytu",
+    "groupEmptyValue": "(Puste)",
     "search": "Wyszukiwanie",
     "empty": "Brak prezentacji."
   },
