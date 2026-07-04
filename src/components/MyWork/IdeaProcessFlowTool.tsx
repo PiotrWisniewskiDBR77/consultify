@@ -27,7 +27,6 @@ import {
   Lightbulb,
   Loader2,
   Magnet,
-  MessageSquare,
   Plus,
   X,
 } from 'lucide-react';
