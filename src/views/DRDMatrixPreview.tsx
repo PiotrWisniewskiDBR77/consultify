@@ -120,7 +120,7 @@ export const DRDMatrixPreview: React.FC = () => {
                   onClick={() => setAxisId(a.id)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
                     active
-                      ? 'bg-c-accent text-c-tag-foreground border-c-accent'
+                      ? 'bg-c-surface-raised text-c-text border-c-border shadow-sm'
                       : 'bg-c-surface text-c-text-secondary border-c-border hover:border-c-border-strong'
                   }`}
                   title={a.namePL || a.name}
