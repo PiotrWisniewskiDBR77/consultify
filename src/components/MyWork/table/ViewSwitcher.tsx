@@ -5,6 +5,7 @@
  * and allows creating new views via an inline form.
  */
 import {
+  BarChart3,
   Calendar,
   Check,
   ChevronDown,
@@ -47,9 +48,10 @@ const VIEW_TYPE_META: Record<
   timeline: { icon: LayoutGrid, labelEn: 'Timeline', labelPl: 'Oś czasu' },
   gallery: { icon: Grid3X3, labelEn: 'Gallery', labelPl: 'Galeria' },
   form: { icon: Table2, labelEn: 'Form', labelPl: 'Formularz' },
+  chart: { icon: BarChart3, labelEn: 'Chart', labelPl: 'Wykres' },
 };
 
-const CREATE_VIEW_TYPES: ViewType[] = ['grid', 'kanban', 'calendar'];
+const CREATE_VIEW_TYPES: ViewType[] = ['grid', 'kanban', 'calendar', 'chart'];
 
 // ── Component ────────────────────────────────────────────────────────────────
 

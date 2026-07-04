@@ -103,7 +103,7 @@ export interface SavedView {
   filters?: FilterGroup;
   groupBy?: string;
   columns?: { key: string; visible: boolean; width: number }[];
-  layout?: 'table' | 'kanban' | 'timeline' | 'calendar' | 'matrix' | 'grid' | 'sticky';
+  layout?: 'table' | 'kanban' | 'timeline' | 'calendar' | 'matrix' | 'grid' | 'sticky' | 'chart';
 }
 
 export interface NodeAttachment {

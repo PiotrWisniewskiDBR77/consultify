@@ -3,11 +3,17 @@
  *
  * Reads layout and data from `TableDataProvider` via `useTableData()`, renders the
  * spreadsheet grid with platform cell renderers/editors, alternate layouts
- * (Kanban, Calendar, Timeline, Matrix, Gallery, Sticky notes), saved-view switching,
+ * (Kanban, Calendar, Timeline, Matrix, Gallery, Chart), saved-view switching,
  * and the Field Manager slide-over.
+ *
+ * Note: the legacy "Sticky notes" layout has been unplugged from this router's
+ * view switcher (nadzorca decision, tp-views-finish) — it was a stub with no
+ * persistence. `StickyNoteView.tsx` itself is left in place, just unreachable
+ * from this UI.
  */
 import {
   AlertTriangle,
+  BarChart3,
   Calendar,
   ChevronRight,
   Filter,
@@ -17,7 +23,6 @@ import {
   Layout,
   LayoutGrid,
   Plus,
-  StickyNote,
   Table2,
   X,
 } from 'lucide-react';
@@ -28,6 +33,8 @@ import type { FieldType, LinkedRecordFieldOptions, TablePlatformView } from '@/t
 
 import { CalendarView } from './CalendarView';
 import { CellEditor } from './CellEditor';
+import { ChartBlock } from './charts/ChartBlock';
+import { type ChartConfig, ChartConfigPanel } from './charts/ChartConfigPanel';
 import { getConditionalStyle, type FormatRule } from './ConditionalFormatting';
 import { ChatToSchemaPanel } from './ChatToSchemaPanel';
 import { EmptyStateView } from './EmptyStateView';
@@ -37,7 +44,6 @@ import { KanbanView } from './KanbanView';
 import { LinkedRecordDisplay } from './LinkedRecordDisplay';
 import { MatrixView } from './MatrixView';
 import { PlatformCellRenderer } from './PlatformCellRenderer';
-import { StickyNoteView } from './StickyNoteView';
 import { useTableData } from './TableDataProvider';
 import { tpViewToLegacy } from './tablePlatformMappers';
 import type { ColumnDef, TableEdge, TableNode } from './tableTypes';
@@ -67,6 +73,8 @@ function platformViewTypeToViewLayout(vt: TablePlatformView['viewType']): ViewLa
       return 'calendar';
     case 'timeline':
       return 'timeline';
+    case 'chart':
+      return 'chart';
     case 'form':
     default:
       return 'table';
@@ -484,6 +492,17 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
     else setMatrixY(col);
   }, []);
 
+  const chartFields = useMemo(
+    () => columns.map((c) => ({ id: c.key, name: c.header, type: c.type })),
+    [columns]
+  );
+
+  const [chartConfig, setChartConfig] = useState<ChartConfig>({
+    chartType: 'bar',
+    xFieldId: '',
+    aggregation: 'count',
+  });
+
   const alternateView = useMemo(() => {
     switch (viewLayout) {
       case 'kanban':
@@ -551,15 +570,27 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
         );
       case 'grid':
         return <GridView />;
-      case 'sticky':
+      case 'chart':
         return (
-          <StickyNoteView
-            nodes={processedRows}
-            columns={columns}
-            groupBy={groupBy}
-            onNodeClick={(id) => uiDispatch({ type: 'SET_DETAIL_RECORD', id })}
-            onFieldChange={handleFieldChange}
-          />
+          <div className="flex flex-col h-full overflow-hidden">
+            <div className="shrink-0 border-b border-c-border p-3 bg-c-surface-raised">
+              <ChartConfigPanel config={chartConfig} fields={chartFields} onChange={setChartConfig} />
+            </div>
+            <div className="flex-1 min-h-0">
+              <ChartBlock
+                tableId={tableId || ''}
+                chartType={chartConfig.chartType}
+                xFieldId={chartConfig.xFieldId}
+                yFieldId={chartConfig.yFieldId}
+                aggregation={chartConfig.aggregation}
+                title={chartConfig.title}
+                records={processedRows.map((r) => ({
+                  data: r.data as Record<string, unknown> | undefined,
+                }))}
+                fields={chartFields}
+              />
+            </div>
+          </div>
         );
       case 'table':
       default:
@@ -578,6 +609,9 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
     mxX,
     mxY,
     onMatrixAxisChange,
+    chartConfig,
+    chartFields,
+    tableId,
     isPl,
   ]);
 
@@ -588,7 +622,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
     { id: 'calendar', icon: Calendar, label: isPl ? 'Kalendarz' : 'Calendar' },
     { id: 'matrix', icon: LayoutGrid, label: 'Matrix' },
     { id: 'grid', icon: Grid3X3, label: isPl ? 'Galeria' : 'Gallery' },
-    { id: 'sticky', icon: StickyNote, label: isPl ? 'Notatki' : 'Notes' },
+    { id: 'chart', icon: BarChart3, label: isPl ? 'Wykres' : 'Chart' },
   ];
 
   const switchToGrid = useCallback(() => setViewLayout('grid'), [setViewLayout]);
