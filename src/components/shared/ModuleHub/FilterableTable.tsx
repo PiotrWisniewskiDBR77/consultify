@@ -491,12 +491,13 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
     defaultSort ?? null
   );
 
+  // Mechanika 1:1 z MyWork (MyTasksListContent.handleSort): asc → desc → none.
   const handleSort = useCallback((columnId: string) => {
-    setSort((prev) =>
-      prev?.columnId === columnId
-        ? { columnId, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
-        : { columnId, direction: 'asc' }
-    );
+    setSort((prev) => {
+      if (prev?.columnId !== columnId) return { columnId, direction: 'asc' };
+      if (prev.direction === 'asc') return { columnId, direction: 'desc' };
+      return null;
+    });
   }, []);
 
   const sortedData = useMemo(() => {
@@ -648,20 +649,54 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                        * (kolumny + „Show row description") w prawym górnym rogu. */
                       <div className="flex justify-end normal-case tracking-normal">
                         <TableSettingsPopover
-                          columns={columnConfigs
-                            .filter((c) => c.id !== '__select')
-                            .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-                            .map((c) => ({
-                              id: c.id,
-                              label: c.label,
-                              required: !!c.required,
-                              visible: c.visible !== false,
-                            }))}
+                          columns={[
+                            ...columnConfigs
+                              .filter((c) => c.id !== '__select')
+                              .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+                              .map((c) => ({
+                                id: c.id,
+                                label: c.label,
+                                required: !!c.required,
+                                visible: c.visible !== false,
+                              })),
+                            // Actions column is structural — shown as LOCKED (wzór My Work).
+                            {
+                              id: '__actions',
+                              label: t('common.actions', isPolish ? 'Akcje' : 'Actions'),
+                              required: true,
+                              visible: true,
+                            },
+                          ]}
                           onToggle={(columnId, visible) =>
                             setColumnConfigs((prev) =>
                               prev.map((c) => (c.id === columnId ? { ...c, visible } : c))
                             )
                           }
+                          onMove={(columnId, direction) => {
+                            if (columnId === '__actions') return;
+                            // Swap kolejności 1:1 z ColumnSelector.moveColumn (My Work).
+                            setColumnConfigs((prev) => {
+                              const sorted = [...prev].sort(
+                                (a, b) => (a.order ?? 0) - (b.order ?? 0)
+                              );
+                              const idx = sorted.findIndex((c) => c.id === columnId);
+                              const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+                              if (idx < 0 || targetIdx < 0 || targetIdx >= sorted.length)
+                                return prev;
+                              const current = sorted[idx];
+                              const target = sorted[targetIdx];
+                              return prev.map((c) => {
+                                if (c.id === current.id) return { ...c, order: target.order };
+                                if (c.id === target.id) return { ...c, order: current.order };
+                                return c;
+                              });
+                            });
+                          }}
+                          onReset={resetColumns}
+                          resetLabel={t(
+                            'common.resetColumns',
+                            isPolish ? 'Przywróć domyślne' : 'Reset columns'
+                          )}
                           showDescription={rowDescription.show}
                           onToggleDescription={rowDescription.onToggle}
                           label={
