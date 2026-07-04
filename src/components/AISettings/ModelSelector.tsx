@@ -190,7 +190,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                                     w-full p-4 rounded-xl text-left transition-all duration-200
                                     ${
                                       isSelected
-                                        ? `bg-gradient-to-br ${providerColor} bg-opacity-20 border-2 border-white/30 shadow-lg`
+                                        ? `bg-gradient-to-br ${providerColor} bg-opacity-20 border-2 border-c-border shadow-lg`
                                         : 'bg-c-surface-raised border border-c-border-subtle hover:border-c-border'
                                     }
                                     ${!isVisible && showVisibilityToggle ? 'opacity-50' : ''}

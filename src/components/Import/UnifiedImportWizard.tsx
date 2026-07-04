@@ -308,7 +308,7 @@ const UploadStep: React.FC<{
           className={`border-2 border-dashed rounded-xl p-8 sm:p-12 text-center cursor-pointer transition-all ${
             isDragging
               ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-              : 'border-slate-300 dark:border-white/20 hover:border-blue-400'
+              : 'border-slate-300 dark:border-c-border hover:border-blue-400'
           }`}
         >
           <Upload

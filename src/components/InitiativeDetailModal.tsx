@@ -1888,7 +1888,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                   };
                                   setInitiative({ ...initiative, milestones: list });
                                 }}
-                                className="rounded bg-c-surface dark:bg-c-bg border-c-border dark:border-white/20 text-c-info dark:text-c-info focus:ring-offset-white dark:focus:ring-offset-navy-900"
+                                className="rounded bg-c-surface dark:bg-c-bg border-c-border dark:border-c-border text-c-info dark:text-c-info focus:ring-offset-white dark:focus:ring-offset-navy-900"
                               />
                               {t('initiative.decisionGate')}
                             </label>

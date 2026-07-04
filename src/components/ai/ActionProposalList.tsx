@@ -119,7 +119,7 @@ export const ActionProposalList: React.FC<ActionProposalListProps> = ({
                   <span
                     className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold border ${
                       selectedId === proposal.proposal_id
-                        ? 'bg-white/10 text-white border-white/20'
+                        ? 'bg-white/10 text-white border-c-border'
                         : getRiskColor(proposal.risk_level)
                     }`}
                   >

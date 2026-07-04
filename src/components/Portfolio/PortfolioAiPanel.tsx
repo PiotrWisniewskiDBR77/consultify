@@ -329,8 +329,8 @@ export function PortfolioAiPanel(props: {
   return (
     <div className="fixed inset-0 z-overlay">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
-      <div className="absolute right-0 top-0 h-full w-full max-w-[560px] bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-white/10 shadow-2xl overflow-y-auto">
-        <div className="sticky top-0 z-10 bg-white/90 dark:bg-navy-900/90 backdrop-blur border-b border-slate-200 dark:border-white/10 px-4 py-3 flex items-center justify-between">
+      <div className="absolute right-0 top-0 h-full w-full max-w-[560px] bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-c-border-subtle shadow-2xl overflow-y-auto">
+        <div className="sticky top-0 z-10 bg-white/90 dark:bg-navy-900/90 backdrop-blur border-b border-slate-200 dark:border-c-border-subtle px-4 py-3 flex items-center justify-between">
           <div>
             <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
               {t('portfolio.ai.panelTitle', 'Portfolio AI')}
@@ -376,7 +376,7 @@ export function PortfolioAiPanel(props: {
                 {conflicts.slice(0, 10).map((c, idx) => (
                   <div
                     key={idx}
-                    className="rounded-xl border border-slate-200 dark:border-white/10 p-3"
+                    className="rounded-xl border border-slate-200 dark:border-c-border-subtle p-3"
                   >
                     <div className="text-sm font-medium text-slate-900 dark:text-white">
                       {String(c?.type || 'conflict')}
@@ -408,7 +408,7 @@ export function PortfolioAiPanel(props: {
                 {priorities.slice(0, 12).map((p, idx) => (
                   <div
                     key={idx}
-                    className="rounded-xl border border-slate-200 dark:border-white/10 p-3"
+                    className="rounded-xl border border-slate-200 dark:border-c-border-subtle p-3"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -465,7 +465,7 @@ export function PortfolioAiPanel(props: {
                 {scenarios.map((s: any) => (
                   <div
                     key={String(s.type)}
-                    className="rounded-xl border border-slate-200 dark:border-white/10 p-3"
+                    className="rounded-xl border border-slate-200 dark:border-c-border-subtle p-3"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>

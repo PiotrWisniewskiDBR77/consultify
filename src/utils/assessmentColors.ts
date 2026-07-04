@@ -129,7 +129,7 @@ export function getLevelBubbleClasses(
   } else if (isInGap) {
     return 'border-primary-500/30 text-primary-200/50';
   } else {
-    return 'border-white/10 text-slate-600';
+    return 'border-c-border-subtle text-slate-600';
   }
 }
 

@@ -606,7 +606,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                   role="tab"
                   aria-selected={activeTab === tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-3 py-2 text-sm border-b-2 transition ${activeTab === tab.id ? 'border-slate-800 dark:border-white/70 text-slate-900 dark:text-white' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                  className={`px-3 py-2 text-sm border-b-2 transition ${activeTab === tab.id ? 'border-slate-800 dark:border-c-border-strong text-slate-900 dark:text-white' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                 >
                   {tab.label}
                 </button>

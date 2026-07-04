@@ -171,7 +171,7 @@ export const RolloutTeamsTab: React.FC<RolloutTeamsTabProps> = ({ data, onUpdate
                 ) : (
                   <div>{/* Member list */}</div>
                 )}
-                <button className="w-full py-2 border border-dashed border-slate-300 dark:border-white/20 rounded text-slate-500 dark:text-slate-400 hover:text-blue-500 hover:border-blue-500 text-xs font-bold transition-colors flex items-center justify-center gap-1">
+                <button className="w-full py-2 border border-dashed border-slate-300 dark:border-c-border rounded text-slate-500 dark:text-slate-400 hover:text-blue-500 hover:border-blue-500 text-xs font-bold transition-colors flex items-center justify-center gap-1">
                   <Plus size={14} /> Add Member
                 </button>
               </div>

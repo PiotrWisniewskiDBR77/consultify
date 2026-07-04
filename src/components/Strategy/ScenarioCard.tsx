@@ -46,7 +46,7 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({
                 ${
                   isSelected
                     ? 'border-c-text bg-white dark:bg-navy-800 shadow-xl shadow-black/10 scale-105 z-10'
-                    : 'border-slate-200 dark:border-navy-700 bg-white/50 dark:bg-navy-900/50 hover:border-slate-300 dark:hover:border-white/20 hover:bg-white dark:hover:bg-navy-800 hover:shadow-lg opacity-80 hover:opacity-100 scale-100'
+                    : 'border-slate-200 dark:border-navy-700 bg-white/50 dark:bg-navy-900/50 hover:border-slate-300 dark:hover:border-c-border hover:bg-white dark:hover:bg-navy-800 hover:shadow-lg opacity-80 hover:opacity-100 scale-100'
                 }
             `}
     >
