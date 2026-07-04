@@ -23,6 +23,9 @@ import { AssessmentMenu3ActionBar } from '@/components/assessment/AssessmentMenu
 import { AssessmentV8CanonPanel } from '@/components/assessment/AssessmentV8CanonPanel';
 import { AssessmentWorkbenchPanel } from '@/components/assessment/AssessmentWorkbenchPanel';
 import { DRDAssessmentEditor } from '@/components/assessment/drd/DRDAssessmentEditor';
+import { DRDMatrixSession } from '@/components/assessment/drd/DRDMatrixSession';
+import { areasToFormData, formDataToAreas } from '@/components/assessment/drd/drdAnswersAdapter';
+import { DRDForm } from '@/components/assessment/tools/DRDForm';
 import { InitiativesGenerationWizardModal } from '@/components/assessment/InitiativesGenerationWizardModal';
 import { AssessmentManagePanel } from '@/components/assessment/manage/AssessmentManagePanel';
 import { ReportTemplatePickerModal } from '@/components/assessment/modals/ReportTemplatePickerModal';
@@ -383,6 +386,13 @@ export const AssessmentSessionEditorView: React.FC = () => {
   const [isExiting, setIsExiting] = useState(false);
   const [showRequestAccessModal, setShowRequestAccessModal] = useState(false);
   const [leftWorkspace, setLeftWorkspace] = useState<'none' | 'manage'>('none');
+  // DRD session surface. Default = Piotr's original "Digital Readiness Diagnosis"
+  // form (his intellectual property). Table = DRDAssessmentEditor. Matrix = the
+  // Digital Pathfinder maturity matrix overview.
+  const [drdViewMode, setDrdViewMode] = useState<'form' | 'table' | 'matrix'>('form');
+  // Governance (workbench + canon intro) is a secondary lane in DRD sessions,
+  // NOT the entry experience. Hidden by default; toggled from the subheader.
+  const [showGovernance, setShowGovernance] = useState(false);
   const [manageTab, setManageTab] = useState<
     'workflow' | 'team' | 'initiatives' | 'reports' | 'access' | 'logs'
   >('workflow');
@@ -1568,6 +1578,52 @@ export const AssessmentSessionEditorView: React.FC = () => {
   const renderEditor = () => {
     if (framework === 'drd') {
       const drdData: DRDFormData = answers?.drd || {};
+
+      // DEFAULT surface: Piotr's original Digital Readiness Diagnosis form.
+      // Reads/writes the canonical answers.drd.areas shape via the adapter, so
+      // Form / Table / Matrix all stay interoperable on one source of truth.
+      if (drdViewMode === 'form') {
+        return (
+          <DRDForm
+            data={areasToFormData(drdData)}
+            readOnly={isLocked}
+            showProgress
+            onChange={(nextForm) => {
+              const nextDrd = formDataToAreas(nextForm, drdData);
+              const nextAnswers = { ...answers, drd: nextDrd };
+              setAnswers(nextAnswers);
+              scheduleSave(nextAnswers, calcDrdCompletionPercent(nextDrd));
+            }}
+          />
+        );
+      }
+
+      // Matrix surface: the Digital Pathfinder maturity matrix overview.
+      if (drdViewMode === 'matrix') {
+        return (
+          <DRDMatrixSession
+            value={drdData}
+            readOnly={isLocked}
+            currentAxisId={currentAxisId}
+            currentAreaId={currentAreaId}
+            onAxisChange={(nextAxisId) => {
+              if (leftWorkspace === 'manage') setLeftWorkspace('none');
+              handleAxisChange(nextAxisId);
+            }}
+            onAreaChange={(nextAreaId) => {
+              if (leftWorkspace === 'manage') setLeftWorkspace('none');
+              handleAreaChange(nextAreaId);
+            }}
+            onChange={(next) => {
+              const nextAnswers = { ...answers, drd: next };
+              setAnswers(nextAnswers);
+              scheduleSave(nextAnswers, calcDrdCompletionPercent(next));
+            }}
+          />
+        );
+      }
+
+      // Table surface: the existing enterprise DRDAssessmentEditor.
       return (
         <DRDAssessmentEditor
           assessmentId={assessmentId}
@@ -1902,7 +1958,46 @@ export const AssessmentSessionEditorView: React.FC = () => {
         <div className="px-6 pb-3">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-2 flex-wrap min-w-0">
-              {framework === 'drd' && drdPositionLabel && (
+              {/* DRD session surface switcher: Form (default) / Table / Matrix + Governance */}
+              {framework === 'drd' && (
+                <div className="inline-flex items-center gap-1 rounded-lg border border-c-border-subtle bg-white/60 dark:bg-navy-900/40 p-0.5">
+                  {(
+                    [
+                      { id: 'form', label: 'Formularz' },
+                      { id: 'table', label: 'Tabela' },
+                      { id: 'matrix', label: 'Macierz' },
+                    ] as const
+                  ).map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setDrdViewMode(opt.id)}
+                      className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors ${
+                        drdViewMode === opt.id
+                          ? 'bg-c-accent-soft text-c-accent'
+                          : 'text-c-text-secondary hover:bg-c-surface-raised'
+                      }`}
+                      title={opt.label}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                  <span className="mx-1 h-4 w-px bg-c-border-subtle" />
+                  <button
+                    type="button"
+                    onClick={() => setShowGovernance((v) => !v)}
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors ${
+                      showGovernance
+                        ? 'bg-c-accent-soft text-c-accent'
+                        : 'text-c-text-secondary hover:bg-c-surface-raised'
+                    }`}
+                    title="Governance / Review lane (workbench)"
+                  >
+                    Governance
+                  </button>
+                </div>
+              )}
+              {framework === 'drd' && drdViewMode !== 'form' && drdPositionLabel && (
                 <div className="inline-flex items-center gap-2 text-[11px] px-2 py-1 rounded-lg border border-c-border-subtle bg-white/60 dark:bg-navy-900/40 text-c-text-secondary truncate">
                   <span className="truncate">{drdPositionLabel}</span>
                 </div>
@@ -2066,21 +2161,32 @@ export const AssessmentSessionEditorView: React.FC = () => {
           </div>
         ) : null}
 
-        <div className="px-6 pb-4">
-          <AssessmentV8CanonPanel mode="session" compact />
-        </div>
+        {/*
+          Governance lane (workbench + canon intro).
+          For DRD: this is a SECONDARY lane — the session opens on Piotr's
+          assessment surface, not on the "shared workbench / checkpoints" screen.
+          Shown only when the user opts into Governance from the subheader.
+          For other frameworks: unchanged (always visible).
+        */}
+        {framework !== 'drd' || showGovernance ? (
+          <>
+            <div className="px-6 pb-4">
+              <AssessmentV8CanonPanel mode="session" compact />
+            </div>
 
-        {assessmentId ? (
-          <div className="px-6 pb-4">
-            <AssessmentWorkbenchPanel
-              assessmentId={assessmentId}
-              permissions={{
-                canView: Boolean(permissions?.canView || isGlobalAdmin),
-                canEdit: canEditEffective,
-                canApprove: Boolean(permissions?.canApprove || isGlobalAdmin),
-              }}
-            />
-          </div>
+            {assessmentId ? (
+              <div className="px-6 pb-4">
+                <AssessmentWorkbenchPanel
+                  assessmentId={assessmentId}
+                  permissions={{
+                    canView: Boolean(permissions?.canView || isGlobalAdmin),
+                    canEdit: canEditEffective,
+                    canApprove: Boolean(permissions?.canApprove || isGlobalAdmin),
+                  }}
+                />
+              </div>
+            ) : null}
+          </>
         ) : null}
 
         {isInfoOpen && (
