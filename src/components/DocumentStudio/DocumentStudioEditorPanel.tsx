@@ -14,6 +14,7 @@ import {
   getDocumentStudioAuditTrail,
   rejectDocumentStudioProposal,
 } from './api';
+import { TransformativeConfirmDialog } from './TransformativeConfirmDialog';
 import type {
   DocumentAuditEntry,
   DocumentEditorProposal,
@@ -68,6 +69,7 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  const [showTransformativeConfirm, setShowTransformativeConfirm] = useState(false);
 
   const editableTargets = useMemo<EditableTarget[]>(() => {
     const targets: EditableTarget[] = [];
@@ -109,28 +111,7 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
     }
   };
 
-  const handleCreateProposal = async (): Promise<void> => {
-    if (!instruction.trim()) {
-      setError(
-        t('documentStudio.editor.validation', 'Select a target block and provide an instruction.')
-      );
-      return;
-    }
-    if (scope === 'local' && !selectedTarget) {
-      setError(
-        t('documentStudio.editor.validation', 'Select a target block and provide an instruction.')
-      );
-      return;
-    }
-    if (scope === 'section' && !sectionTargetId) {
-      setError(
-        t(
-          'documentStudio.editor.sectionValidation',
-          'Pick the section the instruction should apply to.'
-        )
-      );
-      return;
-    }
+  const submitProposal = async (): Promise<void> => {
     setSubmitting(true);
     setError(null);
     setNote(null);
@@ -177,17 +158,6 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
           { useLlm }
         );
       } else if (scope === 'transformative') {
-        if (
-          !window.confirm(
-            t(
-              'documentStudio.editor.transformativeConfirm',
-              'This can dramatically rebuild the document. Continue?'
-            )
-          )
-        ) {
-          setSubmitting(false);
-          return;
-        }
         proposal = await createDocumentStudioTransformativeProposal(
           artifactId,
           { instruction: instruction.trim() },
@@ -223,6 +193,49 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleCreateProposal = async (): Promise<void> => {
+    if (!instruction.trim()) {
+      setError(
+        t('documentStudio.editor.validation', 'Select a target block and provide an instruction.')
+      );
+      return;
+    }
+    if (scope === 'local' && !selectedTarget) {
+      setError(
+        t('documentStudio.editor.validation', 'Select a target block and provide an instruction.')
+      );
+      return;
+    }
+    if (scope === 'section' && !sectionTargetId) {
+      setError(
+        t(
+          'documentStudio.editor.sectionValidation',
+          'Pick the section the instruction should apply to.'
+        )
+      );
+      return;
+    }
+    // B1 — transformative scope is destructive (may rewrite every section),
+    // so it always requires an explicit confirmation modal before the
+    // request is sent. The actual submission happens in
+    // handleConfirmTransformative once the user opts in.
+    if (scope === 'transformative') {
+      setError(null);
+      setShowTransformativeConfirm(true);
+      return;
+    }
+    await submitProposal();
+  };
+
+  const handleConfirmTransformative = async (): Promise<void> => {
+    setShowTransformativeConfirm(false);
+    await submitProposal();
+  };
+
+  const handleCancelTransformative = (): void => {
+    setShowTransformativeConfirm(false);
   };
 
   const handleApprove = async (): Promise<void> => {
@@ -442,17 +455,13 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
               <div className="mb-1 font-semibold text-c-text-muted">
                 {t('documentStudio.editor.before', 'Before')}
               </div>
-              <pre className="whitespace-pre-wrap text-c-text">
-                {pendingProposal.diff.before}
-              </pre>
+              <pre className="whitespace-pre-wrap text-c-text">{pendingProposal.diff.before}</pre>
             </div>
             <div className="rounded-md border border-sky-300/60 bg-sky-50 p-2 text-xs dark:border-sky-400/30 dark:bg-sky-500/10">
               <div className="mb-1 font-semibold text-sky-700 dark:text-sky-300">
                 {t('documentStudio.editor.after', 'After')}
               </div>
-              <pre className="whitespace-pre-wrap text-c-text">
-                {pendingProposal.diff.after}
-              </pre>
+              <pre className="whitespace-pre-wrap text-c-text">{pendingProposal.diff.after}</pre>
             </div>
           </div>
           {pendingProposal.proposedChanges && pendingProposal.proposedChanges.length > 0 ? (
@@ -527,6 +536,13 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
           </ul>
         </div>
       ) : null}
+
+      <TransformativeConfirmDialog
+        open={showTransformativeConfirm}
+        onCancel={handleCancelTransformative}
+        onConfirm={handleConfirmTransformative}
+        submitting={submitting}
+      />
     </section>
   );
 };

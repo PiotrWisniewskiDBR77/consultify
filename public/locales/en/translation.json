@@ -16204,6 +16204,14 @@
       "validation": "Select a target block and provide an instruction.",
       "sectionValidation": "Pick the section the instruction should apply to.",
       "transformativeConfirm": "This can dramatically rebuild the document. Continue?",
+      "transformativeConfirmTitle": "Rebuild the whole document?",
+      "transformativeConsequences": [
+        "Every section and block in the document may be rewritten.",
+        "The current structure, headings, and wording can all change.",
+        "You will still review a before/after diff and can reject the proposal before anything is applied."
+      ],
+      "transformativeCancel": "Cancel",
+      "transformativeContinue": "Continue",
       "unsupportedScope": "Unsupported editor scope.",
       "proposalReadyRefined": "Proposal ready (AI rewrite applied). Review the diff and approve or reject.",
       "proposalReadyFallback": "Proposal ready (AI rewrite unavailable; deterministic edit shown). Review and approve or reject.",

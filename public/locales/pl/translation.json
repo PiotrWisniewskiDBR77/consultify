@@ -17257,6 +17257,14 @@
       "validation": "Wybierz docelowy blok i podaj instrukcję.",
       "sectionValidation": "Wskaż sekcję, której ma dotyczyć instrukcja.",
       "transformativeConfirm": "To może gruntownie przebudować dokument. Kontynuować?",
+      "transformativeConfirmTitle": "Przebudować cały dokument?",
+      "transformativeConsequences": [
+        "Każda sekcja i każdy blok dokumentu mogą zostać przeredagowane.",
+        "Obecna struktura, nagłówki i brzmienie treści mogą się zmienić.",
+        "Nadal zobaczysz porównanie przed/po i możesz odrzucić propozycję, zanim cokolwiek zostanie zastosowane."
+      ],
+      "transformativeCancel": "Anuluj",
+      "transformativeContinue": "Kontynuuj",
       "unsupportedScope": "Nieobsługiwany zakres edytora.",
       "proposalReadyRefined": "Propozycja gotowa (zastosowano przeredagowanie AI). Przejrzyj różnice i zatwierdź lub odrzuć.",
       "proposalReadyFallback": "Propozycja gotowa (przeredagowanie AI niedostępne; pokazano edycję deterministyczną). Przejrzyj i zatwierdź lub odrzuć.",
