@@ -970,7 +970,10 @@
       "regenerating": "Generowanie ponowne…",
       "rewritePlaceholder": "Przerób ten slajd…",
       "rewriteSlide": "Przerób",
-      "notesPlaceholder": "Notatki prelegenta do tego slajdu..."
+      "notesPlaceholder": "Notatki prelegenta do tego slajdu...",
+      "duplicate": "Duplikuj",
+      "delete": "Usuń",
+      "slideSorter": "Slajdy"
     },
     "agent": {
       "title": "Agent AI",

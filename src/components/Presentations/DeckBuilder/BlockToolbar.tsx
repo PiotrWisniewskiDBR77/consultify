@@ -211,8 +211,7 @@ const ImagesPanel: React.FC<{ onOpenMediaLibrary?: () => void }> = ({ onOpenMedi
         description="Browse your org images"
         onClick={() => onOpenMediaLibrary?.()}
       />
-      <PanelButton label="AI Generate" description="Generate with AI" disabled onClick={() => {}} />
-      <PanelButton label="Upload" description="Drag & drop" disabled onClick={() => {}} />
+      {/* "AI Generate" and "Upload" buttons return in P2.2 */}
     </div>
   </div>
 );
