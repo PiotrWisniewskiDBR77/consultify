@@ -34,16 +34,10 @@ interface ActivityFeedProps {
   onEventClick?: (entityId: string) => void;
   /**
    * Whether `tableId` is a real `tp_tables.id` row (table-platform mode).
-   *
-   * TODO(tp): backend/handoff — legacy idea-tables (map/blob persistence, no
-   * table-platform row) currently pass the idea id here, which the audit
-   * endpoint (`requireTableAccess` → `canAccessTable`) always rejects with
-   * 403 because no `tp_tables` row matches. Until the caller resolves and
-   * passes the real platform table id (see IdeaTableTool.tsx `platformTableId`,
-   * used for every other platform-scoped panel except this one and
-   * AuditTrailPanel — handoff for whoever owns that file), we hide this
-   * panel rather than show an affordance that always errors.
-   * Defaults to `false` (hidden) until the caller opts in explicitly.
+   * Legacy idea-tables (map/blob persistence) have no `tp_tables` row, so the
+   * audit endpoint (`requireTableAccess` → `canAccessTable`) always rejects
+   * with 403 — when false (default) the feed hides itself rather than show
+   * an affordance that always errors.
    */
   isPlatformTable?: boolean;
 }

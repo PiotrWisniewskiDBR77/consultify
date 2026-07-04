@@ -44,12 +44,15 @@ function normalizeField(raw: Record<string, unknown>): TablePlatformField {
 }
 
 function normalizeRecord(raw: Record<string, unknown>): TablePlatformRecord {
+  const rawVersion = raw.version ?? (raw as Record<string, unknown>).record_version;
+  const version = rawVersion == null || rawVersion === '' ? null : Number(rawVersion);
   return {
     id: String(raw.id ?? ''),
     tableId: String(raw.table_id ?? raw.tableId ?? ''),
     data: (raw.data ?? {}) as Record<string, unknown>,
     createdAt: String(raw.created_at ?? raw.createdAt ?? ''),
     updatedAt: String(raw.updated_at ?? raw.updatedAt ?? ''),
+    version: Number.isFinite(version as number) ? (version as number) : null,
   };
 }
 
@@ -116,6 +119,17 @@ export interface UseTablePlatformBridgeReturn {
   refresh: () => Promise<void>;
   applyFilters: (filters: TPFilterGroup) => Promise<void>;
   applySorts: (sorts: TPSortRule[]) => Promise<void>;
+
+  /** Canonical `tp_tables.id` currently loaded (realtime room id). Null until first load. */
+  loadedTableId: string | null;
+  /** Apply a `record:created` broadcast to local state (echo-safe, table-scoped). */
+  applyRealtimeCreated: (payload: unknown) => void;
+  /** Apply a `record:updated` broadcast to local state (version-gated echo protection). */
+  applyRealtimeUpdated: (recordId: string, payload: unknown) => void;
+  /** Apply a `record:deleted` broadcast to local state (no-op if absent locally). */
+  applyRealtimeDeleted: (recordId: string) => void;
+  /** Re-fetch fields/views/records after a peer's `schema:changed` broadcast. */
+  applyRealtimeSchemaChanged: () => void;
 }
 
 async function resolveTargetTableForIdea(
@@ -162,6 +176,18 @@ export function useTablePlatformBridge(
 
   const cursorRef = useRef<string | undefined>(undefined);
   const tableIdRef = useRef<string | null>(null);
+  const [loadedTableId, setLoadedTableId] = useState<string | null>(null);
+  /**
+   * Last known `version` per recordId. Own mutations (create/update) advance
+   * this from the server response; a realtime echo whose version is not
+   * strictly newer is dropped — this is the echo-protection contract.
+   */
+  const recordVersionsRef = useRef<Map<string, number>>(new Map());
+
+  const rememberVersion = useCallback((rec: TablePlatformRecord | null | undefined) => {
+    if (!rec?.id || rec.version == null) return;
+    recordVersionsRef.current.set(rec.id, rec.version);
+  }, []);
 
   const columns = fields.map(fieldToColumn);
   const nodes = records.map((r) => recordToNode(r, fields));
@@ -226,6 +252,7 @@ export function useTablePlatformBridge(
           tableId: ensuredTableId,
         });
         tableIdRef.current = tableId;
+        setLoadedTableId(tableId);
         cursorRef.current = undefined;
 
         const [baseRes, tableRes] = await Promise.all([
@@ -270,7 +297,10 @@ export function useTablePlatformBridge(
           hasMore?: boolean;
         };
         const rawRecords = (listData.records ?? []) as Record<string, unknown>[];
-        setRecords(rawRecords.map(normalizeRecord));
+        const normRecords = rawRecords.map(normalizeRecord);
+        recordVersionsRef.current = new Map();
+        normRecords.forEach(rememberVersion);
+        setRecords(normRecords);
         setTotalRecords(Number(listData.total ?? rawRecords.length));
         setHasMore(Boolean(listData.hasMore ?? false));
         cursorRef.current = listData.cursor;
@@ -283,7 +313,16 @@ export function useTablePlatformBridge(
         setLoading(false);
       }
     },
-    [isNewPlatform, enabled, ensureBaseAndTable, filters, sorts, ideaId, preferredTableId]
+    [
+      isNewPlatform,
+      enabled,
+      ensureBaseAndTable,
+      filters,
+      sorts,
+      ideaId,
+      preferredTableId,
+      rememberVersion,
+    ]
   );
 
   const loadMore = useCallback(async () => {
@@ -308,6 +347,7 @@ export function useTablePlatformBridge(
       };
       const rawRecords = (listData.records ?? []) as Record<string, unknown>[];
       const newRecords = rawRecords.map(normalizeRecord);
+      newRecords.forEach(rememberVersion);
       setRecords((prev) => [...prev, ...newRecords]);
       setHasMore(Boolean(listData.hasMore ?? false));
       cursorRef.current = listData.cursor;
@@ -316,7 +356,7 @@ export function useTablePlatformBridge(
     } finally {
       setLoading(false);
     }
-  }, [hasMore, filters, sorts]);
+  }, [hasMore, filters, sorts, rememberVersion]);
 
   const refresh = useCallback(async () => {
     await loadData();
@@ -330,6 +370,7 @@ export function useTablePlatformBridge(
       try {
         const created = await TablePlatformApi.createRecord(tableId, data);
         const norm = normalizeRecord(created as Record<string, unknown>);
+        rememberVersion(norm);
         setRecords((prev) => [norm, ...prev]);
         setTotalRecords((t) => t + 1);
         return norm;
@@ -337,7 +378,7 @@ export function useTablePlatformBridge(
         return null;
       }
     },
-    []
+    [rememberVersion]
   );
 
   const updateRecord = useCallback(
@@ -348,18 +389,20 @@ export function useTablePlatformBridge(
       try {
         const updated = await TablePlatformApi.updateRecord(recordId, data);
         const norm = normalizeRecord(updated as Record<string, unknown>);
+        rememberVersion(norm);
         setRecords((prev) => prev.map((r) => (r.id === recordId ? norm : r)));
         return norm;
       } catch {
         return null;
       }
     },
-    []
+    [rememberVersion]
   );
 
   const deleteRecord = useCallback(async (recordId: string): Promise<boolean> => {
     try {
       await TablePlatformApi.deleteRecord(recordId);
+      recordVersionsRef.current.delete(recordId);
       setRecords((prev) => prev.filter((r) => r.id !== recordId));
       setTotalRecords((t) => Math.max(0, t - 1));
       return true;
@@ -469,6 +512,97 @@ export function useTablePlatformBridge(
     [loadData, filters]
   );
 
+  // ── Realtime broadcast appliers ────────────────────────────────────────────
+  // Peers' record mutations arrive over Socket.IO (see useTableRealtime). We
+  // fold them into `records` (the source of truth); `nodes` and the
+  // integration hook's `localNodes` re-derive automatically. All appliers are
+  // table-scoped (a broadcast whose table_id ≠ the loaded table is ignored) and
+  // defensive (missing records never throw).
+
+  /** True when the payload targets the currently loaded table (or carries no id). */
+  const isForLoadedTable = useCallback((payloadTableId: unknown): boolean => {
+    const loaded = tableIdRef.current;
+    if (!loaded) return false;
+    const pid =
+      typeof payloadTableId === 'string' && payloadTableId.trim() ? payloadTableId.trim() : null;
+    // Row-shaped payloads carry table_id/tableId; when absent (already
+    // room-scoped server-side) we trust room membership and accept.
+    return pid == null || pid === loaded;
+  }, []);
+
+  const applyRealtimeCreated = useCallback(
+    (payload: unknown) => {
+      const raw = (payload ?? {}) as Record<string, unknown>;
+      const rawTableId = raw.table_id ?? raw.tableId;
+      if (!isForLoadedTable(rawTableId)) return;
+      const norm = normalizeRecord(raw);
+      if (!norm.id) return;
+      // Echo of our own create (or a duplicate broadcast): merge, don't dupe.
+      const known = recordVersionsRef.current.get(norm.id);
+      if (known != null && norm.version != null && norm.version <= known) return;
+      rememberVersion(norm);
+      setRecords((prev) => {
+        const idx = prev.findIndex((r) => r.id === norm.id);
+        if (idx === -1) {
+          setTotalRecords((t) => t + 1);
+          return [norm, ...prev];
+        }
+        const next = [...prev];
+        next[idx] = norm;
+        return next;
+      });
+    },
+    [isForLoadedTable, rememberVersion]
+  );
+
+  const applyRealtimeUpdated = useCallback(
+    (recordId: string, payload: unknown) => {
+      const id = String(recordId ?? '').trim();
+      if (!id) return;
+      // `record:updated` payload `data` is the full tp_records row (id, data,
+      // version, table_id, updated_at) — NOT the bare cell-values object.
+      const raw = (payload ?? {}) as Record<string, unknown>;
+      const rawTableId = raw.table_id ?? raw.tableId;
+      if (!isForLoadedTable(rawTableId)) return;
+      const norm = normalizeRecord({ ...raw, id: raw.id ?? id });
+      // Echo protection: drop broadcasts that are not strictly newer than the
+      // version we already hold (our own optimistic update already advanced it).
+      const known = recordVersionsRef.current.get(id);
+      if (known != null && norm.version != null && norm.version <= known) return;
+      if (norm.version != null) rememberVersion({ ...norm, id });
+      setRecords((prev) => {
+        const idx = prev.findIndex((r) => r.id === id);
+        // Defensive: an update for a record we don't have locally → adopt it
+        // (it may have been created by a peer before we joined) rather than crash.
+        if (idx === -1) {
+          setTotalRecords((t) => t + 1);
+          return [{ ...norm, id }, ...prev];
+        }
+        const next = [...prev];
+        next[idx] = { ...next[idx], data: norm.data, version: norm.version ?? next[idx].version };
+        return next;
+      });
+    },
+    [isForLoadedTable, rememberVersion]
+  );
+
+  const applyRealtimeDeleted = useCallback((recordId: string) => {
+    const id = String(recordId ?? '').trim();
+    if (!id) return;
+    recordVersionsRef.current.delete(id);
+    setRecords((prev) => {
+      if (!prev.some((r) => r.id === id)) return prev; // no-op if absent
+      setTotalRecords((t) => Math.max(0, t - 1));
+      return prev.filter((r) => r.id !== id);
+    });
+  }, []);
+
+  const applyRealtimeSchemaChanged = useCallback(() => {
+    // Re-fetch fields/views/records without remounting the component (lesson:
+    // remount-on-edit once made this tool unusable). loadData swaps state in place.
+    void loadData();
+  }, [loadData]);
+
   useEffect(() => {
     if (!isNewPlatform || !enabled) return;
     void loadData();
@@ -499,6 +633,11 @@ export function useTablePlatformBridge(
     refresh: async () => {},
     applyFilters: async () => {},
     applySorts: async () => {},
+    loadedTableId: null,
+    applyRealtimeCreated: () => {},
+    applyRealtimeUpdated: () => {},
+    applyRealtimeDeleted: () => {},
+    applyRealtimeSchemaChanged: () => {},
   };
 
   if (!isNewPlatform) return noopReturn;
@@ -532,5 +671,10 @@ export function useTablePlatformBridge(
     refresh,
     applyFilters,
     applySorts,
+    loadedTableId,
+    applyRealtimeCreated,
+    applyRealtimeUpdated,
+    applyRealtimeDeleted,
+    applyRealtimeSchemaChanged,
   };
 }

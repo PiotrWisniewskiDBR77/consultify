@@ -308,6 +308,15 @@ export interface TablePlatformRecord {
   createdAt: string;
   updatedAt: string;
   /**
+   * Optimistic-concurrency counter (`tp_records.version`, INTEGER). Bumped by
+   * every server-side mutation. Used by the realtime layer to drop stale echoes
+   * of a client's own optimistic update (a broadcast whose version is not
+   * strictly newer than what we already hold is ignored). Optional on the wire
+   * because the column is feature-gated (`hasRecordVersionColumn`) and legacy
+   * responses may predate it.
+   */
+  version?: number | null;
+  /**
    * Block B / EPIC-T8 — AI confidence score in `[0, 1]`. Backend column
    * is `tp_records.confidence_score` (NUMERIC(3,2) NULL). Optional
    * because the column is only populated after the first

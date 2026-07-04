@@ -270,10 +270,25 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   }, [preferredViewId, platformActive, platformIntegration.setActiveViewId]);
 
   // ── Table Platform real-time collaboration ─────────────────────────────────
+  // Join the CANONICAL tp_tables id (the room the server broadcasts CRUD to),
+  // not `ideaId` (a workspace id). Record broadcasts target `table:${tp_tables.id}`,
+  // so joining ideaId would never receive them. Falls back to ideaId only until
+  // the real table id resolves (presence continuity).
+  const realtimeTableId = platformActive
+    ? (platformIntegration.realtimeTableId ?? ideaId)
+    : null;
   const realtime = useTableRealtime({
-    tableId: platformActive ? ideaId : null,
+    tableId: realtimeTableId,
     userId: currentUserId,
     userName: currentUserName,
+    onRecordCreated: platformActive ? platformIntegration.applyRealtimeCreated : undefined,
+    onRecordUpdated: platformActive
+      ? (data) => platformIntegration.applyRealtimeUpdated(data.recordId, data.data)
+      : undefined,
+    onRecordDeleted: platformActive
+      ? (data) => platformIntegration.applyRealtimeDeleted(data.recordId)
+      : undefined,
+    onSchemaChanged: platformActive ? platformIntegration.applyRealtimeSchemaChanged : undefined,
   });
 
   // ── Domain hooks (Stage 1 extraction) ───────────────────────────────────────
@@ -3333,14 +3348,16 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         open={showAuditTrail}
         onClose={() => setShowAuditTrail(false)}
         recordId={detailNodeId}
-        tableId={ideaId}
+        tableId={platformTableId ?? ideaId}
+        isPlatformTable={usePlatform && !!platformTableId}
       />
 
       {/* Activity Feed (table-level) */}
       <ActivityFeed
         open={showActivityFeed}
         onClose={() => setShowActivityFeed(false)}
-        tableId={ideaId}
+        tableId={platformTableId ?? ideaId}
+        isPlatformTable={usePlatform && !!platformTableId}
         onEventClick={(entityId) => {
           setDetailNodeId(entityId);
           setDetailMode('preview');
