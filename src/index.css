@@ -654,10 +654,20 @@ html.caret-thick [contenteditable="true"] {
 }
 
 /* Focus indicators — enhanced focus highlight + style variants.
- * focus-visible only, so mouse users are unaffected. */
+ * focus-visible only, so mouse users are unaffected.
+ * KOLOR = c-focus (niebieski), NIE akcent (decyzja Piotra 2026-07-04: focus
+ * nigdy crimson). To rysowało czerwoną obwódkę na composerze/edytorze u kont
+ * z włączonym focus-highlight w ustawieniach dostępności. */
 html.focus-highlight :focus-visible {
-  outline: 2px solid var(--c-accent, #85182f);
+  outline: 2px solid var(--c-focus-solid, #2563eb);
   outline-offset: 2px;
+}
+/* Edytory tekstu (composer, canvas/TipTap): obwódka fokusa wyłączona w całości
+ * (polecenie Piotra: „ramka do pisania jest zupełnie niepotrzebna"). */
+html.focus-highlight textarea:focus-visible,
+html.focus-highlight [contenteditable='true']:focus-visible,
+html.focus-highlight .ProseMirror:focus-visible {
+  outline: none;
 }
 html.focus-style-high-contrast :focus-visible {
   outline: 3px solid #000000 !important;
@@ -669,7 +679,7 @@ html.dark.focus-style-high-contrast :focus-visible {
   box-shadow: 0 0 0 5px #000000 !important;
 }
 html.focus-style-animated :focus-visible {
-  outline: 2px solid var(--c-accent, #85182f);
+  outline: 2px solid var(--c-focus-solid, #2563eb);
   outline-offset: 2px;
   animation: focus-pulse 1.2s ease-in-out infinite;
 }
