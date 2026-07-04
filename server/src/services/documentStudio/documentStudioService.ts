@@ -117,6 +117,7 @@ import type {
   DocumentQaReport,
   DocumentRunResult,
   DocumentSchema,
+  DocumentSection,
   DocumentSourceRef,
   DocumentTemplate,
   DocumentVersionSnapshot,
@@ -388,6 +389,54 @@ export interface MaterializeDocumentParams {
    * undefined.
    */
   clientId?: string | null;
+  /**
+   * C1 — optional progressive-generation lifecycle hooks. Threaded through
+   * so the streaming route (`POST /generate/stream`) can emit SSE events
+   * as the pipeline advances, WITHOUT forking the pipeline. When every hook
+   * is omitted the function behaves byte-identically to the pre-C1 sync
+   * path — the hooks are pure observers and never influence the result.
+   *
+   * Contract:
+   *   - `onPlan` fires exactly once, right after the outline is resolved
+   *     (before any prose LLM call), so the FE can paint the section
+   *     skeleton immediately.
+   *   - `onWarning` fires for every generation-time warning as it is
+   *     recorded (LLM prose fallback, etc.).
+   *   - `onSection` fires once per section, in `orderIndex` order, after
+   *     the schema (including prose) is fully materialized. The section
+   *     object handed to the hook is a reference into the SAME final schema
+   *     returned in the result, guaranteeing the streamed sections and the
+   *     final `schema` are identical.
+   *   - A hook that throws MUST NOT break materialization — the caller is
+   *     responsible for making its hooks non-throwing; the pipeline wraps
+   *     each invocation defensively regardless.
+   */
+  hooks?: MaterializeDocumentHooks;
+}
+
+/**
+ * C1 — progressive-generation observer hooks. All optional; see
+ * `MaterializeDocumentParams.hooks`. Hooks are best-effort observers: the
+ * pipeline invokes each inside a try/catch so a failing hook can never turn
+ * generation into a hard failure.
+ */
+export interface MaterializeDocumentHooks {
+  onPlan?: (outline: DocumentOutline) => void;
+  onSection?: (section: DocumentSection, index: number, total: number) => void;
+  onWarning?: (warning: DocumentGenerationWarning) => void;
+}
+
+/** C1 — invoke a lifecycle hook without ever letting it escape upward. */
+function safeInvokeHook(fn: (() => void) | undefined, label: string): void {
+  if (!fn) return;
+  try {
+    fn();
+  } catch (err) {
+    logger.warn('[DocumentStudio] streaming hook threw (ignored)', {
+      hook: label,
+      message: err instanceof Error ? err.message : String(err),
+    });
+  }
 }
 
 /**
@@ -506,6 +555,13 @@ export async function materializeDocumentArtifact(
     }
   }
 
+  // C1 — emit the resolved outline immediately so the streaming FE can paint
+  // the section skeleton before the (potentially slow) prose LLM call runs.
+  safeInvokeHook(
+    params.hooks?.onPlan ? () => params.hooks!.onPlan!(outline) : undefined,
+    'onPlan'
+  );
+
   const sourceRefs = incomingSourceRefs;
 
   const provisionalArtifactId = `documentstudio-pending-${Date.now()}`;
@@ -553,7 +609,27 @@ export async function materializeDocumentArtifact(
   // failure → deterministic stubs) become visible to the user instead of
   // being swallowed by a `console.warn`. The collector is threaded into
   // the enrichment layer; it never changes fallback behaviour.
-  const warningsCollector = createDocumentGenerationWarningCollector();
+  const baseWarningsCollector = createDocumentGenerationWarningCollector();
+  // C1 — when an onWarning hook is present, wrap the collector so each
+  // recorded warning is forwarded to the stream as it happens. The wrapper
+  // preserves the exact recorded warning (post-normalization) by reading the
+  // last entry off the underlying collector's list; identity of the final
+  // `generationWarnings` array is unchanged.
+  const warningsCollector = params.hooks?.onWarning
+    ? {
+        record(input: Parameters<typeof baseWarningsCollector.record>[0]): void {
+          const before = baseWarningsCollector.size();
+          baseWarningsCollector.record(input);
+          const after = baseWarningsCollector.list();
+          if (after.length > before) {
+            const recorded = after[after.length - 1];
+            safeInvokeHook(() => params.hooks!.onWarning!(recorded), 'onWarning');
+          }
+        },
+        list: () => baseWarningsCollector.list(),
+        size: () => baseWarningsCollector.size(),
+      }
+    : baseWarningsCollector;
 
   // D11 — block-level prose generation. Opt-in via `useLlm`; fills the
   // deterministic placeholder prose with grounded, consulting-grade
@@ -636,6 +712,21 @@ export async function materializeDocumentArtifact(
   finalSchema.documentStatus = lifecycle.status;
   finalSchema.statusChangedAt = lifecycle.statusChangedAt;
   finalSchema.statusChangedBy = lifecycle.statusChangedBy;
+
+  // C1 — emit each finalized section (in orderIndex order) so the streaming
+  // FE can progressively fill the skeleton painted from the `plan` event. The
+  // sections handed to the hook are references into `finalSchema.sections`,
+  // so the streamed sections and the final `schema` in the `done` event are
+  // guaranteed identical (progressive delivery, not a different result).
+  if (params.hooks?.onSection) {
+    const orderedSections = [...finalSchema.sections].sort(
+      (a, b) => a.orderIndex - b.orderIndex
+    );
+    const total = orderedSections.length;
+    orderedSections.forEach((section, index) => {
+      safeInvokeHook(() => params.hooks!.onSection!(section, index, total), 'onSection');
+    });
+  }
 
   return {
     artifactId,

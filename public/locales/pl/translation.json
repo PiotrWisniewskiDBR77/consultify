@@ -17717,6 +17717,11 @@
       "noChanges": "Brak zmian do wyświetlenia.",
       "legendAdded": "dodane",
       "legendRemoved": "usunięte"
+    },
+    "generating": {
+      "title": "Generuję Twój dokument…",
+      "planning": "Planuję strukturę…",
+      "progress": "Piszę sekcje… gotowe {{done}} z {{total}}"
     }
   },
   "priority": {

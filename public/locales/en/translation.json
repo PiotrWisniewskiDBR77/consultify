@@ -16642,6 +16642,11 @@
       "noChanges": "No changes to display.",
       "legendAdded": "added",
       "legendRemoved": "removed"
+    },
+    "generating": {
+      "title": "Generating your document…",
+      "planning": "Planning the outline…",
+      "progress": "Writing sections… {{done}} of {{total}} ready"
     }
   },
   "priority": {

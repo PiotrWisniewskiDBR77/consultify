@@ -175,6 +175,168 @@ export async function generateDocumentStudioArtifact(
   return handleResponse<GenerateResponse>(res, 'DocumentStudio generate');
 }
 
+// ===========================================================================
+// C1 — Streaming generation (SSE consumer).
+//
+// Consumes `POST /api/document-studio/generate/stream` (text/event-stream).
+// Uses fetch + a ReadableStream reader rather than EventSource because the API
+// is authenticated via an `Authorization: Bearer` header (getHeaders()), which
+// EventSource cannot set. Events: plan | section | warning | done | error.
+//
+// The consumer NEVER throws for a stream that reaches `done`; it resolves via
+// the `onDone` callback. Fatal server errors arrive as an `error` event and are
+// surfaced through `onError`. Transport-level failures (network drop, non-200,
+// missing body) reject the returned promise so the caller can fall back to the
+// synchronous `generateDocumentStudioArtifact` path.
+// ===========================================================================
+
+/** A single streamed section frame (matches the server `section` event). */
+export interface DocumentStreamSectionEvent {
+  sectionId: string;
+  index: number;
+  total: number;
+  title: string;
+  blocks: DocumentBlock[];
+}
+
+/** Terminal `done` payload — identical shape to the sync generate response. */
+export interface DocumentStreamDoneEvent {
+  artifactId: string;
+  schema: DocumentSchema;
+  generationWarnings: DocumentGenerationWarning[];
+}
+
+export interface GenerateDocumentStreamHandlers {
+  onPlan?: (outline: DocumentOutline) => void;
+  onSection?: (event: DocumentStreamSectionEvent) => void;
+  onWarning?: (warning: DocumentGenerationWarning) => void;
+}
+
+/** Thrown when the stream reports a fatal `error` event. */
+export class DocumentStreamError extends Error {
+  readonly code: string;
+  constructor(code: string, message: string) {
+    super(message);
+    this.name = 'DocumentStreamError';
+    this.code = code;
+  }
+}
+
+/** Parse one SSE block (already split on the blank-line delimiter). */
+function parseSseBlock(block: string): { event: string; data: string } | null {
+  const lines = block.split('\n');
+  let event = 'message';
+  const dataLines: string[] = [];
+  for (const line of lines) {
+    if (line.startsWith(':')) continue; // heartbeat / comment
+    if (line.startsWith('event:')) {
+      event = line.slice('event:'.length).trim();
+    } else if (line.startsWith('data:')) {
+      dataLines.push(line.slice('data:'.length).replace(/^ /, ''));
+    }
+  }
+  if (dataLines.length === 0) return null;
+  return { event, data: dataLines.join('\n') };
+}
+
+/**
+ * Stream a document generation. Resolves with the terminal `done` payload.
+ * Rejects with `DocumentStreamError` (fatal `error` event), or a transport
+ * Error (non-200, no body, network failure) — callers should fall back to the
+ * synchronous generate path on a transport rejection.
+ */
+export async function generateDocumentStudioArtifactStream(
+  params: GenerateDocumentParams,
+  handlers: GenerateDocumentStreamHandlers = {},
+  signal?: AbortSignal
+): Promise<DocumentStreamDoneEvent> {
+  const res = await fetch(`${BASE}/generate/stream`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(params),
+    signal,
+  });
+
+  if (!res.ok || !res.body) {
+    // Decode a structured Mode-3 preflight failure (delivered as a normal JSON
+    // 400 before the stream opens) so the caller can render the checklist.
+    if (res.status === 400) {
+      try {
+        const body = (await res.clone().json()) as { error?: string; missing?: unknown };
+        if (body.error === 'missing_required_source' && Array.isArray(body.missing)) {
+          throw new MissingRequiredSourceError(body.missing.map((m) => String(m)));
+        }
+      } catch (err) {
+        if (err instanceof MissingRequiredSourceError) throw err;
+      }
+    }
+    throw new Error(`DocumentStudio stream failed (${res.status})`);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let done: DocumentStreamDoneEvent | null = null;
+
+  const handleFrame = (frame: { event: string; data: string }): void => {
+    switch (frame.event) {
+      case 'plan': {
+        const payload = JSON.parse(frame.data) as { outline: DocumentOutline };
+        handlers.onPlan?.(payload.outline);
+        break;
+      }
+      case 'section': {
+        handlers.onSection?.(JSON.parse(frame.data) as DocumentStreamSectionEvent);
+        break;
+      }
+      case 'warning': {
+        handlers.onWarning?.(JSON.parse(frame.data) as DocumentGenerationWarning);
+        break;
+      }
+      case 'done': {
+        done = JSON.parse(frame.data) as DocumentStreamDoneEvent;
+        break;
+      }
+      case 'error': {
+        const payload = JSON.parse(frame.data) as { code?: string; message?: string };
+        throw new DocumentStreamError(
+          payload.code ?? 'generate_failed',
+          payload.message ?? 'Document generation failed'
+        );
+      }
+      default:
+        break;
+    }
+  };
+
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const { value, done: streamDone } = await reader.read();
+    if (value) buffer += decoder.decode(value, { stream: true });
+    // Split on the SSE record delimiter (blank line). Keep the trailing
+    // partial in the buffer for the next chunk.
+    let sep = buffer.indexOf('\n\n');
+    while (sep !== -1) {
+      const block = buffer.slice(0, sep);
+      buffer = buffer.slice(sep + 2);
+      const frame = parseSseBlock(block);
+      if (frame) handleFrame(frame);
+      sep = buffer.indexOf('\n\n');
+    }
+    if (streamDone) break;
+  }
+  // Flush any trailing block without a terminating blank line.
+  if (buffer.trim().length > 0) {
+    const frame = parseSseBlock(buffer);
+    if (frame) handleFrame(frame);
+  }
+
+  if (!done) {
+    throw new Error('DocumentStudio stream ended without a done event');
+  }
+  return done;
+}
+
 export async function getDocumentStudioArtifact(
   artifactId: string
 ): Promise<DocumentStudioArtifactResult> {
