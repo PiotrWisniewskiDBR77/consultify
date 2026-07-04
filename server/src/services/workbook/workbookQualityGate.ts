@@ -19,6 +19,21 @@
  *                                                    albo goła liczba tam gdzie sąsiedzi mają format
  *   WQ-05  Percent-format  → type_coercion_error  — kolumna typu `percent` bez formatu %
  *   WQ-06  Broken-formula-ref → formula_error     — formuła referuje kolumnę/arkusz, którego nie ma
+ *   WQ-07  Bad-formula-syntax → formula_error     — formuła z uszkodzonym prefiksem `=` (`==`+, samo `=`,
+ *                                                    pusta). `cellDef.formula` trafia do ExcelJS, który
+ *                                                    zapisuje string VERBATIM do XML `<f>` — poprawna
+ *                                                    formuła NIE może mieć wiodącego „=". `==…` → Excel
+ *                                                    odrzuca plik. Pojedyncze `=` = konwencja (builder
+ *                                                    sanityzuje) → NIE flaga. (Ślepa plama: krytyk nie łapał.)
+ *   WQ-08  Cross-sheet-oob   → formula_error       — cross-sheet ref do EXISTUJĄCEGO arkusza, ale komórka
+ *                                                    poza zapełnionym zakresem arkusza DOCELOWEGO. WQ-06
+ *                                                    pomija out-of-bounds gdy formuła ma cross-sheet ref —
+ *                                                    WQ-08 domyka tę lukę (MAJOR). Ref do arkusza spoza
+ *                                                    workbooka nadal łapie WQ-06 (CRITICAL, bez duplikacji).
+ *   WQ-09  Inconsistent-calc-col → validation_failed — kolumna, w której część komórek to formuły a część
+ *                                                    to gołe stałe liczbowe (LLM „zapomniał" formuły w jednej
+ *                                                    komórce). Deterministyczne, konserwatywne — patrz granica
+ *                                                    heurystyki niżej.
  *
  * Deterministyczny i fail-open, jak deckDesignCritic. Werdykt „passed" = brak CRITICAL.
  */
@@ -38,7 +53,10 @@ export type WorkbookRuleCode =
   | 'WQ-03-ASSUMPTIONS-DUP'
   | 'WQ-04-FORMAT-MIX'
   | 'WQ-05-PERCENT-FORMAT'
-  | 'WQ-06-BROKEN-FORMULA-REF';
+  | 'WQ-06-BROKEN-FORMULA-REF'
+  | 'WQ-07-BAD-FORMULA-SYNTAX'
+  | 'WQ-08-CROSS-SHEET-OOB'
+  | 'WQ-09-INCONSISTENT-CALC-COL';
 
 export interface WorkbookIssue {
   /** Stabilny kod reguły krytyka. */
@@ -112,9 +130,23 @@ export function colIndexToLetter(index: number): string {
   return s;
 }
 
+/** Litera kolumny (A, Z, AA) → 1-based indeks (A→1). Zwraca 0 dla pustego. */
+function colLetterToIndex(letter: string): number {
+  let idx = 0;
+  for (let k = 0; k < letter.length; k++) {
+    idx = idx * 26 + (letter.charCodeAt(k) - 64);
+  }
+  return idx;
+}
+
 /** Excel-owy numer wiersza dla wiersza danych o indeksie 0-based (header=1). */
 function dataRowNumber(rowIdx: number): number {
   return rowIdx + 2;
+}
+
+/** Granice zapełnionego zakresu arkusza w formie 1-based (kolumna, wiersz). */
+function sheetBounds(sheet: Sheet): { maxCol: number; maxRow: number } {
+  return { maxCol: sheet.columns.length, maxRow: sheet.rows.length + 1 };
 }
 
 function cellAddress(colIdx: number, rowIdx: number): string {
@@ -481,8 +513,7 @@ function checkBrokenFormulaRefs(workbook: WorkbookSchema): WorkbookIssue[] {
   const sheetNames = new Set(workbook.sheets.map((s) => norm(s.name)));
 
   for (const sheet of workbook.sheets) {
-    const maxCol = sheet.columns.length; // liczba kolumn (A..)
-    const maxRow = sheet.rows.length + 1; // +1 nagłówek
+    const { maxCol, maxRow } = sheetBounds(sheet); // 1-based granice tego arkusza
 
     sheet.rows.forEach((row, rowIdx) => {
       sheet.columns.forEach((col, colIdx) => {
@@ -521,11 +552,7 @@ function checkBrokenFormulaRefs(workbook: WorkbookSchema): WorkbookIssue[] {
             if (!rm) continue;
             const letter = rm[1];
             const rnum = parseInt(rm[2], 10);
-            // litera → indeks
-            let idx = 0;
-            for (let k = 0; k < letter.length; k++) {
-              idx = idx * 26 + (letter.charCodeAt(k) - 64);
-            }
+            const idx = colLetterToIndex(letter);
             if (idx > maxCol || rnum > maxRow) {
               const addr = cellAddress(colIdx, rowIdx);
               out.push(
@@ -552,6 +579,196 @@ function checkBrokenFormulaRefs(workbook: WorkbookSchema): WorkbookIssue[] {
   return out;
 }
 
+// ── Reguła 7: składnia formuły (uszkodzony prefiks `=`) ──────────────────────
+//
+// KRYTYCZNA ślepa plama: `cellDef.formula` idzie do ExcelJS, który zapisuje string
+// VERBATIM do elementu XML `<f>`. Poprawna formuła w XML to `SUM(A1:A2)` — BEZ
+// wiodącego `=`. Weryfikacja empiryczna (unzip xl/worksheets): `=SUM(...)` →
+// `<f>=SUM(...)</f>` (Excel: #NAME?/uszkodzony), `==SUM(...)` → `<f>==…</f>` (jw.).
+//
+// GRANICA (świadomie wąska — Prawda > szeroka reguła):
+//   Konwencja generatora i schema (WorkbookGeneratorService prompt) emitują
+//   formuły Z wiodącym POJEDYNCZYM `=` — to kontrakt kodu, a builder je
+//   SANITYZUJE (sanitizeFormula: strip `^=+`) zanim trafią do ExcelJS. Zatem
+//   pojedyncze `=` NIE psuje już pliku i flagowanie go byłoby false-positive na
+//   100% legalnego outputu. Flagujemy WYŁĄCZNIE kształty, których sanityzacja
+//   NIE ratuje w sensowną formułę:
+//     • `==`+ (dwa lub więcej `=`)  — samo wystąpienie `==` to defekt (LLM
+//       podwoił `=`), nie konwencja.
+//     • samo `=`  / pusta / whitespace  — brak treści formuły (→ #NAME?).
+//   Pojedyncze `=SUM(...)` (kontrakt) → NIE flagujemy.
+function checkFormulaSyntax(sheet: Sheet): WorkbookIssue[] {
+  const out: WorkbookIssue[] = [];
+
+  sheet.rows.forEach((row, rowIdx) => {
+    sheet.columns.forEach((col, colIdx) => {
+      const c = row.cells[col.key];
+      // Rozróżniamy „brak formuły" (undefined) od „formuła obecna ale pusta".
+      if (typeof c?.formula !== 'string') return;
+      const trimmed = c.formula.trim();
+      const addr = cellAddress(colIdx, rowIdx);
+
+      // Ile wiodących `=`? Reszta po stripie = treść formuły.
+      const eqMatch = /^=+/.exec(trimmed);
+      const leadingEq = eqMatch ? eqMatch[0].length : 0;
+      const body = trimmed.replace(/^=+/, '').trim();
+
+      let problem: string | null = null;
+      if (body === '') {
+        // "", "=", "==", "   " → brak treści formuły.
+        problem = 'formuła jest pusta (brak treści po ewentualnym „=")';
+      } else if (leadingEq >= 2) {
+        // "==SUM(...)" — podwojony `=`; sanityzacja usuwa oba, ale to defekt LLM.
+        problem = `formuła ma ${leadingEq} wiodących znaków „=" (\`${trimmed.slice(0, 14)}…\`) — poprawna formuła nie może zaczynać się od „=="`;
+      }
+      // Pojedyncze wiodące `=` = konwencja kodu (builder je sanityzuje) → NIE flaga.
+      if (!problem) return;
+
+      out.push(
+        issue(
+          'WQ-07-BAD-FORMULA-SYNTAX',
+          'formula_error',
+          'CRITICAL',
+          sheet.name,
+          `Zła składnia formuły w ${addr}: ${problem}. Werbatim do ExcelJS zepsuje plik (element <f> w XML).`,
+          {
+            cell: addr,
+            col: col.key,
+            fix: 'Zapisz czystą formułę z co najwyżej jednym wiodącym „=" i niepustą treścią (np. "SUM(B2:B4)").',
+          },
+        ),
+      );
+    });
+  });
+  return out;
+}
+
+// ── Reguła 8: cross-sheet ref do istniejącego arkusza, ale poza zakresem ─────
+//
+// WQ-06 łapie cross-sheet ref do NIEISTNIEJĄCEGO arkusza (CRITICAL) i out-of-bounds
+// TYLKO dla formuł BEZ cross-sheet (`sheetRefs.length === 0`). Luka: ref do
+// ISTNIEJĄCEGO arkusza z komórką poza zapełnionym zakresem DOCELOWEGO arkusza
+// (np. `=Data!Z999`, gdzie `Data` ma 1 kolumnę / 1 wiersz) — nie był oceniany.
+// WQ-08 domyka lukę. MAJOR (nie CRITICAL): out-of-bounds ref daje 0/#REF ale nie
+// psuje samego pliku. Nie duplikuje WQ-06: obsługuje wyłącznie arkusze ISTNIEJĄCE.
+function checkCrossSheetOutOfBounds(workbook: WorkbookSchema): WorkbookIssue[] {
+  const out: WorkbookIssue[] = [];
+  const sheetByName = new Map<string, Sheet>();
+  for (const s of workbook.sheets) sheetByName.set(norm(s.name), s);
+
+  for (const sheet of workbook.sheets) {
+    sheet.rows.forEach((row, rowIdx) => {
+      sheet.columns.forEach((col, colIdx) => {
+        const c = row.cells[col.key];
+        if (!c?.formula) return;
+        // Dopasuj: 'Sheet Name'!A1  albo  Sheet!A1  (z opcjonalnymi $).
+        const re = /'([^']+)'!\$?([A-Z]+)\$?(\d+)|([A-Za-z0-9_]+)!\$?([A-Z]+)\$?(\d+)/g;
+        let m: RegExpExecArray | null;
+        while ((m = re.exec(c.formula)) !== null) {
+          const name = (m[1] ?? m[4] ?? '').trim();
+          const letter = m[2] ?? m[5];
+          const rnumStr = m[3] ?? m[6];
+          if (!name || !letter || !rnumStr) continue;
+          const target = sheetByName.get(norm(name));
+          if (!target) continue; // nieistniejący arkusz → domena WQ-06, nie duplikujemy
+          const { maxCol, maxRow } = sheetBounds(target);
+          const idx = colLetterToIndex(letter);
+          const rnum = parseInt(rnumStr, 10);
+          if (idx > maxCol || rnum > maxRow) {
+            const addr = cellAddress(colIdx, rowIdx);
+            const lastCell = `${colIndexToLetter(maxCol - 1)}${maxRow}`;
+            out.push(
+              issue(
+                'WQ-08-CROSS-SHEET-OOB',
+                'formula_error',
+                'MAJOR',
+                sheet.name,
+                `Formuła w ${addr} referuje „${name}!${letter}${rnum}" poza zakresem danych arkusza „${target.name}" (ostatnia komórka ${lastCell}).`,
+                {
+                  cell: addr,
+                  col: col.key,
+                  fix: `Popraw referencję — „${target.name}" ma dane do ${lastCell}.`,
+                },
+              ),
+            );
+            break; // jedna flaga na formułę wystarczy
+          }
+        }
+      });
+    });
+  }
+  return out;
+}
+
+// ── Reguła 9: kolumna mieszająca formuły ze stałymi ──────────────────────────
+//
+// LLM „zapomina" formuły w jednej komórce kolumny obliczeniowej: reszta kolumny
+// to formuły, jedna komórka to goła stała. Deterministycznie wykrywalne, ale
+// GRANICA jest kluczowa dla braku false-positive — patrz warunki niżej.
+//
+// GRANICA HEURYSTYKI (świadomie wąska — Prawda > szeroka reguła):
+//   • Rozważamy TYLKO wiersze danych (pomijamy header i summary/total — total
+//     legalnie bywa stałą lub inną formułą; WQ-01/WQ-02 zajmują się totalami).
+//   • Kolumna jest „obliczeniowa" gdy ≥2 komórki danych to formuły ORAZ formuły
+//     stanowią WIĘKSZOŚĆ (>50%) niepustych komórek danych. To odróżnia realną
+//     kolumnę wyliczaną z jednym brakiem od legalnej kolumny mieszanej (np.
+//     „Wartość": część ręczna, część liczona — tam formuły NIE są większością
+//     albo jest ich <2, więc nie flagujemy).
+//   • Zgłaszamy DOKŁADNIE te komórki danych, które są gołą liczbą (stałą) w takiej
+//     kolumnie. Tekst/bool/pusta komórka NIE jest defektem (to nie „zapomniana
+//     formuła", tylko brak danych/etykieta).
+function checkInconsistentCalcColumns(sheet: Sheet): WorkbookIssue[] {
+  const out: WorkbookIssue[] = [];
+
+  sheet.columns.forEach((col, colIdx) => {
+    // Zbierz komórki danych (bez header/summary) tej kolumny.
+    let formulaCount = 0;
+    let constNumberCount = 0;
+    const constNumberRows: number[] = [];
+
+    sheet.rows.forEach((row, rowIdx) => {
+      if (row.isHeader || isSummaryRow(row, sheet.columns)) return;
+      const c = row.cells[col.key];
+      if (!c) return;
+      if (typeof c.formula === 'string' && c.formula.trim() !== '') {
+        formulaCount++;
+      } else if (
+        !c.formula &&
+        typeof c.value === 'number' &&
+        Number.isFinite(c.value)
+      ) {
+        constNumberCount++;
+        constNumberRows.push(rowIdx);
+      }
+      // tekst / bool / null / puste → ignorujemy (nie „zapomniana formuła")
+    });
+
+    const nonEmpty = formulaCount + constNumberCount;
+    // Granica: ≥2 formuły, formuły są większością, i istnieje ≥1 goła stała.
+    const isCalcColumn = formulaCount >= 2 && formulaCount > nonEmpty / 2;
+    if (!isCalcColumn || constNumberCount === 0) return;
+
+    for (const rowIdx of constNumberRows) {
+      const addr = cellAddress(colIdx, rowIdx);
+      out.push(
+        issue(
+          'WQ-09-INCONSISTENT-CALC-COL',
+          'validation_failed',
+          'MAJOR',
+          sheet.name,
+          `Kolumna obliczeniowa „${col.header}" ma formuły w ${formulaCount} komórkach, ale ${addr} to goła stała — prawdopodobnie zapomniana formuła.`,
+          {
+            cell: addr,
+            col: col.key,
+            fix: `Wstaw w ${addr} formułę spójną z resztą kolumny „${col.header}".`,
+          },
+        ),
+      );
+    }
+  });
+  return out;
+}
+
 // ── Główna funkcja ───────────────────────────────────────────────────────────
 
 /**
@@ -569,9 +786,12 @@ export function critiqueWorkbook(workbook: WorkbookSchema): WorkbookQualityRepor
       issues.push(...checkMagicNumbers(sheet));
       issues.push(...checkSumCoverage(sheet));
       issues.push(...checkFormatConsistency(sheet));
+      issues.push(...checkFormulaSyntax(sheet));
+      issues.push(...checkInconsistentCalcColumns(sheet));
     }
     issues.push(...checkAssumptionsSeparation(workbook));
     issues.push(...checkBrokenFormulaRefs(workbook));
+    issues.push(...checkCrossSheetOutOfBounds(workbook));
   } catch (err) {
     // Fail-open jak deckDesignCritic — krytyk NIGDY nie wywala generacji.
     logger.warn('[workbookQualityGate] critic threw, returning partial report', err);
