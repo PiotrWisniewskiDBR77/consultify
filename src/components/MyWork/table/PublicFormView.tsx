@@ -19,13 +19,32 @@ interface FormFieldConfig {
   hidden?: boolean;
 }
 
+interface FormStylingConfig {
+  logoUrl?: string;
+  accentColor?: string;
+}
+
 interface FormConfig {
   fields: FormFieldConfig[];
   submitMessage?: string;
   redirectUrl?: string;
   allowMultiple?: boolean;
   requireAuth?: boolean;
-  styling?: Record<string, unknown>;
+  styling?: FormStylingConfig;
+}
+
+// ── Validation helpers for form-level config (styling/redirect) ─────────────
+
+const HTTP_URL_RE = /^https?:\/\//i;
+const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/;
+const REDIRECT_DELAY_MS = 1500;
+
+function isSafeHttpUrl(url: unknown): url is string {
+  return typeof url === 'string' && url.length > 0 && HTTP_URL_RE.test(url);
+}
+
+function isValidAccentColor(color: unknown): color is string {
+  return typeof color === 'string' && HEX_COLOR_RE.test(color);
 }
 
 interface TableField {
@@ -102,6 +121,14 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
 
   const visibleFields = useMemo(() => (config?.fields ?? []).filter((fc) => !fc.hidden), [config]);
 
+  // Minimal, validated styling knobs. Anything that fails validation falls
+  // back to the existing look — no arbitrary CSS injection.
+  const logoUrl = isSafeHttpUrl(config?.styling?.logoUrl) ? config!.styling!.logoUrl : null;
+  const accentColor = isValidAccentColor(config?.styling?.accentColor)
+    ? config!.styling!.accentColor
+    : null;
+  const submitButtonStyle = accentColor ? { backgroundColor: accentColor } : undefined;
+
   const setValue = useCallback((fieldId: string, value: unknown) => {
     setValues((prev) => ({ ...prev, [fieldId]: value }));
     setFieldErrors((prev) => {
@@ -147,18 +174,29 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
       try {
         await tablePlatformApi.submitPublicForm(slug, values);
         setSubmitted(true);
-
-        if (config?.redirectUrl) {
-          window.location.href = config.redirectUrl;
-        }
       } catch (err: any) {
         setError(err.message || 'Submission failed');
       } finally {
         setSubmitting(false);
       }
     },
-    [slug, values, validate, config]
+    [slug, values, validate]
   );
+
+  // Redirect after showing the success state briefly, so the user sees
+  // confirmation before leaving. Only http(s) URLs are honored — anything
+  // else (javascript:, data:, etc.) is silently ignored.
+  useEffect(() => {
+    if (!submitted) return;
+    const redirectUrl = config?.redirectUrl;
+    if (!isSafeHttpUrl(redirectUrl)) return;
+
+    const timer = setTimeout(() => {
+      window.location.assign(redirectUrl);
+    }, REDIRECT_DELAY_MS);
+
+    return () => clearTimeout(timer);
+  }, [submitted, config?.redirectUrl]);
 
   const handleSubmitAnother = useCallback(() => {
     setSubmitted(false);
@@ -227,6 +265,14 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
       <div className="w-full max-w-lg">
         <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-8 shadow-sm">
           {/* Header */}
+          {logoUrl && (
+            <img
+              src={logoUrl}
+              alt=""
+              className="mb-4 max-h-16 w-auto object-contain"
+              style={{ maxHeight: 64 }}
+            />
+          )}
           <h1 className="mb-1 text-2xl font-bold text-c-text">{form.name}</h1>
           {form.description && (
             <p className="mb-8 text-sm text-c-text-muted">{form.description}</p>
@@ -260,7 +306,10 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
             <button
               type="submit"
               disabled={submitting}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+              style={submitButtonStyle}
+              className={`mt-2 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white transition-colors disabled:opacity-50 ${
+                accentColor ? '' : 'bg-blue-600 hover:bg-blue-700'
+              }`}
             >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
               Submit

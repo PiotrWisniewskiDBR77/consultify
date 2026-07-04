@@ -208,6 +208,9 @@ interface IdeaTableToolProps {
 
 // DEFAULT_COLUMNS now lives in useTableSchema.ts
 
+// hidden: sync not implemented — decyzja D-A
+const CONSULTIFY_LINK_ENABLED = false;
+
 export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   open,
   ideaId,
@@ -3548,7 +3551,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       )}
 
       {/* Consultify Link Panel */}
-      {showConsultifyLink && (
+      {CONSULTIFY_LINK_ENABLED && showConsultifyLink && (
         <div
           className="fixed inset-0 z-[150] flex items-stretch justify-end bg-[color-mix(in_srgb,var(--c-text)_20%,transparent)] backdrop-blur-[2px]"
           onClick={() => setShowConsultifyLink(false)}
