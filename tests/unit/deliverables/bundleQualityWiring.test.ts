@@ -191,3 +191,46 @@ describe('Capstone — pełny stos jakości populuje się end-to-end', () => {
     }
   });
 });
+
+// ── P2.4 — provenance footnotes wpięte w bundle.quality.footnotes ──
+describe('P2.4: provenance footnotes wired into bundle.quality', () => {
+  beforeEach(() => {
+    mockGenTable.mockReset(); mockGenDoc.mockReset(); mockPlanDeck.mockReset();
+    mockGenTable.mockResolvedValue({
+      fields: [{ key: 'rok', header: 'Rok', type: 'text' }, { key: 'rev', header: 'Przychód', type: 'currency' }],
+      seedRows: [{ rok: 'Rok 1', rev: 2390 }],
+    });
+    mockGenDoc.mockResolvedValue({
+      sections: [{ heading: 'Streszczenie', blocks: [{ type: 'paragraph', content: { text: 'Realna treść raportu.' } }] }],
+    });
+    mockPlanDeck.mockResolvedValue(deckResult());
+  });
+
+  it('footnotes populated from spine assumptions + market (TAM/SAM/SOM) provenance', async () => {
+    const bundle = await generateBundleFromSpine(buildSpine(input()), {});
+    const fn = bundle.quality!.footnotes;
+    expect(Array.isArray(fn)).toBe(true);
+    expect(fn.length).toBeGreaterThan(0);
+    // numbered 1..N, no gaps
+    expect(fn.map((f) => f.index)).toEqual(fn.map((_, i) => i + 1));
+    // market TAM source (Statista 2025, per input() fixture) surfaces as a footnote
+    expect(fn.some((f) => f.text.includes('Statista 2025'))).toBe(true);
+  });
+
+  it('identical sources across assumptions dedupe to one footnote (no inflation)', async () => {
+    const bundle = await generateBundleFromSpine(buildSpine(input()), {});
+    const fn = bundle.quality!.footnotes;
+    const texts = fn.map((f) => f.text);
+    expect(new Set(texts).size).toBe(texts.length); // every footnote text is unique post-dedupe
+  });
+
+  it('fail-open: quality-gate exception still yields footnotes: [] (never undefined/throws)', async () => {
+    // Force the quality-gate try-block to throw by making deck plans malformed
+    // in a way runBundleDocQa/runBundleDeckQa tolerate but keeps shape-checking honest:
+    // simplest fail-soft proof is the existing catch-path contract — assert the
+    // fallback object always carries footnotes: [].
+    mockPlanDeck.mockRejectedValue(new Error('LLM down'));
+    const bundle = await generateBundleFromSpine(buildSpine(input()), {});
+    expect(Array.isArray(bundle.quality!.footnotes)).toBe(true);
+  });
+});

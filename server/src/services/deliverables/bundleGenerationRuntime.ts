@@ -25,7 +25,14 @@ import type { GenOpts } from './assumptionsModel.js';
 import { applyDeckBeautyGate, type BeautyScore } from './deckLayoutBeautyGate.js';
 import { runBundleContentGate, type ContentGateReport } from './bundleContentGate.js';
 import { buildFactBook, auditFactConsistency, type FactContradiction } from './factBook.js';
-import { auditProvenance, type ProvenanceAudit, type Claim, type ProvenanceKind } from './provenance.js';
+import {
+  auditProvenance,
+  renderProvenanceFootnotes,
+  type ProvenanceAudit,
+  type Claim,
+  type ProvenanceKind,
+  type Footnote,
+} from './provenance.js';
 import { buildBothVariants, type AudienceVariantResult } from './deckAudienceVariants.js';
 import { routeImage } from './imageRouter.js';
 import { selectStockImageProvider } from './stockImageProvider.js';
@@ -60,6 +67,12 @@ export interface BundleQuality {
   designCritique: DeckCritique | null;
   /** W10.1 — zagregowany scorecard 0-100 + ocena + breakdown (wszystkie sygnały). */
   scorecard: QualityScorecard | null;
+  /**
+   * P2.4 — numerowane przypisy źródeł (dedupe) dla twierdzeń z provenance
+   * (założenia + market sizing). Puste gdy brak źródeł w SPINE (fail-open —
+   * deck generuje się identycznie, przypisy to metadane, nie treść).
+   */
+  footnotes: Footnote[];
   /** Zbiorcze: czy wiązka przeszła twarde bramki (content+beauty). */
   passed: boolean;
 }
@@ -123,6 +136,27 @@ function spineClaims(spine: BusinessPlanSpine): Claim[] {
       source: prov?.source
         ? { kind: (prov.benchmarked ? 'external' : 'assumption') as ProvenanceKind, label: prov.source }
         : undefined,
+    });
+  }
+  // P2.4 — market sizing (TAM/SAM/SOM) niesie własne provenance (§A3-A5 spine) —
+  // docstring od zawsze mówił "assumption/market", ale market był pomijany.
+  // Dopisujemy addytywnie: brak spine.market lub brak provenance → po prostu
+  // pominięte (fail-open, nie zmienia istniejącego zachowania assumptions).
+  const market = spine.market as
+    | { tam?: { provenance?: { source?: string; benchmarked?: boolean } }; sam?: { provenance?: { source?: string; benchmarked?: boolean } }; som?: { provenance?: { source?: string; benchmarked?: boolean } } }
+    | undefined;
+  const marketEntries: Array<['tam' | 'sam' | 'som', string]> = [
+    ['tam', 'TAM'],
+    ['sam', 'SAM'],
+    ['som', 'SOM'],
+  ];
+  for (const [field, label] of marketEntries) {
+    const prov = market?.[field]?.provenance;
+    if (!prov?.source) continue;
+    claims.push({
+      key: `market.${field}`,
+      text: label,
+      source: { kind: (prov.benchmarked ? 'external' : 'assumption') as ProvenanceKind, label: prov.source },
     });
   }
   return claims;
@@ -220,7 +254,10 @@ export async function generateBundleFromSpine(
     const allText = [texts.deckText, texts.reportText, texts.tableText].join('\n');
     const factContradictions = auditFactConsistency(factBook, allText);
     // W1.3b provenance: pokrycie źródeł na założeniach (assumption/market mają source).
-    const provenance = auditProvenance(spineClaims(spine));
+    const claims = spineClaims(spine);
+    const provenance = auditProvenance(claims);
+    // P2.4 — numerowane przypisy (dedupe) dla twierdzeń ze źródłem; brak źródeł → [].
+    const { footnotes } = renderProvenanceFootnotes(claims);
     // W1.4 warianty audytorium z planów decka (board ≤7 / working).
     const plans = deckPlansOf(deck);
     const variants = plans.length > 0 ? buildBothVariants(plans) : null;
@@ -248,7 +285,7 @@ export async function generateBundleFromSpine(
       : null;
 
     const passed = content.passed && factContradictions.length === 0 && (beauty?.passed ?? true);
-    quality = { beauty, content, factContradictions, provenance, variants, docQa, deckQa, antiPatterns, designCritique, scorecard: null, passed };
+    quality = { beauty, content, factContradictions, provenance, variants, docQa, deckQa, antiPatterns, designCritique, scorecard: null, footnotes, passed };
     // W10.1 — scorecard agreguje powyższe sygnały + flagi finansowe ze spine.
     quality.scorecard = buildQualityScorecard(quality, spine);
     if (!passed) {
@@ -260,7 +297,7 @@ export async function generateBundleFromSpine(
     }
   } catch (err) {
     logger.warn(`${LOG} quality gate error (fail-soft): ${err instanceof Error ? err.message : String(err)}`);
-    quality = { beauty, content: null, factContradictions: [], provenance: null, variants: null, docQa: null, deckQa: null, antiPatterns: null, designCritique: null, scorecard: null, passed: true };
+    quality = { beauty, content: null, factContradictions: [], provenance: null, variants: null, docQa: null, deckQa: null, antiPatterns: null, designCritique: null, scorecard: null, footnotes: [], passed: true };
   }
 
   return {
