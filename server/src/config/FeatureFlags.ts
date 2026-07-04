@@ -33,6 +33,7 @@ const FeatureFlagsSchema = z.object({
   ENABLE_DELIVERABLES_LIGHT: z.boolean().default(false),
   ENABLE_TERESA_RETRIEVAL: z.boolean().default(false),
   ENABLE_DELIVERABLES_DOC_STREAMING: z.boolean().default(false),
+  ENABLE_SHARED_IDEA_MAPS: z.boolean().default(false),
 });
 
 export type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
@@ -127,6 +128,12 @@ export function loadFeatureFlags(): FeatureFlags {
     // draft progressively, so the first section paints in ~3-4s instead of
     // waiting ~19s for the one-shot. Opt-in; OFF ⇒ proven one-shot path.
     ENABLE_DELIVERABLES_DOC_STREAMING: process.env.ENABLE_DELIVERABLES_DOC_STREAMING === 'true',
+
+    // DP-3 (M06/M07/M09 Ideas): shared/canonical idea maps — one my_idea_maps
+    // row per idea_id instead of one per user_id, with membership-gated
+    // read/write and server-persisted WS graph_patch. OFF = full rollback to
+    // today's per-user reads/writes (Harvard/wdrozenie-100/_M06_DP3_MULTIPLAYER_PLAN_2026-07-04.md).
+    ENABLE_SHARED_IDEA_MAPS: process.env.ENABLE_SHARED_IDEA_MAPS === 'true',
   };
 
   // Validate configuration

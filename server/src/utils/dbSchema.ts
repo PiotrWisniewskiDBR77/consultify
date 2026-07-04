@@ -44,6 +44,10 @@ const MOCK_TABLE_FALLBACK_COLUMNS: Record<string, string[]> = {
     'preferred_tool',
     'extensions_json',
     'schema_version',
+    // DP-3 shared idea maps (20260705_dp3_shared_idea_maps.sql):
+    'is_canonical',
+    'last_editor_user_id',
+    'archived_from_user_id',
   ],
   my_ideas: [
     'id',
