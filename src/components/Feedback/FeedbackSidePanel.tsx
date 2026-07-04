@@ -1152,7 +1152,7 @@ export const FeedbackSidePanel: React.FC = () => {
         </label>
         <input
           type="text"
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none text-sm"
+          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-c-focus outline-none text-sm"
           placeholder={t('feedback.feature.namePlaceholder', 'e.g., Dark mode, Export to PDF')}
           value={featureName}
           onChange={(e) => setFeatureName(e.target.value)}
@@ -1166,7 +1166,7 @@ export const FeedbackSidePanel: React.FC = () => {
           {t('feedback.feature.description', 'Description')}
         </label>
         <textarea
-          className="flex-1 w-full px-3 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none resize-none text-sm min-h-[80px]"
+          className="flex-1 w-full px-3 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl focus:ring-2 focus:ring-c-focus outline-none resize-none text-sm min-h-[80px]"
           placeholder={t(
             'feedback.feature.descPlaceholder',
             'Describe the feature and how it would help you...'

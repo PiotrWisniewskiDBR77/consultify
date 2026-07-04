@@ -304,7 +304,7 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
                 title={c}
                 className={`w-4 h-4 rounded-full border transition-all ${
                   color === c
-                    ? 'ring-2 ring-primary-500 ring-offset-1 scale-110'
+                    ? 'ring-2 ring-c-info ring-offset-1 scale-110'
                     : 'border-slate-300 dark:border-navy-600'
                 }`}
                 style={{ backgroundColor: c }}

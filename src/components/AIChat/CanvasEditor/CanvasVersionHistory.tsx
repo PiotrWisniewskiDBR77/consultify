@@ -62,10 +62,10 @@ export function CanvasVersionHistory({
 
   return (
     <div
-      className="absolute right-0 z-20 mt-2 flex max-h-[70vh] w-[400px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white text-xs shadow-xl dark:border-white/10 dark:bg-navy-800"
+      className="absolute right-0 z-20 mt-2 flex max-h-[70vh] w-[400px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white text-xs shadow-xl dark:border-c-border-subtle dark:bg-navy-800"
       data-testid="canvas-version-history"
     >
-      <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-3 py-2 dark:border-white/10">
+      <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-3 py-2 dark:border-c-border-subtle">
         <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
           {t('canvas.versionHistory.title', 'Version history')}
         </span>
@@ -100,7 +100,7 @@ export function CanvasVersionHistory({
                 key={version.id}
                 className={`rounded-xl p-2 transition-colors ${
                   isPreviewed
-                    ? 'bg-slate-100 ring-1 ring-primary-400 dark:bg-white/10'
+                    ? 'bg-slate-100 ring-1 ring-c-info dark:bg-white/10'
                     : 'bg-slate-50 hover:bg-slate-100 dark:bg-white/[0.06] dark:hover:bg-white/10'
                 }`}
                 data-testid="canvas-version-history-item"
@@ -170,7 +170,7 @@ export function CanvasVersionHistory({
 
       {previewVersion ? (
         <div
-          className="max-h-[36vh] shrink-0 overflow-auto border-t border-slate-200 p-3 dark:border-white/10"
+          className="max-h-[36vh] shrink-0 overflow-auto border-t border-slate-200 p-3 dark:border-c-border-subtle"
           data-testid="canvas-version-preview"
         >
           <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">

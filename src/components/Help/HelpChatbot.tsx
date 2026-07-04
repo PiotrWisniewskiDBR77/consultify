@@ -554,7 +554,7 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
             onKeyDown={handleKeyPress}
             placeholder={t.placeholder[lang]}
             rows={1}
-            className="flex-grow px-4 py-2.5 bg-slate-100 dark:bg-slate-700 border-0 rounded-xl text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 resize-none focus:ring-2 focus:ring-primary-500 focus:outline-none"
+            className="flex-grow px-4 py-2.5 bg-slate-100 dark:bg-slate-700 border-0 rounded-xl text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 resize-none focus:ring-2 focus:ring-c-focus focus:outline-none"
             style={{ minHeight: '44px', maxHeight: '120px' }}
           />
           <button

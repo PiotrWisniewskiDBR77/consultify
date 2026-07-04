@@ -618,7 +618,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
                           type="checkbox"
                           checked={formData.events.includes(event.id)}
                           onChange={() => toggleEvent(event.id)}
-                          className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-500 focus:ring-primary-500"
+                          className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-500 focus:ring-c-focus"
                         />
                         <span className="text-sm text-slate-700 dark:text-slate-300">
                           {event.label}
@@ -639,7 +639,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
               type="checkbox"
               checked={formData.isActive}
               onChange={(e) => setFormData((prev) => ({ ...prev, isActive: e.target.checked }))}
-              className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-500 focus:ring-primary-500"
+              className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-500 focus:ring-c-focus"
             />
             <span className="text-sm text-slate-700 dark:text-slate-300">
               {t('admin.integrations.activateImmediately', 'Activate immediately')}

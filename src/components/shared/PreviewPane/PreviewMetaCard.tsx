@@ -115,7 +115,7 @@ export const PreviewMetaCard: React.FC<PreviewMetaCardProps> = ({
                               ? 'bg-primary-500/10 text-primary-600 dark:text-primary-300'
                               : 'bg-slate-500/10 text-slate-600 dark:text-slate-300'),
                     isClickable
-                      ? 'cursor-pointer hover:ring-1 hover:ring-primary-400/30 transition-shadow'
+                      ? 'cursor-pointer hover:ring-1 hover:ring-c-info/30 transition-shadow'
                       : '',
                     pill.editable ? 'group/pill' : '',
                   ]

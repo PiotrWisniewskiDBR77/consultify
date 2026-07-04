@@ -825,7 +825,7 @@ export const ChatV9FlagsPanel: React.FC<ChatV9FlagsPanelProps> = ({
                     aria-expanded={isExpanded}
                     aria-controls={descriptionId}
                     onClick={() => toggleDescriptionExpanded(flag.id)}
-                    className="mt-1 text-[10px] font-medium text-primary-700 hover:underline dark:text-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-400/50 rounded"
+                    className="mt-1 text-[10px] font-medium text-primary-700 hover:underline dark:text-primary-300 focus:outline-none focus:ring-2 focus:ring-c-focus rounded"
                   >
                     {isExpanded ? 'Show less' : 'Show more'}
                   </button>

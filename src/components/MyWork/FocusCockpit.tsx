@@ -244,7 +244,7 @@ const FocusLaneColumn: React.FC<FocusLaneColumnProps> = ({
         flex flex-col min-w-0 flex-1 rounded-xl
         bg-c-surface
         min-h-[200px]
-        ${dragOver ? 'ring-1 ring-primary-500/50 ring-inset' : ''}
+        ${dragOver ? 'ring-1 ring-c-info/50 ring-inset' : ''}
       `}
     >
       {/* Lane Header */}

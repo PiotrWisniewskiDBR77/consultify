@@ -274,7 +274,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
                     type="checkbox"
                     checked={filters.categoryIds.includes(category.id)}
                     onChange={() => handleCategoryToggle(category.id)}
-                    className="w-4 h-4 rounded border-slate-600 bg-c-surface text-primary-500 focus:ring-primary-500/50"
+                    className="w-4 h-4 rounded border-slate-600 bg-c-surface text-primary-500 focus:ring-c-focus"
                   />
                   <span className="text-sm text-slate-300">{category.name}</span>
                 </label>
@@ -340,7 +340,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
                       dateRange: { ...filters.dateRange, from: e.target.value },
                     })
                   }
-                  className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                  className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-c-focus"
                 />
               </div>
               <div>
@@ -354,7 +354,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
                       dateRange: { ...filters.dateRange, to: e.target.value },
                     })
                   }
-                  className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                  className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-c-focus"
                 />
               </div>
             </div>
@@ -380,7 +380,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
                     type="checkbox"
                     checked={filters.createdBy.includes(user.id)}
                     onChange={() => handleUserToggle(user.id)}
-                    className="w-4 h-4 rounded border-slate-600 bg-c-surface text-primary-500 focus:ring-primary-500/50"
+                    className="w-4 h-4 rounded border-slate-600 bg-c-surface text-primary-500 focus:ring-c-focus"
                   />
                   <span className="text-sm text-slate-300">
                     {user.firstName} {user.lastName}
@@ -403,7 +403,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
             <select
               value={filters.language}
               onChange={(e) => onChange({ ...filters, language: e.target.value })}
-              className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+              className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-c-focus"
             >
               <option value="">All languages</option>
               {languages.map((lang) => (

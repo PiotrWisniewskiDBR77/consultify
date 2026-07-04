@@ -220,7 +220,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                       <motion.div
                         animate={{ scale: [1, 1.05, 1] }}
                         transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-                        className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full border-2 border-white/40 flex items-center justify-center group-hover:scale-110 transition-transform shadow-2xl"
+                        className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full border-2 border-c-border flex items-center justify-center group-hover:scale-110 transition-transform shadow-2xl"
                       >
                         <Play size={32} fill="white" className="text-white ml-1" />
                       </motion.div>
@@ -272,7 +272,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             <div className="absolute inset-0 bg-c-accent/30 rounded-xl blur-2xl opacity-50 group-hover:opacity-80 transition-opacity duration-500"></div>
 
             {/* Content */}
-            <div className="relative h-full px-8 py-8 rounded-xl border border-white/20 backdrop-blur-xl bg-black/60 shadow-2xl flex flex-col justify-center ring-2 ring-c-accent/40 group-hover:ring-c-accent/60 ring-inset transition-all duration-500 overflow-hidden">
+            <div className="relative h-full px-8 py-8 rounded-xl border border-c-border backdrop-blur-xl bg-black/60 shadow-2xl flex flex-col justify-center ring-2 ring-c-accent/40 group-hover:ring-c-accent/60 ring-inset transition-all duration-500 overflow-hidden">
               {/* Background Image */}
               <img
                 src="/assets/landing/cinematic/decisions_manifest.png"

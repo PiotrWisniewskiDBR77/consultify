@@ -120,10 +120,10 @@ export const VoiceConversationOverlay: React.FC = () => {
   // ── Expanded mini-panel ───────────────────────────────────────────
   return (
     <div
-      className="fixed bottom-6 right-6 z-50 flex w-80 flex-col overflow-hidden rounded-2xl border border-white/10 bg-navy-900/95 text-white shadow-2xl shadow-black/40 backdrop-blur-xl transition-all duration-200 animate-in fade-in slide-in-from-bottom-4"
+      className="fixed bottom-6 right-6 z-50 flex w-80 flex-col overflow-hidden rounded-2xl border border-c-border-subtle bg-navy-900/95 text-white shadow-2xl shadow-black/40 backdrop-blur-xl transition-all duration-200 animate-in fade-in slide-in-from-bottom-4"
       data-testid="teresa-voice-overlay"
     >
-      <div className="flex items-center justify-between border-b border-white/10 bg-white/[0.03] px-4 py-3">
+      <div className="flex items-center justify-between border-b border-c-border-subtle bg-white/[0.03] px-4 py-3">
         <div className="flex items-center gap-2">
           <Sparkles size={14} className="text-crimson-400" />
           <span className="text-sm font-semibold text-crimson-300">Teresa</span>

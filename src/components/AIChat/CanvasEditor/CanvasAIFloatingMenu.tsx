@@ -305,7 +305,7 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
 
       {/* Quick actions dropdown */}
       {showQuickActions && (
-        <div className="mb-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 py-1 shadow-lg min-w-[160px]">
+        <div className="mb-1 rounded-lg border border-slate-200 dark:border-c-border-subtle bg-white dark:bg-navy-800 py-1 shadow-lg min-w-[160px]">
           {QUICK_ACTIONS.map((action) => (
             <button
               key={action.id}
@@ -321,7 +321,7 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
 
       {/* E1 — Tone flyout (Zmień ton → Formalny / Prostszy) */}
       {showToneMenu && (
-        <div className="mb-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 py-1 shadow-lg min-w-[140px]">
+        <div className="mb-1 rounded-lg border border-slate-200 dark:border-c-border-subtle bg-white dark:bg-navy-800 py-1 shadow-lg min-w-[140px]">
           {TONE_OPTIONS.map((option) => (
             <button
               key={option.id}
@@ -338,7 +338,7 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
       {/* E1 — Explain popover: read-only AI answer, scrollable, never applied
           to the document. */}
       {explainState && (
-        <div className="mb-1 w-80 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 shadow-lg">
+        <div className="mb-1 w-80 rounded-lg border border-slate-200 dark:border-c-border-subtle bg-white dark:bg-navy-800 shadow-lg">
           <div className="flex items-center gap-1.5 px-3 pt-2 pb-1">
             <HelpCircle size={13} className="text-primary-500 shrink-0" />
             <span className="text-xs font-medium text-slate-500 dark:text-slate-400 flex-1">
@@ -377,7 +377,7 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
       )}
 
       {/* Main toolbar */}
-      <div className="flex items-center gap-0.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 px-1 py-0.5 shadow-lg">
+      <div className="flex items-center gap-0.5 rounded-lg border border-slate-200 dark:border-c-border-subtle bg-white dark:bg-navy-800 px-1 py-0.5 shadow-lg">
         <button
           onClick={() => {
             setShowPromptInput(!showPromptInput);
@@ -481,7 +481,7 @@ export const AIAcceptRejectBar: React.FC<AIAcceptRejectBarProps> = ({
   const { t } = useTranslation();
   return (
     <div className="sticky bottom-4 flex justify-center z-50 pointer-events-none">
-      <div className="flex items-center gap-2 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 px-3 py-1.5 shadow-lg pointer-events-auto">
+      <div className="flex items-center gap-2 rounded-full border border-slate-200 dark:border-c-border-subtle bg-white dark:bg-navy-800 px-3 py-1.5 shadow-lg pointer-events-auto">
         <span className="text-xs text-slate-500 dark:text-slate-400">
           {t('canvas.aiMenu.teresaSuggestion', 'Teresa suggestion')}
         </span>

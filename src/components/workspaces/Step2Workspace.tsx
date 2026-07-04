@@ -17,7 +17,7 @@ export const Step2Workspace: React.FC<Step2WorkspaceProps> = ({
   return (
     <div className="flex flex-col h-full bg-white dark:bg-navy-900">
       {/* Header */}
-      <div className="h-20 border-b border-slate-200 dark:border-white/5 flex flex-col justify-center px-8 bg-white dark:bg-navy-900 shrink-0">
+      <div className="h-20 border-b border-slate-200 dark:border-c-border-subtle flex flex-col justify-center px-8 bg-white dark:bg-navy-900 shrink-0">
         <div className="flex justify-between items-center mb-1">
           <span className="text-sm font-semibold text-slate-900 dark:text-white tracking-wide">
             Step 2 of 3 — Strategic Profile
@@ -32,7 +32,7 @@ export const Step2Workspace: React.FC<Step2WorkspaceProps> = ({
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-8 space-y-6">
         {/* Card: Strategic Goals */}
-        <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-xl p-6 relative">
+        <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6 relative">
           <div className="absolute top-0 right-0 p-6 opacity-5">
             <Target size={64} className="text-slate-900 dark:text-white" />
           </div>
@@ -47,7 +47,7 @@ export const Step2Workspace: React.FC<Step2WorkspaceProps> = ({
               sessionData.strategicGoals.map((goal) => (
                 <div
                   key={goal.id}
-                  className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg border border-slate-200 dark:border-white/5 flex flex-col gap-2"
+                  className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg border border-slate-200 dark:border-c-border-subtle flex flex-col gap-2"
                 >
                   <div className="flex justify-between items-start">
                     <span
@@ -78,7 +78,7 @@ export const Step2Workspace: React.FC<Step2WorkspaceProps> = ({
                 </div>
               ))
             ) : (
-              <div className="text-center py-8 text-slate-500 dark:text-slate-400 italic border border-dashed border-slate-200 dark:border-white/10 rounded-lg">
+              <div className="text-center py-8 text-slate-500 dark:text-slate-400 italic border border-dashed border-slate-200 dark:border-c-border-subtle rounded-lg">
                 No strategic goals defined yet. Chat with AI to define them.
               </div>
             )}
@@ -86,12 +86,12 @@ export const Step2Workspace: React.FC<Step2WorkspaceProps> = ({
         </div>
 
         {/* Card: Success Criteria */}
-        <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-xl p-6 relative">
+        <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6 relative">
           <h3 className="text-lg font-semibold text-green-200 mb-4 flex items-center gap-2">
             <CheckCircle2 size={20} />
             Success Criteria
           </h3>
-          <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg border border-slate-200 dark:border-white/5 min-h-[80px]">
+          <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg border border-slate-200 dark:border-c-border-subtle min-h-[80px]">
             <p className="text-slate-700 dark:text-slate-300 italic">
               {sessionData.successCriteria || 'Not defined yet.'}
             </p>
@@ -100,7 +100,7 @@ export const Step2Workspace: React.FC<Step2WorkspaceProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="p-6 border-t border-slate-200 dark:border-white/5 bg-white dark:bg-navy-900 flex justify-end">
+      <div className="p-6 border-t border-slate-200 dark:border-c-border-subtle bg-white dark:bg-navy-900 flex justify-end">
         <button
           onClick={onNextStep}
           disabled={!sessionData.step2Completed}

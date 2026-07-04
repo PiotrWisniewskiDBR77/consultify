@@ -104,7 +104,7 @@ export const UsageStatsPanel: React.FC = () => {
       )}
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+        <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-c-border-subtle">
           <div className="flex items-center gap-3 mb-2">
             <Building2 size={20} className="text-blue-400" />
             <span className="text-sm text-slate-600 dark:text-slate-500">Organizations</span>
@@ -113,7 +113,7 @@ export const UsageStatsPanel: React.FC = () => {
             {totals.totalOrgs}
           </div>
         </div>
-        <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+        <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-c-border-subtle">
           <div className="flex items-center gap-3 mb-2">
             <Users size={20} className="text-green-400" />
             <span className="text-sm text-slate-600 dark:text-slate-500">Total Users</span>
@@ -122,7 +122,7 @@ export const UsageStatsPanel: React.FC = () => {
             {totals.totalUsers}
           </div>
         </div>
-        <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+        <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-c-border-subtle">
           <div className="flex items-center gap-3 mb-2">
             <Zap size={20} className="text-amber-400" />
             <span className="text-sm text-slate-600 dark:text-slate-500">AI Calls</span>
@@ -131,7 +131,7 @@ export const UsageStatsPanel: React.FC = () => {
             {totals.totalAiCalls.toLocaleString()}
           </div>
         </div>
-        <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+        <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-c-border-subtle">
           <div className="flex items-center gap-3 mb-2">
             <TrendingUp size={20} className="text-primary-400" />
             <span className="text-sm text-slate-600 dark:text-slate-500">Tokens Used</span>
@@ -143,8 +143,8 @@ export const UsageStatsPanel: React.FC = () => {
       </div>
 
       {/* Usage Table */}
-      <div className="bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
-        <div className="p-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
+      <div className="bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-c-border-subtle overflow-hidden">
+        <div className="p-4 border-b border-slate-200 dark:border-c-border-subtle flex items-center justify-between">
           <div className="flex items-center gap-2">
             <BarChart3 size={18} className="text-slate-600 dark:text-slate-500" />
             <h3 className="font-medium text-slate-900 dark:text-white">Usage by Organization</h3>
@@ -159,7 +159,7 @@ export const UsageStatsPanel: React.FC = () => {
         <div className="overflow-x-auto">
           <table /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */  className="w-full">
             <thead>
-              <tr className="border-b border-slate-200 dark:border-white/5">
+              <tr className="border-b border-slate-200 dark:border-c-border-subtle">
                 <th className="text-left p-4 text-xs text-slate-500 dark:text-slate-400 uppercase">
                   Organization
                 </th>
@@ -181,7 +181,7 @@ export const UsageStatsPanel: React.FC = () => {
               {orgUsage.map((org) => (
                 <tr
                   key={org.id}
-                  className="border-b border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-navy-800/20"
+                  className="border-b border-slate-200 dark:border-c-border-subtle hover:bg-slate-50 dark:hover:bg-navy-800/20"
                 >
                   <td className="p-4">
                     <div className="font-medium text-slate-900 dark:text-white">{org.name}</div>

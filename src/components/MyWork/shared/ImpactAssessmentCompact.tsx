@@ -350,7 +350,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                         }
                         placeholder="0"
                         disabled={readOnly}
-                        className="w-full px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                        className="w-full px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid"
                       />
                     </div>
                     <div>
@@ -372,7 +372,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                         }
                         placeholder="0"
                         disabled={readOnly}
-                        className="w-full px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                        className="w-full px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid"
                       />
                     </div>
                   </div>
@@ -430,7 +430,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                       }
                       placeholder="0"
                       disabled={readOnly}
-                      className="flex-1 px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                      className="flex-1 px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid"
                     />
                     <select
                       value={impact.timelineEstimate?.unit || 'weeks'}
@@ -509,7 +509,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                         }
                         placeholder="0"
                         disabled={readOnly}
-                        className="w-full px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                        className="w-full px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid"
                       />
                     </div>
                     <div>
@@ -532,7 +532,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                         }
                         placeholder="e.g. 3 months"
                         disabled={readOnly}
-                        className="w-full px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                        className="w-full px-2 py-1.5 text-sm rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid"
                       />
                     </div>
                   </div>
@@ -578,7 +578,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                   placeholder={
                     isPolish ? 'Opisz szczegóły wpływu decyzji...' : 'Describe impact details...'
                   }
-                  className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-400 resize-none"
+                  className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-c-focus-solid resize-none"
                 />
               </div>
             </motion.div>

@@ -84,11 +84,11 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
   return (
     <aside
       className={cn(
-        'flex h-full w-full flex-col border-r border-slate-200 bg-white dark:border-white/10 dark:bg-navy-950',
+        'flex h-full w-full flex-col border-r border-slate-200 bg-white dark:border-c-border-subtle dark:bg-navy-950',
         className
       )}
     >
-      <div className="border-b border-slate-200 px-4 py-4 dark:border-white/10">
+      <div className="border-b border-slate-200 px-4 py-4 dark:border-c-border-subtle">
         {onBack && (
           <button
             onClick={onBack}
@@ -121,8 +121,8 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
               className={cn(
                 'w-full rounded-xl border px-3 py-3 text-left transition',
                 isActive
-                  ? 'border-slate-200 bg-slate-100 text-slate-900 dark:border-white/10 dark:bg-white/[0.08] dark:text-white'
-                  : 'border-transparent bg-transparent text-slate-700 hover:border-slate-200 hover:bg-slate-50 dark:text-slate-300 dark:hover:border-white/10 dark:hover:bg-white/5'
+                  ? 'border-slate-200 bg-slate-100 text-slate-900 dark:border-c-border-subtle dark:bg-white/[0.08] dark:text-white'
+                  : 'border-transparent bg-transparent text-slate-700 hover:border-slate-200 hover:bg-slate-50 dark:text-slate-300 dark:hover:border-c-border-subtle dark:hover:bg-white/5'
               )}
             >
               <div className="flex items-center gap-3">

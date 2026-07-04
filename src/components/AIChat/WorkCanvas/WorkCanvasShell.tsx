@@ -425,7 +425,7 @@ function EditableMarkdownCanvas({
   onContentChange: (md: string) => void;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-navy-900">
+    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-c-border-subtle dark:bg-navy-900">
       <CanvasRichEditor
         contentMd={content}
         onContentChange={onContentChange}
@@ -438,7 +438,7 @@ function EditableMarkdownCanvas({
 
 function TableCanvas({ content }: { content: WorkCanvasTableContent }) {
   return (
-    <div className="overflow-auto rounded-2xl border border-slate-200 dark:border-white/10">
+    <div className="overflow-auto rounded-2xl border border-slate-200 dark:border-c-border-subtle">
       <table /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */  className="min-w-full divide-y divide-slate-200 dark:divide-white/10 text-sm">
         <thead className="bg-slate-50 dark:bg-white/[0.03]">
           <tr>
@@ -474,13 +474,13 @@ function ChecklistCanvas({ content }: { content: WorkCanvasChecklistItem[] }) {
       {content.map((item) => (
         <div
           key={item.id}
-          className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/[0.03]"
+          className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-c-border-subtle dark:bg-white/[0.03]"
         >
           <span
             className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${
               item.checked
                 ? 'border-emerald-500 bg-emerald-500 text-white'
-                : 'border-slate-300 text-transparent dark:border-white/20'
+                : 'border-slate-300 text-transparent dark:border-c-border'
             }`}
           >
             <Check size={13} />
@@ -522,7 +522,7 @@ function ResearchCanvas({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/[0.03]">
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-c-border-subtle dark:bg-white/[0.03]">
         <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
           {t('canvas.workShell.researchQuestions', 'Research questions')}
         </h3>
@@ -536,7 +536,7 @@ function ResearchCanvas({
         </ul>
       </div>
 
-      <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 dark:border-white/10 dark:bg-navy-950/60">
+      <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 dark:border-c-border-subtle dark:bg-navy-950/60">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           {t('canvas.workShell.governedResearchRuntime', 'Governed research runtime')}
         </p>
@@ -570,7 +570,7 @@ function DecisionCanvas({ content }: { content: WorkCanvasDecisionContent }) {
         <p className="mt-2 text-sm text-amber-950 dark:text-amber-50">{content.recommendation}</p>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 p-4 dark:border-white/10">
+        <div className="rounded-2xl border border-slate-200 p-4 dark:border-c-border-subtle">
           <h3 className="text-sm font-semibold">{t('canvas.workShell.options', 'Options')}</h3>
           <ul className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
             {content.options.map((option) => (
@@ -578,7 +578,7 @@ function DecisionCanvas({ content }: { content: WorkCanvasDecisionContent }) {
             ))}
           </ul>
         </div>
-        <div className="rounded-2xl border border-slate-200 p-4 dark:border-white/10">
+        <div className="rounded-2xl border border-slate-200 p-4 dark:border-c-border-subtle">
           <h3 className="text-sm font-semibold">
             {t('canvas.workShell.assumptionsRisks', 'Assumptions and risks')}
           </h3>
@@ -1076,7 +1076,7 @@ export function WorkCanvasShell() {
       <aside
         className={`${
           mobileChatOpen ? 'fixed inset-0 z-40 flex' : 'hidden'
-        } min-w-[340px] max-w-[520px] basis-[36%] border-r border-slate-200 bg-white dark:border-white/10 dark:bg-navy-900 lg:relative lg:inset-auto lg:z-auto lg:flex`}
+        } min-w-[340px] max-w-[520px] basis-[36%] border-r border-slate-200 bg-white dark:border-c-border-subtle dark:bg-navy-900 lg:relative lg:inset-auto lg:z-auto lg:flex`}
       >
         <UnifiedChatPanel
           mode="split"
@@ -1099,7 +1099,7 @@ export function WorkCanvasShell() {
       </aside>
 
       <section className="flex min-w-0 flex-1 flex-col">
-        <header className="shrink-0 border-b border-slate-200 bg-white/90 px-5 py-3 backdrop-blur dark:border-white/10 dark:bg-navy-900/90">
+        <header className="shrink-0 border-b border-slate-200 bg-white/90 px-5 py-3 backdrop-blur dark:border-c-border-subtle dark:bg-navy-900/90">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -1115,7 +1115,7 @@ export function WorkCanvasShell() {
               <button
                 type="button"
                 onClick={() => setMobileChatOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 lg:hidden"
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-c-border-subtle dark:bg-white/[0.03] dark:text-slate-200 lg:hidden"
               >
                 <MessageSquare size={13} />
                 {t('canvas.workShell.chat', 'Chat')}
@@ -1154,7 +1154,7 @@ export function WorkCanvasShell() {
                   type="button"
                   onClick={() => proposeConversion(target)}
                   disabled={isBusy}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-indigo-300 hover:text-indigo-700 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:border-indigo-400"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-indigo-300 hover:text-indigo-700 dark:border-c-border-subtle dark:bg-white/[0.03] dark:text-slate-200 dark:hover:border-indigo-400"
                 >
                   {target === 'idea' ? <Lightbulb size={13} /> : <Sparkles size={13} />}
                   {t(`canvas.workShell.target.${target}`, WORK_CANVAS_TARGET_LABEL[target])}
@@ -1175,7 +1175,7 @@ export function WorkCanvasShell() {
                   'canvas.workShell.versionHistoryPending',
                   'Version history will load from artifact history in a later runtime step.'
                 )}
-                className="rounded-full border border-slate-200 px-2 py-1 font-semibold text-slate-600 dark:border-white/10 dark:text-slate-500"
+                className="rounded-full border border-slate-200 px-2 py-1 font-semibold text-slate-600 dark:border-c-border-subtle dark:text-slate-500"
               >
                 {t('canvas.workShell.prev', 'Prev')}
               </button>
@@ -1187,7 +1187,7 @@ export function WorkCanvasShell() {
                   'canvas.workShell.versionHistoryPending',
                   'Version history will load from artifact history in a later runtime step.'
                 )}
-                className="rounded-full border border-slate-200 px-2 py-1 font-semibold text-slate-600 dark:border-white/10 dark:text-slate-500"
+                className="rounded-full border border-slate-200 px-2 py-1 font-semibold text-slate-600 dark:border-c-border-subtle dark:text-slate-500"
               >
                 {t('canvas.workShell.next', 'Next')}
               </button>
@@ -1214,7 +1214,7 @@ export function WorkCanvasShell() {
 
         <main className="min-h-0 flex-1 overflow-auto p-5">
           <div className="mx-auto grid max-w-7xl grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-navy-900">
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-c-border-subtle dark:bg-navy-900">
               {isKimiKind ? (
                 <div className="mb-4 rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-xs text-indigo-800 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-100">
                   {t(
@@ -1224,7 +1224,7 @@ export function WorkCanvasShell() {
                 </div>
               ) : null}
               {draft ? (
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3 dark:border-white/10">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3 dark:border-c-border-subtle">
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
@@ -1255,7 +1255,7 @@ export function WorkCanvasShell() {
                     <button
                       type="button"
                       onClick={copyCurrentDraft}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-white/10 dark:text-slate-200"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-c-border-subtle dark:text-slate-200"
                     >
                       <Copy size={13} />
                       {t('canvas.workShell.copy', 'Copy')}
@@ -1263,7 +1263,7 @@ export function WorkCanvasShell() {
                     <button
                       type="button"
                       onClick={downloadCurrentDraft}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-white/10 dark:text-slate-200"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-c-border-subtle dark:text-slate-200"
                     >
                       <Download size={13} />
                       {t('canvas.workShell.download', 'Download')}
@@ -1309,7 +1309,7 @@ export function WorkCanvasShell() {
             </div>
 
             <aside className="space-y-4">
-              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-navy-900">
+              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-c-border-subtle dark:bg-navy-900">
                 <h2 className="text-sm font-semibold text-slate-950 dark:text-white">
                   {t('canvas.workShell.governancePreview', 'Governance preview')}
                 </h2>
@@ -1365,7 +1365,7 @@ export function WorkCanvasShell() {
                     ) : null}
                   </div>
                 ) : (
-                  <p className="mt-4 rounded-2xl border border-dashed border-slate-300 p-3 text-xs text-slate-500 dark:border-white/10 dark:text-slate-400">
+                  <p className="mt-4 rounded-2xl border border-dashed border-slate-300 p-3 text-xs text-slate-500 dark:border-c-border-subtle dark:text-slate-400">
                     {t(
                       'canvas.workShell.selectTargetHint',
                       'Select Idea, Initiative, Task or Brief to create a proposal preview.'
@@ -1382,7 +1382,7 @@ export function WorkCanvasShell() {
                 ) : null}
               </div>
 
-              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-navy-900">
+              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-c-border-subtle dark:bg-navy-900">
                 <h2 className="text-sm font-semibold text-slate-950 dark:text-white">
                   {t('canvas.workShell.artifactRuntime', 'Artifact runtime')}
                 </h2>
@@ -1418,7 +1418,7 @@ export function WorkCanvasShell() {
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-navy-900">
+              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-c-border-subtle dark:bg-navy-900">
                 <h2 className="text-sm font-semibold text-slate-950 dark:text-white">
                   {t('canvas.workShell.sources', 'Sources')}
                 </h2>
@@ -1426,7 +1426,7 @@ export function WorkCanvasShell() {
                   {(draft?.sources || []).map((source) => (
                     <div
                       key={source.id}
-                      className="rounded-2xl border border-slate-200 p-3 text-xs dark:border-white/10"
+                      className="rounded-2xl border border-slate-200 p-3 text-xs dark:border-c-border-subtle"
                     >
                       <p className="font-semibold text-slate-700 dark:text-slate-200">
                         {source.label}

@@ -287,7 +287,7 @@ export const ForceStep: React.FC<ForceStepProps> = ({ forceId, session, isPolish
             value={newDriver}
             onChange={(e) => setNewDriver(e.target.value)}
             placeholder={isPolish ? 'Dodaj czynnik...' : 'Add a driver...'}
-            className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+            className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-c-focus text-sm"
             onKeyDown={(e) => e.key === 'Enter' && handleAddDriver()}
           />
           <button

@@ -186,7 +186,7 @@ export const GoalsExpectationsModule: React.FC = () => {
                   >
                     <input
                       type="checkbox"
-                      className="w-5 h-5 text-primary-600 rounded focus:ring-primary-500 peer"
+                      className="w-5 h-5 text-primary-600 rounded focus:ring-c-focus peer"
                       checked={goals.topPriorities.includes(p.id)}
                       onChange={(e) => {
                         const newPriorities = e.target.checked
@@ -393,7 +393,7 @@ export const GoalsExpectationsModule: React.FC = () => {
                       checked={goals.aiRole === role.id}
                       onChange={() => setGoals({ aiRole: role.id })}
                     />
-                    <div className="p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-950/50 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 peer-checked:border-primary-500 peer-checked:ring-1 peer-checked:ring-primary-500/50 transition-all hover:bg-white dark:hover:bg-navy-800">
+                    <div className="p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-950/50 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 peer-checked:border-primary-500 peer-checked:ring-1 peer-checked:ring-c-info/50 transition-all hover:bg-white dark:hover:bg-navy-800">
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-bold text-sm text-navy-900 dark:text-white peer-checked:text-primary-700 dark:peer-checked:text-primary-400">
                           {role.label}

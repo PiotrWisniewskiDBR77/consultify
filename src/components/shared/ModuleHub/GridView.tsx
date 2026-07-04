@@ -279,7 +279,7 @@ export const GridView: React.FC<GridViewProps> = ({
               accent.borderLeft,
               'bg-slate-50/80 dark:bg-navy-800/60',
               'hover:bg-white dark:hover:bg-navy-800/80',
-              isSelected ? 'ring-2 ring-slate-400/40 dark:ring-white/15 bg-white dark:bg-navy-800/80' : '',
+              isSelected ? 'ring-2 ring-slate-400/40 dark:ring-c-border bg-white dark:bg-navy-800/80' : '',
               'transition-colors duration-150',
             ].join(' ')}
           >

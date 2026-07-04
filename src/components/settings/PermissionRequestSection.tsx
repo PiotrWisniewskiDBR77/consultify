@@ -292,7 +292,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
                                                 ${
                                                   isSelected
                                                     ? 'border-c-border-strong bg-c-surface-raised'
-                                                    : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border-strong dark:hover:border-white/30'
+                                                    : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border-strong dark:hover:border-c-border'
                                                 }
                                             `}
                     >

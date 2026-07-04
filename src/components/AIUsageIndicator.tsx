@@ -108,7 +108,7 @@ export const AIUsageIndicator: React.FC<AIUsageIndicatorProps> = ({
   }
 
   return (
-    <div className="bg-navy-800/50 rounded-lg p-3 border border-white/5">
+    <div className="bg-navy-800/50 rounded-lg p-3 border border-c-border-subtle">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <Zap size={14} className="text-primary-400" />
@@ -144,7 +144,7 @@ export const AIUsageIndicator: React.FC<AIUsageIndicatorProps> = ({
       )}
 
       {showTrend && usage.recentUsage && usage.recentUsage.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-white/5">
+        <div className="mt-3 pt-3 border-t border-c-border-subtle">
           <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
             Last 7 days
           </div>

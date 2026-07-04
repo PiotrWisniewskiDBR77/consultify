@@ -122,7 +122,7 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
             onChange={(e) => setComment(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleRethink()}
             placeholder={isPolish ? 'Dodaj feedback dla AI...' : 'Your feedback for AI...'}
-            className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-navy-700 dark:bg-navy-800 dark:text-white"
+            className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-800 dark:text-white"
             autoFocus
           />
           <button

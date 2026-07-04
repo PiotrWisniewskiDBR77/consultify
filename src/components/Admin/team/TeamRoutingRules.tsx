@@ -277,7 +277,7 @@ export const TeamRoutingRules: React.FC<TeamRoutingRulesProps> = ({
                   rule.enabled
                     ? 'border-slate-200 dark:border-navy-700'
                     : 'border-slate-200 dark:border-navy-700 opacity-60',
-                  isExpanded && 'ring-2 ring-primary-500/20'
+                  isExpanded && 'ring-2 ring-c-info/20'
                 )}
               >
                 {/* Rule Header */}

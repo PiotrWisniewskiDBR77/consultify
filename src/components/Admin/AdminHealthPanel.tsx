@@ -131,7 +131,7 @@ export const AdminHealthPanel: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Header card */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-c-border-subtle dark:bg-white/5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
@@ -177,7 +177,7 @@ export const AdminHealthPanel: React.FC = () => {
           {stats.map((s) => (
             <div
               key={s.key}
-              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/10 dark:bg-white/[0.03]"
+              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-c-border-subtle dark:bg-white/[0.03]"
             >
               <div className="flex items-center gap-2">
                 <StatusDot status={s.dot} />
@@ -194,7 +194,7 @@ export const AdminHealthPanel: React.FC = () => {
       </div>
 
       {/* Probe list */}
-      <div className="rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+      <div className="rounded-2xl border border-slate-200 bg-white dark:border-c-border-subtle dark:bg-white/5">
         {loading ? (
           <div className="flex items-center justify-center py-16 text-slate-400">
             <Loader2 className="h-6 w-6 animate-spin" />

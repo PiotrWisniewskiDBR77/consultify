@@ -313,7 +313,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                 className={`flex-1 p-4 rounded-xl border-2 transition-all ${
                   sameEveryDay
                     ? 'border-[var(--c-info)] bg-c-surface-raised'
-                    : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border dark:hover:border-white/20'
+                    : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border dark:hover:border-c-border'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -342,7 +342,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                 className={`flex-1 p-4 rounded-xl border-2 transition-all ${
                   !sameEveryDay
                     ? 'border-[var(--c-info)] bg-c-surface-raised'
-                    : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border dark:hover:border-white/20'
+                    : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border dark:hover:border-c-border'
                 }`}
               >
                 <div className="flex items-center gap-3">

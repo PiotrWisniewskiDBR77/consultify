@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   CheckSquare,
   ChevronDown,
+  Calendar,
   ChevronUp,
   Clock,
   Compass,
@@ -514,7 +515,7 @@ const STATUS_CONFIG: Record<
   published: {
     label: { en: 'Published', pl: 'Opublikowane' },
     color: 'bg-sky-500',
-    textColor: 'text-primary-500',
+    textColor: 'text-c-info',
   },
   failed: { label: { en: 'Failed', pl: 'Błąd' }, color: 'bg-danger-500', textColor: 'text-danger-500' },
 };
@@ -2917,9 +2918,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         value: isPolish ? typeMeta.labelPl : typeMeta.label,
         onChange: () => {},
         readOnly: true,
+        // Unified meta convention (item 13): one neutral raised pill for every
+        // read-only value — no colored pseudo-input frames, readable text-c-text.
         render: () => (
-          <div className="flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold bg-indigo-50 dark:bg-indigo-900/20 border border-slate-200/60 dark:border-navy-600/60 text-indigo-600 dark:text-indigo-300">
-            <span className="w-2 h-2 rounded-full flex-shrink-0 bg-indigo-500" />
+          <div className="flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold bg-c-surface-raised text-c-text">
+            <FileText size={13} className="flex-shrink-0 text-c-text-muted" />
             <span className="flex-1 truncate">{isPolish ? typeMeta.labelPl : typeMeta.label}</span>
           </div>
         ),
@@ -2927,10 +2930,16 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       {
         id: 'created',
         label: { en: 'Created', pl: 'Utworzono' },
-        type: 'date' as const,
+        type: 'custom' as const,
         value: insight?.createdAt?.split('T')[0] || '',
         onChange: () => {},
         readOnly: true,
+        render: () => (
+          <div className="flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold bg-c-surface-raised text-c-text">
+            <Calendar size={13} className="flex-shrink-0 text-c-text-muted" />
+            <span className="flex-1 truncate">{insight?.createdAt?.split('T')[0] || '—'}</span>
+          </div>
+        ),
       },
       {
         id: 'sessions',
@@ -2940,8 +2949,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         onChange: () => {},
         readOnly: true,
         render: () => (
-          <div className="flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold bg-blue-50 dark:bg-blue-900/20 border border-slate-200/60 dark:border-navy-600/60 text-blue-600 dark:text-blue-300">
-            <span className="w-2 h-2 rounded-full flex-shrink-0 bg-blue-500" />
+          <div className="flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold bg-c-surface-raised text-c-text">
+            <MessageSquare size={13} className="flex-shrink-0 text-c-text-muted" />
             <span className="flex-1 truncate">{String(insight?.sourceSessionCount || 0)}</span>
           </div>
         ),
@@ -2949,10 +2958,16 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       {
         id: 'findings',
         label: { en: 'Findings', pl: 'Findingi' },
-        type: 'text' as const,
+        type: 'custom' as const,
         value: String(findingsSummary.total),
         onChange: () => {},
         readOnly: true,
+        render: () => (
+          <div className="flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold bg-c-surface-raised text-c-text">
+            <Lightbulb size={13} className="flex-shrink-0 text-c-text-muted" />
+            <span className="flex-1 truncate">{String(findingsSummary.total)}</span>
+          </div>
+        ),
       },
     ],
     [
@@ -4109,7 +4124,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         ].map((label) => (
                           <span
                             key={label}
-                            className="px-2 py-0.5 rounded-full bg-primary-500/10 text-primary-600 dark:text-primary-400 text-[10px] font-medium"
+                            className="px-2 py-0.5 rounded-full bg-c-info/10 text-c-info dark:text-c-info text-[10px] font-medium"
                           >
                             {label}
                           </span>
@@ -4726,7 +4741,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   <div key={ref} className="inline-flex flex-col">
                                     <button
                                       onClick={() => toggleEvidenceRef(ref)}
-                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary-500/10 text-primary-600 dark:text-primary-400 text-[10px] font-medium hover:bg-primary-500/20 transition-colors"
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-c-info/10 text-c-info dark:text-c-info text-[10px] font-medium hover:bg-c-info/20 transition-colors"
                                     >
                                       <Zap size={10} />
                                       {evidence?.question_text
@@ -4995,7 +5010,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   <div key={ref} className="inline-flex flex-col">
                                     <button
                                       onClick={() => toggleEvidenceRef(ref)}
-                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary-500/10 text-primary-600 dark:text-primary-400 text-[10px] font-medium hover:bg-primary-500/20 transition-colors"
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-c-info/10 text-c-info dark:text-c-info text-[10px] font-medium hover:bg-c-info/20 transition-colors"
                                     >
                                       <Zap size={10} />
                                       {evidence?.question_text
@@ -5242,7 +5257,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   <div key={ref} className="inline-flex flex-col">
                                     <button
                                       onClick={() => toggleEvidenceRef(ref)}
-                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary-500/10 text-primary-600 dark:text-primary-400 text-[10px] font-medium hover:bg-primary-500/20 transition-colors"
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-c-info/10 text-c-info dark:text-c-info text-[10px] font-medium hover:bg-c-info/20 transition-colors"
                                     >
                                       <Zap size={10} />
                                       {evidence?.question_text
@@ -5331,7 +5346,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         icon: <Target size={10} />,
                       },
                       contradiction: {
-                        bg: 'bg-primary-500/10 text-primary-600 dark:text-primary-400',
+                        bg: 'bg-c-info/10 text-c-info dark:text-c-info',
                         label: 'Contradiction',
                         labelPl: 'Sprzeczność',
                         icon: <AlertCircle size={10} />,
@@ -5528,7 +5543,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               case 'promoted':
                 return {
                   label: isPolish ? 'Promowany' : 'Promoted',
-                  className: 'bg-primary-500/10 text-primary-700 dark:text-primary-300',
+                  className: 'bg-c-info/10 text-c-info dark:text-c-info',
                 };
               default:
                 return {
@@ -5629,7 +5644,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             </div>
                           </div>
                           {linkedFinding && (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary-500/10 text-primary-700 dark:text-primary-300 text-[10px] font-medium">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-c-info/10 text-c-info dark:text-c-info text-[10px] font-medium">
                               <Target size={10} />
                               {isPolish ? 'Powiązany finding' : 'Linked finding'}
                             </span>
@@ -5799,7 +5814,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   handleCandidateAction(candidate, 'promote_to_finding')
                                 }
                                 disabled={isBusy || candidate.triage_status !== 'ready_for_review'}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-500/10 text-primary-700 dark:text-primary-300 hover:bg-primary-500/20 text-xs font-medium disabled:opacity-50"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-c-info/10 text-c-info dark:text-c-info hover:bg-c-info/20 text-xs font-medium disabled:opacity-50"
                               >
                                 {isBusy ? (
                                   <Loader2 size={12} className="animate-spin" />
@@ -6573,7 +6588,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         {[lens.role, lens.department].filter(Boolean).join(' · ') ||
                           (isPolish ? 'Perspektywa' : 'Perspective')}
                       </div>
-                      <blockquote className="mt-2 border-l-2 border-primary-400 pl-3 text-sm italic text-slate-700 dark:text-slate-300">
+                      <blockquote className="mt-2 border-l-2 border-c-info pl-3 text-sm italic text-slate-700 dark:text-slate-300">
                         {lens.localSummary ||
                           (isPolish
                             ? 'Brak lokalnego podsumowania dla tej osoby.'

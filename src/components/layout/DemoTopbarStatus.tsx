@@ -63,7 +63,7 @@ export const DemoTopbarStatus: React.FC<DemoTopbarStatusProps> = ({
         </span>
       </div>
 
-      <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 px-3 py-1 text-xs text-slate-600 dark:text-slate-300">
+      <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 dark:border-c-border-subtle bg-slate-100 dark:bg-white/5 px-3 py-1 text-xs text-slate-600 dark:text-slate-300">
         <span className="font-medium">{orgName}</span>
         <span className="text-slate-600 dark:text-slate-500">read-only</span>
         {demoLocale && (
@@ -74,14 +74,14 @@ export const DemoTopbarStatus: React.FC<DemoTopbarStatusProps> = ({
       </div>
 
       {!compact && (
-        <div className="hidden xl:inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 px-3 py-1 text-xs text-slate-600 dark:text-slate-300">
+        <div className="hidden xl:inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-c-border-subtle bg-slate-100 dark:bg-white/5 px-3 py-1 text-xs text-slate-600 dark:text-slate-300">
           <Clock3 className="h-3.5 w-3.5" />
           <span>{formatRemainingTime(timeRemainingMs)}</span>
         </div>
       )}
 
       {!compact && typeof aiUsed === 'number' && typeof aiLimit === 'number' && aiLimit > 0 && (
-        <div className="hidden xl:inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 px-3 py-1 text-xs text-slate-600 dark:text-slate-300">
+        <div className="hidden xl:inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-c-border-subtle bg-slate-100 dark:bg-white/5 px-3 py-1 text-xs text-slate-600 dark:text-slate-300">
           <Sparkles className="h-3.5 w-3.5" />
           <span>
             AI {aiUsed}/{aiLimit}
@@ -93,7 +93,7 @@ export const DemoTopbarStatus: React.FC<DemoTopbarStatusProps> = ({
         typeof tokenUsed === 'number' &&
         typeof tokenLimit === 'number' &&
         tokenLimit > 0 && (
-          <div className="hidden 2xl:inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 px-3 py-1 text-xs text-slate-600 dark:text-slate-300">
+          <div className="hidden 2xl:inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-c-border-subtle bg-slate-100 dark:bg-white/5 px-3 py-1 text-xs text-slate-600 dark:text-slate-300">
             <span>
               {Math.round(tokenUsed / 1000)}k/{Math.round(tokenLimit / 1000)}k tokens
             </span>
@@ -101,7 +101,7 @@ export const DemoTopbarStatus: React.FC<DemoTopbarStatusProps> = ({
         )}
 
       {compact && (
-        <div className="hidden lg:inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 px-3 py-1 text-xs text-slate-600 dark:text-slate-300">
+        <div className="hidden lg:inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-c-border-subtle bg-slate-100 dark:bg-white/5 px-3 py-1 text-xs text-slate-600 dark:text-slate-300">
           <Clock3 className="h-3.5 w-3.5" />
           <span>{formatRemainingTime(timeRemainingMs)}</span>
         </div>
@@ -131,7 +131,7 @@ export const DemoTopbarStatus: React.FC<DemoTopbarStatusProps> = ({
           type="button"
           onClick={exitDemoMode}
           disabled={isDemoLoading}
-          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-1 text-xs font-medium text-slate-700 dark:text-slate-200 transition-colors hover:bg-slate-50 dark:hover:bg-white/10 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-c-border-subtle bg-white dark:bg-white/5 px-3 py-1 text-xs font-medium text-slate-700 dark:text-slate-200 transition-colors hover:bg-slate-50 dark:hover:bg-white/10 disabled:opacity-50"
         >
           <X className="h-3.5 w-3.5" />
           <span>

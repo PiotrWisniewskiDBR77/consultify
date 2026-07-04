@@ -129,19 +129,20 @@ const TAB_BASE = `
 // canon (MENU_2_TAB_INACTIVE in ModuleMenu3.tsx). Piotr Session 3: Tools /
 // Assessment / Initiatives / Materiały tabs looked like bare labels because
 // the inactive border was transparent — every tab now reads as a real pill.
+// Elewacja > ramki (Piotr 2026-07-04): dark inactive = pełne raised, ramka szept.
 const TAB_INACTIVE = `
   ${TAB_BASE}
-  border border-slate-200/70 dark:border-white/[0.06]
-  bg-white/70 dark:bg-white/[0.04]
+  border border-slate-200/70 dark:border-c-border-subtle
+  bg-white/70 dark:bg-c-surface-raised
   text-c-text-muted
-  hover:text-c-text hover:bg-slate-100/70 dark:hover:bg-white/[0.06]
+  hover:text-c-text hover:bg-slate-100/70 dark:hover:brightness-110
 `;
 
 const TAB_ACTIVE = `
   ${TAB_BASE}
   border border-c-border
-  bg-c-surface-raised
-  text-c-text
+  bg-c-surface-raised text-c-text shadow-sm
+  dark:bg-white/[0.14] dark:text-slate-50
 `;
 
 const BUTTON_BASE = `
@@ -153,16 +154,16 @@ const BUTTON_BASE = `
 // visible pill frame as the tab row (My Work MENU_2_TAB_INACTIVE canon).
 const BUTTON_INACTIVE = `
   ${BUTTON_BASE}
-  border border-slate-200/70 dark:border-white/[0.06]
-  bg-white/70 dark:bg-white/[0.04]
+  border border-slate-200/70 dark:border-c-border-subtle
+  bg-white/70 dark:bg-c-surface-raised
   text-slate-700 dark:text-slate-300
-  hover:bg-slate-100/70 dark:hover:bg-white/[0.06]
+  hover:bg-slate-100/70 dark:hover:brightness-110
 `;
 
 const BUTTON_ACTIVE = `
   ${BUTTON_BASE}
   border border-c-border
-  bg-slate-900/[0.07] text-slate-900 dark:bg-white/10 dark:text-slate-100
+  bg-slate-900/[0.07] text-slate-900 shadow-sm dark:bg-white/[0.14] dark:text-slate-50
 `;
 
 export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
@@ -364,7 +365,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   ) : null;
 
   return (
-    <div className="bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/5">
+    <div className="bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-c-border-subtle">
       {/* Main Navigation Row */}
       <div className="flex items-center justify-between px-4 py-3">
         {/* Left: Search + Tabs + Status Filters */}
@@ -378,8 +379,8 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
             }}
             className={`h-9 w-9 inline-flex items-center justify-center rounded-full transition-colors duration-150 border ${
               showSearch
-                ? 'bg-white/70 dark:bg-white/[0.06] text-slate-900 dark:text-slate-100 border-primary-500/40'
-                : 'text-slate-500 dark:text-slate-400 border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
+                ? 'bg-c-surface-raised text-slate-900 dark:text-slate-50 border-c-border shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 border-slate-200/70 dark:border-c-border-subtle hover:bg-slate-100/70 dark:hover:bg-c-surface-raised'
             }`}
             title={forceCommandRow ? 'Bulk mode active' : 'Search'}
             aria-disabled={forceCommandRow}
@@ -475,7 +476,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
 
           {/* View Mode Toggle — V3-A03: canonical order */}
           {orderedViewModes.length > 1 && (
-            <div className="flex items-center bg-slate-50 dark:bg-navy-950/70 border border-slate-200/60 dark:border-white/5 rounded-full p-1 h-9">
+            <div className="flex items-center bg-slate-50 dark:bg-navy-950/70 border border-slate-200/60 dark:border-c-border-subtle rounded-full p-1 h-9">
               {orderedViewModes.map((mode) => {
                 const config = viewModeConfig[mode];
                 const isActive = viewMode === mode;

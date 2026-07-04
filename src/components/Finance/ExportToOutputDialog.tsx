@@ -238,7 +238,7 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
               <button
                 type="button"
                 onClick={() => setOutputType('report')}
-                className={`flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left hover:ring-2 hover:ring-primary-400/50 ${
+                className={`flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left hover:ring-2 hover:ring-c-info/50 ${
                   outputType === 'report'
                     ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20'
                     : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
@@ -261,7 +261,7 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
               <button
                 type="button"
                 onClick={() => setOutputType('presentation')}
-                className={`flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left hover:ring-2 hover:ring-primary-400/50 ${
+                className={`flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left hover:ring-2 hover:ring-c-info/50 ${
                   outputType === 'presentation'
                     ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20'
                     : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
@@ -287,7 +287,7 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
               <button
                 type="button"
                 onClick={() => setOutputType('initiatives')}
-                className={`flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left hover:ring-2 hover:ring-primary-400/50 ${
+                className={`flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left hover:ring-2 hover:ring-c-info/50 ${
                   outputType === 'initiatives'
                     ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20'
                     : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
@@ -346,7 +346,7 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
                     value={templateId}
                     onChange={(e) => setTemplateId(e.target.value)}
                     disabled={loadingTemplates}
-                    className="w-full pl-3 pr-10 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none"
+                    className="w-full pl-3 pr-10 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-c-focus focus:border-transparent appearance-none"
                   >
                     {loadingTemplates ? (
                       <option>{t('finance.export.loadingTemplates', 'Loading...')}</option>

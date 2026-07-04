@@ -233,7 +233,7 @@ export const PaymentMethodsView: React.FC = () => {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-slate-200 dark:border-white/10">
+      <div className="flex gap-2 border-b border-slate-200 dark:border-c-border-subtle">
         <button
           onClick={() => setActiveTab('methods')}
           className={`px-4 py-2 -mb-px border-b-2 transition-colors ${

@@ -264,7 +264,7 @@ PODEJŚCIE:
   return (
     <div className="h-full flex flex-col bg-c-bg">
       {/* Header */}
-      <div className="shrink-0 px-6 py-4 border-b border-white/10 bg-gradient-to-r from-primary-900/20 to-blue-900/20">
+      <div className="shrink-0 px-6 py-4 border-b border-c-border-subtle bg-gradient-to-r from-primary-900/20 to-blue-900/20">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-gradient-to-br from-primary-500 to-blue-500">
             <Brain className="text-c-text" size={24} />
@@ -279,7 +279,7 @@ PODEJŚCIE:
       </div>
 
       {/* Tabs */}
-      <div className="shrink-0 px-6 py-3 border-b border-white/5 flex gap-2 overflow-x-auto">
+      <div className="shrink-0 px-6 py-3 border-b border-c-border-subtle flex gap-2 overflow-x-auto">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -301,7 +301,7 @@ PODEJŚCIE:
         {activeTab === 'capabilities' && (
           <div className="h-full flex">
             {/* Capabilities List */}
-            <div className="w-80  border-white/5 overflow-y-auto p-4">
+            <div className="w-80  border-c-border-subtle overflow-y-auto p-4">
               <h3 className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold mb-3 px-2">
                 Funkcje AI
               </h3>
@@ -345,7 +345,7 @@ PODEJŚCIE:
             <div className="flex-1 flex flex-col overflow-hidden">
               {selectedCapability ? (
                 <>
-                  <div className="shrink-0 p-4 border-b border-white/5 flex items-center justify-between">
+                  <div className="shrink-0 p-4 border-b border-c-border-subtle flex items-center justify-between">
                     <div>
                       <h3 className="font-semibold text-c-text">
                         Instrukcje dla:{' '}
@@ -376,10 +376,10 @@ PODEJŚCIE:
                       value={editingPrompt}
                       onChange={(e) => setEditingPrompt(e.target.value)}
                       placeholder="Wpisz instrukcje dla AI..."
-                      className="w-full h-full bg-c-text text-c-bg border border-white/10 rounded-xl p-4 text-sm font-mono resize-none focus:outline-none focus:border-c-accent/50 focus:ring-1 focus:ring-primary-500/20"
+                      className="w-full h-full bg-c-text text-c-bg border border-c-border-subtle rounded-xl p-4 text-sm font-mono resize-none focus:outline-none focus:border-c-accent/50 focus:ring-1 focus:ring-c-focus"
                     />
                   </div>
-                  <div className="shrink-0 p-4 border-t border-white/5 text-xs text-slate-500 dark:text-slate-400">
+                  <div className="shrink-0 p-4 border-t border-c-border-subtle text-xs text-slate-500 dark:text-slate-400">
                     💡 Tip: Użyj placeholderów jak{' '}
                     <code className="text-primary-400">{'{{project_name}}'}</code>,{' '}
                     <code className="text-primary-400">{'{{user_role}}'}</code>,{' '}
@@ -404,7 +404,7 @@ PODEJŚCIE:
               {providers.map((provider) => (
                 <div
                   key={provider.id}
-                  className="bg-c-surface border border-white/10 rounded-xl p-4"
+                  className="bg-c-surface border border-c-border-subtle rounded-xl p-4"
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
@@ -457,7 +457,7 @@ PODEJŚCIE:
         {activeTab === 'routing' && (
           <div className="p-6 overflow-y-auto h-full">
             <div className="max-w-2xl mx-auto">
-              <div className="bg-c-surface border border-white/10 rounded-xl p-6">
+              <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6">
                 <h3 className="text-lg font-semibold text-c-text mb-4">Model Routing per Tier</h3>
                 <p className="text-sm text-slate-400 dark:text-slate-500 mb-6">
                   Określ, który model LLM ma być używany dla różnych poziomów złożoności zadań.
@@ -500,7 +500,7 @@ PODEJŚCIE:
                           {item.desc}
                         </div>
                       </div>
-                      <select className="bg-c-surface-raised border border-white/10 rounded-lg px-3 py-2 text-sm text-c-text">
+                      <select className="bg-c-surface-raised border border-c-border-subtle rounded-lg px-3 py-2 text-sm text-c-text">
                         <option>{item.default}</option>
                         {providers
                           .filter((p) => p.is_active)
@@ -548,7 +548,7 @@ PODEJŚCIE:
             </div>
 
             {costStats?.byModel && costStats.byModel.length > 0 && (
-              <div className="bg-c-surface border border-white/10 rounded-xl p-6 mb-6">
+              <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6 mb-6">
                 <h3 className="text-lg font-semibold text-c-text mb-4">Koszty per Model</h3>
                 <div className="space-y-3">
                   {costStats.byModel.map((m: any) => (
@@ -577,7 +577,7 @@ PODEJŚCIE:
           <div className="p-6 overflow-y-auto h-full">
             <div className="max-w-2xl mx-auto">
               {/* System Status */}
-              <div className="bg-c-surface border border-white/10 rounded-xl p-6 mb-6">
+              <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6 mb-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-c-text">Status Systemu AI</h3>
                   <span
@@ -595,7 +595,7 @@ PODEJŚCIE:
                   {healthStatus?.checks?.map((check: any, idx: number) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between py-2 border-b border-white/5 last:border-0"
+                      className="flex items-center justify-between py-2 border-b border-c-border-subtle last:border-0"
                     >
                       <span className="text-sm text-slate-300">{check.name}</span>
                       <span
@@ -615,7 +615,7 @@ PODEJŚCIE:
               </div>
 
               {/* AI Capabilities Health */}
-              <div className="bg-c-surface border border-white/10 rounded-xl p-6">
+              <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6">
                 <h3 className="text-lg font-semibold text-c-text mb-4">Test Capabilities</h3>
                 <div className="grid grid-cols-2 gap-4">
                   {[
@@ -652,7 +652,7 @@ const StatCard: React.FC<{ icon: any; label: string; value: string; color: strin
   value,
   color,
 }) => (
-  <div className="bg-c-surface border border-white/10 rounded-xl p-4">
+  <div className="bg-c-surface border border-c-border-subtle rounded-xl p-4">
     <div className="flex items-center gap-3 mb-2">
       <Icon size={18} className={color} />
       <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">

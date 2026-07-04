@@ -238,7 +238,7 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
                   {/* Tooltip */}
                   {count > 0 && (
                     <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-32 bg-white dark:bg-navy-900 text-slate-900 dark:text-white text-[10px] p-2 rounded shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none z-50 transition-opacity">
-                      <div className="font-bold border-b border-slate-200 dark:border-white/10 pb-1 mb-1">
+                      <div className="font-bold border-b border-slate-200 dark:border-c-border-subtle pb-1 mb-1">
                         {q} Analysis
                       </div>
                       <div className="flex justify-between">

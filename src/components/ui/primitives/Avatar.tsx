@@ -105,7 +105,7 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
           rounded-full
           overflow-hidden
           ${showImage ? '' : bgColor}
-          ${ring ? 'ring-2 ring-primary-500 ring-offset-2 ring-offset-white dark:ring-offset-navy-900' : ''}
+          ${ring ? 'ring-2 ring-c-info ring-offset-2 ring-offset-white dark:ring-offset-navy-900' : ''}
           ${className}
         `
           .trim()

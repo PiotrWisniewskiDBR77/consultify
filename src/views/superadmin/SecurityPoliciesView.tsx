@@ -281,7 +281,7 @@ export const SecurityPoliciesView: React.FC = () => {
                 type="checkbox"
                 checked={editedPolicy.passwordRequireUppercase}
                 onChange={(e) => updateField('passwordRequireUppercase', e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
+                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-c-focus"
               />
               <span className="text-sm text-slate-700 dark:text-slate-300">Uppercase</span>
             </label>
@@ -290,7 +290,7 @@ export const SecurityPoliciesView: React.FC = () => {
                 type="checkbox"
                 checked={editedPolicy.passwordRequireLowercase}
                 onChange={(e) => updateField('passwordRequireLowercase', e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
+                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-c-focus"
               />
               <span className="text-sm text-slate-700 dark:text-slate-300">Lowercase</span>
             </label>
@@ -299,7 +299,7 @@ export const SecurityPoliciesView: React.FC = () => {
                 type="checkbox"
                 checked={editedPolicy.passwordRequireNumbers}
                 onChange={(e) => updateField('passwordRequireNumbers', e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
+                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-c-focus"
               />
               <span className="text-sm text-slate-700 dark:text-slate-300">Numbers</span>
             </label>
@@ -308,7 +308,7 @@ export const SecurityPoliciesView: React.FC = () => {
                 type="checkbox"
                 checked={editedPolicy.passwordRequireSpecial}
                 onChange={(e) => updateField('passwordRequireSpecial', e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
+                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-c-focus"
               />
               <span className="text-sm text-slate-700 dark:text-slate-300">Special chars</span>
             </label>
@@ -391,7 +391,7 @@ export const SecurityPoliciesView: React.FC = () => {
                 type="checkbox"
                 checked={editedPolicy.requireSessionBinding}
                 onChange={(e) => updateField('requireSessionBinding', e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
+                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-c-focus"
               />
               <span className="text-sm text-slate-700 dark:text-slate-300">
                 Bind sessions to IP/device (stricter security)
@@ -420,7 +420,7 @@ export const SecurityPoliciesView: React.FC = () => {
                 type="checkbox"
                 checked={editedPolicy.mfaRequired}
                 onChange={(e) => updateField('mfaRequired', e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
+                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-c-focus"
               />
               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Require MFA for all users

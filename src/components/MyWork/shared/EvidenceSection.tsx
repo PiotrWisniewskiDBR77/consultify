@@ -370,7 +370,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                             !readOnly && onAcceptanceChange(true, 'manual', e.target.value || null)
                           }
                           disabled={readOnly}
-                          className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                          className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid"
                         >
                           <option value="">{isPolish ? 'Wybierz...' : 'Select...'}</option>
                           {availableUsers.map((user) => (
@@ -484,7 +484,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                     value={newEvidenceTitle}
                     onChange={(e) => setNewEvidenceTitle(e.target.value)}
                     placeholder={isPolish ? 'Nazwa dowodu...' : 'Evidence name...'}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-400"
+                    className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-c-focus-solid"
                     autoFocus
                   />
                 </div>

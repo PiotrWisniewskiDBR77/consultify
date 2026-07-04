@@ -217,7 +217,7 @@ export const PolicyGovernanceTab: React.FC = () => {
                     disabled={isDisabled}
                     className={`relative p-4 rounded-xl text-left transition-all ${
                       isSelected
-                        ? `bg-gradient-to-br ${level.bgColor} border-2 border-white/30`
+                        ? `bg-gradient-to-br ${level.bgColor} border-2 border-c-border`
                         : 'bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600'
                     } ${isDisabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                     whileHover={!isDisabled ? { scale: 1.02 } : {}}
@@ -274,7 +274,7 @@ export const PolicyGovernanceTab: React.FC = () => {
                     type="checkbox"
                     checked={settings.activeRoles.includes(role.id as any)}
                     onChange={() => toggleRole(role.id)}
-                    className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-primary-600 focus:ring-primary-500 bg-white dark:bg-slate-700"
+                    className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-primary-600 focus:ring-c-focus bg-white dark:bg-slate-700"
                   />
                   <div>
                     <span className="font-medium text-navy-900 dark:text-white">{role.title}</span>
@@ -291,7 +291,7 @@ export const PolicyGovernanceTab: React.FC = () => {
               <select
                 value={settings.defaultRole}
                 onChange={(e) => updateSetting('defaultRole', e.target.value as any)}
-                className="w-full bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-navy-900 dark:text-white focus:border-primary-500 outline-none"
+                className="w-full bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-navy-900 dark:text-white focus:border-c-focus-solid outline-none"
               >
                 {AI_ROLES.filter((r) => settings.activeRoles.includes(r.id as any)).map((r) => (
                   <option key={r.id} value={r.id}>

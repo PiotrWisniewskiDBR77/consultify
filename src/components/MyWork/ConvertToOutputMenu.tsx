@@ -1,7 +1,7 @@
 /**
  * ConvertToOutputMenu (V3-C02)
  * Dropdown menu for "Convert to..." output actions (Initiative, Report, Presentation).
- * Opens ConvertToDialog on click. DBR77: rounded-lg, bg-navy-800, border-white/10.
+ * Opens ConvertToDialog on click. DBR77: rounded-lg, bg-navy-800, border-c-border-subtle.
  */
 
 import {
@@ -190,7 +190,7 @@ export const ConvertToOutputMenu: React.FC<ConvertToOutputMenuProps> = ({
           <>
             <button
               onClick={() => setOpen((v) => !v)}
-              className={`flex items-center gap-1.5 rounded-lg text-xs font-medium bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-colors ${
+              className={`flex items-center gap-1.5 rounded-lg text-xs font-medium bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-c-border-subtle text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-colors ${
                 compact ? 'p-1' : 'px-2.5 py-1.5'
               }`}
               aria-expanded={open}
@@ -218,7 +218,7 @@ export const ConvertToOutputMenu: React.FC<ConvertToOutputMenuProps> = ({
                 />
                 {/* V5-IDEA-46: Dark/light parity */}
                 <div
-                  className="absolute top-full left-0 mt-1 z-overlay min-w-[220px] rounded-lg bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-white/10 shadow-xl py-1"
+                  className="absolute top-full left-0 mt-1 z-overlay min-w-[220px] rounded-lg bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-c-border-subtle shadow-xl py-1"
                   role="menu"
                 >
                   {TARGET_ITEMS.map(({ type, icon: Icon, labelKey }) => (
@@ -245,7 +245,7 @@ export const ConvertToOutputMenu: React.FC<ConvertToOutputMenuProps> = ({
             )}
           </>
         ) : (
-          <div className="flex items-center gap-1 rounded-lg bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-white/10 p-1">
+          <div className="flex items-center gap-1 rounded-lg bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-c-border-subtle p-1">
             {TARGET_ITEMS.map(({ type, icon: Icon, labelKey }) => (
               <button
                 key={type}

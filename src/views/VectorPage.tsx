@@ -198,7 +198,7 @@ export const VectorPage: React.FC = () => {
               </a>
               <button
                 onClick={handleDemoClick}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold border border-slate-200 dark:border-white/12 text-slate-700 dark:text-white/70 hover:bg-slate-50 dark:hover:bg-white/5 transition-all"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold border border-slate-200 dark:border-c-border-subtle text-slate-700 dark:text-white/70 hover:bg-slate-50 dark:hover:bg-white/5 transition-all"
               >
                 {t('vector.hero.demoCta', 'Book a Demo')}
                 <ArrowRight size={15} />
@@ -467,7 +467,7 @@ export const VectorPage: React.FC = () => {
                 transition={{ duration: 0.4, delay: idx * 0.1 }}
                 className={`relative rounded-2xl p-6 border ${
                   stage.status === 'current'
-                    ? 'border-primary-400 dark:border-primary-500/50 bg-primary-50 dark:bg-primary-900/20 ring-1 ring-primary-400/30'
+                    ? 'border-primary-400 dark:border-primary-500/50 bg-primary-50 dark:bg-primary-900/20 ring-1 ring-c-info/30'
                     : 'border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02]'
                 }`}
               >
@@ -524,7 +524,7 @@ export const VectorPage: React.FC = () => {
                   transition={{ duration: 0.4, delay: idx * 0.08 }}
                   className={`flex-1 rounded-2xl p-6 text-center border ${
                     isVector
-                      ? 'border-primary-500/50 bg-primary-600/15 ring-1 ring-primary-500/30'
+                      ? 'border-primary-500/50 bg-primary-600/15 ring-1 ring-c-info/30'
                       : 'border-white/[0.08] bg-white/[0.03]'
                   }`}
                 >
@@ -587,7 +587,7 @@ export const VectorPage: React.FC = () => {
               </a>
               <button
                 onClick={handleDemoClick}
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-sm font-semibold border border-slate-200 dark:border-white/12 text-slate-700 dark:text-white/70 hover:bg-slate-50 dark:hover:bg-white/5 transition-all"
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-sm font-semibold border border-slate-200 dark:border-c-border-subtle text-slate-700 dark:text-white/70 hover:bg-slate-50 dark:hover:bg-white/5 transition-all"
               >
                 <Zap size={16} />
                 {t('vector.cta.demo', 'Book a Live Demo')}

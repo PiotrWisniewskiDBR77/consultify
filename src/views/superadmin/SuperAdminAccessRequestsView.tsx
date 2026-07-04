@@ -219,7 +219,7 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               statusFilter === status
                 ? 'bg-c-text text-c-bg'
-                : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5'
+                : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-c-border-subtle hover:bg-slate-50 dark:hover:bg-white/5'
             }`}
           >
             {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -242,7 +242,7 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
       {!loadError && (
         <div className="space-y-3">
           {visibleRequests.length === 0 ? (
-            <div className="text-center py-12 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg">
+            <div className="text-center py-12 bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-lg">
               <UserPlus className="mx-auto text-slate-300 dark:text-slate-600 mb-3" size={48} />
               <p className="text-slate-500 dark:text-slate-400">No {statusFilter} requests</p>
             </div>
@@ -250,7 +250,7 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
             visibleRequests.map((request) => (
               <div
                 key={request.id}
-                className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-5"
+                className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-lg p-5"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -342,7 +342,7 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
       {/* Approval Dialog */}
       {showApprovalDialog && selectedRequest && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-navy-900 rounded-lg max-w-md w-full p-6 border border-slate-200 dark:border-white/10">
+          <div className="bg-white dark:bg-navy-900 rounded-lg max-w-md w-full p-6 border border-slate-200 dark:border-c-border-subtle">
             <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4">
               Approve Access Request
             </h3>
@@ -362,7 +362,7 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
                 <select
                   value={approvalRole}
                   onChange={(e) => setApprovalRole(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg text-navy-900 dark:text-white"
                 >
                   <option value="USER">User</option>
                   <option value="ADMIN">Admin</option>
@@ -377,7 +377,7 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
                   value={approvalPassword}
                   onChange={(e) => setApprovalPassword(e.target.value)}
                   placeholder="Set account password"
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg text-navy-900 dark:text-white"
                 />
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                   Leave empty when approving an organization-only access request.
@@ -410,7 +410,7 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
       {/* Reject Dialog */}
       {showRejectDialog && selectedRequest && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-navy-900 rounded-lg max-w-md w-full p-6 border border-slate-200 dark:border-white/10">
+          <div className="bg-white dark:bg-navy-900 rounded-lg max-w-md w-full p-6 border border-slate-200 dark:border-c-border-subtle">
             <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4">
               Reject Access Request
             </h3>
@@ -430,7 +430,7 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
                 onChange={(e) => setRejectionReason(e.target.value)}
                 placeholder="Provide a reason for rejection..."
                 rows={3}
-                className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white resize-none"
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg text-navy-900 dark:text-white resize-none"
               />
             </div>
 

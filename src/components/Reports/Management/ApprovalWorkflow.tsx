@@ -122,7 +122,7 @@ const ApprovalStep: React.FC<{
           className={`
                     w-10 h-10 rounded-full flex items-center justify-center
                     ${statusColor}
-                    ${isActive ? 'ring-2 ring-offset-2 ring-slate-500 dark:ring-white/40' : ''}
+                    ${isActive ? 'ring-2 ring-offset-2 ring-slate-500 dark:ring-c-border' : ''}
                 `}
         >
           {approval.status === 'APPROVED' && <CheckCircle2 size={20} />}
@@ -393,7 +393,7 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
                       ? 'Add an optional comment...'
                       : 'Please provide a reason for rejection...'
                   }
-                  className="w-full px-3 py-2 border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-c-focus"
                   rows={4}
                 />
               </div>
@@ -404,7 +404,7 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
                     type="checkbox"
                     checked={returnToDraft}
                     onChange={(e) => setReturnToDraft(e.target.checked)}
-                    className="w-4 h-4 text-primary-500 rounded focus:ring-primary-500"
+                    className="w-4 h-4 text-primary-500 rounded focus:ring-c-focus"
                   />
                   <span className="text-sm text-slate-600 dark:text-slate-300">
                     Return report to DRAFT status for revisions

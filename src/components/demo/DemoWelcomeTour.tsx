@@ -229,7 +229,7 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
                       'Choose the perspective and scenario that best matches the workflow you want to understand first.'
                     )}
                   </p>
-                  <div className="mt-3 inline-flex items-center rounded-full border border-slate-200 dark:border-white/10 px-3 py-1 text-xs text-slate-500 dark:text-slate-400">
+                  <div className="mt-3 inline-flex items-center rounded-full border border-slate-200 dark:border-c-border-subtle px-3 py-1 text-xs text-slate-500 dark:text-slate-400">
                     {organizationName} • {sourceLabel}
                   </div>
                 </div>
@@ -269,7 +269,7 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
                           className={`rounded-xl border px-4 py-3 text-left transition-colors ${
                             selectedScenario === scenario.id
                               ? 'border-slate-400 dark:border-slate-500 bg-slate-100 dark:bg-slate-700/40'
-                              : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                              : 'border-slate-200 dark:border-c-border-subtle hover:border-slate-300 dark:hover:border-c-border'
                           }`}
                         >
                           <div className="flex items-center justify-between gap-3">

@@ -94,7 +94,7 @@ export const BackupPanel: React.FC = () => {
           backups.map((backup) => (
             <div
               key={backup.id}
-              className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10"
+              className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-c-border-subtle"
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">

@@ -1,7 +1,7 @@
 /**
  * DynamicTabBar (V3-A02)
  * Tab bar below module hub topbar: Home tab + document tabs + overflow.
- * DBR77: h-10, bg-navy-900, border-b border-white/5
+ * DBR77: h-10, bg-navy-900, border-b border-c-border-subtle
  */
 
 import { Home, X } from 'lucide-react';
@@ -113,7 +113,7 @@ export const DynamicTabBar: React.FC<DynamicTabBarProps> = ({
   return (
     <>
       {confirmDialog}
-      <div className="h-10 flex items-center gap-1 px-3 bg-navy-900 border-b border-white/5 shrink-0">
+      <div className="h-10 flex items-center gap-1 px-3 bg-navy-900 border-b border-c-border-subtle shrink-0">
         {/* Home tab */}
         <button
           type="button"

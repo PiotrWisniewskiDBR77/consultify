@@ -135,7 +135,7 @@ export const IntegrationsPanel: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-slate-200 dark:border-white/10">
+      <div className="flex gap-2 border-b border-slate-200 dark:border-c-border-subtle">
         <button
           onClick={() => setActiveTab('integrations')}
           className={`px-4 py-2 font-medium transition-colors ${
@@ -184,7 +184,7 @@ export const IntegrationsPanel: React.FC = () => {
             integrations.map((integration) => (
               <div
                 key={integration.id}
-                className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-navy-900/20 transition-colors"
+                className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-c-border-subtle hover:bg-slate-50 dark:hover:bg-navy-900/20 transition-colors"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
@@ -250,7 +250,7 @@ export const IntegrationsPanel: React.FC = () => {
             webhooks.map((webhook) => (
               <div
                 key={webhook.id}
-                className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-navy-900/20 transition-colors"
+                className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-c-border-subtle hover:bg-slate-50 dark:hover:bg-navy-900/20 transition-colors"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1">

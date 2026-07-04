@@ -28,7 +28,7 @@ export const SummaryCardNode: React.FC<NodeProps> = ({ data, selected }) => {
     <div
       className={`relative w-[220px] p-3 rounded-2xl border-2 transition-all ${
         selected
-          ? 'border-primary-400 ring-2 ring-primary-400/30 shadow-lg'
+          ? 'border-primary-400 ring-2 ring-c-info/30 shadow-lg'
           : 'border-primary-200 dark:border-primary-800/40 shadow-md'
       } bg-gradient-to-br from-primary-50 to-crimson-50 dark:from-primary-900/20 dark:to-crimson-900/20`}
     >

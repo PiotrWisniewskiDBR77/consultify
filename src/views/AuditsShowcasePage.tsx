@@ -123,14 +123,14 @@ const AuditSection: React.FC<AuditSectionProps> = ({ audit, index, onStartAssess
               <div className="absolute inset-0 flex items-center justify-center">
                 <motion.div
                   whileHover={{ scale: 1.1 }}
-                  className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full border-2 border-white/40 flex items-center justify-center cursor-pointer shadow-2xl transition-all hover:bg-white/30"
+                  className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full border-2 border-c-border flex items-center justify-center cursor-pointer shadow-2xl transition-all hover:bg-white/30"
                 >
                   <Play size={32} className="text-white fill-white ml-1" />
                 </motion.div>
               </div>
 
               {/* Label Overlay */}
-              <div className="absolute bottom-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-black/40 backdrop-blur-sm rounded-lg border border-white/10">
+              <div className="absolute bottom-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-black/40 backdrop-blur-sm rounded-lg border border-c-border-subtle">
                 <Globe size={14} className="text-white" />
                 <span className="text-[10px] font-bold text-white uppercase tracking-widest">
                   {t('showcase.common.methodologyIntro')}

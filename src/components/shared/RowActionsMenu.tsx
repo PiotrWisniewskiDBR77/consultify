@@ -183,10 +183,11 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
   const MenuIcon = iconVariant === 'vertical' ? MoreVertical : MoreHorizontal;
 
   const variantStyles: Record<string, string> = {
-    default: 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700',
+    default: 'text-c-text dark:text-c-text hover:bg-slate-100 dark:hover:bg-white/[0.06]',
     danger: 'text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20',
+    // primary (non-destructive highlight) = neutral/info, NOT crimson.
     primary:
-      'text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20',
+      'text-c-info dark:text-c-info hover:bg-slate-100 dark:hover:bg-white/[0.06]',
   };
 
   return (
@@ -194,7 +195,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
       <button
         ref={buttonRef}
         onClick={handleToggle}
-        className={`${buttonHit} rounded-md text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors`}
+        className={`${buttonHit} rounded-md text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors`}
         title="Actions"
         aria-label="Row actions"
         aria-expanded={isOpen}
@@ -215,7 +216,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
             />
             <div
               ref={panelRef}
-              className="fixed z-context-menu min-w-[160px] rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 shadow-lg py-1 animate-in fade-in-0 zoom-in-95"
+              className="fixed z-context-menu min-w-[160px] rounded-lg border border-slate-200 dark:border-c-border bg-white dark:bg-c-surface-raised shadow-2xl py-1 animate-in fade-in-0 zoom-in-95"
               role="menu"
               style={
                 panelPos
@@ -236,7 +237,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
                 return (
                   <React.Fragment key={section.id}>
                     {sectionIndex > 0 && (
-                      <div className="my-1 border-t border-slate-200 dark:border-navy-700" />
+                      <div className="my-1 border-t border-slate-200 dark:border-c-border-subtle" />
                     )}
                     {section.label ? (
                       <div className="px-3 pb-1 pt-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
@@ -250,7 +251,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
                       return (
                         <React.Fragment key={action.id}>
                           {action.divider && (
-                            <div className="my-1 border-t border-slate-200 dark:border-navy-700" />
+                            <div className="my-1 border-t border-slate-200 dark:border-c-border-subtle" />
                           )}
                           <button
                             onClick={(e) => {

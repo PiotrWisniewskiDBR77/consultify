@@ -378,7 +378,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
               {currentDocs.map((doc) => (
                 <div
                   key={doc.id}
-                  className="group p-3 rounded-xl border border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/10 hover:shadow-sm transition-all"
+                  className="group p-3 rounded-xl border border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-c-border-subtle hover:shadow-sm transition-all"
                 >
                   <div className="flex items-start gap-2 mb-2">
                     {getFileIcon(getDocumentFileType(doc))}

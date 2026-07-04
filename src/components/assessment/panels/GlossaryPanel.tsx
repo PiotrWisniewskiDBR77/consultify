@@ -62,10 +62,10 @@ export const GlossaryPanel: React.FC<GlossaryPanelProps> = ({ isOpen, onClose })
         role="dialog"
         aria-label={t('assessment.glossary.title', 'Consulting Glossary')}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-2xl max-h-[80vh] rounded-2xl border border-slate-200 dark:border-white/20 bg-white/98 dark:bg-navy-950/98 backdrop-blur-xl shadow-[0_25px_60px_rgba(0,0,0,0.25)] flex flex-col overflow-hidden"
+        className="w-full max-w-2xl max-h-[80vh] rounded-2xl border border-slate-200 dark:border-c-border bg-white/98 dark:bg-navy-950/98 backdrop-blur-xl shadow-[0_25px_60px_rgba(0,0,0,0.25)] flex flex-col overflow-hidden"
       >
         {/* Header */}
-        <div className="p-4 border-b border-slate-200 dark:border-white/10 flex items-start justify-between gap-3">
+        <div className="p-4 border-b border-slate-200 dark:border-c-border-subtle flex items-start justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <div className="h-9 w-9 rounded-xl bg-primary-500/15 text-primary-600 dark:text-primary-300 flex items-center justify-center">
               <BookOpen className="w-4.5 h-4.5" />
@@ -92,7 +92,7 @@ export const GlossaryPanel: React.FC<GlossaryPanelProps> = ({ isOpen, onClose })
         </div>
 
         {/* Search + category filter */}
-        <div className="p-3 border-b border-slate-200 dark:border-white/10 space-y-2">
+        <div className="p-3 border-b border-slate-200 dark:border-c-border-subtle space-y-2">
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
@@ -111,7 +111,7 @@ export const GlossaryPanel: React.FC<GlossaryPanelProps> = ({ isOpen, onClose })
               className={`text-[11px] px-2.5 py-1 rounded-full border font-medium transition-colors ${
                 activeCategory === 'all'
                   ? 'bg-c-text text-c-bg border-c-text'
-                  : 'bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10'
+                  : 'bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-c-border-subtle hover:bg-slate-100 dark:hover:bg-white/10'
               }`}
             >
               {isPl ? 'Wszystkie' : 'All'}
@@ -124,7 +124,7 @@ export const GlossaryPanel: React.FC<GlossaryPanelProps> = ({ isOpen, onClose })
                 className={`text-[11px] px-2.5 py-1 rounded-full border font-medium transition-colors ${
                   activeCategory === cat
                     ? 'bg-c-text text-c-bg border-c-text'
-                    : 'bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10'
+                    : 'bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-c-border-subtle hover:bg-slate-100 dark:hover:bg-white/10'
                 }`}
               >
                 {isPl ? CATEGORY_LABELS[cat].pl : CATEGORY_LABELS[cat].en}
@@ -143,7 +143,7 @@ export const GlossaryPanel: React.FC<GlossaryPanelProps> = ({ isOpen, onClose })
           {filtered.map((term) => (
             <div
               key={term.id}
-              className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-3.5"
+              className="rounded-xl border border-slate-200 dark:border-c-border-subtle bg-slate-50 dark:bg-white/5 p-3.5"
             >
               <div className="flex items-center justify-between gap-2 mb-1">
                 <div className="text-sm font-bold text-slate-900 dark:text-white">{term.term}</div>

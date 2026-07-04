@@ -50,7 +50,7 @@ export const AnalyticsPanel: React.FC = () => {
 
       {metrics && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
+          <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-c-border-subtle">
             <div className="flex items-center gap-3 mb-2">
               <Activity size={20} className="text-blue-400" />
               <span className="text-sm text-slate-400 dark:text-slate-500">API Requests</span>
@@ -61,7 +61,7 @@ export const AnalyticsPanel: React.FC = () => {
             </div>
           </div>
 
-          <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
+          <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-c-border-subtle">
             <div className="flex items-center gap-3 mb-2">
               <BarChart3 size={20} className="text-green-400" />
               <span className="text-sm text-slate-400 dark:text-slate-500">AI Requests</span>
@@ -72,7 +72,7 @@ export const AnalyticsPanel: React.FC = () => {
             </div>
           </div>
 
-          <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
+          <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-c-border-subtle">
             <div className="flex items-center gap-3 mb-2">
               <TrendingUp size={20} className="text-primary-400" />
               <span className="text-sm text-slate-400 dark:text-slate-500">Database Queries</span>

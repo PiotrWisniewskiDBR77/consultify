@@ -140,13 +140,13 @@ export const FeatureFlagsPanel: React.FC = () => {
             placeholder="Search flags..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-c-text placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full pl-10 pr-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-c-border-subtle rounded-lg text-c-text placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-c-focus"
           />
         </div>
         <select
           value={filterEnvironment}
           onChange={(e) => setFilterEnvironment(e.target.value)}
-          className="px-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-c-text focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="px-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-c-border-subtle rounded-lg text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
         >
           <option value="all">All Environments</option>
           <option value="development">Development</option>
@@ -166,7 +166,7 @@ export const FeatureFlagsPanel: React.FC = () => {
           filteredFlags.map((flag) => (
             <div
               key={flag.id}
-              className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10 hover:border-white/20 transition-colors"
+              className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-c-border-subtle hover:border-c-border transition-colors"
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">
@@ -300,7 +300,7 @@ const FeatureFlagModal: React.FC<{
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
-      <div className="bg-c-surface rounded-xl border border-white/10 p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-c-text">
             {flag ? 'Edit Feature Flag' : 'Create Feature Flag'}
@@ -321,7 +321,7 @@ const FeatureFlagModal: React.FC<{
               required
               value={formData.flag_key}
               onChange={(e) => setFormData({ ...formData, flag_key: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-c-text focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-c-border-subtle rounded-lg text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
               placeholder="new_feature"
             />
           </div>
@@ -333,7 +333,7 @@ const FeatureFlagModal: React.FC<{
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-c-text focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-c-border-subtle rounded-lg text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
             />
           </div>
 
@@ -342,7 +342,7 @@ const FeatureFlagModal: React.FC<{
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-c-text focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-c-border-subtle rounded-lg text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
               rows={3}
             />
           </div>
@@ -353,7 +353,7 @@ const FeatureFlagModal: React.FC<{
               <select
                 value={formData.flag_type}
                 onChange={(e) => setFormData({ ...formData, flag_type: e.target.value as any })}
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-c-text focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-c-border-subtle rounded-lg text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
               >
                 <option value="boolean">Boolean</option>
                 <option value="percentage">Percentage Rollout</option>
@@ -367,7 +367,7 @@ const FeatureFlagModal: React.FC<{
               <select
                 value={formData.environment}
                 onChange={(e) => setFormData({ ...formData, environment: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-c-text focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-c-border-subtle rounded-lg text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
               >
                 <option value="development">Development</option>
                 <option value="staging">Staging</option>
@@ -389,7 +389,7 @@ const FeatureFlagModal: React.FC<{
                 onChange={(e) =>
                   setFormData({ ...formData, rollout_percentage: parseInt(e.target.value) })
                 }
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-c-text focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-c-border-subtle rounded-lg text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
               />
             </div>
           )}
@@ -400,7 +400,7 @@ const FeatureFlagModal: React.FC<{
               id="enabled"
               checked={formData.enabled}
               onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
-              className="w-4 h-4 text-primary-600 bg-slate-50/30 dark:bg-navy-950/20 border-white/10 rounded focus:ring-primary-500"
+              className="w-4 h-4 text-primary-600 bg-slate-50/30 dark:bg-navy-950/20 border-c-border-subtle rounded focus:ring-c-focus"
             />
             <label htmlFor="enabled" className="text-sm text-slate-300">
               Enabled
@@ -457,7 +457,7 @@ const FlagHistoryModal: React.FC<{
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
-      <div className="bg-c-surface rounded-xl border border-white/10 p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-c-text">Feature Flag History</h3>
           <button
@@ -482,7 +482,7 @@ const FlagHistoryModal: React.FC<{
               history.map((item) => (
                 <div
                   key={item.id}
-                  className="p-3 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg border border-white/10"
+                  className="p-3 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg border border-c-border-subtle"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-c-text">{item.change_type}</span>

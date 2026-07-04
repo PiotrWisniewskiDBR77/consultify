@@ -328,7 +328,7 @@ export const AICoreRuntimePanel: React.FC = () => {
       </div>
 
       {error && (
-        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 p-4 shadow-sm">
+        <div className="rounded-xl border border-slate-200 dark:border-c-border-subtle bg-white dark:bg-navy-900 p-4 shadow-sm">
           <DegradedState title="AI core runtime unavailable" description={error} />
         </div>
       )}
@@ -341,7 +341,7 @@ export const AICoreRuntimePanel: React.FC = () => {
 
       {!error && environment && (
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] gap-4">
-          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 p-4 shadow-sm">
+          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-xl border border-slate-200 dark:border-c-border-subtle bg-white dark:bg-navy-900 p-4 shadow-sm">
             <div>
               <dt className="text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
                 {t('superadmin.aiCoreRuntime.fields.healthy', { defaultValue: 'Healthy' })}
@@ -378,7 +378,7 @@ export const AICoreRuntimePanel: React.FC = () => {
             </div>
           </dl>
 
-          <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 p-4 shadow-sm">
+          <div className="rounded-xl border border-slate-200 dark:border-c-border-subtle bg-white dark:bg-navy-900 p-4 shadow-sm">
             <div className="text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
               {t('superadmin.aiCoreRuntime.layerSummary', { defaultValue: 'Layer status' })}
             </div>
@@ -387,7 +387,7 @@ export const AICoreRuntimePanel: React.FC = () => {
                 layerEntries.map(([layer, status]) => (
                   <div
                     key={layer}
-                    className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-white/10 px-3 py-2 text-sm"
+                    className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-c-border-subtle px-3 py-2 text-sm"
                   >
                     <span className="text-slate-700 dark:text-slate-200">{layer}</span>
                     <span className="font-medium text-slate-900 dark:text-white">{status}</span>
@@ -408,7 +408,7 @@ export const AICoreRuntimePanel: React.FC = () => {
       {!error && (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-4">
-            <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 p-4 shadow-sm">
+            <div className="rounded-xl border border-slate-200 dark:border-c-border-subtle bg-white dark:bg-navy-900 p-4 shadow-sm">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -439,7 +439,7 @@ export const AICoreRuntimePanel: React.FC = () => {
                           className={`w-full rounded-lg border px-3 py-2 text-left transition ${
                             isSelected
                               ? 'border-primary-400 bg-primary-50/70 dark:border-primary-500/60 dark:bg-primary-950/30'
-                              : 'border-slate-200 hover:border-primary-300 dark:border-white/10 dark:hover:border-primary-500/40'
+                              : 'border-slate-200 hover:border-primary-300 dark:border-c-border-subtle dark:hover:border-primary-500/40'
                           }`}
                         >
                           <div className="font-medium text-slate-900 dark:text-white">
@@ -463,7 +463,7 @@ export const AICoreRuntimePanel: React.FC = () => {
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 p-4 shadow-sm">
+            <div className="rounded-xl border border-slate-200 dark:border-c-border-subtle bg-white dark:bg-navy-900 p-4 shadow-sm">
               <div>
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                   {t('superadmin.aiCoreRuntime.policyTitle', {
@@ -591,7 +591,7 @@ export const AICoreRuntimePanel: React.FC = () => {
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 p-4 shadow-sm">
+          <div className="rounded-xl border border-slate-200 dark:border-c-border-subtle bg-white dark:bg-navy-900 p-4 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -614,7 +614,7 @@ export const AICoreRuntimePanel: React.FC = () => {
                   placeholder={t('superadmin.aiCoreRuntime.snapshotPlaceholder', {
                     defaultValue: 'Enter snapshot id',
                   })}
-                  className="h-9 min-w-[220px] rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-primary-400 dark:border-white/10 dark:bg-navy-950 dark:text-white"
+                  className="h-9 min-w-[220px] rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-c-focus-solid dark:border-c-border-subtle dark:bg-navy-950 dark:text-white"
                   aria-label={t('superadmin.aiCoreRuntime.snapshotLabel', {
                     defaultValue: 'Snapshot id',
                   })}
@@ -655,7 +655,7 @@ export const AICoreRuntimePanel: React.FC = () => {
 
             {(auditTrail || provenanceLedger) && (
               <div className="mt-4 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-4">
-                <div className="rounded-lg border border-slate-200 dark:border-white/10 px-4 py-3">
+                <div className="rounded-lg border border-slate-200 dark:border-c-border-subtle px-4 py-3">
                   <div className="text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
                     {t('superadmin.aiCoreRuntime.auditTrailTitle', { defaultValue: 'Audit trail' })}
                   </div>
@@ -664,7 +664,7 @@ export const AICoreRuntimePanel: React.FC = () => {
                       (auditTrail?.supportTraces ?? []).map((trace, index) => (
                         <div
                           key={trace.id || `${trace.toolName || 'trace'}-${index}`}
-                          className="rounded-lg border border-slate-200 dark:border-white/10 px-3 py-2"
+                          className="rounded-lg border border-slate-200 dark:border-c-border-subtle px-3 py-2"
                         >
                           <div className="text-sm font-medium text-slate-900 dark:text-white">
                             {trace.toolName ||
@@ -687,7 +687,7 @@ export const AICoreRuntimePanel: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="rounded-lg border border-slate-200 dark:border-white/10 px-4 py-3">
+                <div className="rounded-lg border border-slate-200 dark:border-c-border-subtle px-4 py-3">
                   <div className="text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
                     {t('superadmin.aiCoreRuntime.provenanceTitle', {
                       defaultValue: 'Provenance ledger',
@@ -698,7 +698,7 @@ export const AICoreRuntimePanel: React.FC = () => {
                       (provenanceLedger?.lineage ?? []).map((entry, index) => (
                         <div
                           key={entry.id || `${entry.label || 'lineage'}-${index}`}
-                          className="rounded-lg border border-slate-200 dark:border-white/10 px-3 py-2"
+                          className="rounded-lg border border-slate-200 dark:border-c-border-subtle px-3 py-2"
                         >
                           <div className="text-sm font-medium text-slate-900 dark:text-white">
                             {entry.label ||

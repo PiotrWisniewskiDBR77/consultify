@@ -140,7 +140,7 @@ export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
                 ? 'Co chcesz osiągnąć tą analizą?'
                 : 'What do you want to achieve with this analysis?'
             }
-            className="w-full h-24 px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-colors resize-none"
+            className="w-full h-24 px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid transition-colors resize-none"
             disabled={locked}
           />
         </div>
@@ -159,7 +159,7 @@ export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
                 ? 'Jaki zakres obejmuje analiza?'
                 : 'What is the scope of this analysis?'
             }
-            className="w-full h-20 px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-colors resize-none"
+            className="w-full h-20 px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid transition-colors resize-none"
             disabled={locked}
           />
         </div>
@@ -179,7 +179,7 @@ export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
                 ? 'Kto jest odbiorcą wyników?'
                 : 'Who is the target audience for the results?'
             }
-            className="w-full h-9 px-3 text-sm rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-colors"
+            className="w-full h-9 px-3 text-sm rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid transition-colors"
             disabled={locked}
           />
         </div>
@@ -221,7 +221,7 @@ export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
                   onSessionUpdate({ inputs: { ...sessionData.inputs, [field.id]: e.target.value } })
                 }
                 placeholder={field.placeholder?.[lang]}
-                className="w-full h-24 px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-colors resize-none"
+                className="w-full h-24 px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid transition-colors resize-none"
                 disabled={locked}
               />
             ) : (
@@ -232,7 +232,7 @@ export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
                   onSessionUpdate({ inputs: { ...sessionData.inputs, [field.id]: e.target.value } })
                 }
                 placeholder={field.placeholder?.[lang]}
-                className="w-full h-9 px-3 text-sm rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-colors"
+                className="w-full h-9 px-3 text-sm rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid transition-colors"
                 disabled={locked}
               />
             )}

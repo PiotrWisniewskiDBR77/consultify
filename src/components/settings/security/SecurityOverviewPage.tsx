@@ -506,7 +506,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
                           ? 'bg-danger-500/5 border-danger-500/15'
                           : rec.priority === 'medium'
                             ? 'bg-amber-500/5 border-amber-500/15'
-                            : 'bg-c-surface/[0.02] border-white/5'
+                            : 'bg-c-surface/[0.02] border-c-border-subtle'
                       )}
                     >
                       <RecIcon

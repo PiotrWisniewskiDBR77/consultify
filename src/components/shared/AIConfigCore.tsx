@@ -102,7 +102,7 @@ export const ModelPreferenceList: React.FC<{
             type="checkbox"
             checked={selectedModelIds.includes(model.id)}
             onChange={(e) => onToggleModel(model.id, e.target.checked)}
-            className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-navy-900 text-primary-600 dark:text-primary-500 focus:ring-primary-500/50"
+            className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-navy-900 text-primary-600 dark:text-primary-500 focus:ring-c-focus"
           />
           <div className="flex-1">
             <div className="text-sm text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white">
@@ -162,7 +162,7 @@ export const OrgAIPolicy: React.FC<{
   if (!orgConfig) return null;
 
   return (
-    <div className="bg-navy-900 border border-white/5 rounded-xl p-6">
+    <div className="bg-navy-900 border border-c-border-subtle rounded-xl p-6">
       <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
         <Shield className="text-primary-500" size={20} />
         Organization AI Policy
@@ -175,7 +175,7 @@ export const OrgAIPolicy: React.FC<{
           <select
             value={orgConfig.activeProviderId || ''}
             onChange={(e) => onConfigChange({ activeProviderId: e.target.value || null })}
-            className="w-full bg-navy-950 border border-white/10 rounded-lg px-4 py-2 text-white"
+            className="w-full bg-navy-950 border border-c-border-subtle rounded-lg px-4 py-2 text-white"
           >
             <option value="">Let Users Choose</option>
             {orgConfig.availableProviders.map((p) => (
@@ -399,7 +399,7 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
                   value={customKey}
                   onChange={(e) => setCustomKey(e.target.value)}
                   placeholder="sk-..."
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-800 dark:text-white focus:border-primary-500 outline-none transition-all text-sm font-mono"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-800 dark:text-white focus:border-c-focus-solid outline-none transition-all text-sm font-mono"
                 />
                 <div className="absolute right-3 top-2.5 text-slate-500 dark:text-slate-400">
                   <Lock size={16} />

@@ -250,7 +250,7 @@ export const Checkbox: React.FC<CheckboxProps> = ({
         <div
           className={`
                     w-4 h-4 rounded border transition-colors
-                    border-white/20 bg-slate-800/50
+                    border-c-border bg-slate-800/50
                     peer-checked:bg-blue-600 peer-checked:border-blue-600
                     peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500/50
                 `}

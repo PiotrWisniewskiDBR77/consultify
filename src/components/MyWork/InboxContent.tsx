@@ -2433,7 +2433,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           ${isPreviewed ? PREVIEW_SELECTED_ROW_CLASS : ''}
           ${isFocused && !isPreviewed ? FOCUSED_ROW_CLASS : ''}
           transition-colors duration-150
-          hover:bg-slate-50/70 dark:hover:bg-white/[0.03]
+          hover:bg-slate-50/70 dark:hover:bg-c-surface-raised/50
         `}
         onClick={() => preview(item)}
         onDoubleClick={() => open(item)}

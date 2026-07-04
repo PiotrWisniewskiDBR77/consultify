@@ -90,7 +90,7 @@ export const AIOSHub: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-navy-950 p-6">
       <div className="mx-auto max-w-7xl space-y-6">
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-navy-900">
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-c-border-subtle dark:bg-navy-900">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-sm font-semibold text-primary-700 dark:bg-primary-500/10 dark:text-primary-200">
@@ -128,7 +128,7 @@ export const AIOSHub: React.FC = () => {
               <Link
                 key={module.title}
                 to={module.href}
-                className="group flex min-h-[260px] flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-white/10 dark:bg-navy-900 dark:hover:border-white/20"
+                className="group flex min-h-[260px] flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-c-border-subtle dark:bg-navy-900 dark:hover:border-c-border"
               >
                 <div className="space-y-4">
                   <div className="flex items-start justify-between gap-4">

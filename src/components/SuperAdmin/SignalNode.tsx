@@ -40,7 +40,7 @@ export const SignalNode: React.FC<SignalNodeProps> = ({
                 ${
                   active
                     ? `border-${colorClass.split('-')[1]}-500/30 bg-slate-50 dark:bg-white/5`
-                    : 'border-transparent hover:bg-slate-50 dark:hover:bg-white/5 hover:border-slate-100 dark:hover:border-white/5'
+                    : 'border-transparent hover:bg-slate-50 dark:hover:bg-white/5 hover:border-slate-100 dark:hover:border-c-border-subtle'
                 }
             `}
       title={`${count} ${label}`}

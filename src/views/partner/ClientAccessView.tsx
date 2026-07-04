@@ -372,7 +372,7 @@ export const ClientAccessView: React.FC = () => {
       {/* Tab Content */}
       {activeTab === 'clients' ? (
         /* Clients Tab */
-        <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
+        <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-c-border-subtle p-4">
           {/* Filters */}
           {regions.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-4">
@@ -426,7 +426,7 @@ export const ClientAccessView: React.FC = () => {
         </div>
       ) : (
         /* Employees Tab */
-        <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
+        <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-c-border-subtle p-4">
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-slate-500">
               {t(
@@ -540,7 +540,7 @@ export const ClientAccessView: React.FC = () => {
       )}
 
       {/* PMO Compliance Info */}
-      <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
+      <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-c-border-subtle p-4">
         <div className="flex items-center gap-3 mb-3">
           <Shield className="w-5 h-5 text-amber-400" />
           <h3 className="font-semibold text-slate-900 dark:text-white">
@@ -576,7 +576,7 @@ const ClientRow: React.FC<ClientRowProps> = ({ client }) => {
   };
 
   return (
-    <div className="flex items-center justify-between rounded-xl border border-white/5 bg-slate-50/50 dark:bg-navy-900/30 p-4 transition hover:border-primary-500/30">
+    <div className="flex items-center justify-between rounded-xl border border-c-border-subtle bg-slate-50/50 dark:bg-navy-900/30 p-4 transition hover:border-primary-500/30">
       <div className="flex items-center gap-4">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500/20 text-sm font-bold text-primary-400">
           {(client.clientName || client.organizationName || 'UN').substring(0, 2).toUpperCase()}

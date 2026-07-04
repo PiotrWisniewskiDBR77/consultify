@@ -209,7 +209,7 @@ export const LegalIndexView: React.FC = () => {
   return (
     <div className="min-h-screen bg-c-bg">
       {/* Navigation Bar */}
-      <nav className="bg-gradient-to-r from-slate-900 via-primary-900 to-slate-900 border-b border-white/10 sticky top-0 z-50 backdrop-blur-xl">
+      <nav className="bg-gradient-to-r from-slate-900 via-primary-900 to-slate-900 border-b border-c-border-subtle sticky top-0 z-50 backdrop-blur-xl">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <Link
@@ -242,7 +242,7 @@ export const LegalIndexView: React.FC = () => {
 
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
           <div className="flex items-center gap-4 mb-6">
-            <div className="p-4 bg-white/10 rounded-xl backdrop-blur-sm border border-white/10">
+            <div className="p-4 bg-white/10 rounded-xl backdrop-blur-sm border border-c-border-subtle">
               <Scale className="w-10 h-10" />
             </div>
             <div>
@@ -266,7 +266,7 @@ export const LegalIndexView: React.FC = () => {
             </Link>
             <Link
               to={ROUTES.LEGAL.SUBSCRIPTION}
-              className="inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+              className="inline-flex items-center gap-2 rounded-full border border-c-border px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
             >
               <FileText className="w-4 h-4" />
               Subscription terms
@@ -275,11 +275,11 @@ export const LegalIndexView: React.FC = () => {
 
           {/* Company Info Badges */}
           <div className="mt-10 flex flex-wrap gap-4">
-            <div className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full backdrop-blur-sm border border-white/10">
+            <div className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full backdrop-blur-sm border border-c-border-subtle">
               <Building2 className="w-4 h-4 text-primary-300" />
               <span className="text-sm">DBR77 Robotics Sp. z o.o.</span>
             </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full backdrop-blur-sm border border-white/10">
+            <div className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full backdrop-blur-sm border border-c-border-subtle">
               <Globe className="w-4 h-4 text-primary-300" />
               <span className="text-sm">Toruń, Poland</span>
             </div>

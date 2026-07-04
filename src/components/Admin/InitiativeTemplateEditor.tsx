@@ -363,7 +363,7 @@ const InlineInput: React.FC<{
     value={value}
     onChange={(e) => onChange(e.target.value)}
     placeholder={placeholder}
-    className={`px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition ${className || ''}`}
+    className={`px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus transition ${className || ''}`}
   />
 );
 
@@ -376,7 +376,7 @@ const InlineSelect: React.FC<{
   <select
     value={value}
     onChange={(e) => onChange(e.target.value)}
-    className={`px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white focus:border-primary-500 transition ${className || ''}`}
+    className={`px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white focus:border-c-focus-solid transition ${className || ''}`}
   >
     {options.map((o) => (
       <option key={o} value={o}>
@@ -803,7 +803,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-primary-500 to-primary-600 text-white border border-white/20 hover:brightness-110 shadow-lg shadow-primary-500/25 transition disabled:opacity-50"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-primary-500 to-primary-600 text-white border border-c-border hover:brightness-110 shadow-lg shadow-primary-500/25 transition disabled:opacity-50"
             >
               {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
               <span>Save</span>
@@ -854,7 +854,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Enterprise Transformation Blueprint"
-                  className="w-full px-3 py-2.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white placeholder-slate-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition text-sm"
+                  className="w-full px-3 py-2.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white placeholder-slate-400 focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus transition text-sm"
                 />
               </div>
               <div>
@@ -866,7 +866,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Describe the purpose of this template..."
                   rows={3}
-                  className="w-full px-3 py-2.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white placeholder-slate-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition text-sm resize-none"
+                  className="w-full px-3 py-2.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white placeholder-slate-400 focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus transition text-sm resize-none"
                 />
               </div>
               <div>
@@ -927,7 +927,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   placeholder="e.g. transformation, optimization, digital"
-                  className="w-full px-3 py-2.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white placeholder-slate-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition text-sm"
+                  className="w-full px-3 py-2.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white placeholder-slate-400 focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus transition text-sm"
                 />
               </div>
             </div>
@@ -1202,7 +1202,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                           })
                         }
                         placeholder="name, summary, owner_business_id..."
-                        className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-primary-500 transition"
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-c-focus-solid transition"
                       />
                     </div>
                   ))}
@@ -1332,7 +1332,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                             n[idx] = { ...n[idx], isGate: e.target.checked };
                             setSuggestedMilestones(n);
                           }}
-                          className="rounded border-slate-300 text-primary-500 focus:ring-primary-500/50"
+                          className="rounded border-slate-300 text-primary-500 focus:ring-c-focus"
                         />
                         Gate
                       </label>
@@ -1494,7 +1494,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                     }
                     min={0}
                     step={0.5}
-                    className="w-20 px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-sm text-slate-900 dark:text-white focus:border-primary-500 transition"
+                    className="w-20 px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-sm text-slate-900 dark:text-white focus:border-c-focus-solid transition"
                   />
                 </div>
               </SettingCard>
@@ -1680,7 +1680,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                           setSuggestedKpis(n);
                         }}
                         placeholder="Target"
-                        className="w-20 px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-primary-500 transition"
+                        className="w-20 px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-c-focus-solid transition"
                       />
                       <InlineSelect
                         value={kpi.measurementFrequency}
@@ -1759,7 +1759,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                           })
                         }
                         placeholder="—"
-                        className="w-20 px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white focus:border-primary-500 transition"
+                        className="w-20 px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white focus:border-c-focus-solid transition"
                       />
                     </div>
                   </div>
@@ -1799,7 +1799,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                             trackingDurationMonths: parseInt(e.target.value) || 12,
                           })
                         }
-                        className="w-16 px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white focus:border-primary-500 transition"
+                        className="w-16 px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white focus:border-c-focus-solid transition"
                       />
                     </div>
                     <div className="flex items-center justify-between p-2.5 rounded-lg bg-white dark:bg-navy-900/50 border border-slate-200/50 dark:border-navy-700/50 col-span-2">
@@ -1875,7 +1875,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                           amberThresholdDays: parseInt(e.target.value) || 3,
                         })
                       }
-                      className="w-16 px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white focus:border-primary-500 transition"
+                      className="w-16 px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white focus:border-c-focus-solid transition"
                     />
                     <span className="text-xs text-slate-400">days</span>
                   </div>
@@ -1890,7 +1890,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                           redThresholdDays: parseInt(e.target.value) || 7,
                         })
                       }
-                      className="w-16 px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white focus:border-primary-500 transition"
+                      className="w-16 px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white focus:border-c-focus-solid transition"
                     />
                     <span className="text-xs text-slate-400">days</span>
                   </div>

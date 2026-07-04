@@ -54,13 +54,13 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-6">
         {/* Scope IN */}
-        <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-white/5">
+        <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-c-border-subtle">
           <h3 className="flex items-center gap-2 text-lg font-bold text-green-600 mb-4">
             <CheckCircle size={20} /> Scope IN (Must Do)
           </h3>
           {isEditing ? (
             <textarea
-              className="w-full h-40 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm"
+              className="w-full h-40 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg p-3 text-sm"
               value={editData.scopeIn?.join('\n') || ''}
               onChange={(e) => setEditData({ ...editData, scopeIn: e.target.value.split('\n') })}
               placeholder="List items included in the pilot..."
@@ -75,13 +75,13 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
         </div>
 
         {/* Scope OUT */}
-        <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-white/5">
+        <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-c-border-subtle">
           <h3 className="flex items-center gap-2 text-lg font-bold text-danger-500 mb-4">
             <AlertTriangle size={20} /> Scope OUT (Won't Do)
           </h3>
           {isEditing ? (
             <textarea
-              className="w-full h-40 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm"
+              className="w-full h-40 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg p-3 text-sm"
               value={editData.scopeOut?.join('\n') || ''}
               onChange={(e) => setEditData({ ...editData, scopeOut: e.target.value.split('\n') })}
               placeholder="List items explicitly excluded..."
@@ -99,7 +99,7 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
   );
 
   const renderTeam = () => (
-    <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-white/5">
+    <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-c-border-subtle">
       <h3 className="text-xl font-bold mb-6">Pilot Team Structure</h3>
       {/* Simple Team Display logic for now - typically would link to Users/Team Members */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -126,7 +126,7 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
   );
 
   const renderPlan = () => (
-    <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-white/5">
+    <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-c-border-subtle">
       <h3 className="text-xl font-bold mb-6">Execution Plan & Milestones</h3>
       {isEditing ? (
         <div className="space-y-4">
@@ -185,11 +185,11 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
   );
 
   const renderKPIs = () => (
-    <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-white/5">
+    <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-c-border-subtle">
       <h3 className="text-xl font-bold mb-6">Success Criteria (KPIs)</h3>
       {isEditing ? (
         <textarea
-          className="w-full h-40 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm"
+          className="w-full h-40 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg p-3 text-sm"
           value={editData.successCriteria?.join('\n') || ''}
           onChange={(e) =>
             setEditData({ ...editData, successCriteria: e.target.value.split('\n') })
@@ -263,7 +263,7 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
   return (
     <div className="flex flex-col h-full bg-navy-950 text-white">
       {/* Header */}
-      <div className="h-20 border-b border-white/10 px-8 flex items-center justify-between bg-navy-900/50 backdrop-blur-sm sticky top-0 z-10">
+      <div className="h-20 border-b border-c-border-subtle px-8 flex items-center justify-between bg-navy-900/50 backdrop-blur-sm sticky top-0 z-10">
         <div>
           <div className="text-xs font-bold text-primary-400 uppercase tracking-widest mb-1">
             Active Pilot Experiment
@@ -281,7 +281,7 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
           ) : (
             <button
               onClick={startEdit}
-              className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm font-bold transition-colors border border-white/10"
+              className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm font-bold transition-colors border border-c-border-subtle"
             >
               <Edit3 size={16} /> Edit Pilot Data
             </button>
@@ -290,7 +290,7 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex border-b border-white/10 px-8 gap-8 mt-4">
+      <div className="flex border-b border-c-border-subtle px-8 gap-8 mt-4">
         {[
           { id: 'scope', label: '1. Scope', icon: Target },
           { id: 'team', label: '2. Team', icon: Users },
@@ -302,7 +302,7 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as PilotTab)}
-            className={`pb-4 flex items-center gap-2 text-sm font-medium transition-colors border-b-2 ${activeTab === tab.id ? 'border-white/80 text-white' : 'border-transparent text-slate-600 hover:text-white'}`}
+            className={`pb-4 flex items-center gap-2 text-sm font-medium transition-colors border-b-2 ${activeTab === tab.id ? 'border-c-border-strong text-white' : 'border-transparent text-slate-600 hover:text-white'}`}
           >
             <tab.icon size={16} />
             {tab.label}

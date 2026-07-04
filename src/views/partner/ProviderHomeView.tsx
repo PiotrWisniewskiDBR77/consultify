@@ -145,14 +145,14 @@ const WelcomeHeroBanner: React.FC = () => {
           </button>
           <button
             onClick={() => navigate(PARTNER_DOCS.overview.href)}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-c-bg/50 dark:bg-navy-950/30 text-white font-semibold rounded-lg hover:bg-c-surface/20 transition-colors border border-white/20"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-c-bg/50 dark:bg-navy-950/30 text-white font-semibold rounded-lg hover:bg-c-surface/20 transition-colors border border-c-border"
           >
             <Play className="w-5 h-5" />
             {t('partner.hero.watchOverview', 'Open partner docs')}
           </button>
           <button
             onClick={() => navigate(ROUTES.LEGAL.CONTACT)}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-transparent text-white font-semibold rounded-lg hover:bg-c-surface/10 transition-colors border border-white/25"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-transparent text-white font-semibold rounded-lg hover:bg-c-surface/10 transition-colors border border-c-border"
           >
             <MessageCircle className="w-5 h-5" />
             {t('partner.hero.customTerms', 'Discuss custom terms')}
@@ -1079,7 +1079,7 @@ const ContactPartnerManagerSection: React.FC = () => {
 
       {/* Partner Manager Card */}
       <div className="flex flex-col items-center mb-6">
-        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-400 to-crimson-500 flex items-center justify-center text-white text-3xl font-bold mb-4 ring-4 ring-primary-100 dark:ring-primary-900/50">
+        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-400 to-crimson-500 flex items-center justify-center text-white text-3xl font-bold mb-4 ring-4 ring-c-info dark:ring-c-info/50">
           {PARTNER_CONTACT.initials}
         </div>
         <h3 className="text-lg font-semibold text-navy-900 dark:text-white">

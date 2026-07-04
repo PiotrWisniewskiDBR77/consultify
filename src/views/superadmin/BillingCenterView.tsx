@@ -315,7 +315,7 @@ const OverviewTab: React.FC = () => {
           {/* Two Column Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Plan Distribution */}
-            <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-white/10">
+            <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-c-border-subtle">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-5">
                 <PieChart className="w-5 h-5 text-blue-400" />
                 Plan Distribution
@@ -364,7 +364,7 @@ const OverviewTab: React.FC = () => {
             </div>
 
             {/* Usage Overview */}
-            <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-white/10">
+            <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-c-border-subtle">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-5">
                 <Activity className="w-5 h-5 text-blue-400" />
                 Usage Overview
@@ -419,7 +419,7 @@ const OverviewTab: React.FC = () => {
           </div>
 
           {/* Revenue by Plan Table */}
-          <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-white/10">
+          <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-c-border-subtle">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-5">
               <DollarSign className="w-5 h-5 text-blue-400" />
               Revenue by Plan
@@ -428,7 +428,7 @@ const OverviewTab: React.FC = () => {
             <div className="overflow-x-auto">
               <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full">
                 <thead>
-                  <tr className="text-left text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-white/10">
+                  <tr className="text-left text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-c-border-subtle">
                     <th className="pb-3 font-medium">Plan</th>
                     <th className="pb-3 font-medium">Price</th>
                     <th className="pb-3 font-medium">Subscribers</th>
@@ -470,7 +470,7 @@ const OverviewTab: React.FC = () => {
           </div>
 
           {/* Operational Costs */}
-          <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-white/10">
+          <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-c-border-subtle">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-5">
               <Server className="w-5 h-5 text-blue-400" />
               Operational Costs (Backend)
@@ -482,7 +482,7 @@ const OverviewTab: React.FC = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="text-left text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-white/10">
+                  <tr className="text-left text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-c-border-subtle">
                     <th className="pb-3 font-medium">Provider</th>
                     <th className="pb-3 font-medium">Model</th>
                     <th className="pb-3 font-medium text-right">Tokens</th>
@@ -531,7 +531,7 @@ const OverviewTab: React.FC = () => {
                   operationalCosts.items.length > 0 &&
                   Number.isFinite(safeNumber(operationalCosts.totalCost, Number.NaN)) && (
                     <tfoot>
-                      <tr className="border-t-2 border-slate-200 dark:border-white/10">
+                      <tr className="border-t-2 border-slate-200 dark:border-c-border-subtle">
                         <td colSpan={3} className="py-3 font-bold text-slate-900 dark:text-white">
                           Total Operational Cost
                         </td>
@@ -833,8 +833,8 @@ const PlansTab: React.FC = () => {
                 key={plan.id}
                 className={`relative bg-white dark:bg-navy-900 rounded-xl p-6 border transition-all ${
                   plan.is_active
-                    ? 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
-                    : 'border-slate-200 dark:border-white/5 opacity-60'
+                    ? 'border-slate-200 dark:border-c-border-subtle hover:border-slate-300 dark:hover:border-c-border'
+                    : 'border-slate-200 dark:border-c-border-subtle opacity-60'
                 }`}
               >
                 {editingId === plan.id ? (
@@ -892,7 +892,7 @@ const PlanForm: React.FC<{
         type="text"
         value={formData.name || ''}
         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-        className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm focus:border-blue-500 outline-none"
+        className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm focus:border-blue-500 outline-none"
       />
     </div>
 
@@ -913,7 +913,7 @@ const PlanForm: React.FC<{
             price_monthly: e.target.value === '' ? '' : Number(e.target.value),
           })
         }
-        className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm focus:border-blue-500 outline-none"
+        className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm focus:border-blue-500 outline-none"
       />
     </div>
 
@@ -937,7 +937,7 @@ const PlanForm: React.FC<{
                   token_limit: e.target.value === '' ? '' : Number(e.target.value),
                 })
               }
-              className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm focus:border-blue-500 outline-none"
+              className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm focus:border-blue-500 outline-none"
             />
           </div>
           <div>
@@ -957,7 +957,7 @@ const PlanForm: React.FC<{
                   storage_limit_gb: e.target.value === '' ? '' : Number(e.target.value),
                 })
               }
-              className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm focus:border-blue-500 outline-none"
+              className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm focus:border-blue-500 outline-none"
             />
           </div>
         </div>
@@ -969,7 +969,7 @@ const PlanForm: React.FC<{
             type="text"
             value={formData.stripe_price_id || ''}
             onChange={(e) => setFormData({ ...formData, stripe_price_id: e.target.value })}
-            className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm font-mono focus:border-blue-500 outline-none"
+            className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm font-mono focus:border-blue-500 outline-none"
             placeholder="price_..."
           />
         </div>
@@ -987,7 +987,7 @@ const PlanForm: React.FC<{
             : JSON.stringify(formData.features || {}, null, 2)
         }
         onChange={(e) => setFormData({ ...formData, features: e.target.value })}
-        className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-xs font-mono h-20 focus:border-blue-500 outline-none resize-none"
+        className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg px-3 py-2 text-slate-900 dark:text-white text-xs font-mono h-20 focus:border-blue-500 outline-none resize-none"
       />
     </div>
 
@@ -1057,7 +1057,7 @@ const PlanCard: React.FC<{
       </div>
     )}
 
-    <div className="mt-4 pt-4 border-t border-white/10">
+    <div className="mt-4 pt-4 border-t border-c-border-subtle">
       <div className="text-[10px] text-slate-600 dark:text-slate-400 font-mono overflow-hidden h-10">
         {typeof plan.features === 'string'
           ? plan.features.substring(0, 80)
@@ -1156,7 +1156,7 @@ const TokenEconomyTab: React.FC = () => {
         <>
           {/* KPI Grid */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl p-4">
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-4">
               <div className="flex justify-between items-start mb-3">
                 <span className="text-slate-600 dark:text-slate-500 text-xs font-medium uppercase">
                   Active AI Models
@@ -1167,7 +1167,7 @@ const TokenEconomyTab: React.FC = () => {
                 {stats.activeModels}
               </div>
             </div>
-            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl p-4">
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-4">
               <div className="flex justify-between items-start mb-3">
                 <span className="text-slate-600 dark:text-slate-500 text-xs font-medium uppercase">
                   Active Packages
@@ -1178,7 +1178,7 @@ const TokenEconomyTab: React.FC = () => {
                 {stats.activePackages}
               </div>
             </div>
-            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl p-4">
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-4">
               <div className="flex justify-between items-start mb-3">
                 <span className="text-slate-600 dark:text-slate-500 text-xs font-medium uppercase">
                   Platform Margin
@@ -1187,7 +1187,7 @@ const TokenEconomyTab: React.FC = () => {
               </div>
               <div className="text-2xl font-bold text-emerald-400">{stats.platformMargin}%</div>
             </div>
-            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl p-4">
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-4">
               <div className="flex justify-between items-start mb-3">
                 <span className="text-slate-600 dark:text-slate-500 text-xs font-medium uppercase">
                   System Balance
@@ -1313,7 +1313,7 @@ const TransactionsTab: React.FC = () => {
       </div>
 
       {/* Transactions Table */}
-      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
+      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-c-border-subtle overflow-hidden">
         <table className="w-full">
           <thead>
             <tr className="bg-slate-50 dark:bg-navy-950 text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
@@ -1484,7 +1484,7 @@ const ContractsTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-white/10">
+      <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-c-border-subtle">
         <div className="flex items-center justify-between gap-4 mb-5">
           <div>
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
@@ -1497,7 +1497,7 @@ const ContractsTab: React.FC = () => {
           </div>
           <button
             onClick={loadContracts}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-c-border-subtle text-sm text-slate-700 dark:text-slate-200"
           >
             <RefreshCw className="w-4 h-4" />
             Refresh
@@ -1510,20 +1510,20 @@ const ContractsTab: React.FC = () => {
             disabled={!!loadError}
             onChange={(e) => setForm((prev) => ({ ...prev, organizationId: e.target.value }))}
             placeholder="Organization ID"
-            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent"
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-c-border-subtle bg-transparent"
           />
           <input
             value={form.subscriptionPlanId}
             disabled={!!loadError}
             onChange={(e) => setForm((prev) => ({ ...prev, subscriptionPlanId: e.target.value }))}
             placeholder="Plan ID"
-            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent"
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-c-border-subtle bg-transparent"
           />
           <select
             value={form.billingRail}
             disabled={!!loadError}
             onChange={(e) => setForm((prev) => ({ ...prev, billingRail: e.target.value }))}
-            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent"
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-c-border-subtle bg-transparent"
           >
             <option value="manual_invoice">manual_invoice</option>
             <option value="hybrid_usage_invoice">hybrid_usage_invoice</option>
@@ -1532,7 +1532,7 @@ const ContractsTab: React.FC = () => {
             value={form.contractStatus}
             disabled={!!loadError}
             onChange={(e) => setForm((prev) => ({ ...prev, contractStatus: e.target.value }))}
-            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent"
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-c-border-subtle bg-transparent"
           >
             <option value="active">active</option>
             <option value="renewal_due">renewal_due</option>
@@ -1544,39 +1544,39 @@ const ContractsTab: React.FC = () => {
             value={form.renewalAt}
             disabled={!!loadError}
             onChange={(e) => setForm((prev) => ({ ...prev, renewalAt: e.target.value }))}
-            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent"
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-c-border-subtle bg-transparent"
           />
           <input
             type="date"
             value={form.accessExpiresAt}
             disabled={!!loadError}
             onChange={(e) => setForm((prev) => ({ ...prev, accessExpiresAt: e.target.value }))}
-            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent"
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-c-border-subtle bg-transparent"
           />
           <input
             value={form.externalInvoiceRef}
             disabled={!!loadError}
             onChange={(e) => setForm((prev) => ({ ...prev, externalInvoiceRef: e.target.value }))}
             placeholder="External invoice reference"
-            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent"
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-c-border-subtle bg-transparent"
           />
           <input
             value={form.reason}
             disabled={!!loadError}
             onChange={(e) => setForm((prev) => ({ ...prev, reason: e.target.value }))}
             placeholder="Reason / change summary"
-            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent"
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-c-border-subtle bg-transparent"
           />
           <textarea
             value={form.notes}
             disabled={!!loadError}
             onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
             placeholder="Internal notes"
-            className="md:col-span-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent min-h-[88px]"
+            className="md:col-span-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-c-border-subtle bg-transparent min-h-[88px]"
           />
         </div>
 
-        <div className="mt-5 rounded-xl border border-slate-200 dark:border-white/10 p-4">
+        <div className="mt-5 rounded-xl border border-slate-200 dark:border-c-border-subtle p-4">
           <div className="mb-3">
             <p className="text-sm font-medium text-slate-900 dark:text-white">
               Manual limit overrides
@@ -1611,7 +1611,7 @@ const ContractsTab: React.FC = () => {
                   }))
                 }
                 placeholder={label}
-                className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent"
+                className="px-3 py-2 rounded-lg border border-slate-200 dark:border-c-border-subtle bg-transparent"
               />
             ))}
           </div>
@@ -1629,8 +1629,8 @@ const ContractsTab: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
+      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-c-border-subtle overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-c-border-subtle flex items-center justify-between">
           <h3 className="font-semibold text-slate-900 dark:text-white">Managed accounts</h3>
           <span className="text-sm text-slate-500 dark:text-slate-400">
             {contracts.length} orgs
@@ -1727,7 +1727,7 @@ export const BillingCenterView: React.FC = () => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex gap-1 mb-8 bg-white dark:bg-navy-900/50 p-1 rounded-xl w-fit border border-slate-200 dark:border-white/5">
+      <div className="flex gap-1 mb-8 bg-white dark:bg-navy-900/50 p-1 rounded-xl w-fit border border-slate-200 dark:border-c-border-subtle">
         {tabs.map((tab) => (
           <button
             key={tab.id}

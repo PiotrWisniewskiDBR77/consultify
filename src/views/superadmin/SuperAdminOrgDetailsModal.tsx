@@ -205,7 +205,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
           <input
             disabled
             value={editingOrg.name}
-            className="w-full px-3 py-2 bg-c-bg border border-white/10 rounded text-slate-500 dark:text-slate-400"
+            className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded text-slate-500 dark:text-slate-400"
           />
           <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">ID: {editingOrg.id}</p>
         </div>
@@ -216,7 +216,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
           <input
             disabled
             value={formatDate(org.created_at || org.createdAt)}
-            className="w-full px-3 py-2 bg-c-bg border border-white/10 rounded text-slate-500 dark:text-slate-400"
+            className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded text-slate-500 dark:text-slate-400"
           />
         </div>
       </div>
@@ -231,7 +231,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
             onChange={(e) =>
               setEditingOrg({ ...editingOrg, plan: e.target.value as Organization['plan'] })
             }
-            className="w-full px-3 py-2 bg-c-text text-c-bg border border-white/10 rounded focus:border-blue-500 outline-none"
+            className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded focus:border-blue-500 outline-none"
           >
             <option value="free">Free</option>
             <option value="pro">Pro</option>
@@ -248,7 +248,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
             onChange={(e) =>
               setEditingOrg({ ...editingOrg, status: e.target.value as Organization['status'] })
             }
-            className="w-full px-3 py-2 bg-c-text text-c-bg border border-white/10 rounded focus:border-blue-500 outline-none"
+            className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded focus:border-blue-500 outline-none"
           >
             <option value="active">Active</option>
             <option value="trial">Trial</option>
@@ -270,7 +270,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
             onChange={(e) =>
               setEditingOrg({ ...editingOrg, discount_percent: parseInt(e.target.value) || 0 })
             }
-            className="w-32 px-3 py-2 bg-c-text text-c-bg border border-white/10 rounded focus:border-blue-500 outline-none"
+            className="w-32 px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded focus:border-blue-500 outline-none"
           />
           <p className="text-xs text-slate-500 dark:text-slate-400">
             Discount applied to all future invoices.
@@ -278,7 +278,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
         </div>
       </div>
 
-      <div className="pt-4 border-t border-white/10 flex justify-end">
+      <div className="pt-4 border-t border-c-border-subtle flex justify-end">
         {actionError && (
           <div role="alert" className="mr-auto text-sm text-danger-400">
             {actionError}
@@ -320,7 +320,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
     return (
       <div className="space-y-6">
         {/* Subscription Card */}
-        <div className="bg-c-bg rounded-lg p-4 border border-white/5">
+        <div className="bg-c-bg rounded-lg p-4 border border-c-border-subtle">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center text-green-400">
@@ -361,7 +361,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
 
         {/* Usage Stats */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-c-bg rounded-lg p-4 border border-white/5">
+          <div className="bg-c-bg rounded-lg p-4 border border-c-border-subtle">
             <h4 className="text-sm font-semibold text-c-text mb-4 flex items-center gap-2">
               <BarChart size={16} className="text-blue-400" /> Token Usage
             </h4>
@@ -388,12 +388,12 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
               </div>
             </div>
           </div>
-          <div className="bg-c-bg rounded-lg p-4 border border-white/5">
+          <div className="bg-c-bg rounded-lg p-4 border border-c-border-subtle">
             <h4 className="text-sm font-semibold text-c-text mb-4 flex items-center gap-2">
               <CreditCard size={16} className="text-primary-400" /> Overage
             </h4>
             <div className="space-y-2">
-              <div className="flex justify-between text-sm border-b border-white/5 pb-2">
+              <div className="flex justify-between text-sm border-b border-c-border-subtle pb-2">
                 <span className="text-slate-600 dark:text-slate-500">Tokens Overage</span>
                 <span className="text-c-text">{formatInteger(usage?.tokens_overage)}</span>
               </div>
@@ -408,8 +408,8 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
         </div>
 
         {/* Invoices List */}
-        <div className="bg-c-bg rounded-lg border border-white/5 overflow-hidden">
-          <div className="px-5 py-3 border-b border-white/5 bg-c-surface/50 flex justify-between items-center">
+        <div className="bg-c-bg rounded-lg border border-c-border-subtle overflow-hidden">
+          <div className="px-5 py-3 border-b border-c-border-subtle bg-c-surface/50 flex justify-between items-center">
             <h4 className="text-sm font-semibold text-c-text flex items-center gap-2">
               <FileText size={16} className="text-slate-600 dark:text-slate-500" /> Invoice History
             </h4>
@@ -470,9 +470,9 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="bg-c-surface border border-white/10 rounded-xl w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh]">
+      <div className="bg-c-surface border border-c-border-subtle rounded-xl w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="p-6 border-b border-white/10 flex items-center justify-between bg-c-bg rounded-t-xl">
+        <div className="p-6 border-b border-c-border-subtle flex items-center justify-between bg-c-bg rounded-t-xl">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
               <Building size={24} />
@@ -493,7 +493,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-white/10 px-6 bg-c-surface">
+        <div className="border-b border-c-border-subtle px-6 bg-c-surface">
           <div className="flex items-center gap-8">
             {[
               { id: 'general', label: 'General Info', icon: <Building size={16} /> },

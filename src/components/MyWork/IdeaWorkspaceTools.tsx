@@ -55,7 +55,7 @@ import { ProcessFlowPropertiesPanel } from './processflow/ProcessFlowPropertiesP
 import { IdeaCompletenessWidget } from './table/IdeaCompletenessWidget';
 
 const FIELD_CLASS =
-  'w-full h-9 px-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder:text-slate-400 focus:outline-none focus:border-primary-400 dark:focus:border-primary-400 transition-colors';
+  'w-full h-9 px-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder:text-slate-400 focus:outline-none focus:border-c-focus-solid dark:focus:border-c-focus-solid transition-colors';
 
 // Convert-target union is owned by the SSOT registry (ideaConvertTargets.ts).
 type ConvertTarget = IdeaConvertTarget;

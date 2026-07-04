@@ -128,7 +128,7 @@ export const PrivateModeDetails: React.FC<PrivateModeDetailsProps> = ({
         aria-expanded={open}
         aria-label={label}
         title={open ? undefined : tooltip}
-        className={`${BADGE_CLASSNAME} cursor-pointer hover:bg-primary-100 dark:hover:bg-primary-900/40 focus:outline-none focus:ring-2 focus:ring-primary-400/50`}
+        className={`${BADGE_CLASSNAME} cursor-pointer hover:bg-primary-100 dark:hover:bg-primary-900/40 focus:outline-none focus:ring-2 focus:ring-c-focus`}
       >
         <Lock size={11} strokeWidth={2} />
         <span>{label}</span>

@@ -100,7 +100,7 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({
   return (
     <div className="fixed inset-0 z-50 bg-c-surface-raised flex flex-col animate-in fade-in slide-in-from-bottom-10">
       {/* Header */}
-      <div className="h-16 border-b border-c-border dark:border-white/10 flex items-center justify-between px-6 bg-c-surface">
+      <div className="h-16 border-b border-c-border dark:border-c-border-subtle flex items-center justify-between px-6 bg-c-surface">
         <div className="flex items-center gap-4">
           <button
             onClick={onClose}
@@ -111,14 +111,14 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({
           <div className="h-6 w-px bg-c-border"></div>
           <div>
             <h2 className="text-c-text font-bold text-lg">{initiative.name}</h2>
-            <span className="text-xs text-c-text-muted bg-c-surface-raised px-2 py-0.5 rounded border border-c-border dark:border-white/5">
+            <span className="text-xs text-c-text-muted bg-c-surface-raised px-2 py-0.5 rounded border border-c-border dark:border-c-border-subtle">
               {initiative.axis} • {activePhase.toUpperCase()}
             </span>
           </div>
         </div>
         <div className="flex gap-3">
           {/* Phase Tabs */}
-          <div className="flex bg-c-surface-raised rounded-lg p-1 border border-c-border dark:border-white/10">
+          <div className="flex bg-c-surface-raised rounded-lg p-1 border border-c-border dark:border-c-border-subtle">
             {phases.map((p) => (
               <button
                 key={p}
@@ -159,13 +159,13 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({
             return (
               <div
                 key={status}
-                className="flex-1 flex flex-col bg-slate-50/30 dark:bg-navy-950/30 rounded-xl border border-c-border dark:border-white/5 min-w-[280px]"
+                className="flex-1 flex flex-col bg-slate-50/30 dark:bg-navy-950/30 rounded-xl border border-c-border dark:border-c-border-subtle min-w-[280px]"
               >
-                <div className="p-3 border-b border-c-border dark:border-white/5 flex justify-between items-center bg-slate-100/50 dark:bg-navy-950/50 rounded-t-xl">
+                <div className="p-3 border-b border-c-border dark:border-c-border-subtle flex justify-between items-center bg-slate-100/50 dark:bg-navy-950/50 rounded-t-xl">
                   <h4 className="text-sm font-medium text-c-text-secondary uppercase tracking-wider">
                     {status.replace('_', ' ')}
                   </h4>
-                  <span className="bg-c-surface text-c-text-muted text-xs px-2 py-0.5 rounded-full border border-c-border dark:border-white/5">
+                  <span className="bg-c-surface text-c-text-muted text-xs px-2 py-0.5 rounded-full border border-c-border dark:border-c-border-subtle">
                     {phaseTasks.length}
                   </span>
                 </div>
@@ -180,7 +180,7 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({
                     />
                   ))}
                   {phaseTasks.length === 0 && (
-                    <div className="h-24 border-2 border-dashed border-c-border dark:border-white/5 rounded-lg flex items-center justify-center">
+                    <div className="h-24 border-2 border-dashed border-c-border dark:border-c-border-subtle rounded-lg flex items-center justify-center">
                       <span className="text-xs text-c-text-secondary">No tasks</span>
                     </div>
                   )}

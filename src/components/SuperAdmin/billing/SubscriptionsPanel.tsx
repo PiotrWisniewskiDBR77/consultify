@@ -223,14 +223,14 @@ export const SubscriptionsPanel: React.FC = () => {
               placeholder="Search subscriptions..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none w-64"
+              className="pl-10 pr-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-c-focus-solid outline-none w-64"
             />
           </div>
 
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+            className="px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-c-focus-solid outline-none"
           >
             <option value="all">All Status</option>
             <option value="active">Active</option>
@@ -341,7 +341,7 @@ export const SubscriptionsPanel: React.FC = () => {
       {/* Create Subscription Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-c-surface border border-white/10 rounded-xl p-6 w-full max-w-md">
+          <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6 w-full max-w-md">
             <h3 className="text-lg font-semibold text-c-text mb-6">Create Subscription</h3>
 
             <div className="space-y-4">
@@ -354,7 +354,7 @@ export const SubscriptionsPanel: React.FC = () => {
                   onChange={(e) =>
                     setCreateForm((prev) => ({ ...prev, organizationId: e.target.value }))
                   }
-                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-c-focus-solid outline-none"
                 >
                   <option value="">Select organization</option>
                   {organizations.map((org) => (
@@ -370,7 +370,7 @@ export const SubscriptionsPanel: React.FC = () => {
                 <select
                   value={createForm.planId}
                   onChange={(e) => setCreateForm((prev) => ({ ...prev, planId: e.target.value }))}
-                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-c-focus-solid outline-none"
                 >
                   <option value="">Select plan</option>
                   {plans
@@ -396,7 +396,7 @@ export const SubscriptionsPanel: React.FC = () => {
                       className={`flex-1 px-4 py-2.5 rounded-lg border transition-colors ${
                         createForm.billingCycle === cycle
                           ? 'bg-primary-500/20 border-primary-500/50 text-primary-400'
-                          : 'bg-c-surface-raised border-white/10 text-slate-600 dark:text-slate-500 hover:border-white/20'
+                          : 'bg-c-surface-raised border-c-border-subtle text-slate-600 dark:text-slate-500 hover:border-c-border'
                       }`}
                     >
                       {cycle.charAt(0).toUpperCase() + cycle.slice(1)}
@@ -417,7 +417,7 @@ export const SubscriptionsPanel: React.FC = () => {
                   onChange={(e) =>
                     setCreateForm((prev) => ({ ...prev, trialDays: parseInt(e.target.value) || 0 }))
                   }
-                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-c-focus-solid outline-none"
                 />
               </div>
             </div>
@@ -445,7 +445,7 @@ export const SubscriptionsPanel: React.FC = () => {
       {/* Manage Subscription Modal */}
       {selectedSubscription && (
         <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-c-surface border border-white/10 rounded-xl p-6 w-full max-w-lg">
+          <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6 w-full max-w-lg">
             <h3 className="text-lg font-semibold text-c-text mb-2">Manage Subscription</h3>
             <p className="text-sm text-slate-600 dark:text-slate-500 mb-6">
               {selectedSubscription.organization_name}
@@ -471,7 +471,7 @@ export const SubscriptionsPanel: React.FC = () => {
                       handleChangePlan(selectedSubscription.id, e.target.value);
                     }
                   }}
-                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-c-focus-solid outline-none"
                 >
                   {plans
                     .filter((p) => p.is_active)
@@ -485,7 +485,7 @@ export const SubscriptionsPanel: React.FC = () => {
 
               {selectedSubscription.status === 'active' &&
                 !selectedSubscription.cancel_at_period_end && (
-                  <div className="border-t border-white/10 pt-4 mt-4">
+                  <div className="border-t border-c-border-subtle pt-4 mt-4">
                     <h4 className="text-sm font-medium text-slate-600 mb-3">Cancel Subscription</h4>
                     <div className="flex gap-3">
                       <button

@@ -85,7 +85,7 @@ export const DemoButton: React.FC<DemoButtonProps> = ({
         className={`
                     flex flex-col items-center gap-2 p-4
                     bg-white/5 backdrop-blur-sm
-                    border border-white/10 hover:border-c-accent
+                    border border-c-border-subtle hover:border-c-accent
                     rounded-xl
                     transition-all duration-300
                     group

@@ -127,7 +127,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onStartSession, onLogi
                 </div>
 
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="w-12 h-12 rounded bg-slate-50/50 dark:bg-navy-950/30 flex items-center justify-center border border-white/20">
+                  <div className="w-12 h-12 rounded bg-slate-50/50 dark:bg-navy-950/30 flex items-center justify-center border border-c-border">
                     <Zap className="text-white" size={24} />
                   </div>
                   <div>
@@ -248,7 +248,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onStartSession, onLogi
                   {t('welcome.consultingDesc')}
                 </p>
 
-                <button className="w-full py-3 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/20 text-navy-900 dark:text-white font-medium rounded hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors flex items-center justify-center gap-2">
+                <button className="w-full py-3 bg-white dark:bg-navy-800 border border-slate-200 dark:border-c-border text-navy-900 dark:text-white font-medium rounded hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors flex items-center justify-center gap-2">
                   {t('welcome.consultingBtn')}
                 </button>
               </div>

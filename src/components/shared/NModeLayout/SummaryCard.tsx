@@ -82,7 +82,7 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({
     'text-left w-full transition-all',
     compact ? 'p-3.5' : 'p-5',
     clickable
-      ? 'cursor-pointer hover:ring-2 hover:ring-primary-400/40 hover:border-primary-400/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400/60'
+      ? 'cursor-pointer hover:ring-2 hover:ring-c-info/40 hover:border-primary-400/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus'
       : '',
     className,
   ]

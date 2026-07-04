@@ -38,7 +38,7 @@ export function V10RuntimeWorkspaceView() {
 
   return (
     <div className="space-y-6 p-4 lg:p-6" data-testid="v10-runtime-entrypoint">
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-c-border-subtle dark:bg-white/5">
         <div className="max-w-4xl">
           <h1 className="text-xl font-semibold text-slate-900 dark:text-white">
             Internal V10 QA Workspace
@@ -55,7 +55,7 @@ export function V10RuntimeWorkspaceView() {
           data-testid="v10-runtime-smoke-surface"
           aria-label="V10 runtime smoke surface"
         >
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-black/20">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-c-border-subtle dark:bg-black/20">
             <div className="text-[11px] font-medium uppercase tracking-wide text-slate-600 dark:text-slate-500">
               Route
             </div>
@@ -63,7 +63,7 @@ export function V10RuntimeWorkspaceView() {
               {location.pathname}
             </div>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-black/20">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-c-border-subtle dark:bg-black/20">
             <div className="text-[11px] font-medium uppercase tracking-wide text-slate-600 dark:text-slate-500">
               Block rollout
             </div>
@@ -72,7 +72,7 @@ export function V10RuntimeWorkspaceView() {
               {rolloutSummary.partialBlocks} partial
             </div>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-black/20">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-c-border-subtle dark:bg-black/20">
             <div className="text-[11px] font-medium uppercase tracking-wide text-slate-600 dark:text-slate-500">
               Function rollout
             </div>
@@ -81,7 +81,7 @@ export function V10RuntimeWorkspaceView() {
               {rolloutSummary.flaggedOffFunctions} flagged off
             </div>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-black/20">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-c-border-subtle dark:bg-black/20">
             <div className="text-[11px] font-medium uppercase tracking-wide text-slate-600 dark:text-slate-500">
               Default-off hygiene
             </div>
@@ -99,7 +99,7 @@ export function V10RuntimeWorkspaceView() {
             {rolloutBlocks.map((block) => (
               <div
                 key={block.block}
-                className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-black/20"
+                className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-c-border-subtle dark:bg-black/20"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>

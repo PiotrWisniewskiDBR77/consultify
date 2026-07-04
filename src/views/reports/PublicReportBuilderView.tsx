@@ -161,7 +161,7 @@ const CoverPage: React.FC<{
       <div className="relative px-8 py-12 md:px-12 md:py-16 text-white">
         {/* Source badge */}
         {report.sourceFramework && (
-          <div className="inline-block px-3 py-1 mb-6 text-xs font-medium bg-white/15 rounded-full backdrop-blur-sm border border-white/20">
+          <div className="inline-block px-3 py-1 mb-6 text-xs font-medium bg-white/15 rounded-full backdrop-blur-sm border border-c-border">
             {report.sourceFramework}
           </div>
         )}
@@ -198,7 +198,7 @@ const CoverPage: React.FC<{
 
         {/* Custom message */}
         {branding.customMessage && (
-          <div className="mt-6 px-4 py-3 bg-white/10 rounded-lg backdrop-blur-sm border border-white/15 text-sm text-white/90">
+          <div className="mt-6 px-4 py-3 bg-white/10 rounded-lg backdrop-blur-sm border border-c-border-subtle text-sm text-white/90">
             {branding.customMessage}
           </div>
         )}
@@ -622,7 +622,7 @@ export const PublicReportBuilderView: React.FC = () => {
     <div className="min-h-screen bg-c-bg">
       {/* ── Sticky Header ── */}
       <header
-        className="sticky top-0 z-50 backdrop-blur-xl border-b border-white/10 print:static"
+        className="sticky top-0 z-50 backdrop-blur-xl border-b border-c-border-subtle print:static"
         style={{ backgroundColor: `${primaryColor}f0` }}
       >
         <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">

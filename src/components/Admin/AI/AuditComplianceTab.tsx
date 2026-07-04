@@ -360,7 +360,7 @@ export const AuditComplianceTab: React.FC = () => {
                   placeholder="Search audit log..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg pl-10 pr-4 py-2 text-navy-900 dark:text-white text-sm focus:border-primary-500 outline-none"
+                  className="w-full bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg pl-10 pr-4 py-2 text-navy-900 dark:text-white text-sm focus:border-c-focus-solid outline-none"
                 />
               </div>
             </div>

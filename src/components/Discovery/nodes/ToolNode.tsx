@@ -39,7 +39,7 @@ export const ToolNode: React.FC<NodeProps<ToolNodeData>> = memo(({ data, selecte
       className={`
                 group relative
                 bg-primary-50 dark:bg-primary-900/20
-                border-2 ${selected ? 'border-slate-600 dark:border-white/50 ring-2 ring-slate-400/30 dark:ring-white/10' : 'border-primary-300 dark:border-primary-700'}
+                border-2 ${selected ? 'border-slate-600 dark:border-c-border-strong ring-2 ring-slate-400/30 dark:ring-c-border' : 'border-primary-300 dark:border-primary-700'}
                 rounded-xl p-3
                 min-w-[170px] max-w-[210px]
                 shadow-md hover:shadow-lg

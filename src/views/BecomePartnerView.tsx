@@ -167,7 +167,7 @@ export const BecomePartnerView: React.FC = () => {
                 return (
                   <div
                     key={key}
-                    className="bg-navy-900/30 backdrop-blur-sm p-6 rounded-xl group hover:bg-c-accent/5 transition-all duration-500 border border-white/5 hover:border-c-accent/20 overflow-hidden relative"
+                    className="bg-navy-900/30 backdrop-blur-sm p-6 rounded-xl group hover:bg-c-accent/5 transition-all duration-500 border border-c-border-subtle hover:border-c-accent/20 overflow-hidden relative"
                   >
                     <visual.icon
                       className="text-c-accent mb-4 group-hover:scale-110 transition-transform duration-500 relative z-10"
@@ -209,7 +209,7 @@ export const BecomePartnerView: React.FC = () => {
                     className={`relative bg-navy-900/30 backdrop-blur-sm p-8 rounded-xl border transition-all duration-500 group ${
                       tier.highlight
                         ? 'border-c-accent/40 shadow-lg shadow-c-accent/10'
-                        : 'border-white/10 hover:border-c-accent/20'
+                        : 'border-c-border-subtle hover:border-c-accent/20'
                     }`}
                   >
                     {tier.badge && (
@@ -288,7 +288,7 @@ export const BecomePartnerView: React.FC = () => {
                 const prefix = `pages.partner.process.steps.${key}`;
                 return (
                   <div key={key} className="relative">
-                    <div className="bg-navy-900/30 backdrop-blur-sm p-6 rounded-xl text-center border border-white/5 hover:border-c-accent/20 transition-all duration-300">
+                    <div className="bg-navy-900/30 backdrop-blur-sm p-6 rounded-xl text-center border border-c-border-subtle hover:border-c-accent/20 transition-all duration-300">
                       <div className="w-12 h-12 rounded-full bg-navy-900 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
                         {index + 1}
                       </div>
@@ -307,7 +307,7 @@ export const BecomePartnerView: React.FC = () => {
           </section>
 
           {/* FINAL CTA SECTION */}
-          <section className="max-w-3xl mx-auto text-center py-16 px-8 bg-navy-900/30 backdrop-blur-sm rounded-xl border border-white/10">
+          <section className="max-w-3xl mx-auto text-center py-16 px-8 bg-navy-900/30 backdrop-blur-sm rounded-xl border border-c-border-subtle">
             <BadgeCheck size={48} className="text-c-accent mx-auto mb-6" />
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
               {t('pages.partner.cta.heading', 'Ready to Partner?')}

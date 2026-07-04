@@ -541,7 +541,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                         onClick={() => setSelectedRole(isSelected ? null : role.id)}
                         className={`p-4 bg-c-surface rounded-xl border cursor-pointer transition-all ${
                           isSelected
-                            ? 'border-primary-500 ring-2 ring-primary-500/20'
+                            ? 'border-primary-500 ring-2 ring-c-info/20'
                             : 'border-c-border-subtle hover:border-c-border'
                         }`}
                       >

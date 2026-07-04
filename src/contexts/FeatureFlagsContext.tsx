@@ -112,14 +112,14 @@ const DevToolsPanel: React.FC<DevToolsPanelProps> = ({ featureFlags, onClose }) 
 
   return (
     <motion.div
-      className="fixed bottom-4 right-4 w-96 bg-navy-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden z-[9999]"
+      className="fixed bottom-4 right-4 w-96 bg-navy-900 border border-c-border-subtle rounded-xl shadow-2xl overflow-hidden z-[9999]"
       initial={{ opacity: 0, y: 20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 20, scale: 0.95 }}
       transition={{ duration: 0.2 }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-navy-800 border-b border-white/10">
+      <div className="flex items-center justify-between px-4 py-3 bg-navy-800 border-b border-c-border-subtle">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1.5">
             <Flag size={16} className="text-primary-400" />
@@ -194,7 +194,7 @@ const DevToolsPanel: React.FC<DevToolsPanelProps> = ({ featureFlags, onClose }) 
                   {categoryFlags.map((flag) => (
                     <div
                       key={flag.id}
-                      className="flex items-center justify-between px-4 py-2.5 border-b border-white/5 last:border-b-0"
+                      className="flex items-center justify-between px-4 py-2.5 border-b border-c-border-subtle last:border-b-0"
                     >
                       <div className="flex-1 min-w-0 mr-3">
                         <div className="text-sm text-white truncate">{flag.name}</div>
@@ -212,7 +212,7 @@ const DevToolsPanel: React.FC<DevToolsPanelProps> = ({ featureFlags, onClose }) 
                           disabled={flag.allowLocalOverride === false}
                           className="sr-only peer"
                         />
-                        <div className="w-9 h-5 bg-navy-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-500/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-500 peer-disabled:opacity-50 peer-disabled:cursor-not-allowed" />
+                        <div className="w-9 h-5 bg-navy-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-c-focus rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-500 peer-disabled:opacity-50 peer-disabled:cursor-not-allowed" />
                       </label>
                     </div>
                   ))}
@@ -224,7 +224,7 @@ const DevToolsPanel: React.FC<DevToolsPanelProps> = ({ featureFlags, onClose }) 
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-2 bg-navy-800 border-t border-white/10">
+      <div className="px-4 py-2 bg-navy-800 border-t border-c-border-subtle">
         <div className="text-xs text-slate-500 dark:text-slate-400 text-center">
           Changes saved to localStorage
         </div>

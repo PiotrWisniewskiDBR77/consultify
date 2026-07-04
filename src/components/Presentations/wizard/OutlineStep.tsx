@@ -267,7 +267,7 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
                 <input
                   value={item.title}
                   onChange={(e) => updateSlide(index, { title: e.target.value })}
-                  className="font-medium text-slate-900 dark:text-white bg-transparent border-none outline-none focus:ring-1 focus:ring-primary-500/20 text-sm flex-1 min-w-[120px]"
+                  className="font-medium text-slate-900 dark:text-white bg-transparent border-none outline-none focus:ring-1 focus:ring-c-focus text-sm flex-1 min-w-[120px]"
                 />
 
                 {/* Intent badge (dropdown) */}
@@ -304,7 +304,7 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
                   'presentations.outline.contentHintPlaceholder',
                   'Content hint: describe what this slide should contain...'
                 )}
-                className="text-xs text-slate-500 dark:text-slate-400 mt-1 bg-transparent border-none outline-none focus:ring-1 focus:ring-primary-500/20 w-full"
+                className="text-xs text-slate-500 dark:text-slate-400 mt-1 bg-transparent border-none outline-none focus:ring-1 focus:ring-c-focus w-full"
               />
 
               <input
@@ -314,7 +314,7 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
                   'presentations.outline.keyMessagePlaceholder',
                   'Key message for this slide...'
                 )}
-                className="text-xs text-slate-600 dark:text-slate-300 mt-1 bg-transparent border-none outline-none focus:ring-1 focus:ring-primary-500/20 w-full"
+                className="text-xs text-slate-600 dark:text-slate-300 mt-1 bg-transparent border-none outline-none focus:ring-1 focus:ring-c-focus w-full"
               />
 
               {/* Source references */}

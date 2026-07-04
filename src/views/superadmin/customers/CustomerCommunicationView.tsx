@@ -401,7 +401,7 @@ const CustomerCommunicationView: React.FC = () => {
                   return (
                     <div
                       key={comm.id}
-                      className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                      className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-c-border-subtle hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-3">

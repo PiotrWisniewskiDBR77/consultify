@@ -26,9 +26,9 @@ export const FeedbackToggleButton: React.FC = () => {
         flex items-center justify-center
         rounded-l-md rounded-r-none
         bg-transparent
-        border border-white/20
+        border border-c-border
         hover:bg-white/[0.06]
-        hover:border-white/30
+        hover:border-c-border
         active:scale-95
         transition-all duration-150
       "
@@ -55,11 +55,11 @@ export const FeedbackToggleButton: React.FC = () => {
           transition-all duration-150
           pointer-events-none
           shadow-lg
-          border border-white/10
+          border border-c-border-subtle
         "
       >
         {t('widgets.feedback.tooltip', 'Feedback')}
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-[4px] w-1.5 h-1.5 bg-navy-900/95 dark:bg-slate-800/95 rotate-45 border-r border-t border-white/10" />
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-[4px] w-1.5 h-1.5 bg-navy-900/95 dark:bg-slate-800/95 rotate-45 border-r border-t border-c-border-subtle" />
       </div>
     </button>
   );

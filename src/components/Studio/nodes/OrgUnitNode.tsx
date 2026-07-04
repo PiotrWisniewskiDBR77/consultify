@@ -50,7 +50,7 @@ export const OrgUnitNode: React.FC<NodeProps<OrgUnitData>> = memo(
         className={`
                 w-48 bg-slate-800 rounded-lg border-2 overflow-hidden
                 transition-all duration-200 ${config.borderColor}
-                ${selected ? 'ring-2 ring-white/30 ring-offset-2 ring-offset-slate-900' : ''}
+                ${selected ? 'ring-2 ring-c-border ring-offset-2 ring-offset-slate-900' : ''}
             `}
       >
         {/* Input Handle (from parent) */}

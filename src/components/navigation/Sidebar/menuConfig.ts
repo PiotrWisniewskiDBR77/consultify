@@ -22,7 +22,6 @@ import {
   Factory,
   FileText,
   FolderOutput,
-  Gavel,
   GitBranch,
   LayoutDashboard,
   Lightbulb,
@@ -108,16 +107,17 @@ export function getMenuStructure(t: TranslationFn, _journeyState?: string): Menu
       viewId: AppView.BENEFITS_REALIZATION,
       badge: 'beta',
     },
-    // 7.5 Wnioski (Conclusions) — governed conclusions layer. Sits after Results
-    // because conclusions are the answer-first verdicts (verdict/rationale/evidence)
-    // distilled from tools + assessments that feed readouts and downstream results.
-    {
-      id: 'MODULE_CONCLUSIONS',
-      label: t('sidebar.conclusions', 'Conclusions'),
-      icon: React.createElement(Gavel, { size: 20 }),
-      viewId: AppView.CONCLUSIONS,
-      badge: 'beta',
-    },
+    // 7.5 Wnioski (Conclusions) — HIDDEN from sidebar (owner decision 2026-07-04:
+    // added without consent). Route/AppView.CONCLUSIONS stays wired; only the nav
+    // entry is removed so there is zero trace in the sidebar. Restore by
+    // un-commenting when the owner explicitly approves the module.
+    // {
+    //   id: 'MODULE_CONCLUSIONS',
+    //   label: t('sidebar.conclusions', 'Conclusions'),
+    //   icon: React.createElement(Gavel, { size: 20 }),
+    //   viewId: AppView.CONCLUSIONS,
+    //   badge: 'beta',
+    // },
     // 8. Finanse - Financial Analysis v3
     {
       id: 'MODULE_ECONOMICS',

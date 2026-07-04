@@ -56,7 +56,7 @@ export const DecisionTemperatureBlock: React.FC<DecisionTemperatureBlockProps> =
             onClick={() =>
               onAction({ type: 'open', target: 'decision', id: payload.hottestDecision!.id })
             }
-            className="rounded-lg border border-white/10 bg-white/[0.04] p-3 text-left transition hover:bg-white/[0.08]"
+            className="rounded-lg border border-c-border-subtle bg-white/[0.04] p-3 text-left transition hover:bg-white/[0.08]"
           >
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-white/45">
               <ShieldAlert size={12} className="text-amber-200" />
@@ -93,7 +93,7 @@ export const DecisionTemperatureBlock: React.FC<DecisionTemperatureBlockProps> =
                   },
                 })
               }
-              className="flex w-full items-start gap-2 rounded-lg border border-white/10 bg-white/[0.04] p-2.5 text-left transition hover:bg-white/[0.08]"
+              className="flex w-full items-start gap-2 rounded-lg border border-c-border-subtle bg-white/[0.04] p-2.5 text-left transition hover:bg-white/[0.08]"
             >
               <div className="rounded-xl bg-danger-500/15 p-2 text-danger-200">
                 <AlertTriangle size={15} />

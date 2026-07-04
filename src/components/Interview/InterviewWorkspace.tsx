@@ -2313,7 +2313,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     onClick={() => setActiveCategory(cat)}
                     className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
                       isActive
-                        ? 'bg-slate-200/70 dark:bg-white/[0.08] text-c-text border-slate-400/40 dark:border-white/20'
+                        ? 'bg-slate-200/70 dark:bg-white/[0.08] text-c-text border-slate-400/40 dark:border-c-border'
                         : 'bg-white/60 dark:bg-navy-900/40 text-c-text-muted border-slate-200/60 dark:border-navy-700/60 hover:bg-slate-50/80 dark:hover:bg-navy-800/50'
                     }`}
                   >

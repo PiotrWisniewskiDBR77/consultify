@@ -156,8 +156,8 @@ export const SuperAdminStorageDetailModal: React.FC<StorageModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-c-surface border border-white/10 rounded-xl w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh]">
-        <div className="p-6 border-b border-white/10 flex items-center justify-between">
+      <div className="bg-c-surface border border-c-border-subtle rounded-xl w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh]">
+        <div className="p-6 border-b border-c-border-subtle flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold text-c-text flex items-center gap-2">
               <Folder className="text-pink-500" />
@@ -175,7 +175,7 @@ export const SuperAdminStorageDetailModal: React.FC<StorageModalProps> = ({
           </button>
         </div>
 
-        <div className="p-4 border-b border-white/10 bg-c-bg">
+        <div className="p-4 border-b border-c-border-subtle bg-c-bg">
           <div className="relative">
             <Search
               className="absolute left-3 top-2.5 text-slate-500 dark:text-slate-400"
@@ -187,7 +187,7 @@ export const SuperAdminStorageDetailModal: React.FC<StorageModalProps> = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               disabled={Boolean(loadError)}
-              className="w-full pl-10 pr-4 py-2 bg-c-text text-c-bg border border-white/10 rounded-lg focus:outline-none focus:border-pink-500"
+              className="w-full pl-10 pr-4 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg focus:outline-none focus:border-pink-500"
             />
           </div>
         </div>

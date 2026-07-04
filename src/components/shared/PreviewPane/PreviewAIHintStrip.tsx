@@ -214,7 +214,7 @@ export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
             }}
             placeholder={isPolish ? 'Zapytaj o to...' : 'Ask about this...'}
             disabled={chatLoading}
-            className="flex-1 h-7 px-2.5 rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-xs text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-primary-400/40"
+            className="flex-1 h-7 px-2.5 rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-xs text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-c-focus"
           />
           <button
             onClick={handleChatSubmit}

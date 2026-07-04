@@ -432,7 +432,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                                 })
                                               }
                                               disabled={readOnly}
-                                              className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500"
+                                              className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-c-focus"
                                             />
                                             <Mail size={12} className="text-slate-600" />
                                             <span className="text-xs text-slate-600 dark:text-slate-400">
@@ -456,7 +456,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                                 })
                                               }
                                               disabled={readOnly}
-                                              className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500"
+                                              className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-c-focus"
                                             />
                                             <Bell size={12} className="text-slate-600" />
                                             <span className="text-xs text-slate-600 dark:text-slate-400">
@@ -517,7 +517,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                           <select
                             value={selectedUserId}
                             onChange={(e) => setSelectedUserId(e.target.value)}
-                            className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                            className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid"
                           >
                             <option value="">{isPolish ? 'Wybierz...' : 'Select...'}</option>
                             {availableToAdd.map((user) => (
@@ -534,7 +534,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                           <select
                             value={selectedRole}
                             onChange={(e) => setSelectedRole(e.target.value as StakeholderRole)}
-                            className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                            className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid"
                           >
                             {Object.entries(ROLE_CONFIG).map(([role, config]) => (
                               <option key={role} value={role}>

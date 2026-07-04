@@ -37,7 +37,7 @@ export const AssessmentAuditsWorkspace: React.FC<AssessmentAuditsWorkspaceProps>
       <div className="mb-8">
         <h2 className="text-xl font-bold mb-2 flex items-center gap-2">
           Additional Audits
-          <span className="text-xs font-normal text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/10 px-2 py-0.5 rounded ml-2">
+          <span className="text-xs font-normal text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-c-border-subtle px-2 py-0.5 rounded ml-2">
             ADMA, SIRI, ISO, Lean
           </span>
         </h2>

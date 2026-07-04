@@ -31,7 +31,7 @@ export const AIFreezeBanner: React.FC = () => {
       </div>
 
       <div className="flex items-center gap-3">
-        <div className="hidden md:flex items-center gap-2 bg-black/20 px-3 py-1 rounded-full border border-white/10">
+        <div className="hidden md:flex items-center gap-2 bg-black/20 px-3 py-1 rounded-full border border-c-border-subtle">
           <Cpu size={14} className="text-white/80" />
           <span className="text-[11px] font-medium uppercase tracking-tighter">
             {t('aiFreezeBanner.protocol', 'Budget Control Protocol')}

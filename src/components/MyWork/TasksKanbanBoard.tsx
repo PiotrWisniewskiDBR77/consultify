@@ -289,7 +289,7 @@ const KanbanCardContent: React.FC<{
               <img
                 src={task.assignee.avatarUrl}
                 alt={assigneeName}
-                className="w-5 h-5 rounded-full object-cover ring-1 ring-white/20"
+                className="w-5 h-5 rounded-full object-cover ring-1 ring-c-border"
               />
             ) : (
               <div className="w-5 h-5 rounded-full bg-c-surface-raised text-c-text-secondary flex items-center justify-center text-[10px] font-bold ring-1 ring-c-border-subtle">

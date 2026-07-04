@@ -105,7 +105,7 @@ export const PartnerApplicationView: React.FC = () => {
               ].map((item) => (
                 <div
                   key={item}
-                  className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4"
+                  className="flex items-start gap-3 rounded-2xl border border-c-border-subtle bg-white/[0.04] px-4 py-4"
                 >
                   <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-c-success" />
                   <span className="text-sm text-white/75">{item}</span>
@@ -114,7 +114,7 @@ export const PartnerApplicationView: React.FC = () => {
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-white/10 bg-c-surface p-8 shadow-2xl">
+          <div className="rounded-[28px] border border-c-border-subtle bg-c-surface p-8 shadow-2xl">
             {isSubmitted ? (
               <div className="text-center">
                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-c-success/10 text-c-success">

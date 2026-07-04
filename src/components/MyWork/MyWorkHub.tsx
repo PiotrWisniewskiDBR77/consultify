@@ -556,7 +556,7 @@ const CTA_BASE =
   'inline-flex items-center justify-center h-9 rounded-full border px-4 text-sm font-semibold transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
 const CTA_TONE: Record<'violet' | 'emerald' | 'amber' | 'indigo' | 'neutral', string> = {
   neutral:
-    'border-navy-700/20 bg-navy-900 text-white hover:bg-navy-800 active:bg-navy-950 dark:border-white/20 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]',
+    'border-navy-700/20 bg-navy-900 text-white hover:bg-navy-800 active:bg-navy-950 dark:border-c-border dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]',
   violet:
     'border-c-text bg-c-text text-c-bg hover:bg-c-text-secondary dark:border-c-text dark:bg-c-text dark:hover:bg-c-text-secondary',
   emerald:
@@ -2865,7 +2865,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               })}
             </div>
             <div className={MENU_3_RIGHT_CLASS}>
-              <div className="inline-flex items-center gap-1 rounded-full border border-slate-200/80 bg-white/80 p-1 dark:border-white/[0.08] dark:bg-navy-900/70">
+              <div className="inline-flex items-center gap-1 rounded-full border border-slate-200/80 bg-white/80 p-1 dark:border-c-border-subtle dark:bg-c-surface">
                 {(
                   [
                     {

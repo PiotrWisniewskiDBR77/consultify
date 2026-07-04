@@ -218,7 +218,7 @@ const TagChip: React.FC<TagChipProps> = ({ tag, isActive, onClick }) => {
     <button
       onClick={onClick}
       className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium transition-all whitespace-nowrap
-        ${isActive ? 'bg-navy-900 dark:bg-white/15 text-white shadow-sm ring-1 ring-slate-500/40 dark:ring-white/30' : kindColors[tag.kind] || 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300'}
+        ${isActive ? 'bg-navy-900 dark:bg-white/15 text-white shadow-sm ring-1 ring-slate-500/40 dark:ring-c-border' : kindColors[tag.kind] || 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300'}
       `}
     >
       {tag.label}
@@ -358,7 +358,7 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t('help.knowledge.searchPlaceholder', 'Search articles...')}
             data-testid="help-knowledge-search"
-            className="w-full pl-9 pr-8 py-2.5 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full pl-9 pr-8 py-2.5 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-c-focus"
           />
           {searchQuery && (
             <button

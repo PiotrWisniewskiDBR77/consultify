@@ -71,7 +71,7 @@ const LockedFrameworkOverlay: React.FC<LockedFrameworkOverlayProps> = ({
             </button>
           )}
         </div>
-        <div className="mt-8 pt-6 border-t border-slate-200 dark:border-white/10">
+        <div className="mt-8 pt-6 border-t border-slate-200 dark:border-c-border-subtle">
           <p className="text-xs text-slate-500">
             {config?.legalNoticeType === 'proprietary'
               ? t(

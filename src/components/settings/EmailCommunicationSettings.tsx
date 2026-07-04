@@ -270,7 +270,7 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
               className={`p-4 rounded-lg border-2 text-left transition-all ${
                 emailPrefs.digestFrequency === option.value
                   ? 'border-c-accent bg-c-accent-soft dark:bg-c-accent-soft'
-                  : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border dark:hover:border-white/20'
+                  : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border dark:hover:border-c-border'
               }`}
             >
               <p

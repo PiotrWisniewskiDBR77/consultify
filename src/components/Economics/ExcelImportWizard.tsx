@@ -248,7 +248,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
                   className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all ${
                     isDragging
                       ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
-                      : 'border-slate-300 dark:border-white/20 hover:border-emerald-400 hover:bg-slate-50 dark:hover:bg-white/5'
+                      : 'border-slate-300 dark:border-c-border hover:border-emerald-400 hover:bg-slate-50 dark:hover:bg-white/5'
                   }`}
                 >
                   <FileSpreadsheet

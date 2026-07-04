@@ -523,7 +523,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                         ${isLastOdd ? 'col-span-1' : ''}
                         ${
                           isSelected
-                            ? 'border-slate-400 dark:border-white/40 bg-slate-100/60 dark:bg-white/[0.07] ring-1 ring-slate-300/60 dark:ring-white/10'
+                            ? 'border-slate-400 dark:border-c-border bg-slate-100/60 dark:bg-white/[0.07] ring-1 ring-slate-300/60 dark:ring-c-border'
                             : 'border-slate-200/60 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] hover:border-slate-300 dark:hover:border-white/[0.15] hover:bg-slate-50/50 dark:hover:bg-white/[0.04]'
                         }
                       `}
@@ -567,7 +567,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                     border border-slate-200/60 dark:border-white/[0.08]
                     rounded-xl text-slate-800 dark:text-slate-200
                     placeholder-slate-400 dark:placeholder-slate-600
-                    focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-400
+                    focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid
                     resize-y transition-colors"
                 />
 
@@ -674,7 +674,7 @@ const TTSSettings: React.FC<{
                   icon: '🔊',
                 });
               }}
-              className="w-full px-2 py-1.5 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/[0.08] rounded-lg text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-primary-500 focus:outline-none"
+              className="w-full px-2 py-1.5 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/[0.08] rounded-lg text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-c-focus focus:outline-none"
             >
               <option value="">{t('aiChat.menu.ttsAutoVoice', 'Auto (detect language)')}</option>
               {availableVoices
@@ -723,7 +723,7 @@ const TTSSettings: React.FC<{
                     }}
                     className={`px-2 py-1.5 text-[11px] rounded-lg border transition-colors ${
                       isActive
-                        ? 'bg-slate-200/70 dark:bg-white/[0.1] border-slate-400 dark:border-white/30 text-slate-900 dark:text-white font-medium'
+                        ? 'bg-slate-200/70 dark:bg-white/[0.1] border-slate-400 dark:border-c-border text-slate-900 dark:text-white font-medium'
                         : 'bg-slate-50/60 dark:bg-white/[0.03] border-slate-200/60 dark:border-white/[0.06] text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
                     }`}
                   >

@@ -3037,7 +3037,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t('integrations.syncHub.search', 'Search integrations…')}
-            className="w-full h-9 pl-9 pr-4 bg-c-surface-raised border border-c-border rounded-lg text-sm text-c-text placeholder-slate-500 focus:outline-none focus:border-primary-500/50"
+            className="w-full h-9 pl-9 pr-4 bg-c-surface-raised border border-c-border rounded-lg text-sm text-c-text placeholder-slate-500 focus:outline-none focus:border-c-focus-solid"
           />
         </div>
         <button
@@ -3790,7 +3790,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             value={usersSearchQuery}
             onChange={(e) => setUsersSearchQuery(e.target.value)}
             placeholder={t('integrations.syncHub.usersSearch', 'Search users, connectors, status…')}
-            className="w-full h-9 pl-9 pr-4 bg-c-surface-raised border border-c-border rounded-lg text-sm text-c-text placeholder-slate-500 focus:outline-none focus:border-primary-500/50"
+            className="w-full h-9 pl-9 pr-4 bg-c-surface-raised border border-c-border rounded-lg text-sm text-c-text placeholder-slate-500 focus:outline-none focus:border-c-focus-solid"
           />
         </div>
         <button
@@ -4053,7 +4053,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-white/10">
+              <tr className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-c-border-subtle">
                 <th className="text-left pb-2 pr-4">{t('integrations.syncHub.wfName', 'Name')}</th>
                 <th className="text-left pb-2 pr-4">
                   {t('integrations.syncHub.wfConnector', 'Connector')}
@@ -4072,7 +4072,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             </thead>
             <tbody>
               {v8Workflows.map((wf) => (
-                <tr key={wf.workflowId} className="border-b border-white/5">
+                <tr key={wf.workflowId} className="border-b border-c-border-subtle">
                   <td className="py-2 pr-4 font-medium">{wf.name || wf.connectorId}</td>
                   <td className="py-2 pr-4 text-slate-400 dark:text-slate-500">{wf.connectorId}</td>
                   <td className="py-2 pr-4">

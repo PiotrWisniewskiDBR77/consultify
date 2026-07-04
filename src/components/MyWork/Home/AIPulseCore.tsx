@@ -69,7 +69,7 @@ export const AIPulseCore: React.FC<AIPulseCoreProps> = ({ block, onAction }) => 
           </button>
           <button
             onClick={() => onAction({ type: 'navigate', target: 'tasks' })}
-            className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-[11px] font-medium text-slate-200 transition hover:bg-white/[0.08]"
+            className="rounded-lg border border-c-border-subtle bg-white/[0.04] px-2.5 py-1.5 text-[11px] font-medium text-slate-200 transition hover:bg-white/[0.08]"
           >
             {t('myWork.radar.openExecution')}
           </button>
@@ -118,7 +118,7 @@ export const AIPulseCore: React.FC<AIPulseCoreProps> = ({ block, onAction }) => 
                 id: item.id,
               })
             }
-            className="group rounded-lg border border-white/10 bg-white/[0.03] p-2.5 text-left transition hover:bg-white/[0.06]"
+            className="group rounded-lg border border-c-border-subtle bg-white/[0.03] p-2.5 text-left transition hover:bg-white/[0.06]"
           >
             <div className="flex items-center justify-between gap-3">
               <div className="font-mono text-[9px] uppercase tracking-wider text-white/40">

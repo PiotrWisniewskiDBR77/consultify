@@ -162,7 +162,7 @@ export const BackupConfigPanel: React.FC = () => {
         <select
           value={selectedOrgId}
           onChange={(e) => setSelectedOrgId(e.target.value)}
-          className="px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none min-w-[200px]"
+          className="px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-c-focus-solid outline-none min-w-[200px]"
         >
           <option value="" disabled>
             Select Organization
@@ -271,7 +271,7 @@ export const BackupConfigPanel: React.FC = () => {
                     value={config.frequency}
                     onChange={(e) => updateConfig('frequency', e.target.value)}
                     disabled={!config.enabled}
-                    className="w-full px-4 py-2.5 bg-c-surface/50 border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none disabled:opacity-50"
+                    className="w-full px-4 py-2.5 bg-c-surface/50 border border-c-border-subtle rounded-lg text-c-text focus:border-c-focus-solid outline-none disabled:opacity-50"
                   >
                     <option value="hourly">Hourly</option>
                     <option value="daily">Daily</option>
@@ -291,7 +291,7 @@ export const BackupConfigPanel: React.FC = () => {
                     value={config.retention_days}
                     onChange={(e) => updateConfig('retention_days', parseInt(e.target.value))}
                     disabled={!config.enabled}
-                    className="w-full px-4 py-2.5 bg-c-surface/50 border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none disabled:opacity-50"
+                    className="w-full px-4 py-2.5 bg-c-surface/50 border border-c-border-subtle rounded-lg text-c-text focus:border-c-focus-solid outline-none disabled:opacity-50"
                   />
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     Backups older than this will be deleted

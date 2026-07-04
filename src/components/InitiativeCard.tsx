@@ -245,7 +245,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
             )}
 
             {initiative.axis && (
-              <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-500 border-slate-200 dark:border-white/10">
+              <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-500 border-slate-200 dark:border-c-border-subtle">
                 Axis{' '}
                 {typeof initiative.axis === 'object'
                   ? `${initiative.axis.x}, ${initiative.axis.y}`
@@ -508,7 +508,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
             <button
               onClick={handleEnrich}
               disabled={isEnriching}
-              className={`text-[10px] px-2 py-1 rounded border transition-colors flex items-center gap-1 ${isEnriching ? 'bg-blue-500/20 text-blue-300 border-blue-500/30' : 'bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-500 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-navy-800/40 hover:text-slate-900 dark:hover:text-white'}`}
+              className={`text-[10px] px-2 py-1 rounded border transition-colors flex items-center gap-1 ${isEnriching ? 'bg-blue-500/20 text-blue-300 border-blue-500/30' : 'bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-500 border-slate-200 dark:border-c-border-subtle hover:bg-slate-100 dark:hover:bg-navy-800/40 hover:text-slate-900 dark:hover:text-white'}`}
             >
               {isEnriching ? <span className="animate-spin">⟳</span> : <Globe size={10} />}
               {isEnriching ? 'AI Analyzing...' : 'Analyze'}

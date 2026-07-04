@@ -364,7 +364,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
                     'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition',
                     active
                       ? 'border-primary-400/60 bg-primary-500/15 text-primary-700 dark:border-primary-300/60 dark:bg-primary-500/20 dark:text-primary-100'
-                      : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-100 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300 dark:hover:border-white/20 dark:hover:bg-white/[0.08]'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-100 dark:border-c-border-subtle dark:bg-white/[0.04] dark:text-slate-300 dark:hover:border-c-border dark:hover:bg-white/[0.08]'
                   )}
                 >
                   {filter.label}
@@ -397,7 +397,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
               <button
                 type="button"
                 onClick={() => void refresh()}
-                className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-[12px] font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200 dark:hover:border-white/20 dark:hover:bg-white/[0.1]"
+                className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-[12px] font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 dark:border-c-border-subtle dark:bg-white/[0.05] dark:text-slate-200 dark:hover:border-c-border dark:hover:bg-white/[0.1]"
               >
                 {t('myWork.radar.retry')}
               </button>
@@ -649,7 +649,7 @@ function RadarCanvas({
   };
 
   return (
-    <div className="relative flex h-full min-h-[620px] flex-col gap-2 overflow-hidden rounded-3xl border border-slate-200/70 bg-gradient-to-b from-white to-slate-50 p-3 shadow-[0_24px_60px_-30px_rgba(15,23,42,0.25)] dark:border-white/10 dark:from-[#0A1122] dark:to-[#06080F] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_24px_60px_-24px_rgba(0,0,0,0.8)]">
+    <div className="relative flex h-full min-h-[620px] flex-col gap-2 overflow-hidden rounded-3xl border border-slate-200/70 bg-gradient-to-b from-white to-slate-50 p-3 shadow-[0_24px_60px_-30px_rgba(15,23,42,0.25)] dark:border-c-border-subtle dark:from-[#0A1122] dark:to-[#06080F] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_24px_60px_-24px_rgba(0,0,0,0.8)]">
       <div
         className="relative flex-1 overflow-hidden rounded-2xl border border-slate-200/70 bg-[radial-gradient(circle_at_50%_46%,rgba(56,130,246,0.10),transparent_62%)] dark:border-white/[0.06] dark:bg-[radial-gradient(circle_at_50%_46%,rgba(56,130,246,0.14),transparent_62%)]"
         tabIndex={0}
@@ -950,7 +950,7 @@ function RadarCanvas({
 
               <span
                 className={cn(
-                  'pointer-events-none absolute bottom-[128%] left-1/2 z-30 -translate-x-1/2 whitespace-nowrap rounded-md border border-white/10 bg-slate-950/90 px-1.5 py-0.5 text-[10px] font-medium text-slate-100 shadow-lg transition-opacity',
+                  'pointer-events-none absolute bottom-[128%] left-1/2 z-30 -translate-x-1/2 whitespace-nowrap rounded-md border border-c-border-subtle bg-slate-950/90 px-1.5 py-0.5 text-[10px] font-medium text-slate-100 shadow-lg transition-opacity',
                   selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                 )}
               >
@@ -962,7 +962,7 @@ function RadarCanvas({
 
         {/* Selected signal info card */}
         {selectedSignal && (
-          <div className="pointer-events-none absolute bottom-2.5 left-1/2 -translate-x-1/2 rounded-lg border border-white/12 bg-slate-950/70 px-3 py-1.5 text-center text-[11px] text-slate-100 shadow-lg backdrop-blur-sm">
+          <div className="pointer-events-none absolute bottom-2.5 left-1/2 -translate-x-1/2 rounded-lg border border-c-border-subtle bg-slate-950/70 px-3 py-1.5 text-center text-[11px] text-slate-100 shadow-lg backdrop-blur-sm">
             <div className="font-semibold">{selectedSignal.name}</div>
             <div className="text-[10px] text-slate-400">
               {selectedSignal.ring} · {quadrantTitle(selectedSignal.quadrant)}
@@ -1007,7 +1007,7 @@ function RadarPreviewPanel({
 
   if (!signal) {
     return (
-      <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white/60 p-6 text-center text-slate-500 dark:border-white/10 dark:bg-slate-900/40 dark:text-slate-400">
+      <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white/60 p-6 text-center text-slate-500 dark:border-c-border-subtle dark:bg-slate-900/40 dark:text-slate-400">
         Pick a signal on the radar to see why it may matter to you right now.
       </div>
     );
@@ -1090,7 +1090,7 @@ function RadarPreviewPanel({
         shortDescription={shortDescription}
       />
 
-      <div className="mt-3 rounded-xl border border-slate-200/70 bg-slate-50/60 p-2.5 dark:border-white/10 dark:bg-white/[0.02]">
+      <div className="mt-3 rounded-xl border border-slate-200/70 bg-slate-50/60 p-2.5 dark:border-c-border-subtle dark:bg-white/[0.02]">
         <button
           type="button"
           onClick={() =>
@@ -1220,7 +1220,7 @@ function TeresaBriefing({
       ];
 
   return (
-    <div className="mt-3 flex-1 overflow-auto rounded-xl border border-slate-200/70 bg-white/60 p-3 dark:border-white/10 dark:bg-white/[0.02]">
+    <div className="mt-3 flex-1 overflow-auto rounded-xl border border-slate-200/70 bg-white/60 p-3 dark:border-c-border-subtle dark:bg-white/[0.02]">
       <div className="mb-2.5 flex items-center gap-1.5">
         <Sparkles className="h-3.5 w-3.5 text-primary-500 dark:text-primary-300" />
         <span className="text-[10px] font-semibold uppercase tracking-wider text-primary-700 dark:text-primary-200">
@@ -1247,7 +1247,7 @@ function Badge({ children, tone }: { children: React.ReactNode; tone?: string })
   return (
     <span
       className={cn(
-        'rounded-full border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-slate-600 dark:border-white/15 dark:bg-white/[0.06] dark:text-slate-300',
+        'rounded-full border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-slate-600 dark:border-c-border-subtle dark:bg-white/[0.06] dark:text-slate-300',
         tone
       )}
     >
@@ -1289,9 +1289,9 @@ function ActionChip({
       className={cn(
         'inline-flex min-w-0 flex-1 items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-[11px] font-medium transition',
         tone === 'normal' &&
-          'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-white/12 dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.1]',
+          'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-c-border-subtle dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.1]',
         tone === 'subtle' &&
-          'border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100 dark:border-white/10 dark:bg-white/[0.02] dark:text-slate-400 dark:hover:bg-white/[0.08]'
+          'border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100 dark:border-c-border-subtle dark:bg-white/[0.02] dark:text-slate-400 dark:hover:bg-white/[0.08]'
       )}
     >
       {icon}

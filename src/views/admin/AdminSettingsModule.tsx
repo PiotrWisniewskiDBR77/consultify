@@ -202,7 +202,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col bg-white dark:bg-navy-900">
-        <div className="flex items-center border-b border-slate-200 px-4 py-2 lg:hidden dark:border-white/10">
+        <div className="flex items-center border-b border-slate-200 px-4 py-2 lg:hidden dark:border-c-border-subtle">
           <Button
             variant="ghost"
             size="sm"
@@ -215,7 +215,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
 
         <ScrollArea className="flex-1">
           <div className="space-y-4 p-3 lg:p-4">
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-c-border-subtle dark:bg-white/5">
               <h1 className="text-xl font-semibold text-slate-900 dark:text-white">
                 {t(meta.titleKey, { defaultValue: meta.titleDefault })}
               </h1>

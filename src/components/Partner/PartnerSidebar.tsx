@@ -450,7 +450,7 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="p-3 border-t border-slate-200 dark:border-white/5">
+      <div className="p-3 border-t border-slate-200 dark:border-c-border-subtle">
         <button
           onClick={onBack || (() => window.history.back())}
           className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/20 rounded-lg transition-colors"

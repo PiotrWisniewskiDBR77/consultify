@@ -290,7 +290,7 @@ export const WorkspaceBreadcrumb: React.FC<WorkspaceBreadcrumbProps> = ({
                       type="button"
                       data-testid={`workspace-breadcrumb-segment-${idx}`}
                       onClick={handleChatClick}
-                      className="rounded px-1 -mx-1 hover:bg-slate-100 dark:hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-primary-400/50 text-primary-700 dark:text-primary-200"
+                      className="rounded px-1 -mx-1 hover:bg-slate-100 dark:hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-c-focus text-primary-700 dark:text-primary-200"
                     >
                       {segment.label}
                     </button>

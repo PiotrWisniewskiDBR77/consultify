@@ -42,7 +42,7 @@ export const AdminSecurityIdentityPanel: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-c-border-subtle dark:bg-white/5">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
           Security & Identity
         </h3>
@@ -52,7 +52,7 @@ export const AdminSecurityIdentityPanel: React.FC = () => {
         </p>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-2 dark:border-white/10 dark:bg-white/5">
+      <div className="rounded-2xl border border-slate-200 bg-white p-2 dark:border-c-border-subtle dark:bg-white/5">
         <div className="flex flex-wrap gap-2">
           {tabs.map((tab) => {
             const Icon = tab.icon;

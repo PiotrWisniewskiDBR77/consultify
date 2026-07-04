@@ -243,7 +243,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={text.search[lang]}
-                  className="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-700 border border-transparent focus:border-primary-500 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 outline-none"
+                  className="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-700 border border-transparent focus:border-c-focus-solid rounded-lg text-slate-900 dark:text-white placeholder-slate-400 outline-none"
                 />
               </div>
             </div>

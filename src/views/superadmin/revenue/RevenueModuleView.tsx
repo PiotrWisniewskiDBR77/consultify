@@ -68,7 +68,7 @@ export const RevenueModuleView: React.FC = () => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex flex-wrap gap-2 bg-white dark:bg-navy-900/50 p-2 rounded-xl border border-slate-200 dark:border-white/5">
+      <div className="flex flex-wrap gap-2 bg-white dark:bg-navy-900/50 p-2 rounded-xl border border-slate-200 dark:border-c-border-subtle">
         {tabs.map((tab) => (
           <button
             key={tab.id}

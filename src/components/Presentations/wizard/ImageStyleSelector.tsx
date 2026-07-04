@@ -36,7 +36,7 @@ export const ImageStyleSelector: React.FC<ImageStyleSelectorProps> = ({ value, o
               onClick={() => onChange(style.id)}
               className={`p-3 rounded-lg border-2 text-center transition-all ${
                 selected
-                  ? 'border-slate-500 dark:border-white/40 bg-slate-100/60 dark:bg-white/[0.06]'
+                  ? 'border-slate-500 dark:border-c-border bg-slate-100/60 dark:bg-white/[0.06]'
                   : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
               }`}
             >

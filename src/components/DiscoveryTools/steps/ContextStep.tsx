@@ -1207,7 +1207,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
       return (
         <div className="mt-4 space-y-3">
           {isOpen && (
-            <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]">
+            <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-c-border-subtle dark:bg-white/[0.04]">
               {mode === 'comment' && (
                 <>
                   <textarea
@@ -1289,18 +1289,18 @@ export const ContextStep: React.FC<ContextStepProps> = ({
 
     return (
       <div className="mx-auto max-w-5xl space-y-4">
-        <div className="overflow-hidden rounded-[30px] border border-slate-200/70 bg-[radial-gradient(circle_at_top_left,rgba(165,28,48,0.08),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.98))] shadow-[0_20px_70px_-35px_rgba(15,23,42,0.25)] dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(165,28,48,0.18),transparent_24%),linear-gradient(180deg,#0b1020,#0a0f1b)]">
-          <div className="border-b border-slate-200/70 px-6 py-5 dark:border-white/10">
+        <div className="overflow-hidden rounded-[30px] border border-slate-200/70 bg-[radial-gradient(circle_at_top_left,rgba(165,28,48,0.08),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.98))] shadow-[0_20px_70px_-35px_rgba(15,23,42,0.25)] dark:border-c-border-subtle dark:bg-[radial-gradient(circle_at_top_left,rgba(165,28,48,0.18),transparent_24%),linear-gradient(180deg,#0b1020,#0a0f1b)]">
+          <div className="border-b border-slate-200/70 px-6 py-5 dark:border-c-border-subtle">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center rounded-full border border-primary-400/20 bg-primary-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary-700 dark:text-primary-200">
                   Mission & Context
                 </span>
-                <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300">
+                <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:border-c-border-subtle dark:bg-white/[0.04] dark:text-slate-300">
                   {isPolish ? 'Propozycja konsultanta' : 'Consultant proposal'}
                 </span>
               </div>
-              <span className="inline-flex rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
+              <span className="inline-flex rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-c-border-subtle dark:bg-white/[0.05] dark:text-slate-200">
                 {isGenerating ? (isPolish ? 'AI pracuje' : 'AI working') : 'Draft'}
               </span>
             </div>
@@ -1328,14 +1328,14 @@ export const ContextStep: React.FC<ContextStepProps> = ({
               {renderMissionActionPanel('understanding')}
             </div>
 
-            <div className="rounded-[26px] border border-slate-200/70 bg-white/85 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
+            <div className="rounded-[26px] border border-slate-200/70 bg-white/85 p-5 shadow-sm dark:border-c-border-subtle dark:bg-white/[0.04]">
               <div className="flex items-center justify-between gap-3">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
                   {isPolish
                     ? '1. Jaki kierunek strategiczny projektujemy?'
                     : '1. What strategic direction are we designing?'}
                 </div>
-                <span className="inline-flex rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
+                <span className="inline-flex rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-c-border-subtle dark:bg-white/[0.05] dark:text-slate-200">
                   1/5
                 </span>
               </div>
@@ -1554,7 +1554,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                         className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] transition-colors ${
                           active
                             ? 'border-emerald-400 bg-emerald-500 text-white'
-                            : 'border-emerald-200/70 bg-white/80 text-slate-700 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200'
+                            : 'border-emerald-200/70 bg-white/80 text-slate-700 dark:border-c-border-subtle dark:bg-white/[0.04] dark:text-slate-200'
                         }`}
                         title={option.description}
                       >
@@ -1772,12 +1772,12 @@ export const ContextStep: React.FC<ContextStepProps> = ({
             )}
 
             {displayedContext.question5Confirmed && (
-              <div className="rounded-[26px] border border-slate-200/70 bg-white/85 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
+              <div className="rounded-[26px] border border-slate-200/70 bg-white/85 p-5 shadow-sm dark:border-c-border-subtle dark:bg-white/[0.04]">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
                     {isPolish ? 'Executive summary tej sesji' : 'Executive summary of this session'}
                   </div>
-                  <span className="inline-flex rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
+                  <span className="inline-flex rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-c-border-subtle dark:bg-white/[0.05] dark:text-slate-200">
                     Summary
                   </span>
                 </div>
@@ -1924,7 +1924,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
           }
           placeholder={labels.goalPlaceholder[lang]}
           rows={3}
-          className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+          className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-c-focus resize-none"
         />
         <InlineAssist
           hint={
@@ -1947,7 +1947,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
           }
           placeholder={labels.scopePlaceholder[lang]}
           rows={2}
-          className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+          className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-c-focus resize-none"
         />
         <InlineAssist
           hint={

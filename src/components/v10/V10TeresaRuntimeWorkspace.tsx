@@ -7,7 +7,7 @@ export const V10TeresaRuntimeWorkspace: React.FC = () => {
   const runtime = useV10TeresaRuntime();
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-navy-900">
+    <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-c-border-subtle dark:bg-navy-900">
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-200">

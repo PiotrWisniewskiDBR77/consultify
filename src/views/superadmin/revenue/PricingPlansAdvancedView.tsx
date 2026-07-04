@@ -518,7 +518,7 @@ export const PricingPlansAdvancedView: React.FC = () => {
             <div className="overflow-x-auto">
               <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-200 dark:border-white/10">
+                  <tr className="border-b border-slate-200 dark:border-c-border-subtle">
                     <th className="text-left py-3 px-4 text-slate-600 dark:text-slate-400">
                       Feature
                     </th>
@@ -533,7 +533,7 @@ export const PricingPlansAdvancedView: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-b border-slate-200/70 dark:border-white/10">
+                  <tr className="border-b border-slate-200/70 dark:border-c-border-subtle">
                     <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Monthly Price</td>
                     {comparisonData.plans?.map((plan: any) => (
                       <td
@@ -544,7 +544,7 @@ export const PricingPlansAdvancedView: React.FC = () => {
                       </td>
                     ))}
                   </tr>
-                  <tr className="border-b border-slate-200/70 dark:border-white/10">
+                  <tr className="border-b border-slate-200/70 dark:border-c-border-subtle">
                     <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Yearly Price</td>
                     {comparisonData.plans?.map((plan: any) => (
                       <td
@@ -555,7 +555,7 @@ export const PricingPlansAdvancedView: React.FC = () => {
                       </td>
                     ))}
                   </tr>
-                  <tr className="border-b border-slate-200/70 dark:border-white/10">
+                  <tr className="border-b border-slate-200/70 dark:border-c-border-subtle">
                     <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Max Users</td>
                     {comparisonData.plans?.map((plan: any) => (
                       <td
@@ -566,7 +566,7 @@ export const PricingPlansAdvancedView: React.FC = () => {
                       </td>
                     ))}
                   </tr>
-                  <tr className="border-b border-slate-200/70 dark:border-white/10">
+                  <tr className="border-b border-slate-200/70 dark:border-c-border-subtle">
                     <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Max Projects</td>
                     {comparisonData.plans?.map((plan: any) => (
                       <td
@@ -577,7 +577,7 @@ export const PricingPlansAdvancedView: React.FC = () => {
                       </td>
                     ))}
                   </tr>
-                  <tr className="border-b border-slate-200/70 dark:border-white/10">
+                  <tr className="border-b border-slate-200/70 dark:border-c-border-subtle">
                     <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Storage</td>
                     {comparisonData.plans?.map((plan: any) => (
                       <td
@@ -588,7 +588,7 @@ export const PricingPlansAdvancedView: React.FC = () => {
                       </td>
                     ))}
                   </tr>
-                  <tr className="border-b border-slate-200/70 dark:border-white/10">
+                  <tr className="border-b border-slate-200/70 dark:border-c-border-subtle">
                     <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Trial Days</td>
                     {comparisonData.plans?.map((plan: any) => (
                       <td

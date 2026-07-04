@@ -23,7 +23,7 @@ export const TeamSignalBlock: React.FC<TeamSignalBlockProps> = ({ block, onActio
   return (
     <HomeBlockShell block={block}>
       <div className="grid gap-2.5">
-        <div className="rounded-lg border border-white/10 bg-white/[0.04] p-2.5">
+        <div className="rounded-lg border border-c-border-subtle bg-white/[0.04] p-2.5">
           <div className="flex items-center gap-1.5 font-mono text-[8px] uppercase tracking-wider text-white/40">
             <Users size={10} className="text-slate-600" />
             {t('myWork.radar.teamReadout')}
@@ -52,7 +52,7 @@ export const TeamSignalBlock: React.FC<TeamSignalBlockProps> = ({ block, onActio
                   },
                 })
               }
-              className="flex w-full items-start gap-2 rounded-lg border border-white/10 bg-white/[0.04] p-2.5 text-left transition hover:bg-white/[0.08]"
+              className="flex w-full items-start gap-2 rounded-lg border border-c-border-subtle bg-white/[0.04] p-2.5 text-left transition hover:bg-white/[0.08]"
             >
               <div className={`rounded-xl p-2 ${TONE_STYLE[signal.tone]}`}>
                 <Users size={14} />

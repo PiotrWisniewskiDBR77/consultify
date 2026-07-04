@@ -99,7 +99,7 @@ const ThemeSettings: React.FC<{
               className={`p-6 rounded-xl border-2 transition-all ${
                 theme === t_.id
                   ? 'border-c-accent bg-c-accent-soft dark:bg-c-accent-soft'
-                  : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border dark:hover:border-white/20 bg-c-surface'
+                  : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border dark:hover:border-c-border bg-c-surface'
               }`}
             >
               <div className="text-4xl mb-3">{t_.icon}</div>
@@ -241,7 +241,7 @@ const LanguageSettings: React.FC<{
             className={`w-full p-4 rounded-lg border-2 transition-all flex items-center gap-4 ${
               selectedLanguage === lang.code
                 ? 'border-c-accent bg-c-accent-soft dark:bg-c-accent-soft'
-                : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border dark:hover:border-white/20 bg-c-surface'
+                : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border dark:hover:border-c-border bg-c-surface'
             }`}
           >
             <span className="text-2xl">{lang.flag}</span>

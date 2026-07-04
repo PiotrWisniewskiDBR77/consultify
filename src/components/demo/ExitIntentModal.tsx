@@ -59,7 +59,7 @@ export const ExitIntentModal: React.FC<ExitIntentModalProps> = ({ isOpen, onClos
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="relative w-full max-w-lg bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden"
+            className="relative w-full max-w-lg bg-white/5 backdrop-blur-xl border border-c-border-subtle rounded-xl shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}

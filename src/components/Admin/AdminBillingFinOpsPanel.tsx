@@ -289,12 +289,12 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
   const renderTab = () => {
     if (activeTab === 'plan') {
       const inputClass =
-        'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white';
+        'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-c-border-subtle dark:bg-navy-900 dark:text-white';
       const labelClass =
         'block text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400';
       return (
         <div className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-c-border-subtle dark:bg-white/5">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
               {t('admin.billing.plan.title', { defaultValue: 'Assign plan & limits' })}
             </h3>
@@ -496,7 +496,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
               placeholder={t('admin.billing.payments.idPlaceholder', {
                 defaultValue: 'Payment method id',
               })}
-              className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-navy-900"
+              className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-c-border-subtle dark:bg-navy-900"
             />
             <button
               onClick={() => void addPaymentMethod()}
@@ -565,7 +565,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
     if (activeTab === 'controls') {
       return (
         <div className="grid gap-6 lg:grid-cols-2">
-          <div className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-white/10">
+          <div className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-c-border-subtle">
             <div className="text-sm font-semibold text-slate-900 dark:text-white">Spend alerts</div>
             {alerts.map((alert, index) => (
               <div key={alert.id || index} className="grid gap-2">
@@ -581,7 +581,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
                       )
                     )
                   }
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-navy-900"
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-c-border-subtle dark:bg-navy-900"
                 />
               </div>
             ))}
@@ -593,7 +593,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
             </button>
           </div>
 
-          <div className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-white/10">
+          <div className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-c-border-subtle">
             <div className="text-sm font-semibold text-slate-900 dark:text-white">
               Tax and invoicing
             </div>
@@ -607,7 +607,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
                 }))
               }
               placeholder="Legal company name"
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-navy-900"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-c-border-subtle dark:bg-navy-900"
             />
             <input
               type="text"
@@ -619,7 +619,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
                 }))
               }
               placeholder="Tax ID"
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-navy-900"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-c-border-subtle dark:bg-navy-900"
             />
             <button
               onClick={() => void saveTaxSettings()}
@@ -635,7 +635,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
     return (
       <div className="space-y-6">
         <div className="grid gap-4 lg:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-c-border-subtle dark:bg-white/5">
             <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
               <Wallet className="h-4 w-4" />
               Plan
@@ -647,7 +647,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
               Status: {summary?.summary?.billing?.status || 'unknown'}
             </div>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-c-border-subtle dark:bg-white/5">
             <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
               <Gauge className="h-4 w-4" />
               Limits & Usage
@@ -659,7 +659,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
               Token balance: {summary?.summary?.usage?.tokenBalance || 0}
             </div>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-c-border-subtle dark:bg-white/5">
             <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
               <Receipt className="h-4 w-4" />
               Spend posture
@@ -674,7 +674,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-c-border-subtle dark:bg-white/5">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
             Usage and overage posture
           </h3>
@@ -698,7 +698,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
           </p>
         </div>
       )}
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-c-border-subtle dark:bg-white/5">
         <div className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
           <CreditCard className="h-5 w-5 text-primary-500" />
           Billing, FinOps, and commercial controls
@@ -708,7 +708,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
           posture as first-class tenant admin capabilities.
         </p>
       </div>
-      <div className="rounded-2xl border border-slate-200 bg-white p-2 dark:border-white/10 dark:bg-white/5">
+      <div className="rounded-2xl border border-slate-200 bg-white p-2 dark:border-c-border-subtle dark:bg-white/5">
         <div className="flex flex-wrap gap-2">
           {tabs.map((tab) => (
             <button

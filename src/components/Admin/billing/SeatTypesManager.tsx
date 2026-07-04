@@ -259,7 +259,7 @@ export const SeatTypesManager: React.FC<SeatTypesManagerProps> = ({
               className={cn(
                 'relative p-4 bg-white dark:bg-navy-800 rounded-xl border transition-all cursor-pointer',
                 isSelected
-                  ? 'border-primary-500 ring-2 ring-primary-500/20'
+                  ? 'border-primary-500 ring-2 ring-c-info/20'
                   : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
               )}
               onClick={() => setSelectedType(isSelected ? null : seatType.id)}

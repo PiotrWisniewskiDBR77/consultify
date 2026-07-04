@@ -417,8 +417,8 @@ const CustomerAutomationView: React.FC = () => {
                     key={rule.id}
                     className={`p-4 rounded-lg border ${
                       rule.is_active
-                        ? 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10'
-                        : 'bg-slate-50/60 dark:bg-white/5 border-slate-200 dark:border-white/10 opacity-70'
+                        ? 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-c-border-subtle'
+                        : 'bg-slate-50/60 dark:bg-white/5 border-slate-200 dark:border-c-border-subtle opacity-70'
                     }`}
                   >
                     <div className="flex items-start justify-between">
@@ -653,7 +653,7 @@ const CustomerAutomationView: React.FC = () => {
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                  <div className="border border-slate-200 dark:border-white/10 rounded-lg p-3 bg-slate-50 dark:bg-white/5">
+                  <div className="border border-slate-200 dark:border-c-border-subtle rounded-lg p-3 bg-slate-50 dark:bg-white/5">
                     <div className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
                       Trigger config
                     </div>
@@ -666,7 +666,7 @@ const CustomerAutomationView: React.FC = () => {
                       })()}
                     </pre>
                   </div>
-                  <div className="border border-slate-200 dark:border-white/10 rounded-lg p-3 bg-slate-50 dark:bg-white/5">
+                  <div className="border border-slate-200 dark:border-c-border-subtle rounded-lg p-3 bg-slate-50 dark:bg-white/5">
                     <div className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
                       Action config
                     </div>
@@ -698,7 +698,7 @@ const CustomerAutomationView: React.FC = () => {
                       {ruleExecutions.map((ex, idx) => (
                         <div
                           key={ex.id || idx}
-                          className="flex items-start justify-between gap-3 p-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900"
+                          className="flex items-start justify-between gap-3 p-3 rounded-lg border border-slate-200 dark:border-c-border-subtle bg-white dark:bg-navy-900"
                         >
                           <div className="min-w-0">
                             <div className="text-sm text-slate-900 dark:text-white truncate">

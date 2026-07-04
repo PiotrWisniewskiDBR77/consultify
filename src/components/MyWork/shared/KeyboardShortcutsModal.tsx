@@ -20,7 +20,7 @@ interface KeyboardShortcutsModalProps {
  * Render keyboard key
  */
 const Key: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/20 rounded text-xs font-mono text-slate-700 dark:text-slate-300 shadow-sm">
+  <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-c-border rounded text-xs font-mono text-slate-700 dark:text-slate-300 shadow-sm">
     {children}
   </span>
 );

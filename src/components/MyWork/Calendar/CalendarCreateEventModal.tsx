@@ -199,7 +199,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
             onChange={(e) => setTitle(e.target.value)}
             autoFocus
             placeholder={isPolish ? 'Np. Przygotować deck na review' : 'e.g. Prepare review deck'}
-            className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-primary-400 dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
+            className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-c-focus-solid dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
           />
         </div>
 
@@ -210,7 +210,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
           <select
             value={recurrencePreset}
             onChange={(event) => setRecurrencePreset(event.target.value as RecurrencePreset)}
-            className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-primary-400 dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
+            className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-c-focus-solid dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
           >
             <option value="none">{isPolish ? 'Brak' : 'None'}</option>
             <option value="daily">{isPolish ? 'Codziennie' : 'Daily'}</option>
@@ -232,7 +232,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
                 ? 'Krótki kontekst lub definicja done...'
                 : 'Short context or definition of done...'
             }
-            className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-primary-400 dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
+            className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-c-focus-solid dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
           />
         </div>
 
@@ -249,7 +249,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full rounded-lg border border-slate-300/60 bg-white py-2 pl-10 pr-3 text-sm text-slate-900 outline-none transition focus:border-primary-400 dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
+              className="w-full rounded-lg border border-slate-300/60 bg-white py-2 pl-10 pr-3 text-sm text-slate-900 outline-none transition focus:border-c-focus-solid dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
             />
           </div>
           {helperText && <p className="text-xs text-slate-500 dark:text-slate-400">{helperText}</p>}

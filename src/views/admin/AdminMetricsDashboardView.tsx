@@ -203,7 +203,7 @@ export const AdminMetricsDashboardView: React.FC = () => {
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-4 mt-4 pt-6 border-t border-white/5 text-center">
+            <div className="grid grid-cols-3 gap-4 mt-4 pt-6 border-t border-c-border-subtle text-center">
               <div>
                 <p className="text-[10px] text-c-text-muted uppercase font-bold tracking-widest">
                   Sent
@@ -307,7 +307,7 @@ export const AdminMetricsDashboardView: React.FC = () => {
                   ? `Your trial expires in ${overview?.daysLeft || 0} days. Your engagement score is high, indicating a healthy adoption path.`
                   : 'Your organization is fully licensed and performing at peak efficiency.'}
               </p>
-              <div className="flex items-center gap-4 pt-4 border-t border-white/20 dark:border-navy-700">
+              <div className="flex items-center gap-4 pt-4 border-t border-c-border dark:border-navy-700">
                 <div className="flex-1">
                   <div className="flex justify-between text-[10px] font-bold text-c-text-secondary mb-1 uppercase">
                     <span>Trial Progress</span>
@@ -379,7 +379,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, subtitle, icon, t
   };
 
   return (
-    <div className="bg-c-surface/80 border border-c-border-subtle rounded-xl p-6 shadow-sm dark:shadow-lg backdrop-blur-sm group hover:border-primary-500/30 dark:hover:border-white/20 transition-all hover:translate-y-[-2px]">
+    <div className="bg-c-surface/80 border border-c-border-subtle rounded-xl p-6 shadow-sm dark:shadow-lg backdrop-blur-sm group hover:border-primary-500/30 dark:hover:border-c-border transition-all hover:translate-y-[-2px]">
       <div className="flex justify-between items-start mb-4">
         <div className={`p-3 rounded-xl border ${colorClasses[color]}`}>
           {React.cloneElement(icon as React.ReactElement, { size: 24 } as any)}
@@ -459,7 +459,7 @@ const EventRow: React.FC<{ event: any }> = ({ event }) => {
 
   return (
     <div className="p-4 hover:bg-c-bg dark:hover:bg-c-surface/5 transition-colors flex items-center gap-4 group">
-      <div className="w-8 h-8 rounded-lg bg-c-surface-raised border border-c-border-subtle flex items-center justify-center shrink-0 group-hover:border-primary-500/30 dark:group-hover:border-white/20 transition-all">
+      <div className="w-8 h-8 rounded-lg bg-c-surface-raised border border-c-border-subtle flex items-center justify-center shrink-0 group-hover:border-primary-500/30 dark:group-hover:border-c-border transition-all">
         {getIcon()}
       </div>
       <div className="flex-1 min-w-0">

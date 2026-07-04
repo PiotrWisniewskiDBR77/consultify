@@ -374,7 +374,7 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
                                 ${
                                   gap.selected
                                     ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                                    : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
+                                    : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-c-border'
                                 }
                             `}
             >

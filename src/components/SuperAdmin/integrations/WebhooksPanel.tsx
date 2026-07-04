@@ -280,14 +280,14 @@ export const WebhooksPanel: React.FC = () => {
               placeholder="Search webhooks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none w-64"
+              className="pl-10 pr-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-c-focus-solid outline-none w-64"
             />
           </div>
 
           <select
             value={filterOrgId}
             onChange={(e) => setFilterOrgId(e.target.value)}
-            className="px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+            className="px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-c-focus-solid outline-none"
           >
             <option value="">All Organizations</option>
             {organizations.map((org) => (
@@ -438,7 +438,7 @@ export const WebhooksPanel: React.FC = () => {
       {/* Create/Edit Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-c-surface border border-white/10 rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-semibold text-c-text mb-6">
               {editingWebhook ? 'Edit Webhook' : 'Create Webhook'}
             </h3>
@@ -453,7 +453,7 @@ export const WebhooksPanel: React.FC = () => {
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, organizationId: e.target.value }))
                   }
-                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-c-focus-solid outline-none"
                 >
                   <option value="">Select organization</option>
                   {organizations.map((org) => (
@@ -471,7 +471,7 @@ export const WebhooksPanel: React.FC = () => {
                   value={formData.name}
                   onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                   placeholder="My Webhook"
-                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-c-focus-solid outline-none"
                 />
               </div>
 
@@ -482,7 +482,7 @@ export const WebhooksPanel: React.FC = () => {
                   value={formData.url}
                   onChange={(e) => setFormData((prev) => ({ ...prev, url: e.target.value }))}
                   placeholder="https://example.com/webhook"
-                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none font-mono text-sm"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-c-focus-solid outline-none font-mono text-sm"
                 />
               </div>
 
@@ -495,7 +495,7 @@ export const WebhooksPanel: React.FC = () => {
                   value={formData.secret}
                   onChange={(e) => setFormData((prev) => ({ ...prev, secret: e.target.value }))}
                   placeholder="Signing secret for verification"
-                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-c-focus-solid outline-none"
                 />
               </div>
 
@@ -546,7 +546,7 @@ export const WebhooksPanel: React.FC = () => {
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, retryCount: parseInt(e.target.value) }))
                     }
-                    className="w-full px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+                    className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-c-focus-solid outline-none"
                   />
                 </div>
                 <div>
@@ -562,7 +562,7 @@ export const WebhooksPanel: React.FC = () => {
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, timeoutMs: parseInt(e.target.value) }))
                     }
-                    className="w-full px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+                    className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-c-focus-solid outline-none"
                   />
                 </div>
               </div>

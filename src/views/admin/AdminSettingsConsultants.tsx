@@ -657,7 +657,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                           setInviteGenerateCode(e.target.checked);
                           if (e.target.checked) setInviteAccessCode('');
                         }}
-                        className="rounded border-white/20 bg-c-surface/5 text-blue-500 focus:ring-blue-500"
+                        className="rounded border-c-border bg-c-surface/5 text-blue-500 focus:ring-blue-500"
                       />
                       Auto-generate code
                     </label>
@@ -669,7 +669,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                       value={inviteAccessCode}
                       onChange={(e) => setInviteAccessCode(e.target.value.toUpperCase())}
                       placeholder="Enter existing code (e.g., CONS-A1B2C3D4)"
-                      className="w-full px-4 py-2 bg-c-bg/30 dark:bg-navy-950/20 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-c-text font-mono placeholder:text-c-text-secondary"
+                      className="w-full px-4 py-2 bg-c-bg/30 dark:bg-navy-950/20 border border-c-border-subtle rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-c-text font-mono placeholder:text-c-text-secondary"
                     />
                   )}
 
@@ -691,7 +691,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                     </span>
                   </div>
 
-                  <div className="bg-c-surface/[0.02] border border-white/10 rounded-lg p-4 max-h-64 overflow-y-auto">
+                  <div className="bg-c-surface/[0.02] border border-c-border-subtle rounded-lg p-4 max-h-64 overflow-y-auto">
                     <div className="space-y-4">
                       {Object.entries(groupedPermissions).map(([category, perms]) => (
                         <div key={category}>
@@ -713,7 +713,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                                       [perm.key]: e.target.checked,
                                     })
                                   }
-                                  className="rounded border-white/20 bg-c-surface/5 text-blue-500 focus:ring-blue-500"
+                                  className="rounded border-c-border bg-c-surface/5 text-blue-500 focus:ring-blue-500"
                                 />
                                 <div>
                                   <span className="text-sm text-c-text">{perm.label}</span>
@@ -737,7 +737,7 @@ export const AdminSettingsConsultants: React.FC = () => {
               </div>
 
               {/* Footer */}
-              <div className="p-6 border-t border-white/10 flex gap-3 flex-shrink-0">
+              <div className="p-6 border-t border-c-border-subtle flex gap-3 flex-shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowInviteModal(false)}
@@ -771,8 +771,8 @@ export const AdminSettingsConsultants: React.FC = () => {
       {/* Add Project Modal */}
       {showAddProjectModal && selectedConsultant && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-c-surface border border-white/10 rounded-xl shadow-2xl w-full max-w-md">
-            <div className="p-6 border-b border-white/10 flex justify-between items-center">
+          <div className="bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl w-full max-w-md">
+            <div className="p-6 border-b border-c-border-subtle flex justify-between items-center">
               <div>
                 <h3 className="text-lg font-semibold text-c-text">Add to Project</h3>
                 <p className="text-sm text-c-text-muted mt-1">
@@ -802,7 +802,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                     <button
                       key={project.id}
                       onClick={() => handleAddProject(project.id)}
-                      className="w-full flex items-center gap-3 p-3 bg-c-surface/[0.02] hover:bg-c-surface-raised/20 border border-white/10 rounded-lg transition-colors text-left"
+                      className="w-full flex items-center gap-3 p-3 bg-c-surface/[0.02] hover:bg-c-surface-raised/20 border border-c-border-subtle rounded-lg transition-colors text-left"
                     >
                       <Briefcase className="w-4 h-4 text-c-text-muted" />
                       <div>
@@ -815,7 +815,7 @@ export const AdminSettingsConsultants: React.FC = () => {
               )}
             </div>
 
-            <div className="p-6 border-t border-white/10">
+            <div className="p-6 border-t border-c-border-subtle">
               <button
                 onClick={() => setShowAddProjectModal(false)}
                 className="w-full px-4 py-2 bg-c-bg/30 dark:bg-navy-950/20 text-slate-300 rounded-lg hover:bg-c-surface-raised/40 transition-colors font-medium"
@@ -886,8 +886,8 @@ const PermissionsModal: React.FC<{
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-c-surface border border-white/10 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="p-6 border-b border-white/10 flex justify-between items-center flex-shrink-0">
+      <div className="bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="p-6 border-b border-c-border-subtle flex justify-between items-center flex-shrink-0">
           <div>
             <h3 className="text-lg font-semibold text-c-text">Edit Permissions</h3>
             <p className="text-sm text-c-text-muted mt-1">
@@ -946,7 +946,7 @@ const PermissionsModal: React.FC<{
                       className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
                         permissions[perm.key]
                           ? 'bg-blue-500/10 border border-blue-500/20'
-                          : 'bg-c-surface/[0.02] border border-white/5 hover:bg-c-surface-raised/20'
+                          : 'bg-c-surface/[0.02] border border-c-border-subtle hover:bg-c-surface-raised/20'
                       }`}
                     >
                       <input
@@ -958,7 +958,7 @@ const PermissionsModal: React.FC<{
                             [perm.key]: e.target.checked,
                           })
                         }
-                        className="rounded border-white/20 bg-c-surface/5 text-blue-500 focus:ring-blue-500"
+                        className="rounded border-c-border bg-c-surface/5 text-blue-500 focus:ring-blue-500"
                       />
                       <div>
                         <span
@@ -978,7 +978,7 @@ const PermissionsModal: React.FC<{
           </div>
         </div>
 
-        <div className="p-6 border-t border-white/10 flex gap-3 flex-shrink-0">
+        <div className="p-6 border-t border-c-border-subtle flex gap-3 flex-shrink-0">
           <button
             onClick={onClose}
             className="flex-1 px-4 py-2 bg-c-bg/30 dark:bg-navy-950/20 text-slate-300 rounded-lg hover:bg-c-surface-raised/40 transition-colors font-medium"

@@ -84,7 +84,7 @@ export const NotebookExportMenu: React.FC<NotebookExportMenuProps> = ({
         disabled={disabled}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-c-border bg-c-surface px-2.5 py-1.5 text-[13px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-c-text dark:hover:bg-white/[0.08]"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-c-border bg-c-surface px-2.5 py-1.5 text-[13px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 dark:border-c-border-subtle dark:bg-white/[0.04] dark:text-c-text dark:hover:bg-white/[0.08]"
       >
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
         <span>{t.trigger}</span>
@@ -94,7 +94,7 @@ export const NotebookExportMenu: React.FC<NotebookExportMenuProps> = ({
         <div
           role="menu"
           aria-label={t.ariaMenu}
-          className="absolute right-0 z-50 mt-1 w-52 overflow-hidden rounded-xl border border-c-border bg-c-surface py-1 shadow-lg dark:border-white/10 dark:bg-navy-900"
+          className="absolute right-0 z-50 mt-1 w-52 overflow-hidden rounded-xl border border-c-border bg-c-surface py-1 shadow-lg dark:border-c-border-subtle dark:bg-navy-900"
         >
           <button
             type="button"

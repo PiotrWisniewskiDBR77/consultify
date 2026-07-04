@@ -534,7 +534,7 @@ export const EnhancedDataTable = forwardRef<
                         if (input) input.indeterminate = isSomeSelected;
                       }}
                       onChange={handleSelectAll}
-                      className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
+                      className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-c-focus"
                     />
                   </th>
                 )}
@@ -617,7 +617,7 @@ export const EnhancedDataTable = forwardRef<
                               type="checkbox"
                               checked={isSelected}
                               onChange={() => handleSelectRow(rowId, row)}
-                              className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
+                              className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-c-focus"
                             />
                           </td>
                         )}
@@ -651,7 +651,7 @@ export const EnhancedDataTable = forwardRef<
                                       type="text"
                                       value={String(editValue ?? '')}
                                       onChange={(e) => setEditValue(e.target.value)}
-                                      className="w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                      className="w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-c-focus"
                                       autoFocus
                                     />
                                   )}
@@ -837,7 +837,7 @@ export const EnhancedDataTable = forwardRef<
                       }
                       setVisibleColumns(newVisible);
                     }}
-                    className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
+                    className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-c-focus"
                   />
                   <GripVertical
                     size={14}

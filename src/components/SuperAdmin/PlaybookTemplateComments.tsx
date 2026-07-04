@@ -268,7 +268,7 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
             <textarea
               value={editText}
               onChange={(e) => setEditText(e.target.value)}
-              className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+              className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-c-focus"
               rows={3}
             />
             <div className="flex justify-end gap-2">
@@ -315,7 +315,7 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
               placeholder="Write a reply..."
-              className="flex-1 px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+              className="flex-1 px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-c-focus"
               onKeyPress={(e) => e.key === 'Enter' && handleSubmitReply(comment.id)}
             />
             <button
@@ -354,7 +354,7 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
             type="checkbox"
             checked={showResolved}
             onChange={(e) => setShowResolved(e.target.checked)}
-            className="rounded border-slate-600 bg-c-surface-raised text-primary-500 focus:ring-primary-500/50"
+            className="rounded border-slate-600 bg-c-surface-raised text-primary-500 focus:ring-c-focus"
           />
           Show resolved
         </label>
@@ -371,7 +371,7 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Add a comment..."
             rows={3}
-            className="w-full px-3 py-2 bg-c-surface-raised/50 border border-c-border/50 rounded-lg text-c-text placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+            className="w-full px-3 py-2 bg-c-surface-raised/50 border border-c-border/50 rounded-lg text-c-text placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-c-focus"
           />
           <div className="flex justify-end mt-2">
             <button

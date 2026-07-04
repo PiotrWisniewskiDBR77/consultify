@@ -711,7 +711,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                               className={`px-3 py-1.5 text-xs rounded-full border transition-all flex items-center gap-1.5 ${
                                 isSelected
                                   ? 'bg-primary-100 dark:bg-primary-600/20 border-primary-300 dark:border-primary-500 text-primary-700 dark:text-primary-200'
-                                  : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 hover:border-slate-300 dark:hover:border-white/20'
+                                  : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 hover:border-slate-300 dark:hover:border-c-border'
                               }`}
                             >
                               {option.label}
@@ -777,7 +777,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                     ? 'Listening...'
                     : 'Type your answer...'
               }
-              className={`w-full bg-slate-50 dark:bg-navy-900 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 rounded-lg px-3 py-2.5 pr-10 text-sm border border-slate-200 dark:border-navy-700 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all ${aiFreezeStatus.isFrozen ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-navy-950' : ''} ${isRecording ? 'border-danger-400 ring-1 ring-danger-400 animate-pulse' : ''}`}
+              className={`w-full bg-slate-50 dark:bg-navy-900 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 rounded-lg px-3 py-2.5 pr-10 text-sm border border-slate-200 dark:border-navy-700 focus:outline-none focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus transition-all ${aiFreezeStatus.isFrozen ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-navy-950' : ''} ${isRecording ? 'border-danger-400 ring-1 ring-danger-400 animate-pulse' : ''}`}
             />
             {isRecording && (
               <div className="absolute right-3 top-1/2 -translate-y-1/2">

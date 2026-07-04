@@ -380,7 +380,7 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
             </div>
           </div>
 
-          <div className="rounded-[26px] border border-slate-200/70 bg-white/85 p-4 dark:border-white/10 dark:bg-white/[0.04]">
+          <div className="rounded-[26px] border border-slate-200/70 bg-white/85 p-4 dark:border-c-border-subtle dark:bg-white/[0.04]">
             <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
               {isPolish ? 'Komentarz roboczy dla AI' : 'Working note for AI'}
             </div>
@@ -393,7 +393,7 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
                   ? 'Np. za mocno akcentujemy marżę; dodaj perspektywę rynku niemieckiego i pokaż to bardziej jak decyzję zarządczą.'
                   : 'E.g. we are over-weighting margin; add the German market perspective and frame this more like a leadership decision.'
               }
-              className="mt-3 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-900 placeholder-slate-400 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-navy-700 dark:bg-navy-800 dark:text-white"
+              className="mt-3 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-900 placeholder-slate-400 focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-800 dark:text-white"
             />
             <button
               onClick={onOpenChat}
@@ -418,7 +418,7 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
                 <button
                   key={label}
                   onClick={onOpenChat}
-                  className="inline-flex rounded-full border border-sky-200/70 bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-700 shadow-sm transition-colors hover:bg-sky-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
+                  className="inline-flex rounded-full border border-sky-200/70 bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-700 shadow-sm transition-colors hover:bg-sky-50 dark:border-c-border-subtle dark:bg-white/[0.04] dark:text-slate-200"
                 >
                   {label}
                 </button>
@@ -462,7 +462,7 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
           </div>
 
           {orgName && (
-            <div className="rounded-[26px] border border-slate-200/70 bg-white/85 p-4 dark:border-white/10 dark:bg-white/[0.04]">
+            <div className="rounded-[26px] border border-slate-200/70 bg-white/85 p-4 dark:border-c-border-subtle dark:bg-white/[0.04]">
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
                 {isPolish ? 'Kontekst organizacji' : 'Organization context'}
               </div>
@@ -562,7 +562,7 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
               {phaseSummaries.map((phase) => (
                 <div
                   key={phase.id}
-                  className="rounded-xl border border-white/50 bg-white/60 px-3 py-2 text-xs dark:border-navy-700/50 dark:bg-navy-950/30"
+                  className="rounded-xl border border-c-border-strong bg-white/60 px-3 py-2 text-xs dark:border-navy-700/50 dark:bg-navy-950/30"
                 >
                   <div className="font-medium text-slate-700 dark:text-slate-200">
                     {phase.label}

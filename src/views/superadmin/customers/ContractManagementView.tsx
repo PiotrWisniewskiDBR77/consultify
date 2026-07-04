@@ -568,7 +568,7 @@ const ContractManagementView: React.FC = () => {
                         className={`p-3 rounded-lg cursor-pointer transition-colors ${
                           selectedContract?.id === contract.id
                             ? 'bg-blue-600/20 border border-blue-500'
-                            : 'bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10'
+                            : 'bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-c-border-subtle'
                         }`}
                       >
                         <div className="flex items-start justify-between">
@@ -611,7 +611,7 @@ const ContractManagementView: React.FC = () => {
               {selectedContract ? (
                 <Card padding="sm">
                   {/* Contract Header */}
-                  <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-200 dark:border-white/10">
+                  <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-200 dark:border-c-border-subtle">
                     <div>
                       <h3 className="text-xl font-bold text-slate-900 dark:text-white">
                         {selectedContract.organization_name || 'Contract Details'}
@@ -651,7 +651,7 @@ const ContractManagementView: React.FC = () => {
 
                   {/* Contract Details Grid */}
                   <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-3 border border-slate-200 dark:border-white/10">
+                    <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-3 border border-slate-200 dark:border-c-border-subtle">
                       <span className="text-slate-500 dark:text-slate-400 text-xs">Status</span>
                       <p
                         className={`text-${getStatusColor(selectedContract.status)}-400 font-medium mt-1`}
@@ -659,7 +659,7 @@ const ContractManagementView: React.FC = () => {
                         {getStatusLabel(selectedContract.status)}
                       </p>
                     </div>
-                    <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-3 border border-slate-200 dark:border-white/10">
+                    <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-3 border border-slate-200 dark:border-c-border-subtle">
                       <span className="text-slate-500 dark:text-slate-400 text-xs">
                         Contract Value
                       </span>
@@ -667,19 +667,19 @@ const ContractManagementView: React.FC = () => {
                         {formatCurrency(selectedContract.value, selectedContract.currency)}
                       </p>
                     </div>
-                    <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-3 border border-slate-200 dark:border-white/10">
+                    <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-3 border border-slate-200 dark:border-c-border-subtle">
                       <span className="text-slate-500 dark:text-slate-400 text-xs">Start Date</span>
                       <p className="text-slate-900 dark:text-white font-medium mt-1">
                         {formatDate(selectedContract.start_date)}
                       </p>
                     </div>
-                    <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-3 border border-slate-200 dark:border-white/10">
+                    <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-3 border border-slate-200 dark:border-c-border-subtle">
                       <span className="text-slate-500 dark:text-slate-400 text-xs">End Date</span>
                       <p className="text-slate-900 dark:text-white font-medium mt-1">
                         {formatDate(selectedContract.end_date)}
                       </p>
                     </div>
-                    <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-3 border border-slate-200 dark:border-white/10">
+                    <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-3 border border-slate-200 dark:border-c-border-subtle">
                       <span className="text-slate-500 dark:text-slate-400 text-xs">
                         Renewal Date
                       </span>
@@ -696,7 +696,7 @@ const ContractManagementView: React.FC = () => {
                         )}
                       </p>
                     </div>
-                    <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-3 border border-slate-200 dark:border-white/10">
+                    <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-3 border border-slate-200 dark:border-c-border-subtle">
                       <span className="text-slate-500 dark:text-slate-400 text-xs">Currency</span>
                       <p className="text-slate-900 dark:text-white font-medium mt-1">
                         {selectedContract.currency}
@@ -710,7 +710,7 @@ const ContractManagementView: React.FC = () => {
                       <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         Contract Terms
                       </h4>
-                      <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-3 border border-slate-200 dark:border-white/10">
+                      <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-3 border border-slate-200 dark:border-c-border-subtle">
                         <pre className="text-xs text-slate-700 dark:text-slate-300 overflow-x-auto">
                           {JSON.stringify(safeParseTerms(selectedContract.terms_json), null, 2)}
                         </pre>

@@ -185,7 +185,7 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
             value={sampleInput}
             onChange={(e) => setSampleInput(e.target.value)}
             placeholder="Enter test input..."
-            className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-slate-900 dark:text-white text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+            className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-slate-900 dark:text-white text-sm resize-none focus:outline-none focus:ring-2 focus:ring-c-focus"
             rows={2}
           />
           <div className="flex flex-wrap gap-2 mt-2">

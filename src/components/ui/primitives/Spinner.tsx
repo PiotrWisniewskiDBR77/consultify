@@ -37,7 +37,7 @@ const colorStyles: Record<SpinnerColor, { track: string; active: string }> = {
     active: 'border-t-primary-500',
   },
   white: {
-    track: 'border-white/20',
+    track: 'border-c-border',
     active: 'border-t-white',
   },
   current: {

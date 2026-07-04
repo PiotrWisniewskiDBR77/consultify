@@ -590,7 +590,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
             <button
               key={base.id}
               onClick={() => selectBaseTemplate(base.id)}
-              className="p-6 bg-c-surface/50 border border-white/10 rounded-xl text-left hover:border-c-accent/50 hover:bg-c-accent/5 transition-all"
+              className="p-6 bg-c-surface/50 border border-c-border-subtle rounded-xl text-left hover:border-c-accent/50 hover:bg-c-accent/5 transition-all"
             >
               <h3 className="font-semibold text-c-text mb-2">{base.name}</h3>
               <p className="text-sm text-slate-600 dark:text-slate-500">{base.description}</p>
@@ -598,7 +598,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
           ))}
         </div>
 
-        <div className="border-t border-white/10 pt-6">
+        <div className="border-t border-c-border-subtle pt-6">
           <p className="text-sm text-slate-600 dark:text-slate-500 mb-3">
             Or import an existing template:
           </p>
@@ -665,7 +665,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
             value={template.name}
             onChange={(e) => setTemplate((prev) => ({ ...prev, name: e.target.value }))}
             placeholder="e.g. Custom AI Governance Framework"
-            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-3 text-c-text focus:border-primary-500 outline-none"
+            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-3 text-c-text focus:border-c-focus-solid outline-none"
           />
         </div>
         <div>
@@ -675,7 +675,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
             value={template.version}
             onChange={(e) => setTemplate((prev) => ({ ...prev, version: e.target.value }))}
             placeholder="1.0.0"
-            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-3 text-c-text focus:border-primary-500 outline-none"
+            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-3 text-c-text focus:border-c-focus-solid outline-none"
           />
         </div>
         <div className="md:col-span-2">
@@ -687,7 +687,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
             onChange={(e) => setTemplate((prev) => ({ ...prev, description: e.target.value }))}
             placeholder="Describe the purpose and scope of this compliance framework..."
             rows={2}
-            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-3 text-c-text focus:border-primary-500 outline-none resize-none"
+            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-3 text-c-text focus:border-c-focus-solid outline-none resize-none"
           />
         </div>
       </div>
@@ -715,7 +715,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
             onChange={(e) => setNewTag(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && addTag()}
             placeholder="Add tag..."
-            className="flex-1 bg-c-surface-raised/50 border border-c-border rounded-lg px-3 py-2 text-c-text text-sm focus:border-primary-500 outline-none"
+            className="flex-1 bg-c-surface-raised/50 border border-c-border rounded-lg px-3 py-2 text-c-text text-sm focus:border-c-focus-solid outline-none"
           />
           <button
             onClick={addTag}
@@ -728,17 +728,17 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
 
       {/* Summary Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-c-surface/50 border border-white/10 rounded-lg p-4">
+        <div className="bg-c-surface/50 border border-c-border-subtle rounded-lg p-4">
           <p className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-1">Sections</p>
           <p className="text-2xl font-bold text-c-text">{template.sections.length}</p>
         </div>
-        <div className="bg-c-surface/50 border border-white/10 rounded-lg p-4">
+        <div className="bg-c-surface/50 border border-c-border-subtle rounded-lg p-4">
           <p className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-1">
             Total Checkpoints
           </p>
           <p className="text-2xl font-bold text-c-text">{totalCheckpoints}</p>
         </div>
-        <div className="bg-c-surface/50 border border-white/10 rounded-lg p-4">
+        <div className="bg-c-surface/50 border border-c-border-subtle rounded-lg p-4">
           <p className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-1">Required</p>
           <p className="text-2xl font-bold text-amber-400">{requiredCheckpoints}</p>
         </div>
@@ -764,7 +764,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="bg-c-surface/50 border border-white/10 rounded-xl overflow-hidden"
+              className="bg-c-surface/50 border border-c-border-subtle rounded-xl overflow-hidden"
             >
               {/* Section Header */}
               <div
@@ -781,7 +781,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                       value={section.name}
                       onChange={(e) => updateSection(section.id, { name: e.target.value })}
                       onClick={(e) => e.stopPropagation()}
-                      className="bg-transparent text-c-text font-semibold focus:outline-none focus:border-b focus:border-primary-500"
+                      className="bg-transparent text-c-text font-semibold focus:outline-none focus:border-b focus:border-c-focus-solid"
                     />
                     <input
                       type="text"
@@ -789,7 +789,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                       onChange={(e) => updateSection(section.id, { description: e.target.value })}
                       onClick={(e) => e.stopPropagation()}
                       placeholder="Section description..."
-                      className="block bg-transparent text-sm text-slate-600 dark:text-slate-500 mt-1 focus:outline-none focus:border-b focus:border-primary-500 w-full"
+                      className="block bg-transparent text-sm text-slate-600 dark:text-slate-500 mt-1 focus:outline-none focus:border-b focus:border-c-focus-solid w-full"
                     />
                   </div>
                 </div>

@@ -277,7 +277,7 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
               }))
             }
             placeholder={t('billing.alerts.noCap', 'No limit')}
-            className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+            className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-c-focus focus:border-transparent transition-all"
           />
         </div>
       </div>
@@ -322,7 +322,7 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
                 auto_upgrade_plan_id: e.target.value || null,
               }))
             }
-            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-c-focus focus:border-transparent transition-all"
           >
             <option value="">{t('billing.alerts.selectPlan', 'Select upgrade plan...')}</option>
             {plans.map((plan) => (

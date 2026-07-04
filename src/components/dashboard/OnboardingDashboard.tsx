@@ -60,7 +60,7 @@ export const OnboardingDashboard: React.FC<OnboardingDashboardProps> = ({
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: The Process (1-5) */}
-        <div className="lg:col-span-2 bg-white dark:bg-navy-900 rounded-xl p-5 border border-slate-200 dark:border-white/10 shadow-sm">
+        <div className="lg:col-span-2 bg-white dark:bg-navy-900 rounded-xl p-5 border border-slate-200 dark:border-c-border-subtle shadow-sm">
           <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-6 flex items-center gap-2">
             <Map size={20} className="text-primary-500" />
             Process Overview
@@ -78,10 +78,10 @@ export const OnboardingDashboard: React.FC<OnboardingDashboardProps> = ({
                   key={step.id}
                   className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
                     isCurrent
-                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 shadow-md ring-1 ring-primary-500/20'
+                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 shadow-md ring-1 ring-c-info/20'
                       : status === 'completed'
                         ? 'border-green-200 bg-green-50/50 dark:bg-green-900/10'
-                        : 'border-slate-200 bg-slate-50 dark:bg-navy-950 dark:border-white/5 opacity-60'
+                        : 'border-slate-200 bg-slate-50 dark:bg-navy-950 dark:border-c-border-subtle opacity-60'
                   }`}
                 >
                   <div
@@ -134,7 +134,7 @@ export const OnboardingDashboard: React.FC<OnboardingDashboardProps> = ({
         {/* Right: Action Panel */}
         <div className="space-y-6">
           {/* Status Card */}
-          <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-white/10 shadow-sm text-center">
+          <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-c-border-subtle shadow-sm text-center">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-600 mb-4">
               <Info size={32} />
             </div>
@@ -161,7 +161,7 @@ export const OnboardingDashboard: React.FC<OnboardingDashboardProps> = ({
           </div>
 
           {/* Quick Tip */}
-          <div className="bg-blue-50 dark:bg-navy-800/50 rounded-2xl p-6 border border-blue-100 dark:border-white/5">
+          <div className="bg-blue-50 dark:bg-navy-800/50 rounded-2xl p-6 border border-blue-100 dark:border-c-border-subtle">
             <h4 className="font-bold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
               <TeresaMark size={16} className="text-blue-500" />
               AI Assistant

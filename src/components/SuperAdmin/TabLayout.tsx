@@ -70,7 +70,7 @@ export const TabLayout: React.FC<TabLayoutProps> = ({
                 border-b-2 transition-all duration-200
                 ${
                   activeTab === tab.id
-                    ? 'text-slate-900 dark:text-slate-100 border-navy-900 dark:border-white/70 bg-slate-100/80 dark:bg-white/5'
+                    ? 'text-slate-900 dark:text-slate-100 border-navy-900 dark:border-c-border-strong bg-slate-100/80 dark:bg-white/5'
                     : tab.disabled
                       ? 'text-slate-600 dark:text-slate-400 border-transparent cursor-not-allowed'
                       : 'text-slate-600 dark:text-slate-400 border-transparent hover:bg-slate-50 dark:hover:bg-white/5'

@@ -183,7 +183,7 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
                     onClick={() => handleLevelSelect(levelNum)}
                     className="group flex items-center gap-4 p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-white/5 hover:bg-primary-50 dark:hover:bg-primary-500/10 hover:border-primary-500/50 transition-all text-left shadow-sm dark:shadow-none"
                   >
-                    <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/20 flex items-center justify-center text-xs font-bold text-slate-500 dark:text-slate-400 group-hover:border-primary-500 group-hover:text-primary-600 dark:group-hover:text-primary-400 shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-c-border flex items-center justify-center text-xs font-bold text-slate-500 dark:text-slate-400 group-hover:border-primary-500 group-hover:text-primary-600 dark:group-hover:text-primary-400 shrink-0">
                       {levelNum}
                     </div>
                     <span className="text-sm md:text-base text-slate-700 dark:text-slate-300 group-hover:text-navy-900 dark:group-hover:text-white transition-colors">

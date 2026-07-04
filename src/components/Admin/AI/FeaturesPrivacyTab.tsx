@@ -507,7 +507,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
                 <select
                   value={toneGuidelines}
                   onChange={(e) => setToneGuidelines(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-navy-900 dark:text-white focus:border-primary-500 outline-none"
+                  className="w-full bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-navy-900 dark:text-white focus:border-c-focus-solid outline-none"
                 >
                   <option value="professional">
                     Professional - Formal and business-appropriate
@@ -534,7 +534,7 @@ Example:
 - Always mention relevant ISO standards when discussing processes
 - Use metric units for all measurements
 - Reference company policies when applicable"
-                  className="w-full h-48 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-4 text-navy-900 dark:text-white font-mono text-sm focus:border-primary-500 outline-none resize-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                  className="w-full h-48 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-4 text-navy-900 dark:text-white font-mono text-sm focus:border-c-focus-solid outline-none resize-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
                   These instructions are prepended to every AI request in your organization.
@@ -610,7 +610,7 @@ Example:
                 </label>
                 <textarea
                   placeholder="Enter keywords or phrases the AI should avoid, one per line..."
-                  className="w-full h-24 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-navy-900 dark:text-white font-mono text-sm focus:border-primary-500 outline-none resize-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                  className="w-full h-24 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-navy-900 dark:text-white font-mono text-sm focus:border-c-focus-solid outline-none resize-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
               </div>
             </div>
@@ -632,7 +632,7 @@ Example:
                 className={`p-4 rounded-xl border cursor-pointer transition-all ${
                   editingPrompt?.key === p.key
                     ? 'bg-primary-500/20 border-primary-500'
-                    : 'bg-c-surface border-white/5 hover:border-white/20'
+                    : 'bg-c-surface border-c-border-subtle hover:border-c-border'
                 }`}
               >
                 <div className="flex justify-between items-center mb-2">
@@ -648,7 +648,7 @@ Example:
             ))}
           </div>
 
-          <div className="bg-c-surface border border-white/10 rounded-xl p-6 h-fit">
+          <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6 h-fit">
             {editingPrompt ? (
               <form onSubmit={handleUpdatePrompt}>
                 <h3 className="text-lg font-bold text-c-text mb-4">Edit: {editingPrompt.key}</h3>
@@ -662,7 +662,7 @@ Example:
                       onChange={(e) =>
                         setEditingPrompt({ ...editingPrompt, description: e.target.value })
                       }
-                      className="w-full bg-c-text text-c-bg border border-white/10 rounded p-2 text-sm"
+                      className="w-full bg-c-text text-c-bg border border-c-border-subtle rounded p-2 text-sm"
                     />
                   </div>
                   <div>
@@ -674,12 +674,12 @@ Example:
                       onChange={(e) =>
                         setEditingPrompt({ ...editingPrompt, content: e.target.value })
                       }
-                      className="w-full h-64 bg-c-text text-c-bg border border-white/10 rounded p-4 font-mono text-sm leading-relaxed focus:border-primary-500 outline-none resize-none"
+                      className="w-full h-64 bg-c-text text-c-bg border border-c-border-subtle rounded p-4 font-mono text-sm leading-relaxed focus:border-c-focus-solid outline-none resize-none"
                     />
                   </div>
 
                   {/* Context Injection Controls */}
-                  <div className="bg-c-bg border border-white/5 rounded-lg p-4">
+                  <div className="bg-c-bg border border-c-border-subtle rounded-lg p-4">
                     <h4 className="text-sm font-semibold text-c-text mb-3 flex items-center gap-2">
                       <Shield size={14} className="text-primary-400" />
                       Context Injection
@@ -717,7 +717,7 @@ Example:
                                   context_config: newConfig,
                                 });
                               }}
-                              className="w-4 h-4 rounded border-slate-600 text-primary-500 focus:ring-primary-500 bg-c-surface-raised"
+                              className="w-4 h-4 rounded border-slate-600 text-primary-500 focus:ring-c-focus bg-c-surface-raised"
                             />
                             <span className="text-xs text-slate-600">{opt.label}</span>
                           </label>

@@ -915,7 +915,7 @@ const FeatureFlagModal: React.FC<{
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-white/10 p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-c-border-subtle p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-c-text-secondary">
             {flag ? 'Edit Feature Flag' : 'Create Feature Flag'}
@@ -953,7 +953,7 @@ const FeatureFlagModal: React.FC<{
                     flag_key: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_'),
                   })
                 }
-                className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text-secondary"
+                className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-lg text-c-text-secondary"
                 placeholder="new_feature"
               />
             </div>
@@ -967,7 +967,7 @@ const FeatureFlagModal: React.FC<{
                 aria-label="Flag Name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text-secondary"
+                className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-lg text-c-text-secondary"
               />
             </div>
           </div>
@@ -979,7 +979,7 @@ const FeatureFlagModal: React.FC<{
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text-secondary"
+              className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-lg text-c-text-secondary"
               rows={2}
             />
           </div>
@@ -997,7 +997,7 @@ const FeatureFlagModal: React.FC<{
                     flag_type: e.target.value as FeatureFlag['flag_type'],
                   })
                 }
-                className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text-secondary"
+                className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-lg text-c-text-secondary"
               >
                 {Object.entries(FLAG_TYPE_CONFIG).map(([key, config]) => (
                   <option key={key} value={key}>
@@ -1013,7 +1013,7 @@ const FeatureFlagModal: React.FC<{
               <select
                 value={formData.environment}
                 onChange={(e) => setFormData({ ...formData, environment: e.target.value })}
-                className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text-secondary"
+                className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-lg text-c-text-secondary"
               >
                 {ENVIRONMENTS.map((env) => (
                   <option key={env} value={env}>
@@ -1048,7 +1048,7 @@ const FeatureFlagModal: React.FC<{
               id="enabled"
               checked={formData.enabled}
               onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
-              className="w-4 h-4 text-c-accent bg-c-surface border-c-border-subtle dark:border-white/10 rounded"
+              className="w-4 h-4 text-c-accent bg-c-surface border-c-border-subtle dark:border-c-border-subtle rounded"
             />
             <label htmlFor="enabled" className="text-sm text-c-text-secondary">
               Enable flag immediately
@@ -1107,7 +1107,7 @@ const FlagHistoryModal: React.FC<{
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-c-surface rounded-xl border border-white/10 p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-c-text">Feature Flag History</h3>
           <button
@@ -1134,7 +1134,7 @@ const FlagHistoryModal: React.FC<{
               history.map((item) => (
                 <div
                   key={item.id}
-                  className="p-3 bg-c-surface/30 rounded-lg border border-white/10"
+                  className="p-3 bg-c-surface/30 rounded-lg border border-c-border-subtle"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-c-text">{item.change_type}</span>

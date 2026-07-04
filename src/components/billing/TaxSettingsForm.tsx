@@ -178,7 +178,7 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
             <select
               value={settings.tax_id_type || ''}
               onChange={(e) => handleChange('tax_id_type', e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-c-focus focus:border-transparent"
             >
               <option value="">{t('billing.tax.selectType', 'Select type...')}</option>
               {TAX_ID_TYPES.map((type) => (
@@ -198,7 +198,7 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
               value={settings.tax_id || ''}
               onChange={(e) => handleChange('tax_id', e.target.value)}
               placeholder="e.g., EU123456789"
-              className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-c-focus focus:border-transparent"
             />
           </div>
         </div>
@@ -246,7 +246,7 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
                 value={settings.billing_name || ''}
                 onChange={(e) => handleChange('billing_name', e.target.value)}
                 placeholder="Acme Corporation"
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-c-focus focus:border-transparent"
               />
             </div>
 
@@ -259,7 +259,7 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
                 value={settings.billing_email || ''}
                 onChange={(e) => handleChange('billing_email', e.target.value)}
                 placeholder="billing@company.com"
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-c-focus focus:border-transparent"
               />
             </div>
           </div>
@@ -273,7 +273,7 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
               value={settings.billing_address_line1 || ''}
               onChange={(e) => handleChange('billing_address_line1', e.target.value)}
               placeholder="123 Business Street"
-              className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-c-focus focus:border-transparent"
             />
           </div>
 
@@ -286,7 +286,7 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
               value={settings.billing_address_line2 || ''}
               onChange={(e) => handleChange('billing_address_line2', e.target.value)}
               placeholder="Suite 100"
-              className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-c-focus focus:border-transparent"
             />
           </div>
 
@@ -300,7 +300,7 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
                 value={settings.billing_city || ''}
                 onChange={(e) => handleChange('billing_city', e.target.value)}
                 placeholder="Warsaw"
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-c-focus focus:border-transparent"
               />
             </div>
 
@@ -313,7 +313,7 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
                 value={settings.billing_state || ''}
                 onChange={(e) => handleChange('billing_state', e.target.value)}
                 placeholder="Mazovia"
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-c-focus focus:border-transparent"
               />
             </div>
 
@@ -326,7 +326,7 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
                 value={settings.billing_postal_code || ''}
                 onChange={(e) => handleChange('billing_postal_code', e.target.value)}
                 placeholder="00-001"
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-c-focus focus:border-transparent"
               />
             </div>
 
@@ -337,7 +337,7 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
               <select
                 value={settings.billing_country || ''}
                 onChange={(e) => handleChange('billing_country', e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-c-focus focus:border-transparent"
               >
                 <option value="">{t('billing.tax.selectCountry', 'Select...')}</option>
                 {COUNTRIES.map((country) => (
@@ -369,7 +369,7 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
               onChange={(e) => handleChange('invoice_prefix', e.target.value)}
               placeholder="INV-"
               maxLength={10}
-              className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-c-focus focus:border-transparent"
             />
           </div>
 
@@ -382,7 +382,7 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
               value={settings.po_number || ''}
               onChange={(e) => handleChange('po_number', e.target.value)}
               placeholder="PO-12345"
-              className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-c-focus focus:border-transparent"
             />
           </div>
         </div>

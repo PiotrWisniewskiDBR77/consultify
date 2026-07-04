@@ -281,7 +281,7 @@ export const UserFormModal: React.FC<{
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-8 w-full max-w-md shadow-2xl">
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-8 w-full max-w-md shadow-2xl">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">
             {editingUser ? 'Edit User' : 'Add New User'}
@@ -300,14 +300,14 @@ export const UserFormModal: React.FC<{
             placeholder="First Name"
             value={formData.firstName}
             onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-            className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
+            className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded p-2 text-slate-900 dark:text-white"
           />
           <input
             required
             placeholder="Last Name"
             value={formData.lastName}
             onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-            className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
+            className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded p-2 text-slate-900 dark:text-white"
           />
           <input
             required
@@ -315,7 +315,7 @@ export const UserFormModal: React.FC<{
             placeholder="Email"
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
+            className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded p-2 text-slate-900 dark:text-white"
           />
           {!editingUser && (
             <input
@@ -325,13 +325,13 @@ export const UserFormModal: React.FC<{
               placeholder="Initial Password"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
+              className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded p-2 text-slate-900 dark:text-white"
             />
           )}
           <select
             value={formData.role}
             onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
-            className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
+            className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded p-2 text-slate-900 dark:text-white"
           >
             <option value="USER">User</option>
             <option value="MANAGER">Manager</option>
@@ -340,7 +340,7 @@ export const UserFormModal: React.FC<{
           <select
             value={formData.projectRole}
             onChange={(e) => setFormData({ ...formData, projectRole: e.target.value })}
-            className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
+            className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded p-2 text-slate-900 dark:text-white"
           >
             <option value="">Project Role (optional)</option>
             {DEFAULT_PROJECT_ROLE_OPTIONS.map((projectRole) => (
@@ -353,18 +353,18 @@ export const UserFormModal: React.FC<{
             placeholder="Department (optional)"
             value={formData.department}
             onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-            className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
+            className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded p-2 text-slate-900 dark:text-white"
           />
           <input
             placeholder="Position / Job Title (optional)"
             value={formData.jobTitle}
             onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
-            className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
+            className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded p-2 text-slate-900 dark:text-white"
           />
           <select
             value={formData.licensePlanId}
             onChange={(e) => setFormData({ ...formData, licensePlanId: e.target.value })}
-            className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
+            className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded p-2 text-slate-900 dark:text-white"
           >
             <option value="">Select License...</option>
             {userPlans.map((p) => (
@@ -421,7 +421,7 @@ export const InviteUserModal: React.FC<{
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6 w-full max-w-md shadow-2xl">
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6 w-full max-w-md shadow-2xl">
         <h3 className="text-xl font-bold mb-4 text-slate-900 dark:text-white">Invite New User</h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -433,7 +433,7 @@ export const InviteUserModal: React.FC<{
               required
               value={inviteForm.email}
               onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-blue-500 outline-none"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded text-slate-900 dark:text-white focus:border-blue-500 outline-none"
             />
           </div>
           <div>
@@ -443,7 +443,7 @@ export const InviteUserModal: React.FC<{
             <select
               value={inviteForm.role}
               onChange={(e) => setInviteForm({ ...inviteForm, role: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-blue-500 outline-none"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded text-slate-900 dark:text-white focus:border-blue-500 outline-none"
             >
               <option value="USER">User (Standard)</option>
               <option value="ADMIN">Admin (Organization)</option>
@@ -458,7 +458,7 @@ export const InviteUserModal: React.FC<{
               value={inviteForm.organizationId}
               onChange={(e) => setInviteForm({ ...inviteForm, organizationId: e.target.value })}
               required
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-blue-500 outline-none"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded text-slate-900 dark:text-white focus:border-blue-500 outline-none"
             >
               <option value="">Select Organization...</option>
               {organizations.map((org) => (
@@ -473,7 +473,7 @@ export const InviteUserModal: React.FC<{
               type="button"
               onClick={onClose}
               disabled={isInviting}
-              className="flex-1 py-2 bg-transparent border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded text-slate-700 dark:text-slate-300"
+              className="flex-1 py-2 bg-transparent border border-slate-200 dark:border-c-border-subtle hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded text-slate-700 dark:text-slate-300"
             >
               Cancel
             </button>
@@ -512,7 +512,7 @@ export const MoveUserModal: React.FC<{
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6 w-full max-w-md shadow-2xl">
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6 w-full max-w-md shadow-2xl">
         <h3 className="text-xl font-bold mb-4 text-slate-900 dark:text-white">
           Move User to Organization
         </h3>
@@ -531,7 +531,7 @@ export const MoveUserModal: React.FC<{
             <select
               value={targetOrgId}
               onChange={(e) => setTargetOrgId(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-blue-500 outline-none"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded text-slate-900 dark:text-white focus:border-blue-500 outline-none"
               required
             >
               <option value="">Select Organization...</option>
@@ -547,7 +547,7 @@ export const MoveUserModal: React.FC<{
               type="button"
               onClick={onClose}
               disabled={isMoving}
-              className="flex-1 py-2 bg-transparent border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded text-slate-700 dark:text-slate-300"
+              className="flex-1 py-2 bg-transparent border border-slate-200 dark:border-c-border-subtle hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded text-slate-700 dark:text-slate-300"
             >
               Cancel
             </button>
@@ -847,7 +847,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               disabled={!!loadError}
-              className="pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-primary-500 outline-none w-full md:w-64"
+              className="pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-white focus:border-c-focus-solid outline-none w-full md:w-64"
             />
           </div>
           {mode === 'platform' && (
@@ -856,7 +856,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
                 value={selectedOrganizationId}
                 onChange={(e) => onSelectedOrganizationChange?.(e.target.value)}
                 disabled={!!loadError}
-                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-primary-500 outline-none min-w-[220px]"
+                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-white focus:border-c-focus-solid outline-none min-w-[220px]"
               >
                 <option value="">All organizations</option>
                 {organizations.map((org) => (
@@ -869,7 +869,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
                 disabled={!!loadError}
-                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-primary-500 outline-none min-w-[160px]"
+                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-white focus:border-c-focus-solid outline-none min-w-[160px]"
               >
                 <option value="">All roles</option>
                 {roleOptions.map((role) => (
@@ -882,7 +882,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
                 value={selectedProjectRole}
                 onChange={(e) => setSelectedProjectRole(e.target.value)}
                 disabled={!!loadError}
-                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-primary-500 outline-none min-w-[180px]"
+                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-white focus:border-c-focus-solid outline-none min-w-[180px]"
               >
                 <option value="">All project roles</option>
                 {projectRoleOptions.map((projectRole) => (
@@ -895,7 +895,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
                 disabled={!!loadError}
-                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-primary-500 outline-none min-w-[160px]"
+                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-white focus:border-c-focus-solid outline-none min-w-[160px]"
               >
                 <option value="">All statuses</option>
                 {statusOptions.map((status) => (
@@ -911,7 +911,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
                 searchTerm) && (
                 <button
                   onClick={clearPlatformFilters}
-                  className="px-3 py-2 text-sm border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/40 transition-colors"
+                  className="px-3 py-2 text-sm border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/40 transition-colors"
                 >
                   Clear all
                 </button>
@@ -972,7 +972,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
       )}
 
       {/* Users Table */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl overflow-hidden">
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl overflow-hidden">
         <table /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */  className="w-full text-left text-sm text-slate-600 dark:text-slate-500">
           <thead className="bg-slate-50 dark:bg-navy-950 text-slate-600 dark:text-slate-200 uppercase text-xs font-semibold">
             <tr>

@@ -132,7 +132,7 @@ export const ManagerSelector: React.FC<ManagerSelectorProps> = ({
         className={cn(
           'w-full flex items-center justify-between px-3 py-2.5 bg-white dark:bg-navy-800 border rounded-lg transition-all',
           isOpen
-            ? 'border-primary-500 ring-2 ring-primary-500/20'
+            ? 'border-primary-500 ring-2 ring-c-info/20'
             : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600',
           disabled && 'opacity-50 cursor-not-allowed'
         )}
@@ -203,7 +203,7 @@ export const ManagerSelector: React.FC<ManagerSelectorProps> = ({
                   'admin.team.manager.searchPlaceholder',
                   'Search by name or email...'
                 )}
-                className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-navy-900 border-0 rounded-lg text-sm text-navy-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500"
+                className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-navy-900 border-0 rounded-lg text-sm text-navy-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-c-focus"
               />
             </div>
           </div>

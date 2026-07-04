@@ -100,7 +100,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
-            className="px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+            className="px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text text-sm focus:outline-none focus:ring-2 focus:ring-c-focus"
           >
             <option value="7d">Last 7 days</option>
             <option value="30d">Last 30 days</option>

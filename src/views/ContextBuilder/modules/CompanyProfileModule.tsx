@@ -153,7 +153,7 @@ export const CompanyProfileModule: React.FC = () => {
             <span className="text-sm text-c-text-secondary font-medium group-hover:text-primary-700 dark:group-hover:text-primary-300 transition-colors">
               {opt}
             </span>
-            <div className="absolute inset-0 rounded-xl ring-2 ring-transparent peer-checked:ring-primary-500/50 pointer-events-none transition" />
+            <div className="absolute inset-0 rounded-xl ring-2 ring-transparent peer-checked:ring-c-info/50 pointer-events-none transition" />
           </label>
         ))}
       </div>
@@ -179,7 +179,7 @@ export const CompanyProfileModule: React.FC = () => {
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full appearance-none px-4 py-2.5 rounded-xl border border-c-border-subtle bg-c-surface text-sm font-medium text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-shadow"
+          className="w-full appearance-none px-4 py-2.5 rounded-xl border border-c-border-subtle bg-c-surface text-sm font-medium text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid transition-shadow"
         >
           <option value="" disabled>
             Select...
@@ -226,7 +226,7 @@ export const CompanyProfileModule: React.FC = () => {
                             ${
                               activeTab === tab.id
                                 ? 'border-primary-600 text-primary-600 dark:text-primary-400'
-                                : 'border-transparent text-c-text-muted hover:text-navy-900 dark:hover:text-white hover:border-c-border dark:hover:border-white/20'
+                                : 'border-transparent text-c-text-muted hover:text-navy-900 dark:hover:text-white hover:border-c-border dark:hover:border-c-border'
                             }
                         `}
           >
@@ -441,7 +441,7 @@ export const CompanyProfileModule: React.FC = () => {
                           checked={companyProfile.operationalFootprint === opt}
                           onChange={() => setCompanyProfile({ operationalFootprint: opt })}
                         />
-                        <div className="p-3 rounded-xl border border-c-border-subtle bg-c-surface peer-checked:ring-2 peer-checked:ring-primary-500 peer-checked:border-primary-500 transition text-center">
+                        <div className="p-3 rounded-xl border border-c-border-subtle bg-c-surface peer-checked:ring-2 peer-checked:ring-c-info peer-checked:border-primary-500 transition text-center">
                           <div className="font-bold text-navy-900 dark:text-white mb-1">{opt}</div>
                           <div className="text-[10px] text-c-text-muted">
                             {opt === 'Single Site' ? 'Centralized ops' : 'Distributed ops'}
@@ -517,7 +517,7 @@ export const CompanyProfileModule: React.FC = () => {
                       checked={companyProfile.productionSystem === model.id}
                       onChange={() => setCompanyProfile({ productionSystem: model.id })}
                     />
-                    <div className="h-full p-4 rounded-xl border border-c-border-subtle bg-c-bg/50 dark:bg-navy-950/50 hover:bg-c-surface dark:hover:bg-navy-800 hover:border-primary-300 transition flex flex-col items-center text-center peer-checked:bg-c-surface dark:peer-checked:bg-navy-800 peer-checked:ring-2 peer-checked:ring-primary-500 peer-checked:border-transparent shadow-sm">
+                    <div className="h-full p-4 rounded-xl border border-c-border-subtle bg-c-bg/50 dark:bg-navy-950/50 hover:bg-c-surface dark:hover:bg-navy-800 hover:border-primary-300 transition flex flex-col items-center text-center peer-checked:bg-c-surface dark:peer-checked:bg-navy-800 peer-checked:ring-2 peer-checked:ring-c-info peer-checked:border-transparent shadow-sm">
                       <div className="text-2xl mb-2 grayscale group-hover:grayscale-0 peer-checked:grayscale-0 transition">
                         {model.icon}
                       </div>
@@ -680,7 +680,7 @@ export const CompanyProfileModule: React.FC = () => {
                           checked={companyProfile.decisionMaking === opt.id}
                           onChange={() => setCompanyProfile({ decisionMaking: opt.id })}
                         />
-                        <div className="p-3 rounded-xl border border-c-border-subtle bg-c-surface/50 hover:bg-c-surface-raised/20 dark:hover:bg-c-surface/5 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 peer-checked:border-primary-500 peer-checked:ring-1 peer-checked:ring-primary-500/50 transition flex flex-col h-full">
+                        <div className="p-3 rounded-xl border border-c-border-subtle bg-c-surface/50 hover:bg-c-surface-raised/20 dark:hover:bg-c-surface/5 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 peer-checked:border-primary-500 peer-checked:ring-1 peer-checked:ring-c-info/50 transition flex flex-col h-full">
                           <div className="flex items-center gap-2 mb-1.5 text-c-text-muted peer-checked:text-primary-600 transition-colors">
                             {opt.icon}
                           </div>
@@ -955,7 +955,7 @@ export const CompanyProfileModule: React.FC = () => {
                     }}
                   />
 
-                  <div className="h-full p-4 rounded-xl border border-c-border-subtle bg-c-surface hover:border-primary-300 dark:hover:border-primary-500/50 transition peer-checked:border-primary-500 peer-checked:ring-1 peer-checked:ring-primary-500/50 peer-checked:bg-primary-50/30 dark:peer-checked:bg-primary-900/10 shadow-sm">
+                  <div className="h-full p-4 rounded-xl border border-c-border-subtle bg-c-surface hover:border-primary-300 dark:hover:border-primary-500/50 transition peer-checked:border-primary-500 peer-checked:ring-1 peer-checked:ring-c-info/50 peer-checked:bg-primary-50/30 dark:peer-checked:bg-primary-900/10 shadow-sm">
                     <div className="flex items-start gap-4">
                       <div className="p-2.5 rounded-xl bg-c-surface-raised dark:bg-c-surface/5 text-c-text-muted peer-checked:bg-primary-100 peer-checked:text-primary-600 dark:peer-checked:bg-primary-500/20 dark:peer-checked:text-primary-300 transition-colors">
                         {constraint.icon}

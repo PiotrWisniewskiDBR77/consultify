@@ -59,12 +59,12 @@ const DemoBanner: React.FC<DemoBannerProps> = ({ onStartTrialClick }) => {
   return (
     <div
       data-tour="demo-banner"
-      className="bg-navy-900/95 dark:bg-navy-950 border-b border-white/5 text-slate-100 relative z-overlay"
+      className="bg-navy-900/95 dark:bg-navy-950 border-b border-c-border-subtle text-slate-100 relative z-overlay"
     >
       {/* Main Banner — DBR77 */}
       <div className="px-4 py-2 flex items-center justify-between">
         <div className="flex items-center gap-3 text-sm font-medium">
-          <div className="flex items-center gap-2 bg-navy-800/50 px-2 py-1 rounded border border-white/5">
+          <div className="flex items-center gap-2 bg-navy-800/50 px-2 py-1 rounded border border-c-border-subtle">
             <Sparkles size={14} className="text-primary-400" />
             <span className="font-bold tracking-wide uppercase text-slate-200 text-xs">
               {t('demo.banner.mode', 'Demo')}
@@ -73,7 +73,7 @@ const DemoBanner: React.FC<DemoBannerProps> = ({ onStartTrialClick }) => {
           <span className="text-slate-600">
             <span className="font-medium text-slate-200">{activeOrgName}</span>
             {activeOrgId ? (
-              <span className="ml-2 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-mono text-slate-600">
+              <span className="ml-2 rounded-full border border-c-border-subtle bg-white/5 px-2 py-0.5 text-[10px] font-mono text-slate-600">
                 {activeOrgId}
               </span>
             ) : null}
@@ -113,7 +113,7 @@ const DemoBanner: React.FC<DemoBannerProps> = ({ onStartTrialClick }) => {
 
       {/* Expanded Limitations */}
       {showLimitations && (
-        <div className="px-4 py-3 bg-navy-800/60 border-t border-white/5">
+        <div className="px-4 py-3 bg-navy-800/60 border-t border-c-border-subtle">
           <div className="flex flex-wrap items-center gap-6 text-xs text-slate-600">
             {DEMO_LIMITATIONS.map((limitation, idx) => (
               <div key={idx} className="flex items-center gap-2">

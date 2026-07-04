@@ -473,7 +473,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
       case 'trial':
         return 'bg-amber-500/10 text-amber-800 border-amber-500/20 dark:bg-yellow-500/20 dark:text-yellow-400 dark:border-yellow-500/30';
       default:
-        return 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-700/50 dark:text-slate-300 dark:border-white/10';
+        return 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-700/50 dark:text-slate-300 dark:border-c-border-subtle';
     }
   };
 
@@ -516,7 +516,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
           <button
             onClick={fetchData}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 text-slate-900 rounded-lg text-sm transition-colors border border-slate-200 dark:bg-navy-800 dark:hover:bg-navy-700 dark:text-white dark:border-white/10 disabled:opacity-60"
+            className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 text-slate-900 rounded-lg text-sm transition-colors border border-slate-200 dark:bg-navy-800 dark:hover:bg-navy-700 dark:text-white dark:border-c-border-subtle disabled:opacity-60"
           >
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
             Refresh
@@ -546,7 +546,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
           className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
             activeTab === 'organizations'
               ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 dark:bg-navy-800 dark:text-slate-400 dark:border-white/10 dark:hover:text-white dark:hover:bg-navy-700'
+              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 dark:bg-navy-800 dark:text-slate-400 dark:border-c-border-subtle dark:hover:text-white dark:hover:bg-navy-700'
           }`}
         >
           <Building2 size={16} />
@@ -560,7 +560,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
           className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
             activeTab === 'pending'
               ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 dark:bg-navy-800 dark:text-slate-400 dark:border-white/10 dark:hover:text-white dark:hover:bg-navy-700'
+              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 dark:bg-navy-800 dark:text-slate-400 dark:border-c-border-subtle dark:hover:text-white dark:hover:bg-navy-700'
           }`}
         >
           <Clock size={16} />
@@ -576,7 +576,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
           className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
             activeTab === 'codes'
               ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 dark:bg-navy-800 dark:text-slate-400 dark:border-white/10 dark:hover:text-white dark:hover:bg-navy-700'
+              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 dark:bg-navy-800 dark:text-slate-400 dark:border-c-border-subtle dark:hover:text-white dark:hover:bg-navy-700'
           }`}
         >
           <Key size={16} />
@@ -600,13 +600,13 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 disabled={!!loadErrors.organizations}
-                className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white focus:border-blue-500 outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-lg text-sm text-slate-900 dark:text-white focus:border-blue-500 outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
               />
             </div>
           </div>
 
           {/* Organizations Table */}
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl overflow-hidden">
             <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full text-left">
               <thead>
                 <tr className="bg-slate-50 dark:bg-navy-950 text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider">
@@ -804,8 +804,8 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
 
       {/* Pending Requests Tab */}
       {activeTab === 'pending' && (
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
-          <div className="p-4 border-b border-slate-200 dark:border-white/5 flex justify-between items-center">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl overflow-hidden">
+          <div className="p-4 border-b border-slate-200 dark:border-c-border-subtle flex justify-between items-center">
             <h3 className="font-semibold text-slate-900 dark:text-white">
               Pending Organization Requests
             </h3>
@@ -921,7 +921,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
             </button>
           </div>
 
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl overflow-hidden">
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-slate-50 dark:bg-navy-950 text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider">
@@ -1032,7 +1032,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
       {/* Generate Code Modal */}
       {showCodeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6 w-full max-w-md shadow-2xl">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6 w-full max-w-md shadow-2xl">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Key size={20} className="text-primary-500" /> Generate Access Code
@@ -1057,7 +1057,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                     setNewCodeData({ ...newCodeData, code: e.target.value.toUpperCase() })
                   }
                   placeholder="Leave empty for random"
-                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-primary-500 outline-none text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded text-slate-900 dark:text-white focus:border-c-focus-solid outline-none text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
               </div>
 
@@ -1073,7 +1073,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                     onChange={(e) =>
                       setNewCodeData({ ...newCodeData, maxUses: Number(e.target.value) || 1 })
                     }
-                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-primary-500 outline-none text-sm"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded text-slate-900 dark:text-white focus:border-c-focus-solid outline-none text-sm"
                   />
                 </div>
                 <div>
@@ -1083,7 +1083,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                   <select
                     value={newCodeData.role}
                     onChange={(e) => setNewCodeData({ ...newCodeData, role: e.target.value })}
-                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-primary-500 outline-none text-sm"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded text-slate-900 dark:text-white focus:border-c-focus-solid outline-none text-sm"
                   >
                     <option value="USER">User</option>
                     <option value="ADMIN">Admin</option>
@@ -1100,7 +1100,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                   type="date"
                   value={newCodeData.expiresAt}
                   onChange={(e) => setNewCodeData({ ...newCodeData, expiresAt: e.target.value })}
-                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-primary-500 outline-none text-sm"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded text-slate-900 dark:text-white focus:border-c-focus-solid outline-none text-sm"
                 />
               </div>
 
@@ -1108,7 +1108,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                 <button
                   type="button"
                   onClick={() => setShowCodeModal(false)}
-                  className="flex-1 py-2 bg-transparent border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded text-slate-700 dark:text-slate-300 text-sm font-medium transition-colors"
+                  className="flex-1 py-2 bg-transparent border border-slate-200 dark:border-c-border-subtle hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded text-slate-700 dark:text-slate-300 text-sm font-medium transition-colors"
                 >
                   Cancel
                 </button>

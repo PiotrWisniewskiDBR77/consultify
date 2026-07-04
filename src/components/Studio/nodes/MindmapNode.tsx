@@ -39,7 +39,7 @@ export const MindmapNode: React.FC<NodeProps<MindmapNodeData>> = memo(
         className={`
                 rounded-full border-2 flex items-center justify-center text-center p-2
                 transition-all duration-200 ${(sizeClasses as any)[level]} ${(colorClasses as any)[color]}
-                ${selected ? 'ring-2 ring-white/30 ring-offset-2 ring-offset-slate-900' : ''}
+                ${selected ? 'ring-2 ring-c-border ring-offset-2 ring-offset-slate-900' : ''}
             `}
       >
         {/* Input Handle */}

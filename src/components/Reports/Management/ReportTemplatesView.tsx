@@ -242,7 +242,7 @@ export const ReportTemplatesView: React.FC = () => {
                       onClick={() => handleToggleSection(section.id)}
                       className={`flex items-center gap-2 p-2 rounded-lg text-left border text-sm transition-colors ${
                         isSelected
-                          ? 'border-slate-400 dark:border-white/30 bg-slate-100/60 dark:bg-white/[0.07] text-slate-900 dark:text-white'
+                          ? 'border-slate-400 dark:border-c-border bg-slate-100/60 dark:bg-white/[0.07] text-slate-900 dark:text-white'
                           : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400'
                       }`}
                     >

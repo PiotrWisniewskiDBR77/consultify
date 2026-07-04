@@ -41,7 +41,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
 
   return (
     <thead>
-      <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-20">
+      <tr className="border-b border-slate-200 dark:border-c-border-subtle bg-slate-50 dark:bg-c-bg/90 sticky top-0 z-20">
         {/* Select All Checkbox */}
         {showSelectColumn && (
           <th className="w-10 px-2 py-2">
@@ -53,7 +53,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
                   allSelected
                     ? 'bg-navy-900 border-navy-900 text-white dark:bg-white dark:border-white dark:text-navy-950'
                     : someSelected
-                      ? 'bg-navy-900/50 border-navy-900/60 text-white dark:bg-white/50 dark:border-white/60'
+                      ? 'bg-navy-900/50 border-navy-900/60 text-white dark:bg-white/50 dark:border-c-border-strong'
                       : 'border-slate-300 dark:border-navy-500 hover:border-slate-400 text-transparent hover:text-slate-400'
                 }
               `}

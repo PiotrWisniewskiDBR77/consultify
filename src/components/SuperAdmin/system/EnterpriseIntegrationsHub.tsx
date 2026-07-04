@@ -871,7 +871,7 @@ const DeliveriesModal: React.FC<{
   onClose: () => void;
 }> = ({ webhook, deliveries, loadError, onClose }) => (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-white/10 p-6 w-full max-w-3xl max-h-[80vh] overflow-y-auto">
+    <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-c-border-subtle p-6 w-full max-w-3xl max-h-[80vh] overflow-y-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-xl font-bold text-c-text-secondary dark:text-white">Webhook Deliveries</h3>
@@ -899,7 +899,7 @@ const DeliveriesModal: React.FC<{
           {deliveries.map((delivery) => (
             <div
               key={delivery.id}
-              className="p-3 bg-c-surface/30 rounded-lg border border-c-border-subtle dark:border-white/10"
+              className="p-3 bg-c-surface/30 rounded-lg border border-c-border-subtle dark:border-c-border-subtle"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">

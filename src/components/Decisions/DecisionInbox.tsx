@@ -426,7 +426,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t('decisions.search', 'Search decisions...')}
-                className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-sm text-navy-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-sm text-navy-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-c-focus"
               />
             </div>
 
@@ -434,7 +434,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
             <select
               value={contextFilter}
               onChange={(e) => setContextFilter(e.target.value as ContextFilter)}
-              className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-sm text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-sm text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-c-focus"
             >
               <option value="all">{t('decisions.allContexts', 'All Contexts')}</option>
               <option value="initiative">🎯 {t('decisions.initiatives', 'Initiatives')}</option>
@@ -500,7 +500,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
             <select
               value={sortOrder}
               onChange={(e) => setSortOrder(e.target.value as SortOrder)}
-              className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-sm text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-sm text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-c-focus"
             >
               <option value="urgency">⚠️ {t('decisions.sortUrgency', 'Urgency')}</option>
               <option value="newest">↓ {t('decisions.sortNewest', 'Newest')}</option>

@@ -624,7 +624,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                     customer.commissionDurationMonths !== undefined ||
                     customer.lifetimeValue !== undefined) && (
                     <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
-                      <div className="rounded-lg border border-white/5 bg-c-surface/60 p-3 dark:bg-navy-950/40">
+                      <div className="rounded-lg border border-c-border-subtle bg-c-surface/60 p-3 dark:bg-navy-950/40">
                         <div className="text-[11px] uppercase tracking-wide text-c-text-muted">
                           {t('partner.referrals.customerSignupCompleted', 'Signup completed')}
                         </div>
@@ -632,7 +632,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                           {customer.signupCompletedAt || t('common.pending', 'Pending')}
                         </div>
                       </div>
-                      <div className="rounded-lg border border-white/5 bg-c-surface/60 p-3 dark:bg-navy-950/40">
+                      <div className="rounded-lg border border-c-border-subtle bg-c-surface/60 p-3 dark:bg-navy-950/40">
                         <div className="text-[11px] uppercase tracking-wide text-c-text-muted">
                           {t('partner.referrals.customerFirstPayment', 'First payment')}
                         </div>
@@ -640,7 +640,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                           {customer.firstPaymentAt || t('common.pending', 'Pending')}
                         </div>
                       </div>
-                      <div className="rounded-lg border border-white/5 bg-c-surface/60 p-3 dark:bg-navy-950/40">
+                      <div className="rounded-lg border border-c-border-subtle bg-c-surface/60 p-3 dark:bg-navy-950/40">
                         <div className="text-[11px] uppercase tracking-wide text-c-text-muted">
                           {t('partner.referrals.customerCommissionRate', 'Commission rate')}
                         </div>
@@ -650,7 +650,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                             : t('common.notAvailable', 'Not available')}
                         </div>
                       </div>
-                      <div className="rounded-lg border border-white/5 bg-c-surface/60 p-3 dark:bg-navy-950/40">
+                      <div className="rounded-lg border border-c-border-subtle bg-c-surface/60 p-3 dark:bg-navy-950/40">
                         <div className="text-[11px] uppercase tracking-wide text-c-text-muted">
                           {t('partner.referrals.customerCommissionDuration', 'Commission duration')}
                         </div>
@@ -660,7 +660,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                             : t('common.notAvailable', 'Not available')}
                         </div>
                       </div>
-                      <div className="rounded-lg border border-white/5 bg-c-surface/60 p-3 dark:bg-navy-950/40">
+                      <div className="rounded-lg border border-c-border-subtle bg-c-surface/60 p-3 dark:bg-navy-950/40">
                         <div className="text-[11px] uppercase tracking-wide text-c-text-muted">
                           {t('partner.referrals.customerLifetimeValue', 'Lifetime value')}
                         </div>
@@ -811,7 +811,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                   value={newCampaign.name}
                   onChange={(e) => setNewCampaign((prev) => ({ ...prev, name: e.target.value }))}
                   placeholder="e.g., LinkedIn Q1"
-                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus"
                 />
               </div>
               <div>
@@ -825,7 +825,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                     setNewCampaign((prev) => ({ ...prev, utmSource: e.target.value }))
                   }
                   placeholder="e.g., linkedin"
-                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus"
                 />
               </div>
               <div>
@@ -839,7 +839,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                     setNewCampaign((prev) => ({ ...prev, utmMedium: e.target.value }))
                   }
                   placeholder="e.g., social"
-                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus"
                 />
               </div>
               <div>
@@ -853,7 +853,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                     setNewCampaign((prev) => ({ ...prev, utmCampaign: e.target.value }))
                   }
                   placeholder="e.g., partner-q1-2026"
-                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus"
                 />
               </div>
             </div>
@@ -870,7 +870,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                 className="px-4 py-2 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-primary-600/50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
               >
                 {creating && (
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-c-border border-t-white rounded-full animate-spin" />
                 )}
                 {t('common.create', 'Create')}
               </button>
@@ -1022,7 +1022,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
             <img
               src={qrDataUrl}
               alt={t('partner.referrals.qrAlt', 'Referral QR code')}
-              className="w-full max-w-[240px] mx-auto rounded-lg border border-c-border-subtle dark:border-white/10"
+              className="w-full max-w-[240px] mx-auto rounded-lg border border-c-border-subtle dark:border-c-border-subtle"
             />
             <div className="flex items-center gap-2 mt-4">
               <a

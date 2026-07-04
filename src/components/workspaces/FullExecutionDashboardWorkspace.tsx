@@ -259,7 +259,7 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
 
           {/* Quick Action */}
           <div
-            className="h-32 bg-gradient-to-br from-brand to-brand-hover rounded-xl p-4 shadow-lg shadow-brand/20 text-white flex flex-col justify-between relative overflow-hidden group cursor-pointer border border-white/10"
+            className="h-32 bg-gradient-to-br from-brand to-brand-hover rounded-xl p-4 shadow-lg shadow-brand/20 text-white flex flex-col justify-between relative overflow-hidden group cursor-pointer border border-c-border-subtle"
             onClick={() => setActiveTab('report')}
           >
             <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 group-hover:scale-125 transition-all duration-500">

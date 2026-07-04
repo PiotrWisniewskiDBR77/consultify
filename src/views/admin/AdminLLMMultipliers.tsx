@@ -76,15 +76,15 @@ export const AdminLLMMultipliers = () => {
       case 'google':
         return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
       default:
-        return 'bg-slate-200/70 text-slate-700 border-slate-300 dark:bg-slate-700/50 dark:text-slate-300 dark:border-white/10';
+        return 'bg-slate-200/70 text-slate-700 border-slate-300 dark:bg-slate-700/50 dark:text-slate-300 dark:border-c-border-subtle';
     }
   };
 
   return (
-    <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden shadow-lg h-full flex flex-col relative w-full">
+    <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl overflow-hidden shadow-lg h-full flex flex-col relative w-full">
       <div className="absolute top-0 right-0 p-32 bg-yellow-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
 
-      <div className="p-6 border-b border-slate-200 dark:border-white/10 flex justify-between items-center relative z-10">
+      <div className="p-6 border-b border-slate-200 dark:border-c-border-subtle flex justify-between items-center relative z-10">
         <div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <Zap className="w-5 h-5 text-yellow-400 fill-yellow-400/20" />
@@ -96,7 +96,7 @@ export const AdminLLMMultipliers = () => {
         </div>
         <button
           onClick={fetchProviders}
-          className="p-2 bg-slate-100 hover:bg-slate-200 dark:bg-navy-950/20 dark:hover:bg-navy-800/40 rounded-lg transition-colors border border-slate-200 dark:border-white/10"
+          className="p-2 bg-slate-100 hover:bg-slate-200 dark:bg-navy-950/20 dark:hover:bg-navy-800/40 rounded-lg transition-colors border border-slate-200 dark:border-c-border-subtle"
           title="Refresh Data"
         >
           <RefreshCw
@@ -108,7 +108,7 @@ export const AdminLLMMultipliers = () => {
       <div className="flex-1 overflow-auto">
         <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full text-left text-sm">
           <thead className="sticky top-0 bg-slate-50/90 dark:bg-navy-950/90 backdrop-blur-sm z-10">
-            <tr className="border-b border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 uppercase tracking-wider text-xs">
+            <tr className="border-b border-slate-200 dark:border-c-border-subtle text-slate-600 dark:text-slate-400 uppercase tracking-wider text-xs">
               <th className="py-4 px-6 font-medium">Provider / Model</th>
               <th className="py-4 px-6 font-medium">
                 Base Cost <span className="text-[10px] normal-case opacity-50">(per 1k in)</span>
@@ -257,7 +257,7 @@ export const AdminLLMMultipliers = () => {
         </table>
       </div>
 
-      <div className="p-4 bg-slate-50 dark:bg-navy-950/20 border-t border-slate-200 dark:border-white/10 text-xs text-slate-600 dark:text-slate-400 flex items-start gap-2">
+      <div className="p-4 bg-slate-50 dark:bg-navy-950/20 border-t border-slate-200 dark:border-c-border-subtle text-xs text-slate-600 dark:text-slate-400 flex items-start gap-2">
         <HelpCircle className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
         <p>
           <strong>Pricing Logic:</strong> User Tokens are deducted based on the{' '}

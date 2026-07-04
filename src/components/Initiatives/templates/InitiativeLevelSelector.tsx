@@ -2,7 +2,7 @@
  * InitiativeLevelSelector — Choose initiative level during creation or in properties
  *
  * V3-F01: 4 cards in 2x2 grid, radio selection.
- * DBR77: rounded-xl, hover:ring-2 ring-primary-400, section count text-xs text-slate-600.
+ * DBR77: rounded-xl, hover:ring-2 ring-c-info, section count text-xs text-slate-600.
  */
 
 import { Rocket, Star, Target, Zap } from 'lucide-react';
@@ -71,7 +71,7 @@ export const InitiativeLevelSelector: React.FC<InitiativeLevelSelectorProps> = (
               transition-all
               ${
                 isSelected
-                  ? 'border-slate-500 dark:border-white/40 bg-slate-100/60 dark:bg-white/[0.07] ring-2 ring-slate-400/40 dark:ring-white/10'
+                  ? 'border-slate-500 dark:border-c-border bg-slate-100/60 dark:bg-white/[0.07] ring-2 ring-slate-400/40 dark:ring-c-border'
                   : 'border-slate-200 dark:border-navy-600 hover:border-slate-300 dark:hover:border-navy-500 hover:ring-2 hover:ring-slate-400/30'
               }
               ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}

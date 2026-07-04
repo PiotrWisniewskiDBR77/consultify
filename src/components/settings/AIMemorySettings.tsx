@@ -270,7 +270,7 @@ export const AIMemorySettings: React.FC<{ className?: string }> = ({ className =
                       disabled:opacity-50 transition-colors"
                     >
                       {clearing ? (
-                        <span className="animate-spin h-3 w-3 border-2 border-white/60 border-t-transparent rounded-full" />
+                        <span className="animate-spin h-3 w-3 border-2 border-c-border-strong border-t-transparent rounded-full" />
                       ) : (
                         <Trash2 size={14} />
                       )}

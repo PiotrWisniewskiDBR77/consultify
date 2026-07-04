@@ -308,7 +308,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                                         })
                                       }
                                       disabled={readOnly}
-                                      className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                                      className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid"
                                     >
                                       {Object.entries(RISK_CATEGORIES).map(([key, config]) => (
                                         <option key={key} value={key}>
@@ -330,7 +330,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                                         })
                                       }
                                       disabled={readOnly}
-                                      className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                                      className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid"
                                     >
                                       {Object.entries(RISK_LEVELS).map(([key, config]) => (
                                         <option key={key} value={key}>
@@ -352,7 +352,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                                         })
                                       }
                                       disabled={readOnly}
-                                      className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                                      className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-focus-solid"
                                     >
                                       {Object.entries(RISK_LEVELS).map(([key, config]) => (
                                         <option key={key} value={key}>
@@ -375,7 +375,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                                     }
                                     rows={2}
                                     disabled={readOnly}
-                                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-400 resize-none"
+                                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-c-focus-solid resize-none"
                                     placeholder={
                                       isPolish
                                         ? 'Działania minimalizujące ryzyko...'
@@ -396,7 +396,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                                     }
                                     rows={2}
                                     disabled={readOnly}
-                                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-400 resize-none"
+                                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-c-focus-solid resize-none"
                                     placeholder={
                                       isPolish
                                         ? 'Plan na wypadek materializacji...'

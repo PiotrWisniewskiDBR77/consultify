@@ -190,7 +190,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
             className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-semibold text-sm ${
               isEditing
                 ? 'bg-c-surface text-navy-900 shadow-xl'
-                : 'bg-c-surface/5 border border-white/10 text-c-text hover:bg-c-surface-raised/40'
+                : 'bg-c-surface/5 border border-c-border-subtle text-c-text hover:bg-c-surface-raised/40'
             }`}
           >
             {isEditing ? <X size={18} /> : <Edit size={18} />}
@@ -198,7 +198,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
           </button>
           <button
             onClick={onBack}
-            className="flex items-center gap-2 px-4 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-white/5 text-c-text-secondary hover:text-c-text dark:hover:text-white rounded-xl transition-all text-sm font-semibold"
+            className="flex items-center gap-2 px-4 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-c-border-subtle text-c-text-secondary hover:text-c-text dark:hover:text-white rounded-xl transition-all text-sm font-semibold"
           >
             <ArrowLeft size={18} /> Back
           </button>
@@ -238,7 +238,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
               {isEditing ? (
                 <form
                   onSubmit={handleUpdateProject}
-                  className="bg-c-surface border border-white/10 rounded-xl p-8 space-y-6 shadow-xl"
+                  className="bg-c-surface border border-c-border-subtle rounded-xl p-8 space-y-6 shadow-xl"
                 >
                   <div className="space-y-4">
                     <div>
@@ -248,7 +248,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                       <input
                         value={editForm.name}
                         onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                        className="w-full bg-c-text text-c-bg border border-white/10 rounded-xl p-4 focus:border-primary-500 outline-none"
+                        className="w-full bg-c-text text-c-bg border border-c-border-subtle rounded-xl p-4 focus:border-c-focus-solid outline-none"
                       />
                     </div>
                     <div>
@@ -259,7 +259,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                         value={editForm.description}
                         onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
                         rows={4}
-                        className="w-full bg-c-text text-c-bg border border-white/10 rounded-xl p-4 focus:border-primary-500 outline-none resize-none"
+                        className="w-full bg-c-text text-c-bg border border-c-border-subtle rounded-xl p-4 focus:border-c-focus-solid outline-none resize-none"
                       />
                     </div>
                     <div>
@@ -269,7 +269,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                       <input
                         value={editForm.goal}
                         onChange={(e) => setEditForm({ ...editForm, goal: e.target.value })}
-                        className="w-full bg-c-text text-c-bg border border-white/10 rounded-xl p-4 focus:border-primary-500 outline-none"
+                        className="w-full bg-c-text text-c-bg border border-c-border-subtle rounded-xl p-4 focus:border-c-focus-solid outline-none"
                       />
                     </div>
                     <div>
@@ -284,7 +284,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                             status: e.target.value as Project['status'],
                           })
                         }
-                        className="w-full bg-c-text text-c-bg border border-white/10 rounded-xl p-4 focus:border-primary-500 outline-none appearance-none"
+                        className="w-full bg-c-text text-c-bg border border-c-border-subtle rounded-xl p-4 focus:border-c-focus-solid outline-none appearance-none"
                       >
                         <option value="active">Active</option>
                         <option value="archived">Archived</option>
@@ -339,7 +339,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
 
                   {/* Quick Stats Grid - DBR77 Compatible */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-c-surface/60 border border-c-border-subtle p-4 rounded-xl hover:border-primary-500/30 dark:hover:border-white/10 transition-all group shadow-sm dark:shadow-none">
+                    <div className="bg-c-surface/60 border border-c-border-subtle p-4 rounded-xl hover:border-primary-500/30 dark:hover:border-c-border-subtle transition-all group shadow-sm dark:shadow-none">
                       <Briefcase
                         size={20}
                         className="text-primary-600 dark:text-blue-400 mb-2 group-hover:scale-110 transition-transform"
@@ -351,7 +351,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                         Workstreams
                       </div>
                     </div>
-                    <div className="bg-c-surface/60 border border-c-border-subtle p-4 rounded-xl hover:border-success-500/30 dark:hover:border-white/10 transition-all group shadow-sm dark:shadow-none">
+                    <div className="bg-c-surface/60 border border-c-border-subtle p-4 rounded-xl hover:border-success-500/30 dark:hover:border-c-border-subtle transition-all group shadow-sm dark:shadow-none">
                       <Target
                         size={20}
                         className="text-success-600 dark:text-green-400 mb-2 group-hover:scale-110 transition-transform"
@@ -363,7 +363,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                         Initiatives
                       </div>
                     </div>
-                    <div className="bg-c-surface/60 border border-c-border-subtle p-4 rounded-xl hover:border-primary-500/30 dark:hover:border-white/10 transition-all group shadow-sm dark:shadow-none">
+                    <div className="bg-c-surface/60 border border-c-border-subtle p-4 rounded-xl hover:border-primary-500/30 dark:hover:border-c-border-subtle transition-all group shadow-sm dark:shadow-none">
                       <PieChart
                         size={20}
                         className="text-primary-500 dark:text-amber-400 mb-2 group-hover:scale-110 transition-transform"
@@ -375,7 +375,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                         Assessments
                       </div>
                     </div>
-                    <div className="bg-c-surface/60 border border-c-border-subtle p-4 rounded-xl hover:border-secondary-500/30 dark:hover:border-white/10 transition-all group shadow-sm dark:shadow-none">
+                    <div className="bg-c-surface/60 border border-c-border-subtle p-4 rounded-xl hover:border-secondary-500/30 dark:hover:border-c-border-subtle transition-all group shadow-sm dark:shadow-none">
                       <FileText
                         size={20}
                         className="text-secondary-600 dark:text-indigo-400 mb-2 group-hover:scale-110 transition-transform"
@@ -467,14 +467,14 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {project.initiatives?.length === 0 ? (
-                <div className="col-span-full py-12 text-center bg-c-surface/50 border border-dashed border-white/10 rounded-xl text-c-text-muted">
+                <div className="col-span-full py-12 text-center bg-c-surface/50 border border-dashed border-c-border-subtle rounded-xl text-c-text-muted">
                   No initiatives defined for this project.
                 </div>
               ) : (
                 project.initiatives?.map((item: any) => (
                   <div
                     key={item.id}
-                    className="bg-c-surface border border-white/10 p-6 rounded-xl hover:border-primary-500/30 transition-all flex justify-between items-start group"
+                    className="bg-c-surface border border-c-border-subtle p-6 rounded-xl hover:border-primary-500/30 transition-all flex justify-between items-start group"
                   >
                     <div>
                       <h4 className="font-bold text-c-text mb-1 group-hover:text-primary-400 transition-colors">
@@ -514,14 +514,14 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {project.assessments?.length === 0 ? (
-                <div className="col-span-full py-12 text-center bg-c-surface/50 border border-dashed border-white/10 rounded-xl text-c-text-muted">
+                <div className="col-span-full py-12 text-center bg-c-surface/50 border border-dashed border-c-border-subtle rounded-xl text-c-text-muted">
                   No multi-framework assessments found.
                 </div>
               ) : (
                 project.assessments?.map((item: any) => (
                   <div
                     key={item.id}
-                    className="bg-c-surface border border-white/10 p-6 rounded-xl hover:bg-c-surface-raised transition-all group"
+                    className="bg-c-surface border border-c-border-subtle p-6 rounded-xl hover:bg-c-surface-raised transition-all group"
                   >
                     <div className="flex justify-between items-center mb-4">
                       <div className="p-2 bg-amber-500/10 text-amber-400 rounded-lg">
@@ -559,7 +559,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
         {activeTab === 'documents' && (
           <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-300">
             {/* Upload Panel */}
-            <div className="bg-c-surface border border-white/10 p-8 rounded-xl shadow-xl">
+            <div className="bg-c-surface border border-c-border-subtle p-8 rounded-xl shadow-xl">
               <h3 className="text-xl font-bold text-c-text mb-6 flex items-center gap-2">
                 <Upload size={22} className="text-blue-500" />
                 Project Document Ingestion
@@ -572,7 +572,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                     onChange={(e) => setUploadFile(e.target.files ? e.target.files[0] : null)}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   />
-                  <div className="bg-c-bg border-2 border-dashed border-white/10 rounded-xl p-4 text-center transition-all hover:bg-c-surface-raised/20 hover:border-blue-500 group">
+                  <div className="bg-c-bg border-2 border-dashed border-c-border-subtle rounded-xl p-4 text-center transition-all hover:bg-c-surface-raised/20 hover:border-blue-500 group">
                     {uploadFile ? (
                       <span className="text-blue-400 font-bold flex justify-center items-center gap-2">
                         <FileText size={18} /> {uploadFile.name}
@@ -602,14 +602,14 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
             {/* Documents List */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {project.documents?.length === 0 ? (
-                <div className="col-span-full py-12 text-center text-c-text-muted bg-c-surface/30 border border-dashed border-white/10 rounded-xl">
+                <div className="col-span-full py-12 text-center text-c-text-muted bg-c-surface/30 border border-dashed border-c-border-subtle rounded-xl">
                   No documents ingested for this project.
                 </div>
               ) : (
                 project.documents?.map((item: any) => (
                   <div
                     key={item.id}
-                    className="bg-c-surface border border-white/10 p-4 rounded-xl hover:border-blue-500/30 transition-all flex justify-between items-center group"
+                    className="bg-c-surface border border-c-border-subtle p-4 rounded-xl hover:border-blue-500/30 transition-all flex justify-between items-center group"
                   >
                     <div className="flex items-center gap-3">
                       <div className="p-2.5 bg-c-bg rounded-xl">

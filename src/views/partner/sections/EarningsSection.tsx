@@ -716,7 +716,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         </div>
 
         {/* Statements / Payments Tabs - HubSpot style */}
-        <div className="flex items-center justify-between border-b border-c-border-subtle dark:border-white/10 pb-0">
+        <div className="flex items-center justify-between border-b border-c-border-subtle dark:border-c-border-subtle pb-0">
           <div className="flex items-center gap-1">
             <button
               onClick={() => setActiveTab('statements')}
@@ -771,7 +771,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle dark:border-white/5 p-4">
+          <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle dark:border-c-border-subtle p-4">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-lg bg-emerald-500/20">
                 <Wallet className="w-5 h-5 text-emerald-400" />
@@ -804,7 +804,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             )}
           </div>
 
-          <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle dark:border-white/5 p-4">
+          <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle dark:border-c-border-subtle p-4">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-lg bg-primary-500/20">
                 <TrendingUp className="w-5 h-5 text-primary-400" />
@@ -823,7 +823,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             </p>
           </div>
 
-          <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle dark:border-white/5 p-4">
+          <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle dark:border-c-border-subtle p-4">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-lg bg-amber-500/20">
                 <Clock className="w-5 h-5 text-amber-400" />
@@ -840,7 +840,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             </p>
           </div>
 
-          <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle dark:border-white/5 p-4">
+          <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle dark:border-c-border-subtle p-4">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-lg bg-blue-500/20">
                 <Banknote className="w-5 h-5 text-blue-400" />
@@ -872,7 +872,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         {/* Tab Content */}
         {activeTab === 'statements' ? (
           /* Statements Tab - Recent Transactions */
-          <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle dark:border-white/5 p-4">
+          <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle dark:border-c-border-subtle p-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-c-text">
                 {t('partner.earnings.recentTransactions', 'Recent Commission Statements')}
@@ -972,7 +972,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
           </div>
         ) : (
           /* Payments Tab - Payout History */
-          <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle dark:border-white/5 p-4">
+          <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle dark:border-c-border-subtle p-4">
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-c-text">
                 {t('partner.earnings.paymentHistory', 'Payment History')}
@@ -990,7 +990,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                 {payouts.map((payout) => (
                   <div
                     key={payout.id}
-                    className="flex items-center justify-between p-4 bg-c-surface-raised/50 rounded-lg border border-c-border-subtle dark:border-white/5"
+                    className="flex items-center justify-between p-4 bg-c-surface-raised/50 rounded-lg border border-c-border-subtle dark:border-c-border-subtle"
                   >
                     <div className="flex items-center gap-4">
                       <div
@@ -1079,7 +1079,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             {payouts.map((payout) => (
               <div
                 key={payout.id}
-                className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle dark:border-white/5 p-4"
+                className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle dark:border-c-border-subtle p-4"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
@@ -1170,7 +1170,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
       </div>
 
       {/* Payout Method */}
-      <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle dark:border-white/5 p-4">
+      <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle dark:border-c-border-subtle p-4">
         <h3 className="text-lg font-semibold text-c-text mb-4">Payout Method</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
@@ -1181,7 +1181,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               'p-4 rounded-xl border-2 text-left',
               payoutSettings.payoutMethod === 'BANK_TRANSFER'
                 ? 'border-primary-500 bg-primary-500/10'
-                : 'border-c-border-subtle dark:border-white/10 hover:border-c-border dark:hover:border-white/20'
+                : 'border-c-border-subtle dark:border-c-border-subtle hover:border-c-border dark:hover:border-c-border'
             )}
           >
             <Wallet className="w-6 h-6 text-primary-400 mb-2" />
@@ -1196,7 +1196,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               'p-4 rounded-xl border text-left',
               payoutSettings.payoutMethod === 'PAYPAL'
                 ? 'border-primary-500 bg-primary-500/10'
-                : 'border-c-border-subtle dark:border-white/10 hover:border-c-border dark:hover:border-white/20'
+                : 'border-c-border-subtle dark:border-c-border-subtle hover:border-c-border dark:hover:border-c-border'
             )}
           >
             <DollarSign className="w-6 h-6 text-c-text-secondary mb-2" />
@@ -1209,7 +1209,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               'p-4 rounded-xl border text-left',
               payoutSettings.payoutMethod === 'STRIPE'
                 ? 'border-primary-500 bg-primary-500/10'
-                : 'border-c-border-subtle dark:border-white/10 hover:border-c-border dark:hover:border-white/20'
+                : 'border-c-border-subtle dark:border-c-border-subtle hover:border-c-border dark:hover:border-c-border'
             )}
           >
             <ExternalLink className="w-6 h-6 text-c-text-secondary mb-2" />
@@ -1220,7 +1220,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
       </div>
 
       {/* Bank Details */}
-      <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle dark:border-white/5 p-4">
+      <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle dark:border-c-border-subtle p-4">
         <h3 className="text-lg font-semibold text-c-text mb-4">
           Bank Account Details
         </h3>
@@ -1233,7 +1233,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               type="text"
               value={payoutSettings.payoutAccount?.accountHolderName ?? ''}
               onChange={(e) => updatePayoutAccountField('accountHolderName', e.target.value)}
-              className="w-full px-4 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text"
+              className="w-full px-4 py-2 bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-lg text-c-text"
             />
           </div>
           <div>
@@ -1242,7 +1242,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               type="text"
               value={payoutSettings.payoutAccount?.iban ?? ''}
               onChange={(e) => updatePayoutAccountField('iban', e.target.value)}
-              className="w-full px-4 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text"
+              className="w-full px-4 py-2 bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-lg text-c-text"
             />
           </div>
           <div>
@@ -1253,7 +1253,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               type="text"
               value={payoutSettings.payoutAccount?.bicSwift ?? ''}
               onChange={(e) => updatePayoutAccountField('bicSwift', e.target.value)}
-              className="w-full px-4 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text"
+              className="w-full px-4 py-2 bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-lg text-c-text"
             />
           </div>
           <div>
@@ -1264,7 +1264,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               type="text"
               value={payoutSettings.payoutAccount?.bankName ?? ''}
               onChange={(e) => updatePayoutAccountField('bankName', e.target.value)}
-              className="w-full px-4 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text"
+              className="w-full px-4 py-2 bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-lg text-c-text"
             />
           </div>
         </div>
@@ -1280,7 +1280,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
       </div>
 
       {/* Payout Preferences */}
-      <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle dark:border-white/5 p-4">
+      <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle dark:border-c-border-subtle p-4">
         <h3 className="text-lg font-semibold text-c-text mb-4">
           Payout Preferences
         </h3>
@@ -1300,7 +1300,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                   minimumThreshold: Number(e.target.value),
                 }))
               }
-              className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text"
+              className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-lg text-c-text"
             >
               <option value="100">€100</option>
               <option value="250">€250</option>

@@ -322,7 +322,7 @@ export const SystemSettings: React.FC = () => {
                 type="text"
                 value={settings['app_name'] || ''}
                 onChange={(e) => setSettings((prev) => ({ ...prev, app_name: e.target.value }))}
-                className="flex-1 px-3.5 py-2.5 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-white/[0.06] rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:border-primary-500/50 focus:outline-none"
+                className="flex-1 px-3.5 py-2.5 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-white/[0.06] rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:border-c-focus-solid focus:outline-none"
                 placeholder="Consultify"
               />
               <button
@@ -343,7 +343,7 @@ export const SystemSettings: React.FC = () => {
                 value={settings['default_language'] || 'EN'}
                 onChange={(e) => handleSaveSetting('default_language', e.target.value)}
                 disabled={isSavingSetting('default_language')}
-                className="flex-1 px-3.5 py-2.5 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-white/[0.06] rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:border-primary-500/50 focus:outline-none"
+                className="flex-1 px-3.5 py-2.5 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-white/[0.06] rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:border-c-focus-solid focus:outline-none"
               >
                 <option value="EN">English</option>
                 <option value="PL">Polish</option>
@@ -377,7 +377,7 @@ export const SystemSettings: React.FC = () => {
           </label>
         </div>
 
-        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/5">
+        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-c-border-subtle">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-slate-900 dark:text-slate-100 font-medium">System Announcement</p>
@@ -393,7 +393,7 @@ export const SystemSettings: React.FC = () => {
               onChange={(e) =>
                 setSettings((prev) => ({ ...prev, system_announcement: e.target.value }))
               }
-              className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 focus:border-primary-500 outline-none"
+              className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-slate-100 focus:border-c-focus-solid outline-none"
               placeholder="e.g. Scheduled maintenance at 22:00"
             />
             <button
@@ -413,7 +413,7 @@ export const SystemSettings: React.FC = () => {
 
   const renderSecurity = () => (
     <div className="space-y-6 max-w-2xl">
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6">
         <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-slate-100">
           Access Control
         </h3>
@@ -448,7 +448,7 @@ export const SystemSettings: React.FC = () => {
                 onChange={(e) =>
                   setSettings((prev) => ({ ...prev, session_timeout_mins: e.target.value }))
                 }
-                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 focus:border-primary-500 outline-none"
+                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-slate-100 focus:border-c-focus-solid outline-none"
               />
               <button
                 onClick={() =>
@@ -468,7 +468,7 @@ export const SystemSettings: React.FC = () => {
 
   const renderEmail = () => (
     <div className="space-y-6 max-w-2xl">
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6">
         <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-slate-100">
           SMTP Configuration
         </h3>
@@ -482,7 +482,7 @@ export const SystemSettings: React.FC = () => {
                 type="text"
                 value={settings['smtp_host'] || ''}
                 onChange={(e) => setSettings((prev) => ({ ...prev, smtp_host: e.target.value }))}
-                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 focus:border-primary-500 outline-none"
+                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-slate-100 focus:border-c-focus-solid outline-none"
                 placeholder="smtp.example.com"
               />
               <button
@@ -504,7 +504,7 @@ export const SystemSettings: React.FC = () => {
                   type="text"
                   value={settings['smtp_port'] || ''}
                   onChange={(e) => setSettings((prev) => ({ ...prev, smtp_port: e.target.value }))}
-                  className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 focus:border-primary-500 outline-none"
+                  className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-slate-100 focus:border-c-focus-solid outline-none"
                   placeholder="587"
                 />
                 <button
@@ -525,7 +525,7 @@ export const SystemSettings: React.FC = () => {
                   type="text"
                   value={settings['smtp_from'] || ''}
                   onChange={(e) => setSettings((prev) => ({ ...prev, smtp_from: e.target.value }))}
-                  className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 focus:border-primary-500 outline-none"
+                  className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-slate-100 focus:border-c-focus-solid outline-none"
                   placeholder="noreply@consultify.com"
                 />
                 <button
@@ -545,7 +545,7 @@ export const SystemSettings: React.FC = () => {
 
   const renderLegal = () => (
     <div className="space-y-6 max-w-2xl">
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6">
         <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-slate-100">
           Legal Documents
         </h3>
@@ -561,7 +561,7 @@ export const SystemSettings: React.FC = () => {
                 onChange={(e) =>
                   setSettings((prev) => ({ ...prev, legal_tos_url: e.target.value }))
                 }
-                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 focus:border-primary-500 outline-none"
+                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-slate-100 focus:border-c-focus-solid outline-none"
                 placeholder="https://..."
               />
               <button
@@ -584,7 +584,7 @@ export const SystemSettings: React.FC = () => {
                 onChange={(e) =>
                   setSettings((prev) => ({ ...prev, legal_privacy_url: e.target.value }))
                 }
-                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 focus:border-primary-500 outline-none"
+                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-slate-100 focus:border-c-focus-solid outline-none"
                 placeholder="https://..."
               />
               <button
@@ -624,7 +624,7 @@ export const SystemSettings: React.FC = () => {
         </div>
       )}
 
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl overflow-hidden">
         <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50 dark:bg-navy-950 text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider">
@@ -693,7 +693,7 @@ export const SystemSettings: React.FC = () => {
       {/* Add Admin Modal */}
       {showAddAdmin && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-c-surface border border-white/10 rounded-xl p-6 w-full max-w-md shadow-2xl">
+          <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6 w-full max-w-md shadow-2xl">
             <h3 className="text-xl font-bold mb-4 text-c-text">Add Super Admin</h3>
             <form onSubmit={handleCreateAdmin} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -705,7 +705,7 @@ export const SystemSettings: React.FC = () => {
                     required
                     value={newAdmin.firstName}
                     onChange={(e) => setNewAdmin({ ...newAdmin, firstName: e.target.value })}
-                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-blue-500 outline-none"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded text-slate-900 dark:text-white focus:border-blue-500 outline-none"
                   />
                 </div>
                 <div>
@@ -716,7 +716,7 @@ export const SystemSettings: React.FC = () => {
                     required
                     value={newAdmin.lastName}
                     onChange={(e) => setNewAdmin({ ...newAdmin, lastName: e.target.value })}
-                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-blue-500 outline-none"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded text-slate-900 dark:text-white focus:border-blue-500 outline-none"
                   />
                 </div>
               </div>
@@ -729,7 +729,7 @@ export const SystemSettings: React.FC = () => {
                   type="email"
                   value={newAdmin.email}
                   onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
-                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-blue-500 outline-none"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded text-slate-900 dark:text-white focus:border-blue-500 outline-none"
                 />
               </div>
               <div>
@@ -741,7 +741,7 @@ export const SystemSettings: React.FC = () => {
                   type="password"
                   value={newAdmin.password}
                   onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
-                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-blue-500 outline-none"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded text-slate-900 dark:text-white focus:border-blue-500 outline-none"
                 />
               </div>
               <div className="flex gap-3 pt-4">
@@ -749,7 +749,7 @@ export const SystemSettings: React.FC = () => {
                   type="button"
                   onClick={() => setShowAddAdmin(false)}
                   disabled={savingAdmin}
-                  className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded text-slate-600 transition-colors disabled:opacity-60"
+                  className="flex-1 py-2 bg-transparent border border-c-border-subtle hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded text-slate-600 transition-colors disabled:opacity-60"
                 >
                   Cancel
                 </button>
@@ -771,7 +771,7 @@ export const SystemSettings: React.FC = () => {
   const renderStorage = () => (
     <div className="space-y-6">
       {/* Total Usage Card */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
           Total System Storage
         </h2>
@@ -784,8 +784,8 @@ export const SystemSettings: React.FC = () => {
       </div>
 
       {/* Breakdown Table */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-c-border-subtle flex items-center justify-between">
           <h3 className="font-semibold text-slate-900 dark:text-slate-100">
             Usage by Organization
           </h3>
@@ -896,14 +896,14 @@ export const SystemSettings: React.FC = () => {
           </div>
           <button
             onClick={() => fetchAuditLogs()}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-white/10 rounded-lg text-sm transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-c-border-subtle rounded-lg text-sm transition-colors"
           >
             <RefreshCw size={16} /> Refresh
           </button>
         </div>
 
         {/* Logs Table */}
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl overflow-hidden">
           <table className="w-full text-left">
             <thead className="bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-400 text-xs uppercase">
               <tr>
@@ -972,7 +972,7 @@ export const SystemSettings: React.FC = () => {
                 setAuditLimit(newLimit);
                 fetchAuditLogs(newLimit);
               }}
-              className="px-4 py-2 bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 rounded-lg text-sm transition-colors"
+              className="px-4 py-2 bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-c-border-subtle rounded-lg text-sm transition-colors"
             >
               Load More
             </button>
@@ -1008,7 +1008,7 @@ export const SystemSettings: React.FC = () => {
 
         <div className="grid grid-cols-12 gap-6">
           {/* Sidebar: Table List */}
-          <div className="col-span-3 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4 max-h-[60vh] overflow-y-auto">
+          <div className="col-span-3 bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-4 max-h-[60vh] overflow-y-auto">
             <h2 className="text-sm font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
               <Table size={16} /> Tables ({tables.length})
             </h2>
@@ -1031,7 +1031,7 @@ export const SystemSettings: React.FC = () => {
 
           {/* Main Content: Data Table */}
           <div className="col-span-9 space-y-4">
-            <div className="flex items-center gap-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 p-2 rounded-lg">
+            <div className="flex items-center gap-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle p-2 rounded-lg">
               <Search className="text-slate-500 dark:text-slate-400 ml-2" size={20} />
               <input
                 type="text"
@@ -1042,7 +1042,7 @@ export const SystemSettings: React.FC = () => {
               />
             </div>
 
-            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl overflow-hidden">
               {tableRows.length === 0 ? (
                 <div className="p-12 text-center text-slate-600 dark:text-slate-500">
                   {selectedTable
@@ -1052,7 +1052,7 @@ export const SystemSettings: React.FC = () => {
               ) : (
                 <div className="overflow-x-auto max-h-[50vh]">
                   <table className="w-full text-left text-sm">
-                    <thead className="bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-200 dark:border-white/10 sticky top-0">
+                    <thead className="bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-200 dark:border-c-border-subtle sticky top-0">
                       <tr>
                         {columns.map((col) => (
                           <th key={col} className="px-6 py-4 whitespace-nowrap">
@@ -1083,7 +1083,7 @@ export const SystemSettings: React.FC = () => {
                   </table>
                 </div>
               )}
-              <div className="p-4 border-t border-slate-200 dark:border-white/10 text-xs text-slate-600 dark:text-slate-400 text-right">
+              <div className="p-4 border-t border-slate-200 dark:border-c-border-subtle text-xs text-slate-600 dark:text-slate-400 text-right">
                 Showing {filteredRows.length} rows
               </div>
             </div>
@@ -1111,7 +1111,7 @@ export const SystemSettings: React.FC = () => {
           <button
             onClick={fetchSettings}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 border border-slate-200 dark:border-white/10 rounded-lg text-sm transition-colors text-slate-900 dark:text-slate-100 disabled:opacity-60"
+            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 border border-slate-200 dark:border-c-border-subtle rounded-lg text-sm transition-colors text-slate-900 dark:text-slate-100 disabled:opacity-60"
           >
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Refresh
           </button>

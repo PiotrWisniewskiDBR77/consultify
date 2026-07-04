@@ -83,7 +83,7 @@ export const AuditExportPanel: React.FC = () => {
   };
 
   return (
-    <div className="bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-6 space-y-6">
+    <div className="bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-c-border-subtle p-6 space-y-6">
       <div className="flex items-center gap-3">
         <FileText className="w-5 h-5 text-primary-400" />
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Export Audit Logs</h3>
@@ -98,7 +98,7 @@ export const AuditExportPanel: React.FC = () => {
             type="date"
             value={dateRange.start}
             onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-            className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
+            className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-white"
           />
         </div>
         <div>
@@ -107,7 +107,7 @@ export const AuditExportPanel: React.FC = () => {
             type="date"
             value={dateRange.end}
             onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-            className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
+            className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-lg text-slate-900 dark:text-white"
           />
         </div>
       </div>

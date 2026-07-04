@@ -462,7 +462,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                     step={1000}
                     disabled={line.isLocked}
                     aria-label={`${line.lineName} baseline value`}
-                    className="w-32 text-right px-2 py-1 rounded border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-shadow"
+                    className="w-32 text-right px-2 py-1 rounded border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid transition-shadow"
                   />
                 </td>
                 <td className="px-4 py-2">
@@ -606,7 +606,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                   role="tab"
                   aria-selected={activeTab === tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-3 py-2 text-sm border-b-2 transition ${activeTab === tab.id ? 'border-slate-800 dark:border-white/70 text-slate-900 dark:text-white' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                  className={`px-3 py-2 text-sm border-b-2 transition ${activeTab === tab.id ? 'border-slate-800 dark:border-c-border-strong text-slate-900 dark:text-white' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                 >
                   {tab.label}
                 </button>

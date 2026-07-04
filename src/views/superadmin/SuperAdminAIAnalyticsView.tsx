@@ -123,7 +123,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
         <button
           onClick={fetchData}
           disabled={refreshing}
-          className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 dark:bg-navy-800 dark:hover:bg-navy-700 dark:text-white dark:border-white/10 rounded-lg text-sm transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 dark:bg-navy-800 dark:hover:bg-navy-700 dark:text-white dark:border-c-border-subtle rounded-lg text-sm transition-colors disabled:opacity-50"
         >
           <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
           Refresh
@@ -173,7 +173,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
       {/* Primary Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Tokens Today */}
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-slate-400 dark:text-slate-500 text-sm">Tokens Today</span>
             <Activity className="text-blue-400" size={20} />
@@ -187,7 +187,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
         </div>
 
         {/* Tokens This Month */}
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-slate-400 dark:text-slate-500 text-sm">Tokens This Month</span>
             <TrendingUp className="text-green-400" size={20} />
@@ -201,7 +201,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
         </div>
 
         {/* Cache Hit Rate */}
-        <div className="bg-c-surface border border-white/10 rounded-xl p-4">
+        <div className="bg-c-surface border border-c-border-subtle rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-slate-400 dark:text-slate-500 text-sm">Cache Hit Rate</span>
             <Database className="text-primary-400" size={20} />
@@ -216,7 +216,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
         </div>
 
         {/* Tokens Saved */}
-        <div className="bg-c-surface border border-white/10 rounded-xl p-4">
+        <div className="bg-c-surface border border-c-border-subtle rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-slate-400 dark:text-slate-500 text-sm">Tokens Saved (Cache)</span>
             <DollarSign className="text-blue-400" size={20} />
@@ -233,7 +233,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Organizations */}
-        <div className="bg-c-surface border border-white/10 rounded-xl p-6">
+        <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <BarChart3 className="text-blue-400" size={20} />
             Top Organizations by Token Usage
@@ -282,7 +282,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
         </div>
 
         {/* Active Providers */}
-        <div className="bg-c-surface border border-white/10 rounded-xl p-6">
+        <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Gauge className="text-green-400" size={20} />
             Active LLM Providers
@@ -326,7 +326,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
       </div>
 
       {/* System Checks */}
-      <div className="bg-c-surface border border-white/10 rounded-xl p-6">
+      <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <Clock className="text-yellow-400" size={20} />
           System Health Checks
@@ -358,7 +358,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-c-surface border border-white/10 rounded-xl p-6">
+      <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6">
         <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
         <div className="flex flex-wrap gap-3">
           <button

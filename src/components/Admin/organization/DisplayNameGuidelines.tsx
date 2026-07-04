@@ -168,7 +168,7 @@ export const DisplayNameGuidelinesConfig: React.FC<DisplayNameGuidelinesProps> =
               className={cn(
                 'p-3 rounded-lg border text-left transition-all',
                 guidelines.format === option.value
-                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 ring-2 ring-primary-500/20'
+                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 ring-2 ring-c-info/20'
                   : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
               )}
             >

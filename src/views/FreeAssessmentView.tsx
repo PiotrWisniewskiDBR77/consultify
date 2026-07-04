@@ -25,14 +25,14 @@ import {
 
 const StepIndicator = ({ activeIdx }: { activeIdx: number }) => {
   return (
-    <div className="flex items-center justify-center py-3 border-b border-white/5 bg-navy-950">
+    <div className="flex items-center justify-center py-3 border-b border-c-border-subtle bg-navy-950">
       {[1, 2, 3].map((step) => {
         const isCompleted = step < activeIdx;
         const isActive = step === activeIdx;
         return (
           <div key={step} className="flex items-center">
             <div
-              className={`flex items-center justify-center w-6 h-6 rounded-full border transition-all ${isActive ? 'bg-navy-900 border-white/50 text-white' : isCompleted ? 'bg-green-500/20 border-green-500/30 text-green-400' : 'bg-navy-900 border-white/10 text-slate-500 dark:text-slate-400'}`}
+              className={`flex items-center justify-center w-6 h-6 rounded-full border transition-all ${isActive ? 'bg-navy-900 border-c-border-strong text-white' : isCompleted ? 'bg-green-500/20 border-green-500/30 text-green-400' : 'bg-navy-900 border-c-border-subtle text-slate-500 dark:text-slate-400'}`}
             >
               {isCompleted ? (
                 <Check size={12} />
@@ -499,7 +499,7 @@ export const FreeAssessmentView: React.FC = () => {
           disabled={isTyping}
         />
       </div>
-      <div className="w-[50vw] shrink-0 bg-navy-900 flex flex-col border-l border-white/5">
+      <div className="w-[50vw] shrink-0 bg-navy-900 flex flex-col border-l border-c-border-subtle">
         {currentAppView === AppView.QUICK_STEP3_EXPECTATIONS ? (
           <Step3Workspace
             profile={profileData}

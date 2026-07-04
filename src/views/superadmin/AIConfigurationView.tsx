@@ -441,7 +441,7 @@ Help leaders develop change management competencies.`,
     <div className="h-full flex flex-col bg-c-bg overflow-hidden relative">
       <InfoButton cardId="superadmin-ai-config" position="top-right" />
       {/* Header */}
-      <div className="shrink-0 px-8 py-6 border-b border-white/10">
+      <div className="shrink-0 px-8 py-6 border-b border-c-border-subtle">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center shadow-lg shadow-primary-500/20">
@@ -465,7 +465,7 @@ Help leaders develop change management competencies.`,
       </div>
 
       {/* Tabs */}
-      <div className="shrink-0 px-8 py-3 border-b border-white/5 flex gap-2 overflow-x-auto">
+      <div className="shrink-0 px-8 py-3 border-b border-c-border-subtle flex gap-2 overflow-x-auto">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -488,7 +488,7 @@ Help leaders develop change management competencies.`,
         {activeTab === 'functions' && (
           <div className="h-full flex">
             {/* Capabilities List */}
-            <div className="w-80  border-white/5 overflow-y-auto p-4">
+            <div className="w-80  border-c-border-subtle overflow-y-auto p-4">
               <h3 className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold mb-3 px-2">
                 AI Functions
               </h3>
@@ -532,7 +532,7 @@ Help leaders develop change management competencies.`,
             <div className="flex-1 flex flex-col overflow-hidden">
               {selectedCapability ? (
                 <>
-                  <div className="shrink-0 p-4 border-b border-white/5 flex items-center justify-between">
+                  <div className="shrink-0 p-4 border-b border-c-border-subtle flex items-center justify-between">
                     <div>
                       <h3 className="font-semibold text-c-text">
                         Instructions for:{' '}
@@ -563,10 +563,10 @@ Help leaders develop change management competencies.`,
                       value={editingPrompt}
                       onChange={(e) => setEditingPrompt(e.target.value)}
                       placeholder="Enter AI instructions..."
-                      className="w-full h-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4 text-slate-900 dark:text-white text-sm font-mono resize-none focus:outline-none focus:border-blue-500/50"
+                      className="w-full h-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-4 text-slate-900 dark:text-white text-sm font-mono resize-none focus:outline-none focus:border-blue-500/50"
                     />
                   </div>
-                  <div className="shrink-0 p-4 border-t border-white/5 text-xs text-slate-500 dark:text-slate-400">
+                  <div className="shrink-0 p-4 border-t border-c-border-subtle text-xs text-slate-500 dark:text-slate-400">
                     💡 Tip: Use placeholders like{' '}
                     <code className="text-blue-400">{'{{project_name}}'}</code>,{' '}
                     <code className="text-blue-400">{'{{user_role}}'}</code>,{' '}
@@ -608,7 +608,7 @@ Help leaders develop change management competencies.`,
                   value={ollamaEndpoint}
                   onChange={(e) => setOllamaEndpoint(e.target.value)}
                   placeholder="http://localhost:11434"
-                  className="flex-1 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg px-4 py-2 text-slate-900 dark:text-white text-sm"
+                  className="flex-1 bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded-lg px-4 py-2 text-slate-900 dark:text-white text-sm"
                 />
                 <button
                   onClick={testOllamaConnection}
@@ -674,7 +674,7 @@ Help leaders develop change management competencies.`,
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowInactive(!showInactive)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors text-sm font-medium ${showInactive ? 'bg-white/10 border-white/20 text-c-text' : 'border-white/10 text-slate-400 dark:text-slate-500 hover:text-white'}`}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors text-sm font-medium ${showInactive ? 'bg-white/10 border-c-border text-c-text' : 'border-c-border-subtle text-slate-400 dark:text-slate-500 hover:text-white'}`}
                 >
                   {showInactive ? <Eye size={16} /> : <EyeOff size={16} />}
                   {showInactive ? 'Hide Inactive' : 'Show Inactive'}
@@ -692,7 +692,7 @@ Help leaders develop change management competencies.`,
               </div>
             </div>
 
-            <div className="bg-c-surface border border-white/10 rounded-xl overflow-hidden">
+            <div className="bg-c-surface border border-c-border-subtle rounded-xl overflow-hidden">
               <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full text-left text-sm">
                 <thead className="bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-400 uppercase text-xs">
                   <tr>
@@ -789,7 +789,7 @@ Help leaders develop change management competencies.`,
         {activeTab === 'routing' && (
           <div className="p-8 overflow-y-auto h-full">
             <div className="max-w-3xl mx-auto">
-              <div className="bg-c-surface border border-white/10 rounded-xl p-6">
+              <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6">
                 <h3 className="text-lg font-semibold text-c-text mb-4">Model Routing per Tier</h3>
                 <p className="text-sm text-slate-400 dark:text-slate-500 mb-6">
                   Define which LLM model to use for different complexity levels.
@@ -824,7 +824,7 @@ Help leaders develop change management competencies.`,
                   ].map((item) => (
                     <div
                       key={item.tier}
-                      className="flex items-center gap-4 p-4 bg-c-bg/50 rounded-lg border border-white/5"
+                      className="flex items-center gap-4 p-4 bg-c-bg/50 rounded-lg border border-c-border-subtle"
                     >
                       <div className="flex-1">
                         <div className="font-medium text-c-text">{item.label}</div>
@@ -832,7 +832,7 @@ Help leaders develop change management competencies.`,
                           {item.desc}
                         </div>
                       </div>
-                      <select className="bg-c-surface-raised border border-white/10 rounded-lg px-3 py-2 text-sm text-c-text focus:border-blue-500 outline-none">
+                      <select className="bg-c-surface-raised border border-c-border-subtle rounded-lg px-3 py-2 text-sm text-c-text focus:border-blue-500 outline-none">
                         <option>{item.default}</option>
                         {providers
                           .filter((p) => p.is_active)
@@ -881,7 +881,7 @@ Help leaders develop change management competencies.`,
             </div>
 
             {costStats?.byModel && costStats.byModel.length > 0 && (
-              <div className="bg-c-surface border border-white/10 rounded-xl p-6">
+              <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6">
                 <h3 className="text-lg font-semibold text-c-text mb-4">Costs per Model</h3>
                 <div className="space-y-3">
                   {costStats.byModel.map((m: any) => (
@@ -914,7 +914,7 @@ Help leaders develop change management competencies.`,
           <div className="p-8 overflow-y-auto h-full">
             <div className="max-w-3xl mx-auto space-y-6">
               {/* System Status */}
-              <div className="bg-c-surface border border-white/10 rounded-xl p-6">
+              <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-c-text">AI System Status</h3>
                   <span
@@ -932,7 +932,7 @@ Help leaders develop change management competencies.`,
                   {healthStatus?.checks?.map((check: any, idx: number) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between py-2 border-b border-white/5 last:border-0"
+                      className="flex items-center justify-between py-2 border-b border-c-border-subtle last:border-0"
                     >
                       <span className="text-sm text-slate-300">{check.name}</span>
                       <span
@@ -952,7 +952,7 @@ Help leaders develop change management competencies.`,
               </div>
 
               {/* AI Capabilities Health */}
-              <div className="bg-c-surface border border-white/10 rounded-xl p-6">
+              <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6">
                 <h3 className="text-lg font-semibold text-c-text mb-4">Test Capabilities</h3>
                 <div className="grid grid-cols-2 gap-4">
                   {[
@@ -963,7 +963,7 @@ Help leaders develop change management competencies.`,
                   ].map((cap) => (
                     <button
                       key={cap.id}
-                      className="flex items-center gap-3 p-4 bg-c-bg/50 border border-white/5 rounded-lg hover:bg-c-bg hover:border-white/10 transition-colors"
+                      className="flex items-center gap-3 p-4 bg-c-bg/50 border border-c-border-subtle rounded-lg hover:bg-c-bg hover:border-c-border-subtle transition-colors"
                     >
                       <cap.icon size={20} className="text-blue-400" />
                       <span className="text-sm text-c-text">{cap.label}</span>
@@ -1020,7 +1020,7 @@ Help leaders develop change management competencies.`,
                           onChange={(e) =>
                             updateGlobalSetting('defaultProvider', e.target.value || null)
                           }
-                          className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-primary-500 outline-none"
+                          className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-c-focus-solid outline-none"
                         >
                           <option value="">Auto (First Available)</option>
                           {providers
@@ -1047,7 +1047,7 @@ Help leaders develop change management competencies.`,
                                 failureThreshold: parseInt(e.target.value) || 5,
                               })
                             }
-                            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-primary-500 outline-none"
+                            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-c-focus-solid outline-none"
                           />
                           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                             Failures before circuit opens
@@ -1066,7 +1066,7 @@ Help leaders develop change management competencies.`,
                                 cooldownSeconds: parseInt(e.target.value) || 60,
                               })
                             }
-                            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-primary-500 outline-none"
+                            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-c-focus-solid outline-none"
                           />
                           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                             Wait before retry
@@ -1133,7 +1133,7 @@ Help leaders develop change management competencies.`,
                                 requestsPerMinute: parseInt(e.target.value) || 60,
                               })
                             }
-                            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-primary-500 outline-none"
+                            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-c-focus-solid outline-none"
                           />
                         </div>
                         <div>
@@ -1149,7 +1149,7 @@ Help leaders develop change management competencies.`,
                                 requestsPerHour: parseInt(e.target.value) || 1000,
                               })
                             }
-                            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-primary-500 outline-none"
+                            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-c-focus-solid outline-none"
                           />
                         </div>
                       </div>
@@ -1211,7 +1211,7 @@ Help leaders develop change management competencies.`,
                           onChange={(e) =>
                             updateGlobalSetting('dataResidency', e.target.value || null)
                           }
-                          className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-primary-500 outline-none"
+                          className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-c-focus-solid outline-none"
                         >
                           <option value="">No Restriction</option>
                           <option value="eu">European Union</option>
@@ -1257,7 +1257,7 @@ Help leaders develop change management competencies.`,
       {/* Provider Modal */}
       {showProviderModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-c-surface border border-white/10 rounded-xl p-8 w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh]">
+          <div className="bg-c-surface border border-c-border-subtle rounded-xl p-8 w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh]">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-c-text">
                 {editingProviderId ? 'Edit Provider' : 'Add Provider'}
@@ -1279,7 +1279,7 @@ Help leaders develop change management competencies.`,
                     required
                     value={providerForm.name}
                     onChange={(e) => setProviderForm({ ...providerForm, name: e.target.value })}
-                    className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
+                    className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded p-2 text-slate-900 dark:text-white"
                   />
                 </div>
                 <div>
@@ -1291,7 +1291,7 @@ Help leaders develop change management competencies.`,
                     onChange={(e) =>
                       setProviderForm({ ...providerForm, provider: e.target.value as any })
                     }
-                    className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
+                    className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded p-2 text-slate-900 dark:text-white"
                   >
                     <optgroup label="Major Providers">
                       <option value="openai">OpenAI (GPT-4)</option>
@@ -1321,7 +1321,7 @@ Help leaders develop change management competencies.`,
                   type="password"
                   value={providerForm.api_key}
                   onChange={(e) => setProviderForm({ ...providerForm, api_key: e.target.value })}
-                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
+                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded p-2 text-slate-900 dark:text-white"
                   placeholder="sk-..."
                 />
               </div>
@@ -1335,7 +1335,7 @@ Help leaders develop change management competencies.`,
                     required
                     value={providerForm.model_id}
                     onChange={(e) => setProviderForm({ ...providerForm, model_id: e.target.value })}
-                    className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
+                    className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded p-2 text-slate-900 dark:text-white"
                   />
                 </div>
                 <div>
@@ -1345,7 +1345,7 @@ Help leaders develop change management competencies.`,
                   <input
                     value={providerForm.endpoint}
                     onChange={(e) => setProviderForm({ ...providerForm, endpoint: e.target.value })}
-                    className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
+                    className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded p-2 text-slate-900 dark:text-white"
                     placeholder="https://api..."
                   />
                 </div>
@@ -1361,7 +1361,7 @@ Help leaders develop change management competencies.`,
                     onChange={(e) =>
                       setProviderForm({ ...providerForm, visibility: e.target.value as any })
                     }
-                    className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
+                    className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-c-border-subtle rounded p-2 text-slate-900 dark:text-white"
                   >
                     <option value="admin">Admin Only</option>
                     <option value="beta">Beta Users</option>
@@ -1376,7 +1376,7 @@ Help leaders develop change management competencies.`,
                       onChange={(e) =>
                         setProviderForm({ ...providerForm, is_active: e.target.checked })
                       }
-                      className="w-4 h-4 rounded bg-c-bg border-white/10"
+                      className="w-4 h-4 rounded bg-c-bg border-c-border-subtle"
                     />
                     <span className="text-sm text-slate-300">Active</span>
                   </label>
@@ -1387,7 +1387,7 @@ Help leaders develop change management competencies.`,
                 <button
                   type="button"
                   onClick={() => setShowProviderModal(false)}
-                  className="px-4 py-2 bg-transparent border border-white/10 hover:bg-slate-50 dark:hover:bg-navy-800/20 text-slate-300 rounded"
+                  className="px-4 py-2 bg-transparent border border-c-border-subtle hover:bg-slate-50 dark:hover:bg-navy-800/20 text-slate-300 rounded"
                 >
                   Cancel
                 </button>
@@ -1421,7 +1421,7 @@ const StatCard: React.FC<{ icon: any; label: string; value: string; color: strin
   value,
   color,
 }) => (
-  <div className="bg-c-surface border border-white/10 rounded-xl p-4">
+  <div className="bg-c-surface border border-c-border-subtle rounded-xl p-4">
     <div className="flex items-center gap-3 mb-2">
       <Icon size={18} className={color} />
       <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">

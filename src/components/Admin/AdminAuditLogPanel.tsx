@@ -163,7 +163,7 @@ export const AdminAuditLogPanel: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-c-border-subtle dark:bg-white/5">
           <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
             Total logs
           </p>
@@ -171,7 +171,7 @@ export const AdminAuditLogPanel: React.FC = () => {
             {stats.totalLogs}
           </p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-c-border-subtle dark:bg-white/5">
           <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
             Unresolved
           </p>
@@ -179,7 +179,7 @@ export const AdminAuditLogPanel: React.FC = () => {
             {stats.unresolvedCount}
           </p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-c-border-subtle dark:bg-white/5">
           <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
             High risk
           </p>
@@ -190,7 +190,7 @@ export const AdminAuditLogPanel: React.FC = () => {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-c-border-subtle dark:bg-white/5">
           <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
             Risk & incidents
           </p>
@@ -201,7 +201,7 @@ export const AdminAuditLogPanel: React.FC = () => {
             High-risk admin changes: {riskSummary?.audit?.highRiskCount || 0}
           </p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-c-border-subtle dark:bg-white/5">
           <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
             Compliance evidence
           </p>
@@ -217,7 +217,7 @@ export const AdminAuditLogPanel: React.FC = () => {
               min={30}
               value={retentionDays}
               onChange={(event) => setRetentionDays(Number(event.target.value || 730))}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-c-border-subtle dark:bg-navy-900 dark:text-white"
             />
             <button
               onClick={() => void saveRetention()}
@@ -229,7 +229,7 @@ export const AdminAuditLogPanel: React.FC = () => {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-c-border-subtle dark:bg-white/5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -245,11 +245,11 @@ export const AdminAuditLogPanel: React.FC = () => {
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search action, actor, metadata..."
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-c-border-subtle dark:bg-navy-900 dark:text-white"
             />
             <button
               onClick={() => void load()}
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 dark:border-white/10 dark:text-slate-300"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 dark:border-c-border-subtle dark:text-slate-300"
             >
               <RefreshCw className="h-4 w-4" />
               Refresh

@@ -269,7 +269,7 @@ export const IPAccessRulesPanel: React.FC = () => {
           <select
             value={selectedOrgId}
             onChange={(e) => setSelectedOrgId(e.target.value)}
-            className="px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none min-w-[200px]"
+            className="px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-c-focus-solid outline-none min-w-[200px]"
           >
             <option value="" disabled>
               Select Organization
@@ -326,7 +326,7 @@ export const IPAccessRulesPanel: React.FC = () => {
       {/* Add Rule Modal */}
       {showAddForm && (
         <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-c-surface border border-white/10 rounded-xl p-6 w-full max-w-md">
+          <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6 w-full max-w-md">
             <h3 className="text-lg font-semibold text-c-text mb-6">Add IP Rule</h3>
 
             <div className="space-y-4">
@@ -339,7 +339,7 @@ export const IPAccessRulesPanel: React.FC = () => {
                   value={addForm.ipAddress}
                   onChange={(e) => setAddForm((prev) => ({ ...prev, ipAddress: e.target.value }))}
                   placeholder="192.168.1.1 or 192.168.0.0/24"
-                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none font-mono"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-c-focus-solid outline-none font-mono"
                 />
               </div>
 
@@ -352,7 +352,7 @@ export const IPAccessRulesPanel: React.FC = () => {
                     className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border transition-colors ${
                       addForm.ruleType === 'allow'
                         ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
-                        : 'bg-c-surface-raised border-white/10 text-slate-600 dark:text-slate-500 hover:border-white/20'
+                        : 'bg-c-surface-raised border-c-border-subtle text-slate-600 dark:text-slate-500 hover:border-c-border'
                     }`}
                   >
                     <Shield size={18} />
@@ -364,7 +364,7 @@ export const IPAccessRulesPanel: React.FC = () => {
                     className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border transition-colors ${
                       addForm.ruleType === 'block'
                         ? 'bg-danger-500/20 border-danger-500/50 text-danger-400'
-                        : 'bg-c-surface-raised border-white/10 text-slate-600 dark:text-slate-500 hover:border-white/20'
+                        : 'bg-c-surface-raised border-c-border-subtle text-slate-600 dark:text-slate-500 hover:border-c-border'
                     }`}
                   >
                     <ShieldOff size={18} />
@@ -382,7 +382,7 @@ export const IPAccessRulesPanel: React.FC = () => {
                   value={addForm.description}
                   onChange={(e) => setAddForm((prev) => ({ ...prev, description: e.target.value }))}
                   placeholder="e.g., Office network, VPN"
-                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-c-focus-solid outline-none"
                 />
               </div>
 
@@ -394,7 +394,7 @@ export const IPAccessRulesPanel: React.FC = () => {
                   type="datetime-local"
                   value={addForm.expiresAt}
                   onChange={(e) => setAddForm((prev) => ({ ...prev, expiresAt: e.target.value }))}
-                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:border-c-focus-solid outline-none"
                 />
               </div>
             </div>

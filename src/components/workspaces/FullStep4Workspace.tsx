@@ -62,7 +62,7 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-900">
       {/* Header */}
-      <div className="h-14 border-b border-slate-200 dark:border-white/5 flex flex-col justify-center p-4 bg-white dark:bg-navy-900 shrink-0">
+      <div className="h-14 border-b border-slate-200 dark:border-c-border-subtle flex flex-col justify-center p-4 bg-white dark:bg-navy-900 shrink-0">
         <div className="flex justify-between items-center mb-1">
           <span className="text-xs font-semibold text-slate-900 dark:text-white tracking-wide">
             {t.intro.substring(0, 30)}...
@@ -79,7 +79,7 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
         {/* KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Cost */}
-          <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/5 p-3 rounded-xl">
+          <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-c-border-subtle p-3 rounded-xl">
             <div className="flex items-center gap-2 text-slate-600 dark:text-slate-500 mb-1">
               <DollarSign size={14} />
               <span className="text-[10px] font-bold uppercase tracking-wider">
@@ -92,7 +92,7 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
           </div>
 
           {/* Benefit */}
-          <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/5 p-3 rounded-xl">
+          <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-c-border-subtle p-3 rounded-xl">
             <div className="flex items-center gap-2 text-slate-600 dark:text-slate-500 mb-1">
               <TrendingUp size={14} />
               <span className="text-[10px] font-bold uppercase tracking-wider">
@@ -105,7 +105,7 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
           </div>
 
           {/* ROI */}
-          <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/5 p-3 rounded-xl">
+          <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-c-border-subtle p-3 rounded-xl">
             <div className="flex items-center gap-2 text-slate-600 dark:text-slate-500 mb-1">
               <Activity size={14} />
               <span className="text-[10px] font-bold uppercase tracking-wider">
@@ -120,7 +120,7 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
           </div>
 
           {/* Payback */}
-          <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/5 p-3 rounded-xl">
+          <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-c-border-subtle p-3 rounded-xl">
             <div className="flex items-center gap-2 text-slate-600 dark:text-slate-500 mb-1">
               <Clock size={14} />
               <span className="text-[10px] font-bold uppercase tracking-wider">
@@ -135,13 +135,13 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
         </div>
 
         {/* ROI Chart */}
-        <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/5 rounded-xl p-4 h-[350px]">
+        <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-c-border-subtle rounded-xl p-4 h-[350px]">
           <ROIPaybackChart economics={economics} />
         </div>
 
         {/* Input Mode Toggle */}
         <div className="flex justify-end">
-          <div className="bg-navy-950 p-1 rounded-lg border border-white/10 flex gap-1">
+          <div className="bg-navy-950 p-1 rounded-lg border border-c-border-subtle flex gap-1">
             <button
               onClick={() => setInputMode('range')}
               className={`px-3 py-1.5 rounded text-xs font-medium flex items-center gap-2 transition-colors ${inputMode === 'range' ? 'bg-navy-900 text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
@@ -158,10 +158,10 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
         </div>
 
         {/* Economics Table */}
-        <div className="border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden bg-slate-50 dark:bg-navy-950/50 shadow-xl">
+        <div className="border border-slate-200 dark:border-c-border-subtle rounded-xl overflow-hidden bg-slate-50 dark:bg-navy-950/50 shadow-xl">
           <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */  className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-white/10 text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <tr className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-c-border-subtle text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 <th className="p-3">{ti.tableHeader.initiative}</th>
                 <th className="p-3 w-40">{t.tableHeader.cost}</th>
                 <th className="p-3 w-40">{t.tableHeader.benefit}</th>
@@ -171,7 +171,7 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
               {initiatives.map((init) => (
                 <tr
                   key={init.id}
-                  className="border-b border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
+                  className="border-b border-slate-200 dark:border-c-border-subtle hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
                 >
                   <td className="p-3">
                     <div className="font-medium text-slate-900 dark:text-white text-xs">
@@ -188,7 +188,7 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
                       <select
                         value={init.costRange || costRanges[0].label}
                         onChange={(e) => handleRangeChange(init, 'cost', e.target.value)}
-                        className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 text-xs rounded px-2 py-2 outline-none focus:border-blue-500 text-slate-700 dark:text-slate-300"
+                        className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle text-xs rounded px-2 py-2 outline-none focus:border-blue-500 text-slate-700 dark:text-slate-300"
                       >
                         {costRanges.map((r) => (
                           <option key={r.label} value={r.label}>
@@ -211,7 +211,7 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
                               estimatedCost: parseFloat(e.target.value) || 0,
                             })
                           }
-                          className="bg-navy-900 border border-slate-200 dark:border-white/10 text-sm rounded px-2 py-1 pl-5 outline-none focus:border-blue-500 text-slate-900 dark:text-white w-28"
+                          className="bg-navy-900 border border-slate-200 dark:border-c-border-subtle text-sm rounded px-2 py-1 pl-5 outline-none focus:border-blue-500 text-slate-900 dark:text-white w-28"
                           placeholder="0"
                         />
                       </div>
@@ -224,7 +224,7 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
                       <select
                         value={init.benefitRange || benefitRanges[0].label}
                         onChange={(e) => handleRangeChange(init, 'benefit', e.target.value)}
-                        className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 text-xs rounded px-2 py-2 outline-none focus:border-green-500 text-slate-700 dark:text-slate-300"
+                        className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle text-xs rounded px-2 py-2 outline-none focus:border-green-500 text-slate-700 dark:text-slate-300"
                       >
                         {benefitRanges.map((r) => (
                           <option key={r.label} value={r.label}>
@@ -247,7 +247,7 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
                               estimatedAnnualBenefit: parseFloat(e.target.value) || 0,
                             })
                           }
-                          className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 text-sm rounded px-2 py-1 pl-5 outline-none focus:border-green-500 text-green-700 dark:text-green-300 w-28"
+                          className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle text-sm rounded px-2 py-1 pl-5 outline-none focus:border-green-500 text-green-700 dark:text-green-300 w-28"
                           placeholder="0"
                         />
                       </div>
@@ -261,7 +261,7 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t border-slate-200 dark:border-white/5 bg-white dark:bg-navy-900 flex justify-end">
+      <div className="p-4 border-t border-slate-200 dark:border-c-border-subtle bg-white dark:bg-navy-900 flex justify-end">
         <button
           onClick={onNextStep}
           className="flex items-center gap-2 px-6 py-2.5 rounded-lg font-semibold text-xs transition-all shadow-lg bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/30"

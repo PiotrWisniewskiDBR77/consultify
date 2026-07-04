@@ -512,7 +512,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
       </div>
 
       {loadError ? (
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6">
           <DegradedState title="AI usage analytics unavailable" description={loadError} />
         </div>
       ) : (
@@ -558,7 +558,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
           </div>
 
           {/* Period Comparison */}
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
               <TrendingUp size={18} className="text-emerald-400" />
               Period Comparison (vs Previous {timeRange})
@@ -600,7 +600,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
           </div>
 
           {/* Trends Chart */}
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
               <Activity size={18} className="text-primary-400" />
               Usage Trends
@@ -626,7 +626,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
                       }}
                     />
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10">
-                      <div className="bg-c-surface border border-slate-200 dark:border-white/10 rounded-lg p-2 text-xs whitespace-nowrap">
+                      <div className="bg-c-surface border border-slate-200 dark:border-c-border-subtle rounded-lg p-2 text-xs whitespace-nowrap">
                         <div className="font-medium text-slate-900 dark:text-white">
                           {point.date}
                         </div>
@@ -652,7 +652,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
           {/* Model Usage & Capability Breakdown */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Model Usage */}
-            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                 <Cpu size={18} className="text-blue-400" />
                 Model Popularity
@@ -698,7 +698,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
             </div>
 
             {/* Capability Usage */}
-            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                 <Target size={18} className="text-amber-400" />
                 Usage by Capability
@@ -745,7 +745,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
           </div>
 
           {/* Hourly Usage Heatmap */}
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-6">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
               <Clock size={18} className="text-blue-400" />
               Peak Usage Hours
@@ -761,7 +761,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
                     {hour.hour % 4 === 0 ? `${hour.hour}:00` : ''}
                   </div>
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10">
-                    <div className="bg-c-surface border border-slate-200 dark:border-white/10 rounded px-2 py-1 text-xs whitespace-nowrap">
+                    <div className="bg-c-surface border border-slate-200 dark:border-c-border-subtle rounded px-2 py-1 text-xs whitespace-nowrap">
                       <div className="text-slate-900 dark:text-white">
                         {hour.hour}:00 - {hour.hour + 1}:00
                       </div>
@@ -825,7 +825,7 @@ const SummaryCard: React.FC<{
   value: string;
   color: string;
 }> = ({ icon: Icon, label, value, color }) => (
-  <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4">
+  <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-4">
     <div className="flex items-center gap-2 mb-2">
       <Icon size={16} className={color} />
       <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
@@ -843,7 +843,7 @@ const InsightCard: React.FC<{
   icon: LucideIcon;
   color: string;
 }> = ({ title, value, description, icon: Icon, color }) => (
-  <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4">
+  <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-c-border-subtle rounded-xl p-4">
     <div className="flex items-center gap-3 mb-3">
       <div className={`p-2 rounded-lg bg-slate-50 dark:bg-navy-800`}>
         <Icon size={20} className={color} />

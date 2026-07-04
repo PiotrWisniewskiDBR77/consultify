@@ -132,7 +132,7 @@ oraz budowy kompetencji data science, co może przynieść szacowany ROI na pozi
           onChange={(e) => updateAttributes({ content: e.target.value })}
           onBlur={() => setIsEditing(false)}
           autoFocus
-          className="w-full bg-white/10 rounded-lg p-4 text-white placeholder-white/50 resize-none min-h-[200px] focus:outline-none focus:ring-2 focus:ring-white/30"
+          className="w-full bg-white/10 rounded-lg p-4 text-white placeholder-white/50 resize-none min-h-[200px] focus:outline-none focus:ring-2 focus:ring-c-focus"
         />
       ) : (
         <div

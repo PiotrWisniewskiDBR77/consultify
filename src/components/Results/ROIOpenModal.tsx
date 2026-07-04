@@ -47,7 +47,7 @@ export const ROIOpenModal: React.FC<ROIOpenModalProps> = ({ onClose, onSelect, t
   );
 
   const inputCls =
-    'w-full h-9 pl-9 pr-9 text-sm rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors';
+    'w-full h-9 pl-9 pr-9 text-sm rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid transition-colors';
 
   return (
     <div className="fixed inset-0 z-overlay flex items-center justify-center">

@@ -72,7 +72,7 @@ export const AIFeedbackButton: React.FC<AIFeedbackButtonProps> = ({
 
       {showModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-navy-900 border border-white/10 rounded-xl p-6 w-full max-w-sm shadow-2xl">
+          <div className="bg-navy-900 border border-c-border-subtle rounded-xl p-6 w-full max-w-sm shadow-2xl">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-bold text-white flex items-center gap-2">
                 <MessageSquare size={16} className="text-primary-400" />
@@ -92,7 +92,7 @@ export const AIFeedbackButton: React.FC<AIFeedbackButtonProps> = ({
                 className={`p-3 rounded-xl border transition-all ${
                   rating === 'positive'
                     ? 'bg-green-500/20 border-green-500 text-green-400'
-                    : 'bg-navy-950 border-white/5 text-slate-600 dark:text-slate-500 hover:border-green-500/50'
+                    : 'bg-navy-950 border-c-border-subtle text-slate-600 dark:text-slate-500 hover:border-green-500/50'
                 }`}
               >
                 <ThumbsUp size={24} />
@@ -102,7 +102,7 @@ export const AIFeedbackButton: React.FC<AIFeedbackButtonProps> = ({
                 className={`p-3 rounded-xl border transition-all ${
                   rating === 'negative'
                     ? 'bg-danger-500/20 border-danger-500 text-danger-400'
-                    : 'bg-navy-950 border-white/5 text-slate-600 dark:text-slate-500 hover:border-danger-500/50'
+                    : 'bg-navy-950 border-c-border-subtle text-slate-600 dark:text-slate-500 hover:border-danger-500/50'
                 }`}
               >
                 <ThumbsDown size={24} />
@@ -113,7 +113,7 @@ export const AIFeedbackButton: React.FC<AIFeedbackButtonProps> = ({
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="Tell us more about your experience... (optional)"
-              className="w-full bg-navy-950 border border-white/10 rounded-lg p-3 text-sm text-white focus:border-primary-500 outline-none h-24 mb-4 resize-none"
+              className="w-full bg-navy-950 border border-c-border-subtle rounded-lg p-3 text-sm text-white focus:border-c-focus-solid outline-none h-24 mb-4 resize-none"
             />
 
             <div className="flex justify-end">

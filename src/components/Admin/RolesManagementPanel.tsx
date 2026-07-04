@@ -647,7 +647,7 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
                   onClick={() => setFormData((prev) => ({ ...prev, color: color.id }))}
                   disabled={selectedRole?.isSystem}
                   className={`w-8 h-8 rounded-full ${color.bg} ${
-                    formData.color === color.id ? 'ring-2 ring-offset-2 ring-primary-500' : ''
+                    formData.color === color.id ? 'ring-2 ring-offset-2 ring-c-info' : ''
                   } disabled:opacity-50`}
                 />
               ))}
@@ -756,7 +756,7 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
                                   type="checkbox"
                                   checked={isSelected}
                                   onChange={() => togglePermission(permission.key)}
-                                  className="w-4 h-4 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500"
+                                  className="w-4 h-4 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-c-focus"
                                 />
                                 <div className="flex-1">
                                   <span className="font-medium text-slate-900 dark:text-white text-sm">

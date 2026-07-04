@@ -1816,7 +1816,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                         'bg-c-surface',
                         'hover:shadow-md hover:-translate-y-px transition-all duration-150',
                         isPreviewSelected || isSelected
-                          ? 'ring-2 ring-c-border-strong dark:ring-white/20'
+                          ? 'ring-2 ring-c-border-strong dark:ring-c-border'
                           : '',
                       ].join(' ')}
                     >

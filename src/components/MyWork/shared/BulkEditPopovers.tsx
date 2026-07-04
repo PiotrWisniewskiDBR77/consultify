@@ -249,7 +249,7 @@ export const BulkDatePicker: React.FC<BulkDatePickerProps> = ({
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') handleCustomSubmit();
                   }}
-                  className="flex-1 h-8 px-2 text-sm rounded-lg border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+                  className="flex-1 h-8 px-2 text-sm rounded-lg border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-c-focus"
                 />
                 <button
                   onClick={handleCustomSubmit}

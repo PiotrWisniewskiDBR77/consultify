@@ -498,7 +498,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                           type="checkbox"
                           checked={newKeyForm.permissions.includes(perm.id)}
                           onChange={() => togglePermission(perm.id)}
-                          className="mt-0.5 w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
+                          className="mt-0.5 w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-c-focus"
                         />
                         <div>
                           <span className="font-medium text-slate-900 dark:text-white text-sm">

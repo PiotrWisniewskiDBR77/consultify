@@ -78,7 +78,7 @@ export const DynamicTabBarOverflow: React.FC<DynamicTabBarOverflowProps> = ({
         <>
           <div className="fixed inset-0 z-40" onClick={onToggle} aria-hidden="true" />
           <div
-            className="absolute top-full right-0 mt-0.5 z-50 min-w-[220px] max-h-[320px] overflow-y-auto bg-navy-800 border border-white/10 rounded-lg shadow-xl"
+            className="absolute top-full right-0 mt-0.5 z-50 min-w-[220px] max-h-[320px] overflow-y-auto bg-navy-800 border border-c-border-subtle rounded-lg shadow-xl"
             role="listbox"
           >
             {documents.map((doc) => {
@@ -121,7 +121,7 @@ export const DynamicTabBarOverflow: React.FC<DynamicTabBarOverflowProps> = ({
                 </div>
               );
             })}
-            <div className="border-t border-white/5">
+            <div className="border-t border-c-border-subtle">
               <button
                 type="button"
                 onClick={() => {

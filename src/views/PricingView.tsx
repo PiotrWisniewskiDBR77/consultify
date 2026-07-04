@@ -272,7 +272,7 @@ export const PricingView: React.FC = () => {
                   transition={{ duration: 0.5, delay: idx * 0.1 }}
                   className={`relative rounded-xl p-8 flex flex-col ${
                     tier.highlight
-                      ? 'bg-gradient-to-b from-primary-600 to-primary-700 text-white ring-4 ring-primary-500/50 shadow-2xl shadow-primary-500/20 scale-105 z-10'
+                      ? 'bg-gradient-to-b from-primary-600 to-primary-700 text-white ring-4 ring-c-info/50 shadow-2xl shadow-primary-500/20 scale-105 z-10'
                       : 'bg-c-surface border border-c-border-subtle'
                   }`}
                 >
@@ -424,7 +424,7 @@ export const PricingView: React.FC = () => {
                         ? 'bg-c-surface text-primary-700 hover:bg-primary-50 shadow-lg'
                         : tier.ctaVariant === 'secondary'
                           ? 'bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800'
-                          : 'border-2 border-c-border dark:border-white/20 text-navy-950 dark:text-white hover:bg-c-bg dark:hover:bg-c-surface/5'
+                          : 'border-2 border-c-border dark:border-c-border text-navy-950 dark:text-white hover:bg-c-bg dark:hover:bg-c-surface/5'
                     }`}
                   >
                     {tier.cta}
@@ -644,7 +644,7 @@ export const PricingView: React.FC = () => {
               href={CALENDAR_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-8 py-4 border-2 border-c-border dark:border-white/20 text-navy-950 dark:text-white font-bold rounded-xl hover:bg-c-surface dark:hover:bg-c-surface/5 transition-colors flex items-center justify-center gap-2"
+              className="px-8 py-4 border-2 border-c-border dark:border-c-border text-navy-950 dark:text-white font-bold rounded-xl hover:bg-c-surface dark:hover:bg-c-surface/5 transition-colors flex items-center justify-center gap-2"
             >
               <Calendar size={18} />
               Schedule a Demo

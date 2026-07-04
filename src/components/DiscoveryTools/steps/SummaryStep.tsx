@@ -150,7 +150,7 @@ function ContentSelector({
             checked={selected.has(s.id)}
             onChange={() => s.available && onToggle(s.id)}
             disabled={!s.available}
-            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-600"
+            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-navy-600"
           />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">

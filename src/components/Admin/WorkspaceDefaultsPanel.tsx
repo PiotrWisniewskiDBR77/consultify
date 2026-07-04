@@ -439,7 +439,7 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({
                   onChange={(e) =>
                     updateSettings('projectDefaults.autoAssignCreator', e.target.checked)
                   }
-                  className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-500 focus:ring-primary-500"
+                  className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-500 focus:ring-c-focus"
                 />
               </label>
               <label className="flex items-center justify-between cursor-pointer">
@@ -452,7 +452,7 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({
                   onChange={(e) =>
                     updateSettings('projectDefaults.enableTimeTracking', e.target.checked)
                   }
-                  className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-500 focus:ring-primary-500"
+                  className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-500 focus:ring-c-focus"
                 />
               </label>
               <label className="flex items-center justify-between cursor-pointer">
@@ -465,7 +465,7 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({
                   onChange={(e) =>
                     updateSettings('projectDefaults.enableDependencies', e.target.checked)
                   }
-                  className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-500 focus:ring-primary-500"
+                  className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-500 focus:ring-c-focus"
                 />
               </label>
             </div>
@@ -554,7 +554,7 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({
                 type="checkbox"
                 checked={settings.taskDefaults.autoAddToMyWork}
                 onChange={(e) => updateSettings('taskDefaults.autoAddToMyWork', e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-500 focus:ring-primary-500"
+                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-500 focus:ring-c-focus"
               />
             </label>
           </div>

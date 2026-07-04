@@ -61,8 +61,8 @@ const TRIGGER_CLASS =
   'flex h-10 w-full items-center gap-2 rounded-xl border ' +
   'border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] ' +
   'px-3 text-left text-sm transition-colors ' +
-  'hover:border-slate-300 dark:hover:border-white/20 ' +
-  'focus:outline-none focus:ring-2 focus:ring-primary-500/40 ' +
+  'hover:border-slate-300 dark:hover:border-c-border ' +
+  'focus:outline-none focus:ring-2 focus:ring-c-focus ' +
   'disabled:cursor-not-allowed disabled:opacity-60';
 
 const PANEL_CLASS =
@@ -252,7 +252,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                         isSel
                           ? 'bg-navy-900 font-semibold text-white dark:bg-white dark:text-navy-950'
                           : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/[0.06]',
-                        !isSel && isToday && 'ring-1 ring-inset ring-primary-400',
+                        !isSel && isToday && 'ring-1 ring-inset ring-c-info',
                         off &&
                           'cursor-not-allowed text-slate-300 hover:bg-transparent dark:text-slate-600'
                       )}

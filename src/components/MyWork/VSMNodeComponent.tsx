@@ -188,7 +188,7 @@ export const VSMProcessNode: React.FC<NodeProps> = ({ id, data, selected }) => {
   return (
     <div
       className={`relative min-w-[140px] rounded-lg border-2 border-blue-600 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/30 shadow-sm transition-shadow ${
-        selected ? 'ring-2 ring-slate-500/60 dark:ring-white/30 shadow-md' : ''
+        selected ? 'ring-2 ring-slate-500/60 dark:ring-c-border shadow-md' : ''
       }`}
     >
       <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-slate-400" />
@@ -266,7 +266,7 @@ export const VSMInventoryNode: React.FC<NodeProps> = ({ id, data, selected }) =>
       {/* Triangle via CSS clip-path */}
       <div
         className={`w-16 h-14 flex items-end justify-center ${
-          selected ? 'ring-2 ring-slate-500/60 dark:ring-white/30 rounded' : ''
+          selected ? 'ring-2 ring-slate-500/60 dark:ring-c-border rounded' : ''
         }`}
         style={{
           clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
@@ -306,7 +306,7 @@ export const VSMSupplierNode: React.FC<NodeProps> = ({ data, selected }) => {
   return (
     <div
       className={`relative flex flex-col items-center min-w-[90px] rounded-xl border-2 border-slate-500 dark:border-slate-400 bg-slate-50 dark:bg-slate-800 px-3 py-2 shadow-sm transition-shadow ${
-        selected ? 'ring-2 ring-slate-500/60 dark:ring-white/30 shadow-md' : ''
+        selected ? 'ring-2 ring-slate-500/60 dark:ring-c-border shadow-md' : ''
       }`}
     >
       <Truck size={20} className="text-slate-600 dark:text-slate-300 mb-1" />
@@ -330,7 +330,7 @@ export const VSMCustomerNode: React.FC<NodeProps> = ({ data, selected }) => {
   return (
     <div
       className={`relative flex flex-col items-center min-w-[90px] rounded-xl border-2 border-emerald-600 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-3 py-2 shadow-sm transition-shadow ${
-        selected ? 'ring-2 ring-slate-500/60 dark:ring-white/30 shadow-md' : ''
+        selected ? 'ring-2 ring-slate-500/60 dark:ring-c-border shadow-md' : ''
       }`}
     >
       <Users size={20} className="text-emerald-600 dark:text-emerald-300 mb-1" />
@@ -351,7 +351,7 @@ export const VSMPushArrowNode: React.FC<NodeProps> = ({ data, selected }) => {
   return (
     <div
       className={`relative flex items-center justify-center w-16 h-10 transition-shadow ${
-        selected ? 'ring-2 ring-slate-500/60 dark:ring-white/30 rounded' : ''
+        selected ? 'ring-2 ring-slate-500/60 dark:ring-c-border rounded' : ''
       }`}
     >
       <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-slate-400" />
@@ -372,7 +372,7 @@ export const VSMPullArrowNode: React.FC<NodeProps> = ({ data, selected }) => {
   return (
     <div
       className={`relative flex items-center justify-center w-16 h-10 transition-shadow ${
-        selected ? 'ring-2 ring-slate-500/60 dark:ring-white/30 rounded' : ''
+        selected ? 'ring-2 ring-slate-500/60 dark:ring-c-border rounded' : ''
       }`}
     >
       <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-slate-400" />
@@ -401,7 +401,7 @@ export const VSMSupermarketNode: React.FC<NodeProps> = ({ id, data, selected }) 
   return (
     <div
       className={`relative flex flex-col items-center min-w-[80px] rounded-lg border-2 border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/30 px-3 py-2 shadow-sm transition-shadow ${
-        selected ? 'ring-2 ring-slate-500/60 dark:ring-white/30 shadow-md' : ''
+        selected ? 'ring-2 ring-slate-500/60 dark:ring-c-border shadow-md' : ''
       }`}
     >
       <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-slate-400" />
@@ -441,7 +441,7 @@ export const VSMFifoNode: React.FC<NodeProps> = ({ data, selected }) => {
   return (
     <div
       className={`relative flex items-center justify-center min-w-[80px] h-10 rounded border-2 border-dashed border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20 px-3 transition-shadow ${
-        selected ? 'ring-2 ring-slate-500/60 dark:ring-white/30 shadow-md' : ''
+        selected ? 'ring-2 ring-slate-500/60 dark:ring-c-border shadow-md' : ''
       }`}
     >
       <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-slate-400" />

@@ -360,7 +360,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                   )}
 
                   {addType === 'document' && (
-                    <div className="border-2 border-dashed border-slate-300 dark:border-white/20 rounded-lg p-4 text-center">
+                    <div className="border-2 border-dashed border-slate-300 dark:border-c-border rounded-lg p-4 text-center">
                       {file ? (
                         <div className="flex items-center justify-center gap-2">
                           <FileText size={16} className="text-emerald-500" />

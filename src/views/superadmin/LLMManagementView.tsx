@@ -1444,7 +1444,7 @@ export const LLMManagementView: React.FC = () => {
                       onChange={(e) =>
                         setProviderForm({ ...providerForm, is_active: e.target.checked })
                       }
-                      className="w-4 h-4 rounded bg-white dark:bg-slate-800 border-slate-300 dark:border-white/10"
+                      className="w-4 h-4 rounded bg-white dark:bg-slate-800 border-slate-300 dark:border-c-border-subtle"
                     />
                     <span className="text-sm text-slate-700 dark:text-slate-300">Active</span>
                   </label>

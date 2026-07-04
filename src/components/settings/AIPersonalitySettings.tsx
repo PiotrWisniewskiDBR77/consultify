@@ -96,7 +96,7 @@ export const AIPersonalitySettings: React.FC = () => {
         >
           {saving ? (
             <>
-              <span className="animate-spin h-4 w-4 border-2 border-white/60 border-t-transparent rounded-full" />
+              <span className="animate-spin h-4 w-4 border-2 border-c-border-strong border-t-transparent rounded-full" />
               {t('settings.saving', 'Saving...')}
             </>
           ) : (

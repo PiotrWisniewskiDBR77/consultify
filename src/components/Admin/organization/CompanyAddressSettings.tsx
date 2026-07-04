@@ -245,7 +245,7 @@ export const CompanyAddressSettings: React.FC<CompanyAddressSettingsProps> = ({
                 'transition-all duration-150 ease-out outline-none focus:ring-2 focus:bg-white dark:focus:bg-navy-900',
                 errors.country
                   ? 'border-danger-500 focus:border-danger-500 focus:ring-danger-500/20'
-                  : 'border-transparent focus:border-primary-500 focus:ring-primary-500/20'
+                  : 'border-transparent focus:border-c-focus-solid focus:ring-c-focus'
               )}
             >
               {COUNTRIES.map((country) => (

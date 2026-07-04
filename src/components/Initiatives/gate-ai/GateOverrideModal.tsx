@@ -147,7 +147,7 @@ export const GateOverrideModal: React.FC<GateOverrideModalProps> = ({
               onChange={(e) => setReason(e.target.value)}
               rows={3}
               placeholder={t('initiatives.gateAi.override.reasonPlaceholder')}
-              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-3 py-2 text-[13px] text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 resize-none"
+              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-3 py-2 text-[13px] text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid resize-none"
             />
           </div>
         </div>

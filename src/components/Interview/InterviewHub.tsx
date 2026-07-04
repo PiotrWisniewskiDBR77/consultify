@@ -3768,7 +3768,7 @@ export const InterviewHub: React.FC = () => {
       const badgeInactive = MENU_3_BADGE_INACTIVE;
       const badgeActive = MENU_3_BADGE_ACTIVE;
       const bulkGhostPill =
-        'inline-flex h-8 items-center gap-1 rounded-full border border-slate-200/80 px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100/70 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/[0.06]';
+        'inline-flex h-8 items-center gap-1 rounded-full border border-slate-200/80 px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100/70 dark:border-c-border-subtle dark:text-slate-300 dark:hover:bg-white/[0.06]';
 
       const buttons: Array<{
         id: 'all' | 'answered' | 'approved' | 'sent_back';
@@ -3902,7 +3902,7 @@ export const InterviewHub: React.FC = () => {
       const badgeInactive = MENU_3_BADGE_INACTIVE;
       const badgeActive = MENU_3_BADGE_ACTIVE;
       const bulkGhostPill =
-        'inline-flex h-8 items-center gap-1 rounded-full border border-slate-200/80 px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100/70 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/[0.06]';
+        'inline-flex h-8 items-center gap-1 rounded-full border border-slate-200/80 px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100/70 dark:border-c-border-subtle dark:text-slate-300 dark:hover:bg-white/[0.06]';
 
       const buttons: Array<{
         id: 'all' | 'to-approve' | 'overdue' | 'sent_back';
@@ -4109,7 +4109,7 @@ export const InterviewHub: React.FC = () => {
       const badgeInactive = MENU_3_BADGE_INACTIVE;
       const badgeActive = MENU_3_BADGE_ACTIVE;
       const bulkGhostPill =
-        'inline-flex h-8 items-center gap-1 rounded-full border border-slate-200/80 px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100/70 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/[0.06]';
+        'inline-flex h-8 items-center gap-1 rounded-full border border-slate-200/80 px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100/70 dark:border-c-border-subtle dark:text-slate-300 dark:hover:bg-white/[0.06]';
 
       const allCount = sessions.length;
       const inProgressCount = sessions.filter(
@@ -4365,7 +4365,7 @@ export const InterviewHub: React.FC = () => {
       const badgeInactive = MENU_3_BADGE_INACTIVE;
       const badgeActive = MENU_3_BADGE_ACTIVE;
       const bulkGhostPill =
-        'inline-flex h-8 items-center gap-1 rounded-full border border-slate-200/80 px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100/70 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/[0.06]';
+        'inline-flex h-8 items-center gap-1 rounded-full border border-slate-200/80 px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100/70 dark:border-c-border-subtle dark:text-slate-300 dark:hover:bg-white/[0.06]';
 
       const buttons: Array<{
         id: 'all' | 'draft' | 'in_review' | 'approved' | 'archived';
@@ -5406,7 +5406,7 @@ export const InterviewHub: React.FC = () => {
                                       return next;
                                     });
                                   }}
-                                  className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
+                                  className="h-3.5 w-3.5 rounded border-slate-300 text-c-info focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
                                 />
                                 <span>{col.label}</span>
                               </label>
@@ -5424,7 +5424,7 @@ export const InterviewHub: React.FC = () => {
                                   event.target.checked
                                 );
                               }}
-                              className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
+                              className="h-3.5 w-3.5 rounded border-slate-300 text-c-info focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
                             />
                             <span>
                               {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
@@ -6160,7 +6160,7 @@ export const InterviewHub: React.FC = () => {
                     e.stopPropagation();
                     handleGenerateInsight(session, 'summary');
                   }}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50 px-2.5 py-1 text-[11px] font-medium text-primary-800 hover:bg-primary-100 dark:border-primary-500/30 dark:bg-primary-500/15 dark:text-primary-300 dark:hover:bg-primary-500/25 transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-c-info bg-c-info/10 px-2.5 py-1 text-[11px] font-medium text-c-info hover:bg-c-info/10 dark:border-c-info/30 dark:bg-c-info/15 dark:text-c-info dark:hover:bg-c-info/25 transition-colors"
                 >
                   <Lightbulb size={12} />
                   {isPolish ? 'AI insight' : 'AI insight'}
@@ -6851,7 +6851,7 @@ export const InterviewHub: React.FC = () => {
                                       return next;
                                     });
                                   }}
-                                  className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
+                                  className="h-3.5 w-3.5 rounded border-slate-300 text-c-info focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
                                 />
                                 <span>{column.label}</span>
                               </label>
@@ -6869,7 +6869,7 @@ export const InterviewHub: React.FC = () => {
                                   event.target.checked
                                 );
                               }}
-                              className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
+                              className="h-3.5 w-3.5 rounded border-slate-300 text-c-info focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
                             />
                             <span>
                               {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
@@ -6972,7 +6972,7 @@ export const InterviewHub: React.FC = () => {
                   onClick={handleClick}
                   onDoubleClick={handleDoubleClick}
                   className={`group cursor-pointer transition-colors border-b border-slate-200/50 dark:border-white/[0.08] last:border-0 ${rowAccentClass} ${rowToneClass} ${
-                    isSelected || isInsightSelected ? 'ring-1 ring-primary-500/25 ring-inset' : ''
+                    isSelected || isInsightSelected ? 'ring-1 ring-c-info/25 ring-inset' : ''
                   }`}
                 >
                   <td className="px-3 py-3" style={{ width: insightColumnWidths.select }}>
@@ -7954,7 +7954,7 @@ export const InterviewHub: React.FC = () => {
                                         return next;
                                       });
                                     }}
-                                    className="h-3.5 w-3.5 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-c-focus"
+                                    className="h-3.5 w-3.5 rounded border-slate-300 dark:border-navy-700 text-c-info focus:ring-c-focus"
                                   />
                                   <span className="flex-1 text-c-text-secondary">
                                     {col.label}
@@ -7980,7 +7980,7 @@ export const InterviewHub: React.FC = () => {
                                   event.target.checked
                                 );
                               }}
-                              className="h-3.5 w-3.5 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-c-focus"
+                              className="h-3.5 w-3.5 rounded border-slate-300 dark:border-navy-700 text-c-info focus:ring-c-focus"
                             />
                             <span className="text-c-text-secondary">
                               {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
@@ -8347,7 +8347,7 @@ export const InterviewHub: React.FC = () => {
                       {statusLabel}
                     </span>
                     {template.isDefault && (
-                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-primary-500/10 text-primary-600 dark:text-primary-400">
+                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-c-info/10 text-c-info dark:text-c-info">
                         Default
                       </span>
                     )}
@@ -9648,7 +9648,7 @@ Return ONLY the answer text (no markdown fences).`;
                     ),
                   }))
                 }
-                className="inline-flex items-center gap-1 rounded-full border border-primary-500/30 bg-primary-500/10 px-2 py-0.5 text-[11px] font-medium text-primary-600 transition-colors hover:bg-primary-500/20 dark:text-primary-300"
+                className="inline-flex items-center gap-1 rounded-full border border-c-info/30 bg-c-info/10 px-2 py-0.5 text-[11px] font-medium text-c-info transition-colors hover:bg-c-info/20 dark:text-c-info"
               >
                 <span className="max-w-[200px] truncate">{chip.label}</span>
                 <X size={11} />
@@ -9986,7 +9986,7 @@ Return ONLY the answer text (no markdown fences).`;
                                       return next;
                                     });
                                   }}
-                                  className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
+                                  className="h-3.5 w-3.5 rounded border-slate-300 text-c-info focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
                                 />
                                 <span className="flex-1">{col.label}</span>
                                 {alwaysVisible ? (
@@ -10005,7 +10005,7 @@ Return ONLY the answer text (no markdown fences).`;
                               onChange={(event) =>
                                 updateAssignmentsViewShowRowDescription(event.target.checked)
                               }
-                              className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
+                              className="h-3.5 w-3.5 rounded border-slate-300 text-c-info focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
                             />
                             <span>
                               {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
@@ -11746,7 +11746,7 @@ Return ONLY the answer text (no markdown fences).`;
                                                     return next;
                                                   });
                                                 }}
-                                                className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-navy-700"
+                                                className="h-3.5 w-3.5 rounded border-slate-300 text-c-info focus:ring-c-focus dark:border-navy-700"
                                               />
                                               <span className="flex-1 text-[12px] font-medium text-c-text-secondary">
                                                 {column.label}
@@ -11772,7 +11772,7 @@ Return ONLY the answer text (no markdown fences).`;
                                                 event.target.checked
                                               );
                                             }}
-                                            className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-navy-700"
+                                            className="h-3.5 w-3.5 rounded border-slate-300 text-c-info focus:ring-c-focus dark:border-navy-700"
                                           />
                                           <span className="flex-1 text-[12px] font-medium text-c-text-secondary">
                                             {isPolish
@@ -12795,7 +12795,7 @@ Return ONLY the answer text (no markdown fences).`;
                             checked ? prev.filter((item) => item !== tag) : [...prev, tag]
                           )
                         }
-                        className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-c-focus"
+                        className="h-4 w-4 rounded border-slate-300 text-c-info focus:ring-c-focus"
                       />
                       <span>{getTemplateAreaTagLabel(tag, isPolish)}</span>
                     </label>
@@ -13490,9 +13490,9 @@ Return ONLY the answer text (no markdown fences).`;
                   (w) => w.verdict === 'needs_improvement' || w.verdict === 'insufficient'
                 );
                 return (
-                  <div className="rounded-lg border border-primary-200/70 dark:border-primary-400/20 bg-primary-50/60 dark:bg-primary-500/[0.08] p-3 mb-4">
+                  <div className="rounded-lg border border-c-info/70 dark:border-c-info/20 bg-c-info/60 dark:bg-c-info/[0.08] p-3 mb-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold uppercase tracking-wide text-primary-700 dark:text-primary-300 flex items-center gap-1.5">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-c-info dark:text-c-info flex items-center gap-1.5">
                         <Gauge size={14} />
                         {isPolish ? 'Ocena AI' : 'AI assessment'}
                       </span>
@@ -13584,7 +13584,7 @@ Return ONLY the answer text (no markdown fences).`;
           <div className="bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl w-full max-w-md mx-4">
             <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
               <h2 className="text-lg font-semibold text-c-text flex items-center gap-2">
-                <CalendarClock size={18} className="text-primary-500" />
+                <CalendarClock size={18} className="text-c-info" />
                 {isPolish ? 'Zmień termin' : 'Change due date'}
               </h2>
               <button
@@ -13653,7 +13653,7 @@ Return ONLY the answer text (no markdown fences).`;
           <div className="bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
               <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                <BarChart3 size={20} className="text-primary-400" />
+                <BarChart3 size={20} className="text-c-info" />
                 {isPolish ? 'Analityka wywiadów' : 'Interview Analytics'}
               </h2>
               <button

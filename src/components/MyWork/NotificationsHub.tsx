@@ -861,7 +861,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
                                       isActive
                                         ? 'bg-slate-700 text-white dark:bg-slate-600 shadow-sm'
                                         : hasItems
-                                          ? 'bg-white dark:bg-navy-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
+                                          ? 'bg-white dark:bg-navy-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-c-border'
                                           : 'bg-slate-100 dark:bg-navy-800/50 text-slate-500 dark:text-slate-400 dark:text-slate-500 border border-transparent cursor-not-allowed opacity-50'
                                     }
                                 `}
@@ -888,7 +888,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
           <div className="ml-auto relative" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => setMutedTypesOpen((v) => !v)}
-              className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full text-[11px] font-medium bg-white dark:bg-navy-800 text-slate-500 dark:text-slate-300 border border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20 transition-all"
+              className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full text-[11px] font-medium bg-white dark:bg-navy-800 text-slate-500 dark:text-slate-300 border border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-c-border transition-all"
               title={t('notifications.mutedSession', 'Muted types (session)')}
             >
               <BellOff size={11} className="text-slate-500 dark:text-slate-400" />
@@ -1146,7 +1146,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
                   type="text"
                   value={newNotifTitle}
                   onChange={(e) => setNewNotifTitle(e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-900 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500/40"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-900 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-c-focus"
                   placeholder={t('notifications.titlePlaceholder', 'Notification title...')}
                 />
               </div>
@@ -1158,7 +1158,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
                   value={newNotifMessage}
                   onChange={(e) => setNewNotifMessage(e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-900 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500/40"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-900 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-c-focus"
                   placeholder={t('notifications.messagePlaceholder', 'Notification message...')}
                 />
               </div>
