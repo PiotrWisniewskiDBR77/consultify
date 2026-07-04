@@ -35,6 +35,13 @@ interface AuditTrailPanelProps {
   onClose: () => void;
   recordId: string | null;
   tableId: string;
+  /**
+   * When false (default), a legacy idea-table has no `tp_tables` row, so audit
+   * endpoints always 403 → the panel hides itself. The real gating body lives on
+   * `feat/tp-fe-fix-broken-buttons`; this optional prop is declared here so
+   * IdeaTableTool can pass it without a type error before that branch merges.
+   */
+  isPlatformTable?: boolean;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -156,6 +163,8 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
   onClose,
   recordId,
   tableId,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  isPlatformTable: _isPlatformTable = false, // gating body merges in feat/tp-fe-fix-broken-buttons
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
