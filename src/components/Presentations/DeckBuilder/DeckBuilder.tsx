@@ -323,6 +323,8 @@ export const DeckBuilder: React.FC = () => {
   // R4 — animations toggle UI removed; deck animations stay on by default.
   const [animationsEnabled] = useState(true);
   const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false);
+  // P2.2 — "AI Generate" button in BlockToolbar's Images panel is in flight.
+  const [generatingAiImage, setGeneratingAiImage] = useState(false);
   const [qualityGatesOpen, setQualityGatesOpen] = useState(false);
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
   const [auditLogOpen, setAuditLogOpen] = useState(() => {
@@ -904,6 +906,26 @@ export const DeckBuilder: React.FC = () => {
     [deckId, deck, updateCard, t]
   );
 
+  // P2.2 — BlockToolbar "AI Generate" button (Images panel). No dedicated
+  // single-block image-generation endpoint exists, so this reuses the R4
+  // per-slide rewrite mechanism (handleRewriteCard → regenerateSlide) with
+  // an image-focused instruction, targeting the currently active card.
+  const handleGenerateAiImage = useCallback(async () => {
+    if (activeCardIndex == null || activeCardIndex < 0) return;
+    setGeneratingAiImage(true);
+    try {
+      await handleRewriteCard(
+        activeCardIndex,
+        t(
+          'presentations.builder.toolbar.aiGenerateInstruction',
+          'Add a relevant AI-generated image to this slide.'
+        )
+      );
+    } finally {
+      setGeneratingAiImage(false);
+    }
+  }, [activeCardIndex, handleRewriteCard, t]);
+
   if (loadingDeck || !deck) {
     if (!loadingDeck && loadError) {
       return (
@@ -990,6 +1012,9 @@ export const DeckBuilder: React.FC = () => {
               <BlockToolbar
                 onInsertBlock={handleInsertBlock}
                 onOpenMediaLibrary={() => setMediaLibraryOpen(true)}
+                onGenerateAiImage={handleGenerateAiImage}
+                isGeneratingAiImage={generatingAiImage}
+                onUpload={() => setMediaLibraryOpen(true)}
               />
             ),
             activity: (
@@ -1309,6 +1334,9 @@ export const DeckBuilder: React.FC = () => {
           <BlockToolbar
             onInsertBlock={handleInsertBlock}
             onOpenMediaLibrary={() => setMediaLibraryOpen(true)}
+            onGenerateAiImage={handleGenerateAiImage}
+            isGeneratingAiImage={generatingAiImage}
+            onUpload={() => setMediaLibraryOpen(true)}
           />
 
           {/* Passive AI Activity Panel — runtime telemetry feed */}

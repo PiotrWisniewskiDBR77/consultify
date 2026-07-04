@@ -11019,6 +11019,16 @@
         "title": "Teresa"
       },
       "usedIn": "Used in (backlinks)",
+      "toolbar": {
+        "orgLibrary": "Organization Library",
+        "orgLibraryDescription": "Browse your org images",
+        "aiGenerate": "AI Generate",
+        "aiGenerating": "Generating…",
+        "aiGenerateDescription": "Regenerate this slide with an AI image",
+        "aiGenerateInstruction": "Add a relevant AI-generated image to this slide.",
+        "upload": "Upload",
+        "uploadDescription": "Upload an image from your device"
+      },
       "topBar": {
         "qualityGates": "Quality Gates",
         "governance": "Governance",

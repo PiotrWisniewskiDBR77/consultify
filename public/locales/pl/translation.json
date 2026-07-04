@@ -826,7 +826,15 @@
         "chartsData": "Wykresy i dane",
         "media": "Media",
         "artifacts": "Artefakty",
-        "aiEdit": "Edycja AI"
+        "aiEdit": "Edycja AI",
+        "orgLibrary": "Biblioteka organizacji",
+        "orgLibraryDescription": "Przeglądaj obrazy Twojej organizacji",
+        "aiGenerate": "Generuj AI",
+        "aiGenerating": "Generowanie…",
+        "aiGenerateDescription": "Wygeneruj ten slajd ponownie z obrazem AI",
+        "aiGenerateInstruction": "Dodaj do tego slajdu pasujący obraz wygenerowany przez AI.",
+        "upload": "Prześlij",
+        "uploadDescription": "Prześlij obraz z urządzenia"
       },
       "blocks": {
         "heading": "Nagłówek",
