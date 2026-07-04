@@ -63,6 +63,16 @@ import type {
 } from './tableTypes';
 import { ROW_ACCENT_COLORS } from './tableTypes';
 
+function isImageAttachment(att: NodeAttachment): boolean {
+  if (att.mimeType) return att.mimeType.startsWith('image/');
+  if (att.type === 'image') return true;
+  return /\.(png|jpe?g|gif|webp|svg|bmp|avif)$/i.test(att.name || att.url || '');
+}
+
+function attachmentPreviewUrl(att: NodeAttachment): string | undefined {
+  return att.thumbnailUrl || att.url;
+}
+
 function extractLinkedIds(val: unknown): string[] {
   if (val == null) return [];
   if (typeof val === 'string') {
@@ -180,6 +190,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
   const [relationSearch, setRelationSearch] = useState('');
   const [artifactDropdownOpen, setArtifactDropdownOpen] = useState(false);
   const [artifactSearch, setArtifactSearch] = useState('');
+  const [lightboxAttachment, setLightboxAttachment] = useState<NodeAttachment | null>(null);
   const bodyTextareaRef = useRef<HTMLTextAreaElement>(null);
   const relationDropdownRef = useRef<HTMLDivElement>(null);
   const artifactDropdownRef = useRef<HTMLDivElement>(null);
@@ -290,6 +301,16 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
     document.addEventListener('mousedown', closeOnClickOutside);
     return () => document.removeEventListener('mousedown', closeOnClickOutside);
   }, [relationDropdownOpen, artifactDropdownOpen, mentionQuery]);
+
+  // Close the attachment lightbox on Escape.
+  useEffect(() => {
+    if (!lightboxAttachment) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setLightboxAttachment(null);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [lightboxAttachment]);
 
   const connectedEdges = useMemo(() => {
     if (!node) return [];
@@ -903,7 +924,9 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                       {child.data?.label || child.id}
                     </span>
                     {child.data?.status && (
-                      <span className="text-[9px] text-c-text-muted">{String(child.data.status)}</span>
+                      <span className="text-[9px] text-c-text-muted">
+                        {String(child.data.status)}
+                      </span>
                     )}
                   </button>
                 ))}
@@ -1441,7 +1464,10 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                                   }}
                                   className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left hover:bg-c-surface-raised text-[11px] text-c-text-secondary transition-colors"
                                 >
-                                  <StickyNote size={12} className="text-c-text-muted flex-shrink-0" />
+                                  <StickyNote
+                                    size={12}
+                                    className="text-c-text-muted flex-shrink-0"
+                                  />
                                   <span className="truncate">{n.data?.label || n.id}</span>
                                 </button>
                               ))}
@@ -1470,47 +1496,69 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                       {isPl ? 'Brak załączników' : 'No attachments'}
                     </p>
                   )}
-                {attachments.map((att) => (
-                  <div
-                    key={att.id}
-                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-c-surface-raised"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-c-surface-raised flex items-center justify-center flex-shrink-0">
-                      {att.type === 'image' ? (
-                        <Image size={14} className="text-c-text-muted" />
-                      ) : att.type === 'link' ? (
-                        <Link2 size={14} className="text-c-info" />
-                      ) : (
-                        <FileText size={14} className="text-c-text-muted" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      {att.url ? (
-                        <a
-                          href={att.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[11px] font-medium text-c-info hover:underline truncate block"
+                {attachments.map((att) => {
+                  const isImage = isImageAttachment(att);
+                  const previewUrl = attachmentPreviewUrl(att);
+                  return (
+                    <div
+                      key={att.id}
+                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-c-surface-raised"
+                    >
+                      {isImage && previewUrl ? (
+                        <button
+                          type="button"
+                          onClick={() => setLightboxAttachment(att)}
+                          className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 border border-c-border-subtle"
+                          aria-label={isPl ? 'Podgląd obrazu' : 'Preview image'}
+                          data-testid="attachment-thumbnail"
                         >
-                          {att.name}
-                        </a>
+                          <img
+                            src={previewUrl}
+                            alt={att.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </button>
                       ) : (
-                        <span className="text-[11px] font-medium text-c-text-secondary truncate block">
-                          {att.name}
-                        </span>
+                        <div className="w-8 h-8 rounded-lg bg-c-surface-raised flex items-center justify-center flex-shrink-0">
+                          {isImage ? (
+                            <Image size={14} className="text-c-text-muted" />
+                          ) : att.type === 'link' ? (
+                            <Link2 size={14} className="text-c-info" />
+                          ) : (
+                            <FileText size={14} className="text-c-text-muted" />
+                          )}
+                        </div>
                       )}
-                      <span className="text-[9px] text-c-text-muted">{formatTime(att.createdAt)}</span>
+                      <div className="flex-1 min-w-0">
+                        {att.url ? (
+                          <a
+                            href={att.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[11px] font-medium text-c-info hover:underline truncate block"
+                          >
+                            {att.name}
+                          </a>
+                        ) : (
+                          <span className="text-[11px] font-medium text-c-text-secondary truncate block">
+                            {att.name}
+                          </span>
+                        )}
+                        <span className="text-[9px] text-c-text-muted">
+                          {formatTime(att.createdAt)}
+                        </span>
+                      </div>
+                      {!locked && (
+                        <button
+                          onClick={() => handleRemoveAttachment(att.id)}
+                          className="p-1 rounded text-c-text-muted hover:text-danger-500 transition-colors"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      )}
                     </div>
-                    {!locked && (
-                      <button
-                        onClick={() => handleRemoveAttachment(att.id)}
-                        className="p-1 rounded text-c-text-muted hover:text-danger-500 transition-colors"
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
                 {!locked && (
                   <div className="flex items-center gap-2 pt-2">
                     <button
@@ -1787,6 +1835,37 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
           </div>
         )}
       </div>
+
+      {/* ── Attachment lightbox ── */}
+      {lightboxAttachment && (
+        <div
+          className="fixed inset-0 z-[999] flex items-center justify-center bg-[color-mix(in_srgb,var(--c-text)_70%,transparent)]"
+          onClick={(e) => {
+            e.stopPropagation();
+            setLightboxAttachment(null);
+          }}
+          data-testid="attachment-lightbox"
+        >
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setLightboxAttachment(null);
+            }}
+            className="absolute top-4 right-4 p-2 rounded-full bg-c-surface/90 text-c-text hover:bg-c-surface transition-colors"
+            aria-label={isPl ? 'Zamknij podgląd' : 'Close preview'}
+            data-testid="attachment-lightbox-close"
+          >
+            <X size={18} />
+          </button>
+          <img
+            src={lightboxAttachment.url}
+            alt={lightboxAttachment.name}
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-[90vw] max-h-[90vh] rounded-lg shadow-2xl object-contain"
+          />
+        </div>
+      )}
     </div>
   );
 };
