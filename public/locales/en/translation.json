@@ -2412,7 +2412,9 @@
         "voteSyncFailed": "Vote sync failed",
         "missingSessionId": "Missing sessionId",
         "voteSaveFailed": "Failed to save vote",
-        "selectAtLeastTwo": "Select at least 2 elements"
+        "selectAtLeastTwo": "Select at least 2 elements",
+        "imageTooLarge": "Image too large (max 10MB)",
+        "imageUploadFallback": "Image saved locally (offline) — storage upload unavailable"
       },
       "drawingsCleared": "Drawings cleared",
       "boardMode": "Board mode",

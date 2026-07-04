@@ -65,6 +65,7 @@ import { useConfirmDialog } from './shared/ConfirmDialog';
 import { whiteboardEdgeTypes, whiteboardNodeTypes } from './whiteboard/nodes/nodeTypes';
 import { STICKY_COLORS, useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
 import { useWhiteboardCollab } from './whiteboard/useWhiteboardCollab';
+import { uploadWhiteboardImageWithFallback } from './whiteboard/whiteboardImageUpload';
 import { useWhiteboardNodes } from './whiteboard/useWhiteboardNodes';
 import {
   useWhiteboardQuickActions,
@@ -247,22 +248,29 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
             return;
           }
 
-          const reader = new FileReader();
-          reader.onload = (ev) => {
-            const dataUrl = ev.target?.result as string;
-            if (!dataUrl) return;
-            const center = getCenter();
+          const center = getCenter();
+          const label = file.name || 'Pasted image';
+          void uploadWhiteboardImageWithFallback(file).then((result) => {
+            if (!result.uploaded) {
+              toast(
+                t(
+                  'myWork.whiteboard.errors.imageUploadFallback',
+                  'Image saved locally (offline) — storage upload unavailable'
+                ),
+                { icon: '⚠️' }
+              );
+            }
             onExternalInsert?.([
               {
                 kind: 'image',
-                label: file.name || 'Pasted image',
-                src: dataUrl,
+                label,
+                imageUrl: result.imageUrl,
+                src: result.src,
                 width: 300,
                 position: center,
               },
             ]);
-          };
-          reader.readAsDataURL(file);
+          });
           return;
         }
       }
@@ -308,21 +316,28 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
               );
               continue;
             }
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-              const dataUrl = ev.target?.result as string;
-              if (!dataUrl) return;
+            const dropPosition = { x: pos.x + i * 30, y: pos.y + i * 30 };
+            void uploadWhiteboardImageWithFallback(file).then((result) => {
+              if (!result.uploaded) {
+                toast(
+                  t(
+                    'myWork.whiteboard.errors.imageUploadFallback',
+                    'Image saved locally (offline) — storage upload unavailable'
+                  ),
+                  { icon: '⚠️' }
+                );
+              }
               onExternalInsert?.([
                 {
                   kind: 'image',
                   label: file.name,
-                  src: dataUrl,
+                  imageUrl: result.imageUrl,
+                  src: result.src,
                   width: 250,
-                  position: { x: pos.x + i * 30, y: pos.y + i * 30 },
+                  position: dropPosition,
                 },
               ]);
-            };
-            reader.readAsDataURL(file);
+            });
           } else {
             onExternalInsert?.([
               {
@@ -476,7 +491,11 @@ type WhiteboardExternalInsert =
   | {
       kind: 'image';
       label: string;
-      src: string;
+      // A6: exactly one of these is set — `imageUrl` for storage-backed
+      // uploads, `src` (inline base64) for the pre-A6 / fallback path.
+      // ImageNode renders `data.imageUrl || data.src` so both work identically.
+      src?: string;
+      imageUrl?: string;
       width?: number;
       position?: { x: number; y: number };
     }
@@ -1704,7 +1723,10 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             'image',
             {
               label: item.label,
-              src: item.src,
+              // A6: pass through whichever the upload path produced. ImageNode
+              // reads `data.imageUrl || data.src`, so only one needs to be set.
+              ...(item.imageUrl ? { imageUrl: item.imageUrl } : {}),
+              ...(item.src ? { src: item.src } : {}),
               width: item.width ?? 300,
               position: item.position,
               semanticType: 'image',

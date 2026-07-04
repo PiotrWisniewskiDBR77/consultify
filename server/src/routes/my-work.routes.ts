@@ -52,6 +52,7 @@ import notebookRouter from './my-work/notebook.routes.js';
 import radarRouter from './my-work/radar.routes.js';
 import signalsRouter from './my-work/signals.routes.js';
 import statsRouter from './my-work/stats.routes.js';
+import whiteboardUploadsRouter from './my-work/whiteboard-uploads.routes.js';
 
 const router = Router();
 
@@ -1509,6 +1510,8 @@ router.delete(
 router.use(calendarRouter);
 
 router.use(decisionsRouter);
+
+router.use(whiteboardUploadsRouter);
 
 /**
  * GET /api/my-work/inbox

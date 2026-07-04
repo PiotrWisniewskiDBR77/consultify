@@ -1627,7 +1627,9 @@
         "voteSyncFailed": "Błąd synchronizacji głosów",
         "missingSessionId": "Brak sessionId",
         "voteSaveFailed": "Nie udało się zapisać głosu",
-        "selectAtLeastTwo": "Zaznacz co najmniej 2 elementy"
+        "selectAtLeastTwo": "Zaznacz co najmniej 2 elementy",
+        "imageTooLarge": "Obraz za duży (maks. 10MB)",
+        "imageUploadFallback": "Obraz zapisany lokalnie (offline) — zapis w magazynie niedostępny"
       },
       "drawingsCleared": "Rysunki wyczyszczone",
       "boardMode": "Tryb tablicy",
