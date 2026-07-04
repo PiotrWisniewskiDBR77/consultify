@@ -98,18 +98,239 @@ export async function selectCanonicalMapRow(
   return row ?? null;
 }
 
+// ---------------------------------------------------------------------------
+// T5 — sequential canonical persist for WS graph_patch
+// ---------------------------------------------------------------------------
+
+/** A single graph-patch operation, mirroring the client wire format
+ *  (src/components/MyWork/whiteboard/useWhiteboardCollab.ts): `{ op, data }`
+ *  where `data.id` identifies the node/edge. Idempotent, last-write-wins per
+ *  field. */
+export interface GraphPatchOp {
+  op: string;
+  data?: { id?: string; [key: string]: unknown } | null;
+}
+
+export interface GraphPersistResult {
+  /** The new canonical version (previous + 1). */
+  version: number;
+}
+
+interface GraphNode {
+  id?: string;
+  [key: string]: unknown;
+}
+interface GraphEdge {
+  id?: string;
+  [key: string]: unknown;
+}
+
 /**
- * CONTRACT PLACEHOLDER (T5 scope) — not implemented here.
- *
- * applyGraphPatchToCanonical(db, ideaId, organizationId, userId, patch) will:
- *   1. Serialize concurrent writes per ideaId (in-memory Map<ideaId, Promise>,
- *      single-writer queue — see plan §3).
- *   2. Read-modify-write the canonical row inside a transaction, bumping
- *      `version` and stamping `last_editor_user_id = userId`.
- *   3. Return the new version so the gateway can broadcast
- *      `{ type: 'graph_version', version }` to the room.
- *
- * Intentionally left unimplemented in T1-T3 — the gateway must keep using
- * pure in-memory relay (no persistence) until this lands.
+ * Single-writer queue per ideaId. Every persist for a given idea chains onto
+ * the previous one, so concurrent `graph_patch` messages for the same idea are
+ * serialized end-to-end (read-modify-write never interleaves). Different ideas
+ * run in parallel. The chain is best-effort cleaned up when it drains.
  */
-export const applyGraphPatchToCanonical = undefined;
+const persistQueues = new Map<string, Promise<unknown>>();
+
+function parseGraphArray<T>(raw: unknown): T[] {
+  if (Array.isArray(raw)) return raw as T[];
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? (parsed as T[]) : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+/**
+ * Applies patch ops to in-memory node/edge arrays. Idempotent and
+ * last-write-wins per field:
+ *   - add_node / add_edge: insert if absent, else shallow-merge (idempotent
+ *     re-add doesn't duplicate).
+ *   - update_node / update_edge: shallow-merge onto the matching id (no-op if
+ *     absent — a lost add + late update simply doesn't resurrect a ghost).
+ *   - remove_node / remove_edge: drop the matching id (idempotent).
+ * Unknown ops are ignored. Ops without a `data.id` are skipped.
+ */
+function applyOpsToGraph(
+  nodes: GraphNode[],
+  edges: GraphEdge[],
+  ops: GraphPatchOp[]
+): { nodes: GraphNode[]; edges: GraphEdge[] } {
+  let nextNodes = nodes;
+  let nextEdges = edges;
+
+  for (const op of ops) {
+    const data = op?.data;
+    const id = data?.id != null ? String(data.id) : '';
+    if (!id) continue;
+
+    switch (op.op) {
+      case 'add_node': {
+        const idx = nextNodes.findIndex((n) => String(n.id) === id);
+        if (idx === -1) nextNodes = [...nextNodes, data as GraphNode];
+        else nextNodes = nextNodes.map((n) => (String(n.id) === id ? { ...n, ...data } : n));
+        break;
+      }
+      case 'update_node': {
+        nextNodes = nextNodes.map((n) => (String(n.id) === id ? { ...n, ...data } : n));
+        break;
+      }
+      case 'remove_node': {
+        nextNodes = nextNodes.filter((n) => String(n.id) !== id);
+        break;
+      }
+      case 'add_edge': {
+        const idx = nextEdges.findIndex((e) => String(e.id) === id);
+        if (idx === -1) nextEdges = [...nextEdges, data as GraphEdge];
+        else nextEdges = nextEdges.map((e) => (String(e.id) === id ? { ...e, ...data } : e));
+        break;
+      }
+      case 'update_edge': {
+        nextEdges = nextEdges.map((e) => (String(e.id) === id ? { ...e, ...data } : e));
+        break;
+      }
+      case 'remove_edge': {
+        nextEdges = nextEdges.filter((e) => String(e.id) !== id);
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+  return { nodes: nextNodes, edges: nextEdges };
+}
+
+/**
+ * The actual read-modify-write against the canonical row, wrapped in a DB
+ * transaction. Runs only from inside the single-writer queue, so it never
+ * races another writer for the same idea.
+ */
+async function persistCanonicalPatch(
+  db: IDatabase,
+  ideaId: string,
+  organizationId: string,
+  userId: string,
+  ops: GraphPatchOp[]
+): Promise<GraphPersistResult> {
+  const canonical = await selectCanonicalMapRowFull(db, ideaId, organizationId);
+  if (!canonical) {
+    throw new Error(`No canonical map row for idea ${ideaId} in org ${organizationId}`);
+  }
+
+  const nodes = parseGraphArray<GraphNode>(canonical.nodes_json);
+  const edges = parseGraphArray<GraphEdge>(canonical.edges_json);
+  const applied = applyOpsToGraph(nodes, edges, ops);
+
+  const currentVersion = Number(canonical.version || 1);
+  const nextVersion = currentVersion + 1;
+  const now = new Date().toISOString();
+
+  let inTx = false;
+  try {
+    await db.exec('BEGIN');
+    inTx = true;
+    await db.run(
+      `UPDATE my_idea_maps
+       SET nodes_json = ?, edges_json = ?, version = ?, last_editor_user_id = ?, updated_at = ?
+       WHERE id = ?`,
+      [
+        JSON.stringify(applied.nodes),
+        JSON.stringify(applied.edges),
+        nextVersion,
+        userId,
+        now,
+        canonical.id,
+      ]
+    );
+    await db.exec('COMMIT');
+    inTx = false;
+  } catch (err) {
+    if (inTx) {
+      try {
+        await db.exec('ROLLBACK');
+      } catch {
+        /* best effort */
+      }
+    }
+    throw err;
+  }
+
+  return { version: nextVersion };
+}
+
+/** Full canonical row read (includes nodes_json/edges_json), used by the
+ *  persist path. Distinct from selectCanonicalMapRow() which returns only the
+ *  lightweight membership/version view. Returns null when the is_canonical
+ *  column is absent (schema not migrated) or no canonical row exists. */
+async function selectCanonicalMapRowFull(
+  db: IDatabase,
+  ideaId: string,
+  organizationId: string
+): Promise<{ id: string; version: number; nodes_json: unknown; edges_json: unknown } | null> {
+  const mapCols = await getTableColumns('my_idea_maps');
+  if (!mapCols.has('is_canonical')) return null;
+
+  const row = await db.get<{
+    id: string;
+    version: number;
+    nodes_json: unknown;
+    edges_json: unknown;
+  }>(
+    `SELECT id, version, nodes_json, edges_json
+     FROM my_idea_maps
+     WHERE idea_id = ? AND organization_id = ? AND is_canonical = TRUE
+     LIMIT 1`,
+    [ideaId, organizationId]
+  );
+  return row ?? null;
+}
+
+/**
+ * Sequentially persists a graph_patch into the canonical `my_idea_maps` row.
+ *
+ * Concurrency model (plan §3): a per-ideaId in-memory promise chain
+ * (single-writer). Each call enqueues behind the previous persist for the same
+ * idea, so read-modify-write of the canonical row never interleaves and
+ * versions increment strictly (n+1, n+2, …). Different ideas persist in
+ * parallel.
+ *
+ * Returns `{ version }` — the new canonical version — so the gateway can
+ * broadcast `{ type: 'graph_version', version }` to the whole room.
+ *
+ * Throws when there is no canonical row (data migration T2 not run for this
+ * idea, or is_canonical column absent). The gateway logs the error and messages
+ * the author, but the relay still happens (rehydration reconciles).
+ */
+export async function applyGraphPatchToCanonical(
+  db: IDatabase,
+  ideaId: string,
+  organizationId: string,
+  userId: string,
+  ops: GraphPatchOp[]
+): Promise<GraphPersistResult> {
+  const prev = persistQueues.get(ideaId) ?? Promise.resolve();
+
+  // Chain onto the previous persist regardless of whether it resolved or
+  // rejected — we must not let one failed write break the queue for the idea.
+  const next = prev
+    .catch(() => undefined)
+    .then(() => persistCanonicalPatch(db, ideaId, organizationId, userId, ops));
+
+  persistQueues.set(ideaId, next);
+
+  // Best-effort cleanup: once this is the tail of the chain and it settles,
+  // drop the entry so the map doesn't grow unbounded across ideas.
+  void next
+    .catch(() => undefined)
+    .finally(() => {
+      if (persistQueues.get(ideaId) === next) persistQueues.delete(ideaId);
+    });
+
+  return next;
+}
