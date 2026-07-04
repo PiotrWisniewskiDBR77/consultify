@@ -161,10 +161,11 @@ const getPriorityConfig = (priority?: string) => {
   switch (priority?.toLowerCase()) {
     case 'urgent':
     case 'critical':
+      // Cichy chip (decyzja Piotra 2026-07-04): kropka + tonowany tekst niesie
+      // semantykę — bez wypełnionej czerwonej pigułki z ramką (ściana alarmów).
       return {
-        color: 'text-danger-800 dark:text-danger-400',
-        badgeClass:
-          'bg-danger-50 dark:bg-danger-500/10 border border-danger-200 dark:border-danger-500/30 rounded-md px-1.5 py-0.5',
+        color: 'text-danger-700 dark:text-danger-300',
+        badgeClass: '',
         bg: 'bg-danger-50',
         dot: 'bg-danger-500',
         label: 'Critical',

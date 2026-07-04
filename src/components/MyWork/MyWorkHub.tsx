@@ -548,8 +548,10 @@ const CTA_BASE =
 const CTA_TONE: Record<'violet' | 'emerald' | 'amber' | 'indigo' | 'neutral', string> = {
   neutral:
     'border-navy-700/20 bg-navy-900 text-white hover:bg-navy-800 active:bg-navy-950 dark:border-white/20 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]',
+  // Primary CTA = neutral inverted (decyzja Piotra 2026-07-03/04: koniec crimson
+  // CTA; primary-* = crimson #85182F). Ten sam wzór co CTA_TONE.neutral.
   violet:
-    'border-primary-500/30 bg-primary-600 text-white hover:bg-primary-700 dark:border-primary-400/20 dark:bg-primary-500/80 dark:hover:bg-primary-500',
+    'border-navy-700/20 bg-navy-900 text-white hover:bg-navy-800 active:bg-navy-950 dark:border-white/20 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]',
   emerald:
     'border-emerald-500/30 bg-emerald-600 text-white hover:bg-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/80 dark:hover:bg-emerald-500',
   amber:
