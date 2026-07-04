@@ -89,6 +89,12 @@ export class TablePlatformRealtimeService {
         this.userColors.set(userId, TablePlatformRealtimeService.COLORS[idx]);
       }
 
+      // Per-user room (identity from the verified JWT) — lets server-side
+      // producers (watch notifications, @mention delivery) push directly to
+      // a specific user regardless of which table room(s) they've joined.
+      // Joining is automatic on connect; no client-side change required.
+      socket.join(`user:${userId}`);
+
       logger.info('[TablePlatformRealtime] User connected', { userId, socketId: socket.id });
 
       socket.on('join:table', async (rawTableId: unknown) => {
@@ -232,6 +238,26 @@ export class TablePlatformRealtimeService {
     } catch (err) {
       logger.warn('[TablePlatformRealtime] notifySchemaChanged failed', {
         tableId,
+        error: (err as Error).message,
+      });
+    }
+  }
+
+  /**
+   * Push a notification (watch update/delete, @mention) directly to one
+   * user's room, regardless of which table room(s) they currently have
+   * joined. Fail-soft — a realtime-emit failure must never affect the
+   * notification write it accompanies (callers already wrap this in
+   * try/catch or fire-and-forget .catch()).
+   */
+  notifyUser(userId: string, notification: unknown): void {
+    try {
+      (this.io?.of('/table-platform') as any)
+        ?.to(`user:${userId}`)
+        .emit('notification:new', notification);
+    } catch (err) {
+      logger.warn('[TablePlatformRealtime] notifyUser failed', {
+        userId,
         error: (err as Error).message,
       });
     }
