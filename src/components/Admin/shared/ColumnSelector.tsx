@@ -152,10 +152,10 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
 
           {/* Panel */}
-          <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-lg z-50">
+          <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-c-surface-raised border border-slate-200 dark:border-c-border rounded-xl shadow-2xl z-50">
             {/* Header */}
-            <div className="flex items-center justify-between p-3 border-b border-slate-200 dark:border-navy-700">
-              <span className="font-medium text-navy-900 dark:text-white">
+            <div className="flex items-center justify-between p-3 border-b border-slate-200 dark:border-c-border-subtle">
+              <span className="font-medium text-navy-900 dark:text-c-text">
                 {t('admin.table.editColumns', 'Edit Columns')}
               </span>
               <button
@@ -167,7 +167,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
             </div>
 
             {/* Search */}
-            <div className="p-2 border-b border-slate-200 dark:border-navy-700">
+            <div className="p-2 border-b border-slate-200 dark:border-c-border-subtle">
               <div className="relative">
                 <Search
                   size={14}
@@ -178,13 +178,13 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t('admin.table.searchColumns', 'Search columns...')}
-                  className="w-full pl-8 pr-3 py-1.5 text-sm bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg"
+                  className="w-full pl-8 pr-3 py-1.5 text-sm bg-slate-50 dark:bg-c-surface border border-slate-200 dark:border-c-border-subtle rounded-lg"
                 />
               </div>
             </div>
 
             {/* Quick Actions */}
-            <div className="flex items-center gap-2 p-2 border-b border-slate-200 dark:border-navy-700">
+            <div className="flex items-center gap-2 p-2 border-b border-slate-200 dark:border-c-border-subtle">
               <button
                 onClick={showAll}
                 className="flex-1 px-2 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised rounded"
@@ -193,7 +193,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
               </button>
               <button
                 onClick={hideOptional}
-                className="flex-1 px-2 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-700 rounded"
+                className="flex-1 px-2 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.06] rounded"
               >
                 {t('admin.table.hideOptional', 'Required Only')}
               </button>
@@ -201,7 +201,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                 <Tooltip content={t('admin.table.resetColumns', 'Reset to default')}>
                   <button
                     onClick={onReset}
-                    className="p-1.5 text-slate-600 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-700 rounded"
+                    className="p-1.5 text-slate-600 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.06] rounded"
                   >
                     <RefreshCw size={14} />
                   </button>
@@ -217,7 +217,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                     key={column.id}
                     className={cn(
                       'flex items-center gap-2 p-2 rounded-lg transition-colors',
-                      column.visible ? 'bg-slate-50 dark:bg-navy-900' : 'opacity-60'
+                      column.visible ? 'bg-slate-50 dark:bg-white/[0.03]' : 'opacity-60'
                     )}
                   >
                     {/* Drag Handle */}
@@ -291,7 +291,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="p-3 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 rounded-b-xl">
+            <div className="p-3 border-t border-slate-200 dark:border-c-border-subtle bg-slate-50 dark:bg-c-surface rounded-b-xl">
               <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
                 {t('admin.table.columnsTip', 'Drag to reorder, click eye to toggle visibility')}
               </p>
