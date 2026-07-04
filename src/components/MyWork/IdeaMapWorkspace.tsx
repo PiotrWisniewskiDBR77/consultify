@@ -23,8 +23,10 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import type { WorkspacePanelKey } from '@/components/shared/WorkspacePanelStrip';
 import { LoadingState } from '@/components/shared/states';
+import type { WorkspacePanelKey } from '@/components/shared/WorkspacePanelStrip';
+import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api, getMapVersionFromPayload } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
@@ -47,6 +49,11 @@ import { type ShortcutHelp, useKeyboardShortcuts } from './hooks/useKeyboardShor
 import { IdeaAISuggestionsPanel } from './IdeaAISuggestionsPanel';
 import { IdeaContextPanel } from './IdeaContextPanel';
 import {
+  IDEA_CONVERT_TARGETS,
+  type IdeaConvertTarget,
+  isLiveConvertTarget,
+} from './ideaConvertTargets';
+import {
   composeIdeaBodyFromSeedIntent,
   deriveIdeaTitleFromSeedIntent,
   IDEA_STAGE_LABELS,
@@ -56,18 +63,13 @@ import {
   normalizePreferredSystem,
   normalizeStageToV5,
 } from './ideaEntryTypes';
-import { ideaMapToMarkdown } from './ideaMapToMarkdown';
 import { IdeaExportMenu } from './IdeaExportMenu';
 import { IdeaGhostCards } from './IdeaGhostCards';
+import { ideaMapToMarkdown } from './ideaMapToMarkdown';
 import { type ExtendedNodeData, IdeaNodeDetailDrawer } from './IdeaNodeDetailDrawer';
 import { IdeaProcessFlowTool } from './IdeaProcessFlowTool';
 import { IdeaProposalReview } from './IdeaProposalReview';
 import { IdeaRecommendationMap } from './IdeaRecommendationMap';
-import {
-  IDEA_CONVERT_TARGETS,
-  type IdeaConvertTarget,
-  isLiveConvertTarget,
-} from './ideaConvertTargets';
 import type { CanvasToolType, MindMapInteractionMode } from './ideaSelectionTypes';
 import {
   type AIProposal,
@@ -249,6 +251,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const isPolish = useMemo(() => i18n.language?.startsWith('pl'), [i18n.language]);
   const isNewInitial = useMemo(() => ideaId.startsWith('new-idea-'), [ideaId]);
   const { setChatKickoffMessage, isChatCollapsed, toggleChatCollapse } = useAppStore();
+  const { isEnabled } = useFeatureFlagsContext();
+  const mindmapTeresaBridgeEnabled = isEnabled('ENABLE_TERESA_MINDMAP');
+  const openChatWithContext = useOpenChatWithContext();
   const currentUser = useAppStore((state) => state.currentUser);
   const currentProjectId = useAppStore((state) => state.currentProjectId);
   const currentUserId = String(currentUser?.id || 'current-user');
@@ -1779,8 +1784,34 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       tool: activeTool,
       nodeCount: liveNodes.length,
     });
+
+    // M06 Fala 2 §2.1 (flag ENABLE_TERESA_MINDMAP): route through the shared
+    // entity-context hook so the conversation carries pmoContext.ideaId — a
+    // second click on the same idea reuses the conversation (alreadyHasContext)
+    // instead of always creating a new one. OFF preserves today's exact
+    // behavior: local kickoff message with no entity-context.
+    if (mindmapTeresaBridgeEnabled && realId) {
+      openChatWithContext({
+        entityType: 'idea',
+        entityId: realId,
+        entityName: mapTitle,
+        contextData: { teresaPrompt: kickoff },
+      });
+      return;
+    }
     openChat(kickoff);
-  }, [activeTool, graphEdges, graphNodes, isPolish, openChat, realId, seedText, title]);
+  }, [
+    activeTool,
+    graphEdges,
+    graphNodes,
+    isPolish,
+    mindmapTeresaBridgeEnabled,
+    openChat,
+    openChatWithContext,
+    realId,
+    seedText,
+    title,
+  ]);
 
   // Subscribe to idea-workspace-chat-prompt so any tool can send text to the chat panel
   useEffect(() => {

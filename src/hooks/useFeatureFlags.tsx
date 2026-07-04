@@ -160,6 +160,15 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     category: 'experimental',
     allowLocalOverride: false,
   },
+  {
+    id: 'ENABLE_TERESA_MINDMAP',
+    name: 'Teresa: Mind Map Bridge',
+    description:
+      'Sidekick→chat entity-context bridge for Ideas mind maps (M06 Fala 2 §2.1): kickoff carries ideaId/intent and reuses the existing conversation instead of creating a new one. OFF = today’s local-only kickoff behavior.',
+    defaultValue: false,
+    category: 'ai',
+    allowLocalOverride: true,
+  },
 ];
 
 // ============================================
