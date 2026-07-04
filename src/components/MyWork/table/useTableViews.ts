@@ -17,7 +17,8 @@ export type ViewLayout =
   | 'calendar'
   | 'matrix'
   | 'grid'
-  | 'sticky';
+  | 'sticky'
+  | 'chart';
 
 export interface UseTableViewsOpts {
   isPl: boolean;

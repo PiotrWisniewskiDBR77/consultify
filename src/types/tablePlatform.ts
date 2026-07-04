@@ -217,7 +217,7 @@ export interface TablePlatformView {
   id: string;
   tableId: string;
   name: string;
-  viewType: 'grid' | 'kanban' | 'calendar' | 'timeline' | 'gallery' | 'form';
+  viewType: 'grid' | 'kanban' | 'calendar' | 'timeline' | 'gallery' | 'form' | 'chart';
   visibleFieldIds: string[];
   config: ViewConfig;
   isPersonal?: boolean;

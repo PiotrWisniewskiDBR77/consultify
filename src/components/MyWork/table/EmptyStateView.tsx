@@ -72,6 +72,12 @@ export const EmptyStateView: React.FC<EmptyStateViewProps> = ({
         enDesc: 'Share the form or add a record manually to see responses here.',
         plDesc: 'Udostępnij formularz lub dodaj rekord ręcznie.',
       },
+      chart: {
+        en: 'Nothing to chart yet',
+        pl: 'Brak danych do wykresu',
+        enDesc: 'Add records to this table, then pick fields in the chart config to visualize them.',
+        plDesc: 'Dodaj rekordy do tabeli, a następnie wybierz pola w konfiguracji wykresu.',
+      },
     };
     const row = map[vt] ?? map.table;
     return {
