@@ -66,7 +66,7 @@ const ACCENT_CLASSES: Record<string, { bg: string; text: string; border: string;
     bg: 'bg-primary-500/10',
     text: 'text-primary-500',
     border: 'border-primary-500/20',
-    ring: 'ring-primary-400/30',
+    ring: 'ring-c-info/30',
   },
   emerald: {
     bg: 'bg-emerald-500/10',

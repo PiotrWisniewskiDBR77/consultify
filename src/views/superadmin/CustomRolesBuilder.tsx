@@ -761,7 +761,7 @@ const CustomRolesBuilder: React.FC = () => {
                       onClick={() => setNewRole({ ...newRole, color })}
                       className={`w-8 h-8 rounded-lg transition-all ${
                         newRole.color === color
-                          ? 'ring-2 ring-primary-600 ring-offset-2 ring-offset-white dark:ring-white dark:ring-offset-gray-800'
+                          ? 'ring-2 ring-c-info ring-offset-2 ring-offset-white dark:ring-white dark:ring-offset-gray-800'
                           : ''
                       }`}
                       style={{ backgroundColor: color }}

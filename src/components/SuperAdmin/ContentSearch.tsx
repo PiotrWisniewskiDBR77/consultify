@@ -182,7 +182,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
         <div
           className={`flex items-center bg-slate-800/80 border rounded-xl transition-all ${
             isFocused
-              ? 'border-primary-500/50 ring-2 ring-primary-500/20'
+              ? 'border-primary-500/50 ring-2 ring-c-info/20'
               : 'border-c-border/50 hover:border-slate-600'
           }`}
         >

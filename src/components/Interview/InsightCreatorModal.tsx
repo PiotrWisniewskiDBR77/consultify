@@ -1292,7 +1292,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       bg: 'bg-slate-100 dark:bg-navy-800/80',
       border: 'border-slate-200 dark:border-white/[0.08]',
       text: 'text-slate-600 dark:text-slate-300',
-      ring: 'ring-primary-500/30',
+      ring: 'ring-c-info/30',
     };
     return colors[variant];
   };
@@ -2466,7 +2466,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 onClick={() => setContextMode(option.value)}
                 className={`rounded-lg border px-2.5 py-2 text-left transition ${
                   selected
-                    ? 'border-primary-500/50 bg-primary-50 ring-1 ring-primary-500/20 dark:bg-primary-500/15'
+                    ? 'border-primary-500/50 bg-primary-50 ring-1 ring-c-info/20 dark:bg-primary-500/15'
                     : 'border-slate-200 bg-white hover:border-primary-500/40 dark:border-white/[0.08] dark:bg-navy-900/70'
                 }`}
               >
@@ -2527,7 +2527,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           onDrop={(event) => void handleContextDrop(event)}
           className={`flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed px-4 py-5 text-center transition ${
             isContextDragActive
-              ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-500/20 dark:bg-primary-500/10'
+              ? 'border-primary-500 bg-primary-50 ring-2 ring-c-info/20 dark:bg-primary-500/10'
               : 'border-slate-300 bg-white hover:border-primary-500/60 hover:bg-primary-50/40 dark:border-white/[0.15] dark:bg-navy-900/60 dark:hover:border-primary-500/40'
           } ${isUploadingContextDocument ? 'pointer-events-none opacity-70' : ''}`}
         >

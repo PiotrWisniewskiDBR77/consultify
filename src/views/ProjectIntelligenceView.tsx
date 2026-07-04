@@ -748,7 +748,7 @@ const InsightCard: React.FC<InsightCardProps> = ({
     <div
       className={`bg-c-surface rounded-xl border ${
         isSelected
-          ? 'border-primary-300 dark:border-primary-700 ring-1 ring-primary-200 dark:ring-primary-800'
+          ? 'border-primary-300 dark:border-primary-700 ring-1 ring-c-info dark:ring-c-info'
           : 'border-c-border-subtle'
       } p-4 hover:shadow-md transition-all cursor-pointer`}
       onClick={onSelect}

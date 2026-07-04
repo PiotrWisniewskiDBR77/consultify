@@ -2,7 +2,7 @@
  * InitiativeLevelSelector — Choose initiative level during creation or in properties
  *
  * V3-F01: 4 cards in 2x2 grid, radio selection.
- * DBR77: rounded-xl, hover:ring-2 ring-primary-400, section count text-xs text-slate-600.
+ * DBR77: rounded-xl, hover:ring-2 ring-c-info, section count text-xs text-slate-600.
  */
 
 import { Rocket, Star, Target, Zap } from 'lucide-react';

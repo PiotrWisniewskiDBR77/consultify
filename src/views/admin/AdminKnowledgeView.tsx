@@ -845,7 +845,7 @@ export const AdminKnowledgeView: React.FC = () => {
                     key={s.id}
                     className={`bg-c-surface border rounded-xl p-6 transition-colors ${
                       s.is_active
-                        ? 'border-primary-200 dark:border-primary-500/40 ring-1 ring-primary-200/60 dark:ring-primary-500/20'
+                        ? 'border-primary-200 dark:border-primary-500/40 ring-1 ring-c-info/60 dark:ring-c-info/20'
                         : 'border-c-border-subtle'
                     }`}
                   >

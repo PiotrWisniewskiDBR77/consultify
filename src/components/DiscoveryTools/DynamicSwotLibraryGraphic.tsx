@@ -367,7 +367,7 @@ export function DynamicSwotLibraryGraphic({
             {stages.slice(3).map((stage) => (
               <div
                 key={stage.id}
-                className={`rounded-2xl border border-slate-200/70 bg-gradient-to-br ${stage.tone} p-3 shadow-sm ring-1 ring-c-border dark:border-c-border-subtle dark:ring-primary-400/20`}
+                className={`rounded-2xl border border-slate-200/70 bg-gradient-to-br ${stage.tone} p-3 shadow-sm ring-1 ring-c-border dark:border-c-border-subtle dark:ring-c-info/20`}
               >
                 <div className="flex items-center gap-2">
                   <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-900 text-[10px] font-bold text-white dark:bg-white dark:text-slate-950">

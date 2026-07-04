@@ -1027,7 +1027,7 @@ export const OrganizationProfileModule: React.FC = () => {
                         setExpandedSections((prev) => ({ ...prev, type: false, identity: true }));
                       }}
                     />
-                    <div className="h-full p-3 rounded-xl border border-c-border-subtle bg-c-bg/50 dark:bg-navy-950/50 hover:border-primary-300 transition-all flex flex-col items-center text-center peer-checked:ring-2 peer-checked:ring-primary-500 peer-checked:border-transparent peer-checked:bg-c-surface dark:peer-checked:bg-navy-800">
+                    <div className="h-full p-3 rounded-xl border border-c-border-subtle bg-c-bg/50 dark:bg-navy-950/50 hover:border-primary-300 transition-all flex flex-col items-center text-center peer-checked:ring-2 peer-checked:ring-c-info peer-checked:border-transparent peer-checked:bg-c-surface dark:peer-checked:bg-navy-800">
                       <div className="text-c-text-muted mb-2 peer-checked:text-primary-600">
                         {ot.icon}
                       </div>

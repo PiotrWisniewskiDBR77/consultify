@@ -156,7 +156,7 @@ export const AccessBlockedModal: React.FC = () => {
           <div className="h-1 w-full bg-gradient-to-r from-primary-600 via-primary-400 to-amber-400" />
 
           <div className="p-7 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary-50 ring-1 ring-primary-100 dark:bg-primary-500/10 dark:ring-primary-500/20">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary-50 ring-1 ring-c-info dark:bg-primary-500/10 dark:ring-c-info/20">
               <Lock className="h-6 w-6 text-primary-600 dark:text-primary-400" strokeWidth={1.75} />
             </div>
 

@@ -376,7 +376,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                                       : 'bg-slate-200 dark:bg-navy-700',
                                     !readOnly &&
                                       !isLocked &&
-                                      'cursor-pointer hover:ring-2 hover:ring-primary-500/20',
+                                      'cursor-pointer hover:ring-2 hover:ring-c-info/20',
                                     (readOnly || isLocked) && 'cursor-not-allowed opacity-60'
                                   )}
                                 >

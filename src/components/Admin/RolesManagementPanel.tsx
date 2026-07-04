@@ -647,7 +647,7 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
                   onClick={() => setFormData((prev) => ({ ...prev, color: color.id }))}
                   disabled={selectedRole?.isSystem}
                   className={`w-8 h-8 rounded-full ${color.bg} ${
-                    formData.color === color.id ? 'ring-2 ring-offset-2 ring-primary-500' : ''
+                    formData.color === color.id ? 'ring-2 ring-offset-2 ring-c-info' : ''
                   } disabled:opacity-50`}
                 />
               ))}

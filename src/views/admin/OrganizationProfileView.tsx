@@ -420,7 +420,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                   {/* Logo Upload */}
                   <div className="flex-shrink-0">
                     <div
-                      className="w-24 h-24 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-navy-700 dark:to-navy-800 flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary-500 transition-all overflow-hidden"
+                      className="w-24 h-24 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-navy-700 dark:to-navy-800 flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-c-info transition-all overflow-hidden"
                       onClick={() => fileInputRef.current?.click()}
                     >
                       {profile.logoUrl ? (

@@ -155,7 +155,7 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({ hideTrigger = false })
               onClick={() => setShowThinking(!showThinking)}
               className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${
                 showThinking
-                  ? 'bg-primary-500/20 text-primary-300 ring-1 ring-primary-500/50'
+                  ? 'bg-primary-500/20 text-primary-300 ring-1 ring-c-info/50'
                   : 'text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/40 hover:text-white'
               }`}
               title={showThinking ? 'Hide Thinking Process' : 'Show Thinking Process'}

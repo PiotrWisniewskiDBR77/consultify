@@ -4125,7 +4125,7 @@ function WorkCanvasMarkdownDocumentPanel({
                             key={version.id}
                             className={`rounded-xl p-2 text-[11px] dark:bg-white/[0.06] ${
                               idx === versionCursor
-                                ? 'bg-slate-100 ring-1 ring-primary-400 dark:bg-white/10'
+                                ? 'bg-slate-100 ring-1 ring-c-info dark:bg-white/10'
                                 : 'bg-slate-50'
                             }`}
                           >

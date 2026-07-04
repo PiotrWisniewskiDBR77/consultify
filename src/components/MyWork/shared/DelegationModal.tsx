@@ -259,7 +259,7 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
                       }}
                       className={`p-3 rounded-lg border text-left transition-all ${
                         delegationType === dt.type
-                          ? 'border-primary-500 bg-primary-500/5 ring-1 ring-primary-500'
+                          ? 'border-primary-500 bg-primary-500/5 ring-1 ring-c-info'
                           : 'border-slate-200 dark:border-navy-600 hover:border-slate-300 dark:hover:border-navy-500'
                       }`}
                     >

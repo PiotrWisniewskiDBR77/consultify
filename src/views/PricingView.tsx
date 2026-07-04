@@ -272,7 +272,7 @@ export const PricingView: React.FC = () => {
                   transition={{ duration: 0.5, delay: idx * 0.1 }}
                   className={`relative rounded-xl p-8 flex flex-col ${
                     tier.highlight
-                      ? 'bg-gradient-to-b from-primary-600 to-primary-700 text-white ring-4 ring-primary-500/50 shadow-2xl shadow-primary-500/20 scale-105 z-10'
+                      ? 'bg-gradient-to-b from-primary-600 to-primary-700 text-white ring-4 ring-c-info/50 shadow-2xl shadow-primary-500/20 scale-105 z-10'
                       : 'bg-c-surface border border-c-border-subtle'
                   }`}
                 >

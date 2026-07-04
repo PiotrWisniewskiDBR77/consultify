@@ -186,7 +186,7 @@ const RAID_TYPE_META: Record<
     icon: GitBranch,
     color: 'text-primary-500',
     bgLight: 'bg-primary-500/10',
-    borderActive: 'border-primary-400/60 ring-primary-400/30',
+    borderActive: 'border-primary-400/60 ring-c-info/30',
   },
 };
 

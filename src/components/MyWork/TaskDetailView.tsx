@@ -4925,7 +4925,7 @@ Return ONLY the final comment text.`;
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="lg:col-span-3 bg-gradient-to-r from-white/80 via-primary-50/30 to-white/80 dark:from-navy-900/80 dark:via-primary-900/20 dark:to-navy-900/80 backdrop-blur-xl rounded-2xl border border-primary-200/40 dark:border-primary-500/20 shadow-lg shadow-primary-500/10 dark:shadow-primary-500/20 overflow-hidden ring-1 ring-primary-500/10 dark:ring-primary-400/10"
+            className="lg:col-span-3 bg-gradient-to-r from-white/80 via-primary-50/30 to-white/80 dark:from-navy-900/80 dark:via-primary-900/20 dark:to-navy-900/80 backdrop-blur-xl rounded-2xl border border-primary-200/40 dark:border-primary-500/20 shadow-lg shadow-primary-500/10 dark:shadow-primary-500/20 overflow-hidden ring-1 ring-c-info/10 dark:ring-c-info/10"
           >
             <div className="flex items-center gap-4 px-5 py-4">
               <motion.button

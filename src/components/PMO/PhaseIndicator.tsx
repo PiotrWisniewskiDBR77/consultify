@@ -100,7 +100,7 @@ export const PhaseIndicator: React.FC<PhaseIndicatorProps> = ({ compact = false 
               i < phaseIndex
                 ? 'bg-green-500'
                 : i === phaseIndex
-                  ? 'bg-primary-500 ring-2 ring-primary-500/30'
+                  ? 'bg-primary-500 ring-2 ring-c-info/30'
                   : 'bg-slate-300 dark:bg-slate-600'
             }`}
           />

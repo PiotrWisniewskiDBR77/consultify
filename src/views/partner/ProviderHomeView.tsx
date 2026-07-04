@@ -1079,7 +1079,7 @@ const ContactPartnerManagerSection: React.FC = () => {
 
       {/* Partner Manager Card */}
       <div className="flex flex-col items-center mb-6">
-        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-400 to-crimson-500 flex items-center justify-center text-white text-3xl font-bold mb-4 ring-4 ring-primary-100 dark:ring-primary-900/50">
+        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-400 to-crimson-500 flex items-center justify-center text-white text-3xl font-bold mb-4 ring-4 ring-c-info dark:ring-c-info/50">
           {PARTNER_CONTACT.initials}
         </div>
         <h3 className="text-lg font-semibold text-navy-900 dark:text-white">

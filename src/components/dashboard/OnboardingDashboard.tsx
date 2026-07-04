@@ -78,7 +78,7 @@ export const OnboardingDashboard: React.FC<OnboardingDashboardProps> = ({
                   key={step.id}
                   className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
                     isCurrent
-                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 shadow-md ring-1 ring-primary-500/20'
+                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 shadow-md ring-1 ring-c-info/20'
                       : status === 'completed'
                         ? 'border-green-200 bg-green-50/50 dark:bg-green-900/10'
                         : 'border-slate-200 bg-slate-50 dark:bg-navy-950 dark:border-c-border-subtle opacity-60'

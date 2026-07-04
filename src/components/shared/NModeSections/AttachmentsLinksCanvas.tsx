@@ -1188,7 +1188,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                     onClick={() => setSelectedCloudProvider(p.id)}
                     className={`rounded-lg border px-3 py-2.5 text-left transition-all ${
                       selected
-                        ? 'border-primary-500/50 bg-primary-500/5 dark:bg-primary-500/10 ring-1 ring-primary-500/20'
+                        ? 'border-primary-500/50 bg-primary-500/5 dark:bg-primary-500/10 ring-1 ring-c-info/20'
                         : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
                     }`}
                   >

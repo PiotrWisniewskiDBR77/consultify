@@ -203,7 +203,7 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
                             touch-target touch-ripple rounded-xl font-bold transition-all border flex items-center justify-center gap-2
                             ${getAssessmentButtonClasses('actual', isActual)}
                             ${isCompact ? 'px-3 py-4 text-sm flex-col' : 'px-6 py-3 text-sm min-w-[160px]'}
-                            ${isAutoFilling && autoFillSource === 'actual' ? 'ring-2 ring-primary-500 ring-offset-2' : ''}
+                            ${isAutoFilling && autoFillSource === 'actual' ? 'ring-2 ring-c-info ring-offset-2' : ''}
                         `}
           >
             {isAutoFilling && autoFillSource === 'actual' ? (
@@ -221,7 +221,7 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
                             touch-target touch-ripple rounded-xl font-bold transition-all border flex items-center justify-center gap-2
                             ${getAssessmentButtonClasses('target', isTarget)}
                             ${isCompact ? 'px-3 py-4 text-sm flex-col' : 'px-6 py-3 text-sm min-w-[160px]'}
-                            ${isAutoFilling && autoFillSource === 'target' ? 'ring-2 ring-primary-500 ring-offset-2' : ''}
+                            ${isAutoFilling && autoFillSource === 'target' ? 'ring-2 ring-c-info ring-offset-2' : ''}
                         `}
           >
             {isAutoFilling && autoFillSource === 'target' ? (

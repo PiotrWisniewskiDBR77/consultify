@@ -331,7 +331,7 @@ const BRANCH_COLORS: Record<
     bg: 'bg-primary-100 dark:bg-primary-900/25',
     border: 'border-primary-400/70',
     text: 'text-primary-700 dark:text-primary-300',
-    ring: 'ring-primary-400',
+    ring: 'ring-c-info',
     edge: '#a78bfa',
   },
   experiments: {
@@ -374,7 +374,7 @@ const BRANCH_COLORS: Record<
     bg: 'bg-primary-100 dark:bg-primary-900/25',
     border: 'border-primary-400/70',
     text: 'text-primary-700 dark:text-primary-300',
-    ring: 'ring-primary-400',
+    ring: 'ring-c-info',
     edge: '#a78bfa',
   },
   // 5 Whys
@@ -439,7 +439,7 @@ const BRANCH_COLORS: Record<
     bg: 'bg-primary-100 dark:bg-primary-900/25',
     border: 'border-primary-400/70',
     text: 'text-primary-700 dark:text-primary-300',
-    ring: 'ring-primary-400',
+    ring: 'ring-c-info',
     edge: '#6366f1',
   },
   measurement: {
@@ -533,7 +533,7 @@ const BRANCH_COLORS: Record<
     bg: 'bg-primary-100 dark:bg-primary-900/25',
     border: 'border-primary-400/70',
     text: 'text-primary-700 dark:text-primary-300',
-    ring: 'ring-primary-400',
+    ring: 'ring-c-info',
     edge: '#6366f1',
   },
   marketing: {
@@ -576,7 +576,7 @@ const BRANCH_COLORS: Record<
     bg: 'bg-primary-100 dark:bg-primary-900/25',
     border: 'border-primary-400/70',
     text: 'text-primary-700 dark:text-primary-300',
-    ring: 'ring-primary-400',
+    ring: 'ring-c-info',
     edge: '#6366f1',
   },
   shared_values: {
@@ -676,7 +676,7 @@ const BRANCH_COLORS: Record<
     bg: 'bg-primary-100 dark:bg-primary-900/25',
     border: 'border-primary-400/70',
     text: 'text-primary-700 dark:text-primary-300',
-    ring: 'ring-primary-400',
+    ring: 'ring-c-info',
     edge: '#a78bfa',
   },
   uncategorized: {

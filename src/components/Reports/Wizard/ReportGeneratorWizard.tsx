@@ -341,7 +341,7 @@ export const ReportGeneratorWizard: React.FC = () => {
               onClick={() => applyType(def)}
               className={`flex items-start gap-3 rounded-xl border p-3 text-left transition-all ${
                 active
-                  ? 'border-primary-500 bg-primary-50/70 ring-1 ring-primary-500/30 dark:border-primary-500/60 dark:bg-primary-500/10'
+                  ? 'border-primary-500 bg-primary-50/70 ring-1 ring-c-info/30 dark:border-primary-500/60 dark:bg-primary-500/10'
                   : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-white/[0.08] dark:bg-navy-900 dark:hover:bg-white/[0.04]'
               }`}
             >
@@ -408,7 +408,7 @@ export const ReportGeneratorWizard: React.FC = () => {
               onClick={() => setCadenceMode(opt.id)}
               className={`flex items-start gap-3 rounded-xl border p-4 text-left transition-all ${
                 active
-                  ? 'border-primary-500 bg-primary-50/70 ring-1 ring-primary-500/30 dark:border-primary-500/60 dark:bg-primary-500/10'
+                  ? 'border-primary-500 bg-primary-50/70 ring-1 ring-c-info/30 dark:border-primary-500/60 dark:bg-primary-500/10'
                   : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-white/[0.08] dark:bg-navy-900 dark:hover:bg-white/[0.04]'
               }`}
             >
@@ -458,7 +458,7 @@ export const ReportGeneratorWizard: React.FC = () => {
               onClick={() => setRecurrenceUnit(unit.id)}
               className={`flex flex-col items-center gap-1.5 rounded-xl border p-3 text-center transition-all ${
                 active
-                  ? 'border-primary-500 bg-primary-50/70 ring-1 ring-primary-500/30 dark:border-primary-500/60 dark:bg-primary-500/10'
+                  ? 'border-primary-500 bg-primary-50/70 ring-1 ring-c-info/30 dark:border-primary-500/60 dark:bg-primary-500/10'
                   : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-white/[0.08] dark:bg-navy-900 dark:hover:bg-white/[0.04]'
               }`}
             >
@@ -560,7 +560,7 @@ export const ReportGeneratorWizard: React.FC = () => {
                 onClick={() => setDensity(opt.id)}
                 className={`rounded-xl border p-2.5 text-left transition-all ${
                   active
-                    ? 'border-primary-500 bg-primary-50/70 ring-1 ring-primary-500/30 dark:border-primary-500/60 dark:bg-primary-500/10'
+                    ? 'border-primary-500 bg-primary-50/70 ring-1 ring-c-info/30 dark:border-primary-500/60 dark:bg-primary-500/10'
                     : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-white/[0.08] dark:bg-navy-900 dark:hover:bg-white/[0.04]'
                 }`}
               >

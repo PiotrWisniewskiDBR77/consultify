@@ -236,7 +236,7 @@ export const SeatAllocationView: React.FC<SeatAllocationViewProps> = ({
                 className={cn(
                   'p-4 rounded-xl border text-left transition-all',
                   isSelected
-                    ? 'border-primary-500 ring-2 ring-primary-500/20'
+                    ? 'border-primary-500 ring-2 ring-c-info/20'
                     : 'border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-700'
                 )}
               >

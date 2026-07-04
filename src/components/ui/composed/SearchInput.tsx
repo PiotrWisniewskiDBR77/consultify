@@ -196,7 +196,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                 outline-none
                 ${
                   isFocused
-                    ? 'bg-white dark:bg-navy-900 border-primary-500 ring-2 ring-primary-500/20'
+                    ? 'bg-white dark:bg-navy-900 border-primary-500 ring-2 ring-c-info/20'
                     : 'hover:bg-slate-100 dark:hover:bg-navy-800'
                 }
               `}

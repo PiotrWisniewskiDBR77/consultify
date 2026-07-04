@@ -170,7 +170,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
                                         w-8 h-8 rounded-full flex items-center justify-center transition-all
                                         ${
                                           state === 'current'
-                                            ? 'bg-primary-100 dark:bg-primary-900/30 ring-2 ring-primary-500 ring-offset-2 ring-offset-slate-50 dark:ring-offset-navy-950'
+                                            ? 'bg-primary-100 dark:bg-primary-900/30 ring-2 ring-c-info ring-offset-2 ring-offset-slate-50 dark:ring-offset-navy-950'
                                             : state === 'completed'
                                               ? 'bg-green-100 dark:bg-green-900/30'
                                               : 'bg-slate-100 dark:bg-navy-800'

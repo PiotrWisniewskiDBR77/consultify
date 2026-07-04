@@ -132,7 +132,7 @@ export const ManagerSelector: React.FC<ManagerSelectorProps> = ({
         className={cn(
           'w-full flex items-center justify-between px-3 py-2.5 bg-white dark:bg-navy-800 border rounded-lg transition-all',
           isOpen
-            ? 'border-primary-500 ring-2 ring-primary-500/20'
+            ? 'border-primary-500 ring-2 ring-c-info/20'
             : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600',
           disabled && 'opacity-50 cursor-not-allowed'
         )}

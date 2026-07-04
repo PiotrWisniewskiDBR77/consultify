@@ -29,7 +29,7 @@ const PhaseNode: React.FC<PhaseNodeProps> = ({ phase, isCurrent, isLast }) => {
     }
     if (isCurrent) {
       return {
-        ring: 'bg-primary-500 ring-4 ring-primary-200 dark:ring-primary-900/50',
+        ring: 'bg-primary-500 ring-4 ring-c-info dark:ring-c-info/50',
         text: 'text-primary-600 dark:text-primary-400',
         line: 'bg-slate-200 dark:bg-slate-700',
       };

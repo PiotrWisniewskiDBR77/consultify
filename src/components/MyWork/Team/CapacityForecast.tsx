@@ -56,7 +56,7 @@ const ForecastDay: React.FC<{
       className={`
                 relative p-3 rounded-xl border cursor-pointer transition-all
                 ${getCapacityBgColor(forecast.capacity)}
-                ${isToday ? 'ring-2 ring-primary-500 ring-offset-2 dark:ring-offset-navy-950' : ''}
+                ${isToday ? 'ring-2 ring-c-info ring-offset-2 dark:ring-offset-navy-950' : ''}
             `}
     >
       {/* Day Header */}

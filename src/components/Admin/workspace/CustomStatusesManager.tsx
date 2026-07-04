@@ -205,7 +205,7 @@ export const CustomStatusesManager: React.FC<CustomStatusesManagerProps> = ({
         className={cn(
           'flex items-center gap-3 p-3 bg-white dark:bg-navy-800 rounded-lg border transition-all',
           isEditing
-            ? 'border-primary-500 ring-2 ring-primary-500/20'
+            ? 'border-primary-500 ring-2 ring-c-info/20'
             : 'border-slate-200 dark:border-navy-700'
         )}
       >

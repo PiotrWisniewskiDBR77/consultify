@@ -252,7 +252,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                         isSel
                           ? 'bg-navy-900 font-semibold text-white dark:bg-white dark:text-navy-950'
                           : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/[0.06]',
-                        !isSel && isToday && 'ring-1 ring-inset ring-primary-400',
+                        !isSel && isToday && 'ring-1 ring-inset ring-c-info',
                         off &&
                           'cursor-not-allowed text-slate-300 hover:bg-transparent dark:text-slate-600'
                       )}

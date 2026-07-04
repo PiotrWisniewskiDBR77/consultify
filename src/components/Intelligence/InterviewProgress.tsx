@@ -55,7 +55,7 @@ export function InterviewProgress({
                 w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-all
                 ${
                   status === 'current'
-                    ? 'bg-primary-50 dark:bg-primary-900/20 ring-1 ring-primary-200 dark:ring-primary-800'
+                    ? 'bg-primary-50 dark:bg-primary-900/20 ring-1 ring-c-info dark:ring-c-info'
                     : 'hover:bg-slate-50 dark:hover:bg-white/5'
                 }
                 ${!onCategoryClick ? 'cursor-default' : 'cursor-pointer'}

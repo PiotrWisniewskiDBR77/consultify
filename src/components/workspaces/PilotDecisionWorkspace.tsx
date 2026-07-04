@@ -62,7 +62,7 @@ export const PilotDecisionWorkspace: React.FC<PilotDecisionWorkspaceProps> = ({
                   onClick={() => handleSelectPilot(init.id)}
                   className={`p - 3 rounded - lg border cursor - pointer transition - all ${
                     selectedPilotId === init.id
-                      ? 'bg-primary-500/10 border-primary-500 ring-1 ring-primary-500'
+                      ? 'bg-primary-500/10 border-primary-500 ring-1 ring-c-info'
                       : 'bg-slate-50 dark:bg-navy-900 border-slate-200 dark:border-navy-700 hover:border-primary-300'
                   } `}
                 >

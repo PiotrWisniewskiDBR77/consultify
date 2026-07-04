@@ -505,7 +505,7 @@ export const PartnerPricingView: React.FC = () => {
                     transition={{ duration: 0.5, delay: idx * 0.08 }}
                     className={`relative flex flex-col rounded-2xl p-6 ${
                       tier.highlight
-                        ? 'z-10 scale-[1.02] bg-gradient-to-b from-primary-600 to-primary-700 text-white shadow-2xl shadow-primary-500/20 ring-4 ring-primary-500/50'
+                        ? 'z-10 scale-[1.02] bg-gradient-to-b from-primary-600 to-primary-700 text-white shadow-2xl shadow-primary-500/20 ring-4 ring-c-info/50'
                         : 'border border-c-border-subtle bg-c-surface'
                     }`}
                   >
