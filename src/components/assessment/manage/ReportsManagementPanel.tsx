@@ -334,7 +334,7 @@ const ReportRow: FC<{
               <button
                 onClick={handleFinalize}
                 disabled={busy}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white rounded-lg transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:bg-navy-900/40 dark:disabled:bg-[#F4F7FB]/50 text-white dark:text-navy-950 rounded-lg transition-colors"
               >
                 {busy ? <Loader2 size={12} className="animate-spin" /> : <ArrowRight size={12} />}
                 Submit Review
@@ -351,7 +351,7 @@ const ReportRow: FC<{
           ) : report.status === 'IN_REVIEW' ? (
             <button
               onClick={() => onOpen(report.id, report.name, report.status)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950 rounded-lg transition-colors"
             >
               <Eye size={12} />
               Review
@@ -725,7 +725,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
                   disabled={!onCreateReport}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
                     onCreateReport
-                      ? 'bg-primary-500 hover:bg-primary-600 text-white'
+                      ? 'bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950'
                       : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                   }`}
                   title={!onCreateReport ? 'Report creation not available' : undefined}
@@ -819,7 +819,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
                 <button
                   onClick={handleCreateReport}
                   disabled={creatingReport || !onCreateReport}
-                  className="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold transition-colors disabled:opacity-50"
+                  className="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950 text-sm font-semibold transition-colors disabled:opacity-50"
                 >
                   {creatingReport ? (
                     <Loader2 size={16} className="animate-spin" />

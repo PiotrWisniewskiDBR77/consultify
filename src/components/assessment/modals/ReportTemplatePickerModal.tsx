@@ -355,7 +355,7 @@ export function ReportTemplatePickerModal(props: {
                   setError(e?.message || 'Failed to open template generator');
                 }
               }}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 disabled:cursor-not-allowed text-white text-xs font-medium transition-colors"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:bg-navy-900/40 dark:disabled:bg-[#F4F7FB]/50 disabled:cursor-not-allowed text-white dark:text-navy-950 text-xs font-medium transition-colors"
               title="Create new template"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -746,7 +746,7 @@ export function ReportTemplatePickerModal(props: {
                   setIsNewTemplateMetaOpen(false);
                   setIsTemplateBuilderOpen(true);
                 }}
-                className="h-10 px-4 rounded-lg bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-semibold"
+                className="h-10 px-4 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:bg-navy-900/40 dark:disabled:bg-[#F4F7FB]/50 text-white dark:text-navy-950 text-sm font-semibold"
               >
                 Open generator
               </button>

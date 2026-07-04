@@ -189,7 +189,7 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
             </button>
             <button
               onClick={onNewAssessment}
-              className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-500 text-white font-medium rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950 font-medium rounded-lg transition-colors"
             >
               <Plus size={18} />
               New Assessment
@@ -388,7 +388,7 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
                   </p>
                   <button
                     onClick={onNewAssessment}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white font-medium rounded-lg transition-colors"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950 font-medium rounded-lg transition-colors"
                   >
                     <Plus size={16} />
                     New Assessment

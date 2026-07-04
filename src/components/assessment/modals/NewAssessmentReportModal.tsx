@@ -186,7 +186,7 @@ export function NewAssessmentReportModal(props: {
                   setBusy(false);
                 }
               }}
-              className="h-10 px-4 rounded-lg bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-semibold"
+              className="h-10 px-4 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:bg-navy-900/40 dark:disabled:bg-[#F4F7FB]/50 text-white dark:text-navy-950 text-sm font-semibold"
             >
               {busy ? (
                 <span className="inline-flex items-center gap-2">

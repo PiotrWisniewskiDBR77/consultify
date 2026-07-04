@@ -176,7 +176,7 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
                   toast.error('Failed to export PDF');
                 }
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-danger-600 hover:bg-danger-700 text-white rounded-lg text-sm font-semibold transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950 rounded-lg text-sm font-semibold transition-colors"
             >
               <FileText size={16} />
               {t('assessment.reports.exportPDF', 'Export PDF')}
@@ -342,7 +342,7 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
               }
             }}
             disabled={generating}
-            className="flex items-center gap-2 p-4 py-2.5 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-primary-400 text-white rounded-lg text-sm font-semibold transition-colors shadow-lg shadow-primary-500/20"
+            className="flex items-center gap-2 p-4 py-2.5 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-navy-900/40 dark:disabled:bg-[#F4F7FB]/50 text-white rounded-lg text-sm font-semibold transition-colors"
           >
             {generating ? (
               <>
