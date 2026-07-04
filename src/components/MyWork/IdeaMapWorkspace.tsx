@@ -3247,6 +3247,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         graphNodes={graphNodes}
         graphEdges={graphEdges}
         extensions={{
+          // A3: pass through the full graph extensions so whiteboard JSON export is
+          // round-trip safe (drawingPaths/scenes/bgPattern/sessionState survive) and
+          // IdeaExportMenu can enforce extensions.whiteboard.sharePolicy.exportAllowed.
+          ...mapExtensions,
           processFlow: { lanes: graphLanes },
           activeTool,
         }}
