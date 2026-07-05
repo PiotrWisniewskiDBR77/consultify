@@ -1,40 +1,33 @@
 /**
- * ReportsTabContent — "Raporty" tab
- * Golden standard: FilterableTable (7 columns) + GridView cards + Preview pane
- * Connected to /api/report-builder backend
+ * ReportsTabContent — "Documents" tab (rap.outputs.tabs.documents)
+ * Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7): table view →
+ * StandardTable + StandardPreview, 1:1 with the Assessment 'list' / Interview
+ * Inbox / Results KPI catalog adopters. Grid view keeps GridView (unchanged).
+ * Connected to /api/report-builder backend.
  */
 
-import {
-  Archive,
-  ChevronRight,
-  Download,
-  ExternalLink,
-  FileText,
-  MessageCircle,
-  Share2,
-} from 'lucide-react';
+import { Download, ExternalLink, FileText, MessageCircle, Share2 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import {
+  StandardPreview,
+  standardPreviewShortcuts,
+  type StandardPreviewActions,
+  type StandardRowMenu,
+  StandardTable,
+  type TableColumn as StandardTableColumn,
+} from '@/components/standard';
 import { LoadingState, StatusChip } from '@/components/ui/primitives';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 
-import {
-  FilterableTable,
-  type FilterChip,
-  type GridItem,
-  GridView,
-  type TableColumn,
-  type ViewMode,
-} from '../shared/ModuleHub';
-import type { RowAction } from '../shared/RowActionsMenu';
-import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import { type FilterChip, type GridItem, GridView, type ViewMode } from '../shared/ModuleHub';
 import { appendArtifactOpenAction, resolveArtifactOpenPath } from './artifactNavigation';
-import { ReportPreviewBody, ReportPreviewFooter } from './previews/ReportPreview';
 import { REPORT_STATUS_META, REPORT_TYPE_META, type ReportItem } from './types';
 import type { useRapActions } from './useRapData';
 import { useTrustState } from './useTrustState';
+import { TrustStatePreviewSection } from './TrustStatePreviewSection';
 
 interface ReportsTabContentProps {
   viewMode: ViewMode;
@@ -68,6 +61,8 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const deepLinkConsumed = useRef(false);
   const [reviewBusyArtifactId, setReviewBusyArtifactId] = useState<string | null>(null);
+  // Triada standard MUST #7 (StandardTable): checkbox selection → bulk mode.
+  const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
 
   const filteredData = useMemo(() => {
     let data = reports;
@@ -82,7 +77,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
     return data;
   }, [reports, searchQuery, activeFilters]);
 
-  const columns: TableColumn[] = useMemo(
+  const columns: StandardTableColumn[] = useMemo(
     () => [
       {
         id: 'title',
@@ -229,68 +224,68 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
     if (openPath) navigate(openPath);
   };
 
-  const getRowActions = (row: ReportItem): RowAction[] => [
-    // canon §9.2 FIXED BOTTOM MANIFEST position 1
-    {
-      id: 'open_preview',
-      label: t('rap.actions.openPreview', 'Otwórz podgląd'),
-      icon: ChevronRight,
-      onClick: () => setSelectedId(row.id),
-    },
-    {
-      id: 'open',
-      label: t('rap.actions.open', 'Otwórz'),
-      icon: ExternalLink,
-      variant: 'primary',
-      onClick: () => openReport(row),
-    },
-    {
-      id: 'discuss',
-      label: t('rap.actions.discuss', 'Discuss'),
-      icon: MessageCircle,
-      onClick: () => {
-        void openChatWithContext({
-          entityType: 'report',
-          entityId: row.id,
-          entityName: row.title,
-          pmoContext: { reportId: row.id },
-        });
+  // Triada standard (StandardTable rowMenu contract, ANEKS #4): moduł deklaruje
+  // TYLKO bloki 1-3 (primary/statusTransitions/timeActions); StandardTable SAM
+  // dokłada bloki 4 (Open preview · Edit · Archive) i 5 (Delete, disabled — brak
+  // API delete dla raportów, tylko archive = soft-delete, canon §14).
+  const buildRowMenu = (row: ReportItem): StandardRowMenu => ({
+    primary: [
+      {
+        id: 'open',
+        label: t('rap.actions.open', 'Otwórz'),
+        icon: ExternalLink,
+        onClick: () => openReport(row),
+      },
+      {
+        id: 'discuss',
+        label: t('rap.actions.discuss', 'Discuss'),
+        icon: MessageCircle,
+        onClick: () => {
+          void openChatWithContext({
+            entityType: 'report',
+            entityId: row.id,
+            entityName: row.title,
+            pmoContext: { reportId: row.id },
+          });
+        },
+      },
+      {
+        id: 'export',
+        label: t('rap.actions.exportPdf', 'Eksportuj PDF'),
+        icon: Download,
+        onClick: () => actions.exportReportPdf(row),
+      },
+      {
+        id: 'share',
+        label: t('rap.actions.share', 'Udostępnij'),
+        icon: Share2,
+        onClick: () => {
+          const sharePath = appendArtifactOpenAction(
+            resolveArtifactOpenPath({
+              kind: 'document',
+              originRecordId: row.id,
+              governance: row.governance,
+            }),
+            'share'
+          );
+          if (sharePath) navigate(sharePath);
+        },
+      },
+    ],
+    universalHandlers: {
+      preview: () => setSelectedId(row.id),
+      edit: () => openReport(row),
+      // canon §14: Archive = soft-delete (reversible) — real API (archiveReport).
+      archive: () => {
+        void (async () => {
+          const ok = await actions.archiveReport(row);
+          if (ok) onRefresh();
+        })();
       },
     },
-    {
-      id: 'export',
-      label: t('rap.actions.exportPdf', 'Eksportuj PDF'),
-      icon: Download,
-      onClick: () => actions.exportReportPdf(row),
-    },
-    {
-      id: 'share',
-      label: t('rap.actions.share', 'Udostępnij'),
-      icon: Share2,
-      onClick: () => {
-        const sharePath = appendArtifactOpenAction(
-          resolveArtifactOpenPath({
-            kind: 'document',
-            originRecordId: row.id,
-            governance: row.governance,
-          }),
-          'share'
-        );
-        if (sharePath) navigate(sharePath);
-      },
-    },
-    {
-      // canon §14: Archive = soft-delete (reversible) — label "Archiwizuj", NOT "Usuń"
-      id: 'archive',
-      label: t('rap.actions.archive', 'Archiwizuj'),
-      icon: Archive,
-      divider: true,
-      onClick: async () => {
-        const ok = await actions.archiveReport(row);
-        if (ok) onRefresh();
-      },
-    },
-  ];
+    // Blok 5 (Delete): brak endpointu usuwania raportów (tylko archive) —
+    // disabled z notą, StandardTable dokłada ją sama (brak destructive.onClick).
+  });
 
   useEffect(() => {
     if (!initialArtifactId || deepLinkConsumed.current || filteredData.length === 0) return;
@@ -310,7 +305,6 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
         governance: selectedGovernance || selectedItem.governance,
       }
     : null;
-  const itemIds = filteredData.map((i) => i.id);
   const reviewDisabled =
     !previewItem?.artifactId ||
     reviewBusyArtifactId === previewItem?.artifactId ||
@@ -318,6 +312,56 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
       previewItem.governance.validationState !== 'validated') ||
     (!!previewItem?.governance?.publishState &&
       previewItem.governance.publishState !== 'private_draft');
+
+  // Triada standard (StandardPreview blok 6, ANEKS #5): rząd 1 = rozstrzygnięcia
+  // (Start review), rząd 2 = informacyjne (Export PDF).
+  const previewActions: StandardPreviewActions | undefined = previewItem
+    ? {
+        resolutions: previewItem.artifactId
+          ? [
+              {
+                id: 'start-review',
+                variant: 'positive',
+                label: t('rap.actions.startReview', 'Rozpocznij przegląd'),
+                icon: FileText,
+                disabled: reviewDisabled,
+                onClick: () => {
+                  void (async () => {
+                    const aid = previewItem.artifactId as string;
+                    setReviewBusyArtifactId(aid);
+                    const ok = await actions.startArtifactReview(aid);
+                    setReviewBusyArtifactId(null);
+                    if (ok) onRefresh();
+                  })();
+                },
+              },
+            ]
+          : undefined,
+      }
+    : undefined;
+
+  // Esc closes preview; single-key shortcuts active while preview open (kanon B.24/B.31,
+  // 1:1 with AssessmentHub 'list' / ResultsHub KPI catalog).
+  useEffect(() => {
+    if (viewMode !== 'table' || !selectedId) return;
+    const shortcuts = standardPreviewShortcuts(previewActions);
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable)
+        return;
+      if (e.key === 'Escape') {
+        setSelectedId(null);
+        return;
+      }
+      const handler = shortcuts[e.key.toUpperCase()];
+      if (handler) {
+        e.preventDefault();
+        handler();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [viewMode, selectedId, previewActions]);
 
   if (loading) {
     return <LoadingState variant="spinner" className="h-64" />;
@@ -420,60 +464,105 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
     );
   }
 
+  // Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7): Documents tab
+  // table view → StandardTable + StandardPreview, 1:1 with the Assessment
+  // 'list' / Interview Inbox / Results KPI catalog adopters (plain flex split,
+  // NOT TableWithPreviewLayout — matches the established pattern).
   return (
-    <div className="h-full overflow-hidden">
-      <TableWithPreviewLayout<ReportItem & { title: string }>
-        selectedId={selectedId}
-        selectedItem={previewItem}
-        onSelect={setSelectedId}
-        onOpenFull={(id) => {
-          const row = filteredData.find((x) => x.id === id);
-          if (row) openReport(row);
-        }}
-        itemIds={itemIds}
-        getItemById={(id) => filteredData.find((x) => x.id === id) ?? null}
-        renderPreview={(item) => (
-          <ReportPreviewBody
-            report={item}
-            trustProps={{
-              governance: item.governance,
-              artifactId: item.artifactId,
-              exportFormats: item.exportFormats,
-            }}
-          />
-        )}
-        renderPreviewFooter={(item) => (
-          <ReportPreviewFooter
-            report={item}
-            onStartReview={
-              item.artifactId
-                ? async () => {
-                    const aid = item.artifactId as string;
-                    setReviewBusyArtifactId(aid);
-                    const ok = await actions.startArtifactReview(aid);
-                    setReviewBusyArtifactId(null);
-                    if (ok) onRefresh();
-                  }
-                : undefined
-            }
-            reviewActionDisabled={item.id === previewItem?.id ? reviewDisabled : !item.artifactId}
-            onExport={() => actions.exportReportPdf(item)}
-          />
-        )}
-      >
-        <FilterableTable
+    <div className="h-full flex overflow-hidden">
+      <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
+        <StandardTable
           columns={columns}
-          data={filteredData}
+          data={filteredData as unknown as Array<Record<string, unknown> & { id: string }>}
           selectedRowId={selectedId}
-          onRowClick={(row) => setSelectedId(row.id)}
-          onRowDoubleClick={(row) => openReport(row as ReportItem)}
-          getRowActions={(row) => getRowActions(row as unknown as ReportItem)}
+          onRowClick={(row) => setSelectedId(String((row as unknown as ReportItem).id))}
+          onRowDoubleClick={(row) => openReport(row as unknown as ReportItem)}
+          rowDescription={() => null}
+          defaultSort={{ columnId: 'createdAt', direction: 'desc' }}
+          persistKey="reports.documents.list"
           activeFilters={activeFilters}
           onFilterChange={onFilterChange}
-          emptyMessage={t('rap.empty.reports', 'Brak raportów')}
-          canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
+          selection={{ selectedIds: selectedRowIds, onChange: setSelectedRowIds }}
+          empty={{
+            icon: FileText,
+            title: t('rap.empty.reportsTitle', 'Canonical management reports'),
+            description: t('rap.empty.reports', 'Brak raportów'),
+            actionLabel: t('rap.actions.newReport', 'Nowy raport'),
+          }}
+          rowMenu={(row) => buildRowMenu(row as unknown as ReportItem)}
         />
-      </TableWithPreviewLayout>
+      </div>
+
+      {previewItem ? (
+        <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+          <StandardPreview
+            title={previewItem.title || 'Report'}
+            onClose={() => setSelectedId(null)}
+            onOpenFull={() => openReport(previewItem)}
+            meta={{
+              pills: [
+                {
+                  label: isPolish
+                    ? REPORT_STATUS_META[previewItem.status]?.labelPl
+                    : REPORT_STATUS_META[previewItem.status]?.label,
+                  tone: REPORT_STATUS_META[previewItem.status]?.tone ?? 'neutral',
+                },
+                {
+                  label: isPolish
+                    ? REPORT_TYPE_META[previewItem.reportType]?.labelPl
+                    : REPORT_TYPE_META[previewItem.reportType]?.label,
+                  tone: 'neutral',
+                },
+              ],
+              trailing: (
+                <span className="text-[11px] font-semibold text-c-text-secondary">
+                  {previewItem.updatedAt
+                    ? new Date(previewItem.updatedAt).toLocaleDateString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })
+                    : '—'}
+                </span>
+              ),
+            }}
+            details={{
+              text: [
+                `${t('rap.columns.owner', 'Właściciel')}: ${previewItem.owner || '—'}`,
+                `${t('rap.columns.exports', 'Eksporty')}: ${
+                  previewItem.exportFormats?.length
+                    ? previewItem.exportFormats.join(', ').toUpperCase()
+                    : '—'
+                }`,
+              ].join('\n'),
+              onCopy: () => {
+                void navigator.clipboard?.writeText(
+                  `${previewItem.title} — ${previewItem.status} (${previewItem.owner || '—'})`
+                );
+              },
+              // canon A7.3: eksporty TYLKO w Details kebab (nie w gridzie akcji).
+              onExport: () => actions.exportReportPdf(previewItem),
+              exportLabel: t('rap.actions.exportPdf', 'Eksportuj PDF'),
+            }}
+            ai={{
+              hints: [
+                t('rap.preview.aiSummarize', 'Summarize report'),
+                t('rap.preview.aiNextSteps', 'Suggest next steps'),
+              ],
+              disabled: true,
+              disabledTooltip: t('common.comingSoon', 'Coming soon'),
+            }}
+            relations={[]}
+            actions={previewActions}
+          >
+            <TrustStatePreviewSection
+              governance={previewItem.governance}
+              artifactId={previewItem.artifactId}
+              exportFormats={previewItem.exportFormats}
+            />
+          </StandardPreview>
+        </aside>
+      ) : null}
     </div>
   );
 };
