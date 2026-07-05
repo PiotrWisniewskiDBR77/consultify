@@ -67,6 +67,10 @@ import { IdeaExportMenu } from './IdeaExportMenu';
 import { IdeaGhostCards } from './IdeaGhostCards';
 import { ideaMapToMarkdown } from './ideaMapToMarkdown';
 import { type ExtendedNodeData, IdeaNodeDetailDrawer } from './IdeaNodeDetailDrawer';
+import {
+  type UnifiedNodeData,
+  UnifiedNodeDetailDrawer,
+} from './mindmap/UnifiedNodeDetailDrawer';
 import { IdeaProcessFlowTool } from './IdeaProcessFlowTool';
 import { IdeaProposalReview } from './IdeaProposalReview';
 import { IdeaRecommendationMap } from './IdeaRecommendationMap';
@@ -256,6 +260,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const { setChatKickoffMessage, isChatCollapsed, toggleChatCollapse } = useAppStore();
   const { isEnabled } = useFeatureFlagsContext();
   const mindmapTeresaBridgeEnabled = isEnabled('ENABLE_TERESA_MINDMAP');
+  // M06 Fala 4.1b: canonical unified node-detail drawer (idea variant). OFF
+  // (default) keeps today's IdeaNodeDetailDrawer, no change.
+  const drawerUnifiedEnabled = isEnabled('mindmapDrawerUnified');
   const openChatWithContext = useOpenChatWithContext();
   const currentUser = useAppStore((state) => state.currentUser);
   const currentProjectId = useAppStore((state) => state.currentProjectId);
@@ -3289,31 +3296,68 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         onImportGraph={handleImportGraph}
       />
 
-      <IdeaNodeDetailDrawer
-        open={nodeDetailOpen}
-        onClose={() => setNodeDetailOpen(false)}
-        nodeId={nodeDetailId}
-        nodeData={nodeDetailData}
-        ideaId={realId}
-        activeTool={activeTool}
-        locked={canvasLocked}
-        allNodes={graphNodes}
-        mapVersion={graphRuntime.graph.version}
-        onMapConflictRefresh={graphRuntime.refresh}
-        onNodeDataChange={handleNodeDataChange}
-        onGenerateProposal={(batch) => {
-          setProposalBatch(batch);
-          setNodeDetailOpen(false);
-        }}
-        onDrillDown={(nid) => {
-          setNodeDetailOpen(false);
-          window.dispatchEvent(
-            new CustomEvent('idea-workspace-drill-down', {
-              detail: { nodeId: nid, ideaId: realId },
-            })
-          );
-        }}
-      />
+      {drawerUnifiedEnabled ? (
+        // M06 Fala 4.1b: canonical unified drawer (idea variant). ExtendedNodeData
+        // carries nodeId separately, so merge it into UnifiedNodeData here. The
+        // unified onUpdateNode maps 1:1 to the legacy onNodeDataChange contract.
+        <UnifiedNodeDetailDrawer
+          variant="idea"
+          open={nodeDetailOpen}
+          onClose={() => setNodeDetailOpen(false)}
+          nodeData={
+            nodeDetailOpen
+              ? ({ ...(nodeDetailData as UnifiedNodeData), nodeId: nodeDetailId } as UnifiedNodeData)
+              : null
+          }
+          ideaId={realId}
+          activeTool={activeTool}
+          locked={canvasLocked}
+          allNodes={graphNodes}
+          mapVersion={graphRuntime.graph.version}
+          onMapConflictRefresh={graphRuntime.refresh}
+          onUpdateNode={(nid, patch) =>
+            handleNodeDataChange(nid, patch as Partial<ExtendedNodeData>)
+          }
+          onGenerateProposal={(batch) => {
+            setProposalBatch(batch);
+            setNodeDetailOpen(false);
+          }}
+          onDrillDown={(nid) => {
+            setNodeDetailOpen(false);
+            window.dispatchEvent(
+              new CustomEvent('idea-workspace-drill-down', {
+                detail: { nodeId: nid, ideaId: realId },
+              })
+            );
+          }}
+        />
+      ) : (
+        <IdeaNodeDetailDrawer
+          open={nodeDetailOpen}
+          onClose={() => setNodeDetailOpen(false)}
+          nodeId={nodeDetailId}
+          nodeData={nodeDetailData}
+          ideaId={realId}
+          activeTool={activeTool}
+          locked={canvasLocked}
+          allNodes={graphNodes}
+          mapVersion={graphRuntime.graph.version}
+          onMapConflictRefresh={graphRuntime.refresh}
+          onNodeDataChange={handleNodeDataChange}
+          onGenerateProposal={(batch) => {
+            setProposalBatch(batch);
+            setNodeDetailOpen(false);
+          }}
+          onDrillDown={(nid) => {
+            setNodeDetailOpen(false);
+            window.dispatchEvent(
+              new CustomEvent('idea-workspace-drill-down', {
+                detail: { nodeId: nid, ideaId: realId },
+              })
+            );
+          }}
+        />
+      )}
 
       <IdeaUnifiedSearch
         open={searchOpen}
