@@ -12,6 +12,10 @@ import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import {
+  renderTemplate as renderEmailTemplate,
+  templateExists as emailTemplateExists,
+} from './email/emailTemplateRenderer.js';
 
 // ==========================================
 // TYPES
@@ -45,6 +49,40 @@ interface SMTPConfig {
 interface SettingRow {
   key: string;
   value: string;
+}
+
+// ==========================================
+// TEMPLATE ALIASES
+// ==========================================
+
+/**
+ * Map legacy / short template names passed by existing callers to the actual
+ * `.hbs` file paths under templates/emails. Callers may also pass the real path
+ * directly (e.g. "billing/invoice_created"), in which case no alias is needed.
+ *
+ * Only entries that have a real .hbs on disk get wired; unmapped names (e.g.
+ * "dunning_retry_1", "welcome") fall through to the caller's inline content.
+ */
+const TEMPLATE_ALIASES: Record<string, string> = {
+  invoice: 'billing/invoice_created',
+  invoice_created: 'billing/invoice_created',
+  invoice_paid: 'billing/invoice_paid',
+  invoice_overdue: 'billing/invoice_overdue',
+  payment_failed: 'billing/payment_failed',
+  payment_method_expiring: 'billing/payment_method_expiring',
+  credit_note_issued: 'billing/credit_note_issued',
+  subscription_renewed: 'billing/subscription_renewed',
+  subscription_canceled: 'billing/subscription_canceled',
+};
+
+/**
+ * Resolve a caller template name to a renderable .hbs path, or null if no
+ * template file exists for it (caller keeps its inline content).
+ */
+function resolveTemplatePath(template?: string): string | null {
+  if (!template) return null;
+  const aliased = TEMPLATE_ALIASES[template] ?? template;
+  return emailTemplateExists(aliased) ? aliased : null;
 }
 
 // ==========================================
@@ -101,6 +139,29 @@ export async function send(options: SendEmailOptions): Promise<boolean> {
 
   const { to, subject, html, template, data, attachments = [] } = options;
 
+  // 0. Render Handlebars .hbs template when one exists for `template`.
+  //    An explicit `html` always wins (caller opted out of the template).
+  //    Any render failure MUST fall back to the previous behaviour and never
+  //    block the send (Task #84, fallback requirement).
+  let renderedHtml: string | undefined = html;
+  if (!renderedHtml && template) {
+    const templatePath = resolveTemplatePath(template);
+    if (templatePath) {
+      const out = renderEmailTemplate(templatePath, {
+        subject,
+        recipientName: (data as Record<string, unknown>)?.recipientName,
+        ...(data ?? {}),
+      });
+      if (out) {
+        renderedHtml = out;
+      } else {
+        logger.warn(
+          `[EMAIL SERVICE] Template "${template}" (${templatePath}) failed to render; falling back to inline content`
+        );
+      }
+    }
+  }
+
   // 1. Fetch SMTP Settings from DB
   const settingsRows = await DbPromise.all<SettingRow>(
     db,
@@ -128,7 +189,7 @@ export async function send(options: SendEmailOptions): Promise<boolean> {
   };
 
   // For logging and debugging
-  const displayHtml = html || `Template: ${template}`;
+  const displayHtml = renderedHtml || `Template: ${template}`;
   logger.info(`\n--- [EMAIL SERVICE] Sending to ${to} ---`);
   logger.info(`Using Host: ${smtpConfig.host || 'Mock (Console)'}`);
   logger.info(`Subject: ${subject}`);
@@ -144,7 +205,7 @@ export async function send(options: SendEmailOptions): Promise<boolean> {
         to,
         subject,
         html:
-          html ||
+          renderedHtml ||
           `<h1>${subject}</h1><p>Template: ${template}</p><pre>${JSON.stringify(data, null, 2)}</pre>`,
         attachments,
       });

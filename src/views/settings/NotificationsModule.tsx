@@ -29,10 +29,10 @@ const ScheduleSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+        <h3 className="text-lg font-semibold text-c-text mb-4">
           {t('settings.schedule.title', 'Notification Schedule')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+        <p className="text-sm text-c-text-muted mb-6">
           {t(
             'settings.schedule.description',
             "Set quiet hours when you don't want to be disturbed"
@@ -41,13 +41,13 @@ const ScheduleSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
       </div>
 
       {/* Quiet Hours Toggle */}
-      <div className="p-4 bg-white dark:bg-white/5 rounded-lg border border-slate-200 dark:border-navy-700">
+      <div className="p-4 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700">
         <div className="flex items-center justify-between">
           <div>
-            <p className="font-medium text-slate-900 dark:text-white">
+            <p className="font-medium text-c-text">
               {t('settings.schedule.quietHours', 'Quiet Hours')}
             </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t(
                 'settings.schedule.quietHoursDesc',
                 'Pause non-urgent notifications during set hours'
@@ -57,11 +57,11 @@ const ScheduleSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
           <button
             onClick={() => setQuietHoursEnabled(!quietHoursEnabled)}
             className={`w-12 h-6 rounded-full transition-colors ${
-              quietHoursEnabled ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
+              quietHoursEnabled ? 'bg-c-accent' : 'bg-c-surface-raised'
             }`}
           >
             <div
-              className={`w-5 h-5 bg-white dark:bg-navy-900 rounded-full transform transition-transform ${
+              className={`w-5 h-5 bg-c-surface rounded-full transform transition-transform ${
                 quietHoursEnabled ? 'translate-x-6' : 'translate-x-0.5'
               }`}
             />
@@ -71,28 +71,28 @@ const ScheduleSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
 
       {/* Time Range */}
       {quietHoursEnabled && (
-        <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg">
+        <div className="p-4 bg-c-surface-raised rounded-lg">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-c-text-secondary mb-1">
                 {t('settings.schedule.startTime', 'Start Time')}
               </label>
               <input
                 type="time"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-white/5 text-slate-900 dark:text-white"
+                className="w-full px-3 py-2 rounded-lg border border-c-border-subtle dark:border-navy-700 bg-c-surface text-c-text"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-c-text-secondary mb-1">
                 {t('settings.schedule.endTime', 'End Time')}
               </label>
               <input
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-white/5 text-slate-900 dark:text-white"
+                className="w-full px-3 py-2 rounded-lg border border-c-border-subtle dark:border-navy-700 bg-c-surface text-c-text"
               />
             </div>
           </div>
@@ -100,19 +100,19 @@ const ScheduleSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
       )}
 
       {/* Weekend Settings */}
-      <div className="p-4 bg-white dark:bg-white/5 rounded-lg border border-slate-200 dark:border-navy-700">
+      <div className="p-4 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700">
         <div className="flex items-center justify-between">
           <div>
-            <p className="font-medium text-slate-900 dark:text-white">
+            <p className="font-medium text-c-text">
               {t('settings.schedule.weekends', 'Weekend Notifications')}
             </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t('settings.schedule.weekendsDesc', 'Receive notifications on weekends')}
             </p>
           </div>
-          <button className={`w-12 h-6 rounded-full transition-colors bg-primary-600`}>
+          <button className={`w-12 h-6 rounded-full transition-colors bg-c-accent`}>
             <div
-              className={`w-5 h-5 bg-white dark:bg-navy-900 rounded-full transform transition-transform translate-x-6`}
+              className={`w-5 h-5 bg-c-surface rounded-full transform transition-transform translate-x-6`}
             />
           </button>
         </div>

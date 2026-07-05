@@ -7,9 +7,14 @@ import React, { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Api } from '@/services/api';
+
+import { isMindmapPptxNativeEnabled } from './mindmapExportFlags';
+
 interface ExportPowerPointProps {
   open: boolean;
   onClose: () => void;
+  ideaId: string;
   ideaTitle: string;
   branches: Array<{
     branchKey: string;
@@ -77,16 +82,42 @@ function generateSlideHTML(title: string, branches: ExportPowerPointProps['branc
 export const ExportPowerPoint: React.FC<ExportPowerPointProps> = ({
   open,
   onClose,
+  ideaId,
   ideaTitle,
   branches,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [exporting, setExporting] = useState(false);
+  const nativePptx = isMindmapPptxNativeEnabled();
 
   const handleExport = useCallback(async () => {
     setExporting(true);
     try {
+      if (nativePptx) {
+        // ON: real .pptx via PptxPipelineService (BCG-grade), same pipeline
+        // Report Builder uses. See server/src/services/mindmap/mindMapToUnifiedReport.ts.
+        const blob = await Api.exportMyIdeaMapPptx(ideaId, {
+          ideaTitle,
+          branches,
+          language: isPl ? 'pl' : 'en',
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${ideaTitle || 'mindmap'}.pptx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast.success(isPl ? 'Prezentacja .pptx wyeksportowana!' : 'Presentation (.pptx) exported!', {
+          duration: 1500,
+        });
+        onClose();
+        return;
+      }
+
+      // OFF (default/fallback): legacy HTML blob, unchanged.
       const html = generateSlideHTML(ideaTitle, branches);
       const blob = new Blob([html], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
@@ -106,7 +137,7 @@ export const ExportPowerPoint: React.FC<ExportPowerPointProps> = ({
     } finally {
       setExporting(false);
     }
-  }, [branches, ideaTitle, isPl, onClose]);
+  }, [branches, ideaId, ideaTitle, isPl, nativePptx, onClose]);
 
   const handlePrint = useCallback(() => {
     const html = generateSlideHTML(ideaTitle, branches);
@@ -123,29 +154,29 @@ export const ExportPowerPoint: React.FC<ExportPowerPointProps> = ({
   const totalIdeas = branches.reduce((s, b) => s + b.nodes.length, 0);
 
   return (
-    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/40">
-      <div className="w-full max-w-md rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
-        <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-c-bg">
+      <div className="w-full max-w-md rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
           <div className="flex items-center gap-2">
-            <Presentation size={16} className="text-indigo-500" />
-            <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+            <Presentation size={16} className="text-c-info" />
+            <h3 className="text-sm font-bold text-c-text dark:text-c-text">
               {isPl ? 'Eksport prezentacji' : 'Export Presentation'}
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-c-text-secondary hover:text-c-text-secondary dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
           >
             <X size={16} />
           </button>
         </div>
 
         <div className="px-5 py-4">
-          <div className="p-3 rounded-xl bg-slate-50/50 dark:bg-navy-950/20 border border-slate-200/30 dark:border-navy-700/30 mb-4">
-            <div className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
+          <div className="p-3 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border mb-4">
+            <div className="text-[11px] font-bold text-c-text-secondary dark:text-c-text">
               {ideaTitle}
             </div>
-            <div className="text-[10px] text-slate-500 mt-1">
+            <div className="text-[10px] text-c-text-secondary mt-1">
               {branches.length} {isPl ? 'gałęzi' : 'branches'} · {totalIdeas}{' '}
               {isPl ? 'pomysłów' : 'ideas'} · {branches.length + 2} {isPl ? 'slajdów' : 'slides'}
             </div>
@@ -155,24 +186,36 @@ export const ExportPowerPoint: React.FC<ExportPowerPointProps> = ({
             <button
               onClick={handleExport}
               disabled={exporting}
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500/15 to-blue-500/10 text-[11px] font-bold text-indigo-700 dark:text-indigo-300 hover:from-indigo-500/25 hover:to-blue-500/15 transition-all disabled:opacity-40"
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-c-surface-raised text-[11px] font-bold text-c-info dark:text-c-info transition-all disabled:opacity-40"
             >
               {exporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
-              {isPl ? 'Pobierz HTML (do PDF/PPTX)' : 'Download HTML (for PDF/PPTX)'}
+              {nativePptx
+                ? isPl
+                  ? 'Pobierz .pptx'
+                  : 'Download .pptx'
+                : isPl
+                  ? 'Pobierz HTML (do PDF/PPTX)'
+                  : 'Download HTML (for PDF/PPTX)'}
             </button>
-            <button
-              onClick={handlePrint}
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100/50 dark:bg-navy-800/50 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-navy-700/50 transition-all"
-            >
-              <FileText size={14} />
-              {isPl ? 'Drukuj / Zapisz jako PDF' : 'Print / Save as PDF'}
-            </button>
+            {!nativePptx ? (
+              <button
+                onClick={handlePrint}
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-c-surface-raised dark:bg-c-surface text-[11px] font-bold text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-all"
+              >
+                <FileText size={14} />
+                {isPl ? 'Drukuj / Zapisz jako PDF' : 'Print / Save as PDF'}
+              </button>
+            ) : null}
           </div>
 
-          <p className="text-[9px] text-slate-600 mt-3 text-center">
-            {isPl
-              ? 'Otwórz HTML w przeglądarce i użyj Ctrl+P aby zapisać jako PDF.'
-              : 'Open HTML in browser and use Ctrl+P to save as PDF.'}
+          <p className="text-[9px] text-c-text-secondary mt-3 text-center">
+            {nativePptx
+              ? isPl
+                ? 'Prawdziwy plik .pptx — otwórz w PowerPoint lub Keynote.'
+                : 'Real .pptx file — open in PowerPoint or Keynote.'
+              : isPl
+                ? 'Otwórz HTML w przeglądarce i użyj Ctrl+P aby zapisać jako PDF.'
+                : 'Open HTML in browser and use Ctrl+P to save as PDF.'}
           </p>
         </div>
       </div>

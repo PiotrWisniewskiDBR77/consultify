@@ -20,34 +20,27 @@ interface RiskScoreCellProps {
   fieldOptions?: RiskScoreFieldOptions;
 }
 
+// Tinted chip (color-mix bg + solid text) keeps the label legible without any
+// banned /NN alpha suffix on a c-* token.
+function chipStyle(varName: string): React.CSSProperties {
+  return {
+    color: `var(${varName})`,
+    borderColor: `color-mix(in srgb, var(${varName}) 40%, transparent)`,
+    backgroundColor: `color-mix(in srgb, var(${varName}) 14%, transparent)`,
+  };
+}
+
 function severityTone(percent: number): {
-  bg: string;
-  text: string;
-  border: string;
+  style: React.CSSProperties;
   label: 'low' | 'medium' | 'high';
 } {
   if (percent >= 0.7) {
-    return {
-      bg: 'bg-danger-100 dark:bg-danger-900/30',
-      text: 'text-danger-700 dark:text-danger-300',
-      border: 'border-danger-200 dark:border-danger-800/50',
-      label: 'high',
-    };
+    return { style: chipStyle('--c-danger'), label: 'high' };
   }
   if (percent >= 0.4) {
-    return {
-      bg: 'bg-amber-100 dark:bg-amber-900/30',
-      text: 'text-amber-700 dark:text-amber-300',
-      border: 'border-amber-200 dark:border-amber-800/50',
-      label: 'medium',
-    };
+    return { style: chipStyle('--c-warning'), label: 'medium' };
   }
-  return {
-    bg: 'bg-emerald-100 dark:bg-emerald-900/30',
-    text: 'text-emerald-700 dark:text-emerald-300',
-    border: 'border-emerald-200 dark:border-emerald-800/50',
-    label: 'low',
-  };
+  return { style: chipStyle('--c-success'), label: 'low' };
 }
 
 export const RiskScoreCell: React.FC<RiskScoreCellProps> = ({ value, fieldOptions }) => {
@@ -57,7 +50,7 @@ export const RiskScoreCell: React.FC<RiskScoreCellProps> = ({ value, fieldOption
   if (value == null || value === '') {
     return (
       <span
-        className="text-xs text-slate-600 dark:text-slate-500 px-1"
+        className="text-xs text-c-text-muted px-1"
         data-testid="risk-score-empty"
       >
         —
@@ -69,7 +62,7 @@ export const RiskScoreCell: React.FC<RiskScoreCellProps> = ({ value, fieldOption
   if (!Number.isFinite(num) || !Number.isInteger(num) || num < 1 || num > scale) {
     return (
       <span
-        className="inline-flex items-center gap-1 text-xs text-danger-600 dark:text-danger-400 px-1"
+        className="inline-flex items-center gap-1 text-xs text-c-danger px-1"
         data-testid="risk-score-invalid"
         title={`risk_score value out of range (expected 1..${scale})`}
       >
@@ -88,7 +81,8 @@ export const RiskScoreCell: React.FC<RiskScoreCellProps> = ({ value, fieldOption
 
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-semibold ${tone.bg} ${tone.text} ${tone.border}`}
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-semibold"
+      style={tone.style}
       data-testid="risk-score-chip"
       data-severity={tone.label}
       data-scale={scale}

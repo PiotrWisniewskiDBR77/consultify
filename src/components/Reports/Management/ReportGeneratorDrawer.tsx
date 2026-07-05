@@ -159,7 +159,7 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
+    <div className="fixed inset-0 z-overlay overflow-hidden">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
@@ -250,7 +250,7 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
                 disabled={reportType === 'TEAM_MEETING' || reportType === 'TEAM_WEEKLY'}
                 className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all ${
                   scope === 'PORTFOLIO'
-                    ? 'border-primary-500 bg-primary-500/10 text-white'
+                    ? 'border-c-text bg-c-text text-c-bg'
                     : 'border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:border-primary-500/50'
                 } ${reportType === 'TEAM_MEETING' || reportType === 'TEAM_WEEKLY' ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
@@ -262,7 +262,7 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
                 disabled={reportType === 'PORTFOLIO_HEALTH'}
                 className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all ${
                   scope === 'PROJECT'
-                    ? 'border-primary-500 bg-primary-500/10 text-white'
+                    ? 'border-c-text bg-c-text text-c-bg'
                     : 'border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:border-primary-500/50'
                 } ${reportType === 'PORTFOLIO_HEALTH' ? 'opacity-50 cursor-not-allowed' : ''}`}
               >

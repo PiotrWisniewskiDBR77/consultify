@@ -206,19 +206,17 @@ server/exports/
 _backup/
 /backups/
 /data/
-# USPOJNIENIE F3 — `/tests/*` (nie `/tests/`) by git mógł zejść w głąb i
-# RE-INCLUDE'ować zatwierdzone suity inicjatyw, tak by NOWE spec-y tam nie były
-# po cichu pomijane przez `git add` (wcześniej cały /tests/ ginął → 150 testów
-# nigdy nie trafiło do repo). Pliki już-śledzone są nietykalne; każdy nowy test
-# POZA tymi ścieżkami nadal wymaga `git add -f` (finding_tests_dir_gitignored_force_add).
+# USPOJNIENIE F3 (H6.6) — ignoruj tylko LUŹNE pliki bezpośrednio w tests/,
+# ale ZAWSZE dopuszczaj podkatalogi z testami. Wcześniejszy allowlist
+# (`/tests/*` + re-include tylko initiatives/uspojnienie) po cichu zjadał
+# `git add` KAŻDEGO nowego testu w tests/unit/backend, tests/components,
+# tests/integration, tests/hooks, tests/store, tests/security itd.
+# — dokładnie te katalogi, które zbiera vitest.config.ts i uruchamia CI.
+# Pliki już-śledzone i tak są nietykalne; ta zmiana odblokowuje NOWE testy
+# bez `git add -f` (finding_tests_dir_gitignored_force_add).
+# Śmieci (logi/raporty) łapią osobne reguły: unit_tests_report.txt, tests_*.log.
 /tests/*
-!/tests/e2e/
-/tests/e2e/*
-!/tests/e2e/uspojnienie/
-!/tests/unit/
-/tests/unit/*
-!/tests/unit/initiative/
-!/tests/unit/initiatives/
+!/tests/*/
 # dist/ already ignored above
 
 # Personal tooling

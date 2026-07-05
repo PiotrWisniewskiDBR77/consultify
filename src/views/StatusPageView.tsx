@@ -72,32 +72,32 @@ interface UptimeStats {
 const STATUS_CONFIG = {
   operational: {
     icon: CheckCircle,
-    color: 'text-green-500',
-    bg: 'bg-green-100 dark:bg-green-900/30',
+    color: 'text-c-success',
+    bg: 'bg-c-success/10',
     label: { en: 'Operational', pl: 'Operacyjny' },
   },
   degraded: {
     icon: AlertTriangle,
-    color: 'text-yellow-500',
-    bg: 'bg-yellow-100 dark:bg-yellow-900/30',
+    color: 'text-c-warning',
+    bg: 'bg-c-warning/10',
     label: { en: 'Degraded', pl: 'Obniżona wydajność' },
   },
   partial_outage: {
     icon: AlertTriangle,
-    color: 'text-amber-500',
-    bg: 'bg-amber-100 dark:bg-amber-900/30',
+    color: 'text-c-warning',
+    bg: 'bg-c-warning/10',
     label: { en: 'Partial Outage', pl: 'Częściowa awaria' },
   },
   major_outage: {
     icon: XCircle,
-    color: 'text-danger-500',
-    bg: 'bg-danger-100 dark:bg-danger-900/30',
+    color: 'text-c-danger',
+    bg: 'bg-c-danger/10',
     label: { en: 'Major Outage', pl: 'Poważna awaria' },
   },
   maintenance: {
     icon: Clock,
-    color: 'text-blue-500',
-    bg: 'bg-blue-100 dark:bg-blue-900/30',
+    color: 'text-c-info',
+    bg: 'bg-c-info/10',
     label: { en: 'Maintenance', pl: 'Konserwacja' },
   },
 };
@@ -199,7 +199,7 @@ export const StatusPageView: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-c-surface-raised flex items-center justify-center">
-        <RefreshCw size={32} className="animate-spin text-primary-500" />
+        <RefreshCw size={32} className="animate-spin text-c-accent" />
       </div>
     );
   }
@@ -241,7 +241,7 @@ export const StatusPageView: React.FC = () => {
           </div>
           <button
             onClick={fetchData}
-            className="p-2 hover:bg-c-surface/50 dark:hover:bg-slate-700/50 rounded-lg transition-colors"
+            className="p-2 hover:bg-c-surface/50 rounded-lg transition-colors"
             title={t.refresh[lang]}
           >
             <RefreshCw size={20} className="text-c-text-secondary" />
@@ -270,7 +270,7 @@ export const StatusPageView: React.FC = () => {
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <ServiceIcon size={20} className="text-c-text-secondary" />
+                      <ServiceIcon size={20} className="text-c-text-muted" />
                       <span className="font-medium text-c-text">
                         {SERVICE_NAMES[key]?.[lang] || key}
                       </span>
@@ -300,7 +300,7 @@ export const StatusPageView: React.FC = () => {
             </h3>
             <div className="bg-c-surface rounded-xl p-6 shadow-sm">
               <div className="text-center mb-6">
-                <div className="text-5xl font-bold text-green-500">{uptime.overall}%</div>
+                <div className="text-5xl font-bold text-c-success">{uptime.overall}%</div>
                 <div className="text-sm text-c-text-muted mt-1">
                   {lang === 'pl' ? 'Ogólna dostępność' : 'Overall Uptime'}
                 </div>
@@ -363,7 +363,7 @@ export const StatusPageView: React.FC = () => {
           <div className="bg-c-surface rounded-xl shadow-sm overflow-hidden">
             {incidents.length === 0 ? (
               <div className="px-6 py-8 text-center text-c-text-muted">
-                <CheckCircle size={32} className="mx-auto mb-2 opacity-50 text-green-500" />
+                <CheckCircle size={32} className="mx-auto mb-2 opacity-50 text-c-success" />
                 {t.noIncidents[lang]}
               </div>
             ) : (
@@ -376,7 +376,7 @@ export const StatusPageView: React.FC = () => {
                     onClick={() =>
                       setExpandedIncident(expandedIncident === incident.id ? null : incident.id)
                     }
-                    className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-c-surface-raised/50"
+                    className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-c-surface-raised"
                   >
                     <div>
                       <h4 className="font-medium text-c-text">
@@ -387,9 +387,9 @@ export const StatusPageView: React.FC = () => {
                       </p>
                     </div>
                     {expandedIncident === incident.id ? (
-                      <ChevronUp size={20} className="text-c-text-secondary" />
+                      <ChevronUp size={20} className="text-c-text-muted" />
                     ) : (
-                      <ChevronDown size={20} className="text-c-text-secondary" />
+                      <ChevronDown size={20} className="text-c-text-muted" />
                     )}
                   </button>
                   {expandedIncident === incident.id && (
@@ -400,7 +400,7 @@ export const StatusPageView: React.FC = () => {
                       <div className="space-y-2">
                         {incident.updates.map((update, i) => (
                           <div key={i} className="flex gap-3 text-sm">
-                            <span className="text-c-text-secondary">
+                            <span className="text-c-text-muted">
                               {new Date(update.timestamp).toLocaleTimeString()}
                             </span>
                             <span className="text-c-text-secondary">
@@ -420,7 +420,7 @@ export const StatusPageView: React.FC = () => {
         {/* Subscribe */}
         <section className="bg-c-surface rounded-xl p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-2">
-            <Bell size={20} className="text-primary-500" />
+            <Bell size={20} className="text-c-accent" />
             <h3 className="text-lg font-semibold text-c-text">
               {t.subscribe[lang]}
             </h3>
@@ -432,7 +432,7 @@ export const StatusPageView: React.FC = () => {
               value={subscribeEmail}
               onChange={(e) => setSubscribeEmail(e.target.value)}
               placeholder="email@example.com"
-              className="flex-1 px-4 py-2 border border-c-border-subtle rounded-lg bg-c-surface text-c-text"
+              className="flex-1 px-4 py-2 border border-c-border rounded-lg bg-c-surface text-c-text"
               required
             />
             <button

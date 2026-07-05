@@ -181,7 +181,7 @@ describe('Ambition Decomposer engine — conclusion bridge', () => {
     expect(prompt).toContain('W2 MOVE SEQUENCE');
     expect(prompt).toContain('rejected variant');
     expect(prompt).toContain('"tradeoffs"');
-    expect(prompt).toContain('"rejectedVariant"');
+    expect(prompt).toContain('"initiatives"');
   });
 
   it('synthesizeAmbition returns a consistent sequence + moves', () => {

@@ -69,7 +69,7 @@ export const BackupPanel: React.FC = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-2">Backup & Recovery</h2>
+          <h2 className="text-2xl font-bold text-c-text mb-2">Backup & Recovery</h2>
           <p className="text-slate-400 dark:text-slate-500 text-sm">
             Manage database backups and disaster recovery
           </p>
@@ -99,7 +99,7 @@ export const BackupPanel: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="text-white font-medium">{backup.backup_type} Backup</span>
+                    <span className="text-c-text font-medium">{backup.backup_type} Backup</span>
                     <span
                       className={`px-2 py-1 text-xs rounded ${
                         backup.status === 'completed'
@@ -129,7 +129,7 @@ export const BackupPanel: React.FC = () => {
                 <div className="flex items-center gap-2">
                   {backup.status === 'completed' && (
                     <button
-                      className="p-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors"
+                      className="p-2 rounded-lg bg-c-surface-raised text-slate-300 hover:bg-slate-600 transition-colors"
                       title="Download"
                     >
                       <Download size={16} />

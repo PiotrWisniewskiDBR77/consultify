@@ -278,7 +278,7 @@ export const OrgAISettingsView: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center bg-navy-950">
+      <div className="h-full flex items-center justify-center bg-c-bg">
         <RefreshCw className="w-8 h-8 text-primary-400 animate-spin" />
       </div>
     );
@@ -287,18 +287,18 @@ export const OrgAISettingsView: React.FC = () => {
   if (!settings && !loading) {
     if (loadError) {
       return (
-        <div className="h-full bg-navy-950 p-8">
+        <div className="h-full bg-c-bg p-8">
           <DegradedState title="Organization AI settings unavailable" description={loadError} />
         </div>
       );
     }
 
     return (
-      <div className="h-full flex flex-col items-center justify-center bg-navy-950 p-8 text-center">
-        <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mb-4">
+      <div className="h-full flex flex-col items-center justify-center bg-c-bg p-8 text-center">
+        <div className="w-16 h-16 rounded-full bg-c-surface-raised flex items-center justify-center mb-4">
           <Brain className="text-slate-500 dark:text-slate-400" size={32} />
         </div>
-        <h2 className="text-xl font-semibold text-white mb-2">No AI Settings Found</h2>
+        <h2 className="text-xl font-semibold text-c-text mb-2">No AI Settings Found</h2>
         <p className="text-slate-600 dark:text-slate-500 max-w-md mb-6">
           This organization doesn't have AI settings configured yet. Please contact support or check
           your permissions.
@@ -315,7 +315,7 @@ export const OrgAISettingsView: React.FC = () => {
   }
 
   return (
-    <div className="h-full flex flex-col bg-navy-950 overflow-hidden">
+    <div className="h-full flex flex-col bg-c-bg overflow-hidden">
       <InfoButton cardId="admin-ai-settings" position="top-right" />
 
       {/* Header */}
@@ -323,10 +323,10 @@ export const OrgAISettingsView: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-lg shadow-primary-500/20">
-              <Brain className="text-white" size={24} />
+              <Brain className="text-c-text" size={24} />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Organization AI Settings</h1>
+              <h1 className="text-2xl font-bold text-c-text">Organization AI Settings</h1>
               <p className="text-sm text-slate-600 dark:text-slate-500">
                 Configure AI behavior for {currentOrganization?.name || 'your organization'}
               </p>
@@ -351,7 +351,7 @@ export const OrgAISettingsView: React.FC = () => {
                                 ${
                                   hasChanges
                                     ? 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] shadow-lg shadow-primary-500/20'
-                                    : 'bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+                                    : 'bg-c-surface-raised text-slate-500 dark:text-slate-400 cursor-not-allowed'
                                 }
                             `}
             >
@@ -376,7 +376,7 @@ export const OrgAISettingsView: React.FC = () => {
                             flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap
                             ${
                               activeTab === tab.id
-                                ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/20'
+                                ? 'bg-c-text text-c-bg shadow-lg shadow-primary-500/20'
                                 : 'text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20'
                             }
                         `}
@@ -431,7 +431,7 @@ export const OrgAISettingsView: React.FC = () => {
                                                     ${
                                                       isSelected
                                                         ? `bg-gradient-to-br ${level.bgColor} border-2 border-white/30`
-                                                        : 'bg-slate-800/30 border border-slate-700/50 hover:border-slate-600'
+                                                        : 'bg-c-surface-raised/30 border border-c-border/50 hover:border-slate-600'
                                                     }
                                                     ${isDisabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
                                                 `}
@@ -447,14 +447,14 @@ export const OrgAISettingsView: React.FC = () => {
                           <div
                             className={`
                                                         w-10 h-10 rounded-lg flex items-center justify-center
-                                                        ${isSelected ? 'bg-white/20' : 'bg-slate-700/50'}
+                                                        ${isSelected ? 'bg-white/20' : 'bg-c-surface-raised/50'}
                                                     `}
                           >
                             <Icon className={`w-5 h-5 ${level.color}`} />
                           </div>
                           <div>
                             <h4
-                              className={`font-semibold ${isSelected ? 'text-white' : 'text-slate-600'}`}
+                              className={`font-semibold ${isSelected ? 'text-c-text' : 'text-slate-600'}`}
                             >
                               {level.title}
                             </h4>
@@ -485,7 +485,7 @@ export const OrgAISettingsView: React.FC = () => {
                                                 ${
                                                   settings.activeRoles.includes(role.id)
                                                     ? 'bg-primary-500/10 border border-primary-500/30'
-                                                    : 'bg-slate-800/30 border border-slate-700/50 hover:border-slate-600'
+                                                    : 'bg-c-surface-raised/30 border border-c-border/50 hover:border-slate-600'
                                                 }
                                             `}
                     >
@@ -493,10 +493,10 @@ export const OrgAISettingsView: React.FC = () => {
                         type="checkbox"
                         checked={settings.activeRoles.includes(role.id)}
                         onChange={() => toggleRole(role.id)}
-                        className="w-4 h-4 rounded border-slate-600 text-primary-500 focus:ring-primary-500 bg-slate-700"
+                        className="w-4 h-4 rounded border-slate-600 text-primary-500 focus:ring-primary-500 bg-c-surface-raised"
                       />
                       <div>
-                        <span className="font-medium text-white">{role.title}</span>
+                        <span className="font-medium text-c-text">{role.title}</span>
                         <p className="text-xs text-slate-600 dark:text-slate-500">
                           {role.description}
                         </p>
@@ -505,14 +505,14 @@ export const OrgAISettingsView: React.FC = () => {
                   ))}
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-slate-700/50">
+                <div className="mt-4 pt-4 border-t border-c-border/50">
                   <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
                     Default Role
                   </label>
                   <select
                     value={settings.defaultRole}
                     onChange={(e) => updateSetting('defaultRole', e.target.value as AIRole)}
-                    className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-white focus:border-primary-500 outline-none"
+                    className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-primary-500 outline-none"
                   >
                     {AI_ROLES.filter((r) => settings.activeRoles.includes(r.id)).map((r) => (
                       <option key={r.id} value={r.id}>
@@ -594,7 +594,7 @@ export const OrgAISettingsView: React.FC = () => {
                         onChange={(e) =>
                           updateSetting('monthlyBudgetUSD', parseFloat(e.target.value) || 0)
                         }
-                        className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-white focus:border-primary-500 outline-none"
+                        className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-primary-500 outline-none"
                         placeholder="0 = unlimited"
                       />
                     </div>
@@ -608,7 +608,7 @@ export const OrgAISettingsView: React.FC = () => {
                         onChange={(e) =>
                           updateSetting('hardLimitUSD', parseFloat(e.target.value) || 0)
                         }
-                        className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-white focus:border-primary-500 outline-none"
+                        className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-primary-500 outline-none"
                         placeholder="0 = no hard limit"
                       />
                     </div>
@@ -681,8 +681,8 @@ export const OrgAISettingsView: React.FC = () => {
                   onChange={(v) => updateSetting('voiceEnabled', v)}
                 />
 
-                <div className="pt-4 border-t border-slate-700/50">
-                  <h4 className="font-medium text-white mb-3">Audit Settings</h4>
+                <div className="pt-4 border-t border-c-border/50">
+                  <h4 className="font-medium text-c-text mb-3">Audit Settings</h4>
 
                   <div className="space-y-3">
                     <SettingsToggle

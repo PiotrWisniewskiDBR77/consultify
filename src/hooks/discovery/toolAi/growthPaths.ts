@@ -9,6 +9,7 @@ import type {
 import { buildAnsoffConclusionPrompt } from '@/config/ansoff';
 
 import type { ToolAiPendingAction } from './dynamicSwot';
+import { pickW2SummaryFields } from './w2SummaryFields';
 
 const QUADRANTS: GrowthQuadrantId[] = [
   'marketPenetration',
@@ -317,6 +318,7 @@ export function applyGrowthPathsPendingAction({
     actions.updateInputData({
       summary: {
         proposalId: 'growth-summary',
+        ...pickW2SummaryFields(summaryObj),
         executiveSummary:
           typeof summaryObj?.executiveSummary === 'string'
             ? summaryObj.executiveSummary

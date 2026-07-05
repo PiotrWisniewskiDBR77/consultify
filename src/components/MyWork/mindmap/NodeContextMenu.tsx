@@ -46,6 +46,11 @@ export interface NodeContextMenuProps {
   canPasteStyle?: boolean;
   canPasteNodes?: boolean;
   hasChildren?: boolean;
+  /**
+   * DP-5: item ids rendered as disabled with a "Wkrótce / Coming soon" badge
+   * (feature-flagged heuristic AI actions that are not yet honestly AI-backed).
+   */
+  comingSoonIds?: string[];
   onClose: () => void;
   onAction: (action: string) => void;
 }
@@ -66,6 +71,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
   canPasteStyle = false,
   canPasteNodes = false,
   hasChildren = false,
+  comingSoonIds,
   onClose,
   onAction,
 }) => {
@@ -480,21 +486,28 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
 
   const renderItem = (item: MenuItemBase) => {
     const Icon = item.icon;
+    const comingSoon = comingSoonIds?.includes(item.id) ?? false;
+    const disabled = item.disabled || comingSoon;
     return (
       <button
         key={item.id}
         type="button"
-        disabled={item.disabled}
+        disabled={disabled}
         onClick={() => handleClick(item.id)}
-        className={`w-full flex items-center gap-2 px-3 py-[6px] text-left text-[11px] font-medium transition-colors rounded-md ${menuItemClass(item)}`}
+        className={`w-full flex items-center gap-2 px-3 py-[6px] text-left text-[11px] font-medium transition-colors rounded-md ${menuItemClass({ ...item, disabled })}`}
       >
         <Icon
           size={13}
-          className={`shrink-0 ${item.danger ? 'text-danger-500' : 'text-slate-600 dark:text-slate-500'}`}
+          className={`shrink-0 ${item.danger ? 'text-c-danger' : 'text-c-text-secondary dark:text-c-text-secondary'}`}
         />
         <span className="flex-1 truncate">{isPl ? item.labelPl : item.labelEn}</span>
-        {item.shortcut && (
-          <span className="text-[9px] text-slate-600 dark:text-slate-500 font-mono ml-2 shrink-0">
+        {comingSoon && (
+          <span className="text-[9px] text-c-text-secondary dark:text-c-text-secondary ml-2 shrink-0 italic">
+            {isPl ? 'Wkrótce' : 'Coming soon'}
+          </span>
+        )}
+        {item.shortcut && !comingSoon && (
+          <span className="text-[9px] text-c-text-secondary dark:text-c-text-secondary font-mono ml-2 shrink-0">
             {item.shortcut}
           </span>
         )}
@@ -515,13 +528,13 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
           {groups.map((group, gi) => (
           <React.Fragment key={gi}>
             {group.titlePl && (
-              <div className="px-3 pt-2 pb-1 text-[9px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-500">
+              <div className="px-3 pt-2 pb-1 text-[9px] font-bold uppercase tracking-wider text-c-text-secondary dark:text-c-text-secondary">
                 {isPl ? group.titlePl : group.titleEn}
               </div>
             )}
             {group.items.map(renderItem)}
             {gi < groups.length - 1 && (
-              <div className="my-1.5 mx-2 h-px bg-slate-200/40 dark:bg-white/[0.04]" />
+              <div className="my-1.5 mx-2 h-px bg-c-surface-raised dark:bg-c-surface-raised" />
             )}
           </React.Fragment>
         ))}
@@ -543,11 +556,11 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
       >
       {mainItems.map((group, gi) => (
         <React.Fragment key={gi}>
-          <div className="px-3 pt-2 pb-1 text-[9px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-500">
+          <div className="px-3 pt-2 pb-1 text-[9px] font-bold uppercase tracking-wider text-c-text-secondary dark:text-c-text-secondary">
             {isPl ? group.titlePl : group.titleEn}
           </div>
           {group.items.map(renderItem)}
-          <div className="my-1.5 mx-2 h-px bg-slate-200/40 dark:bg-white/[0.04]" />
+          <div className="my-1.5 mx-2 h-px bg-c-surface-raised dark:bg-c-surface-raised" />
         </React.Fragment>
       ))}
 
@@ -565,15 +578,15 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         >
           <button
             type="button"
-            className="w-full flex items-center gap-2 px-3 py-[6px] text-left text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-white/[0.04] rounded-md"
+            className="w-full flex items-center gap-2 px-3 py-[6px] text-left text-[11px] font-medium text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-md"
           >
             <span className="flex-1">{isPl ? group.titlePl : group.titleEn}</span>
-            <ChevronRight size={11} className="text-slate-600" />
+            <ChevronRight size={11} className="text-c-text-secondary" />
           </button>
 
           {submenu === group.titleEn && (
             <div
-              className="absolute left-full top-0 ml-1 min-w-[200px] py-1.5 px-1 rounded-xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border border-slate-200/60 dark:border-navy-700/60 shadow-2xl animate-in fade-in slide-in-from-left-1 duration-100"
+              className="absolute left-full top-0 ml-1 min-w-[200px] py-1.5 px-1 rounded-xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-border-subtle dark:border-c-border shadow-2xl animate-in fade-in slide-in-from-left-1 duration-100"
               onMouseEnter={() => {
                 if (submenuTimerRef.current) window.clearTimeout(submenuTimerRef.current);
               }}
@@ -581,7 +594,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
                 submenuTimerRef.current = window.setTimeout(() => setSubmenu(null), 200);
               }}
             >
-              <div className="px-3 pt-1 pb-1 text-[9px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-500">
+              <div className="px-3 pt-1 pb-1 text-[9px] font-bold uppercase tracking-wider text-c-text-secondary dark:text-c-text-secondary">
                 {isPl ? group.titlePl : group.titleEn}
               </div>
               {group.items.map(renderItem)}
@@ -590,7 +603,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         </div>
       ))}
 
-        <div className="my-1.5 mx-2 h-px bg-slate-200/40 dark:bg-white/[0.04]" />
+        <div className="my-1.5 mx-2 h-px bg-c-surface-raised dark:bg-c-surface-raised" />
         {deleteGroup.items.map(renderItem)}
       </div>
     </ContextMenuPortal>

@@ -149,6 +149,13 @@
     "trends": {
       "title": "Score Evolution Over Time",
       "noData": "No historical data available. Complete reassessments to track trends."
+    },
+    "drdRadar": {
+      "title": "Maturity profile",
+      "subtitle": "Current state vs. target (N+1) per dimension",
+      "current": "Current",
+      "target": "Target (N+1)",
+      "gap": "Gap"
     }
   }
 }

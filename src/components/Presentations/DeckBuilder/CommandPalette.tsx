@@ -255,26 +255,26 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh]"
+      className="fixed inset-0 z-toast flex items-start justify-center pt-[15vh]"
       onClick={onClose}
     >
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
       <div
-        className="relative w-[520px] max-h-[420px] bg-white dark:bg-navy-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-navy-700 overflow-hidden flex flex-col"
+        className="relative w-[520px] max-h-[420px] bg-c-surface rounded-2xl shadow-2xl border border-c-border-subtle overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search input */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200 dark:border-navy-800">
-          <Search size={16} className="text-slate-600 flex-shrink-0" />
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-c-border-subtle">
+          <Search size={16} className="text-c-text-secondary flex-shrink-0" />
           <input
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t('presentations.builder.commandPalette.placeholder', 'Type a command...')}
-            className="flex-1 bg-transparent text-sm outline-none focus:ring-2 focus:ring-primary-500/30 text-slate-700 dark:text-white placeholder-slate-400"
+            className="flex-1 bg-transparent text-sm outline-none focus:ring-2 focus:ring-c-focus text-c-text placeholder:text-c-text-muted"
           />
-          <kbd className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-600 border border-slate-200 dark:border-navy-700">
+          <kbd className="text-[10px] px-1.5 py-0.5 rounded bg-c-surface-raised text-c-text-secondary border border-c-border-subtle">
             ESC
           </kbd>
         </div>
@@ -283,15 +283,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         <div ref={listRef} className="flex-1 overflow-y-auto py-2">
           {filtered.length === 0 ? (
             <div className="px-4 py-6 text-center">
-              <Sparkles size={16} className="mx-auto text-primary-400 mb-2" />
-              <p className="text-xs text-slate-500">
+              <Sparkles size={16} className="mx-auto text-c-accent mb-2" />
+              <p className="text-xs text-c-text-secondary">
                 Press Enter to open Teresa and continue the conversation.
               </p>
             </div>
           ) : (
             Object.entries(grouped).map(([cat, cmds]) => (
               <div key={cat}>
-                <p className="px-4 py-1 text-[10px] font-semibold uppercase text-slate-600">
+                <p className="px-4 py-1 text-[10px] font-semibold uppercase text-c-text-secondary">
                   {CATEGORY_LABELS[cat as Command['category']] || cat}
                 </p>
                 {cmds.map((cmd) => {
@@ -306,23 +306,23 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                       onMouseEnter={() => setSelectedIndex(globalIdx)}
                       className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors ${
                         globalIdx === selectedIndex
-                          ? 'bg-primary-50 dark:bg-primary-500/10'
-                          : 'hover:bg-slate-50 dark:hover:bg-navy-800/50'
+                          ? 'bg-c-accent-soft'
+                          : 'hover:bg-c-surface-raised'
                       }`}
                     >
                       <span
-                        className={`flex-shrink-0 ${globalIdx === selectedIndex ? 'text-primary-500' : 'text-slate-600'}`}
+                        className={`flex-shrink-0 ${globalIdx === selectedIndex ? 'text-c-accent' : 'text-c-text-secondary'}`}
                       >
                         {cmd.icon}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-slate-700 dark:text-white">{cmd.label}</p>
+                        <p className="text-sm text-c-text">{cmd.label}</p>
                         {cmd.description && (
-                          <p className="text-[10px] text-slate-600 truncate">{cmd.description}</p>
+                          <p className="text-[10px] text-c-text-secondary truncate">{cmd.description}</p>
                         )}
                       </div>
                       {cmd.shortcut && (
-                        <kbd className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-600 border border-slate-200 dark:border-navy-700">
+                        <kbd className="text-[10px] px-1.5 py-0.5 rounded bg-c-surface-raised text-c-text-secondary border border-c-border-subtle">
                           {cmd.shortcut}
                         </kbd>
                       )}
@@ -335,7 +335,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center gap-3 px-4 py-2 border-t border-slate-200 dark:border-navy-800 text-[10px] text-slate-600">
+        <div className="flex items-center gap-3 px-4 py-2 border-t border-c-border-subtle text-[10px] text-c-text-secondary">
           <span>↑↓ Navigate</span>
           <span>↵ Select</span>
           <span>ESC Close</span>

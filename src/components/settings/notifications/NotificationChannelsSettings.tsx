@@ -265,7 +265,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
       className={`p-6 rounded-xl border-2 transition-all ${
         config.enabled && config.connected
           ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
-          : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
+          : 'border-c-border-subtle dark:border-navy-700 bg-c-surface'
       }`}
     >
       <div className="flex items-start justify-between mb-4">
@@ -274,8 +274,8 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
             <Icon size={24} className="text-white" />
           </div>
           <div>
-            <h4 className="font-semibold text-slate-900 dark:text-white">{name}</h4>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{description}</p>
+            <h4 className="font-semibold text-c-text">{name}</h4>
+            <p className="text-sm text-c-text-muted">{description}</p>
           </div>
         </div>
         {config.connected && (
@@ -290,7 +290,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
         {config.connected ? (
           <>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-600 dark:text-slate-400">
+              <span className="text-sm text-c-text-secondary">
                 {t('settings.notifications.channels.enableNotifications', 'Enable notifications')}
               </span>
               <button
@@ -301,11 +301,11 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
                   })
                 }
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  config.enabled ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-600'
+                  config.enabled ? 'bg-blue-600' : 'bg-c-surface-raised'
                 }`}
               >
                 <span
-                  className={`absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${
+                  className={`absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${
                     config.enabled ? 'left-7' : 'left-1'
                   }`}
                 />
@@ -344,11 +344,11 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
             <MessageSquare size={28} className="text-blue-500" />
             {t('settings.notifications.channels.title', 'Notification Channels')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             {t(
               'settings.notifications.channels.description',
               'Choose where to receive notifications'
@@ -396,7 +396,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
         className={`p-6 rounded-xl border-2 transition-all ${
           channels.sms.enabled && channels.sms.connected
             ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
-            : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
+            : 'border-c-border-subtle dark:border-navy-700 bg-c-surface'
         }`}
       >
         <div className="flex items-start justify-between mb-4">
@@ -405,10 +405,10 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
               <Phone size={24} className="text-white" />
             </div>
             <div>
-              <h4 className="font-semibold text-slate-900 dark:text-white">
+              <h4 className="font-semibold text-c-text">
                 {t('settings.notifications.channels.smsTitle', 'SMS Notifications')}
               </h4>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t(
                   'settings.notifications.channels.smsDescription',
                   'Receive critical notifications via SMS'
@@ -429,7 +429,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
             <input
               type="tel"
               placeholder="+1 (555) 123-4567"
-              className="w-full px-4 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+              className="w-full px-4 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg"
               onChange={(e) =>
                 setChannels({
                   ...channels,
@@ -448,7 +448,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
 
         {showSmsVerification && (
           <div className="space-y-3">
-            <p className="text-sm text-slate-600 dark:text-slate-400">
+            <p className="text-sm text-c-text-secondary">
               {t(
                 'settings.notifications.channels.enterCode',
                 'Enter the verification code sent to your phone'
@@ -459,7 +459,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
               placeholder="123456"
               value={smsVerificationCode}
               onChange={(e) => setSmsVerificationCode(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-center text-2xl tracking-widest"
+              className="w-full px-4 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-center text-2xl tracking-widest"
               maxLength={6}
             />
             <button
@@ -474,7 +474,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
         {channels.sms.connected && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-600 dark:text-slate-400">
+              <span className="text-sm text-c-text-secondary">
                 {t('settings.notifications.channels.enableSms', 'Enable SMS notifications')}
               </span>
               <button
@@ -485,17 +485,17 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
                   })
                 }
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  channels.sms.enabled ? 'bg-green-600' : 'bg-slate-300 dark:bg-slate-600'
+                  channels.sms.enabled ? 'bg-green-600' : 'bg-c-surface-raised'
                 }`}
               >
                 <span
-                  className={`absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${
+                  className={`absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${
                     channels.sms.enabled ? 'left-7' : 'left-1'
                   }`}
                 />
               </button>
             </div>
-            <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+            <label className="flex items-center gap-2 text-sm text-c-text-secondary">
               <input
                 type="checkbox"
                 checked={channels.sms.settings.criticalOnly !== false}
@@ -533,16 +533,16 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
       />
 
       {/* In-App Notification Center */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
         <div className="flex items-center gap-3 mb-4">
           <div className="p-3 rounded-xl bg-blue-600">
             <Bell size={24} className="text-white" />
           </div>
           <div>
-            <h4 className="font-semibold text-slate-900 dark:text-white">
+            <h4 className="font-semibold text-c-text">
               {t('settings.notifications.channels.inAppTitle', 'In-App Notification Center')}
             </h4>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t(
                 'settings.notifications.channels.inAppDescription',
                 'Configure the in-app notification experience'
@@ -580,11 +580,11 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
           ].map((item) => (
             <div
               key={item.key}
-              className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950 rounded-lg"
+              className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg"
             >
               <div>
-                <p className="font-medium text-slate-900 dark:text-white">{item.label}</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{item.desc}</p>
+                <p className="font-medium text-c-text">{item.label}</p>
+                <p className="text-sm text-c-text-muted">{item.desc}</p>
               </div>
               <button
                 onClick={() =>
@@ -599,11 +599,11 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
                 className={`relative w-12 h-6 rounded-full transition-colors ${
                   channels.inApp[item.key as keyof typeof channels.inApp]
                     ? 'bg-blue-600'
-                    : 'bg-slate-300 dark:bg-slate-600'
+                    : 'bg-c-surface-raised'
                 }`}
               >
                 <span
-                  className={`absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${
+                  className={`absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${
                     channels.inApp[item.key as keyof typeof channels.inApp] ? 'left-7' : 'left-1'
                   }`}
                 />
@@ -611,8 +611,8 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
             </div>
           ))}
 
-          <div className="p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
-            <label className="block text-sm font-medium text-slate-900 dark:text-white mb-2">
+          <div className="p-4 bg-c-surface-raised rounded-lg">
+            <label className="block text-sm font-medium text-c-text mb-2">
               {t('settings.notifications.channels.maxToKeep', 'Max Notifications to Keep')}
             </label>
             <select
@@ -623,7 +623,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
                   inApp: { ...channels.inApp, maxNotifications: parseInt(e.target.value) },
                 })
               }
-              className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg"
+              className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
             >
               <option value={50}>
                 {t('settings.notifications.channels.notificationCount', '{{count}} notifications', {
@@ -651,17 +651,17 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
       </div>
 
       {/* Email (always connected) */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-3 rounded-xl bg-danger-500">
               <Mail size={24} className="text-white" />
             </div>
             <div>
-              <h4 className="font-semibold text-slate-900 dark:text-white">
+              <h4 className="font-semibold text-c-text">
                 {t('settings.notifications.channels.emailTitle', 'Email Notifications')}
               </h4>
-              <p className="text-sm text-slate-500 dark:text-slate-400">{currentUser.email}</p>
+              <p className="text-sm text-c-text-muted">{currentUser.email}</p>
             </div>
           </div>
           <button
@@ -672,11 +672,11 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
               })
             }
             className={`relative w-12 h-6 rounded-full transition-colors ${
-              channels.email.enabled ? 'bg-danger-600' : 'bg-slate-300 dark:bg-slate-600'
+              channels.email.enabled ? 'bg-danger-600' : 'bg-c-surface-raised'
             }`}
           >
             <span
-              className={`absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${
+              className={`absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${
                 channels.email.enabled ? 'left-7' : 'left-1'
               }`}
             />

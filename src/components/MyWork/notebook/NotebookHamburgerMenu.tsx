@@ -253,16 +253,16 @@ export const NotebookHamburgerMenu: React.FC<NotebookHamburgerMenuProps> = (prop
     <div
       ref={menuRef}
       role="menu"
-      className="fixed z-50 min-w-[220px] rounded-lg border border-slate-200/70 bg-white py-1 shadow-xl dark:border-navy-700/70 dark:bg-navy-900"
+      className="fixed z-50 min-w-[220px] rounded-lg border border-c-border/70 bg-c-surface py-1 shadow-xl dark:border-navy-700/70 dark:bg-navy-900"
       style={{ top: y, left: x }}
     >
       {actions.map((action) => (
         <React.Fragment key={action.id}>
           {action.separatorBefore && (
-            <div className="my-1 border-t border-slate-200/70 dark:border-navy-700/70" />
+            <div className="my-1 border-t border-c-border-subtle" />
           )}
           {action.id.startsWith('convert-') && action.separatorBefore && (
-            <div className="px-3 pb-0.5 pt-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            <div className="px-3 pb-0.5 pt-1 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
               {convertHeading(isPolish)}
             </div>
           )}
@@ -277,10 +277,10 @@ export const NotebookHamburgerMenu: React.FC<NotebookHamburgerMenuProps> = (prop
             className={`flex w-full items-center gap-2.5 px-3 py-2 text-[13px] transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
               action.danger
                 ? 'text-danger-600 hover:bg-danger-50 dark:text-danger-400 dark:hover:bg-danger-900/20'
-                : 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-navy-800'
+                : 'text-c-text-secondary hover:bg-c-surface-raised dark:text-c-text-secondary dark:hover:bg-c-surface-raised'
             }`}
           >
-            <span className="shrink-0 text-slate-400 dark:text-slate-500">{action.icon}</span>
+            <span className="shrink-0 text-c-text-muted">{action.icon}</span>
             {action.label}
           </button>
         </React.Fragment>

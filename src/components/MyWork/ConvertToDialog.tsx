@@ -79,7 +79,7 @@ export const ConvertToDialog: React.FC<ConvertToDialogProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden border border-slate-200/60 dark:border-white/[0.06]">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200/60 dark:border-white/[0.06]">
@@ -162,7 +162,7 @@ export const ConvertToDialog: React.FC<ConvertToDialogProps> = ({
           <button
             onClick={handleConfirm}
             disabled={creating || !sources?.length}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-primary-500 text-white text-xs font-semibold hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-c-text text-c-bg text-xs font-semibold hover:bg-c-text-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             {creating && <Loader2 size={12} className="animate-spin" />}
             {t('traceability.convertTo.confirm', 'Confirm & create')}

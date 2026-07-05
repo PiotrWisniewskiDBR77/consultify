@@ -24,6 +24,7 @@ import {
   Upload,
   X,
 } from 'lucide-react';
+import type { TFunction } from 'i18next';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -495,12 +496,14 @@ const materializedTargetIcons: Record<string, React.ComponentType<{ size?: numbe
   task: CheckSquare,
 };
 
-function materializedTargetLabel(target: string): string {
-  if (target === 'idea') return 'Pomysł';
-  if (target === 'note') return 'Notatka';
-  if (target === 'initiative') return 'Inicjatywa';
-  if (target === 'decision') return 'Decyzja';
-  if (target === 'task') return 'Zadanie';
+type CanvasPanelTFn = TFunction;
+
+function materializedTargetLabel(target: string, t: CanvasPanelTFn): string {
+  if (target === 'idea') return t('canvas.panel.materialized.idea', 'Idea');
+  if (target === 'note') return t('canvas.panel.materialized.note', 'Note');
+  if (target === 'initiative') return t('canvas.panel.materialized.initiative', 'Initiative');
+  if (target === 'decision') return t('canvas.panel.materialized.decision', 'Decision');
+  if (target === 'task') return t('canvas.panel.materialized.task', 'Task');
   return target;
 }
 
@@ -558,29 +561,32 @@ function createDocumentState(
   };
 }
 
-function lifecycleLabel(lifecycleState: CanvasLifecycleState): string {
-  if (lifecycleState === 'in_review') return 'In review';
-  if (lifecycleState === 'approved') return 'Approved';
-  return 'Draft';
+function lifecycleLabel(lifecycleState: CanvasLifecycleState, t: CanvasPanelTFn): string {
+  if (lifecycleState === 'in_review') return t('canvas.panel.lifecycle.inReview', 'In review');
+  if (lifecycleState === 'approved') return t('canvas.panel.lifecycle.approved', 'Approved');
+  return t('canvas.panel.lifecycle.draft', 'Draft');
 }
 
-function projectionLabel(status: CanvasProjectionStatus): string {
-  if (status === 'stale') return 'Projection stale';
-  if (status === 'failed') return 'Projection failed';
-  if (status === 'missing') return 'Projection missing';
-  return 'Projection synced';
+function projectionLabel(status: CanvasProjectionStatus, t: CanvasPanelTFn): string {
+  if (status === 'stale') return t('canvas.panel.projection.stale', 'Projection stale');
+  if (status === 'failed') return t('canvas.panel.projection.failed', 'Projection failed');
+  if (status === 'missing') return t('canvas.panel.projection.missing', 'Projection missing');
+  return t('canvas.panel.projection.synced', 'Projection synced');
 }
 
-function saveStateLabel(saveState: CanvasDocumentState['saveState']): string {
-  if (saveState === 'saving') return 'Saving';
-  if (saveState === 'failed') return 'Save failed';
-  if (saveState === 'unsaved') return 'Unsaved changes';
-  return 'Saved';
+function saveStateLabel(saveState: CanvasDocumentState['saveState'], t: CanvasPanelTFn): string {
+  if (saveState === 'saving') return t('canvas.panel.saveState.saving', 'Saving');
+  if (saveState === 'failed') return t('canvas.panel.saveState.failed', 'Save failed');
+  if (saveState === 'unsaved') return t('canvas.panel.saveState.unsaved', 'Unsaved changes');
+  return t('canvas.panel.saveState.saved', 'Saved');
 }
 
-function capabilityLabel(status: CanvasCapabilityStatus): string {
-  if (status === 'out_of_scope') return 'Out of scope';
-  return status.charAt(0).toUpperCase() + status.slice(1);
+function capabilityLabel(status: CanvasCapabilityStatus, t: CanvasPanelTFn): string {
+  if (status === 'out_of_scope') return t('canvas.panel.capability.outOfScope', 'Out of scope');
+  return t(
+    `canvas.panel.capability.${status}`,
+    status.charAt(0).toUpperCase() + status.slice(1)
+  );
 }
 
 function capabilityBadgeClass(status: CanvasCapabilityStatus): string {
@@ -599,7 +605,14 @@ function capabilityBadgeClass(status: CanvasCapabilityStatus): string {
   return 'bg-slate-500/10 text-slate-600 dark:text-slate-300';
 }
 
-function renderCapabilityBadge(status: CanvasCapabilityStatus, testId?: string) {
+function CapabilityBadge({
+  status,
+  testId,
+}: {
+  status: CanvasCapabilityStatus;
+  testId?: string;
+}): React.ReactElement {
+  const { t } = useTranslation();
   return (
     <span
       data-testid={testId}
@@ -607,9 +620,13 @@ function renderCapabilityBadge(status: CanvasCapabilityStatus, testId?: string) 
         status
       )}`}
     >
-      {capabilityLabel(status)}
+      {capabilityLabel(status, t)}
     </span>
   );
+}
+
+function renderCapabilityBadge(status: CanvasCapabilityStatus, testId?: string) {
+  return <CapabilityBadge status={status} testId={testId} />;
 }
 
 function buildLineDiff(before: string, after: string): CanvasDiffSummary {
@@ -2697,7 +2714,7 @@ function WorkCanvasMarkdownDocumentPanel({
       >
         {isLoading ? <RefreshCw size={15} className="animate-spin" /> : <Icon size={15} />}
         {availability.status === 'coming_soon' ? (
-          <span className="sr-only">Coming soon</span>
+          <span className="sr-only">{t('canvas.panel.comingSoon', 'Coming soon')}</span>
         ) : null}
       </button>
     );
@@ -2795,7 +2812,7 @@ function WorkCanvasMarkdownDocumentPanel({
             disabled={!selectionEditDraft.trim()}
             className={
               selectionEditDraft.trim()
-                ? 'rounded-full bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-primary-700'
+                ? 'rounded-full bg-c-text px-3 py-1.5 text-xs font-semibold text-c-bg shadow-sm hover:bg-c-text-secondary'
                 : 'cursor-not-allowed rounded-full bg-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:bg-white/10 dark:text-slate-500'
             }
           >
@@ -3194,7 +3211,7 @@ function WorkCanvasMarkdownDocumentPanel({
                     <button
                       type="button"
                       onClick={insertQuickAddElement}
-                      className="mt-2 w-full rounded-xl bg-primary-600 px-3 py-2 text-xs font-semibold text-white hover:bg-primary-700"
+                      className="mt-2 w-full rounded-xl bg-c-text px-3 py-2 text-xs font-semibold text-c-bg hover:bg-c-text-secondary"
                     >
                       {t('canvas.panel.addElement.submit', 'Add to canvas')}
                     </button>
@@ -3252,7 +3269,7 @@ function WorkCanvasMarkdownDocumentPanel({
                       <button
                         type="button"
                         onClick={() => void previewSelectionMenuPrompt()}
-                        className="flex-1 rounded-xl bg-primary-600 px-3 py-2 text-xs font-semibold text-white hover:bg-primary-700"
+                        className="flex-1 rounded-xl bg-c-text px-3 py-2 text-xs font-semibold text-c-bg hover:bg-c-text-secondary"
                       >
                         {t('canvas.panel.selection.preview', 'Preview AI edit')}
                       </button>
@@ -3329,7 +3346,7 @@ function WorkCanvasMarkdownDocumentPanel({
                         <button
                           type="button"
                           onClick={applyBuiltTemplate}
-                          className="flex-1 rounded-lg bg-primary-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-primary-700"
+                          className="flex-1 rounded-lg bg-c-text px-2.5 py-1.5 text-xs font-semibold text-c-bg hover:bg-c-text-secondary"
                         >
                           {t('canvas.panel.templates.apply', 'Apply template')}
                         </button>
@@ -3409,7 +3426,7 @@ function WorkCanvasMarkdownDocumentPanel({
                             {entry.title}
                           </span>
                           <span className="shrink-0 text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                            {materializedTargetLabel(entry.target)}
+                            {materializedTargetLabel(entry.target, t)}
                           </span>
                           <a
                             href={entry.url}
@@ -3455,7 +3472,7 @@ function WorkCanvasMarkdownDocumentPanel({
                         onClick={() => setPendingDataset(null)}
                         className="rounded-full px-3 py-1.5 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                       >
-                        Dismiss
+                        {t('canvas.panel.dismiss', 'Dismiss')}
                       </button>
                     </div>
                   </div>
@@ -3463,7 +3480,7 @@ function WorkCanvasMarkdownDocumentPanel({
 
                 <div className="space-y-1.5">
                   <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                    Markdown actions
+                    {t('canvas.panel.markdownActions', 'Markdown actions')}
                   </div>
                   <button
                     type="button"
@@ -3497,7 +3514,7 @@ function WorkCanvasMarkdownDocumentPanel({
                     className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
                   >
                     <Table2 size={14} />
-                    <span>Download CSV</span>
+                    <span>{t('canvas.panel.downloadCsv', 'Download CSV')}</span>
                   </button>
                   <button
                     type="button"
@@ -3505,7 +3522,7 @@ function WorkCanvasMarkdownDocumentPanel({
                     className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
                   >
                     <Copy size={14} />
-                    <span>Copy Markdown</span>
+                    <span>{t('canvas.panel.copyMarkdown', 'Copy Markdown')}</span>
                   </button>
                   <button
                     type="button"
@@ -3513,7 +3530,7 @@ function WorkCanvasMarkdownDocumentPanel({
                     className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
                   >
                     <Download size={14} />
-                    <span>Download PDF</span>
+                    <span>{t('canvas.panel.downloadPdf', 'Download PDF')}</span>
                   </button>
                   {/* L-1 — Document Studio bridge. Calls the same
                       materializeDocumentArtifact pipeline DocumentStudio's own
@@ -3529,8 +3546,8 @@ function WorkCanvasMarkdownDocumentPanel({
                     <Sparkles size={14} />
                     <span>
                       {isSendingToDocumentStudio
-                        ? 'Sending to Document Studio…'
-                        : 'Send to Document Studio'}
+                        ? t('canvas.panel.sendingToDocumentStudio', 'Sending to Document Studio…')
+                        : t('canvas.panel.sendToDocumentStudio', 'Send to Document Studio')}
                     </span>
                   </button>
                   {/* L-2 — Table Studio bridge. Disabled for non-table drafts
@@ -3542,14 +3559,19 @@ function WorkCanvasMarkdownDocumentPanel({
                     disabled={isSendingToTableStudio || documentState.kind !== 'table'}
                     title={
                       documentState.kind === 'table'
-                        ? 'Send the current table to Table Studio'
-                        : 'Table Studio handoff requires a Canvas with kind=table.'
+                        ? t('canvas.panel.sendToTableStudioTitle', 'Send the current table to Table Studio')
+                        : t(
+                            'canvas.panel.sendToTableStudioDisabledTitle',
+                            'Table Studio handoff requires a Canvas with kind=table.'
+                          )
                     }
                     className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:text-slate-200 dark:hover:bg-white/10"
                   >
                     <Table2 size={14} />
                     <span>
-                      {isSendingToTableStudio ? 'Sending to Table Studio…' : 'Send to Table Studio'}
+                      {isSendingToTableStudio
+                        ? t('canvas.panel.sendingToTableStudio', 'Sending to Table Studio…')
+                        : t('canvas.panel.sendToTableStudio', 'Send to Table Studio')}
                     </span>
                   </button>
                   {/* C4.4 — exposes the existing backend exporters (exportDocxBuffer
@@ -3574,13 +3596,16 @@ function WorkCanvasMarkdownDocumentPanel({
                     disabled={documentState.kind !== 'table'}
                     title={
                       documentState.kind === 'table'
-                        ? 'Download as Excel spreadsheet'
-                        : 'Excel export is available only for Canvas tables (kind=table).'
+                        ? t('canvas.panel.downloadExcelTitle', 'Download as Excel spreadsheet')
+                        : t(
+                            'canvas.panel.downloadExcelDisabledTitle',
+                            'Excel export is available only for Canvas tables (kind=table).'
+                          )
                     }
                     className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent dark:text-slate-200 dark:hover:bg-white/10 dark:disabled:hover:bg-transparent"
                   >
                     <Download size={14} />
-                    <span>Download Excel (.xlsx)</span>
+                    <span>{t('canvas.panel.downloadExcel', 'Download Excel (.xlsx)')}</span>
                   </button>
                   <button
                     type="button"
@@ -3588,9 +3613,7 @@ function WorkCanvasMarkdownDocumentPanel({
                     className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
                   >
                     <Download size={14} />
-                    <span>
-                      {t('canvas.panel.export.downloadPowerPoint', 'Download PowerPoint (.pptx)')}
-                    </span>
+                    <span>{t('canvas.panel.downloadPowerpoint', 'Download PowerPoint (.pptx)')}</span>
                   </button>
                   <button
                     type="button"
@@ -3598,7 +3621,7 @@ function WorkCanvasMarkdownDocumentPanel({
                     className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
                   >
                     <Download size={14} />
-                    <span>Export metadata</span>
+                    <span>{t('canvas.panel.exportMetadata', 'Export metadata')}</span>
                   </button>
                   <button
                     type="button"
@@ -3606,7 +3629,7 @@ function WorkCanvasMarkdownDocumentPanel({
                     className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
                   >
                     <Download size={14} />
-                    <span>Upload dataset</span>
+                    <span>{t('canvas.panel.uploadDataset', 'Upload dataset')}</span>
                   </button>
                 </div>
 
@@ -3625,39 +3648,43 @@ function WorkCanvasMarkdownDocumentPanel({
                   {isMdPropertiesOpen ? (
                     <div className="mt-2 space-y-2 rounded-xl bg-slate-100/80 p-2.5 text-slate-700 dark:bg-white/10 dark:text-slate-200">
                       <div className="flex items-center justify-between gap-3">
-                        <span>Format</span>
-                        <strong className="font-semibold">Markdown canonical</strong>
+                        <span>{t('canvas.panel.diagnostics.format', 'Format')}</span>
+                        <strong className="font-semibold">
+                          {t('canvas.panel.diagnostics.markdownCanonical', 'Markdown canonical')}
+                        </strong>
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <span>{t('canvas.panel.save', 'Save')}</span>
+                        <span>{t('canvas.panel.diagnostics.save', 'Save')}</span>
                         <strong
                           className="font-semibold"
                           data-testid="canvas-diagnostics-save-state"
                         >
-                          {saveStateLabel(documentState.saveState)}
+                          {saveStateLabel(documentState.saveState, t)}
                         </strong>
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <span>Projection</span>
+                        <span>{t('canvas.panel.diagnostics.projection', 'Projection')}</span>
                         <strong className="font-semibold" data-testid="canvas-projection-status">
                           {isProjectionRefreshing
-                            ? 'Projection refreshing'
-                            : projectionLabel(documentState.markdownProjectionStatus)}
+                            ? t('canvas.panel.projection.refreshing', 'Projection refreshing')
+                            : projectionLabel(documentState.markdownProjectionStatus, t)}
                         </strong>
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <span>Lifecycle</span>
+                        <span>{t('canvas.panel.diagnostics.lifecycle', 'Lifecycle')}</span>
                         <strong className="font-semibold">
-                          {lifecycleLabel(documentState.lifecycleState)}
+                          {lifecycleLabel(documentState.lifecycleState, t)}
                         </strong>
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <span>Action</span>
+                        <span>{t('canvas.panel.diagnostics.action', 'Action')}</span>
                         <strong
                           className="font-semibold"
                           data-testid="canvas-diagnostics-action-state"
                         >
-                          {activeActionId ? 'Running' : 'Idle'}
+                          {activeActionId
+                            ? t('canvas.panel.diagnostics.running', 'Running')
+                            : t('canvas.panel.diagnostics.idle', 'Idle')}
                         </strong>
                       </div>
                     </div>
@@ -3669,7 +3696,7 @@ function WorkCanvasMarkdownDocumentPanel({
                     {t('canvas.panel.capabilities.title', 'Capabilities and workflow')}
                   </div>
                   <div className="flex items-start justify-between gap-3 px-2.5">
-                    <span>Capability</span>
+                    <span>{t('canvas.panel.diagnostics.capability', 'Capability')}</span>
                     <div className="min-w-0 text-right">
                       {renderCapabilityBadge(activeTemplate.capability, 'canvas-capability-status')}
                       <div
@@ -3682,7 +3709,7 @@ function WorkCanvasMarkdownDocumentPanel({
                   </div>
                   {documentState.researchSessionId ? (
                     <div className="flex items-center justify-between gap-3 px-2.5">
-                      <span>ResearchSession</span>
+                      <span>{t('canvas.panel.diagnostics.researchSession', 'ResearchSession')}</span>
                       <strong
                         className="max-w-[180px] truncate font-semibold text-primary-700 dark:text-primary-300"
                         data-testid="canvas-research-session-id"
@@ -3694,13 +3721,15 @@ function WorkCanvasMarkdownDocumentPanel({
                   ) : null}
                   <div className="flex flex-wrap items-center gap-2 px-2.5">
                     <label className="inline-flex items-center gap-1 text-slate-500 dark:text-slate-300">
-                      <span className="sr-only">Workflow template</span>
+                      <span className="sr-only">
+                        {t('canvas.panel.workflowTemplate', 'Workflow template')}
+                      </span>
                       <select
                         value={selectedWorkflowTemplate}
                         onChange={(event) =>
                           setSelectedWorkflowTemplate(event.target.value as CanvasWorkflowTemplate)
                         }
-                        aria-label="Workflow template"
+                        aria-label={t('canvas.panel.workflowTemplate', 'Workflow template')}
                         className="max-w-[190px] rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 outline-none hover:bg-slate-50 dark:border-white/10 dark:bg-white/10 dark:text-slate-200"
                       >
                         {workflowTemplateOptions.map((template) => (
@@ -3819,7 +3848,7 @@ function WorkCanvasMarkdownDocumentPanel({
                                   className={
                                     executionBlocked
                                       ? 'cursor-not-allowed rounded-full bg-slate-200 px-2 py-0.5 font-semibold text-slate-600 dark:bg-white/10 dark:text-slate-500'
-                                      : 'rounded-full bg-primary-600 px-2 py-0.5 font-semibold text-white hover:bg-primary-700'
+                                      : 'rounded-full bg-c-text px-2 py-0.5 font-semibold text-c-bg hover:bg-c-text-secondary'
                                   }
                                 >
                                   {isWorkflowStepRunning

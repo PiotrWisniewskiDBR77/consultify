@@ -53,6 +53,46 @@ function makeId(orgId: string, entity: string, slug: string): string {
   return `${orgId}--${entity}--${slug}`;
 }
 
+/**
+ * Canonical initiative statuses accepted by the DB `initiatives_status_check`
+ * constraint (uppercase). The template mixes a couple of legacy lowercase
+ * values (`in_progress`, `planned`) with the canonical set; normalize them here
+ * so the seed converges any tenant — including prod demo — without tripping the
+ * check constraint. Unknown values fall back to a safe canonical status.
+ */
+const CANONICAL_INITIATIVE_STATUSES = new Set([
+  'DRAFT',
+  'PENDING_REVIEW',
+  'REVIEW',
+  'PROMOTED',
+  'PLANNING',
+  'APPROVED',
+  'SCHEDULED',
+  'EXECUTING',
+  'BLOCKED',
+  'DONE',
+  'TRACKING',
+  'CANCELLED',
+  'ARCHIVED',
+]);
+
+const LEGACY_INITIATIVE_STATUS_MAP: Record<string, string> = {
+  IN_PROGRESS: 'EXECUTING',
+  PLANNED: 'PLANNING',
+  ACTIVE: 'EXECUTING',
+  COMPLETED: 'DONE',
+  ON_HOLD: 'BLOCKED',
+};
+
+function normalizeInitiativeStatus(status: string | null | undefined): string {
+  const upper = String(status || '')
+    .trim()
+    .toUpperCase();
+  if (CANONICAL_INITIATIVE_STATUSES.has(upper)) return upper;
+  if (LEGACY_INITIATIVE_STATUS_MAP[upper]) return LEGACY_INITIATIVE_STATUS_MAP[upper];
+  return 'EXECUTING';
+}
+
 function markdownBlocksToDocJson(markdown: string) {
   const paragraphs = String(markdown || '')
     .split(/\n{2,}/)
@@ -2141,7 +2181,7 @@ async function upsertInitiatives(
       organizationId,
       projectMap[initiative.projectSlug],
       initiative.name,
-      initiative.status,
+      normalizeInitiativeStatus(initiative.status),
     ];
 
     if (hasArea) {
@@ -2779,7 +2819,9 @@ async function upsertIdeaWorkspaces(
     }
     if (mapColsSupport.schemaVersion) {
       mapCols.push('schema_version');
-      mapVals.push('v1');
+      // schema_version is an INTEGER column; the string 'v1' tripped
+      // `invalid input syntax for type integer` and dropped every idea map.
+      mapVals.push(1);
     }
 
     await DbPromise.run(

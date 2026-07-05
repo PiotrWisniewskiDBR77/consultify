@@ -226,11 +226,11 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <Clock size={28} className="text-primary-500" />
+          <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
+            <Clock size={28} className="text-c-accent" />
             {t('settings.availability.title', 'Availability & Status')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             {t('settings.availability.description', 'Set your availability and status message')}
           </p>
         </div>
@@ -245,8 +245,8 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
       </div>
 
       {/* Status Message */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <MessageSquare size={20} className="text-blue-500" />
           {t('settings.availability.statusMessage', 'Status Message')}
         </h3>
@@ -259,20 +259,20 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
             'e.g., 🎉 On vacation until Jan 15'
           )}
           maxLength={100}
-          className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
+          className="w-full px-4 py-3 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
         />
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+        <p className="text-xs text-c-text-muted mt-2">
           {statusMessage.length} / 100 {t('settings.availability.characters', 'characters')}
         </p>
       </div>
 
       {/* Working Hours */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Clock size={20} className="text-green-500" />
           {t('settings.availability.workingHours', 'Working Hours')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+        <p className="text-sm text-c-text-muted mb-4">
           {t(
             'settings.availability.workingHoursDesc',
             'Set your availability for each day of the week'
@@ -288,7 +288,7 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
             return (
               <div
                 key={key}
-                className="flex items-center gap-4 p-3 border border-slate-200 dark:border-navy-700 rounded-lg"
+                className="flex items-center gap-4 p-3 border border-c-border-subtle dark:border-navy-700 rounded-lg"
               >
                 <div className="w-24">
                   <label className="flex items-center gap-2 cursor-pointer">
@@ -307,14 +307,14 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
                       type="time"
                       value={dayHours.startTime}
                       onChange={(e) => updateWorkingHoursDay(key, { startTime: e.target.value })}
-                      className="px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+                      className="px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg"
                     />
-                    <span className="text-slate-500 dark:text-slate-400">-</span>
+                    <span className="text-c-text-muted">-</span>
                     <input
                       type="time"
                       value={dayHours.endTime}
                       onChange={(e) => updateWorkingHoursDay(key, { endTime: e.target.value })}
-                      className="px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+                      className="px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg"
                     />
                   </div>
                 )}
@@ -325,18 +325,18 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
       </div>
 
       {/* Do Not Disturb Hours */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Moon size={20} className="text-indigo-500" />
           {t('settings.availability.dndHours', 'Do Not Disturb Hours')}
         </h3>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300">
+              <label className="block font-medium text-c-text-secondary">
                 {t('settings.availability.enableDND', 'Enable Do Not Disturb')}
               </label>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t('settings.availability.enableDNDDesc', 'Block notifications during these hours')}
               </p>
             </div>
@@ -345,11 +345,11 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
                 setDoNotDisturbHours((prev: any) => ({ ...prev, enabled: !prev.enabled }))
               }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                doNotDisturbHours.enabled ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'
+                doNotDisturbHours.enabled ? 'bg-indigo-600' : 'bg-c-surface-raised'
               }`}
             >
               <span
-                className={`${doNotDisturbHours.enabled ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+                className={`${doNotDisturbHours.enabled ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
               />
             </button>
           </div>
@@ -358,7 +358,7 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
             <>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-1">
                     {t('settings.availability.startTime', 'Start Time')}
                   </label>
                   <input
@@ -367,11 +367,11 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
                     onChange={(e) =>
                       setDoNotDisturbHours((prev: any) => ({ ...prev, startTime: e.target.value }))
                     }
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+                    className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-1">
                     {t('settings.availability.endTime', 'End Time')}
                   </label>
                   <input
@@ -380,12 +380,12 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
                     onChange={(e) =>
                       setDoNotDisturbHours((prev: any) => ({ ...prev, endTime: e.target.value }))
                     }
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+                    className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-c-text-secondary mb-2">
                   {t('settings.availability.dndDays', 'Days')}
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -396,7 +396,7 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
                       className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                         doNotDisturbHours.days.includes(key)
                           ? 'bg-indigo-600 text-white'
-                          : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700'
+                          : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-700'
                       }`}
                     >
                       {label}
@@ -410,9 +410,9 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
       </div>
 
       {/* Out of Office Periods */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <Calendar size={20} className="text-amber-500" />
             {t('settings.availability.outOfOffice', 'Out of Office')}
           </h3>
@@ -444,7 +444,7 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
             />
           ))}
           {outOfOfficePeriods.length === 0 && (
-            <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-4">
+            <p className="text-sm text-c-text-muted text-center py-4">
               {t('settings.availability.noOOO', 'No out of office periods added yet')}
             </p>
           )}
@@ -477,32 +477,32 @@ const OOOPeriodCard: React.FC<OOOPeriodCardProps> = ({
 
   if (isEditing) {
     return (
-      <div className="p-4 border border-primary-200 dark:border-primary-500/30 rounded-lg bg-primary-50 dark:bg-primary-500/5">
+      <div className="p-4 border border-c-accent dark:border-c-accent rounded-lg bg-c-accent-soft dark:bg-c-accent-soft">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">
               {t('settings.availability.startDate', 'Start Date')}
             </label>
             <input
               type="date"
               value={period.startDate}
               onChange={(e) => onUpdate({ startDate: e.target.value })}
-              className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+              className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">
               {t('settings.availability.endDate', 'End Date')}
             </label>
             <input
               type="date"
               value={period.endDate}
               onChange={(e) => onUpdate({ endDate: e.target.value })}
-              className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+              className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
             />
           </div>
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">
               {t('settings.availability.reason', 'Reason (optional)')}
             </label>
             <input
@@ -513,7 +513,7 @@ const OOOPeriodCard: React.FC<OOOPeriodCardProps> = ({
                 'settings.availability.reasonPlaceholder',
                 'e.g., Vacation, Conference'
               )}
-              className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+              className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -535,7 +535,7 @@ const OOOPeriodCard: React.FC<OOOPeriodCardProps> = ({
           </button>
           <button
             onClick={onCancel}
-            className="px-4 py-2 bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm"
+            className="px-4 py-2 bg-c-surface-raised text-c-text-secondary rounded-lg text-sm"
           >
             {t('common.cancel', 'Cancel')}
           </button>
@@ -558,7 +558,7 @@ const OOOPeriodCard: React.FC<OOOPeriodCardProps> = ({
     <div
       className={`p-4 border rounded-lg transition-colors ${
         isPast
-          ? 'border-slate-200 dark:border-navy-700 opacity-60'
+          ? 'border-c-border-subtle dark:border-navy-700 opacity-60'
           : 'border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/5'
       }`}
     >
@@ -566,20 +566,20 @@ const OOOPeriodCard: React.FC<OOOPeriodCardProps> = ({
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <Calendar size={18} className="text-amber-500" />
-            <span className="font-medium text-slate-900 dark:text-white">
+            <span className="font-medium text-c-text">
               {startDate.toLocaleDateString()} - {endDate.toLocaleDateString()}
             </span>
             {isPast && (
-              <span className="text-xs text-slate-500 dark:text-slate-400">
+              <span className="text-xs text-c-text-muted">
                 {t('settings.availability.past', 'Past')}
               </span>
             )}
           </div>
           {period.reason && (
-            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{period.reason}</p>
+            <p className="text-sm text-c-text-secondary mt-1">{period.reason}</p>
           )}
           {period.isAllDay && (
-            <span className="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
+            <span className="text-xs text-c-text-muted mt-1 block">
               {t('settings.availability.allDay', 'All Day')}
             </span>
           )}
@@ -587,7 +587,7 @@ const OOOPeriodCard: React.FC<OOOPeriodCardProps> = ({
         <div className="flex gap-2">
           <button
             onClick={onEdit}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
+            className="p-2 hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg"
           >
             <Edit2 size={16} />
           </button>

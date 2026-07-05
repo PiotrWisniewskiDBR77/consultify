@@ -405,7 +405,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
             <div className="flex items-center gap-2 text-sm">
               <Star size={14} className="text-amber-400" />
               <span className="text-slate-600 dark:text-slate-500">Default:</span>
-              <span className="text-white font-medium">{llmStatus.defaultProvider.name}</span>
+              <span className="text-c-text font-medium">{llmStatus.defaultProvider.name}</span>
               <span className="text-slate-500 dark:text-slate-400">
                 ({llmStatus.defaultProvider.model})
               </span>
@@ -423,7 +423,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
             onClick={() => setShowInactive(!showInactive)}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors text-sm font-medium ${
               showInactive
-                ? 'bg-white/10 border-white/20 text-white'
+                ? 'bg-white/10 border-white/20 text-c-text'
                 : 'border-white/10 text-slate-600 dark:text-slate-500 hover:text-white'
             }`}
           >
@@ -449,7 +449,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
             <div key={p.id || p.provider} className="admin-card p-4">
               <div className="flex justify-between items-start mb-3">
                 <div>
-                  <h4 className="text-sm font-medium text-white">{p.name || p.provider}</h4>
+                  <h4 className="text-sm font-medium text-c-text">{p.name || p.provider}</h4>
                   <p className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">
                     {p.model}
                   </p>
@@ -546,7 +546,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
       {/* Unified Provider Table */}
       <div className="admin-card overflow-hidden">
         <div className="px-4 py-3 border-b border-[var(--admin-border)]">
-          <h3 className="text-sm font-medium text-white">AI Providers Management</h3>
+          <h3 className="text-sm font-medium text-c-text">AI Providers Management</h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Configure providers for your organization. Enable/disable to control which models are
             available.
@@ -583,7 +583,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                         <div className="flex items-center gap-3">
                           {statusInfo?.isDefault && <Star size={14} className="text-amber-400" />}
                           <div>
-                            <div className="font-medium text-white">{p.name}</div>
+                            <div className="font-medium text-c-text">{p.name}</div>
                             <div className="text-xs text-slate-500 dark:text-slate-400 capitalize">
                               {p.provider}
                             </div>
@@ -649,13 +649,13 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                           onClick={() => toggleOrgAccess(p.id, p.is_enabled_for_org !== false)}
                           disabled={savingProvider === p.id}
                           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                            p.is_enabled_for_org !== false ? 'bg-navy-900' : 'bg-slate-700'
+                            p.is_enabled_for_org !== false ? 'bg-c-surface' : 'bg-c-surface-raised'
                           } ${savingProvider === p.id ? 'opacity-50' : ''}`}
                         >
                           {savingProvider === p.id ? (
                             <RefreshCw
                               size={12}
-                              className="absolute left-1/2 -translate-x-1/2 animate-spin text-white"
+                              className="absolute left-1/2 -translate-x-1/2 animate-spin text-c-text"
                             />
                           ) : (
                             <span
@@ -708,7 +708,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
         >
           <div className="flex items-center gap-2">
             <Info size={16} className="text-blue-400" />
-            <span className="text-sm font-medium text-white">Models Available per Tier</span>
+            <span className="text-sm font-medium text-c-text">Models Available per Tier</span>
           </div>
           <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500">
             <span>

@@ -44,7 +44,7 @@ export const InterviewInitiativePreviewFooter: React.FC<InterviewInitiativePrevi
 }) => {
   const relationItems: RelationItem[] = relations.map((r) => ({
     label: r.label,
-    tone: r.tone ?? 'text-slate-600 dark:text-slate-300',
+    tone: r.tone ?? 'text-[var(--c-text-secondary)]',
   }));
 
   const normalized = String(status || '').toUpperCase();
@@ -108,7 +108,7 @@ export const InterviewInitiativePreviewFooter: React.FC<InterviewInitiativePrevi
   return (
     // canon §7.3: space-y-2.5, NO border-t dividers between footer cards
     <div className="space-y-2.5">
-      <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
+      <div className="rounded-token-md border border-[var(--c-border-subtle)] bg-[var(--c-surface-raised)] p-2.5">
         <PreviewAIHintStrip
           hints={
             isPolish

@@ -267,7 +267,7 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
       case 'error':
         return <XCircle size={18} className="text-danger-500" />;
       default:
-        return <AlertCircle size={18} className="text-slate-600 dark:text-slate-500" />;
+        return <AlertCircle size={18} className="text-c-text-secondary" />;
     }
   };
 
@@ -280,7 +280,7 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
       case 'error':
         return 'border-danger-500/50 bg-danger-50 dark:bg-danger-500/5';
       default:
-        return 'border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950';
+        return 'border-c-border-subtle dark:border-navy-700 bg-c-surface-raised';
     }
   };
 
@@ -310,11 +310,11 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
             <Activity size={28} className="text-brand" />
             {t('settings.integrations.health.title', 'Integration Health')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             {t(
               'settings.integrations.health.subtitle',
               'Monitor and manage your connected integrations'
@@ -335,11 +335,11 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
       {/* Overview Stats */}
       {!loadError && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 text-center">
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">
+          <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-4 text-center">
+            <p className="text-2xl font-bold text-c-text">
               {integrations.length}
             </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t('integrations.health.statConnected', 'Connected')}
             </p>
           </div>
@@ -355,19 +355,19 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
               {t('integrations.health.statWarnings', 'Warnings')}
             </p>
           </div>
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 text-center">
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">
+          <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-4 text-center">
+            <p className="text-2xl font-bold text-c-text">
               {totalStats.requestsToday}
             </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t('integrations.health.statRequestsToday', 'Requests Today')}
             </p>
           </div>
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 text-center">
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">
+          <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-4 text-center">
+            <p className="text-2xl font-bold text-c-text">
               {totalStats.requestsThisMonth.toLocaleString()}
             </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t('integrations.health.statThisMonth', 'This Month')}
             </p>
           </div>
@@ -401,11 +401,11 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
                     />
                     <span className="text-2xl">{integration.icon}</span>
                     <div>
-                      <h4 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                      <h4 className="font-semibold text-c-text flex items-center gap-2">
                         {integration.name}
                         {getStatusIcon(integration.status)}
                       </h4>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                      <p className="text-sm text-c-text-muted">
                         {t('integrations.health.lastSync', 'Last sync')}:{' '}
                         {integration.lastSync
                           ? new Date(integration.lastSync).toLocaleString()
@@ -424,7 +424,7 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
                       className={`p-2 rounded-lg transition-colors ${
                         integration.enabled
                           ? 'text-green-600 hover:bg-green-100 dark:hover:bg-green-500/20'
-                          : 'text-slate-600 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'
+                          : 'text-c-text-secondary hover:bg-c-surface-raised'
                       }`}
                       title={
                         integration.enabled
@@ -449,7 +449,7 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
                       onClick={() =>
                         setShowErrorLogs(showErrorLogs === integration.id ? null : integration.id)
                       }
-                      className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                      className="p-2 text-c-text-muted hover:bg-c-surface-raised rounded-lg transition-colors"
                       title={t('integrations.health.viewLogs', 'View logs')}
                     >
                       <BarChart3 size={18} />
@@ -460,34 +460,34 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
                 {/* Stats */}
                 <div className="grid grid-cols-4 gap-4 text-sm">
                   <div>
-                    <p className="text-slate-500 dark:text-slate-400">
+                    <p className="text-c-text-muted">
                       {t('integrations.health.syncFrequency', 'Sync Frequency')}
                     </p>
-                    <p className="font-medium text-slate-900 dark:text-white">
+                    <p className="font-medium text-c-text">
                       {integration.syncFrequency}
                     </p>
                   </div>
                   <div>
-                    <p className="text-slate-500 dark:text-slate-400">
+                    <p className="text-c-text-muted">
                       {t('integrations.health.requestsToday', 'Requests Today')}
                     </p>
-                    <p className="font-medium text-slate-900 dark:text-white">
+                    <p className="font-medium text-c-text">
                       {integration.usageStats.requestsToday}
                     </p>
                   </div>
                   <div>
-                    <p className="text-slate-500 dark:text-slate-400">
+                    <p className="text-c-text-muted">
                       {t('integrations.health.thisMonth', 'This Month')}
                     </p>
-                    <p className="font-medium text-slate-900 dark:text-white">
+                    <p className="font-medium text-c-text">
                       {integration.usageStats.requestsThisMonth}
                     </p>
                   </div>
                   <div>
-                    <p className="text-slate-500 dark:text-slate-400">
+                    <p className="text-c-text-muted">
                       {t('integrations.health.dataTransferred', 'Data Transferred')}
                     </p>
-                    <p className="font-medium text-slate-900 dark:text-white">
+                    <p className="font-medium text-c-text">
                       {integration.usageStats.dataTransferred}
                     </p>
                   </div>
@@ -555,7 +555,7 @@ function RecentActivityPanel({ integrationId }: { integrationId: string }) {
 
   if (loading) {
     return (
-      <div className="mt-4 p-4 bg-slate-100 dark:bg-navy-950 rounded-lg flex items-center gap-2 text-sm text-slate-500">
+      <div className="mt-4 p-4 bg-c-surface-raised rounded-lg flex items-center gap-2 text-sm text-c-text-muted">
         <Loader2 size={14} className="animate-spin" />{' '}
         {t('integrations.health.loadingActivity', 'Loading activity…')}
       </div>
@@ -564,15 +564,15 @@ function RecentActivityPanel({ integrationId }: { integrationId: string }) {
 
   if (runs.length === 0) {
     return (
-      <div className="mt-4 p-4 bg-slate-100 dark:bg-navy-950 rounded-lg text-sm text-slate-500 dark:text-slate-400">
+      <div className="mt-4 p-4 bg-c-surface-raised rounded-lg text-sm text-c-text-muted">
         {t('integrations.health.noRuns', 'No sync runs recorded yet.')}
       </div>
     );
   }
 
   return (
-    <div className="mt-4 p-4 bg-slate-100 dark:bg-navy-950 rounded-lg">
-      <h5 className="font-medium text-slate-900 dark:text-white mb-2">
+    <div className="mt-4 p-4 bg-c-surface-raised rounded-lg">
+      <h5 className="font-medium text-c-text mb-2">
         {t('integrations.health.recentActivity', 'Recent Activity')}
       </h5>
       <div className="space-y-2 text-sm">
@@ -603,7 +603,7 @@ function RecentActivityPanel({ integrationId }: { integrationId: string }) {
                   ? run.error_summary || t('integrations.health.syncFailed', 'Sync failed')
                   : t('integrations.health.syncInProgress', 'Sync in progress')}
             </span>
-            <span className="text-slate-600 dark:text-slate-500 ml-auto">
+            <span className="text-c-text-secondary ml-auto">
               {formatTimestamp(run.started_at)}
             </span>
           </div>

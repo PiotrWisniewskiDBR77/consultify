@@ -24,8 +24,12 @@ import {
 import type { DeliverableFormat } from '../../../types/deliverablesGeneration.js';
 import { featureFlags } from '../../../config/FeatureFlags.js';
 import logger from '../../../utils/Logger.js';
+import {
+  buildMindmapSkeleton,
+  type MindmapSkeletonGraph,
+} from '../mindmapSkeleton.js';
 
-type DeliverableKind = 'document' | 'sheet' | 'presentation';
+type DeliverableKind = 'document' | 'sheet' | 'presentation' | 'mindmap';
 
 type GenerateDeliverableParams = {
   type: DeliverableKind;
@@ -41,9 +45,17 @@ type GenerateDeliverableParams = {
 export type DeliverableEmit = (payload: {
   draftId: string;
   generationId: string;
-  kind: 'doc' | 'sheet' | 'deck';
+  kind: 'doc' | 'sheet' | 'deck' | 'mindmap';
   format: DeliverableFormat;
   title: string;
+  /**
+   * Only present for `kind:'mindmap'` — the pre-built skeleton graph the FE
+   * seeds into the Ideas mind-map workspace. Absent for doc/sheet/deck (those
+   * hydrate their content from the DB-bound generation runtime via draftId).
+   */
+  graph?: MindmapSkeletonGraph;
+  /** Only present for `kind:'mindmap'` — the topic seed text for AI expansion. */
+  seedText?: string;
 }) => void;
 
 type GenerateDeliverableContext = {
@@ -59,6 +71,7 @@ const KIND_TO_FORMAT: Record<DeliverableKind, DeliverableFormat> = {
   document: 'doc',
   sheet: 'sheet',
   presentation: 'deck',
+  mindmap: 'mindmap',
 };
 
 function deriveTitle(rawTitle: string | undefined, intent: string, language: 'pl' | 'en'): string {
@@ -111,7 +124,7 @@ export async function generateDeliverable(
     return {
       ok: false,
       error: 'invalid_type',
-      message: `Nieznany typ artefaktu '${String(kind)}' — dozwolone: document, sheet, presentation.`,
+      message: `Nieznany typ artefaktu '${String(kind)}' — dozwolone: document, sheet, presentation, mindmap.`,
     };
   }
 
@@ -119,6 +132,67 @@ export async function generateDeliverable(
   const intent = String(params.intent || '').trim();
   const title = deriveTitle(params.title, intent, language);
   const conversationId = context.conversationId ? String(context.conversationId) : undefined;
+
+  // ── M06 Fala 2 · 2.3 — mind map (ff_teresaMindmap) ──────────────────────────
+  // Mapa NIE przechodzi przez DB-bound runtime deck/doc/sheet. Handler self-gate
+  // na ENABLE_TERESA_MINDMAP (OFF ⇒ feature_disabled, parytet z resztą), buduje
+  // realny szkielet grafu z intentu i emituje go do frontu, który montuje mapę
+  // w Ideas. Brak wiersza `presentation_decks`, brak planGeneration/startGeneration.
+  if (format === 'mindmap') {
+    if (!featureFlags.ENABLE_TERESA_MINDMAP) {
+      return {
+        ok: false,
+        error: 'feature_disabled',
+        message:
+          language === 'en'
+            ? 'Mind-map generation is disabled in this environment — point the user to the Ideas module.'
+            : 'Generacja map myśli jest wyłączona w tym środowisku — skieruj użytkownika do modułu Pomysły (Ideas).',
+      };
+    }
+
+    // TODO (M06 Fala 2 · [REAL-AI] nightly): swap this deterministic skeleton for
+    // an LLM-backed generator (semantic branches + sub-nodes + notes). Wiring is
+    // format-stable; only buildMindmapSkeleton changes. Tracked as risk R1.
+    const graph: MindmapSkeletonGraph = buildMindmapSkeleton(intent, params.title);
+    // Client-generated id — the real idea/map rows are created on the FE mount
+    // path (setMyWorkIntent → IdeaMapWorkspace), which owns idea/map persistence.
+    const mindmapId = `chat-mindmap-${Date.now()}`;
+
+    try {
+      context.onDeliverable?.({
+        draftId: mindmapId,
+        generationId: mindmapId,
+        kind: 'mindmap',
+        format: 'mindmap',
+        title,
+        graph,
+        seedText: intent || title,
+      });
+    } catch (emitErr) {
+      logger.warn(
+        `[generate_deliverable] mindmap onDeliverable emit failed id=${mindmapId}: ${
+          emitErr instanceof Error ? emitErr.message : String(emitErr)
+        }`
+      );
+    }
+
+    logger.info(
+      `[generate_deliverable] mindmap skeleton id=${mindmapId} nodes=${graph.nodes.length} title="${title.slice(0, 80)}"`
+    );
+
+    return {
+      ok: true,
+      kind: 'mindmap',
+      format: 'mindmap',
+      title,
+      generationId: mindmapId,
+      draftId: mindmapId,
+      message:
+        language === 'en'
+          ? `A mind map titled "${title}" was created and opened in the Ideas workspace on the right. You can expand any branch with AI.`
+          : `Utworzyłem mapę myśli „${title}" i otworzyłem ją w module Pomysły po prawej. Każdą gałąź możesz rozwinąć z AI.`,
+    };
+  }
 
   // Setup per format. doc/sheet biorą intent+conversation; deck wymaga pełnego
   // DeckSetup (enumy) — wypełniamy bezpiecznymi domyślnymi, użytkownik dostroi

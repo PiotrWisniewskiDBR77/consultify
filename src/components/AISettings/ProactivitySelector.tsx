@@ -33,10 +33,10 @@ const MODE_CONFIG: Record<
     longDescription:
       'The AI remains silent until you ask. Perfect for experienced users who prefer to work independently.',
     icon: Pause,
-    color: 'text-slate-600 dark:text-slate-500',
-    bgGradient: 'from-slate-800 to-slate-900',
-    borderColor: 'border-slate-600',
-    glowColor: 'shadow-slate-500/20',
+    color: 'text-c-text-secondary',
+    bgGradient: 'from-c-surface to-c-surface',
+    borderColor: 'border-c-border-strong',
+    glowColor: 'shadow-c-border-strong',
     characteristics: [
       'Responds only when asked',
       'No automatic suggestions',
@@ -56,10 +56,10 @@ const MODE_CONFIG: Record<
     longDescription:
       'The AI provides suggestions when it detects you might benefit, but waits for you to initiate major interactions.',
     icon: Scale,
-    color: 'text-primary-400',
-    bgGradient: 'from-primary-900/50 to-primary-900/50',
-    borderColor: 'border-primary-500',
-    glowColor: 'shadow-primary-500/30',
+    color: 'text-c-accent',
+    bgGradient: 'from-c-accent-soft to-c-surface-raised',
+    borderColor: 'border-c-accent',
+    glowColor: 'shadow-c-accent',
     characteristics: [
       'Helpful suggestions when relevant',
       'Contextual hints appear naturally',
@@ -146,7 +146,7 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
                                 ${
                                   isSelected
                                     ? `bg-gradient-to-br ${config.bgGradient} ${config.borderColor} border shadow-lg ${config.glowColor}`
-                                    : 'bg-slate-800/50 border border-slate-700 hover:border-slate-600'
+                                    : 'bg-c-surface border border-c-border-strong hover:border-c-border-strong'
                                 }
                                 ${!allowed ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
                                 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
@@ -155,12 +155,12 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
               whileTap={allowed && !disabled ? { scale: 0.98 } : {}}
             >
               <ModeIcon
-                className={`w-5 h-5 ${isSelected ? config.color : 'text-slate-500 dark:text-slate-400'}`}
+                className={`w-5 h-5 ${isSelected ? config.color : 'text-c-text-muted'}`}
               />
               {isSelected && (
                 <motion.div
                   layoutId="proactivity-indicator"
-                  className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-white dark:bg-navy-900"
+                  className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-c-surface"
                 />
               )}
             </motion.button>
@@ -178,9 +178,9 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
       {/* Header */}
       <div className="flex items-center gap-2">
         <Icon className={`w-5 h-5 ${selectedConfig.color}`} />
-        <h3 className="text-lg font-semibold text-navy-900 dark:text-white">AI Proactivity</h3>
+        <h3 className="text-lg font-semibold text-navy-900">AI Proactivity</h3>
       </div>
-      <p className="text-sm text-slate-500 dark:text-slate-400">How should AI interact with you?</p>
+      <p className="text-sm text-c-text-muted">How should AI interact with you?</p>
 
       {/* Mode Selector Cards */}
       <div className="grid grid-cols-3 gap-3">
@@ -200,7 +200,7 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
                                 ${
                                   isSelected
                                     ? `bg-gradient-to-br ${config.bgGradient} ${config.borderColor} border-2 shadow-xl ${config.glowColor}`
-                                    : 'bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800/50'
+                                    : 'bg-c-surface-raised border border-c-border-subtle hover:border-c-border hover:bg-c-surface-raised'
                                 }
                                 ${!allowed ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
                                 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
@@ -215,7 +215,7 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     exit={{ scale: 0 }}
-                    className={`absolute top-3 right-3 w-5 h-5 rounded-full ${config.color} bg-white/10 flex items-center justify-center`}
+                    className={`absolute top-3 right-3 w-5 h-5 rounded-full ${config.color} bg-c-surface-raised flex items-center justify-center`}
                   >
                     <Check className="w-3 h-3" />
                   </motion.div>
@@ -229,31 +229,31 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
                                 ${
                                   isSelected
                                     ? `bg-gradient-to-br ${config.bgGradient} border ${config.borderColor}`
-                                    : 'bg-slate-200 dark:bg-slate-700/50'
+                                    : 'bg-c-surface-raised'
                                 }
                             `}
               >
                 <ModeIcon
-                  className={`w-5 h-5 ${isSelected ? config.color : 'text-slate-500 dark:text-slate-400'}`}
+                  className={`w-5 h-5 ${isSelected ? config.color : 'text-c-text-muted'}`}
                 />
               </div>
 
               {/* Title */}
               <h4
-                className={`font-semibold mb-1 ${isSelected ? config.color : 'text-navy-900 dark:text-slate-300'}`}
+                className={`font-semibold mb-1 ${isSelected ? config.color : 'text-navy-900'}`}
               >
                 {config.title}
               </h4>
 
               {/* Short description */}
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-c-text-muted">
                 {config.shortDescription}
               </p>
 
               {/* Locked indicator */}
               {!allowed && (
-                <div className="absolute inset-0 rounded-xl bg-white/60 dark:bg-slate-900/60 flex items-center justify-center">
-                  <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
+                <div className="absolute inset-0 rounded-xl bg-c-surface-raised flex items-center justify-center">
+                  <span className="text-xs text-c-text-muted bg-c-surface-raised px-2 py-1 rounded">
                     Org limit
                   </span>
                 </div>
@@ -282,7 +282,7 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
               <div
                 className={`
                                 w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0
-                                bg-white/5 border ${selectedConfig.borderColor}
+                                bg-c-surface-raised border ${selectedConfig.borderColor}
                             `}
               >
                 <Icon className={`w-5 h-5 ${selectedConfig.color}`} />
@@ -291,7 +291,7 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
                 <h4 className={`font-semibold ${selectedConfig.color} mb-1`}>
                   {selectedConfig.title} Mode
                 </h4>
-                <p className="text-sm text-slate-600 mb-3">{selectedConfig.longDescription}</p>
+                <p className="text-sm text-c-text-secondary mb-3">{selectedConfig.longDescription}</p>
 
                 {/* Behavior flags */}
                 <div className="grid grid-cols-2 gap-2">
@@ -300,11 +300,11 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
                       {enabled ? (
                         <Check className="w-3.5 h-3.5 text-emerald-400" />
                       ) : (
-                        <X className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                        <X className="w-3.5 h-3.5 text-c-text-muted" />
                       )}
                       <span
                         className={
-                          enabled ? 'text-slate-600' : 'text-slate-500 dark:text-slate-400'
+                          enabled ? 'text-c-text-secondary' : 'text-c-text-muted'
                         }
                       >
                         {formatBehaviorKey(key)}

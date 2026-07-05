@@ -73,7 +73,7 @@ function getStatusIndicator(status: OperationStatus): React.ReactNode {
       );
     case 'running':
       return (
-        <div className="w-5 h-5 rounded-full bg-navy-900 flex items-center justify-center">
+        <div className="w-5 h-5 rounded-full bg-c-surface flex items-center justify-center">
           <Loader2 size={12} className="text-white animate-spin" />
         </div>
       );
@@ -86,8 +86,8 @@ function getStatusIndicator(status: OperationStatus): React.ReactNode {
     case 'pending':
     default:
       return (
-        <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-zinc-600 flex items-center justify-center">
-          <Circle size={8} className="text-slate-600 dark:text-zinc-600" />
+        <div className="w-5 h-5 rounded-full border-2 border-c-border flex items-center justify-center">
+          <Circle size={8} className="text-c-text-secondary" />
         </div>
       );
   }
@@ -121,7 +121,7 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
     ? 'bg-danger-500'
     : stats.allDone
       ? 'bg-emerald-500'
-      : 'bg-navy-900';
+      : 'bg-c-surface';
 
   const statusLabel = stats.allDone
     ? stats.hasErrors
@@ -136,25 +136,25 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
       : 'Executing…';
 
   return (
-    <div className="rounded-2xl border border-primary-500/30 bg-white dark:bg-zinc-900 dark:border-zinc-700 shadow-xl overflow-hidden transition-all duration-200">
+    <div className="rounded-2xl border border-c-accent bg-c-surface shadow-xl overflow-hidden transition-all duration-200">
       {/* Header + Progress bar */}
-      <div className="px-4 py-3 border-b border-slate-200/60 dark:border-zinc-700/60">
+      <div className="px-4 py-3 border-b border-c-border-subtle">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            {!stats.allDone && <Loader2 size={14} className="animate-spin text-primary-500" />}
+            {!stats.allDone && <Loader2 size={14} className="animate-spin text-c-accent" />}
             {stats.allDone && !stats.hasErrors && <Check size={14} className="text-emerald-500" />}
             {stats.allDone && stats.hasErrors && (
               <AlertCircle size={14} className="text-danger-500" />
             )}
-            <span className="text-xs font-semibold text-slate-700 dark:text-zinc-200">
+            <span className="text-xs font-semibold text-c-text">
               {statusLabel}
             </span>
           </div>
-          <span className="text-[10px] text-slate-600 dark:text-zinc-500 font-mono">
+          <span className="text-[10px] text-c-text-secondary font-mono">
             {stats.done}/{stats.total}
           </span>
         </div>
-        <div className="h-1.5 rounded-full bg-slate-200 dark:bg-zinc-700 overflow-hidden">
+        <div className="h-1.5 rounded-full bg-c-border-subtle overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-500 ease-out ${progressColor}`}
             style={{ width: `${stats.percent}%` }}
@@ -175,7 +175,7 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
               key={op.id}
               className={`flex items-start gap-2.5 px-3 py-2 rounded-xl transition-all duration-200 ${
                 isActive
-                  ? 'bg-primary-500/5 dark:bg-primary-500/10 border border-primary-500/20'
+                  ? 'bg-c-accent-soft border border-c-accent'
                   : isFailed
                     ? 'bg-danger-500/5 dark:bg-danger-500/10 border border-danger-500/20'
                     : isDone
@@ -191,7 +191,7 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
                     className={`w-0.5 h-3 mt-0.5 rounded-full transition-colors ${
                       isDone
                         ? 'bg-emerald-300 dark:bg-emerald-700'
-                        : 'bg-slate-200 dark:bg-zinc-700'
+                        : 'bg-c-border-subtle'
                     }`}
                   />
                 )}
@@ -208,8 +208,8 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
                         : isFailed
                           ? 'text-danger-600 dark:text-danger-400'
                           : isActive
-                            ? 'text-primary-600 dark:text-primary-400'
-                            : 'text-slate-600 dark:text-zinc-500'
+                            ? 'text-c-accent'
+                            : 'text-c-text-secondary'
                     }`}
                   />
                   <span
@@ -219,8 +219,8 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
                         : isFailed
                           ? 'text-danger-700 dark:text-danger-300'
                           : isActive
-                            ? 'text-slate-700 dark:text-zinc-200'
-                            : 'text-slate-500 dark:text-zinc-400'
+                            ? 'text-c-text'
+                            : 'text-c-text-muted'
                     }`}
                   >
                     {op.description}
@@ -239,7 +239,7 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
 
       {/* Undo button (shown after successful execution) */}
       {stats.allDone && !stats.hasErrors && onUndo && (
-        <div className="px-4 py-3 border-t border-slate-200/60 dark:border-zinc-700/60 bg-slate-50/50 dark:bg-zinc-800/30">
+        <div className="px-4 py-3 border-t border-c-border-subtle bg-c-surface-raised">
           <button
             onClick={onUndo}
             disabled={undoLoading}

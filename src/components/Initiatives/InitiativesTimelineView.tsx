@@ -175,7 +175,7 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
         const msg =
           error?.data?.error ||
           error?.message ||
-          t('initiatives.toast.scheduleUpdateError', 'Nie udało się zaktualizować harmonogramu');
+          t('initiatives.toast.scheduleUpdateError', 'Could not update the schedule');
         toast.error(msg);
       }
     },

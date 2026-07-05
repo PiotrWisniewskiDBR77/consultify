@@ -67,10 +67,21 @@ export function useCollaboration(
   const connect = useCallback(() => {
     if (!deckId || !currentUser || !enabled) return;
 
+    // Fail-open to solo mode: the presence gateway requires a JWT (?token=). If
+    // there's no token we simply never connect — the editor keeps working, the
+    // hook just stays `disconnected`. Never block core editing on presence.
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setState((prev) => ({ ...prev, connectionStatus: 'disconnected' }));
+      return;
+    }
+
     setState((prev) => ({ ...prev, connectionStatus: 'connecting' }));
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws/presentations/${deckId}`;
+    const wsUrl = `${protocol}//${window.location.host}/ws/presentations/${deckId}?token=${encodeURIComponent(
+      token
+    )}`;
 
     try {
       const ws = new WebSocket(wsUrl);

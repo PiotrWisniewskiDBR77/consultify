@@ -399,8 +399,8 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
   };
 
   const sectionLabel =
-    'text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4';
-  const cardClass = 'bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-white/5 rounded-lg p-5';
+    'text-xs font-bold text-c-text-secondary uppercase tracking-wider flex items-center gap-2 mb-4';
+  const cardClass = 'bg-c-surface-raised border border-c-border-subtle rounded-lg p-5';
 
   return (
     <SettingsSection
@@ -425,13 +425,13 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
         {!loadError && (
           <>
             {/* GDPR Compliance Banner */}
-            <div className="p-4 bg-primary-600/5 border border-primary-500/20 rounded-lg flex items-start gap-3">
-              <Shield size={18} className="text-primary-400 flex-shrink-0 mt-0.5" />
+            <div className="p-4 bg-c-accent-soft border border-c-accent rounded-lg flex items-start gap-3">
+              <Shield size={18} className="text-c-accent flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-primary-300">
+                <p className="text-sm font-medium text-c-accent">
                   {t('settings.data.gdprTitle', 'GDPR Compliant')}
                 </p>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                <p className="text-xs text-c-text-secondary mt-0.5">
                   {t(
                     'settings.data.gdprDesc',
                     'We comply with GDPR regulations. You have full control over your personal data, including the right to access, export, and delete it.'
@@ -443,10 +443,10 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
             {/* ─── Consent Management ─── */}
             <div>
               <h4 className={sectionLabel}>
-                <Shield size={14} className="text-primary-400" />
+                <Shield size={14} className="text-c-accent" />
                 {t('settings.data.consentsTitle', 'Consent Management')}
               </h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+              <p className="text-xs text-c-text-muted mb-4">
                 {t('settings.data.consentsDesc', 'Choose how we can use your data')}
               </p>
               <div className="space-y-3">
@@ -459,7 +459,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                           'p-1.5 rounded-md flex-shrink-0 mt-0.5',
                           consents[item.key]
                             ? 'bg-emerald-500/10 text-emerald-400'
-                            : 'bg-white/5 text-slate-500'
+                            : 'bg-c-surface-raised text-c-text-muted'
                         )}
                       >
                         <Icon size={14} />
@@ -483,10 +483,10 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
             {/* ─── Data Retention ─── */}
             <div>
               <h4 className={sectionLabel}>
-                <Clock size={14} className="text-primary-400" />
+                <Clock size={14} className="text-c-accent" />
                 {t('settings.data.retentionTitle', 'Data Retention')}
               </h4>
-              <p className="text-xs text-slate-500 mb-4">
+              <p className="text-xs text-c-text-muted mb-4">
                 {t('settings.data.retentionDesc', 'Choose how long we keep your data')}
               </p>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
@@ -502,15 +502,15 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                     className={cn(
                       'px-4 py-2.5 rounded-lg text-sm font-medium transition-all border',
                       retention.period === option.value
-                        ? 'bg-navy-900 text-white border-navy-900 shadow-sm dark:bg-primary-600/20 dark:text-primary-300 dark:border-primary-500'
-                        : 'bg-white dark:bg-navy-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20'
+                        ? 'bg-navy-900 text-white border-navy-900 shadow-sm dark:border-c-accent'
+                        : 'bg-c-surface-raised text-c-text-secondary border-c-border-subtle hover:border-c-border dark:hover:border-white/20'
                     )}
                   >
                     {t(option.labelKey, option.labelDefault)}
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-3 flex items-center gap-1.5">
+              <p className="text-xs text-c-text-muted mt-3 flex items-center gap-1.5">
                 <Info size={12} />
                 {t(
                   'settings.data.retentionNote',
@@ -524,7 +524,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
             {/* ─── Data Portability ─── */}
             <div>
               <h4 className={sectionLabel}>
-                <Download size={14} className="text-primary-400" />
+                <Download size={14} className="text-c-accent" />
                 {t('settings.data.portabilityTitle', 'Data Portability')}
               </h4>
               <div className={cardClass}>
@@ -533,7 +533,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                     <p className="text-sm font-medium text-white">
                       {t('settings.data.exportData', 'Export Your Data')}
                     </p>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                    <p className="text-xs text-c-text-secondary mt-1">
                       {t(
                         'settings.data.exportDataDesc',
                         'Download a copy of all your personal data including profile, settings, activity history, and documents. Processing typically takes 24-48 hours.'
@@ -545,8 +545,8 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                     disabled={exporting}
                     className={cn(
                       'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0',
-                      'bg-primary-600/10 text-primary-300 border border-primary-500/30',
-                      'hover:bg-primary-600/20 hover:border-primary-500/50',
+                      'bg-c-accent-soft text-c-accent border border-c-accent',
+                      'hover:bg-c-accent-soft hover:border-c-accent',
                       'disabled:opacity-50'
                     )}
                   >
@@ -577,7 +577,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                     <p className="text-sm font-medium text-danger-300">
                       {t('settings.data.deleteAccount', 'Delete Account & Data')}
                     </p>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                    <p className="text-xs text-c-text-secondary mt-1">
                       {t(
                         'settings.data.deleteAccountDesc',
                         'Permanently delete your account and all associated data. This action cannot be undone. A 30-day grace period applies before final deletion.'
@@ -596,20 +596,20 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                 </div>
 
                 {showDeleteConfirm && (
-                  <div className="mt-4 p-4 bg-danger-50 dark:bg-navy-900/50 border border-danger-200 dark:border-danger-500/20 rounded-lg">
+                  <div className="mt-4 p-4 bg-danger-50/50 border border-danger-200 dark:border-danger-500/20 rounded-lg">
                     <div className="flex items-center gap-2 text-danger-400 mb-3">
                       <AlertTriangle size={16} />
                       <span className="text-sm font-medium">
                         {t('settings.data.deleteConfirmTitle', 'Are you absolutely sure?')}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
+                    <p className="text-xs text-c-text-secondary mb-3">
                       {t(
                         'settings.data.deleteConfirmDesc',
                         'This action cannot be undone. All your data, including projects, settings, and history will be permanently deleted after a 30-day grace period.'
                       )}
                     </p>
-                    <label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5 block">
+                    <label className="text-xs font-medium text-c-text-secondary mb-1.5 block">
                       {t('settings.data.deleteConfirmType', 'Type "{{phrase}}" to confirm:', {
                         phrase: deleteConfirmationPhrase,
                       })}
@@ -618,10 +618,10 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                       type="text"
                       value={deleteConfirmText}
                       onChange={(e) => setDeleteConfirmText(e.target.value)}
-                      className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-danger-300 dark:border-danger-500/30 rounded-lg text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-danger-500/50 outline-none transition-all mb-3"
+                      className="w-full px-3 py-2 bg-c-surface border border-danger-300 dark:border-danger-500/30 rounded-lg text-c-text text-sm focus:ring-2 focus:ring-danger-500/50 outline-none transition-all mb-3"
                       placeholder={deleteConfirmationPhrase}
                     />
-                    <label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5 block">
+                    <label className="text-xs font-medium text-c-text-secondary mb-1.5 block">
                       {t('settings.data.deletePasswordLabel', 'Enter your password to confirm:')}
                     </label>
                     <input
@@ -629,7 +629,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                       value={deletePassword}
                       onChange={(e) => setDeletePassword(e.target.value)}
                       autoComplete="current-password"
-                      className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-danger-300 dark:border-danger-500/30 rounded-lg text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-danger-500/50 outline-none transition-all mb-3"
+                      className="w-full px-3 py-2 bg-c-surface border border-danger-300 dark:border-danger-500/30 rounded-lg text-c-text text-sm focus:ring-2 focus:ring-danger-500/50 outline-none transition-all mb-3"
                       placeholder={t(
                         'settings.data.deletePasswordPlaceholder',
                         'Your account password'
@@ -658,7 +658,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                           setDeleteConfirmText('');
                           setDeletePassword('');
                         }}
-                        className="px-4 py-2 bg-white/5 border border-white/10 text-slate-600 rounded-lg text-sm font-medium hover:bg-white/10 transition-colors"
+                        className="px-4 py-2 bg-c-surface-raised border border-white/10 text-c-text-secondary rounded-lg text-sm font-medium hover:bg-c-surface-raised transition-colors"
                       >
                         {t('common.cancel', 'Cancel')}
                       </button>
@@ -673,7 +673,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
             {/* ─── Sample / Demo Data ─── */}
             <div>
               <h4 className={sectionLabel}>
-                <FlaskConical size={14} className="text-primary-400" />
+                <FlaskConical size={14} className="text-c-accent" />
                 {t('settings.data.sampleWorkspace', 'Sample Workspace')}
               </h4>
               <div className={cardClass}>
@@ -712,7 +712,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
             {/* ─── Legal Documents ─── */}
             <div>
               <h4 className={sectionLabel}>
-                <FileText size={14} className="text-primary-400" />
+                <FileText size={14} className="text-c-accent" />
                 {t('settings.data.relatedDocs', 'Legal Documents')}
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
@@ -722,20 +722,20 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                     <Link
                       key={doc.to}
                       to={doc.to}
-                      className="flex items-start gap-3 p-3 bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-white/5 rounded-lg hover:border-slate-300 dark:hover:border-primary-500/30 hover:bg-slate-50 dark:hover:bg-primary-600/5 transition-all group"
+                      className="flex items-start gap-3 p-3 bg-c-surface-raised border border-c-border-subtle rounded-lg hover:border-c-border dark:hover:border-c-accent hover:bg-c-surface-raised dark:hover:bg-c-accent-soft transition-all group"
                     >
                       <Icon
                         size={14}
-                        className="text-slate-500 dark:text-slate-400 group-hover:text-primary-400 mt-0.5 flex-shrink-0"
+                        className="text-c-text-muted group-hover:text-c-accent mt-0.5 flex-shrink-0"
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1">
-                          <span className="text-xs font-medium text-slate-600 dark:text-slate-400 group-hover:text-primary-300">
+                          <span className="text-xs font-medium text-c-text-secondary group-hover:text-c-accent">
                             {t(doc.titleKey, doc.titleDefault)}
                           </span>
-                          <ExternalLink size={10} className="text-slate-600 dark:text-slate-400" />
+                          <ExternalLink size={10} className="text-c-text-secondary" />
                         </div>
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                        <span className="text-[11px] text-c-text-muted">
                           {t(doc.descKey, doc.desc)}
                         </span>
                       </div>

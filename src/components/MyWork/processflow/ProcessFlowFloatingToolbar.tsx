@@ -1,4 +1,4 @@
-import { Copy, Edit3, GitMerge, Link2, MessageSquare, Trash2 } from 'lucide-react';
+import { Copy, Edit3, GitMerge, Link2, MessageCircle, MessageSquare, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { ArtifactLink } from '@/utils/artifactLinks';
@@ -16,10 +16,13 @@ interface ProcessFlowFloatingToolbarProps {
   onOpenChat?: () => void;
   artifactLinks?: ArtifactLink[];
   onArtifactLinksChange?: (links: ArtifactLink[]) => void;
+  /** M07 F5b B3: node comment thread trigger (badge shows comment count). */
+  onOpenComments?: () => void;
+  commentCount?: number;
 }
 
 const BTN =
-  'inline-flex items-center justify-center w-7 h-7 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-40';
+  'inline-flex items-center justify-center w-7 h-7 rounded-lg text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-40';
 
 export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProps> = ({
   nodeId,
@@ -34,6 +37,8 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
   onOpenChat,
   artifactLinks,
   onArtifactLinksChange,
+  onOpenComments,
+  commentCount = 0,
 }) => {
   const toolbarRef = useRef<HTMLDivElement>(null);
   const [showLinks, setShowLinks] = useState(false);
@@ -51,7 +56,7 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
   return (
     <div
       ref={toolbarRef}
-      className="absolute z-50 flex items-center gap-0.5 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/95 dark:bg-navy-900/95 shadow-lg backdrop-blur-sm px-1 py-0.5"
+      className="absolute z-50 flex items-center gap-0.5 rounded-xl border border-c-border-subtle bg-c-surface shadow-lg backdrop-blur-sm px-1 py-0.5"
       style={{
         left: position.x,
         top: position.y - 44,
@@ -108,8 +113,25 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
         >
           <Link2 size={14} />
           {linkCount > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] rounded-full bg-indigo-500 text-white text-[8px] font-bold flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] rounded-full bg-c-tag-2 text-white text-[8px] font-bold flex items-center justify-center">
               {linkCount}
+            </span>
+          )}
+        </button>
+      )}
+
+      {onOpenComments && (
+        <button
+          type="button"
+          className={`${BTN} relative`}
+          onClick={onOpenComments}
+          title={isPl ? 'Komentarze' : 'Comments'}
+          aria-label={isPl ? 'Komentarze' : 'Comments'}
+        >
+          <MessageCircle size={14} />
+          {commentCount > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] rounded-full bg-c-info text-white text-[8px] font-bold flex items-center justify-center">
+              {commentCount}
             </span>
           )}
         </button>
@@ -127,7 +149,7 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
         </button>
       )}
 
-      <div className="w-px h-4 bg-slate-200 dark:bg-navy-700 mx-0.5" />
+      <div className="w-px h-4 bg-c-surface-raised mx-0.5" />
 
       {onDelete && (
         <button
@@ -144,14 +166,14 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
 
       {showLinks && onArtifactLinksChange && (
         <div
-          className="absolute top-full left-0 mt-1 w-64 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900 shadow-xl p-3 z-50"
+          className="absolute top-full left-0 mt-1 w-64 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl p-3 z-50"
           onKeyDown={handleKeyDown}
         >
-          <div className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-2">
+          <div className="text-[11px] font-semibold text-c-text-secondary mb-2">
             {isPl ? 'Powiązane artefakty' : 'Linked artifacts'}
           </div>
           {linkCount === 0 ? (
-            <div className="text-[10px] text-slate-500 dark:text-slate-400">
+            <div className="text-[10px] text-c-text-muted">
               {isPl ? 'Brak powiązań' : 'No links yet'}
             </div>
           ) : (
@@ -159,7 +181,7 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
               {artifactLinks!.map((link, idx) => (
                 <li
                   key={idx}
-                  className="flex items-center justify-between text-[10px] text-slate-600 dark:text-slate-400"
+                  className="flex items-center justify-between text-[10px] text-c-text-secondary"
                 >
                   <span className="truncate flex-1">
                     {link.label || link.artifactIndex || link.artifactRef.id}

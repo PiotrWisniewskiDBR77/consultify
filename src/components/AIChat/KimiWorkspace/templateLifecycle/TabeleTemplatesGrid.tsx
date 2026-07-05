@@ -58,7 +58,7 @@ export const TabeleTemplatesGrid: React.FC<TabeleTemplatesGridProps> = ({
         <TemplateLifecycleFilter value={status} onChange={setStatus} />
         {loading && (
           <span
-            className="inline-flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400"
+            className="inline-flex items-center gap-1.5 text-[11px] text-c-text-secondary"
             data-testid={`${testId}-loading`}
           >
             <Loader2 size={12} className="animate-spin" aria-hidden />
@@ -79,7 +79,7 @@ export const TabeleTemplatesGrid: React.FC<TabeleTemplatesGridProps> = ({
 
       {!loading && !error && templates.length === 0 && (
         <p
-          className="text-sm text-slate-500 dark:text-slate-400 text-center py-12"
+          className="text-sm text-c-text-secondary text-center py-12"
           data-testid={`${testId}-empty`}
         >
           {t('kimi.template.grid.empty', 'No templates in status "{{status}}".', { status })}
@@ -91,7 +91,7 @@ export const TabeleTemplatesGrid: React.FC<TabeleTemplatesGridProps> = ({
           <div
             key={tpl.id}
             data-testid={`${testId}-card`}
-            className="group relative text-left p-4 rounded-xl border border-slate-200/70 dark:border-white/5 bg-white dark:bg-navy-900 hover:border-brand/40 dark:hover:border-brand/30 hover:shadow-sm transition-all"
+            className="group relative text-left p-4 rounded-xl border border-c-border-subtle bg-c-surface hover:border-brand/40 dark:hover:border-brand/30 hover:shadow-sm transition-all"
           >
             <button
               type="button"
@@ -100,7 +100,7 @@ export const TabeleTemplatesGrid: React.FC<TabeleTemplatesGridProps> = ({
               data-testid={`${testId}-card-${tpl.id}`}
             >
               <div className="flex items-start justify-between gap-2 mb-1">
-                <p className="text-sm font-medium text-slate-800 dark:text-slate-200 group-hover:text-brand transition-colors line-clamp-1 flex-1">
+                <p className="text-sm font-medium text-c-text group-hover:text-brand transition-colors line-clamp-1 flex-1">
                   {tpl.name}
                 </p>
                 <TemplateLifecycleBadge
@@ -110,12 +110,12 @@ export const TabeleTemplatesGrid: React.FC<TabeleTemplatesGridProps> = ({
                 />
               </div>
               {tpl.description && (
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                <p className="text-xs text-c-text-secondary mt-1 line-clamp-2">
                   {tpl.description}
                 </p>
               )}
               {(tpl.usage_count > 0 || tpl.is_featured) && (
-                <p className="mt-2 text-[10px] text-slate-600 dark:text-slate-500 tabular-nums">
+                <p className="mt-2 text-[10px] text-c-text-secondary tabular-nums">
                   {tpl.is_featured && t('kimi.template.grid.featured', '⭐ Featured · ')}
                   {t('kimi.template.grid.used', 'Used')}: {tpl.usage_count}
                 </p>
@@ -128,7 +128,7 @@ export const TabeleTemplatesGrid: React.FC<TabeleTemplatesGridProps> = ({
                   e.stopPropagation();
                   setGovernanceTarget(tpl);
                 }}
-                className="absolute top-2 right-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                className="absolute top-2 right-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold text-c-text-secondary hover:bg-c-surface-raised opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-c-focus"
                 title={t('kimi.template.grid.governanceTitle', 'Governance')}
                 data-testid={`${testId}-card-${tpl.id}-governance`}
               >

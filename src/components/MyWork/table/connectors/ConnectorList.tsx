@@ -113,13 +113,13 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
     <div className="space-y-2">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+        <h3 className="text-sm font-semibold text-c-text">
           {isPl ? 'Konektory' : 'Connectors'}{' '}
-          <span className="text-slate-600 font-normal">({connectors.length})</span>
+          <span className="text-c-text-secondary font-normal">({connectors.length})</span>
         </h3>
         <button
           onClick={onAdd}
-          className="inline-flex items-center gap-1 rounded-lg bg-primary-50 dark:bg-primary-500/10 px-2.5 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors"
+          className="inline-flex items-center gap-1 rounded-lg bg-c-accent-soft px-2.5 py-1.5 text-xs font-medium text-c-accent hover:bg-c-accent-soft transition-colors"
         >
           <Plus size={12} />
           {isPl ? 'Dodaj' : 'Add'}
@@ -132,7 +132,7 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
         return (
           <div
             key={c.id}
-            className="group flex items-center gap-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 py-3 hover:border-slate-300 dark:hover:border-navy-600 transition-colors"
+            className="group flex items-center gap-3 rounded-xl border border-c-border bg-c-surface px-4 py-3 hover:border-c-border transition-colors"
           >
             {/* Icon */}
             <div className="flex-shrink-0">
@@ -142,14 +142,14 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
             {/* Info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-slate-800 dark:text-white truncate">
+                <span className="text-sm font-medium text-c-text truncate">
                   {c.name}
                 </span>
-                <span className="text-[11px] text-slate-600 dark:text-slate-500">
+                <span className="text-[11px] text-c-text-muted">
                   {isPl ? meta.labelPl : meta.labelEn}
                 </span>
               </div>
-              <div className="flex items-center gap-3 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+              <div className="flex items-center gap-3 mt-0.5 text-[11px] text-c-text-muted">
                 <span>
                   {isPl ? 'Ostatni:' : 'Last:'} {formatTime(c.lastRunAt)}
                 </span>
@@ -169,7 +169,7 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
             <div className="relative flex-shrink-0">
               <button
                 onClick={() => setMenuOpen(menuOpen === c.id ? null : c.id)}
-                className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                className="p-1.5 rounded-lg text-c-text-secondary hover:text-c-text-muted hover:bg-c-surface-raised transition-colors"
               >
                 <MoreHorizontal size={16} />
               </button>
@@ -177,7 +177,7 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
               {menuOpen === c.id && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(null)} />
-                  <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1">
+                  <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-c-border bg-c-surface shadow-xl py-1">
                     <MenuBtn
                       icon={<Play size={13} />}
                       label={isPl ? 'Uruchom teraz' : 'Run now'}
@@ -202,7 +202,7 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
                         onEdit(c);
                       }}
                     />
-                    <div className="my-1 border-t border-slate-200 dark:border-navy-800" />
+                    <div className="my-1 border-t border-c-border" />
                     <MenuBtn
                       icon={<Trash2 size={13} />}
                       label={isPl ? 'Usuń' : 'Delete'}
@@ -238,7 +238,7 @@ const MenuBtn: React.FC<{
     className={`flex items-center gap-2 w-full px-3 py-1.5 text-xs font-medium transition-colors ${
       danger
         ? 'text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-500/10'
-        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+        : 'text-c-text-muted hover:bg-c-surface-raised'
     }`}
   >
     {icon}

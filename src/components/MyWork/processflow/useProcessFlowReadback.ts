@@ -1,24 +1,33 @@
 import { useCallback, useState } from 'react';
+import type { Edge, Node } from 'reactflow';
 
-import { getHeaders } from '@/services/api';
+import { generateReadback, type LaneLike } from './generateReadback';
 
-export interface ReadbackStep {
-  type: 'step' | 'decision' | 'parallel_split' | 'parallel_join' | 'start' | 'end';
-  label: string;
-  object_id: string;
-  branches?: ReadbackStep[][];
-}
-
-export interface ReadbackResult {
-  paths: ReadbackStep[];
-  warnings: string[];
-}
+export type { ReadbackStep, ReadbackResult } from './generateReadback';
+import type { ReadbackResult } from './generateReadback';
 
 interface UseProcessFlowReadbackOpts {
   processId: string | null;
+  nodes: Node[];
+  edges: Edge[];
+  lanes?: LaneLike[];
+  isPl?: boolean;
 }
 
-export function useProcessFlowReadback({ processId }: UseProcessFlowReadbackOpts) {
+/**
+ * Process-flow readback — client-side (DP-7). The V8 mirror
+ * (`GET /api/v8/process-flow/:id/readback`) was cut, so this hook now
+ * traverses the in-memory graph via `generateReadback()` instead of
+ * fetching. The public API (result/isLoading/fetchReadback) is unchanged so
+ * ReadbackPanel and callers need no changes.
+ */
+export function useProcessFlowReadback({
+  processId,
+  nodes,
+  edges,
+  lanes = [],
+  isPl = false,
+}: UseProcessFlowReadbackOpts) {
   const [result, setResult] = useState<ReadbackResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -26,17 +35,12 @@ export function useProcessFlowReadback({ processId }: UseProcessFlowReadbackOpts
     if (!processId) return;
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/v8/process-flow/${processId}/readback`, { headers: getHeaders() });
-      if (res.ok) {
-        const data = await res.json();
-        setResult(data);
-      }
-    } catch {
-      // keep last result
+      const readback = generateReadback(nodes, edges, lanes, isPl);
+      setResult(readback);
     } finally {
       setIsLoading(false);
     }
-  }, [processId]);
+  }, [processId, nodes, edges, lanes, isPl]);
 
   return { result, isLoading, fetchReadback };
 }

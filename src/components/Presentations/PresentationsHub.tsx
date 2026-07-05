@@ -31,6 +31,8 @@ import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { exportPresentationDeck, PresentationExportError } from '@/services/presentationExport';
 
 import {
+  type BulkAction,
+  BulkActionBar,
   FilterableTable,
   FilterChip,
   GridItem,
@@ -38,9 +40,11 @@ import {
   ModuleHub,
   OpenDocument,
   TableColumn,
+  useTableSelection,
   ViewMode,
 } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
+import { useConfirmDialog } from '../MyWork/shared/ConfirmDialog';
 import { type RowAction } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { AssigneeCell } from '../ui/primitives/cells/AssigneeCell';
@@ -227,6 +231,8 @@ export const PresentationsHub: React.FC = () => {
   // Table columns
   const columns: TableColumn[] = useMemo(
     () => [
+      // canon §3.5 — leading selection column.
+      { id: 'select', label: '', type: 'select', width: '44px' },
       {
         id: 'title',
         label: t('presentations.columns.title', 'Title'),
@@ -305,7 +311,7 @@ export const PresentationsHub: React.FC = () => {
   // Row actions — canon §9.2 Fixed Bottom Manifest (decks have no due date → no Delay)
   const getRowActions = useCallback(
     (deck: PresentationDeck): RowAction[] => [
-      // GÓRA — kontekst
+      // TOP — context
       {
         id: 'open',
         label: t('common.open', 'Open'),
@@ -329,10 +335,10 @@ export const PresentationsHub: React.FC = () => {
             },
           ] as RowAction[])
         : []),
-      // DÓŁ — FIXED BOTTOM MANIFEST
+      // BOTTOM — FIXED BOTTOM MANIFEST
       {
         id: 'open_preview',
-        label: t('rap.actions.openPreview', 'Otwórz podgląd'),
+        label: t('rap.actions.openPreview', 'Open preview'),
         icon: ChevronRight,
         divider: true,
         onClick: () => setSelectedId(deck.id),
@@ -346,10 +352,10 @@ export const PresentationsHub: React.FC = () => {
       {
         // canon §14 + §9.2: Archive slot — soft-delete (backend TBD)
         id: 'archive',
-        label: t('rap.actions.archive', 'Archiwizuj'),
+        label: t('rap.actions.archive', 'Archive'),
         icon: Archive,
         disabled: true,
-        description: t('common.comingSoon', 'Wkrótce'),
+        description: t('common.comingSoon', 'Coming soon'),
         onClick: () => {},
       },
       // DANGER
@@ -454,6 +460,48 @@ export const PresentationsHub: React.FC = () => {
       }
     },
     [fetchDecks, t]
+  );
+
+  // canon §3.5 — row selection + bulk delete (loops the existing DELETE
+  // /presentations/decks/:id; no new backend endpoint).
+  const selection = useTableSelection(filteredDecks.map((d) => String(d.id)));
+  const { dialog: bulkConfirmDialog, confirm: confirmBulkDelete } = useConfirmDialog();
+  const bulkActions = useMemo<BulkAction[]>(
+    () => [
+      {
+        id: 'delete',
+        label: t('common.delete', 'Delete'),
+        icon: Trash2,
+        variant: 'danger',
+        onRun: async (sel) => {
+          const ok = await confirmBulkDelete({
+            title: t('presentations.bulk.confirmDeleteTitle', 'Delete selected presentations?'),
+            description: t(
+              'presentations.bulk.confirmDeleteDesc',
+              'You will permanently delete {{count}} presentations. This action cannot be undone.',
+              { count: sel.count }
+            ),
+            confirmLabel: t('common.delete', 'Delete'),
+            cancelLabel: t('common.cancel', 'Cancel'),
+            variant: 'danger',
+          });
+          if (!ok) return;
+          const deleted: string[] = [];
+          await sel.runBulk(
+            async (id) => {
+              await Api.delete(`/presentations/decks/${id}`);
+              deleted.push(id);
+            },
+            { successNoun: t('presentations.bulk.deletedNoun', 'deleted') }
+          );
+          if (deleted.length > 0) {
+            setOpenDocuments((prev) => prev.filter((d) => !deleted.includes(String(d.id))));
+            fetchDecks();
+          }
+        },
+      },
+    ],
+    [confirmBulkDelete, fetchDecks, setOpenDocuments, t]
   );
 
   const handleOpenSource = useCallback(
@@ -665,17 +713,24 @@ export const PresentationsHub: React.FC = () => {
             </div>
           )}
         >
-          <FilterableTable
-            columns={columns}
-            data={filteredDecks}
-            selectedRowId={selectedId}
-            onRowClick={(row) => setSelectedId(row.id)}
-            onRowDoubleClick={(row) => handleOpenDocument(row as unknown as PresentationDeck)}
-            getRowActions={(row) => getRowActions(row as unknown as PresentationDeck)}
-            activeFilters={activeFilters}
-            onFilterChange={setActiveFilters}
-            emptyMessage={t('presentations.empty', 'No presentations yet.')}
-          />
+          <div className="flex h-full min-h-0 flex-col">
+            <BulkActionBar selection={selection} actions={bulkActions} />
+            {bulkConfirmDialog}
+            <div className="min-h-0 flex-1">
+              <FilterableTable
+                columns={columns}
+                data={filteredDecks}
+                selectedRowId={selectedId}
+                selection={selection.selectionProp}
+                onRowClick={(row) => setSelectedId(row.id)}
+                onRowDoubleClick={(row) => handleOpenDocument(row as unknown as PresentationDeck)}
+                getRowActions={(row) => getRowActions(row as unknown as PresentationDeck)}
+                activeFilters={activeFilters}
+                onFilterChange={setActiveFilters}
+                emptyMessage={t('presentations.empty', 'No presentations yet.')}
+              />
+            </div>
+          </div>
         </TableWithPreviewLayout>
       </div>
     );

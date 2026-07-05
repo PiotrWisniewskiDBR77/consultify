@@ -44,7 +44,7 @@ export const AiSummaryCell: React.FC<AiSummaryCellProps> = ({
   if (value == null || value === '') {
     return (
       <span
-        className="inline-flex items-center gap-1 px-1 text-xs text-slate-600 dark:text-slate-500 italic"
+        className="inline-flex items-center gap-1 px-1 text-xs text-c-text-muted italic"
         data-testid="ai-summary-pending"
         title={promptTemplate ? `AI prompt: ${promptTemplate}` : undefined}
       >
@@ -69,7 +69,7 @@ export const AiSummaryCell: React.FC<AiSummaryCellProps> = ({
 
   return (
     <span
-      className="inline-flex items-center gap-1 px-1 text-xs text-slate-700 dark:text-slate-300 max-w-full"
+      className="inline-flex items-center gap-1 px-1 text-xs text-c-text-muted max-w-full"
       data-testid="ai-summary-text"
       data-truncated={truncated ? 'true' : 'false'}
       data-manual-override={manualOverride ? 'true' : 'false'}
@@ -79,8 +79,8 @@ export const AiSummaryCell: React.FC<AiSummaryCellProps> = ({
         size={10}
         className={`flex-shrink-0 ${
           manualOverride
-            ? 'text-amber-500 dark:text-amber-400'
-            : 'text-primary-500 dark:text-primary-400'
+            ? 'text-c-warning'
+            : 'text-c-accent'
         }`}
       />
       <span className="truncate">{display}</span>

@@ -102,10 +102,29 @@ export interface ArtifactExportTraceItem {
   completedAt: string | null;
 }
 
+/**
+ * P2.6 — compact deck quality scorecard surfaced on presentation list rows.
+ * Derived server-side from the existing checkDeckQualityGates output (score +
+ * A-F grade + top failing gates); present only for presentation decks that are
+ * readable. Absent → the list badge falls back to `validationState`.
+ */
+export interface DeckListScorecard {
+  score: number;
+  grade: 'A' | 'B' | 'C' | 'D' | 'F';
+  result: 'PASS' | 'PASS_WITH_P2' | 'BLOCKED_P1' | 'INCONCLUSIVE';
+  p0: number;
+  p1: number;
+  p2: number;
+  canExport: boolean;
+  topIssues: string[];
+}
+
 export interface ArtifactGovernanceSummary {
   visibilityScope?: 'private' | 'project' | 'organization' | 'review_shared' | 'demo';
   publishState?: string | null;
   validationState?: 'validated' | 'pending' | 'attention_required' | null;
+  /** P2.6 — deck quality scorecard (presentation decks only; see DeckListScorecard). */
+  deckScorecard?: DeckListScorecard | null;
   validationChecks?: Array<{
     id: string;
     status: 'passed' | 'pending' | 'failed';

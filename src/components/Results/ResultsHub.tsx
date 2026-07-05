@@ -865,12 +865,12 @@ export const ResultsHub: React.FC = () => {
               : document
           )
         );
-        toast.success(t('initiatives.toast.statusUpdated', 'Status zaktualizowany'));
+        toast.success(t('initiatives.toast.statusUpdated', 'Status updated'));
         await refreshResultsTruth({ refreshRoi: false });
       } catch (error: any) {
         toast.error(
           error?.response?.data?.error ||
-            t('initiatives.toast.statusUpdateFailed', 'Nie udało się zaktualizować statusu')
+            t('initiatives.toast.statusUpdateFailed', 'Failed to update the status')
         );
       }
     },
@@ -2042,7 +2042,7 @@ export const ResultsHub: React.FC = () => {
               <StrategicLayerPanel projectId="all" />
             ) : (
               <div className="text-sm text-c-text-muted py-8 text-center">
-                {t('results.strategic.disabled', 'Warstwa strategiczna wyłączona — włącz flagę ff_strategicLayer.')}
+                {t('results.strategic.disabled', 'Strategic layer disabled — enable the ff_strategicLayer flag.')}
               </div>
             )}
             {isResultsFlagEnabled('valueDriverTree') && (
@@ -2060,7 +2060,7 @@ export const ResultsHub: React.FC = () => {
             {isResultsFlagEnabled('portfolioInsights') && <PortfolioInsightsPanel projectId="all" />}
             {!isResultsFlagEnabled('aiInsights') && !isResultsFlagEnabled('portfolioInsights') && (
               <div className="text-sm text-c-text-muted py-8 text-center">
-                {t('results.ai.disabled', 'Panel AI/Portfolio wyłączony — włącz ff_aiInsights lub ff_portfolioInsights.')}
+                {t('results.ai.disabled', 'AI/Portfolio panel disabled — enable ff_aiInsights or ff_portfolioInsights.')}
               </div>
             )}
           </div>

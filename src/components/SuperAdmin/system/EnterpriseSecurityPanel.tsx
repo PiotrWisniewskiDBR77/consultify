@@ -17,7 +17,6 @@ import {
   FileCheck,
   Globe,
   Laptop,
-  Loader2,
   Monitor,
   Plus,
   RefreshCw,
@@ -33,6 +32,7 @@ import { toast } from 'react-hot-toast';
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState, ReadOnlyState } from '../../Admin/AdminState';
+import { EmptyState, LoadingState } from '../../shared/states';
 
 interface SecurityEvent {
   id: string;
@@ -95,28 +95,28 @@ interface ComplianceFramework {
 
 const SEVERITY_CONFIG = {
   LOW: {
-    color: 'bg-slate-500',
-    text: 'text-slate-700 dark:text-slate-400',
-    bg: 'bg-slate-500/10',
-    border: 'border-slate-500/30',
+    color: 'bg-c-text-muted',
+    text: 'text-c-text-secondary',
+    bg: 'bg-c-text-muted/10',
+    border: 'border-c-border-strong/30',
   },
   MEDIUM: {
-    color: 'bg-amber-500',
-    text: 'text-amber-700 dark:text-amber-400',
-    bg: 'bg-amber-500/10',
-    border: 'border-amber-500/30',
+    color: 'bg-c-warning',
+    text: 'text-c-warning',
+    bg: 'bg-c-warning/10',
+    border: 'border-c-warning/30',
   },
   HIGH: {
-    color: 'bg-amber-500',
-    text: 'text-amber-700 dark:text-amber-400',
-    bg: 'bg-amber-500/10',
-    border: 'border-amber-500/30',
+    color: 'bg-c-warning',
+    text: 'text-c-warning',
+    bg: 'bg-c-warning/10',
+    border: 'border-c-warning/30',
   },
   CRITICAL: {
-    color: 'bg-danger-500',
-    text: 'text-danger-700 dark:text-danger-400',
-    bg: 'bg-danger-500/10',
-    border: 'border-danger-500/30',
+    color: 'bg-c-danger',
+    text: 'text-c-danger',
+    bg: 'bg-c-danger/10',
+    border: 'border-c-danger/30',
   },
 };
 
@@ -528,31 +528,31 @@ export const EnterpriseSecurityPanel: React.FC = () => {
     switch (status) {
       case 'compliant':
         return {
-          bg: 'bg-emerald-500/10',
-          border: 'border-emerald-500/30',
-          text: 'text-emerald-700 dark:text-emerald-400',
-          color: 'bg-emerald-500',
+          bg: 'bg-c-success/10',
+          border: 'border-c-success/30',
+          text: 'text-c-success',
+          color: 'bg-c-success',
         };
       case 'non_compliant':
         return {
-          bg: 'bg-danger-500/10',
-          border: 'border-danger-500/30',
-          text: 'text-danger-700 dark:text-danger-400',
-          color: 'bg-danger-500',
+          bg: 'bg-c-danger/10',
+          border: 'border-c-danger/30',
+          text: 'text-c-danger',
+          color: 'bg-c-danger',
         };
       case 'partial':
         return {
-          bg: 'bg-amber-500/10',
-          border: 'border-amber-500/30',
-          text: 'text-amber-700 dark:text-amber-400',
-          color: 'bg-amber-500',
+          bg: 'bg-c-warning/10',
+          border: 'border-c-warning/30',
+          text: 'text-c-warning',
+          color: 'bg-c-warning',
         };
       default:
         return {
-          bg: 'bg-slate-500/10',
-          border: 'border-slate-500/30',
-          text: 'text-slate-700 dark:text-slate-400',
-          color: 'bg-slate-500',
+          bg: 'bg-c-text-muted/10',
+          border: 'border-c-border-strong/30',
+          text: 'text-c-text-secondary',
+          color: 'bg-c-text-muted',
         };
     }
   };
@@ -579,25 +579,25 @@ export const EnterpriseSecurityPanel: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+          <h2 className="text-2xl font-semibold text-c-text">
             Security & Compliance
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 text-sm">
+          <p className="text-c-text-secondary text-sm">
             Monitor security events, manage access, and ensure compliance
           </p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-slate-200 dark:border-white/10 pb-1 overflow-x-auto">
+      <div className="flex gap-2 border-b border-c-border-subtle pb-1 overflow-x-auto">
         {securityTabs.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             onClick={() => setActiveTab(id)}
             className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors whitespace-nowrap ${
               activeTab === id
-                ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-slate-100 border-b-2 border-primary-500'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800/20'
+                ? 'bg-c-surface-raised text-c-text border-b-2 border-c-accent'
+                : 'text-c-text-secondary hover:bg-c-surface-raised'
             }`}
           >
             <Icon className="w-4 h-4" />
@@ -609,16 +609,14 @@ export const EnterpriseSecurityPanel: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-danger-500/30 bg-danger-500/5 p-4 text-sm text-danger-600 dark:text-danger-300"
+          className="rounded-xl border border-c-danger/30 bg-c-danger/5 p-4 text-sm text-c-danger"
         >
           {actionError}
         </div>
       )}
 
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-slate-600 dark:text-slate-500 animate-spin" />
-        </div>
+        <LoadingState template="panel" />
       ) : (
         <>
           {/* Security Events Tab */}
@@ -626,7 +624,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
             <div className="space-y-4">
               {/* Stats */}
               {loadErrors.events ? (
-                <div className="p-6 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                <div className="p-6 bg-c-surface rounded-xl border border-c-border">
                   <DegradedState
                     title="Security events unavailable"
                     description={loadErrors.events}
@@ -635,16 +633,16 @@ export const EnterpriseSecurityPanel: React.FC = () => {
               ) : (
                 eventStats && (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                      <div className="text-sm text-slate-600 dark:text-slate-400">Total Events</div>
-                      <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+                    <div className="p-4 bg-c-surface rounded-xl border border-c-border">
+                      <div className="text-sm text-c-text-secondary">Total Events</div>
+                      <div className="text-2xl font-semibold text-c-text">
                         {eventStats.total || 0}
                       </div>
                     </div>
                     <div
                       className={`p-4 rounded-xl ${SEVERITY_CONFIG.CRITICAL.bg} ${SEVERITY_CONFIG.CRITICAL.border}`}
                     >
-                      <div className="text-sm text-slate-600 dark:text-slate-400">Critical</div>
+                      <div className="text-sm text-c-text-secondary">Critical</div>
                       <div className={`text-2xl font-semibold ${SEVERITY_CONFIG.CRITICAL.text}`}>
                         {eventStats.critical || 0}
                       </div>
@@ -652,14 +650,14 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                     <div
                       className={`p-4 rounded-xl ${SEVERITY_CONFIG.HIGH.bg} ${SEVERITY_CONFIG.HIGH.border}`}
                     >
-                      <div className="text-sm text-slate-600 dark:text-slate-400">High</div>
+                      <div className="text-sm text-c-text-secondary">High</div>
                       <div className={`text-2xl font-semibold ${SEVERITY_CONFIG.HIGH.text}`}>
                         {eventStats.high || 0}
                       </div>
                     </div>
-                    <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30">
-                      <div className="text-sm text-slate-600 dark:text-slate-400">Unresolved</div>
-                      <div className="text-2xl font-semibold text-amber-700 dark:text-amber-400">
+                    <div className="p-4 bg-c-warning/10 rounded-xl border border-c-warning/30">
+                      <div className="text-sm text-c-text-secondary">Unresolved</div>
+                      <div className="text-2xl font-semibold text-c-warning">
                         {eventStats.unresolved || 0}
                       </div>
                     </div>
@@ -673,7 +671,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                   value={eventFilters.severity}
                   onChange={(e) => setEventFilters({ ...eventFilters, severity: e.target.value })}
                   disabled={!!loadErrors.events}
-                  className="px-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 text-sm"
+                  className="px-4 py-2 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
                 >
                   <option value="">All Severities</option>
                   {Object.keys(SEVERITY_CONFIG).map((s) => (
@@ -686,7 +684,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                   value={eventFilters.eventType}
                   onChange={(e) => setEventFilters({ ...eventFilters, eventType: e.target.value })}
                   disabled={!!loadErrors.events}
-                  className="px-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 text-sm"
+                  className="px-4 py-2 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
                 >
                   <option value="">All Event Types</option>
                   {EVENT_TYPES.map((t) => (
@@ -699,7 +697,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                   value={eventFilters.resolved}
                   onChange={(e) => setEventFilters({ ...eventFilters, resolved: e.target.value })}
                   disabled={!!loadErrors.events}
-                  className="px-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 text-sm"
+                  className="px-4 py-2 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
                 >
                   <option value="">All Status</option>
                   <option value="false">Unresolved</option>
@@ -710,24 +708,26 @@ export const EnterpriseSecurityPanel: React.FC = () => {
               {/* Events List */}
               <div className="space-y-2">
                 {loadErrors.events ? (
-                  <div className="p-6 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                  <div className="p-6 bg-c-surface rounded-xl border border-c-border">
                     <DegradedState
                       title="Security event list unavailable"
                       description={loadErrors.events}
                     />
                   </div>
                 ) : safeEvents.length === 0 ? (
-                  <div className="text-center py-12 text-slate-600 dark:text-slate-400">
-                    <Shield className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>No security events found</p>
-                  </div>
+                  <EmptyState
+                    variant="new"
+                    icon={Shield}
+                    title="No security events found"
+                    description="Security events will appear here as they are detected."
+                  />
                 ) : (
                   safeEvents.map((event) => {
                     const severityConfig = SEVERITY_CONFIG[event.severity] || SEVERITY_CONFIG.LOW;
                     return (
                       <div
                         key={event.id}
-                        className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-navy-900/20 transition-colors"
+                        className="p-4 bg-c-surface rounded-xl border border-c-border hover:bg-c-surface-raised transition-colors"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
@@ -736,7 +736,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                             </div>
                             <div>
                               <div className="flex items-center gap-2">
-                                <span className="font-medium text-slate-900 dark:text-slate-100">
+                                <span className="font-medium text-c-text">
                                   {event.event_type.replace(/_/g, ' ')}
                                 </span>
                                 <span
@@ -745,12 +745,12 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                                   {event.severity}
                                 </span>
                                 {event.resolved ? (
-                                  <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                                  <CheckCircle className="w-4 h-4 text-c-success" />
                                 ) : (
-                                  <XCircle className="w-4 h-4 text-danger-600 dark:text-danger-400" />
+                                  <XCircle className="w-4 h-4 text-c-danger" />
                                 )}
                               </div>
-                              <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-400 mt-1">
+                              <div className="flex items-center gap-3 text-xs text-c-text-secondary mt-1">
                                 <span>{formatDateTime(event.created_at)}</span>
                                 {event.ip_address && <span>{event.ip_address}</span>}
                                 {event.location_city && (
@@ -765,7 +765,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                             <button
                               onClick={() => handleResolveEvent(event.id)}
                               aria-label={`Resolve security event ${event.id}`}
-                              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm rounded-lg transition-colors"
+                              className="px-4 py-2 bg-c-success hover:bg-c-success/90 text-c-text text-sm rounded-lg transition-colors"
                             >
                               Resolve
                             </button>
@@ -783,13 +783,13 @@ export const EnterpriseSecurityPanel: React.FC = () => {
           {activeTab === 'sessions' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
+                <h3 className="text-lg font-medium text-c-text">
                   Active Sessions
                 </h3>
                 <button
                   disabled
                   title="Bulk session termination requires an audited backend workflow"
-                  className="px-4 py-2 bg-danger-600 text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-c-danger text-c-text text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Terminate All
                 </button>
@@ -797,17 +797,19 @@ export const EnterpriseSecurityPanel: React.FC = () => {
 
               <div className="space-y-2">
                 {loadErrors.sessions ? (
-                  <div className="p-6 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                  <div className="p-6 bg-c-surface rounded-xl border border-c-border">
                     <DegradedState
                       title="Active session list unavailable"
                       description={loadErrors.sessions}
                     />
                   </div>
                 ) : safeSessions.length === 0 ? (
-                  <div className="text-center py-12 text-slate-600 dark:text-slate-400">
-                    <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>No active sessions</p>
-                  </div>
+                  <EmptyState
+                    variant="new"
+                    icon={Users}
+                    title="No active sessions"
+                    description="Active user sessions will appear here once someone signs in."
+                  />
                 ) : (
                   safeSessions.map((session) => {
                     const DeviceIcon = getDeviceIcon(session.device_type);
@@ -816,8 +818,8 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                         key={session.id}
                         className={`p-4 rounded-xl border transition-colors ${
                           session.is_current
-                            ? 'bg-emerald-500/10 border-emerald-500/30'
-                            : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10'
+                            ? 'bg-c-success/10 border-c-success/30'
+                            : 'bg-c-surface border-c-border'
                         }`}
                       >
                         <div className="flex items-center justify-between">
@@ -825,33 +827,33 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                             <div
                               className={`p-2 rounded-lg ${
                                 session.is_current
-                                  ? 'bg-emerald-500/20'
-                                  : 'bg-slate-100 dark:bg-white/10'
+                                  ? 'bg-c-success/20'
+                                  : 'bg-c-surface-raised'
                               }`}
                             >
                               <DeviceIcon
-                                className={`w-5 h-5 ${session.is_current ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-400'}`}
+                                className={`w-5 h-5 ${session.is_current ? 'text-c-success' : 'text-c-text-secondary'}`}
                               />
                             </div>
                             <div>
                               <div className="flex items-center gap-2">
-                                <span className="font-medium text-slate-900 dark:text-slate-100">
+                                <span className="font-medium text-c-text">
                                   {session.user_email}
                                 </span>
                                 {session.is_current && (
-                                  <span className="px-2 py-0.5 text-xs bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded">
+                                  <span className="px-2 py-0.5 text-xs bg-c-success/20 text-c-success rounded">
                                     Current
                                   </span>
                                 )}
                               </div>
-                              <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-400 mt-1">
+                              <div className="flex items-center gap-3 text-xs text-c-text-secondary mt-1">
                                 <span>{session.browser}</span>
                                 <span>•</span>
                                 <span>{session.ip_address}</span>
                                 <span>•</span>
                                 <span>{session.location}</span>
                               </div>
-                              <div className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                              <div className="text-xs text-c-text-secondary mt-1">
                                 Last active: {formatDateTime(session.last_activity)}
                               </div>
                             </div>
@@ -860,7 +862,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                             <button
                               onClick={() => handleTerminateSession(session.id)}
                               aria-label={`Terminate session ${session.id}`}
-                              className="px-3 py-1.5 bg-danger-500/20 hover:bg-danger-500/30 text-danger-400 text-sm rounded-lg transition-colors"
+                              className="px-3 py-1.5 bg-c-danger/20 hover:bg-c-danger/30 text-c-danger text-sm rounded-lg transition-colors"
                             >
                               Terminate
                             </button>
@@ -878,27 +880,27 @@ export const EnterpriseSecurityPanel: React.FC = () => {
           {activeTab === 'ip-rules' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
+                <h3 className="text-lg font-medium text-c-text">
                   IP Access Rules
                 </h3>
                 <button
                   disabled
                   title="IP rule creation requires an audited backend workflow"
-                  className="flex items-center gap-2 px-4 py-2 bg-navy-900 text-white text-sm rounded-lg hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-4 py-2 bg-c-surface text-white text-sm rounded-lg hover:bg-c-surface dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Plus className="w-4 h-4" />
                   Add Rule
                 </button>
               </div>
 
-              <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+              <div className="p-4 bg-c-warning/10 border border-c-warning/30 rounded-xl">
                 <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-amber-700 dark:text-amber-400 mt-0.5" />
+                  <AlertTriangle className="w-5 h-5 text-c-warning mt-0.5" />
                   <div>
-                    <h4 className="font-medium text-amber-800 dark:text-amber-300">
+                    <h4 className="font-medium text-c-warning">
                       IP Filtering Mode
                     </h4>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                    <p className="text-sm text-c-text-secondary mt-1">
                       Currently using <strong>allowlist mode</strong>. Only IPs matching allow rules
                       can access the system. Deny rules take precedence over allow rules.
                     </p>
@@ -908,57 +910,58 @@ export const EnterpriseSecurityPanel: React.FC = () => {
 
               <div className="space-y-2">
                 {loadErrors.ipRules ? (
-                  <div className="p-6 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                  <div className="p-6 bg-c-surface rounded-xl border border-c-border">
                     <DegradedState
                       title="IP access rules unavailable"
                       description={loadErrors.ipRules}
                     />
                   </div>
                 ) : safeIpRules.length === 0 ? (
-                  <div className="text-center py-12 text-slate-600 dark:text-slate-400">
-                    <Globe className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>No IP rules configured</p>
-                    <p className="text-sm mt-1">All IP addresses are currently allowed</p>
-                  </div>
+                  <EmptyState
+                    variant="new"
+                    icon={Globe}
+                    title="No IP rules configured"
+                    description="All IP addresses are currently allowed."
+                  />
                 ) : (
                   safeIpRules.map((rule) => (
                     <div
                       key={rule.id}
                       className={`p-4 rounded-xl border transition-colors ${
                         rule.rule_type === 'allow'
-                          ? 'bg-emerald-500/5 border-emerald-500/20'
-                          : 'bg-danger-500/5 border-danger-500/20'
+                          ? 'bg-c-success/5 border-c-success/20'
+                          : 'bg-c-danger/5 border-c-danger/20'
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                           <div
                             className={`p-2 rounded-lg ${
-                              rule.rule_type === 'allow' ? 'bg-emerald-500/20' : 'bg-danger-500/20'
+                              rule.rule_type === 'allow' ? 'bg-c-success/20' : 'bg-c-danger/20'
                             }`}
                           >
                             {rule.rule_type === 'allow' ? (
-                              <CheckCircle className="w-4 h-4 text-emerald-400" />
+                              <CheckCircle className="w-4 h-4 text-c-success" />
                             ) : (
-                              <XCircle className="w-4 h-4 text-danger-400" />
+                              <XCircle className="w-4 h-4 text-c-danger" />
                             )}
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <code className="font-mono text-slate-900 dark:text-slate-100">
+                              <code className="font-mono text-c-text">
                                 {rule.ip_pattern}
                               </code>
                               <span
                                 className={`px-2 py-0.5 text-xs rounded ${
                                   rule.rule_type === 'allow'
-                                    ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400'
-                                    : 'bg-danger-500/20 text-danger-700 dark:text-danger-400'
+                                    ? 'bg-c-success/20 text-c-success'
+                                    : 'bg-c-danger/20 text-c-danger'
                                 }`}
                               >
                                 {rule.rule_type.toUpperCase()}
                               </span>
                             </div>
-                            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                            <p className="text-sm text-c-text-secondary mt-1">
                               {rule.description}
                             </p>
                           </div>
@@ -969,14 +972,14 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                             aria-label={`${rule.enabled ? 'Disable' : 'Enable'} IP rule ${rule.ip_pattern}`}
                             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                               rule.enabled
-                                ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400'
-                                : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-400'
+                                ? 'bg-c-success/20 text-c-success'
+                                : 'bg-c-surface-raised text-c-text-secondary'
                             }`}
                           >
                             {rule.enabled ? 'Enabled' : 'Disabled'}
                           </button>
-                          <button className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors">
-                            <Trash2 className="w-4 h-4 text-danger-400" />
+                          <button className="p-2 hover:bg-c-surface-raised rounded-lg transition-colors">
+                            <Trash2 className="w-4 h-4 text-c-danger" />
                           </button>
                         </div>
                       </div>
@@ -991,14 +994,14 @@ export const EnterpriseSecurityPanel: React.FC = () => {
           {activeTab === 'policies' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
+                <h3 className="text-lg font-medium text-c-text">
                   Security Policies
                 </h3>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {loadErrors.policies ? (
-                  <div className="md:col-span-2 p-6 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                  <div className="md:col-span-2 p-6 bg-c-surface rounded-xl border border-c-border">
                     <DegradedState
                       title="Security policies unavailable"
                       description={loadErrors.policies}
@@ -1008,22 +1011,22 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                   safePolicies.map((policy) => (
                     <div
                       key={policy.id}
-                      className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-navy-900/20 transition-colors"
+                      className="p-4 bg-c-surface rounded-xl border border-c-border hover:bg-c-surface-raised transition-colors"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <span className="font-medium text-slate-900 dark:text-slate-100">
+                            <span className="font-medium text-c-text">
                               {policy.name}
                             </span>
-                            <span className="px-2 py-0.5 text-xs bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300 rounded">
+                            <span className="px-2 py-0.5 text-xs bg-c-surface-raised text-c-text-secondary rounded">
                               {policy.category}
                             </span>
                           </div>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">
+                          <p className="text-sm text-c-text-secondary">
                             {policy.description}
                           </p>
-                          <div className="text-xs text-slate-600 dark:text-slate-400 mt-2">
+                          <div className="text-xs text-c-text-secondary mt-2">
                             Last updated: {formatDate(policy.last_updated)}
                           </div>
                         </div>
@@ -1032,8 +1035,8 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                           aria-label={`${policy.enabled ? 'Disable' : 'Enable'} policy ${policy.name}`}
                           className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                             policy.enabled
-                              ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400'
-                              : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-400'
+                              ? 'bg-c-success/20 text-c-success'
+                              : 'bg-c-surface-raised text-c-text-secondary'
                           }`}
                         >
                           {policy.enabled ? 'Enabled' : 'Disabled'}
@@ -1050,13 +1053,13 @@ export const EnterpriseSecurityPanel: React.FC = () => {
           {activeTab === 'compliance' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
+                <h3 className="text-lg font-medium text-c-text">
                   Compliance Frameworks
                 </h3>
                 <button
                   disabled
                   title="Compliance assessment execution requires an audited backend workflow"
-                  className="flex items-center gap-2 px-4 py-2 bg-navy-900 text-white text-sm rounded-lg hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-4 py-2 bg-c-surface text-white text-sm rounded-lg hover:bg-c-surface dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <RefreshCw className="w-4 h-4" />
                   Run Assessment
@@ -1065,7 +1068,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {loadErrors.compliance ? (
-                  <div className="md:col-span-3 p-6 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                  <div className="md:col-span-3 p-6 bg-c-surface rounded-xl border border-c-border">
                     <DegradedState
                       title="Compliance frameworks unavailable"
                       description={loadErrors.compliance}
@@ -1082,7 +1085,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                         className={`p-4 rounded-xl ${statusColors.bg} ${statusColors.border} border`}
                       >
                         <div className="flex items-center justify-between mb-3">
-                          <h4 className="font-medium text-slate-900 dark:text-slate-100">
+                          <h4 className="font-medium text-c-text">
                             {framework.name}
                           </h4>
                           <span
@@ -1091,23 +1094,23 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                             {framework.status.replace('_', ' ').toUpperCase()}
                           </span>
                         </div>
-                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+                        <p className="text-sm text-c-text-secondary mb-3">
                           {framework.description}
                         </p>
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-sm">
-                            <span className="text-slate-600 dark:text-slate-400">Controls</span>
+                            <span className="text-c-text-secondary">Controls</span>
                             <span className={statusColors.text}>
                               {framework.controls_compliant}/{framework.controls_total}
                             </span>
                           </div>
-                          <div className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                          <div className="h-2 bg-c-surface-raised rounded-full overflow-hidden">
                             <div
                               className={`h-full ${statusColors.color} rounded-full transition-all`}
                               style={{ width: `${compliancePercent}%` }}
                             />
                           </div>
-                          <div className="text-xs text-slate-600 dark:text-slate-400">
+                          <div className="text-xs text-c-text-secondary">
                             Last assessment: {formatDate(framework.last_assessment)}
                           </div>
                         </div>
@@ -1117,12 +1120,12 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                 )}
               </div>
 
-              <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-3 flex items-center gap-2">
-                  <Building className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+              <div className="p-4 bg-c-surface rounded-xl border border-c-border">
+                <h4 className="font-medium text-c-text mb-3 flex items-center gap-2">
+                  <Building className="w-4 h-4 text-c-text-secondary" />
                   SIEM Integration
                 </h4>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                <p className="text-sm text-c-text-secondary mb-4">
                   Forward security events to your SIEM solution for centralized monitoring.
                 </p>
                 <ReadOnlyState

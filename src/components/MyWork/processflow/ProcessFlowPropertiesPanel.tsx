@@ -2,13 +2,13 @@ import { ChevronDown, Clock, DollarSign, Layers, Server, Tag, User } from 'lucid
 import React, { useCallback, useEffect, useState } from 'react';
 import type { Edge, Node } from 'reactflow';
 
-import { CONDITION_TYPES } from './FlowEdgeComponent';
+import { CONDITION_TYPES, EDGE_KINDS, type EdgeKind } from './FlowEdgeComponent';
 
 const inputClass =
-  'w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500/40 outline-none';
+  'w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:ring-2 focus:ring-c-info outline-none';
 
 const sectionHeaderClass =
-  'text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2';
+  'text-xs font-semibold uppercase tracking-wider text-c-text-muted mb-2';
 
 const GATEWAY_SHAPES = new Set(['decision', 'bpmn_gateway', 'auto_condition']);
 
@@ -30,6 +30,10 @@ interface ProcessFlowPropertiesPanelProps {
   ) => void;
   /** Persist edge `data.conditionType` (yes / no / default / exception). */
   onEdgeConditionChange?: (edgeId: string, conditionType: EdgeCondition) => void;
+  /** F5a A2: persist edge `data.edgeKind` (sequence / conditional / message). */
+  onEdgeKindChange?: (edgeId: string, kind: EdgeKind) => void;
+  /** F5a A1: toggle orthogonal routing (`data.orthogonal`) for the edge. */
+  onEdgeOrthogonalToggle?: (edgeId: string, orthogonal: boolean) => void;
   /** Persist description, assignee, and system fields on node `data`. */
   onNodeMetadataChange?: (
     nodeId: string,
@@ -48,6 +52,8 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
   onLaneChange,
   onEdgeLabelChange,
   onEdgeConditionChange = () => {},
+  onEdgeKindChange = () => {},
+  onEdgeOrthogonalToggle = () => {},
   onNodeMetricsChange,
   onNodeMetadataChange = () => {},
 }) => {
@@ -143,7 +149,7 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
 
   if (!selectedNode && !selectedEdge) {
     return (
-      <div className="space-y-4 p-4 text-sm text-slate-500 dark:text-slate-400">
+      <div className="space-y-4 p-4 text-sm text-c-text-muted">
         {isPl
           ? 'Zaznacz węzeł lub krawędź, aby zobaczyć właściwości'
           : 'Select a node or edge to view properties'}
@@ -153,12 +159,30 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
 
   if (selectedEdge && !selectedNode) {
     const condition = (selectedEdge.data?.conditionType ?? '') as EdgeCondition;
+    const edgeKind: EdgeKind = EDGE_KINDS.includes(selectedEdge.data?.edgeKind)
+      ? selectedEdge.data.edgeKind
+      : selectedEdge.data?.conditionType
+        ? 'conditional'
+        : 'sequence';
+    const orthogonal = Boolean(selectedEdge.data?.orthogonal);
+    const edgeKindLabel = (k: EdgeKind) =>
+      k === 'sequence'
+        ? isPl
+          ? 'Sekwencja'
+          : 'Sequence'
+        : k === 'conditional'
+          ? isPl
+            ? 'Warunkowa'
+            : 'Conditional'
+          : isPl
+            ? 'Komunikat'
+            : 'Message';
     return (
       <div className="space-y-4 p-4 text-sm">
         <div>
           <h3 className={sectionHeaderClass}>{isPl ? 'Krawędź' : 'Edge properties'}</h3>
           <label className="block">
-            <span className="mb-1 flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-300">
+            <span className="mb-1 flex items-center gap-1 text-xs font-medium text-c-text-secondary">
               <Tag size={14} className="opacity-70" />
               {isPl ? 'Etykieta' : 'Label'}
             </span>
@@ -171,6 +195,42 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
               onKeyDown={(e) => {
                 if (e.key === 'Enter') commitEdgeLabel();
               }}
+            />
+          </label>
+        </div>
+        <div>
+          <h3 className={sectionHeaderClass}>{isPl ? 'Typ krawędzi' : 'Edge type'}</h3>
+          <div className="relative">
+            <select
+              className={`${inputClass} appearance-none pr-9`}
+              value={edgeKind}
+              disabled={locked}
+              onChange={(e) => onEdgeKindChange(selectedEdge.id, e.target.value as EdgeKind)}
+            >
+              {EDGE_KINDS.map((k) => (
+                <option key={k} value={k}>
+                  {edgeKindLabel(k)}
+                </option>
+              ))}
+            </select>
+            <ChevronDown
+              size={16}
+              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-600"
+              aria-hidden
+            />
+          </div>
+        </div>
+        <div>
+          <label className="flex cursor-pointer items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-navy-700 dark:bg-navy-900/40">
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+              {isPl ? 'Routing ortogonalny' : 'Orthogonal routing'}
+            </span>
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-[var(--c-info)]"
+              checked={orthogonal}
+              disabled={locked}
+              onChange={(e) => onEdgeOrthogonalToggle(selectedEdge.id, e.target.checked)}
             />
           </label>
         </div>
@@ -211,7 +271,7 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
             </select>
             <ChevronDown
               size={16}
-              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-600"
+              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-c-text-secondary"
               aria-hidden
             />
           </div>
@@ -228,7 +288,7 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
     <div className="space-y-4 p-4 text-sm">
       <div>
         <h3 className={sectionHeaderClass}>{isPl ? 'Typ węzła' : 'Node type'}</h3>
-        <span className="inline-flex items-center rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-medium text-slate-700 dark:border-navy-600 dark:bg-navy-900/40 dark:text-slate-200">
+        <span className="inline-flex items-center rounded-md border border-c-border-subtle bg-c-surface-raised px-2 py-1 text-xs font-medium text-c-text-secondary">
           {shape || (isPl ? 'nieznany' : 'unknown')}
         </span>
       </div>
@@ -251,22 +311,22 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
         <div>
           <h3 className={sectionHeaderClass}>{isPl ? 'Rodzaj bramki' : 'Gateway kind'}</h3>
           <div className="flex flex-col gap-2">
-            <label className="flex cursor-pointer items-center gap-2 text-slate-700 dark:text-slate-200">
+            <label className="flex cursor-pointer items-center gap-2 text-c-text-secondary">
               <input
                 type="radio"
                 name="gateway-kind"
-                className="text-primary-600 focus:ring-blue-500/40"
+                className="text-c-accent focus:ring-c-info"
                 checked={gatewayKind === 'xor'}
                 disabled={locked}
                 onChange={() => onGatewayKindChange(selectedNode.id, 'xor')}
               />
               XOR
             </label>
-            <label className="flex cursor-pointer items-center gap-2 text-slate-700 dark:text-slate-200">
+            <label className="flex cursor-pointer items-center gap-2 text-c-text-secondary">
               <input
                 type="radio"
                 name="gateway-kind"
-                className="text-primary-600 focus:ring-blue-500/40"
+                className="text-c-accent focus:ring-c-info"
                 checked={gatewayKind === 'and'}
                 disabled={locked}
                 onChange={() => onGatewayKindChange(selectedNode.id, 'and')}
@@ -299,7 +359,7 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
           </select>
           <ChevronDown
             size={16}
-            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-600"
+            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-c-text-secondary"
             aria-hidden
           />
         </div>
@@ -309,7 +369,7 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
         <h3 className={sectionHeaderClass}>{isPl ? 'Metadane' : 'Metadata'}</h3>
         <div className="space-y-2">
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
+            <span className="mb-1 block text-xs font-medium text-c-text-secondary">
               {isPl ? 'Opis' : 'Description'}
             </span>
             <textarea
@@ -321,7 +381,7 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
             />
           </label>
           <label className="block">
-            <span className="mb-1 flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-300">
+            <span className="mb-1 flex items-center gap-1 text-xs font-medium text-c-text-secondary">
               <User size={14} className="opacity-70" />
               {isPl ? 'Przypisany' : 'Assignee'}
             </span>
@@ -337,7 +397,7 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
             />
           </label>
           <label className="block">
-            <span className="mb-1 flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-300">
+            <span className="mb-1 flex items-center gap-1 text-xs font-medium text-c-text-secondary">
               <Server size={14} className="opacity-70" />
               {isPl ? 'System' : 'System'}
             </span>
@@ -360,7 +420,7 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
         <div className="space-y-2">
           <div className="flex gap-2">
             <label className="min-w-0 flex-1">
-              <span className="mb-1 flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-300">
+              <span className="mb-1 flex items-center gap-1 text-xs font-medium text-c-text-secondary">
                 <Clock size={14} className="opacity-70" />
                 {isPl ? 'Czas trwania' : 'Duration'}
               </span>
@@ -376,7 +436,7 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
               />
             </label>
             <label className="w-24 shrink-0">
-              <span className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
+              <span className="mb-1 block text-xs font-medium text-c-text-secondary">
                 {isPl ? 'Jedn.' : 'Unit'}
               </span>
               <select
@@ -400,7 +460,7 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
             </label>
           </div>
           <label className="block">
-            <span className="mb-1 flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-300">
+            <span className="mb-1 flex items-center gap-1 text-xs font-medium text-c-text-secondary">
               <DollarSign size={14} className="opacity-70" />
               {isPl ? 'Koszt' : 'Cost'}
             </span>
@@ -416,7 +476,7 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
             />
           </label>
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
+            <span className="mb-1 block text-xs font-medium text-c-text-secondary">
               {isPl ? 'Liczba FTE' : 'FTE count'}
             </span>
             <input

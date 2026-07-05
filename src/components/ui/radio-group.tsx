@@ -1,6 +1,8 @@
 import { Circle } from 'lucide-react';
 import * as React from 'react';
 
+import { cn } from '../../lib/utils';
+
 interface RadioGroupContextValue {
   value: string;
   onValueChange: (value: string) => void;
@@ -52,7 +54,13 @@ const RadioGroupItem = React.forwardRef<HTMLButtonElement, RadioGroupItemProps>(
         role="radio"
         aria-checked={isSelected}
         ref={ref}
-        className={`aspect-square h-4 w-4 rounded-full border border-primary text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${className || ''}`}
+        className={cn(
+          'aspect-square h-4 w-4 rounded-full border transition-colors',
+          'focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-c-surface',
+          'disabled:cursor-not-allowed disabled:opacity-50',
+          isSelected ? 'border-c-accent text-c-accent' : 'border-c-border text-c-text',
+          className
+        )}
         onClick={() => context.onValueChange(value)}
         {...props}
       >

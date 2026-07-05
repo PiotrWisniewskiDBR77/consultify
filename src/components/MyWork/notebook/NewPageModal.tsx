@@ -409,14 +409,14 @@ export const NewPageModal: React.FC<NewPageModalProps> = ({
         if (e.target === overlayRef.current) onClose();
       }}
     >
-      <div className="w-full max-w-2xl mx-4 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-800">
-          <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+      <div className="w-full max-w-2xl mx-4 rounded-2xl bg-c-surface border border-c-border shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-c-border-subtle">
+          <h2 className="text-base font-semibold text-c-text">
             {pl ? 'Nowa notatka' : 'New Note'}
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+            className="p-1.5 rounded-lg text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised"
             aria-label={pl ? 'Zamknij' : 'Close'}
           >
             <X size={18} />
@@ -437,16 +437,16 @@ export const NewPageModal: React.FC<NewPageModalProps> = ({
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-slate-300 dark:border-navy-600 hover:border-slate-500 dark:hover:border-slate-500 hover:bg-slate-500/5 transition-colors"
+                className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-c-border hover:border-c-border-strong hover:bg-c-surface-raised transition-colors"
               >
-                <div className="shrink-0 p-2.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400">
+                <div className="shrink-0 p-2.5 rounded-lg bg-c-surface-raised text-c-text-secondary">
                   <Upload size={20} />
                 </div>
                 <div className="text-left">
-                  <div className="font-medium text-sm text-slate-900 dark:text-white">
+                  <div className="font-medium text-sm text-c-text">
                     {pl ? 'Wgraj plik (PDF, XLSX, TXT)' : 'Upload file (PDF, XLSX, TXT)'}
                   </div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  <div className="text-[11px] text-c-text-muted">
                     {uploading
                       ? pl
                         ? 'Przetwarzam…'
@@ -460,7 +460,7 @@ export const NewPageModal: React.FC<NewPageModalProps> = ({
             </div>
           )}
 
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+          <p className="text-sm text-c-text-muted mb-4">
             {pl
               ? 'Wybierz szablon, aby szybciej zacząć pisać'
               : 'Pick a template to get started faster'}
@@ -471,7 +471,7 @@ export const NewPageModal: React.FC<NewPageModalProps> = ({
               <button
                 key={tmpl.id}
                 onClick={() => handleSelect(tmpl)}
-                className="group flex items-start gap-3.5 w-full p-4 rounded-xl text-left border border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600 hover:shadow-md bg-white dark:bg-navy-950 transition-all duration-150 hover:-translate-y-0.5"
+                className="group flex items-start gap-3.5 w-full p-4 rounded-xl text-left border border-c-border hover:border-c-border-strong hover:shadow-md bg-c-surface transition-all duration-150 hover:-translate-y-0.5"
               >
                 <div
                   className={`shrink-0 p-2.5 rounded-lg bg-gradient-to-br ${tmpl.gradient} text-white`}
@@ -479,10 +479,10 @@ export const NewPageModal: React.FC<NewPageModalProps> = ({
                   {tmpl.icon}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="font-medium text-sm text-slate-900 dark:text-white">
+                  <div className="font-medium text-sm text-c-text">
                     {pl ? tmpl.labelPl : tmpl.label}
                   </div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+                  <div className="text-[11px] text-c-text-muted mt-0.5 line-clamp-2">
                     {pl ? tmpl.descriptionPl : tmpl.description}
                   </div>
                 </div>

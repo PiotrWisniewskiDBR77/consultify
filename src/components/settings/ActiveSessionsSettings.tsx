@@ -82,11 +82,11 @@ export const ActiveSessionsSettings: React.FC<ActiveSessionsSettingsProps> = ({
     <div className={`space-y-6 ${className}`}>
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-lg font-medium text-c-text flex items-center gap-2">
             <Globe size={20} />
             {t('settings.security.sessionsTitle', 'Active Sessions')}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-muted mt-1">
             {t(
               'settings.security.sessionsDesc',
               "Manage devices where you're currently logged in."
@@ -95,7 +95,7 @@ export const ActiveSessionsSettings: React.FC<ActiveSessionsSettingsProps> = ({
         </div>
         <button
           onClick={fetchSessions}
-          className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
+          className="p-2 text-c-text-secondary hover:text-c-text-secondary"
         >
           <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
         </button>
@@ -107,15 +107,15 @@ export const ActiveSessionsSettings: React.FC<ActiveSessionsSettingsProps> = ({
           return (
             <div
               key={session.id}
-              className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-800/50 rounded-lg"
+              className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg"
             >
               <div className="flex items-center gap-4">
-                <div className="p-2 bg-white dark:bg-navy-700 rounded-lg">
-                  <DeviceIcon size={20} className="text-slate-600 dark:text-slate-300" />
+                <div className="p-2 bg-c-surface rounded-lg">
+                  <DeviceIcon size={20} className="text-c-text-secondary" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="font-medium text-slate-900 dark:text-white">
+                    <p className="font-medium text-c-text">
                       {session.deviceInfo || session.device || 'Unknown Device'}{' '}
                       {session.browser ? `- ${session.browser}` : ''}
                     </p>
@@ -125,7 +125,7 @@ export const ActiveSessionsSettings: React.FC<ActiveSessionsSettingsProps> = ({
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-c-text-muted">
                     {session.location || session.ipAddress || 'Unknown Location'} ·{' '}
                     {session.lastActive || session.lastUsedAt || 'Recently'}
                   </p>
@@ -146,7 +146,7 @@ export const ActiveSessionsSettings: React.FC<ActiveSessionsSettingsProps> = ({
       </div>
 
       {sessions.length > 1 && (
-        <div className="flex justify-end pt-4 border-t border-slate-200 dark:border-navy-700">
+        <div className="flex justify-end pt-4 border-t border-c-border-subtle dark:border-navy-700">
           <button
             onClick={handleRevokeAll}
             className="px-4 py-2 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors text-sm font-medium"

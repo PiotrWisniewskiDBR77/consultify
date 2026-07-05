@@ -141,7 +141,7 @@ export const DocumentInlineAIMenu: React.FC<DocumentInlineAIMenuProps> = ({
     <div
       ref={menuRef}
       data-testid="doc-inline-ai-menu"
-      className="fixed z-50 rounded-lg border border-slate-200 bg-white shadow-lg dark:border-navy-700 dark:bg-navy-900 p-2"
+      className="fixed z-overlay rounded-lg border border-c-border-subtle bg-c-surface shadow-lg p-2"
       style={{
         top: `${position.top}px`,
         left: `${position.left}px`,
@@ -153,8 +153,8 @@ export const DocumentInlineAIMenu: React.FC<DocumentInlineAIMenuProps> = ({
     >
       {/* Loading state */}
       {status === 'loading' && (
-        <div className="flex items-center gap-2 px-1 py-0.5 text-sm text-slate-500 dark:text-slate-400">
-          <Loader2 size={14} className="animate-spin text-primary-500" />
+        <div className="flex items-center gap-2 px-1 py-0.5 text-sm text-c-text-secondary">
+          <Loader2 size={14} className="animate-spin text-c-accent" />
           <span>Teresa pracuje…</span>
         </div>
       )}
@@ -164,14 +164,14 @@ export const DocumentInlineAIMenu: React.FC<DocumentInlineAIMenuProps> = ({
         <div className="flex items-center gap-1">
           <button
             onClick={handleApprove}
-            className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-white bg-emerald-500 hover:bg-emerald-600 transition-colors"
+            className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-c-text bg-emerald-500 hover:bg-emerald-600 transition-colors"
           >
             <Check size={12} />
             Zatwierdź
           </button>
           <button
             onClick={handleReject}
-            className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
+            className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-c-text-secondary bg-c-surface-raised/[0.06] hover:bg-c-border-subtle transition-colors"
           >
             <X size={12} />
             Odrzuć
@@ -187,7 +187,7 @@ export const DocumentInlineAIMenu: React.FC<DocumentInlineAIMenuProps> = ({
           </p>
           <button
             onClick={() => rejectProposal()}
-            className="text-xs text-slate-500 underline hover:text-slate-700 dark:hover:text-slate-300"
+            className="text-xs text-c-text-secondary underline hover:text-c-text"
           >
             Zamknij
           </button>
@@ -200,7 +200,7 @@ export const DocumentInlineAIMenu: React.FC<DocumentInlineAIMenuProps> = ({
           {!showActions ? (
             <button
               onClick={() => setShowActions(true)}
-              className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors w-full"
+              className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-c-accent hover:bg-c-accent-soft transition-colors w-full"
             >
               <span>Popraw z Teresa</span>
               <ChevronDown size={12} />
@@ -212,7 +212,7 @@ export const DocumentInlineAIMenu: React.FC<DocumentInlineAIMenuProps> = ({
                   key={action.id}
                   data-testid={`doc-inline-ai-${action.id}`}
                   onClick={() => handleAction(action.id)}
-                  className="w-full rounded px-2 py-1 text-left text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+                  className="w-full rounded px-2 py-1 text-left text-xs text-c-text hover:bg-c-surface-raised/[0.06] transition-colors"
                 >
                   {action.labelPl}
                 </button>

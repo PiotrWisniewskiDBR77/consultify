@@ -44,11 +44,11 @@ const KpiStripNodeComponent: React.FC<{
     <NodeViewWrapper
       data-doc-block={blockType}
       className={`my-3 rounded-lg border ${
-        selected ? 'border-primary-500 ring-1 ring-primary-500/40' : 'border-slate-200 dark:border-navy-700'
-      } bg-white p-3 dark:bg-navy-900`}
+        selected ? 'border-c-accent ring-1 ring-c-focus' : 'border-c-border-subtle'
+      } bg-c-surface p-3`}
     >
       {rendered ?? (
-        <pre className="whitespace-pre-wrap text-xs text-slate-500">
+        <pre className="whitespace-pre-wrap text-xs text-c-text-secondary">
           {JSON.stringify(payload, null, 2)}
         </pre>
       )}

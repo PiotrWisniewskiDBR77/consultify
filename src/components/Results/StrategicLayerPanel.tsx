@@ -152,10 +152,10 @@ interface SustainmentData {
 }
 
 const PERSPECTIVE_LABELS: Record<string, string> = {
-  financial: 'Finanse',
-  customer: 'Klient',
-  process: 'Procesy',
-  learning: 'Rozwój',
+  financial: 'Finance',
+  customer: 'Customer',
+  process: 'Processes',
+  learning: 'Growth',
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -166,10 +166,10 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  sustained: 'Utrzymana',
-  'at-risk': 'Zagrożona',
-  unowned: 'Bez właściciela',
-  'overdue-review': 'Przegląd przeterminowany',
+  sustained: 'Sustained',
+  'at-risk': 'At risk',
+  unowned: 'Unowned',
+  'overdue-review': 'Review overdue',
 };
 
 const DICE_ZONE_PILL: Record<DiceZone, string> = {
@@ -251,7 +251,7 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
   return (
     <div data-testid="strategic-layer-panel" className="space-y-6">
 
-      {/* BSC — 4 perspektywy */}
+      {/* BSC — 4 perspectives */}
       <section>
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
           <Target size={14} />
@@ -269,7 +269,7 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                 ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
                 : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
             }`}>
-              {Math.round(strategic.bsc.overallHealthPct * 100)}% {t('results.strategic.bscHealth', 'zdrowie')}
+              {Math.round(strategic.bsc.overallHealthPct * 100)}% {t('results.strategic.bscHealth', 'health')}
             </span>
           )}
         </h3>
@@ -277,13 +277,13 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
         {strategic?.bsc?.balanced === false && bscPerspectives && (
           <div className="mb-3 flex items-center gap-2 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
             <AlertTriangle size={12} className="shrink-0" />
-            {t('results.strategic.bscUnbalanced', 'Scorecard niezrównoważony — brakuje KPI w co najmniej jednej perspektywie.')}
+            {t('results.strategic.bscUnbalanced', 'Scorecard unbalanced — a KPI is missing in at least one perspective.')}
           </div>
         )}
 
         {!bscPerspectives ? (
           <div className="text-sm text-slate-400 py-4 text-center">
-            {t('results.strategic.bscNoData', 'Brak KPI — dodaj KPI i powiąż je z inicjatywami.')}
+            {t('results.strategic.bscNoData', 'No KPIs — add KPIs and link them to initiatives.')}
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -299,7 +299,7 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                   </div>
                   {p == null || p.count === 0 ? (
                     <div className="text-sm text-slate-400 italic py-2">
-                      {t('results.strategic.perspectiveNoKpi', 'Brak KPI')}
+                      {t('results.strategic.perspectiveNoKpi', 'No KPIs')}
                     </div>
                   ) : (
                     <>
@@ -307,7 +307,7 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                         {Math.round(p.healthPct * 100)}%
                       </div>
                       <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        {p.onTarget} OK / {p.below} niżej / {p.noData} brak
+                        {p.onTarget} OK / {p.below} below / {p.noData} none
                       </div>
                       <div className="mt-2 h-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] overflow-hidden">
                         <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.round(p.healthPct * 100)}%` }} />
@@ -330,9 +330,9 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
           </h3>
           <div className="flex flex-wrap gap-3">
             {[
-              { label: t('results.strategic.bdnBenefits', 'Korzyści'), value: bdnStats.byType?.benefit ?? 0 },
-              { label: t('results.strategic.bdnEnablers', 'Enablerzy'), value: bdnStats.byType?.enabler ?? 0 },
-              { label: t('results.strategic.bdnLinks', 'Powiązania'), value: bdnStats.edgeCount },
+              { label: t('results.strategic.bdnBenefits', 'Benefits'), value: bdnStats.byType?.benefit ?? 0 },
+              { label: t('results.strategic.bdnEnablers', 'Enablers'), value: bdnStats.byType?.enabler ?? 0 },
+              { label: t('results.strategic.bdnLinks', 'Links'), value: bdnStats.edgeCount },
             ].map((s) => (
               <div key={s.label} className="rounded-lg border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] px-4 py-2.5">
                 <div className="text-xs text-slate-500 dark:text-slate-400">{s.label}</div>
@@ -347,7 +347,7 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
       <section>
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
           <AlertTriangle size={14} />
-          {t('results.strategic.adoption', 'Adopcja → ryzyko korzyści')}
+          {t('results.strategic.adoption', 'Adoption → benefit risk')}
           {adoption && (
             <span className="ml-2 rounded-full px-2 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">
               {adoption.atRiskCount} / {adoption.total}
@@ -360,15 +360,15 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                 : 'bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300'
             }`}>
               {adoption.dataSource === 'change-management'
-                ? t('results.strategic.adoptionSourceCm', 'Dane: zarządzanie zmianą (ADKAR)')
-                : t('results.strategic.adoptionSourceProxy', 'Dane: proxy z realizacji (v1)')}
+                ? t('results.strategic.adoptionSourceCm', 'Source: change management (ADKAR)')
+                : t('results.strategic.adoptionSourceProxy', 'Source: delivery proxy (v1)')}
             </span>
           )}
         </h3>
         {adoptionFlags.length === 0 ? (
           <div className="text-sm text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
             <CheckCircle2 size={14} />
-            {t('results.strategic.adoptionOk', 'Brak inicjatyw zagrożonych słabą adopcją.')}
+            {t('results.strategic.adoptionOk', 'No initiatives at risk from weak adoption.')}
           </div>
         ) : (
           <>
@@ -388,13 +388,13 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                   <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
                     {f.adoptionScore != null && (
                       <span>
-                        {t('results.strategic.adoptionScore', 'Adopcja')}:{' '}
+                        {t('results.strategic.adoptionScore', 'Adoption')}:{' '}
                         <span className="font-semibold text-slate-700 dark:text-slate-200">{Math.round(f.adoptionScore * 100)}%</span>
                       </span>
                     )}
                     {f.sentimentTrend && (
                       <span className="inline-flex items-center gap-1">
-                        {t('results.strategic.sentiment', 'Nastrój')}:
+                        {t('results.strategic.sentiment', 'Sentiment')}:
                         {f.sentimentTrend === 'improving' ? (
                           <ArrowUpRight size={13} className="text-emerald-500" />
                         ) : f.sentimentTrend === 'declining' ? (
@@ -409,7 +409,7 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                     )}
                     {f.championCoveragePct != null && (
                       <span>
-                        {t('results.strategic.championCoverage', 'Liderzy zmiany')}:{' '}
+                        {t('results.strategic.championCoverage', 'Change champions')}:{' '}
                         <span className="font-semibold text-slate-700 dark:text-slate-200">{Math.round(f.championCoveragePct)}%</span>
                       </span>
                     )}
@@ -418,7 +418,7 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                   {f.riskReasons && f.riskReasons.length > 0 && (
                     <details className="mt-2 group">
                       <summary className="cursor-pointer text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 select-none">
-                        {t('results.strategic.riskReasons', 'Powody ryzyka')} ({f.riskReasons.length})
+                        {t('results.strategic.riskReasons', 'Risk reasons')} ({f.riskReasons.length})
                       </summary>
                       <ul className="mt-1 ml-3 list-disc space-y-0.5 text-xs text-slate-500 dark:text-slate-400">
                         {f.riskReasons.map((r, i) => (<li key={i}>{r}</li>))}
@@ -430,7 +430,7 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
             </div>
             {proxyAdoptionFlags.length > 0 && (
               <div className="mt-2 text-xs text-slate-400">
-                {t('results.strategic.adoptionProxyMore', '+{{count}} oznaczonych z danych proxy (bez sygnału nastroju)', { count: proxyAdoptionFlags.length })}
+                {t('results.strategic.adoptionProxyMore', '+{{count}} flagged from proxy data (no sentiment signal)', { count: proxyAdoptionFlags.length })}
               </div>
             )}
           </>
@@ -441,12 +441,12 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
       <section>
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
           <Layers size={14} />
-          {t('results.strategic.benefitProfiles', 'Profil korzyści')}
+          {t('results.strategic.benefitProfiles', 'Benefit profile')}
           {profileSummary && (
             <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
               {t(
                 'results.strategic.benefitProfilesSummary',
-                '{{total}} korzyści · {{financial}} finansowa · {{withTarget}} z celem',
+                '{{total}} benefits · {{financial}} financial · {{withTarget}} with target',
                 {
                   total: profileSummary.total,
                   financial: profileSummary.financial,
@@ -455,7 +455,7 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
               )}
               {profileSummary.disBenefits > 0 && (
                 <span className="ml-2 rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
-                  {t('results.strategic.disBenefits', '{{count}} dis-korzyść', { count: profileSummary.disBenefits })}
+                  {t('results.strategic.disBenefits', '{{count}} dis-benefit', { count: profileSummary.disBenefits })}
                 </span>
               )}
             </span>
@@ -463,7 +463,7 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
         </h3>
         {profiles.length === 0 ? (
           <div className="text-sm text-slate-400 py-4 text-center">
-            {t('results.strategic.benefitProfilesNoData', 'Brak profili korzyści — zdefiniuj KPI z typem i celem.')}
+            {t('results.strategic.benefitProfilesNoData', 'No benefit profiles — define KPIs with a type and target.')}
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -473,7 +473,7 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate" title={p.name}>{p.name}</span>
                   {p.isDisBenefit && (
                     <span className="shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
-                      {t('results.strategic.disBenefitTag', 'dis-korzyść')}
+                      {t('results.strategic.disBenefitTag', 'dis-benefit')}
                     </span>
                   )}
                   <span className="ml-auto shrink-0 text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -488,7 +488,7 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                     {t(`results.strategic.benefitCategory.${p.category}`, p.category)}
                   </span>
                   {!p.hasTarget && (
-                    <span className="text-xs text-slate-400">{t('results.strategic.benefitNoTarget', 'brak celu')}</span>
+                    <span className="text-xs text-slate-400">{t('results.strategic.benefitNoTarget', 'no target')}</span>
                   )}
                   {p.businessOwner && (
                     <span className="ml-auto text-xs text-slate-400 truncate">{p.businessOwner}</span>
@@ -504,21 +504,21 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
       <section>
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
           <ListChecks size={14} />
-          {t('results.strategic.okr', 'OKR — kaskada celów')}
+          {t('results.strategic.okr', 'OKR — objective cascade')}
           {okrSummary && objectives.length > 0 && (
             <span className="ml-auto flex items-center gap-2 text-xs font-normal text-slate-500 dark:text-slate-400">
               <span className="font-semibold text-slate-700 dark:text-slate-200">
-                {Math.round(okrSummary.avgScore * 100)}% {t('results.strategic.okrAvg', 'śr.')}
+                {Math.round(okrSummary.avgScore * 100)}% {t('results.strategic.okrAvg', 'avg')}
               </span>
-              <span className="text-emerald-600 dark:text-emerald-400">{okrSummary.onTrack} {t('results.strategic.okrOnTrack', 'na torze')}</span>
-              <span className="text-amber-600 dark:text-amber-400">{okrSummary.atRisk} {t('results.strategic.okrAtRisk', 'zagrożone')}</span>
-              <span className="text-red-600 dark:text-red-400">{okrSummary.offTrack} {t('results.strategic.okrOffTrack', 'poza torem')}</span>
+              <span className="text-emerald-600 dark:text-emerald-400">{okrSummary.onTrack} {t('results.strategic.okrOnTrack', 'on track')}</span>
+              <span className="text-amber-600 dark:text-amber-400">{okrSummary.atRisk} {t('results.strategic.okrAtRisk', 'at risk')}</span>
+              <span className="text-red-600 dark:text-red-400">{okrSummary.offTrack} {t('results.strategic.okrOffTrack', 'off track')}</span>
             </span>
           )}
         </h3>
         {objectives.length === 0 ? (
           <div className="text-sm text-slate-400 py-4 text-center">
-            {t('results.strategic.okrNoData', 'Brak zdefiniowanych OKR')}
+            {t('results.strategic.okrNoData', 'No OKRs defined')}
           </div>
         ) : (
           <div className="space-y-3">
@@ -606,14 +606,14 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
         <section>
           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
             <CheckCircle2 size={14} />
-            {t('results.strategic.sustainment', 'Utrzymanie wartości')}
+            {t('results.strategic.sustainment', 'Value sustainment')}
           </h3>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
-              { key: 'total', label: 'Razem', value: sustainSummary.total, color: 'text-slate-700 dark:text-slate-200' },
-              { key: 'sustained', label: 'Utrzymane', value: sustainSummary.sustained, color: 'text-emerald-600 dark:text-emerald-400' },
-              { key: 'atRisk', label: 'Zagrożone', value: sustainSummary.atRisk, color: 'text-amber-600 dark:text-amber-400' },
-              { key: 'unowned', label: 'Bez właściciela', value: sustainSummary.unowned, color: 'text-red-600 dark:text-red-400' },
+              { key: 'total', label: 'Total', value: sustainSummary.total, color: 'text-slate-700 dark:text-slate-200' },
+              { key: 'sustained', label: 'Sustained', value: sustainSummary.sustained, color: 'text-emerald-600 dark:text-emerald-400' },
+              { key: 'atRisk', label: 'At risk', value: sustainSummary.atRisk, color: 'text-amber-600 dark:text-amber-400' },
+              { key: 'unowned', label: 'Unowned', value: sustainSummary.unowned, color: 'text-red-600 dark:text-red-400' },
             ].map((s) => (
               <div key={s.key} className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] p-4 text-center">
                 <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
@@ -647,7 +647,7 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
       {strategic?.narrative?.executiveSummary && (
         <section>
           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
-            {t('results.strategic.narrative', 'Narracja zarządcza')}
+            {t('results.strategic.narrative', 'Management narrative')}
           </h3>
           <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] p-4">
             {strategic.narrative.executiveSummary}

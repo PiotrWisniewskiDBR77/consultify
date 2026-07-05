@@ -63,11 +63,11 @@ const ScheduleTab: React.FC<ScheduleTabProps> = ({ preferences, onUpdateSchedule
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+        <h3 className="text-lg font-medium text-c-text flex items-center gap-2">
           <Clock size={20} />
           {t('settings.notifications.scheduleTitle', 'Notification Schedule')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        <p className="text-sm text-c-text-muted mt-1">
           {t(
             'settings.notifications.scheduleDesc',
             "Set quiet hours when you don't want to be disturbed."
@@ -76,14 +76,14 @@ const ScheduleTab: React.FC<ScheduleTabProps> = ({ preferences, onUpdateSchedule
       </div>
 
       {/* Quiet Hours Toggle */}
-      <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-800/50 rounded-lg">
+      <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
         <div className="flex items-center gap-3">
-          <Moon size={20} className="text-slate-600 dark:text-slate-500" />
+          <Moon size={20} className="text-c-text-secondary" />
           <div>
-            <p className="font-medium text-slate-900 dark:text-white">
+            <p className="font-medium text-c-text">
               {t('settings.notifications.quietHours', 'Quiet Hours')}
             </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t(
                 'settings.notifications.quietHoursDesc',
                 'Pause notifications during specific hours'
@@ -98,7 +98,7 @@ const ScheduleTab: React.FC<ScheduleTabProps> = ({ preferences, onUpdateSchedule
             onChange={handleQuietHoursToggle}
             className="sr-only peer"
           />
-          <div className="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-brand rounded-full peer dark:bg-navy-700 peer-checked:after:translate-x-full peer-checked:bg-navy-900 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+          <div className="w-11 h-6 bg-c-surface-raised peer-focus:ring-2 peer-focus:ring-[color:var(--c-focus)] rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-navy-900 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-c-surface after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
         </label>
       </div>
 
@@ -107,32 +107,32 @@ const ScheduleTab: React.FC<ScheduleTabProps> = ({ preferences, onUpdateSchedule
           {/* Time Range */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-c-text-secondary mb-2">
                 {t('settings.notifications.startTime', 'Start Time')}
               </label>
               <input
                 type="time"
                 value={localSchedule.quietHoursStart}
                 onChange={(e) => handleTimeChange('quietHoursStart', e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand focus:border-transparent"
+                className="w-full px-3 py-2 border border-c-border dark:border-navy-600 rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-c-text-secondary mb-2">
                 {t('settings.notifications.endTime', 'End Time')}
               </label>
               <input
                 type="time"
                 value={localSchedule.quietHoursEnd}
                 onChange={(e) => handleTimeChange('quietHoursEnd', e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand focus:border-transparent"
+                className="w-full px-3 py-2 border border-c-border dark:border-navy-600 rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
               />
             </div>
           </div>
 
           {/* Quiet Days */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+            <label className="block text-sm font-medium text-c-text-secondary mb-3">
               {t('settings.notifications.quietDays', 'Quiet Days')}
             </label>
             <div className="flex flex-wrap gap-2">
@@ -145,7 +145,7 @@ const ScheduleTab: React.FC<ScheduleTabProps> = ({ preferences, onUpdateSchedule
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                       isSelected
                         ? 'bg-navy-900 text-white'
-                        : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-600'
+                        : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-600'
                     }`}
                   >
                     {label}
@@ -177,7 +177,7 @@ const ScheduleTab: React.FC<ScheduleTabProps> = ({ preferences, onUpdateSchedule
                 }}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-amber-200 peer-focus:ring-2 peer-focus:ring-amber-500 rounded-full peer dark:bg-amber-800 peer-checked:after:translate-x-full peer-checked:bg-amber-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+              <div className="w-11 h-6 bg-amber-200 peer-focus:ring-2 peer-focus:ring-amber-500 rounded-full peer dark:bg-amber-800 peer-checked:after:translate-x-full peer-checked:bg-amber-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-c-surface after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
             </label>
           </div>
         </>

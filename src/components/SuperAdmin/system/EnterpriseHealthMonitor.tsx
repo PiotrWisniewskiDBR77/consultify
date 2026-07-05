@@ -22,7 +22,6 @@ import {
   Cpu,
   Database,
   Globe,
-  Loader2,
   MemoryStick,
   RefreshCw,
   Server,
@@ -37,6 +36,7 @@ import { toast } from 'react-hot-toast';
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState } from '../../Admin/AdminState';
+import { EmptyState, LoadingState } from '../../shared/states';
 
 interface ServiceHealth {
   name: string;
@@ -105,10 +105,10 @@ type HealthMetricsPayload = {
 type ViewId = 'overview' | 'services' | 'metrics' | 'alerts';
 
 const STATUS_CONFIG = {
-  healthy: { color: 'bg-emerald-500', text: 'text-emerald-400', icon: CheckCircle },
-  degraded: { color: 'bg-amber-500', text: 'text-amber-400', icon: AlertTriangle },
-  down: { color: 'bg-danger-500', text: 'text-danger-400', icon: XCircle },
-  unknown: { color: 'bg-slate-500', text: 'text-slate-600 dark:text-slate-500', icon: Activity },
+  healthy: { color: 'bg-c-success', text: 'text-c-success', icon: CheckCircle },
+  degraded: { color: 'bg-c-warning', text: 'text-c-warning', icon: AlertTriangle },
+  down: { color: 'bg-c-danger', text: 'text-c-danger', icon: XCircle },
+  unknown: { color: 'bg-c-text-muted', text: 'text-c-text-secondary', icon: Activity },
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -454,8 +454,8 @@ export const EnterpriseHealthMonitor: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-8 flex items-center justify-center h-96">
-        <Loader2 className="w-10 h-10 text-primary-400 animate-spin" />
+      <div className="p-8">
+        <LoadingState template="panel" />
       </div>
     );
   }
@@ -469,10 +469,10 @@ export const EnterpriseHealthMonitor: React.FC = () => {
             <StatusIcon className={`w-6 h-6 ${STATUS_CONFIG[overallStatus].text}`} />
           </div>
           <div>
-            <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+            <h2 className="text-2xl font-semibold text-c-text">
               System Health
             </h2>
-            <p className="text-slate-600 dark:text-slate-400 text-sm">
+            <p className="text-c-text-secondary text-sm">
               {overallStatus === 'healthy' && 'All systems operational'}
               {overallStatus === 'degraded' && 'Some services experiencing issues'}
               {overallStatus === 'down' && 'Critical services are down'}
@@ -481,19 +481,19 @@ export const EnterpriseHealthMonitor: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-400">
+          <label className="flex items-center gap-2 text-sm text-c-text-secondary">
             <input
               type="checkbox"
               checked={autoRefresh}
               onChange={(e) => setAutoRefresh(e.target.checked)}
-              className="rounded border-slate-300 bg-white text-primary-600 dark:border-slate-600 dark:bg-slate-800 dark:text-primary-500"
+              className="rounded border-c-border-strong bg-c-surface text-c-accent"
             />
             Auto-refresh
           </label>
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-navy-950/20 hover:bg-slate-50 dark:hover:bg-navy-800/40 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-c-surface hover:bg-c-surface-raised border border-c-border rounded-lg text-c-text transition-colors"
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
@@ -502,15 +502,15 @@ export const EnterpriseHealthMonitor: React.FC = () => {
       </div>
 
       {/* View Tabs */}
-      <div className="flex gap-2 border-b border-slate-200 dark:border-white/10 pb-1">
+      <div className="flex gap-2 border-b border-c-border-subtle pb-1">
         {healthTabs.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             onClick={() => setActiveView(id)}
             className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${
               activeView === id
-                ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-slate-100 border-b-2 border-primary-500'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800/20'
+                ? 'bg-c-surface-raised text-c-text border-b-2 border-c-accent'
+                : 'text-c-text-secondary hover:bg-c-surface-raised'
             }`}
           >
             <Icon className="w-4 h-4" />
@@ -522,7 +522,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-danger-500/30 bg-danger-500/5 p-4 text-sm text-danger-600 dark:text-danger-300"
+          className="rounded-xl border border-c-danger/30 bg-c-danger/5 p-4 text-sm text-c-danger"
         >
           {actionError}
         </div>
@@ -532,7 +532,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
       {activeView === 'overview' && (
         <div className="space-y-6">
           {healthLoadError ? (
-            <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+            <div className="rounded-xl border border-c-border bg-c-surface p-6">
               <DegradedState
                 title="System health overview unavailable"
                 description={healthLoadError}
@@ -542,58 +542,58 @@ export const EnterpriseHealthMonitor: React.FC = () => {
             <>
               {/* Quick Stats */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="p-4 bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 rounded-xl border border-emerald-500/20">
+                <div className="p-4 bg-gradient-to-br from-c-success/10 to-c-success/5 rounded-xl border border-c-success/20">
                   <div className="flex items-center gap-3 mb-3">
-                    <Server className="w-5 h-5 text-emerald-400" />
-                    <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                    <Server className="w-5 h-5 text-c-success" />
+                    <span className="text-sm font-medium text-c-text">
                       API Server
                     </span>
                   </div>
-                  <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+                  <div className="text-2xl font-semibold text-c-text">
                     {health?.api?.responseTime || 0}ms
                   </div>
-                  <div className="text-xs text-emerald-400 mt-1">Response time</div>
+                  <div className="text-xs text-c-success mt-1">Response time</div>
                 </div>
 
-                <div className="p-4 bg-gradient-to-br from-blue-500/10 to-blue-600/5 rounded-xl border border-blue-500/20">
+                <div className="p-4 bg-gradient-to-br from-c-info/10 to-c-info/5 rounded-xl border border-c-info/20">
                   <div className="flex items-center gap-3 mb-3">
-                    <Database className="w-5 h-5 text-blue-400" />
-                    <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                    <Database className="w-5 h-5 text-c-info" />
+                    <span className="text-sm font-medium text-c-text">
                       Database
                     </span>
                   </div>
-                  <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+                  <div className="text-2xl font-semibold text-c-text">
                     {health?.database?.responseTime || 0}ms
                   </div>
-                  <div className="text-xs text-blue-400 mt-1">
+                  <div className="text-xs text-c-info mt-1">
                     {health?.database?.type || 'SQLite'}
                   </div>
                 </div>
 
-                <div className="p-4 bg-gradient-to-br from-primary-500/10 to-primary-600/5 rounded-xl border border-primary-500/20">
+                <div className="p-4 bg-c-accent-soft rounded-xl border border-c-accent/20">
                   <div className="flex items-center gap-3 mb-3">
-                    <Brain className="w-5 h-5 text-primary-400" />
-                    <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                    <Brain className="w-5 h-5 text-c-accent" />
+                    <span className="text-sm font-medium text-c-text">
                       AI Services
                     </span>
                   </div>
-                  <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+                  <div className="text-2xl font-semibold text-c-text">
                     {Object.values(health?.ai?.providers || {}).filter(Boolean).length}
                   </div>
-                  <div className="text-xs text-primary-400 mt-1">Active providers</div>
+                  <div className="text-xs text-c-accent mt-1">Active providers</div>
                 </div>
 
-                <div className="p-4 bg-gradient-to-br from-amber-500/10 to-amber-600/5 rounded-xl border border-amber-500/20">
+                <div className="p-4 bg-gradient-to-br from-c-warning/10 to-c-warning/5 rounded-xl border border-c-warning/20">
                   <div className="flex items-center gap-3 mb-3">
-                    <Clock className="w-5 h-5 text-amber-400" />
-                    <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                    <Clock className="w-5 h-5 text-c-warning" />
+                    <span className="text-sm font-medium text-c-text">
                       Uptime
                     </span>
                   </div>
-                  <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+                  <div className="text-2xl font-semibold text-c-text">
                     {health?.system?.uptime?.formatted || '0m'}
                   </div>
-                  <div className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                  <div className="text-xs text-c-warning mt-1">
                     {health?.system?.environment}
                   </div>
                 </div>
@@ -601,40 +601,40 @@ export const EnterpriseHealthMonitor: React.FC = () => {
 
               {/* Resource Usage */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                  <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-                    <MemoryStick className="w-4 h-4 text-blue-400" />
+                <div className="p-4 bg-c-surface rounded-xl border border-c-border">
+                  <h3 className="text-sm font-medium text-c-text mb-4 flex items-center gap-2">
+                    <MemoryStick className="w-4 h-4 text-c-info" />
                     Memory Usage
                   </h3>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-slate-600 dark:text-slate-500">Used</span>
-                      <span className="text-slate-900 dark:text-slate-100 font-medium">
+                      <span className="text-c-text-secondary">Used</span>
+                      <span className="text-c-text font-medium">
                         {metrics?.memory.used || health?.system?.memory?.used || 0} MB
                       </span>
                     </div>
-                    <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div className="h-3 bg-c-surface-raised rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-500"
+                        className="h-full bg-gradient-to-r from-c-info to-c-info rounded-full transition-all duration-500"
                         style={{ width: `${Math.min(100, metrics?.memory.percent || 0)}%` }}
                       />
                     </div>
-                    <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center justify-between text-xs text-c-text-muted">
                       <span>0 MB</span>
                       <span>{metrics?.memory.total || health?.system?.memory?.total || 0} MB</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                  <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-                    <Cpu className="w-4 h-4 text-amber-400" />
+                <div className="p-4 bg-c-surface rounded-xl border border-c-border">
+                  <h3 className="text-sm font-medium text-c-text mb-4 flex items-center gap-2">
+                    <Cpu className="w-4 h-4 text-c-warning" />
                     System Load
                   </h3>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-slate-600 dark:text-slate-500">Load Average (1m)</span>
-                      <span className="text-slate-900 dark:text-slate-100 font-medium">
+                      <span className="text-c-text-secondary">Load Average (1m)</span>
+                      <span className="text-c-text font-medium">
                         {safeNumber(health?.system?.loadAvg?.[0]).toFixed(2)}
                       </span>
                     </div>
@@ -642,16 +642,16 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                       {['1m', '5m', '15m'].map((label, i) => (
                         <div
                           key={label}
-                          className="p-2 bg-slate-100 dark:bg-slate-800/50 rounded-lg text-center"
+                          className="p-2 bg-c-surface-raised rounded-lg text-center"
                         >
-                          <div className="text-slate-500 dark:text-slate-400">{label}</div>
-                          <div className="text-slate-900 dark:text-slate-100 font-medium mt-1">
+                          <div className="text-c-text-muted">{label}</div>
+                          <div className="text-c-text font-medium mt-1">
                             {safeNumber(health?.system?.loadAvg?.[i]).toFixed(2)}
                           </div>
                         </div>
                       ))}
                     </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400 text-right">
+                    <div className="text-xs text-c-text-muted text-right">
                       {health?.system?.cpus || metrics?.cpu.cores || 0} CPU cores available
                     </div>
                   </div>
@@ -659,17 +659,17 @@ export const EnterpriseHealthMonitor: React.FC = () => {
               </div>
 
               {/* AI Providers Status */}
-              <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-                  <Brain className="w-4 h-4 text-primary-400" />
+              <div className="p-4 bg-c-surface rounded-xl border border-c-border">
+                <h3 className="text-sm font-medium text-c-text mb-4 flex items-center gap-2">
+                  <Brain className="w-4 h-4 text-c-accent" />
                   AI Provider Status
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {[
-                    { name: 'OpenAI', key: 'openai', color: 'emerald' },
-                    { name: 'Anthropic', key: 'anthropic', color: 'amber' },
-                    { name: 'Groq', key: 'groq', color: 'blue' },
-                  ].map(({ name, key, color }) => {
+                    { name: 'OpenAI', key: 'openai' },
+                    { name: 'Anthropic', key: 'anthropic' },
+                    { name: 'Groq', key: 'groq' },
+                  ].map(({ name, key }) => {
                     const isActive =
                       health?.ai?.providers?.[key as keyof typeof health.ai.providers];
                     return (
@@ -677,24 +677,24 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                         key={key}
                         className={`p-3 rounded-lg border transition-colors ${
                           isActive
-                            ? `bg-${color}-500/10 border-${color}-500/30`
-                            : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'
+                            ? 'bg-c-success/10 border-c-success/30'
+                            : 'bg-c-surface-raised border-c-border'
                         }`}
                       >
                         <div className="flex items-center justify-between">
                           <span
-                            className={`font-medium ${isActive ? 'text-slate-900 dark:text-slate-100' : 'text-slate-700 dark:text-slate-400'}`}
+                            className={`font-medium ${isActive ? 'text-c-text' : 'text-c-text-secondary'}`}
                           >
                             {name}
                           </span>
                           {isActive ? (
-                            <CheckCircle className={`w-4 h-4 text-${color}-400`} />
+                            <CheckCircle className="w-4 h-4 text-c-success" />
                           ) : (
-                            <XCircle className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                            <XCircle className="w-4 h-4 text-c-text-secondary" />
                           )}
                         </div>
                         <div
-                          className={`text-xs mt-1 ${isActive ? `text-${color}-600 dark:text-${color}-400` : 'text-slate-600 dark:text-slate-400'}`}
+                          className={`text-xs mt-1 ${isActive ? 'text-c-success' : 'text-c-text-secondary'}`}
                         >
                           {isActive ? 'Connected' : 'Not configured'}
                         </div>
@@ -712,7 +712,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
       {activeView === 'services' && (
         <div className="space-y-4">
           {healthLoadError ? (
-            <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+            <div className="rounded-xl border border-c-border bg-c-surface p-6">
               <DegradedState title="Service health unavailable" description={healthLoadError} />
             </div>
           ) : (
@@ -723,7 +723,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                 return (
                   <div
                     key={service.name}
-                    className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 transition-colors"
+                    className="p-4 bg-c-surface rounded-xl border border-c-border hover:border-c-border-strong transition-colors"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
@@ -731,10 +731,10 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                           <Icon className={`w-5 h-5 ${statusConfig.text}`} />
                         </div>
                         <div>
-                          <h4 className="font-medium text-slate-900 dark:text-slate-100">
+                          <h4 className="font-medium text-c-text">
                             {service.name}
                           </h4>
-                          <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          <div className="flex items-center gap-3 text-xs text-c-text-muted mt-1">
                             <span>Latency: {service.latency}ms</span>
                             <span>•</span>
                             <span>Last check: {formatTime(service.lastCheck)}</span>
@@ -747,16 +747,16 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                         >
                           {service.status.charAt(0).toUpperCase() + service.status.slice(1)}
                         </span>
-                        <ChevronRight className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                        <ChevronRight className="w-4 h-4 text-c-text-secondary" />
                       </div>
                     </div>
                     {service.dependencies.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-slate-200 dark:border-white/5">
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                      <div className="mt-3 pt-3 border-t border-c-border-subtle">
+                        <span className="text-xs text-c-text-muted">
                           Dependencies:{' '}
                         </span>
                         {service.dependencies.map((dep, i) => (
-                          <span key={dep} className="text-xs text-slate-600 dark:text-slate-500">
+                          <span key={dep} className="text-xs text-c-text-secondary">
                             {dep}
                             {i < service.dependencies.length - 1 ? ', ' : ''}
                           </span>
@@ -775,7 +775,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
       {activeView === 'metrics' && (
         <div className="space-y-6">
           {healthLoadError ? (
-            <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+            <div className="rounded-xl border border-c-border bg-c-surface p-6">
               <DegradedState title="Health metrics unavailable" description={healthLoadError} />
             </div>
           ) : (
@@ -809,26 +809,26 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                 ].map(({ label, value, trend, icon: Icon }) => (
                   <div
                     key={label}
-                    className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10"
+                    className="p-4 bg-c-surface rounded-xl border border-c-border"
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <Icon className="w-4 h-4 text-slate-600 dark:text-slate-500" />
-                      {trend === 'up' && <TrendingUp className="w-4 h-4 text-emerald-400" />}
-                      {trend === 'down' && <TrendingDown className="w-4 h-4 text-danger-400" />}
+                      <Icon className="w-4 h-4 text-c-text-secondary" />
+                      {trend === 'up' && <TrendingUp className="w-4 h-4 text-c-success" />}
+                      {trend === 'down' && <TrendingDown className="w-4 h-4 text-c-danger" />}
                       {trend === 'stable' && (
-                        <Activity className="w-4 h-4 text-slate-600 dark:text-slate-500" />
+                        <Activity className="w-4 h-4 text-c-text-secondary" />
                       )}
                     </div>
-                    <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+                    <div className="text-2xl font-semibold text-c-text">
                       {value}
                     </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{label}</div>
+                    <div className="text-xs text-c-text-muted mt-1">{label}</div>
                   </div>
                 ))}
               </div>
 
-              <div className="p-6 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-4">
+              <div className="p-6 bg-c-surface rounded-xl border border-c-border">
+                <h3 className="text-sm font-medium text-c-text mb-4">
                   System Information
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -839,8 +839,8 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                     { label: 'Database Type', value: health?.database?.type || 'Unknown' },
                   ].map(({ label, value }) => (
                     <div key={label}>
-                      <div className="text-xs text-slate-500 dark:text-slate-400">{label}</div>
-                      <div className="text-sm text-slate-900 dark:text-slate-100 font-medium mt-1 capitalize">
+                      <div className="text-xs text-c-text-muted">{label}</div>
+                      <div className="text-sm text-c-text font-medium mt-1 capitalize">
                         {value}
                       </div>
                     </div>
@@ -856,13 +856,13 @@ export const EnterpriseHealthMonitor: React.FC = () => {
       {activeView === 'alerts' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100">
+            <h3 className="text-sm font-medium text-c-text">
               Alert Configuration
             </h3>
             <button
               onClick={() => setShowCreateAlert(true)}
               disabled={!!alertsLoadError}
-              className="flex items-center gap-2 px-3 py-1.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm rounded-lg transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 bg-c-surface hover:bg-c-surface text-white dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] text-sm rounded-lg transition-colors"
             >
               <Bell className="w-4 h-4" />
               Add Alert
@@ -870,20 +870,20 @@ export const EnterpriseHealthMonitor: React.FC = () => {
           </div>
 
           {showCreateAlert && (
-            <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-primary-500/30 space-y-3">
-              <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100">New Alert</h4>
+            <div className="p-4 bg-c-surface rounded-xl border border-c-accent/30 space-y-3">
+              <h4 className="text-sm font-medium text-c-text">New Alert</h4>
               <div className="grid grid-cols-2 gap-3">
                 <input
                   type="text"
                   placeholder="Alert name"
                   value={newAlert.name}
                   onChange={(e) => setNewAlert({ ...newAlert, name: e.target.value })}
-                  className="px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400"
+                  className="px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm text-c-text placeholder:text-c-text-muted"
                 />
                 <select
                   value={newAlert.metric}
                   onChange={(e) => setNewAlert({ ...newAlert, metric: e.target.value })}
-                  className="px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white"
+                  className="px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm text-c-text"
                 >
                   <option value="cpu_usage">CPU Usage (%)</option>
                   <option value="memory_usage">Memory Usage (%)</option>
@@ -898,7 +898,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                     onChange={(e) =>
                       setNewAlert({ ...newAlert, operator: e.target.value as 'gt' | 'lt' | 'eq' })
                     }
-                    className="px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white w-20"
+                    className="px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm text-c-text w-20"
                   >
                     <option value="gt">&gt;</option>
                     <option value="lt">&lt;</option>
@@ -911,7 +911,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                     onChange={(e) =>
                       setNewAlert({ ...newAlert, threshold: Number(e.target.value) })
                     }
-                    className="flex-1 px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white"
+                    className="flex-1 px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm text-c-text"
                   />
                 </div>
                 <div className="flex gap-2 items-center">
@@ -926,14 +926,14 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                         channels: [],
                       });
                     }}
-                    className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    className="px-3 py-2 text-sm text-c-text-muted hover:text-c-text"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleCreateAlert}
                     disabled={!newAlert.name.trim()}
-                    className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm rounded-lg transition-colors disabled:opacity-50"
+                    className="px-4 py-2 bg-c-surface hover:bg-c-surface text-white dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] text-sm rounded-lg transition-colors disabled:opacity-50"
                   >
                     Create
                   </button>
@@ -943,28 +943,29 @@ export const EnterpriseHealthMonitor: React.FC = () => {
           )}
 
           {alertsLoadError ? (
-            <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+            <div className="rounded-xl border border-c-border bg-c-surface p-6">
               <DegradedState
                 title="Alert configuration unavailable"
                 description={alertsLoadError}
               />
             </div>
           ) : alerts.length === 0 && !showCreateAlert ? (
-            <div className="text-center py-12 text-slate-600 dark:text-slate-500">
-              <Bell className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p className="mb-2">No alerts configured</p>
-              <p className="text-sm">Set up alerts to monitor critical metrics</p>
-            </div>
+            <EmptyState
+              variant="new"
+              icon={Bell}
+              title="No alerts configured"
+              description="Set up alerts to monitor critical metrics."
+            />
           ) : (
             alerts.map((alert) => (
               <div
                 key={alert.id}
-                className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10"
+                className="p-4 bg-c-surface rounded-xl border border-c-border"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-medium text-slate-900 dark:text-slate-100">{alert.name}</h4>
-                    <p className="text-sm text-slate-600 dark:text-slate-500 mt-1">
+                    <h4 className="font-medium text-c-text">{alert.name}</h4>
+                    <p className="text-sm text-c-text-secondary mt-1">
                       {alert.metric}{' '}
                       {alert.operator === 'gt' ? '>' : alert.operator === 'lt' ? '<' : '='}{' '}
                       {alert.threshold}
@@ -976,8 +977,8 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                       aria-label={`${alert.enabled ? 'Disable' : 'Enable'} alert ${alert.name}`}
                       className={`px-3 py-1 text-xs font-medium rounded-full cursor-pointer transition-colors ${
                         alert.enabled
-                          ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'
-                          : 'bg-slate-700 text-slate-600 dark:text-slate-500 hover:bg-slate-600'
+                          ? 'bg-c-success/20 text-c-success hover:bg-c-success/30'
+                          : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-surface'
                       }`}
                     >
                       {alert.enabled ? 'Active' : 'Disabled'}
@@ -985,7 +986,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                     <button
                       onClick={() => handleDeleteAlert(alert.id)}
                       aria-label={`Delete alert ${alert.name}`}
-                      className="p-1 text-slate-600 hover:text-danger-400 transition-colors"
+                      className="p-1 text-c-text-secondary hover:text-c-danger transition-colors"
                       title="Delete alert"
                     >
                       <XCircle className="w-4 h-4" />
@@ -996,12 +997,12 @@ export const EnterpriseHealthMonitor: React.FC = () => {
             ))
           )}
 
-          <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+          <div className="p-4 bg-c-warning/10 border border-c-warning/30 rounded-xl">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-amber-400 mt-0.5" />
+              <AlertTriangle className="w-5 h-5 text-c-warning mt-0.5" />
               <div>
-                <h4 className="font-medium text-amber-400">Alert Channels</h4>
-                <p className="text-sm text-slate-600 dark:text-slate-500 mt-1">
+                <h4 className="font-medium text-c-warning">Alert Channels</h4>
+                <p className="text-sm text-c-text-secondary mt-1">
                   Configure notification channels (Email, Slack, PagerDuty) in the Organization
                   settings to receive alerts.
                 </p>
@@ -1012,7 +1013,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
       )}
 
       {/* Footer */}
-      <div className="pt-4 border-t border-slate-200 dark:border-white/10 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
+      <div className="pt-4 border-t border-c-border-subtle text-xs text-c-text-muted flex items-center justify-between">
         <span>Last updated: {formatDateTime(health?.timestamp)}</span>
         <span>Data retention: 30 days</span>
       </div>

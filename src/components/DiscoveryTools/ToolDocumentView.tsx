@@ -229,7 +229,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   onAutoExportPdfConsumed,
   onCommandRowActionsChange,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const {
     currentOrganization,
@@ -356,6 +356,15 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     [currentSession?.inputData]
   );
   const completionReady = reviewGaps.length === 0;
+  // H3 DoD chain: this document view is the canonical tool runtime, so it must
+  // report confidence — the review/approve gate requires confidence_avg >= 3.
+  // Same heuristic as ToolWorkspace: review-ready sessions score 4, otherwise
+  // scale with progress (schema floor is 1).
+  const confidenceAvg = useMemo(() => {
+    if (!currentSession) return 1;
+    if (completionReady) return 4;
+    return Math.max(1, Math.min(5, Math.round(progress / 20)));
+  }, [completionReady, currentSession, progress]);
   const missingItemsPayload = useMemo(
     () =>
       reviewGaps.map((gap, index) => ({
@@ -566,8 +575,19 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     if (toolSessionId) void fetchAll();
   }, [fetchAll, toolSessionId]);
 
+  // H3 resume-safety: until fetchAll() hydrates the store from the API,
+  // `currentSession` may still hold a DIFFERENT session persisted from a
+  // previous visit (zustand persist). Auto-saving that stale inputData into
+  // this toolSessionId would silently overwrite the resumed session's answers.
+  // hydrateSessionFromApi sets currentSession.id = toolSessionId, so an id
+  // match is the proof that we are saving the session we actually loaded.
+  const isSessionHydrated = Boolean(
+    currentSession && toolSessionId && currentSession.id === toolSessionId
+  );
+
   useEffect(() => {
     if (!currentSession || !toolSessionId) return;
+    if (!isSessionHydrated) return;
     setSaveState('dirty');
     const timeout = setTimeout(async () => {
       setSaveState('saving');
@@ -575,6 +595,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         await Api.updateToolSession(toolSessionId, {
           answers: currentSession.inputData as Record<string, unknown>,
           completionPercent: completionReady ? 100 : progress,
+          confidenceAvg,
           missingItems: missingItemsPayload,
           wizardState: wizardStatePayload,
         });
@@ -590,7 +611,9 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     return () => clearTimeout(timeout);
   }, [
     completionReady,
+    confidenceAvg,
     currentSession,
+    isSessionHydrated,
     missingItemsPayload,
     progress,
     toolSessionId,
@@ -599,12 +622,19 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
   const handleSave = async () => {
     if (!toolSessionId || !currentSession) return;
+    if (!isSessionHydrated) {
+      toast.error(
+        t('tools.session.notLoadedYet', 'Session is still loading — try again in a moment')
+      );
+      return;
+    }
     setSaving(true);
     setSaveState('saving');
     try {
       await Api.updateToolSession(toolSessionId, {
         answers: currentSession.inputData as Record<string, unknown>,
         completionPercent: completionReady ? 100 : progress,
+        confidenceAvg,
         missingItems: missingItemsPayload,
         wizardState: wizardStatePayload,
       });

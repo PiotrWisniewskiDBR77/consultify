@@ -9,6 +9,12 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
+import {
+  insertMentionIntoText,
+  renderMentionText,
+  useMentionAutocomplete,
+} from '../mentionAutocomplete';
+
 export interface NodeComment {
   id: string;
   author: string;
@@ -28,11 +34,6 @@ interface NodeCommentThreadProps {
   currentUser: string;
   onAddComment: (nodeId: string, comment: NodeComment) => void;
   onDeleteComment: (nodeId: string, commentId: string) => void;
-}
-
-function extractMentions(text: string): string[] {
-  const matches = text.match(/@(\w+)/g);
-  return matches ? matches.map((m) => m.slice(1)) : [];
 }
 
 function formatTime(iso: string): string {
@@ -69,6 +70,16 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
   const [loading, setLoading] = useState(false);
   const [apiAvailable, setApiAvailable] = useState(true);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // @mention org-member autocomplete (shared with IdeaNodeDetailDrawer, B2b).
+  const {
+    mentionPool,
+    mentionQuery,
+    mentionSuggestions,
+    resolveMentionIds,
+    handleMentionInput,
+    closeMentionMenu,
+  } = useMentionAutocomplete(open);
 
   const comments = apiAvailable ? localComments : propComments;
 
@@ -107,7 +118,9 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
     const trimmed = text.trim();
     if (!trimmed) return;
 
-    const mentions = extractMentions(trimmed);
+    // Prefer resolved org-member user ids; fall back to bare name tokens.
+    const mentions = resolveMentionIds(trimmed);
+    closeMentionMenu();
 
     if (apiAvailable && ideaId) {
       try {
@@ -135,7 +148,17 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
     setLocalComments((prev) => [...prev, comment]);
     setText('');
     inputRef.current?.focus();
-  }, [apiAvailable, currentUser, ideaId, isPl, nodeId, onAddComment, text]);
+  }, [
+    apiAvailable,
+    closeMentionMenu,
+    currentUser,
+    ideaId,
+    isPl,
+    nodeId,
+    onAddComment,
+    resolveMentionIds,
+    text,
+  ]);
 
   const handleDelete = useCallback(
     async (commentId: string) => {
@@ -155,33 +178,69 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
     [apiAvailable, ideaId, isPl, nodeId, onDeleteComment]
   );
 
+  const handleInput = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const val = e.target.value;
+      setText(val);
+      const caret = e.target.selectionStart ?? val.length;
+      handleMentionInput(val, caret);
+    },
+    [handleMentionInput]
+  );
+
+  const insertMention = useCallback(
+    (user: { id: string; name: string }) => {
+      const ta = inputRef.current;
+      const body = text || '';
+      const caretPos = ta?.selectionStart ?? body.length;
+      const result = insertMentionIntoText(body, caretPos, user);
+      if (!result) return;
+      setText(result.text);
+      closeMentionMenu();
+      requestAnimationFrame(() => {
+        if (ta) {
+          ta.focus();
+          ta.setSelectionRange(result.caret, result.caret);
+        }
+      });
+    },
+    [closeMentionMenu, text]
+  );
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      if (e.key === 'Escape' && mentionQuery !== null) {
+        e.preventDefault();
+        closeMentionMenu();
+        return;
+      }
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         handleSubmit();
       }
     },
-    [handleSubmit]
+    [closeMentionMenu, handleSubmit, mentionQuery]
   );
 
   if (!open) return null;
 
   return (
-    <div className="fixed top-0 right-0 bottom-0 z-[86] w-[360px] max-w-[85vw] bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border-l border-slate-200/60 dark:border-navy-700/60 shadow-2xl flex flex-col overflow-hidden">
+    <div className="fixed top-0 right-0 bottom-0 z-[86] w-[360px] max-w-[85vw] bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border-l border-c-border-subtle dark:border-c-border shadow-2xl flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-slate-200/40 dark:border-navy-700/40">
-        <MessageSquare size={14} className="text-blue-500 shrink-0" />
+      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-c-border-subtle dark:border-c-border">
+        <MessageSquare size={14} className="text-c-info shrink-0" />
         <div className="min-w-0 flex-1">
-          <div className="text-[11px] font-bold text-slate-800 dark:text-white truncate">
+          <div className="text-[11px] font-bold text-c-text dark:text-c-text truncate">
             {isPl ? 'Komentarze' : 'Comments'}
           </div>
-          <div className="text-[9px] text-slate-500 dark:text-slate-400 truncate">{nodeLabel}</div>
+          <div className="text-[9px] text-c-text-secondary dark:text-c-text-muted truncate">
+            {nodeLabel}
+          </div>
         </div>
-        <span className="text-[10px] text-slate-600 font-medium">{comments.length}</span>
+        <span className="text-[10px] text-c-text-secondary font-medium">{comments.length}</span>
         <button
           onClick={onClose}
-          className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          className="p-1.5 rounded-lg text-c-text-secondary hover:text-c-text-secondary dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
         >
           <X size={14} />
         </button>
@@ -191,12 +250,12 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
         {loading && (
           <div className="flex justify-center py-6">
-            <Loader2 size={18} className="animate-spin text-blue-500" />
+            <Loader2 size={18} className="animate-spin text-c-info" />
           </div>
         )}
 
         {!loading && comments.length === 0 && (
-          <div className="text-center py-8 text-[11px] text-slate-600">
+          <div className="text-center py-8 text-[11px] text-c-text-secondary">
             {isPl ? 'Brak komentarzy. Napisz pierwszy!' : 'No comments yet. Write the first one!'}
           </div>
         )}
@@ -205,34 +264,28 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
           comments.map((c) => (
             <div key={c.id} className="group">
               <div className="flex items-start gap-2">
-                <div className="w-6 h-6 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5">
+                <div className="w-6 h-6 rounded-full bg-c-surface-raised text-c-info dark:text-c-info flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5">
                   {c.author.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200">
+                    <span className="text-[10px] font-bold text-c-text-secondary dark:text-c-text">
                       {c.author}
                     </span>
-                    <span className="text-[8px] text-slate-600">{formatTime(c.createdAt)}</span>
+                    <span className="text-[8px] text-c-text-secondary">
+                      {formatTime(c.createdAt)}
+                    </span>
                     {c.author === currentUser && (
                       <button
                         onClick={() => handleDelete(c.id)}
-                        className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-slate-600 hover:text-danger-500 transition-all"
+                        className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-c-text-secondary hover:text-c-danger transition-all"
                       >
                         <Trash2 size={10} />
                       </button>
                     )}
                   </div>
-                  <div className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed whitespace-pre-wrap">
-                    {c.text.split(/(@\w+)/g).map((part, idx) =>
-                      part.startsWith('@') ? (
-                        <span key={idx} className="text-blue-500 font-medium">
-                          {part}
-                        </span>
-                      ) : (
-                        <span key={idx}>{part}</span>
-                      )
-                    )}
+                  <div className="text-[11px] text-c-text-secondary dark:text-c-text-muted mt-0.5 leading-relaxed whitespace-pre-wrap">
+                    {renderMentionText(c.text, mentionPool)}
                   </div>
                 </div>
               </div>
@@ -242,26 +295,51 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
 
       {/* Input */}
       {!locked && (
-        <div className="px-4 py-3 border-t border-slate-200/40 dark:border-navy-700/40">
+        <div className="px-4 py-3 border-t border-c-border-subtle dark:border-c-border">
           <div className="flex items-end gap-2">
             <div className="flex-1 relative">
+              {mentionQuery !== null && mentionSuggestions.length > 0 && (
+                <div
+                  role="listbox"
+                  aria-label={isPl ? 'Wspomnij osobę' : 'Mention a teammate'}
+                  className="absolute bottom-full left-0 mb-1 w-64 rounded-xl border border-c-border bg-c-surface shadow-lg max-h-40 overflow-y-auto z-overlay"
+                >
+                  {mentionSuggestions.map((user) => (
+                    <button
+                      key={user.id}
+                      type="button"
+                      role="option"
+                      className="w-full text-left px-3 py-2 text-[11px] hover:bg-c-surface-raised flex items-center gap-2"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        insertMention(user);
+                      }}
+                    >
+                      <div className="h-6 w-6 rounded-full bg-c-surface-raised text-c-info flex items-center justify-center text-[9px] font-bold">
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="text-c-text-secondary truncate">{user.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
               <textarea
                 ref={inputRef}
                 value={text}
-                onChange={(e) => setText(e.target.value)}
+                onChange={handleInput}
                 onKeyDown={handleKeyDown}
                 rows={2}
                 placeholder={
                   isPl ? 'Napisz komentarz... (@wzmianka)' : 'Write a comment... (@mention)'
                 }
-                className="w-full px-3 py-2 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/50 dark:bg-navy-950/30 text-[11px] text-slate-800 dark:text-slate-200 placeholder:text-slate-400/60 focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none"
+                className="w-full px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface text-[11px] text-c-text dark:text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-info resize-none"
               />
-              <AtSign size={10} className="absolute right-2.5 bottom-2.5 text-slate-600" />
+              <AtSign size={10} className="absolute right-2.5 bottom-2.5 text-c-text-secondary" />
             </div>
             <button
               onClick={handleSubmit}
               disabled={!text.trim()}
-              className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-colors disabled:opacity-30"
+              className="p-2.5 rounded-xl bg-c-surface-raised text-c-info dark:text-c-info hover:bg-c-surface-raised transition-colors disabled:opacity-30"
             >
               <Send size={14} />
             </button>

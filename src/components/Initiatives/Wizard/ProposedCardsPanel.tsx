@@ -139,7 +139,7 @@ export const ProposedCardsPanel: React.FC<ProposedCardsPanelProps> = ({
                   className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
                     isSelected
                       ? 'border-[var(--c-info)] bg-slate-100 text-[var(--c-info)] dark:bg-white/[0.08] dark:text-[var(--c-info)]'
-                      : 'border-slate-200 bg-white text-slate-600 hover:border-[var(--c-info)]/40 dark:border-navy-700/60 dark:bg-navy-800/40 dark:text-slate-300'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-c-info/40 dark:border-navy-700/60 dark:bg-navy-800/40 dark:text-slate-300'
                   }`}
                 >
                   {isSelected ? (

@@ -687,11 +687,11 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
   const renderPending = () => (
     <div className="text-center space-y-6 animate-in fade-in zoom-in-95 duration-200">
-      <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-yellow-200 dark:border-yellow-500/20 shadow-[0_0_15px_-3px_rgba(234,179,8,0.3)]">
-        <Lock className="text-yellow-600 dark:text-yellow-400" size={32} />
+      <div className="w-16 h-16 bg-c-warning/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-c-warning/20">
+        <Lock className="text-c-warning" size={32} />
       </div>
       <div>
-        <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">Access Pending</h2>
+        <h2 className="text-2xl font-bold text-c-text mb-2">Access Pending</h2>
         <p className="text-c-text-muted text-sm max-w-xs mx-auto leading-relaxed">
           Your organization is currently waiting for manual approval. You will receive an email once
           your access is granted.
@@ -702,7 +702,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           setIsPending(false);
           setStep(AuthStep.LOGIN);
         }}
-        className="text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300 font-medium hover:underline text-sm transition-colors"
+        className="text-c-accent hover:opacity-80 font-medium hover:underline text-sm transition-colors"
       >
         Back to Login
       </button>
@@ -712,11 +712,11 @@ export const AuthView: React.FC<AuthViewProps> = ({
   // Demo redirect for non-DBR77 users
   const renderDemoRedirect = () => (
     <div className="text-center space-y-6 animate-in fade-in zoom-in-95 duration-200">
-      <div className="w-16 h-16 bg-primary-100 dark:bg-primary-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-primary-200 dark:border-primary-500/20 shadow-[0_0_15px_-3px_rgba(147,51,234,0.3)]">
-        <Sparkles className="text-primary-600 dark:text-primary-400" size={32} />
+      <div className="w-16 h-16 bg-c-accent-soft rounded-full flex items-center justify-center mx-auto mb-4 border border-c-accent/20">
+        <Sparkles className="text-c-accent" size={32} />
       </div>
       <div>
-        <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
+        <h2 className="text-2xl font-bold text-c-text mb-2">
           {t('auth.demoMode', 'Demo Mode')}
         </h2>
         <p className="text-c-text-muted text-sm max-w-xs mx-auto leading-relaxed">
@@ -730,14 +730,14 @@ export const AuthView: React.FC<AuthViewProps> = ({
       <div className="flex flex-col gap-3">
         <button
           onClick={handleDemoRedirectToForm}
-          className="w-full py-2.5 bg-gradient-to-r from-primary-600 to-crimson-600 hover:from-primary-500 hover:to-crimson-500 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-primary-500/20 flex items-center justify-center gap-2"
+          className="w-full py-2.5 bg-c-accent hover:opacity-90 text-white font-semibold rounded-lg transition-colors shadow-lg flex items-center justify-center gap-2"
         >
           {t('auth.signUpForDemo', 'Sign up for Demo')}
           <ArrowRight size={16} />
         </button>
         <button
           onClick={handleDemoRedirectToLogin}
-          className="w-full py-2.5 bg-c-surface border border-c-border-subtle text-navy-900 dark:text-white font-semibold rounded-lg hover:border-primary-300 dark:hover:border-primary-500/30 transition-colors"
+          className="w-full py-2.5 bg-c-surface border border-c-border text-c-text font-semibold rounded-lg hover:border-c-accent/30 transition-colors"
         >
           {t('auth.logInForDemo', 'Log in for Demo')}
         </button>
@@ -745,7 +745,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           href="https://meetings.hubspot.com/piotr-wisniewski1?uuid=a2976570-a2d2-4682-9e5f-c3958a7af017"
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full py-2.5 bg-c-surface-raised/50 border border-c-border-subtle text-c-text-secondary font-medium rounded-lg hover:bg-c-surface-raised transition-colors text-center text-sm"
+          className="w-full py-2.5 bg-c-bg border border-c-border text-c-text-secondary font-medium rounded-lg hover:bg-c-surface-raised transition-colors text-center text-sm"
         >
           {t('auth.contactSales', 'Contact Sales for Full Access')}
         </a>
@@ -757,7 +757,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           setFromDemoRedirect(false);
           setError(null);
         }}
-        className="text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300 font-medium hover:underline text-sm transition-colors"
+        className="text-c-accent hover:opacity-80 font-medium hover:underline text-sm transition-colors"
       >
         {t('auth.back', 'Back')}
       </button>
@@ -767,10 +767,10 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const renderCodeEntry = () => (
     <div className="space-y-8">
       <div className="text-center">
-        <div className="w-12 h-12 bg-blue-100 dark:bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-200 dark:border-blue-500/20 shadow-[0_0_15px_-3px_rgba(59,130,246,0.3)]">
-          <Lock className="text-blue-600 dark:text-blue-400" size={24} />
+        <div className="w-12 h-12 bg-c-info/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-c-info/20">
+          <Lock className="text-c-info" size={24} />
         </div>
-        <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
+        <h2 className="text-2xl font-bold text-c-text mb-2">
           {t('auth.unlockFull', 'Join Workspace')}
         </h2>
         <p className="text-c-text-muted text-sm max-w-xs mx-auto">
@@ -788,10 +788,10 @@ export const AuthView: React.FC<AuthViewProps> = ({
           onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
           placeholder="WPISZ KOD (np. ABCD1234)"
           autoComplete="off"
-          className="w-full px-4 py-3 bg-c-surface/50 border border-c-border-subtle rounded-lg text-center text-sm font-semibold tracking-[0.18em] uppercase text-navy-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:bg-c-bg dark:focus:bg-navy-900 outline-none transition-colors shadow-sm dark:shadow-inner"
+          className="w-full px-4 py-3 bg-c-surface border border-c-border rounded-lg text-center text-sm font-semibold tracking-[0.18em] uppercase text-c-text focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus focus:bg-c-surface-raised outline-none transition-colors shadow-sm"
         />
         {inviteCodeInfo?.code && (
-          <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-3 text-xs text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
+          <div className="rounded-lg border border-c-success/20 bg-c-success/10 px-3 py-3 text-xs text-c-success">
             <div className="font-semibold">Code accepted</div>
             <div className="mt-1">
               {inviteCodeInfo.organizationName
@@ -819,7 +819,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
       <button
         onClick={() => void verifyInviteCode()}
         disabled={isVerifyingInviteCode}
-        className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-blue-500/20 dark:shadow-blue-900/20 text-sm"
+        className="w-full py-2.5 bg-c-info hover:opacity-90 text-white font-semibold rounded-lg transition-colors shadow-lg text-sm"
       >
         {isVerifyingInviteCode
           ? t('auth.verifyingCode', 'Verifying code...')
@@ -831,7 +831,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const renderRegister = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
+        <h2 className="text-2xl font-bold text-c-text mb-2">
           {hasInviteCode
             ? t('auth.joinWorkspaceTitle', 'Create your participant account')
             : targetMode === SessionMode.FREE
@@ -850,7 +850,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
       <form onSubmit={handleRegister} className="space-y-4">
         {hasInviteCode && (
-          <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-3 text-xs leading-5 text-blue-800 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300">
+          <div className="rounded-lg border border-c-info/20 bg-c-info/10 px-3 py-3 text-xs leading-5 text-c-info">
             <div className="font-semibold">
               {inviteCodeInfo?.organizationName
                 ? `Joining ${inviteCodeInfo.organizationName}`
@@ -866,7 +866,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 clearInviteCode();
                 setStep(AuthStep.CODE_ENTRY);
               }}
-              className="mt-2 text-xs font-medium text-blue-700 hover:underline dark:text-blue-300"
+              className="mt-2 text-xs font-medium text-c-info hover:underline"
             >
               Change access code
             </button>
@@ -876,51 +876,48 @@ export const AuthView: React.FC<AuthViewProps> = ({
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-c-text-secondary">
-              {t('auth.firstName')}{' '}
-              <span className="text-primary-500 dark:text-primary-400">*</span>
+              {t('auth.firstName')} <span className="text-c-accent">*</span>
             </label>
             <input
               required
               value={formData.firstName}
               onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-              className="w-full px-3 py-2 bg-c-surface-raised/50 border border-c-border-subtle rounded-lg text-navy-900 dark:text-white focus:border-primary-500 focus:bg-c-surface dark:focus:bg-navy-900 outline-none transition-colors text-xs"
+              className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text focus:border-c-focus-solid focus:bg-c-surface outline-none transition-colors text-xs"
             />
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-c-text-secondary">
-              {t('auth.lastName')} <span className="text-primary-500 dark:text-primary-400">*</span>
+              {t('auth.lastName')} <span className="text-c-accent">*</span>
             </label>
             <input
               required
               value={formData.lastName}
               onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-              className="w-full px-3 py-2 bg-c-surface-raised/50 border border-c-border-subtle rounded-lg text-navy-900 dark:text-white focus:border-primary-500 focus:bg-c-surface dark:focus:bg-navy-900 outline-none transition-colors text-xs"
+              className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text focus:border-c-focus-solid focus:bg-c-surface outline-none transition-colors text-xs"
             />
           </div>
         </div>
 
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-c-text-secondary">
-            {t('auth.email')} <span className="text-primary-500 dark:text-primary-400">*</span>
+            {t('auth.email')} <span className="text-c-accent">*</span>
           </label>
           <input
             type="email"
             required
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className="w-full px-3 py-2 bg-c-surface-raised/50 border border-c-border-subtle rounded-lg text-navy-900 dark:text-white focus:border-primary-500 focus:bg-c-surface dark:focus:bg-navy-900 outline-none transition-colors text-xs"
+            className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text focus:border-c-focus-solid focus:bg-c-surface outline-none transition-colors text-xs"
           />
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-c-text-secondary">
-            {t('auth.phone')}
-          </label>
+          <label className="text-xs font-medium text-c-text-secondary">{t('auth.phone')}</label>
           <input
             type="tel"
             value={formData.phone}
             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            className="w-full px-3 py-2 bg-c-surface-raised/50 border border-c-border-subtle rounded-lg text-navy-900 dark:text-white focus:border-primary-500 focus:bg-c-surface dark:focus:bg-navy-900 outline-none transition-colors text-xs"
+            className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text focus:border-c-focus-solid focus:bg-c-surface outline-none transition-colors text-xs"
           />
         </div>
 
@@ -932,7 +929,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             <input
               value={formData.companyName}
               onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-              className="w-full px-3 py-2 bg-c-surface-raised/50 border border-c-border-subtle rounded-lg text-navy-900 dark:text-white focus:border-primary-500 focus:bg-c-surface dark:focus:bg-navy-900 outline-none transition-colors text-xs"
+              className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text focus:border-c-focus-solid focus:bg-c-surface outline-none transition-colors text-xs"
             />
           </div>
         )}
@@ -940,9 +937,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-c-text-secondary">
             {t('auth.accessCode')}{' '}
-            <span className="text-c-text-secondary font-normal">
-              ({t('auth.optional')})
-            </span>
+            <span className="text-c-text-muted font-normal">({t('auth.optional')})</span>
           </label>
           <input
             value={formData.accessCode}
@@ -953,13 +948,13 @@ export const AuthView: React.FC<AuthViewProps> = ({
               setInviteCodeInfo(null);
             }}
             placeholder={t('auth.accessCodePlaceholder')}
-            className="w-full px-3 py-2 bg-c-surface-raised/50 border border-c-border-subtle rounded-lg text-navy-900 dark:text-white focus:border-primary-500 focus:bg-c-surface dark:focus:bg-navy-900 outline-none transition-colors text-xs placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary"
+            className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text focus:border-c-focus-solid focus:bg-c-surface outline-none transition-colors text-xs placeholder:text-c-text-muted"
           />
         </div>
 
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-c-text-secondary">
-            {t('auth.password')} <span className="text-primary-500 dark:text-primary-400">*</span>
+            {t('auth.password')} <span className="text-c-accent">*</span>
           </label>
           <input
             type="password"
@@ -967,7 +962,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             minLength={8}
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            className="w-full px-3 py-2 bg-c-surface-raised/50 border border-c-border-subtle rounded-lg text-navy-900 dark:text-white focus:border-primary-500 focus:bg-c-surface dark:focus:bg-navy-900 outline-none transition-colors text-xs"
+            className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text focus:border-c-focus-solid focus:bg-c-surface outline-none transition-colors text-xs"
           />
         </div>
 
@@ -982,27 +977,21 @@ export const AuthView: React.FC<AuthViewProps> = ({
           </div>
         )}
 
-        <div className="rounded-lg border border-c-border-subtle bg-c-bg px-3 py-3 text-xs leading-5 text-c-text-secondary dark:border-navy-700 dark:bg-navy-950/50 dark:text-c-text-muted">
+        <div className="rounded-lg border border-c-border bg-c-surface-raised px-3 py-3 text-xs leading-5 text-c-text-secondary">
           <label className="flex items-start gap-3">
             <input
               type="checkbox"
               checked={hasAcceptedLegal}
               onChange={(e) => setHasAcceptedLegal(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded border-c-border text-primary-600 focus:ring-primary-500"
+              className="mt-0.5 h-4 w-4 rounded border-c-border text-c-accent focus:ring-c-focus"
             />
             <span>
               {t('auth.legalConsentPrefix', 'I agree to the')}{' '}
-              <a
-                href={ROUTES.LEGAL.TERMS}
-                className="font-medium text-primary-600 hover:underline dark:text-primary-400"
-              >
+              <a href={ROUTES.LEGAL.TERMS} className="font-medium text-c-accent hover:underline">
                 {t('auth.termsLink', 'Terms of Service')}
               </a>{' '}
               {t('auth.legalConsentAnd', 'and')}{' '}
-              <a
-                href={ROUTES.LEGAL.PRIVACY}
-                className="font-medium text-primary-600 hover:underline dark:text-primary-400"
-              >
+              <a href={ROUTES.LEGAL.PRIVACY} className="font-medium text-c-accent hover:underline">
                 {t('auth.privacyLink', 'Privacy Policy')}
               </a>
               .
@@ -1012,22 +1001,19 @@ export const AuthView: React.FC<AuthViewProps> = ({
             {t('auth.legalReviewNote', 'Review pricing and legal materials in')}{' '}
             <a
               href={ROUTES.LEGAL.SUBSCRIPTION}
-              className="font-medium text-primary-600 hover:underline dark:text-primary-400"
+              className="font-medium text-c-accent hover:underline"
             >
               {t('auth.subscriptionLink', 'Subscription Terms')}
             </a>{' '}
             {t('auth.legalReviewDivider', 'or visit the')}{' '}
-            <a
-              href={ROUTES.LEGAL.CENTER}
-              className="font-medium text-primary-600 hover:underline dark:text-primary-400"
-            >
+            <a href={ROUTES.LEGAL.CENTER} className="font-medium text-c-accent hover:underline">
               {t('auth.legalCenterLink', 'Legal Center')}
             </a>
             .
           </p>
         </div>
 
-        <button className="w-full py-2.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 mt-4 shadow-lg shadow-primary-500/20 dark:shadow-primary-900/20 group text-sm">
+        <button className="w-full py-2.5 bg-c-text hover:opacity-90 text-c-bg font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 mt-4 shadow-lg group text-sm">
           {t('auth.createStart')}
           <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
         </button>
@@ -1036,7 +1022,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
       {/* Social Login Divider */}
       <div className="relative my-4">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-c-border-subtle" />
+          <div className="w-full border-t border-c-border" />
         </div>
         <div className="relative flex justify-center text-sm">
           <span className="px-3 bg-c-surface text-c-text-muted text-xs">
@@ -1050,7 +1036,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         <button
           type="button"
           onClick={handleGoogleLogin}
-          className="flex items-center justify-center gap-2 px-4 py-2 bg-c-surface/50 border border-c-border-subtle rounded-lg hover:bg-c-surface-raised transition-colors text-xs font-medium text-navy-900 dark:text-white shadow-sm"
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-c-surface-raised border border-c-border rounded-lg hover:bg-c-surface transition-colors text-xs font-medium text-c-text shadow-sm"
         >
           <GoogleIcon />
           Google
@@ -1058,7 +1044,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         <button
           type="button"
           onClick={handleLinkedInLogin}
-          className="flex items-center justify-center gap-2 px-4 py-2 bg-c-surface/50 border border-c-border-subtle rounded-lg hover:bg-c-surface-raised transition-colors text-xs font-medium text-navy-900 dark:text-white shadow-sm"
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-c-surface-raised border border-c-border rounded-lg hover:bg-c-surface transition-colors text-xs font-medium text-c-text shadow-sm"
         >
           <LinkedInIcon />
           LinkedIn
@@ -1070,7 +1056,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           {t('auth.haveAccount')}{' '}
           <button
             onClick={() => setStep(AuthStep.LOGIN)}
-            className="text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300 font-medium hover:underline"
+            className="text-c-accent hover:opacity-80 font-medium hover:underline"
           >
             {t('auth.logIn')}
           </button>
@@ -1082,7 +1068,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             <button
               type="button"
               onClick={() => setStep(AuthStep.CODE_ENTRY)}
-              className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline font-medium"
+              className="inline-flex items-center gap-1 text-c-info hover:underline font-medium"
             >
               <Lock size={12} />
               {t('auth.enterAccessCodeCta', 'Enter access code')}
@@ -1090,10 +1076,10 @@ export const AuthView: React.FC<AuthViewProps> = ({
           </div>
         )}
 
-        <div className="pt-2 border-t border-c-border-subtle">
+        <div className="pt-2 border-t border-c-border">
           <button
             onClick={startDemoFlow}
-            className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 text-xs font-medium hover:underline flex items-center justify-center gap-1 mx-auto transition-colors"
+            className="text-c-info hover:opacity-80 text-xs font-medium hover:underline flex items-center justify-center gap-1 mx-auto transition-colors"
           >
             {t('auth.tryDemo')}
             <ArrowRight size={12} />
@@ -1106,17 +1092,13 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const renderLogin = () => (
     <div className="space-y-8">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
-          {t('auth.welcomeBack')}
-        </h2>
+        <h2 className="text-2xl font-bold text-c-text mb-2">{t('auth.welcomeBack')}</h2>
         <p className="text-c-text-muted text-sm">{t('auth.signInText')}</p>
       </div>
 
       <form onSubmit={handleLogin} className="space-y-5">
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-c-text-secondary">
-            {t('auth.email')}
-          </label>
+          <label className="text-xs font-medium text-c-text-secondary">{t('auth.email')}</label>
           <input
             type="email"
             name="email"
@@ -1125,7 +1107,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             value={formData.email}
             onChange={(e) => setFormData((current) => ({ ...current, email: e.target.value }))}
             data-testid="email-input"
-            className="w-full px-3 py-2.5 bg-c-surface-raised/50 border border-c-border-subtle rounded-lg text-navy-900 dark:text-white focus:border-primary-500 focus:bg-c-surface dark:focus:bg-navy-900 outline-none transition-colors text-sm"
+            className="w-full px-3 py-2.5 bg-c-surface-raised border border-c-border rounded-lg text-c-text focus:border-c-focus-solid focus:bg-c-surface outline-none transition-colors text-sm"
           />
         </div>
 
@@ -1137,7 +1119,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             <button
               type="button"
               onClick={() => (window.location.href = '/forgot-password')}
-              className="text-xs text-primary-600 dark:text-primary-400 hover:underline"
+              className="text-xs text-c-accent hover:underline"
             >
               {t('auth.forgotPassword')}
             </button>
@@ -1150,7 +1132,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             value={formData.password}
             onChange={(e) => setFormData((current) => ({ ...current, password: e.target.value }))}
             data-testid="password-input"
-            className="w-full px-3 py-2.5 bg-c-surface-raised/50 border border-c-border-subtle rounded-lg text-navy-900 dark:text-white focus:border-primary-500 focus:bg-c-surface dark:focus:bg-navy-900 outline-none transition-colors text-sm"
+            className="w-full px-3 py-2.5 bg-c-surface-raised border border-c-border rounded-lg text-c-text focus:border-c-focus-solid focus:bg-c-surface outline-none transition-colors text-sm"
           />
         </div>
 
@@ -1168,7 +1150,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         <button
           type="submit"
           data-testid="login-button"
-          className="w-full py-2.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-semibold rounded-lg transition-colors shadow-lg shadow-primary-500/20 dark:shadow-primary-900/20 mt-2 text-sm"
+          className="w-full py-2.5 bg-c-text hover:opacity-90 text-c-bg font-semibold rounded-lg transition-colors shadow-lg mt-2 text-sm"
         >
           {t('auth.logIn')}
         </button>
@@ -1177,7 +1159,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
       {/* Social Login Divider */}
       <div className="relative my-6">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-c-border-subtle" />
+          <div className="w-full border-t border-c-border" />
         </div>
         <div className="relative flex justify-center text-sm">
           <span className="px-3 bg-c-surface text-c-text-muted text-xs">
@@ -1191,7 +1173,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         <button
           type="button"
           onClick={handleGoogleLogin}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-c-surface/50 border border-c-border-subtle rounded-lg hover:bg-c-surface-raised transition-colors text-sm font-medium text-navy-900 dark:text-white shadow-sm"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-c-surface-raised border border-c-border rounded-lg hover:bg-c-surface transition-colors text-sm font-medium text-c-text shadow-sm"
         >
           <GoogleIcon />
           Google
@@ -1199,7 +1181,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         <button
           type="button"
           onClick={handleLinkedInLogin}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-c-surface/50 border border-c-border-subtle rounded-lg hover:bg-c-surface-raised transition-colors text-sm font-medium text-navy-900 dark:text-white shadow-sm"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-c-surface-raised border border-c-border rounded-lg hover:bg-c-surface transition-colors text-sm font-medium text-c-text shadow-sm"
         >
           <LinkedInIcon />
           LinkedIn
@@ -1210,7 +1192,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         {t('auth.noAccount')}{' '}
         <button
           onClick={() => setStep(AuthStep.REGISTER)}
-          className="text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300 font-medium hover:underline"
+          className="text-c-accent hover:opacity-80 font-medium hover:underline"
         >
           {t('auth.createOne')}
         </button>
@@ -1223,7 +1205,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         <button
           type="button"
           onClick={() => setStep(AuthStep.CODE_ENTRY)}
-          className="mt-2 inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/15"
+          className="mt-2 inline-flex items-center gap-2 rounded-lg border border-c-info/20 bg-c-info/10 px-3 py-2 text-xs font-medium text-c-info transition-colors hover:bg-c-info/15"
         >
           <Lock size={13} />
           {t('auth.enterAccessCodeCta', 'Enter access code')}
@@ -1231,24 +1213,24 @@ export const AuthView: React.FC<AuthViewProps> = ({
       </div>
 
       {/* Privacy Policy Link */}
-      <div className="text-center pt-3 border-t border-c-border-subtle">
+      <div className="text-center pt-3 border-t border-c-border">
         <a
           href={ROUTES.LEGAL.PRIVACY}
-          className="text-xs text-c-text-secondary hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+          className="text-xs text-c-text-muted hover:text-c-accent transition-colors"
         >
           {t('auth.privacyLink', 'Polityka prywatności')}
         </a>
-        <span className="text-c-text-secondary mx-2">•</span>
+        <span className="text-c-text-muted mx-2">•</span>
         <a
           href={ROUTES.LEGAL.TERMS}
-          className="text-xs text-c-text-secondary hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+          className="text-xs text-c-text-muted hover:text-c-accent transition-colors"
         >
           {t('auth.termsLink', 'Regulamin')}
         </a>
-        <span className="text-c-text-secondary mx-2">•</span>
+        <span className="text-c-text-muted mx-2">•</span>
         <a
           href={ROUTES.LEGAL.CENTER}
-          className="text-xs text-c-text-secondary hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+          className="text-xs text-c-text-muted hover:text-c-accent transition-colors"
         >
           {t('auth.legalCenterLink', 'Legal Center')}
         </a>
@@ -1257,12 +1239,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
   );
 
   return (
-    <div className="flex flex-col items-center justify-center w-full h-full bg-c-surface-raised p-6 relative overflow-hidden transition-colors duration-200">
+    <div className="flex flex-col items-center justify-center w-full h-full bg-c-bg p-6 relative overflow-hidden transition-colors duration-200">
       {/* Decorative BG */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary-100/50 dark:from-primary-900/20 via-slate-50 dark:via-navy-950 to-slate-50 dark:to-navy-950 pointer-events-none transition-colors duration-200"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-c-accent-soft via-c-bg to-c-bg pointer-events-none transition-colors duration-200"></div>
 
       {/* Card Container */}
-      <div className="relative w-full max-w-sm bg-c-surface/80 dark:bg-navy-900/80 backdrop-blur-xl border border-c-border-subtle shadow-2xl rounded-xl p-6 lg:p-8 animate-in fade-in zoom-in-95 duration-200 transition-colors">
+      <div className="relative w-full max-w-sm bg-c-surface/80 backdrop-blur-xl border border-c-border shadow-2xl rounded-xl p-6 lg:p-8 animate-in fade-in zoom-in-95 duration-200 transition-colors">
         {/* Branding */}
         <div className="flex flex-col items-center mb-6">
           <div
@@ -1333,9 +1315,9 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 }}
                 placeholder="••••"
                 aria-label={t('auth.quickAccessPinAria', 'Four-digit quick access PIN')}
-                className="w-24 px-3 py-1.5 text-center text-lg tracking-widest font-mono bg-c-surface-raised border border-c-border dark:border-white/20 rounded-lg text-navy-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-colors"
+                className="w-24 px-3 py-1.5 text-center text-lg tracking-widest font-mono bg-c-surface-raised border border-c-border rounded-lg text-c-text focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus outline-none transition-colors"
               />
-              <span className="text-[10px] text-c-text-secondary max-w-[14rem] text-center leading-tight">
+              <span className="text-[10px] text-c-text-muted max-w-[14rem] text-center leading-tight">
                 {t(
                   'auth.quickAccessFooter',
                   'Enter your PIN. To hide this field, double-click the logo or press Ctrl+Shift+K.'
@@ -1348,14 +1330,14 @@ export const AuthView: React.FC<AuthViewProps> = ({
         {/* Close/Back Button */}
         <button
           onClick={onBack}
-          className="absolute top-4 right-4 text-c-text-secondary hover:text-navy-900 dark:text-c-text-muted dark:hover:text-white transition-colors p-2 rounded-full hover:bg-c-surface-raised dark:hover:bg-c-surface/5"
+          className="absolute top-4 right-4 text-c-text-muted hover:text-c-text transition-colors p-2 rounded-full hover:bg-c-surface-raised"
         >
           <X size={20} />
         </button>
 
         {isDemoLoading && (
           <div className="text-center py-12 space-y-4 animate-in fade-in zoom-in-95 duration-200">
-            <div className="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto shadow-lg shadow-primary-500/20"></div>
+            <div className="w-12 h-12 border-4 border-c-accent border-t-transparent rounded-full animate-spin mx-auto shadow-lg"></div>
             <p className="text-c-text-secondary font-medium animate-pulse">
               {t('auth.loading', 'Initializing Demo Context...')}
             </p>
@@ -1384,7 +1366,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
       <div className="mt-8 flex flex-col items-center gap-3 animate-in fade-in slide-in-from-bottom-4 duration-200 delay-100">
         <a
           href="/"
-          className="flex items-center gap-2 px-4 py-2 bg-c-surface/50 dark:bg-c-surface/5 border border-c-border-subtle rounded-lg text-c-text-secondary hover:text-primary-600 dark:hover:text-primary-400 hover:border-primary-300 dark:hover:border-primary-500/30 text-sm transition-colors group"
+          className="flex items-center gap-2 px-4 py-2 bg-c-surface/50 border border-c-border rounded-lg text-c-text-secondary hover:text-c-accent hover:border-c-accent/30 text-sm transition-colors group"
         >
           <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
           {t('auth.backToStart')}

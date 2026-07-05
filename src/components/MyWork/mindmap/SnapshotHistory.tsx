@@ -82,7 +82,7 @@ function relTime(ts: number, pl: boolean): string {
 
 function dotColor(ts: number) {
   const h = (Date.now() - ts) / 3_600_000;
-  return h < 1 ? 'bg-emerald-400' : h < 24 ? 'bg-amber-400' : 'bg-slate-400';
+  return h < 1 ? 'bg-c-success' : h < 24 ? 'bg-c-warning' : 'bg-c-surface-raised';
 }
 
 const DiffBadge: React.FC<{ diff: SnapshotDiff; pl: boolean }> = ({ diff, pl }) => {
@@ -93,10 +93,10 @@ const DiffBadge: React.FC<{ diff: SnapshotDiff; pl: boolean }> = ({ diff, pl }) 
     [-diff.removedEdges, '-', pl ? 'krawędzi' : 'edges'],
   ];
   const colors = [
-    'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300',
-    'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300',
-    'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
-    'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
+    'bg-c-surface-raised dark:bg-c-surface-raised text-c-success dark:text-c-success',
+    'bg-c-surface-raised dark:bg-c-surface-raised text-c-danger dark:text-c-danger',
+    'bg-c-surface-raised dark:bg-c-surface-raised text-c-info dark:text-c-info',
+    'bg-c-surface-raised dark:bg-c-surface-raised text-c-warning dark:text-c-warning',
   ];
   const visible = items
     .map((it, i) => ({ val: Math.abs(it[0]), sign: it[1], label: it[2], cls: colors[i] }))
@@ -339,28 +339,28 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/40">
-      <div className="w-full max-w-md rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
-        <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-c-bg">
+      <div className="w-full max-w-md rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
           <div className="flex items-center gap-2">
-            <Clock size={16} className="text-amber-500" />
-            <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+            <Clock size={16} className="text-c-warning" />
+            <h3 className="text-sm font-bold text-c-text dark:text-c-text">
               {t('Historia wersji', 'Version History')}
             </h3>
             {!backend && (
-              <span className="text-[9px] rounded bg-amber-100 px-1.5 py-0.5 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+              <span className="text-[9px] rounded bg-c-surface-raised px-1.5 py-0.5 text-c-warning dark:bg-c-surface dark:text-c-warning">
                 {t('tryb lokalny', 'local mode')}
               </span>
             )}
             {previewing && (
-              <span className="text-[9px] rounded bg-blue-100 px-1.5 py-0.5 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+              <span className="text-[9px] rounded bg-c-surface-raised px-1.5 py-0.5 text-c-info dark:bg-c-surface dark:text-c-info">
                 {t('podgląd', 'preview')}
               </span>
             )}
           </div>
           <button
             onClick={close}
-            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-c-text-secondary hover:text-c-text-secondary dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
           >
             <X size={16} />
           </button>
@@ -380,12 +380,12 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
                   }
                 }}
                 placeholder={t('Nazwa snapshotu...', 'Snapshot name...')}
-                className="flex-1 rounded border border-slate-300 px-2 py-1.5 text-xs outline-none focus:border-amber-500 dark:border-navy-600 dark:bg-navy-800 dark:text-white"
+                className="flex-1 rounded border border-c-border-subtle px-2 py-1.5 text-xs outline-none focus:border-c-warning dark:border-c-border dark:bg-c-surface dark:text-c-text"
               />
               <button
                 onClick={save}
                 disabled={!label.trim() || saving}
-                className="rounded bg-amber-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-600 disabled:opacity-40"
+                className="rounded bg-c-warning px-3 py-1.5 text-xs font-bold text-c-text hover:bg-c-warning disabled:opacity-40"
               >
                 <Save size={12} />
               </button>
@@ -394,7 +394,7 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
                   setShowInput(false);
                   setLabel('');
                 }}
-                className="rounded px-2 py-1.5 text-xs text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800"
+                className="rounded px-2 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface"
               >
                 <X size={12} />
               </button>
@@ -405,21 +405,21 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
                 setLabel(t(`Wersja ${snapshots.length + 1}`, `Version ${snapshots.length + 1}`));
                 setShowInput(true);
               }}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-amber-500/10 to-amber-500/8 hover:from-amber-500/15 hover:to-amber-500/12 transition-all mb-3"
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-c-surface-raised transition-all mb-3"
             >
-              <Save size={14} className="text-amber-600" />
-              <span className="text-[11px] font-bold text-amber-700 dark:text-amber-300">
+              <Save size={14} className="text-c-warning" />
+              <span className="text-[11px] font-bold text-c-warning dark:text-c-warning">
                 {t('Zapisz aktualny stan', 'Save current state')}
               </span>
             </button>
           )}
           {sorted.length === 0 ? (
-            <div className="text-center py-8 text-[11px] text-slate-600">
+            <div className="text-center py-8 text-[11px] text-c-text-secondary">
               {t('Brak zapisanych snapshotów', 'No snapshots saved yet')}
             </div>
           ) : (
             <div className="relative pl-5">
-              <div className="absolute left-[7px] top-2 bottom-2 w-px bg-slate-200 dark:bg-navy-700" />
+              <div className="absolute left-[7px] top-2 bottom-2 w-px bg-c-surface-raised dark:bg-c-surface" />
               {sorted.map((snap, idx) => {
                 const prev = idx < sorted.length - 1 ? sorted[idx + 1] : null;
                 const diff = prev ? diffSnap(snap, prev) : null;
@@ -439,10 +439,10 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
                     }}
                   >
                     <div
-                      className={`absolute -left-5 top-3 w-3 h-3 rounded-full border-2 border-white dark:border-navy-900 ${dotColor(snap.timestamp)} ${hov ? 'ring-2 ring-amber-300/50' : ''}`}
+                      className={`absolute -left-5 top-3 w-3 h-3 rounded-full border-2 border-c-border dark:border-c-border ${dotColor(snap.timestamp)} ${hov ? 'ring-2 ring-c-warning' : ''}`}
                     />
                     <div
-                      className={`p-3 rounded-xl border transition-all ${hov ? 'bg-amber-50/50 dark:bg-amber-900/10 border-amber-200/50 dark:border-amber-700/30' : 'bg-slate-50/50 dark:bg-navy-950/20 border-slate-200/30 dark:border-navy-700/30'}`}
+                      className={`p-3 rounded-xl border transition-all ${hov ? 'bg-c-surface-raised dark:bg-c-surface border-c-warning dark:border-c-warning' : 'bg-c-surface-raised dark:bg-c-surface border-c-border-subtle dark:border-c-border'}`}
                     >
                       <div className="flex items-center gap-1.5 min-w-0">
                         {editing ? (
@@ -455,11 +455,11 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
                               if (e.key === 'Escape') setEditId(null);
                             }}
                             onBlur={() => saveLabel(snap.id, editLabel)}
-                            className="flex-1 min-w-0 rounded border border-amber-400 px-1.5 py-0.5 text-[11px] font-medium outline-none dark:bg-navy-800 dark:text-white"
+                            className="flex-1 min-w-0 rounded border border-c-warning px-1.5 py-0.5 text-[11px] font-medium outline-none dark:bg-c-surface dark:text-c-text"
                           />
                         ) : (
                           <span
-                            className="flex-1 min-w-0 truncate text-[11px] font-medium text-slate-700 dark:text-slate-200 cursor-pointer hover:text-amber-600 dark:hover:text-amber-400"
+                            className="flex-1 min-w-0 truncate text-[11px] font-medium text-c-text-secondary dark:text-c-text cursor-pointer hover:text-c-warning dark:hover:text-c-warning"
                             onClick={() => {
                               setEditId(snap.id);
                               setEditLabel(snap.label);
@@ -472,7 +472,7 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
                         {editing && (
                           <button
                             onClick={() => saveLabel(snap.id, editLabel)}
-                            className="p-0.5 text-emerald-500 hover:text-emerald-600"
+                            className="p-0.5 text-c-success hover:text-c-success"
                           >
                             <Check size={10} />
                           </button>
@@ -483,13 +483,13 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
                               setEditId(snap.id);
                               setEditLabel(snap.label);
                             }}
-                            className="p-0.5 text-slate-600 hover:text-amber-500"
+                            className="p-0.5 text-c-text-secondary hover:text-c-warning"
                           >
                             <Pencil size={10} />
                           </button>
                         )}
                       </div>
-                      <div className="flex items-center gap-1.5 mt-1 text-[9px] text-slate-600">
+                      <div className="flex items-center gap-1.5 mt-1 text-[9px] text-c-text-secondary">
                         <span>{relTime(snap.timestamp, pl)}</span>
                         <span>·</span>
                         <span>
@@ -502,17 +502,17 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
                       </div>
                       {diff && <DiffBadge diff={diff} pl={pl} />}
                       {hov && (
-                        <div className="flex items-center gap-1 mt-2 pt-1.5 border-t border-slate-200/30 dark:border-navy-700/30">
+                        <div className="flex items-center gap-1 mt-2 pt-1.5 border-t border-c-border-subtle dark:border-c-border">
                           <button
                             onClick={() => restore(snap)}
-                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium text-amber-600 hover:bg-amber-500/10 transition-colors"
+                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium text-c-warning hover:bg-c-surface-raised transition-colors"
                           >
                             <RotateCcw size={10} />
                             {t('Przywróć', 'Restore')}
                           </button>
                           <button
                             onClick={() => del(snap.id)}
-                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] text-slate-600 hover:text-danger-500 hover:bg-danger-500/10 transition-colors"
+                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] text-c-text-secondary hover:text-c-danger hover:bg-c-surface-raised transition-colors"
                           >
                             <Trash2 size={10} />
                             {t('Usuń', 'Delete')}

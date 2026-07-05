@@ -1,51 +1,28 @@
-import { Copy, Crown, KeyRound, Loader2, Shield, Trash2, UserPlus, Users } from 'lucide-react';
+import { Copy, Crown, KeyRound, Shield, Trash2, UserPlus, Users } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { Button, Input, SelectField } from '../ui/primitives';
 import { EntityStatusChip } from '../ui/primitives/chips';
 import { FilterableTable } from '../shared/ModuleHub/FilterableTable';
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import type { TableColumn } from '../shared/ModuleHub/FilterableTable';
 import { useAppStore } from '../../store/useAppStore';
-import { cn } from '../../utils/cn';
 import { OwnershipManagementView } from '../../views/admin/OwnershipManagementView';
 
 type RoleOption = 'OWNER' | 'ADMIN' | 'MEMBER' | 'GUEST';
 
-const ROLE_GUIDANCE: Array<{
-  role: RoleOption;
-  title: string;
-  description: string;
-  denial: string;
-}> = [
-  {
-    role: 'OWNER',
-    title: 'Owner',
-    description: 'Full workspace control, ownership transfer, and owner-only safeguards.',
-    denial: 'Only an owner can assign or remove another owner.',
-  },
-  {
-    role: 'ADMIN',
-    title: 'Admin',
-    description: 'Can manage team members, member roles, and team invite codes.',
-    denial: 'Cannot change owner membership or bypass owner protections.',
-  },
-  {
-    role: 'MEMBER',
-    title: 'Member',
-    description: 'Standard workspace access without team administration permissions.',
-    denial: 'Cannot open Team Admin or change membership.',
-  },
-  {
-    role: 'GUEST',
-    title: 'Guest',
-    description: 'Restricted collaborator role with no admin access.',
-    denial: 'Guests cannot access admin tools.',
-  },
+const ROLE_GUIDANCE: Array<{ role: RoleOption }> = [
+  { role: 'OWNER' },
+  { role: 'ADMIN' },
+  { role: 'MEMBER' },
+  { role: 'GUEST' },
 ];
 
 export const AdminMembersRolesPanel: React.FC = () => {
+  const { t } = useTranslation();
   const { currentOrganization, currentUser } = useAppStore();
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,8 +42,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
   const viewerMembership = useMemo(
     () =>
       members.find(
-        (member) =>
-          String(member.user_id ?? member.id ?? '') === String(currentUser?.id ?? '')
+        (member) => String(member.user_id ?? member.id ?? '') === String(currentUser?.id ?? '')
       ),
     [members, currentUser?.id]
   );
@@ -75,9 +51,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
   // back to the platform role so a real admin/owner is never blocked with a
   // silent no-op. The server remains the final authority (requireRole + controller).
   const platformRole = String(currentUser?.role || '').toUpperCase();
-  const platformCanManage = ['OWNER', 'ADMIN', 'SUPERADMIN', 'SUPER_ADMIN'].includes(
-    platformRole
-  );
+  const platformCanManage = ['OWNER', 'ADMIN', 'SUPERADMIN', 'SUPER_ADMIN'].includes(platformRole);
   const canManageTeam =
     ['OWNER', 'ADMIN'].includes(String(viewerMembership?.role || '').toUpperCase()) ||
     platformCanManage;
@@ -94,12 +68,12 @@ export const AdminMembersRolesPanel: React.FC = () => {
       const data = await Api.getOrganizationMembers(orgId);
       setMembers(Array.isArray(data) ? data : []);
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to load members');
+      toast.error(error?.message || t('admin.membersRoles.loadFailed', 'Failed to load members'));
       setMembers([]);
     } finally {
       setLoading(false);
     }
-  }, [orgId]);
+  }, [orgId, t]);
 
   useEffect(() => {
     void loadMembers();
@@ -107,25 +81,29 @@ export const AdminMembersRolesPanel: React.FC = () => {
 
   // RFC-lite email check — mirrors the server-side z.string().email() so we fail
   // fast with a visible, field-level message instead of a silent round-trip.
-  const isValidEmail = (value: string): boolean =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  const isValidEmail = (value: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
   const handleInvite = async () => {
     setInviteNotice(null);
     setInviteError(null);
 
     if (!orgId) {
-      setInviteError('No active organization — reload the page and try again.');
+      setInviteError(
+        t('admin.membersRoles.invite.noOrg', 'No active organization — reload the page and try again.')
+      );
       return;
     }
     if (!canManageTeam) {
-      const msg = 'Only a team owner or admin can add members.';
+      const msg = t('admin.membersRoles.invite.denied', 'Only a team owner or admin can add members.');
       setInviteError(msg);
       toast.error(msg);
       return;
     }
     if (inviteRole === 'OWNER') {
-      const msg = 'Owner changes must use the ownership transfer flow.';
+      const msg = t(
+        'admin.membersRoles.invite.ownerFlow',
+        'Owner changes must use the ownership transfer flow.'
+      );
       setInviteError(msg);
       toast.error(msg);
       return;
@@ -133,20 +111,24 @@ export const AdminMembersRolesPanel: React.FC = () => {
 
     const email = inviteEmail.trim();
     if (!email) {
-      setInviteError('Enter an email address before adding a member.');
+      setInviteError(
+        t('admin.membersRoles.invite.emptyEmail', 'Enter an email address before adding a member.')
+      );
       return;
     }
     if (!isValidEmail(email)) {
-      setInviteError('Enter a valid email address (e.g. member@company.com).');
+      setInviteError(
+        t('admin.membersRoles.invite.invalidEmail', 'Enter a valid email address (e.g. member@company.com).')
+      );
       return;
     }
 
     try {
       setInviting(true);
       await Api.addOrganizationMember(orgId, email, inviteRole);
-      const msg = `${email} added to the workspace.`;
+      const msg = t('admin.membersRoles.invite.added', '{{email}} added to the workspace.', { email });
       setInviteNotice(msg);
-      toast.success('Member added to workspace');
+      toast.success(t('admin.membersRoles.invite.addedToast', 'Member added to workspace'));
       setInviteEmail('');
       setInviteRole('MEMBER');
       await loadMembers();
@@ -155,8 +137,11 @@ export const AdminMembersRolesPanel: React.FC = () => {
       // both inline and as a toast so it is never a silent no-op.
       const raw = String(error?.message || '');
       const friendly = /not\s*found/i.test(raw)
-        ? 'No account exists for that email yet. Use the Team Invite Code below so they can self-register, or create the account first.'
-        : raw || 'Failed to add member.';
+        ? t(
+            'admin.membersRoles.invite.notFound',
+            'No account exists for that email yet. Use the Team Invite Code below so they can self-register, or create the account first.'
+          )
+        : raw || t('admin.membersRoles.invite.failed', 'Failed to add member.');
       setInviteError(friendly);
       toast.error(friendly);
     } finally {
@@ -167,20 +152,24 @@ export const AdminMembersRolesPanel: React.FC = () => {
   const handleRoleChange = async (memberId: string, role: RoleOption) => {
     if (!orgId) return;
     if (!canManageTeam) {
-      toast.error('Only a team owner or admin can change member roles');
+      toast.error(
+        t('admin.membersRoles.role.denied', 'Only a team owner or admin can change member roles')
+      );
       return;
     }
     if (role === 'OWNER') {
-      toast.error('Owner changes must use the ownership transfer flow');
+      toast.error(
+        t('admin.membersRoles.role.ownerFlow', 'Owner changes must use the ownership transfer flow')
+      );
       return;
     }
     try {
       setSavingMemberId(memberId);
       await Api.updateOrganizationMemberRole(orgId, memberId, role);
-      toast.success('Member role updated');
+      toast.success(t('admin.membersRoles.role.updated', 'Member role updated'));
       await loadMembers();
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to update role');
+      toast.error(error?.message || t('admin.membersRoles.role.updateFailed', 'Failed to update role'));
     } finally {
       setSavingMemberId(null);
     }
@@ -191,10 +180,10 @@ export const AdminMembersRolesPanel: React.FC = () => {
     try {
       setSavingMemberId(memberId);
       await Api.removeOrganizationMember(orgId, memberId);
-      toast.success('Member removed');
+      toast.success(t('admin.membersRoles.remove.removed', 'Member removed'));
       await loadMembers();
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to remove member');
+      toast.error(error?.message || t('admin.membersRoles.remove.failed', 'Failed to remove member'));
     } finally {
       setSavingMemberId(null);
     }
@@ -215,13 +204,17 @@ export const AdminMembersRolesPanel: React.FC = () => {
 
       const code = response?.code?.code || response?.code;
       if (!code) {
-        throw new Error('Code was not returned by the server');
+        throw new Error(
+          t('admin.membersRoles.code.noCode', 'Code was not returned by the server')
+        );
       }
 
       setGeneratedInviteCode(code);
-      toast.success('Access code generated');
+      toast.success(t('admin.membersRoles.code.generated', 'Access code generated'));
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to generate access code');
+      toast.error(
+        error?.message || t('admin.membersRoles.code.generateFailed', 'Failed to generate access code')
+      );
     } finally {
       setIsGeneratingCode(false);
     }
@@ -236,106 +229,117 @@ export const AdminMembersRolesPanel: React.FC = () => {
       await navigator.clipboard.writeText(value);
       toast.success(message);
     } catch {
-      toast.error('Failed to copy to clipboard');
+      toast.error(t('admin.membersRoles.code.copyFailed', 'Failed to copy to clipboard'));
     }
+  };
+
+  const roleLabels: Record<RoleOption, string> = {
+    OWNER: t('admin.membersRoles.roles.owner', 'Owner'),
+    ADMIN: t('admin.membersRoles.roles.admin', 'Admin'),
+    MEMBER: t('admin.membersRoles.roles.member', 'Member'),
+    GUEST: t('admin.membersRoles.roles.guest', 'Guest'),
   };
 
   const memberColumns: TableColumn[] = [
     {
       id: 'name',
-      label: 'Member',
+      label: t('admin.membersRoles.columns.member', 'Member'),
       width: '200px',
-      render: (row) => (
-        <span className="font-medium text-slate-900 dark:text-white">{row.name}</span>
-      ),
+      render: (row) => <span className="font-medium text-c-text">{row.name}</span>,
     },
     {
       id: 'email',
-      label: 'Email',
+      label: t('admin.membersRoles.columns.email', 'Email'),
       width: '220px',
-      render: (row) => (
-        <span className="text-slate-600 dark:text-slate-300">{row.email}</span>
-      ),
+      render: (row) => <span className="text-c-text-secondary">{row.email}</span>,
     },
     {
       id: 'role',
-      label: 'Role',
+      label: t('admin.membersRoles.columns.role', 'Role'),
       width: '200px',
       filterable: true,
       filterOptions: [
-        { value: 'OWNER', label: 'Owner' },
-        { value: 'ADMIN', label: 'Admin' },
-        { value: 'MEMBER', label: 'Member' },
-        { value: 'GUEST', label: 'Guest' },
+        { value: 'OWNER', label: roleLabels.OWNER },
+        { value: 'ADMIN', label: roleLabels.ADMIN },
+        { value: 'MEMBER', label: roleLabels.MEMBER },
+        { value: 'GUEST', label: roleLabels.GUEST },
       ],
       render: (row) => {
         const isBusy = savingMemberId === row.memberId;
         const ownerProtected = row.role === 'OWNER';
         return (
-          <select
-            value={row.role}
-            disabled={isBusy || ownerProtected}
-            onClick={(e) => e.stopPropagation()}
-            onChange={(event) =>
-              void handleRoleChange(row.memberId, event.target.value as RoleOption)
-            }
-            className={cn(
-              'rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white',
-              (isBusy || ownerProtected) && 'opacity-60'
-            )}
-          >
-            <option value="OWNER" disabled>Owner</option>
-            <option value="ADMIN">Admin</option>
-            <option value="MEMBER">Member</option>
-            <option value="GUEST">Guest</option>
-          </select>
+          <div onClick={(e) => e.stopPropagation()} className="max-w-[160px]">
+            <SelectField
+              value={row.role}
+              disabled={isBusy || ownerProtected}
+              onChange={(value) => void handleRoleChange(row.memberId, value as RoleOption)}
+              placeholder=""
+              options={[
+                { value: 'OWNER', label: roleLabels.OWNER, disabled: true },
+                { value: 'ADMIN', label: roleLabels.ADMIN },
+                { value: 'MEMBER', label: roleLabels.MEMBER },
+                { value: 'GUEST', label: roleLabels.GUEST },
+              ]}
+            />
+          </div>
         );
       },
     },
     {
       id: 'memberStatus',
-      label: 'Status',
+      label: t('admin.membersRoles.columns.status', 'Status'),
       width: '120px',
-      render: (row) => <EntityStatusChip status={String(row.memberStatus || 'active').toLowerCase()} />,
+      render: (row) => (
+        <EntityStatusChip status={String(row.memberStatus || 'active').toLowerCase()} />
+      ),
     },
   ];
 
   return (
     <div className="space-y-6">
+      {/* Role guidance cards */}
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {ROLE_GUIDANCE.map((item) => (
           <div
             key={item.role}
-            className="rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5"
+            className="rounded-xl border border-c-border-subtle bg-c-surface p-4"
           >
-            <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
+            <div className="flex items-center gap-2 text-sm font-semibold text-c-text">
               {item.role === 'OWNER' ? (
-                <Crown className="h-4 w-4 text-amber-500" />
+                <Crown className="h-4 w-4 text-c-warning" />
               ) : item.role === 'ADMIN' ? (
-                <Shield className="h-4 w-4 text-primary-500" />
+                <Shield className="h-4 w-4 text-c-accent" />
               ) : (
-                <Users className="h-4 w-4 text-slate-500" />
+                <Users className="h-4 w-4 text-c-text-muted" />
               )}
-              {item.title}
+              {roleLabels[item.role]}
             </div>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{item.description}</p>
-            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{item.denial}</p>
+            <p className="mt-2 text-sm text-c-text-secondary">
+              {t(`admin.membersRoles.guidance.${item.role.toLowerCase()}.description`, '')}
+            </p>
+            <p className="mt-2 text-xs text-c-text-muted">
+              {t(`admin.membersRoles.guidance.${item.role.toLowerCase()}.denial`, '')}
+            </p>
           </div>
         ))}
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+      {/* Members table + invite */}
+      <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-              Members & Roles
+            <h3 className="text-lg font-semibold text-c-text">
+              {t('admin.membersRoles.title', 'Members & Roles')}
             </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              Canonical P32 surface for membership, role changes, and ownership safeguards.
+            <p className="text-sm text-c-text-muted">
+              {t(
+                'admin.membersRoles.subtitle',
+                'Canonical P32 surface for membership, role changes, and ownership safeguards.'
+              )}
             </p>
           </div>
-          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr),160px,auto]">
-            <input
+          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr),160px,auto] sm:items-end">
+            <Input
               type="email"
               value={inviteEmail}
               onChange={(event) => {
@@ -343,31 +347,27 @@ export const AdminMembersRolesPanel: React.FC = () => {
                 if (inviteError) setInviteError(null);
                 if (inviteNotice) setInviteNotice(null);
               }}
-              placeholder="member@company.com"
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white"
+              placeholder={t('admin.membersRoles.invite.placeholder', 'member@company.com')}
+              aria-label={t('admin.membersRoles.invite.emailLabel', 'Member email')}
             />
-            <select
+            <SelectField
               value={inviteRole}
-              onChange={(event) => setInviteRole(event.target.value as RoleOption)}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white"
-            >
-              <option value="MEMBER">Member</option>
-              <option value="ADMIN">Admin</option>
-              <option value="GUEST">Guest</option>
-            </select>
-            <button
-              type="button"
+              onChange={(value) => setInviteRole(value as RoleOption)}
+              placeholder=""
+              options={[
+                { value: 'MEMBER', label: roleLabels.MEMBER },
+                { value: 'ADMIN', label: roleLabels.ADMIN },
+                { value: 'GUEST', label: roleLabels.GUEST },
+              ]}
+            />
+            <Button
+              variant="primary"
               onClick={() => void handleInvite()}
-              disabled={inviting}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50"
+              loading={inviting}
+              icon={<UserPlus className="h-4 w-4" />}
             >
-              {inviting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <UserPlus className="h-4 w-4" />
-              )}
-              Add member
-            </button>
+              {t('admin.membersRoles.invite.cta', 'Add member')}
+            </Button>
           </div>
         </div>
 
@@ -389,8 +389,8 @@ export const AdminMembersRolesPanel: React.FC = () => {
         )}
 
         {loading ? (
-          <div className="mt-5 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-            Loading members...
+          <div className="mt-5 py-8 text-center text-sm text-c-text-muted">
+            {t('admin.membersRoles.loading', 'Loading members…')}
           </div>
         ) : (
           <div className="mt-5">
@@ -402,7 +402,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
                 name:
                   `${member.first_name || ''} ${member.last_name || ''}`.trim() ||
                   member.email?.split('@')[0] ||
-                  'Unknown member',
+                  t('admin.membersRoles.unknownMember', 'Unknown member'),
                 email: member.email,
                 role: String(member.role || 'MEMBER').toUpperCase(),
                 memberStatus: member.status || 'ACTIVE',
@@ -415,7 +415,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
                 return [
                   {
                     id: 'remove',
-                    label: 'Remove',
+                    label: t('admin.membersRoles.remove.action', 'Remove'),
                     icon: Trash2,
                     variant: 'danger' as const,
                     onClick: () => void handleRemove(row.memberId),
@@ -424,7 +424,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
               }}
               activeFilters={memberFilters}
               onFilterChange={setMemberFilters}
-              emptyMessage="No members found for this workspace."
+              emptyMessage={t('admin.membersRoles.empty', 'No members found for this workspace.')}
               persistKey="admin-members-table"
               canvasClassName=""
             />
@@ -432,97 +432,108 @@ export const AdminMembersRolesPanel: React.FC = () => {
         )}
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+      {/* Team invite code */}
+      <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-              Team Invite Code
+            <h3 className="text-lg font-semibold text-c-text">
+              {t('admin.membersRoles.code.title', 'Team Invite Code')}
             </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              Generate one shared code for team onboarding. The default limit is set to 50 members
-              and you can copy the ready registration link below.
+            <p className="text-sm text-c-text-muted">
+              {t(
+                'admin.membersRoles.code.subtitle',
+                'Generate one shared code for team onboarding. The default limit is set to 50 members and you can copy the ready registration link below.'
+              )}
             </p>
-            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-              Team members register with email and password after opening the invite link. Phone
-              number remains optional.
+            <p className="mt-2 text-xs text-c-text-muted">
+              {t(
+                'admin.membersRoles.code.note',
+                'Team members register with email and password after opening the invite link. Phone number remains optional.'
+              )}
             </p>
           </div>
-          <div className="grid gap-3 sm:grid-cols-[160px,120px,auto]">
-            <select
+          <div className="grid gap-3 sm:grid-cols-[160px,120px,auto] sm:items-end">
+            <SelectField
               value={generatedInviteRole}
-              onChange={(event) => setGeneratedInviteRole(event.target.value as RoleOption)}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white"
-            >
-              <option value="MEMBER">Member</option>
-              <option value="GUEST">Guest</option>
-              <option value="ADMIN">Admin</option>
-            </select>
-            <input
+              onChange={(value) => setGeneratedInviteRole(value as RoleOption)}
+              placeholder=""
+              options={[
+                { value: 'MEMBER', label: roleLabels.MEMBER },
+                { value: 'GUEST', label: roleLabels.GUEST },
+                { value: 'ADMIN', label: roleLabels.ADMIN },
+              ]}
+            />
+            <Input
               type="number"
               min={1}
               max={500}
               value={generatedInviteMaxUses}
-              aria-label="Maximum team registrations"
+              aria-label={t('admin.membersRoles.code.maxUsesLabel', 'Maximum team registrations')}
               onChange={(event) =>
-                setGeneratedInviteMaxUses(
-                  Math.min(500, Math.max(1, Number(event.target.value || 1)))
-                )
+                setGeneratedInviteMaxUses(Math.min(500, Math.max(1, Number(event.target.value || 1))))
               }
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white"
             />
-            <button
+            <Button
+              variant="primary"
               onClick={() => void handleGenerateInviteCode()}
-              disabled={isGeneratingCode}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50"
+              loading={isGeneratingCode}
+              icon={<KeyRound className="h-4 w-4" />}
             >
-              {isGeneratingCode ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <KeyRound className="h-4 w-4" />
-              )}
-              Generate code
-            </button>
+              {t('admin.membersRoles.code.cta', 'Generate code')}
+            </Button>
           </div>
         </div>
 
         {generatedInviteCode && (
-          <div className="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-500/20 dark:bg-blue-500/10">
-            <div className="text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300">
-              Ready for team onboarding
+          <div className="mt-5 rounded-xl border border-c-info/30 bg-c-info/10 p-4">
+            <div className="text-xs font-semibold uppercase tracking-wide text-c-info">
+              {t('admin.membersRoles.code.ready', 'Ready for team onboarding')}
             </div>
             <div className="mt-2 flex flex-col gap-3">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">Access code</div>
-                  <div className="font-mono text-lg font-semibold text-slate-900 dark:text-white">
+                  <div className="text-xs text-c-text-muted">
+                    {t('admin.membersRoles.code.accessCode', 'Access code')}
+                  </div>
+                  <div className="font-mono text-lg font-semibold text-c-text">
                     {generatedInviteCode}
                   </div>
                 </div>
-                <button
-                  onClick={() => void copyValue(generatedInviteCode, 'Access code copied')}
-                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 dark:border-white/10 dark:bg-navy-900 dark:text-slate-300"
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    void copyValue(
+                      generatedInviteCode,
+                      t('admin.membersRoles.code.codeCopied', 'Access code copied')
+                    )
+                  }
+                  icon={<Copy className="h-4 w-4" />}
                 >
-                  <Copy className="h-4 w-4" />
-                  Copy code
-                </button>
+                  {t('admin.membersRoles.code.copyCode', 'Copy code')}
+                </Button>
               </div>
 
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
-                  <div className="text-xs text-slate-500 dark:text-slate-400">
-                    Registration link
+                  <div className="text-xs text-c-text-muted">
+                    {t('admin.membersRoles.code.regLink', 'Registration link')}
                   </div>
-                  <div className="truncate text-sm text-slate-900 dark:text-white">
-                    {registrationLink}
-                  </div>
+                  <div className="truncate text-sm text-c-text">{registrationLink}</div>
                 </div>
-                <button
-                  onClick={() => void copyValue(registrationLink, 'Registration link copied')}
-                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 dark:border-white/10 dark:bg-navy-900 dark:text-slate-300"
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    void copyValue(
+                      registrationLink,
+                      t('admin.membersRoles.code.linkCopied', 'Registration link copied')
+                    )
+                  }
+                  icon={<Copy className="h-4 w-4" />}
                 >
-                  <Copy className="h-4 w-4" />
-                  Copy link
-                </button>
+                  {t('admin.membersRoles.code.copyLink', 'Copy link')}
+                </Button>
               </div>
             </div>
           </div>

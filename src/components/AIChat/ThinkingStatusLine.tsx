@@ -114,14 +114,14 @@ export function ThinkingStatusLine({
           {step.status === 'done' && (
             <Check
               size={compact ? 10 : 12}
-              className="text-green-400 dark:text-green-500 flex-shrink-0"
+              className="text-c-success flex-shrink-0"
               strokeWidth={2.5}
             />
           )}
           {step.status === 'in_progress' && (
             <Loader2
               size={compact ? 10 : 12}
-              className="text-slate-600 dark:text-slate-500 flex-shrink-0 animate-spin"
+              className="text-c-text-muted flex-shrink-0 animate-spin"
             />
           )}
           {step.status === 'pending' && (
@@ -129,7 +129,7 @@ export function ThinkingStatusLine({
           )}
 
           {/* Step label */}
-          <span className="text-slate-600 dark:text-slate-500">{step.label}</span>
+          <span className="text-c-text-muted">{step.label}</span>
         </div>
       ))}
     </div>

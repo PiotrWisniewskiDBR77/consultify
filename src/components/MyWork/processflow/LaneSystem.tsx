@@ -1,7 +1,8 @@
-import { ArrowDownUp, Palette, X } from 'lucide-react';
+import { ArrowDownUp, ChevronDown, ChevronRight, Palette, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
 import { LANE_HEIGHT } from './FlowNodeComponent';
+import { laneBandLayout } from './laneState';
 import type { Lane } from './useProcessFlowNodes';
 
 export { LANE_HEIGHT };
@@ -44,29 +45,42 @@ export const DEFAULT_LANES: Lane[] = [
 interface LaneBackgroundProps {
   lane: Lane;
   idx: number;
+  /** Absolute band top (px), honouring collapse/resize of lanes above. */
+  top: number;
+  /** Rendered band height (px). */
+  height: number;
   locked: boolean;
   onRename: (id: string, next: string) => void;
   onDelete?: (id: string) => void;
   onColorChange?: (id: string, color: string) => void;
   onMoveUp?: (id: string) => void;
   onMoveDown?: (id: string) => void;
+  /** F5a A3: toggle collapse for this lane. */
+  onToggleCollapse?: (id: string) => void;
+  /** F5a A3: commit a new band height (px) after a resize drag. */
+  onResize?: (id: string, height: number) => void;
   isFirst?: boolean;
   isLast?: boolean;
   laneCount: number;
+  isPl?: boolean;
 }
 
 const LaneBackground: React.FC<LaneBackgroundProps> = ({
   lane,
-  idx,
+  top,
+  height,
   locked,
   onRename,
   onDelete,
   onColorChange,
   onMoveUp,
   onMoveDown,
+  onToggleCollapse,
+  onResize,
   isFirst,
   isLast,
   laneCount,
+  isPl,
 }) => {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(lane.label);
@@ -82,12 +96,48 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
     if (value.trim() && value !== lane.label) onRename(lane.id, value.trim());
   };
 
+  const collapsed = Boolean(lane.collapsed);
+
+  // F5a A3: resize the band by dragging the bottom edge. Pointer maths only —
+  // the committed height persists via onResize → lanes[].height.
+  const startResize = (ev: React.PointerEvent) => {
+    if (locked || collapsed || !onResize) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    const startY = ev.clientY;
+    const startH = height;
+    const onMove = (moveEv: PointerEvent) => {
+      const nextH = startH + (moveEv.clientY - startY);
+      onResize(lane.id, nextH);
+    };
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  };
+
   return (
     <div
-      className="absolute left-0 right-0 border-b border-slate-200/40 dark:border-navy-700/40"
-      style={{ top: idx * LANE_HEIGHT, height: LANE_HEIGHT, background: `${lane.color}15` }}
+      className="absolute left-0 right-0 border-b border-c-border-subtle"
+      style={{ top, height, background: `${lane.color}15` }}
     >
       <div className="absolute left-2 top-1 z-10 flex items-center gap-1">
+        {onToggleCollapse && (
+          <button
+            onClick={() => onToggleCollapse(lane.id)}
+            className="p-0.5 rounded hover:bg-white/60 dark:hover:bg-navy-700/60"
+            title={collapsed ? (isPl ? 'Rozwiń tor' : 'Expand lane') : isPl ? 'Zwiń tor' : 'Collapse lane'}
+            aria-label={collapsed ? (isPl ? 'Rozwiń tor' : 'Expand lane') : isPl ? 'Zwiń tor' : 'Collapse lane'}
+          >
+            {collapsed ? (
+              <ChevronRight size={11} className="text-slate-600 dark:text-slate-400" />
+            ) : (
+              <ChevronDown size={11} className="text-slate-600 dark:text-slate-400" />
+            )}
+          </button>
+        )}
         {editing ? (
           <input
             ref={inputRef}
@@ -98,11 +148,11 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
               if (e.key === 'Enter') commit();
               if (e.key === 'Escape') setEditing(false);
             }}
-            className="text-[10px] font-semibold text-slate-700 dark:text-slate-200 bg-white/80 dark:bg-navy-800/80 rounded px-1 outline-none border border-primary-400"
+            className="text-[10px] font-semibold text-c-text-secondary bg-c-surface rounded px-1 outline-none border border-c-accent"
           />
         ) : (
           <div
-            className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 select-none cursor-pointer hover:text-slate-700 dark:hover:text-slate-200"
+            className="text-[10px] font-semibold text-c-text-muted select-none cursor-pointer hover:text-c-text-secondary"
             onDoubleClick={() => {
               if (!locked) {
                 setValue(lane.label);
@@ -128,27 +178,27 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
             {!isFirst && (
               <button
                 onClick={() => onMoveUp?.(lane.id)}
-                className="p-0.5 rounded hover:bg-white/60 dark:hover:bg-navy-700/60"
+                className="p-0.5 rounded hover:bg-c-surface"
                 title="Move up"
               >
-                <ArrowDownUp size={9} className="text-slate-600 rotate-180" />
+                <ArrowDownUp size={9} className="text-c-text-secondary rotate-180" />
               </button>
             )}
             {!isLast && (
               <button
                 onClick={() => onMoveDown?.(lane.id)}
-                className="p-0.5 rounded hover:bg-white/60 dark:hover:bg-navy-700/60"
+                className="p-0.5 rounded hover:bg-c-surface"
                 title="Move down"
               >
-                <ArrowDownUp size={9} className="text-slate-600" />
+                <ArrowDownUp size={9} className="text-c-text-secondary" />
               </button>
             )}
             <button
               onClick={() => setShowColorPicker(!showColorPicker)}
-              className="p-0.5 rounded hover:bg-white/60 dark:hover:bg-navy-700/60"
+              className="p-0.5 rounded hover:bg-c-surface"
               title="Change color"
             >
-              <Palette size={9} className="text-slate-600" />
+              <Palette size={9} className="text-c-text-secondary" />
             </button>
             {laneCount > 1 && (
               <button
@@ -164,7 +214,7 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
       </div>
 
       {showColorPicker && !locked && (
-        <div className="absolute left-2 top-5 z-20 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg p-1.5 shadow-lg flex flex-wrap gap-1 w-[120px]">
+        <div className="absolute left-2 top-5 z-20 bg-c-surface border border-c-border-subtle rounded-lg p-1.5 shadow-lg flex flex-wrap gap-1 w-[120px]">
           {LANE_COLORS.map((c) => (
             <button
               key={c}
@@ -172,11 +222,20 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
                 onColorChange?.(lane.id, c);
                 setShowColorPicker(false);
               }}
-              className={`w-5 h-5 rounded-full border-2 transition-transform hover:scale-110 ${c === lane.color ? 'border-primary-500 scale-110' : 'border-transparent'}`}
+              className={`w-5 h-5 rounded-full border-2 transition-transform hover:scale-110 ${c === lane.color ? 'border-c-accent scale-110' : 'border-transparent'}`}
               style={{ backgroundColor: c }}
             />
           ))}
         </div>
+      )}
+
+      {/* F5a A3: bottom-edge resize handle (hidden when locked/collapsed). */}
+      {!locked && !collapsed && onResize && (
+        <div
+          onPointerDown={startResize}
+          className="absolute left-0 right-0 bottom-0 h-1.5 cursor-ns-resize opacity-0 hover:opacity-100 transition-opacity bg-[var(--c-info)]/40"
+          title={isPl ? 'Zmień wysokość toru' : 'Resize lane'}
+        />
       )}
     </div>
   );
@@ -193,51 +252,66 @@ export interface LaneSystemProps {
   onColorChange: (laneId: string, color: string) => void;
   onMoveUp: (laneId: string) => void;
   onMoveDown: (laneId: string) => void;
+  /** F5a A3: toggle a lane collapsed. */
+  onToggleCollapse?: (laneId: string) => void;
+  /** F5a A3: commit a resized lane height (px). */
+  onResize?: (laneId: string, height: number) => void;
   dragOverLaneId: string | null;
 }
 
 export const LaneSystem: React.FC<LaneSystemProps> = ({
   lanes,
+  isPl,
   locked,
   onRename,
   onDelete,
   onColorChange,
   onMoveUp,
   onMoveDown,
+  onToggleCollapse,
+  onResize,
   dragOverLaneId,
-}) => (
-  <>
-    {lanes.map((lane, idx) => (
-      <LaneBackground
-        key={lane.id}
-        lane={lane}
-        idx={idx}
-        locked={locked}
-        onRename={onRename}
-        onDelete={onDelete}
-        onColorChange={onColorChange}
-        onMoveUp={onMoveUp}
-        onMoveDown={onMoveDown}
-        isFirst={idx === 0}
-        isLast={idx === lanes.length - 1}
-        laneCount={lanes.length}
-      />
-    ))}
-    {dragOverLaneId &&
-      (() => {
-        const dragIdx = lanes.findIndex((l) => l.id === dragOverLaneId);
-        if (dragIdx < 0) return null;
+}) => {
+  const layout = laneBandLayout(lanes, LANE_HEIGHT);
+  return (
+    <>
+      {lanes.map((lane, idx) => {
+        const band = layout[lane.id] ?? { top: idx * LANE_HEIGHT, height: LANE_HEIGHT };
         return (
-          <div
-            className="absolute left-0 right-0 pointer-events-none border-2 border-primary-400/40 rounded-lg"
-            style={{
-              top: dragIdx * LANE_HEIGHT,
-              height: LANE_HEIGHT,
-            }}
+          <LaneBackground
+            key={lane.id}
+            lane={lane}
+            idx={idx}
+            top={band.top}
+            height={band.height}
+            locked={locked}
+            isPl={isPl}
+            onRename={onRename}
+            onDelete={onDelete}
+            onColorChange={onColorChange}
+            onMoveUp={onMoveUp}
+            onMoveDown={onMoveDown}
+            onToggleCollapse={onToggleCollapse}
+            onResize={onResize}
+            isFirst={idx === 0}
+            isLast={idx === lanes.length - 1}
+            laneCount={lanes.length}
           />
         );
-      })()}
-  </>
-);
+      })}
+      {dragOverLaneId &&
+        (() => {
+          const band = layout[dragOverLaneId];
+          if (!band) return null;
+          return (
+            <div
+              className="absolute left-0 right-0 pointer-events-none border-2 border-c-accent rounded-lg"
+              style={{ top: band.top, height: band.height }}
+            />
+          );
+        })()}
+    </>
+  );
+};
 
 export default LaneSystem;

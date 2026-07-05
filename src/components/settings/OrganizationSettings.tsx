@@ -158,7 +158,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
 
   if (loading) {
     return (
-      <div className="p-8 text-center text-slate-500 dark:text-slate-400">
+      <div className="p-8 text-center text-c-text-muted">
         Loading organization details...
       </div>
     );
@@ -186,21 +186,21 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
   if (organizations.length === 0) {
     return (
       <>
-        <div className="p-8 text-center bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm">
+        <div className="p-8 text-center bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 shadow-sm">
           <Building2
             size={48}
-            className="mx-auto text-slate-700 dark:text-slate-300 dark:text-slate-400 mb-4"
+            className="mx-auto text-c-text-secondary mb-4"
           />
-          <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">
+          <h3 className="text-lg font-semibold text-navy-900 mb-2">
             No Organization Found
           </h3>
-          <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-md mx-auto">
+          <p className="text-c-text-muted mb-6 max-w-md mx-auto">
             You are not currently a member of any organization. Create one to get started with team
             collaboration and token sharing.
           </p>
           <button
             onClick={() => setIsCreateOrgModalOpen(true)}
-            className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            className="bg-c-accent hover:bg-c-accent text-white px-4 py-2 rounded-lg font-medium transition-colors"
           >
             Create Organization
           </button>
@@ -209,22 +209,22 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
         {/* Create Organization Modal */}
         {isCreateOrgModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in">
-            <div className="bg-white dark:bg-navy-800 rounded-xl max-w-md w-full p-6 shadow-2xl animate-in zoom-in-95">
+            <div className="bg-c-surface rounded-xl max-w-md w-full p-6 shadow-2xl animate-in zoom-in-95">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
-                  <Building2 size={20} className="text-primary-500" />
+                <h3 className="text-lg font-bold text-navy-900 flex items-center gap-2">
+                  <Building2 size={20} className="text-c-accent" />
                   Create Organization
                 </h3>
                 <button
                   onClick={() => setIsCreateOrgModalOpen(false)}
-                  className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 dark:text-slate-400"
+                  className="p-2 rounded-lg hover:bg-c-surface-raised dark:hover:bg-c-surface-raised text-c-text-muted"
                 >
                   <X size={20} />
                 </button>
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-2">
                     Organization Name
                   </label>
                   <input
@@ -232,7 +232,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                     value={newOrgName}
                     onChange={(e) => setNewOrgName(e.target.value)}
                     placeholder="e.g., Acme Corporation"
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-navy-900 dark:text-white"
+                    className="w-full px-4 py-3 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] text-navy-900"
                     onKeyDown={(e) => e.key === 'Enter' && handleCreateOrganization()}
                     autoFocus
                   />
@@ -240,14 +240,14 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                 <div className="flex gap-3 justify-end pt-4">
                   <button
                     onClick={() => setIsCreateOrgModalOpen(false)}
-                    className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg font-medium"
+                    className="px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg font-medium"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleCreateOrganization}
                     disabled={creatingOrg || !newOrgName.trim()}
-                    className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-6 py-2 bg-c-accent hover:bg-c-accent text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     {creatingOrg && <Loader2 size={16} className="animate-spin" />}
                     {creatingOrg ? 'Creating...' : 'Create Organization'}
@@ -267,17 +267,17 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
       {/* Header / Selector */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
-            <Building2 className="text-primary-500" />
+          <h2 className="text-2xl font-bold text-navy-900 flex items-center gap-2">
+            <Building2 className="text-c-accent" />
             Organization Settings
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             Manage members, billing, and tokens.
           </p>
         </div>
         {organizations.length > 1 && (
           <select
-            className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-sm"
+            className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg px-3 py-2 text-sm"
             value={selectedOrg?.id}
             onChange={(e) => handleOrgChange(e.target.value)}
           >
@@ -292,16 +292,16 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
 
       {/* Billing & Tokens Card */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2 mb-4">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-navy-900 flex items-center gap-2 mb-4">
             <CreditCard
               size={20}
-              className="text-slate-500 dark:text-slate-400 dark:text-slate-500"
+              className="text-c-text-muted"
             />
             Billing Status
           </h3>
           <div className="flex items-center justify-between mb-4">
-            <span className="text-slate-600 dark:text-slate-300">Status</span>
+            <span className="text-c-text-secondary">Status</span>
             <span
               className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                 selectedOrg?.billing_status === 'ACTIVE'
@@ -330,22 +330,22 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
           <button
             onClick={handleActivateBilling}
             disabled={selectedOrg?.billing_status === 'ACTIVE'}
-            className="w-full bg-slate-900 dark:bg-white text-white dark:text-navy-900 px-4 py-2 rounded-lg font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-c-surface dark:bg-c-surface text-white dark:text-navy-900 px-4 py-2 rounded-lg font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {selectedOrg?.billing_status === 'ACTIVE' ? 'Billing Active' : 'Activate Billing'}
           </button>
         </div>
 
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2 mb-4">
-            <Coins size={20} className="text-slate-500 dark:text-slate-400 dark:text-slate-500" />
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-navy-900 flex items-center gap-2 mb-4">
+            <Coins size={20} className="text-c-text-muted" />
             Token Balance & Usage
           </h3>
           <div className="flex flex-col items-center justify-center py-4">
-            <div className="text-4xl font-bold text-navy-900 dark:text-white mb-1">
+            <div className="text-4xl font-bold text-navy-900 mb-1">
               {selectedOrg?.token_balance?.toLocaleString() || 0}
             </div>
-            <div className="text-sm text-slate-500 dark:text-slate-400">Available Tokens</div>
+            <div className="text-sm text-c-text-muted">Available Tokens</div>
           </div>
 
           {/* Trial Usage Bar - uses API values, no hardcode */}
@@ -353,7 +353,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
             selectedOrg?.organization_type === 'TRIAL') &&
             selectedOrg?.trialBudgetTotal &&
             selectedOrg?.trialBudgetRemaining !== null && (
-              <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700">
+              <div className="mt-4 pt-4 border-t border-c-border-subtle dark:border-navy-700">
                 {(() => {
                   const total = selectedOrg.trialBudgetTotal;
                   const remaining = selectedOrg.trialBudgetRemaining ?? 0;
@@ -365,11 +365,11 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                   const medThreshold = total * 0.3;
                   return (
                     <>
-                      <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-2">
+                      <div className="flex justify-between text-xs text-c-text-muted mb-2">
                         <span>Trial Usage</span>
                         <span>{usedPct}% Used</span>
                       </div>
-                      <div className="w-full bg-slate-200 dark:bg-navy-800 rounded-full h-2.5">
+                      <div className="w-full bg-c-surface-raised rounded-full h-2.5">
                         <div
                           className={`h-2.5 rounded-full transition-all ${
                             remaining < lowThreshold
@@ -392,7 +392,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
               </div>
             )}
 
-          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700 text-xs text-slate-500 dark:text-slate-400 text-center">
+          <div className="mt-4 pt-4 border-t border-c-border-subtle dark:border-navy-700 text-xs text-c-text-muted text-center">
             {selectedOrg?.billing_status === 'ACTIVE'
               ? 'Pay-as-you-go billing active'
               : selectedOrg?.paygoStatus === 'PAYGO_PENDING'
@@ -403,39 +403,39 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
       </div>
 
       {/* Token Ledger / Recent Activity */}
-      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-white/5">
-          <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
-            <Coins size={20} className="text-slate-500 dark:text-slate-400 dark:text-slate-500" />
+      <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-c-border-subtle dark:border-navy-700 bg-c-surface-raised">
+          <h3 className="text-lg font-semibold text-navy-900 flex items-center gap-2">
+            <Coins size={20} className="text-c-text-muted" />
             Recent Token Activity
           </h3>
         </div>
         <div className="max-h-64 overflow-y-auto">
           {!selectedOrg?.ledger || selectedOrg.ledger.length === 0 ? (
-            <div className="p-8 text-center text-slate-500 dark:text-slate-400 text-sm">
+            <div className="p-8 text-center text-c-text-muted text-sm">
               No token activity yet.
             </div>
           ) : (
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 dark:bg-navy-950 sticky top-0">
+              <thead className="bg-c-surface-raised sticky top-0">
                 <tr>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                  <th className="px-4 py-2 text-left text-xs font-medium text-c-text-muted uppercase">
                     Type
                   </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                  <th className="px-4 py-2 text-left text-xs font-medium text-c-text-muted uppercase">
                     Amount
                   </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                  <th className="px-4 py-2 text-left text-xs font-medium text-c-text-muted uppercase">
                     Reason
                   </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                  <th className="px-4 py-2 text-left text-xs font-medium text-c-text-muted uppercase">
                     When
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-white/5">
+              <tbody className="divide-y divide-c-border-subtle dark:divide-white/5">
                 {selectedOrg.ledger.slice(0, 10).map((entry: any) => (
-                  <tr key={entry.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
+                  <tr key={entry.id} className="hover:bg-c-surface-raised dark:hover:bg-c-surface-raised">
                     <td className="px-4 py-2">
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
@@ -447,14 +447,14 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                         {entry.type}
                       </span>
                     </td>
-                    <td className="px-4 py-2 font-mono text-navy-900 dark:text-white">
+                    <td className="px-4 py-2 font-mono text-navy-900">
                       {entry.type === 'CREDIT' ? '+' : '-'}
                       {entry.amount?.toLocaleString()}
                     </td>
-                    <td className="px-4 py-2 text-slate-600 dark:text-slate-300 truncate max-w-xs">
+                    <td className="px-4 py-2 text-c-text-secondary truncate max-w-xs">
                       {entry.reason || entry.ref_entity_type || '-'}
                     </td>
-                    <td className="px-4 py-2 text-slate-500 dark:text-slate-400 text-xs">
+                    <td className="px-4 py-2 text-c-text-muted text-xs">
                       {new Date(entry.created_at).toLocaleString()}
                     </td>
                   </tr>
@@ -466,12 +466,12 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
       </div>
 
       {/* Finance Defaults Card */}
-      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2 mb-4">
-          <Calculator size={20} className="text-slate-500 dark:text-slate-400" />
+      <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 p-6 shadow-sm">
+        <h3 className="text-lg font-semibold text-navy-900 flex items-center gap-2 mb-4">
+          <Calculator size={20} className="text-c-text-muted" />
           {t('settings.financeDefaults', 'Finance Defaults')}
         </h3>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+        <p className="text-xs text-c-text-muted mb-4">
           {t(
             'settings.financeDefaultsDesc',
             'Default values for new valuations, budgets, and financial models across the organization.'
@@ -479,7 +479,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">
+            <label className="block text-xs font-semibold text-c-text-muted mb-1">
               {t('settings.defaultWacc', 'Default WACC (%)')}
             </label>
             <input
@@ -491,11 +491,11 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
               onChange={(e) =>
                 setFinanceSettings((p) => ({ ...p, defaultWacc: Number(e.target.value) }))
               }
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm"
+              className="w-full px-3 py-2 rounded-lg border border-c-border dark:border-navy-700 bg-c-surface text-sm"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">
+            <label className="block text-xs font-semibold text-c-text-muted mb-1">
               {t('settings.defaultCurrency', 'Default Currency')}
             </label>
             <select
@@ -503,7 +503,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
               onChange={(e) =>
                 setFinanceSettings((p) => ({ ...p, defaultCurrency: e.target.value }))
               }
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm"
+              className="w-full px-3 py-2 rounded-lg border border-c-border dark:border-navy-700 bg-c-surface text-sm"
             >
               <option value="PLN">PLN</option>
               <option value="EUR">EUR</option>
@@ -512,7 +512,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">
+            <label className="block text-xs font-semibold text-c-text-muted mb-1">
               {t('settings.defaultHorizon', 'Default Horizon (years)')}
             </label>
             <input
@@ -523,7 +523,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
               onChange={(e) =>
                 setFinanceSettings((p) => ({ ...p, defaultHorizonYears: Number(e.target.value) }))
               }
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm"
+              className="w-full px-3 py-2 rounded-lg border border-c-border dark:border-navy-700 bg-c-surface text-sm"
             />
           </div>
         </div>
@@ -531,7 +531,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
           <button
             onClick={handleSaveFinanceSettings}
             disabled={savingFinance}
-            className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 bg-c-accent hover:bg-c-accent text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
           >
             {savingFinance ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
             {savingFinance ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
@@ -540,15 +540,15 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
       </div>
 
       {/* Members List */}
-      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between bg-slate-50/50 dark:bg-white/5">
-          <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
-            <Users size={20} className="text-slate-500 dark:text-slate-400 dark:text-slate-500" />
+      <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-c-border-subtle dark:border-navy-700 flex items-center justify-between bg-c-surface-raised">
+          <h3 className="text-lg font-semibold text-navy-900 flex items-center gap-2">
+            <Users size={20} className="text-c-text-muted" />
             Team Members
           </h3>
           <button
             onClick={() => setIsAddMemberOpen(!isAddMemberOpen)}
-            className="flex items-center gap-1.5 bg-primary-600 hover:bg-primary-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-1.5 bg-c-accent hover:bg-c-accent text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
           >
             <Plus size={16} />
             Add Member
@@ -556,10 +556,10 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
         </div>
 
         {isAddMemberOpen && (
-          <div className="p-4 bg-slate-50 dark:bg-navy-950/50 border-b border-slate-200 dark:border-navy-700 animate-in slide-in-from-top-2">
+          <div className="p-4 bg-c-surface-raised border-b border-c-border-subtle dark:border-navy-700 animate-in slide-in-from-top-2">
             <div className="flex gap-4 items-end">
               <div className="flex-1">
-                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                <label className="block text-xs font-semibold text-c-text-muted mb-1">
                   User ID / Email
                 </label>
                 <input
@@ -567,17 +567,17 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                   value={newMemberEmail}
                   onChange={(e) => setNewMemberEmail(e.target.value)}
                   placeholder="Enter User ID (or Email if supported)"
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-c-border dark:border-navy-700 bg-c-surface text-sm"
                 />
               </div>
               <div className="w-40">
-                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                <label className="block text-xs font-semibold text-c-text-muted mb-1">
                   Role
                 </label>
                 <select
                   value={newMemberRole}
                   onChange={(e) => setNewMemberRole(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-c-border dark:border-navy-700 bg-c-surface text-sm"
                 >
                   <option value="ADMIN">Admin</option>
                   <option value="MEMBER">Member</option>
@@ -587,33 +587,33 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
               </div>
               <button
                 onClick={handleAddMember}
-                className="bg-slate-900 dark:bg-white text-white dark:text-navy-900 px-4 py-2 rounded-lg font-medium text-sm hover:opacity-90"
+                className="bg-c-surface dark:bg-c-surface text-white dark:text-navy-900 px-4 py-2 rounded-lg font-medium text-sm hover:opacity-90"
               >
                 Send Invite
               </button>
             </div>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-2">
+            <p className="text-[10px] text-c-text-muted mt-2">
               * Note: For this release, please use User ID if Email lookup is not configured.
             </p>
           </div>
         )}
 
-        <div className="divide-y divide-slate-200 dark:divide-white/5">
+        <div className="divide-y divide-c-border-subtle dark:divide-white/5">
           {members.map((member) => (
             <div
               key={member.id}
-              className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+              className="p-4 flex items-center justify-between hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
             >
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-navy-800 flex items-center justify-center text-slate-500 dark:text-slate-400 font-bold">
+                <div className="w-10 h-10 rounded-full bg-c-surface-raised flex items-center justify-center text-c-text-muted font-bold">
                   {member.first_name ? member.first_name[0] : <UserCircle size={20} />}
                 </div>
                 <div>
-                  <div className="font-semibold text-navy-900 dark:text-white text-sm">
+                  <div className="font-semibold text-navy-900 text-sm">
                     {member.first_name} {member.last_name}{' '}
                     {member.user_id === currentUser.id && '(You)'}
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                  <div className="text-xs text-c-text-muted">
                     {member.email || member.user_id}
                   </div>
                 </div>
@@ -622,23 +622,23 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                 <span
                   className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium border ${
                     member.role === 'OWNER'
-                      ? 'bg-primary-50 text-primary-700 border-primary-200 dark:bg-primary-900/20 dark:text-primary-300 dark:border-primary-500/30'
+                      ? 'bg-c-accent-soft text-c-accent border-c-accent dark:border-c-accent'
                       : member.role === 'ADMIN'
                         ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-500/30'
-                        : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-navy-800 dark:text-slate-300 dark:border-slate-700'
+                        : 'bg-c-surface-raised text-c-text-secondary border-c-border-subtle'
                   }`}
                 >
                   {member.role === 'OWNER' && <ShieldCheck size={12} className="mr-1" />}
                   {member.role}
                 </span>
-                <div className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                <div className="text-xs text-c-text-muted">
                   Joined {new Date(member.created_at).toLocaleDateString()}
                 </div>
               </div>
             </div>
           ))}
           {members.length === 0 && (
-            <div className="p-8 text-center text-slate-500 dark:text-slate-400 text-sm">
+            <div className="p-8 text-center text-c-text-muted text-sm">
               No members found.
             </div>
           )}

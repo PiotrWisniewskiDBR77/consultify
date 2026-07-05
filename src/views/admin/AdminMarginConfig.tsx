@@ -116,7 +116,7 @@ export const AdminMarginConfig = () => {
           <div>
             <p className="font-bold">Error Loading Data</p>
             <p>{error}</p>
-            <button onClick={loadMargins} className="text-white underline mt-2 hover:text-white/80">
+            <button onClick={loadMargins} className="text-c-text underline mt-2 hover:text-white/80">
               Try Again
             </button>
           </div>
@@ -151,7 +151,7 @@ export const AdminMarginConfig = () => {
               <div className="flex items-center gap-3">
                 <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500 cursor-pointer select-none">
                   <div
-                    className={`w-8 h-4 rounded-full relative transition-colors ${margin.is_active ? 'bg-emerald-500/30' : 'bg-slate-700'}`}
+                    className={`w-8 h-4 rounded-full relative transition-colors ${margin.is_active ? 'bg-emerald-500/30' : 'bg-c-surface-raised'}`}
                   >
                     <div
                       className={`absolute top-0.5 w-3 h-3 rounded-full bg-white dark:bg-navy-900 transition-all ${margin.is_active ? 'left-4.5 bg-emerald-400' : 'left-0.5 bg-slate-400'}`}

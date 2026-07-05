@@ -39,7 +39,7 @@ export const AIInsightsCard: React.FC<AIInsightsCardProps> = ({ megatrends, load
 
   if (loading) {
     return (
-      <div className="p-8 text-center text-slate-500 dark:text-slate-400 animate-pulse">
+      <div className="p-8 text-center text-c-text-muted animate-pulse">
         Analyzing strategic landscape...
       </div>
     );
@@ -47,7 +47,7 @@ export const AIInsightsCard: React.FC<AIInsightsCardProps> = ({ megatrends, load
 
   if (!analytics) {
     return (
-      <div className="p-8 text-center text-slate-500 dark:text-slate-400">
+      <div className="p-8 text-center text-c-text-muted">
         No data available for analysis.
       </div>
     );
@@ -56,11 +56,11 @@ export const AIInsightsCard: React.FC<AIInsightsCardProps> = ({ megatrends, load
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header / Context */}
-      <div className="bg-gradient-to-r from-primary-900 to-crimson-900 rounded-xl p-6 text-white shadow-lg">
+      <div className="bg-c-accent rounded-xl p-6 text-white shadow-lg">
         <h2 className="text-2xl font-bold flex items-center gap-2">
           <SparklesIcon /> Strategic AI Synthesis
         </h2>
-        <p className="mt-2 text-primary-100 max-w-2xl">
+        <p className="mt-2 text-white/85 max-w-2xl">
           By analyzing {megatrends.length} global megatrends against your industry profile, I've
           identified the following priority areas for your 3-5 year roadmap.
         </p>
@@ -68,24 +68,24 @@ export const AIInsightsCard: React.FC<AIInsightsCardProps> = ({ megatrends, load
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* 1. Critical Megatrends */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-slate-200 dark:border-navy-700 col-span-1 md:col-span-2">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <AlertTriangle className="text-danger-500" size={20} />
+        <div className="bg-c-surface-raised rounded-xl shadow-md p-6 border border-c-border-subtle col-span-1 md:col-span-2">
+          <h3 className="text-lg font-bold text-c-text mb-4 flex items-center gap-2">
+            <AlertTriangle className="text-c-danger" size={20} />
             Top 5 Critical Megatrends (3-5 Years)
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
             {analytics.critical.map((trend) => (
               <div
                 key={trend.id}
-                className="bg-slate-50 dark:bg-navy-900 p-3 rounded-lg border border-slate-200 dark:border-navy-700"
+                className="bg-c-surface-raised dark:bg-c-surface p-3 rounded-lg border border-c-border-subtle"
               >
-                <div className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1">
+                <div className="text-[10px] uppercase font-bold text-c-text-muted mb-1">
                   {trend.type}
                 </div>
-                <div className="font-bold text-sm text-navy-900 dark:text-gray-100 leading-tight mb-2 h-10 overflow-hidden">
+                <div className="font-bold text-sm text-c-text leading-tight mb-2 h-10 overflow-hidden">
                   {trend.label}
                 </div>
-                <div className="flex items-center gap-1 text-xs font-bold text-primary-600">
+                <div className="flex items-center gap-1 text-xs font-bold text-c-accent">
                   Impact: {trend.impactScore}/7
                 </div>
               </div>
@@ -94,22 +94,22 @@ export const AIInsightsCard: React.FC<AIInsightsCardProps> = ({ megatrends, load
         </div>
 
         {/* 2. Top External Risks */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-slate-200 dark:border-navy-700">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <AlertTriangle className="text-amber-500" size={20} />
+        <div className="bg-c-surface-raised rounded-xl shadow-md p-6 border border-c-border-subtle">
+          <h3 className="text-lg font-bold text-c-text mb-4 flex items-center gap-2">
+            <AlertTriangle className="text-c-warning" size={20} />
             Top 3 External Risks
           </h3>
           <ul className="space-y-3">
             {analytics.risks.map((risk) => (
               <li key={risk.id} className="flex items-start gap-3">
-                <span className="bg-amber-100 text-amber-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mt-0.5">
+                <span className="bg-c-warning text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mt-0.5">
                   !
                 </span>
                 <div>
-                  <div className="font-bold text-sm text-gray-800 dark:text-gray-200">
+                  <div className="font-bold text-sm text-c-text-secondary">
                     {risk.label}
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <div className="text-xs text-c-text-muted">
                     Pressure: {risk.competitivePressure || 'High'}
                   </div>
                 </div>
@@ -119,22 +119,22 @@ export const AIInsightsCard: React.FC<AIInsightsCardProps> = ({ megatrends, load
         </div>
 
         {/* 3. Top Opportunities */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-slate-200 dark:border-navy-700">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <TrendingUp className="text-green-500" size={20} />
+        <div className="bg-c-surface-raised rounded-xl shadow-md p-6 border border-c-border-subtle">
+          <h3 className="text-lg font-bold text-c-text mb-4 flex items-center gap-2">
+            <TrendingUp className="text-c-success" size={20} />
             Top 3 Strategic Opportunities
           </h3>
           <ul className="space-y-3">
             {analytics.opportunities.map((opp) => (
               <li key={opp.id} className="flex items-start gap-3">
-                <span className="bg-green-100 text-green-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mt-0.5">
+                <span className="bg-c-success text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mt-0.5">
                   ✓
                 </span>
                 <div>
-                  <div className="font-bold text-sm text-gray-800 dark:text-gray-200">
+                  <div className="font-bold text-sm text-c-text-secondary">
                     {opp.label}
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <div className="text-xs text-c-text-muted">
                     Potential: High Value
                   </div>
                 </div>
@@ -145,8 +145,8 @@ export const AIInsightsCard: React.FC<AIInsightsCardProps> = ({ megatrends, load
       </div>
 
       {/* 4. Recommended Actions */}
-      <div className="bg-primary-50 dark:bg-primary-900/10 rounded-xl p-6 border border-primary-100 dark:border-navy-700">
-        <h3 className="text-lg font-bold text-primary-900 dark:text-primary-300 mb-4 flex items-center gap-2">
+      <div className="bg-c-accent-soft rounded-xl p-6 border border-c-border-subtle">
+        <h3 className="text-lg font-bold text-c-accent mb-4 flex items-center gap-2">
           <CheckCircle size={20} />
           Recommended Next Steps
         </h3>
@@ -174,23 +174,23 @@ export const AIInsightsCard: React.FC<AIInsightsCardProps> = ({ megatrends, load
 
 // Helper for UI icons
 const SparklesIcon = () => (
-  <svg className="w-6 h-6 text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
+  <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
     <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
   </svg>
 );
 
 const ActionCard = ({ title, desc, label }: { title: string; desc: string; label: string }) => (
-  <div className="bg-white dark:bg-navy-800 p-4 rounded-lg shadow-sm border border-primary-100 dark:border-navy-700 flex flex-col justify-between">
+  <div className="bg-c-surface-raised p-4 rounded-lg shadow-sm border border-c-border-subtle flex flex-col justify-between">
     <div>
       <div className="flex justify-between items-start mb-2">
-        <h4 className="font-bold text-navy-900 dark:text-white">{title}</h4>
-        <span className="bg-primary-100 text-primary-700 text-[10px] font-bold px-2 py-0.5 rounded">
+        <h4 className="font-bold text-c-text">{title}</h4>
+        <span className="bg-c-accent-soft text-c-accent text-[10px] font-bold px-2 py-0.5 rounded">
           {label}
         </span>
       </div>
-      <p className="text-sm text-slate-600 dark:text-slate-300 leading-snug">{desc}</p>
+      <p className="text-sm text-c-text-secondary leading-snug">{desc}</p>
     </div>
-    <button className="mt-4 text-xs font-bold text-primary-600 flex items-center gap-1 hover:underline">
+    <button className="mt-4 text-xs font-bold text-c-accent flex items-center gap-1 hover:underline">
       Add to Roadmap <ArrowRight size={12} />
     </button>
   </div>

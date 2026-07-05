@@ -177,6 +177,7 @@ export const IdeaPinnedCard: React.FC<IdeaPinnedCardProps> = ({
       {hasDetails && (
         <button
           onClick={toggleExpanded}
+          aria-expanded={expanded}
           className="w-full flex items-center justify-center gap-1 py-1.5 text-[10px] font-semibold text-slate-600 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors border-t border-slate-200/40 dark:border-white/[0.04]"
         >
           {expanded ? (isPl ? 'Zwiń' : 'Collapse') : isPl ? 'Pokaż szczegóły' : 'Show details'}

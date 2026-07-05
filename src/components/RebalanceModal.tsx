@@ -47,7 +47,7 @@ export const RebalanceModal: React.FC<RebalanceModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-overlay bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white dark:bg-navy-900 w-full max-w-3xl rounded-xl shadow-2xl border border-slate-200 dark:border-navy-700 overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="p-6 border-b border-slate-200 dark:border-navy-700 flex justify-between items-center bg-slate-50 dark:bg-navy-950">

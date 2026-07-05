@@ -95,7 +95,7 @@ export const TableTabStrip: React.FC<TableTabStripProps> = ({
   }, [dragId, dragOverId, tables, onReorderTables]);
 
   return (
-    <div className="flex items-center h-9 bg-gray-50 dark:bg-navy-900/80 border-t border-slate-200/60 dark:border-navy-700/60 px-1 gap-0.5 overflow-x-auto flex-shrink-0 select-none">
+    <div className="flex items-center h-9 bg-c-surface-raised border-t border-c-border-subtle px-1 gap-0.5 overflow-x-auto flex-shrink-0 select-none">
       {tables.map((table) => {
         const isActive = table.id === activeTableId;
         const isDragOver = table.id === dragOverId;
@@ -104,7 +104,7 @@ export const TableTabStrip: React.FC<TableTabStripProps> = ({
           return (
             <div
               key={table.id}
-              className="flex items-center h-7 px-2 bg-white dark:bg-navy-800 rounded-t border border-b-0 border-slate-200 dark:border-navy-700"
+              className="flex items-center h-7 px-2 bg-c-surface rounded-t border border-b-0 border-c-border"
             >
               <input
                 ref={renameInputRef}
@@ -118,7 +118,7 @@ export const TableTabStrip: React.FC<TableTabStripProps> = ({
                     setRenameValue('');
                   }
                 }}
-                className="w-24 text-xs bg-transparent outline-none text-slate-700 dark:text-slate-200"
+                className="w-24 text-xs bg-transparent outline-none text-c-text-secondary"
               />
             </div>
           );
@@ -138,11 +138,11 @@ export const TableTabStrip: React.FC<TableTabStripProps> = ({
             }}
             className={`
               flex items-center gap-1 h-7 px-3 rounded-t text-xs whitespace-nowrap transition-colors
-              ${isDragOver ? 'border-l-2 border-blue-400' : ''}
+              ${isDragOver ? 'border-l-2 border-c-info' : ''}
               ${
                 isActive
-                  ? 'bg-white dark:bg-navy-800 text-slate-800 dark:text-slate-100 font-semibold border-b-2 border-blue-500 shadow-sm'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-navy-800/50'
+                  ? 'bg-c-surface text-c-text font-semibold border-b-2 border-c-info shadow-sm'
+                  : 'text-c-text-muted hover:text-c-text-secondary hover:bg-c-surface'
               }
             `}
           >
@@ -158,7 +158,7 @@ export const TableTabStrip: React.FC<TableTabStripProps> = ({
       {/* Add table button */}
       <button
         onClick={onCreateTable}
-        className="flex items-center justify-center h-7 w-7 rounded text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-white/60 dark:hover:bg-navy-800/60 transition-colors flex-shrink-0"
+        className="flex items-center justify-center h-7 w-7 rounded text-c-text-muted hover:text-c-text-secondary hover:bg-c-surface transition-colors flex-shrink-0"
         title={isPl ? 'Dodaj tabelę' : 'Add table'}
       >
         <Plus size={14} />
@@ -167,12 +167,12 @@ export const TableTabStrip: React.FC<TableTabStripProps> = ({
       {/* Context menu */}
       {contextMenu && (
         <div
-          className="fixed z-[200] bg-white dark:bg-navy-900 rounded-lg shadow-xl border border-slate-200 dark:border-navy-700 py-1 min-w-[150px]"
+          className="fixed z-[200] bg-c-surface rounded-lg shadow-xl border border-c-border py-1 min-w-[150px]"
           style={{ left: contextMenu.x, top: contextMenu.y - 120 }}
           onClick={(e) => e.stopPropagation()}
         >
           <button
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
             onClick={() => {
               const t = tables.find((t) => t.id === contextMenu.tableId);
               setRenameValue(t?.name ?? '');
@@ -184,7 +184,7 @@ export const TableTabStrip: React.FC<TableTabStripProps> = ({
             {isPl ? 'Zmień nazwę' : 'Rename'}
           </button>
           <button
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
             onClick={() => {
               onDuplicateTable(contextMenu.tableId);
               setContextMenu(null);
@@ -195,9 +195,9 @@ export const TableTabStrip: React.FC<TableTabStripProps> = ({
           </button>
           {tables.length > 1 && (
             <>
-              <div className="h-px bg-slate-200 dark:bg-navy-700 my-1" />
+              <div className="h-px bg-c-border-subtle my-1" />
               <button
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-danger-50 dark:hover:bg-danger-900/20 text-danger-600"
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left text-c-danger hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)]"
                 onClick={() => {
                   onDeleteTable(contextMenu.tableId);
                   setContextMenu(null);

@@ -68,10 +68,10 @@ export const OnboardingBanner: React.FC<OnboardingBannerProps> = ({
     <div
       role="region"
       aria-label={title}
-      className={`relative flex items-start gap-4 rounded-xl border border-c-accent/20 bg-c-accent-soft p-4 ${className}`.trim()}
+      className={`relative flex items-start gap-4 rounded-xl border border-c-border-subtle bg-c-accent-soft p-4 ${className}`.trim()}
     >
       {icon !== null && icon !== undefined && (
-        <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-c-accent/10 text-c-accent">
+        <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-c-accent-soft text-c-accent">
           {icon}
         </span>
       )}
@@ -84,7 +84,7 @@ export const OnboardingBanner: React.FC<OnboardingBannerProps> = ({
           <button
             type="button"
             onClick={cta.onClick}
-            className="mt-3 inline-flex items-center rounded-full bg-c-accent px-3.5 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-c-accent/40"
+            className="mt-3 inline-flex items-center rounded-full bg-c-accent px-3.5 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             {cta.label}
           </button>
@@ -96,7 +96,7 @@ export const OnboardingBanner: React.FC<OnboardingBannerProps> = ({
           type="button"
           onClick={handleDismiss}
           aria-label="Dismiss"
-          className="flex-shrink-0 rounded-lg p-1 text-c-text-muted transition-colors hover:bg-c-accent/10 hover:text-c-text"
+          className="flex-shrink-0 rounded-lg p-1 text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text"
         >
           <X size={16} aria-hidden="true" />
         </button>

@@ -188,8 +188,9 @@ describe('SOP engine — bridges', () => {
     expect(prompt).toContain('SOP ENFORCEABILITY');
     expect(prompt).toContain('W2 ROLLOUT SEQUENCE');
     expect(prompt).toContain('rejected variant');
-    expect(prompt).toContain('"rejectedVariant"');
-    expect(prompt).toContain('"tradeOff"');
+    expect(prompt).toContain('"initiatives"');
+    expect(prompt).toContain('"verdict"');
+    expect(prompt).toContain('"tradeoffs"');
   });
 
   it('synthesizeSop returns a consistent readiness + sequence', () => {

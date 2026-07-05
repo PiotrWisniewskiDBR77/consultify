@@ -376,6 +376,14 @@ export async function planDeckVisualsTiered(params: {
       if (plan?.layoutIntent) {
         (out as any)._b1LayoutIntent = plan.layoutIntent;
       }
+      // (d) STEP 1b — carry B1's per-slide COMPOSITION onto the persisted slide
+      //     so it survives into `unifiedJson` and reaches the FE renderer
+      //     (deckFromUnifiedJson → DeckCard.composition). Only when the LLM
+      //     actually composed this slide; absent/deterministic → field omitted
+      //     → FE keeps its heuristic (byte-identical back-compat).
+      if (plan?.composition && plan.source === 'llm') {
+        out.composition = plan.composition;
+      }
       return out;
     });
 

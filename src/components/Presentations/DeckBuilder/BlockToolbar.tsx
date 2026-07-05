@@ -14,6 +14,19 @@ type ToolbarPanel =
 interface BlockToolbarProps {
   onInsertBlock?: (blockType: string, content?: Record<string, unknown>) => void;
   onOpenMediaLibrary?: () => void;
+  /**
+   * P2.2 — "AI Generate" in the Images panel. Reuses the existing R4
+   * per-slide rewrite mechanism (regenerateSlide) with an image-focused
+   * instruction rather than building a new generation pipeline.
+   */
+  onGenerateAiImage?: () => void;
+  /** True while an AI image-generation rewrite is in flight. */
+  isGeneratingAiImage?: boolean;
+  /**
+   * P2.2 — "Upload" in the Images panel. Opens the same Media Library
+   * panel, which already has a real file-upload flow built in.
+   */
+  onUpload?: () => void;
 }
 
 const TOOLBAR_ITEMS: { id: ToolbarPanel; icon: React.FC<{ size?: number }>; labelKey: string }[] = [
@@ -28,6 +41,9 @@ const TOOLBAR_ITEMS: { id: ToolbarPanel; icon: React.FC<{ size?: number }>; labe
 export const BlockToolbar: React.FC<BlockToolbarProps> = ({
   onInsertBlock,
   onOpenMediaLibrary,
+  onGenerateAiImage,
+  isGeneratingAiImage,
+  onUpload,
 }) => {
   const { t } = useTranslation();
   const [activePanel, setActivePanel] = useState<ToolbarPanel>(null);
@@ -39,7 +55,7 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
   return (
     <div className="flex flex-shrink-0">
       {/* Icon strip */}
-      <div className="w-14 border-l border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 flex flex-col items-center py-3 gap-1">
+      <div className="w-14 border-l border-c-border-subtle bg-c-surface flex flex-col items-center py-3 gap-1">
         {TOOLBAR_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive = activePanel === item.id;
@@ -50,8 +66,8 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
               title={t(item.labelKey, item.id || '')}
               className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
                 isActive
-                  ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
-                  : 'text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 hover:text-slate-600 dark:hover:text-slate-300'
+                  ? 'bg-c-accent-soft0 text-c-accent'
+                  : 'text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text-secondary'
               }`}
             >
               <Icon size={18} />
@@ -62,14 +78,21 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
 
       {/* Expanded Panel */}
       {activePanel && (
-        <div className="w-64 border-l border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 overflow-y-auto">
+        <div className="w-64 border-l border-c-border-subtle bg-c-surface overflow-y-auto">
           <div className="p-3">
-            <h3 className="text-sm font-semibold text-slate-700 dark:text-white mb-3">
+            <h3 className="text-sm font-semibold text-c-text mb-3">
               {t(TOOLBAR_ITEMS.find((i) => i.id === activePanel)?.labelKey || '', activePanel)}
             </h3>
 
             {activePanel === 'basic' && <BasicBlocksPanel onInsertBlock={onInsertBlock} />}
-            {activePanel === 'images' && <ImagesPanel onOpenMediaLibrary={onOpenMediaLibrary} />}
+            {activePanel === 'images' && (
+              <ImagesPanel
+                onOpenMediaLibrary={onOpenMediaLibrary}
+                onGenerateAiImage={onGenerateAiImage}
+                isGeneratingAiImage={isGeneratingAiImage}
+                onUpload={onUpload}
+              />
+            )}
             {activePanel === 'layouts' && <LayoutsPanel onInsertBlock={onInsertBlock} />}
             {activePanel === 'diagrams' && <DiagramsPanel onInsertBlock={onInsertBlock} />}
             {activePanel === 'charts' && <ChartsPanel onInsertBlock={onInsertBlock} />}
@@ -85,18 +108,19 @@ const PanelButton: React.FC<{
   label: string;
   description?: string;
   disabled?: boolean;
+  disabledTitle?: string;
   onClick: () => void;
-}> = ({ label, description, disabled, onClick }) => (
+}> = ({ label, description, disabled, disabledTitle, onClick }) => (
   <button
     onClick={onClick}
     disabled={disabled}
-    title={disabled ? 'Coming soon' : undefined}
+    title={disabled ? (disabledTitle ?? 'Coming soon') : undefined}
     className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
-      disabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-50 dark:hover:bg-navy-800'
+      disabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-c-surface-raised'
     }`}
   >
-    <p className="text-xs font-medium text-slate-700 dark:text-slate-300">{label}</p>
-    {description && <p className="text-[10px] text-slate-600 mt-0.5">{description}</p>}
+    <p className="text-xs font-medium text-c-text">{label}</p>
+    {description && <p className="text-[10px] text-c-text-secondary mt-0.5">{description}</p>}
   </button>
 );
 
@@ -203,28 +227,64 @@ const ChartsPanel: React.FC<{
   );
 };
 
-const ImagesPanel: React.FC<{ onOpenMediaLibrary?: () => void }> = ({ onOpenMediaLibrary }) => (
-  <div className="space-y-3">
-    <div className="space-y-0.5">
-      <PanelButton
-        label="Organization Library"
-        description="Browse your org images"
-        onClick={() => onOpenMediaLibrary?.()}
-      />
-      <PanelButton label="AI Generate" description="Generate with AI" disabled onClick={() => {}} />
-      <PanelButton label="Upload" description="Drag & drop" disabled onClick={() => {}} />
+const ImagesPanel: React.FC<{
+  onOpenMediaLibrary?: () => void;
+  onGenerateAiImage?: () => void;
+  isGeneratingAiImage?: boolean;
+  onUpload?: () => void;
+}> = ({ onOpenMediaLibrary, onGenerateAiImage, isGeneratingAiImage, onUpload }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="space-y-3">
+      <div className="space-y-0.5">
+        <PanelButton
+          label={t('presentations.builder.toolbar.orgLibrary', 'Organization Library')}
+          description={t(
+            'presentations.builder.toolbar.orgLibraryDescription',
+            'Browse your org images'
+          )}
+          onClick={() => onOpenMediaLibrary?.()}
+        />
+        <PanelButton
+          label={
+            isGeneratingAiImage
+              ? t('presentations.builder.toolbar.aiGenerating', 'Generating…')
+              : t('presentations.builder.toolbar.aiGenerate', 'AI Generate')
+          }
+          description={t(
+            'presentations.builder.toolbar.aiGenerateDescription',
+            'Regenerate this slide with an AI image'
+          )}
+          disabled={isGeneratingAiImage || !onGenerateAiImage}
+          disabledTitle={
+            isGeneratingAiImage
+              ? t('presentations.builder.toolbar.aiGenerating', 'Generating…')
+              : undefined
+          }
+          onClick={() => onGenerateAiImage?.()}
+        />
+        <PanelButton
+          label={t('presentations.builder.toolbar.upload', 'Upload')}
+          description={t(
+            'presentations.builder.toolbar.uploadDescription',
+            'Upload an image from your device'
+          )}
+          disabled={!onUpload}
+          onClick={() => onUpload?.()}
+        />
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const SearchPanel: React.FC = () => (
   <div>
     <input
       type="text"
       placeholder="Search deck content..."
-      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm"
+      className="w-full px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface-raised text-sm"
     />
-    <p className="text-[10px] text-slate-600 mt-2">Type to search across all cards</p>
+    <p className="text-[10px] text-c-text-secondary mt-2">Type to search across all cards</p>
   </div>
 );
 

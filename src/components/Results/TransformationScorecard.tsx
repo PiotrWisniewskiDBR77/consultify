@@ -39,10 +39,10 @@ interface ValueIntelligence {
 }
 
 const FUNNEL_LABEL: Record<string, string> = {
-  ideas: 'Pomysły',
-  validated: 'Zwalidowane',
-  inflight: 'W realizacji',
-  realized: 'Zrealizowane',
+  ideas: 'Ideas',
+  validated: 'Validated',
+  inflight: 'In progress',
+  realized: 'Realized',
 };
 const FUNNEL_ORDER = ['ideas', 'validated', 'inflight', 'realized'];
 
@@ -53,10 +53,10 @@ const ACTION_STYLE: Record<DecisionAction, string> = {
   HOLD: 'bg-gray-100 text-gray-500 border-gray-200',
 };
 const ACTION_LABEL: Record<DecisionAction, string> = {
-  SCALE: 'Skaluj',
-  INTERVENE: 'Interweniuj',
-  STOP: 'Zatrzymaj',
-  HOLD: 'Wstrzymaj',
+  SCALE: 'Scale',
+  INTERVENE: 'Intervene',
+  STOP: 'Stop',
+  HOLD: 'Hold',
 };
 
 function fmt(v: number | null | undefined): string {
@@ -111,7 +111,7 @@ export const TransformationScorecard: React.FC<Props> = ({ projectId, fetcher })
 
   const wrap = (children: React.ReactNode) => (
     <section
-      className="rounded-xl border border-gray-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900"
+      className="rounded-xl border border-c-border-subtle bg-c-surface p-4"
       data-testid="transformation-scorecard"
     >
       {children}
@@ -119,12 +119,12 @@ export const TransformationScorecard: React.FC<Props> = ({ projectId, fetcher })
   );
 
   if (failed)
-    return wrap(<p className="text-sm text-gray-400">Narracja wartości niedostępna chwilowo.</p>);
-  if (loading && !data) return wrap(<p className="text-sm text-gray-400">Ładowanie wartości…</p>);
+    return wrap(<p className="text-sm text-c-text-muted">Value narrative temporarily unavailable.</p>);
+  if (loading && !data) return wrap(<p className="text-sm text-c-text-muted">Loading value…</p>);
   if (!data || (data.scorecard?.itemCount ?? 0) === 0)
     return wrap(
-      <p className="text-sm text-gray-400" data-testid="scorecard-empty">
-        Brak danych wartości — dodaj ROI/realizację inicjatyw.
+      <p className="text-sm text-c-text-muted" data-testid="scorecard-empty">
+        No value data yet — add initiative ROI / realization.
       </p>
     );
 
@@ -136,44 +136,44 @@ export const TransformationScorecard: React.FC<Props> = ({ projectId, fetcher })
 
   return wrap(
     <>
-      <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-slate-100">
-        Wartość transformacji
+      <h3 className="mb-3 text-sm font-semibold text-c-text">
+        Transformation value
       </h3>
 
       <div className="grid grid-cols-3 gap-3" data-testid="scorecard-header">
-        <Stat label="Zabankowane" value={fmt(sc.banked)} tone="emerald" />
-        <Stat label="W realizacji" value={fmt(sc.inFlight)} tone="blue" />
-        <Stat label="Zagrożone" value={fmt(sc.atRisk)} tone="red" />
+        <Stat label="Banked" value={fmt(sc.banked)} tone="emerald" />
+        <Stat label="In progress" value={fmt(sc.inFlight)} tone="blue" />
+        <Stat label="At risk" value={fmt(sc.atRisk)} tone="red" />
       </div>
       <div className="mt-2">
-        <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-navy-800">
+        <div className="h-2 w-full overflow-hidden rounded-full bg-c-surface-raised">
           <div
             className="h-2 rounded-full bg-emerald-500"
             style={{ width: `${Math.min(100, Math.round((sc.pctOfTarget || 0) * 100))}%` }}
           />
         </div>
-        <p className="mt-1 text-[11px] text-gray-400">
-          {Math.round((sc.pctOfTarget || 0) * 100)}% z celu {fmt(sc.totalTarget)}
+        <p className="mt-1 text-[11px] text-c-text-muted">
+          {Math.round((sc.pctOfTarget || 0) * 100)}% of target {fmt(sc.totalTarget)}
         </p>
       </div>
 
       <div className="mt-4" data-testid="scorecard-funnel">
-        <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-          Lejek wartości
+        <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
+          Value funnel
         </p>
         <div className="flex flex-col gap-1">
           {orderedFunnel.map((f) => (
             <div key={f.stage} className="flex items-center gap-2">
-              <span className="w-24 shrink-0 text-[11px] text-gray-500">
+              <span className="w-24 shrink-0 text-[11px] text-c-text-muted">
                 {FUNNEL_LABEL[f.stage] || f.stage}
               </span>
-              <div className="h-3 flex-1 overflow-hidden rounded bg-gray-50 dark:bg-navy-800">
+              <div className="h-3 flex-1 overflow-hidden rounded bg-c-surface-raised">
                 <div
                   className="h-3 rounded bg-blue-400/70"
                   style={{ width: `${Math.round((f.value / funnelMax) * 100)}%` }}
                 />
               </div>
-              <span className="w-20 shrink-0 text-right text-[11px] text-gray-500">
+              <span className="w-20 shrink-0 text-right text-[11px] text-c-text-muted">
                 {fmt(f.value)} · {f.count}
               </span>
             </div>
@@ -183,14 +183,14 @@ export const TransformationScorecard: React.FC<Props> = ({ projectId, fetcher })
 
       {(data.decisions || []).length > 0 && (
         <div className="mt-4" data-testid="scorecard-decisions">
-          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-            Rekomendacje
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
+            Recommendations
           </p>
           <ul className="flex flex-col gap-1">
             {data.decisions.slice(0, 6).map((d) => (
               <li
                 key={d.id}
-                className="flex items-center justify-between gap-2 rounded-lg border border-gray-100 p-2 dark:border-navy-700"
+                className="flex items-center justify-between gap-2 rounded-lg border border-c-border-subtle p-2"
               >
                 <div className="flex min-w-0 items-center gap-2">
                   <span
@@ -198,11 +198,11 @@ export const TransformationScorecard: React.FC<Props> = ({ projectId, fetcher })
                   >
                     {ACTION_LABEL[d.action] || d.action}
                   </span>
-                  <span className="truncate text-xs text-gray-700 dark:text-slate-200">
+                  <span className="truncate text-xs text-c-text-secondary">
                     {d.name || d.id}
                   </span>
                 </div>
-                <span className="shrink-0 text-[11px] text-gray-400">{fmt(d.valueAtStake)}</span>
+                <span className="shrink-0 text-[11px] text-c-text-muted">{fmt(d.valueAtStake)}</span>
               </li>
             ))}
           </ul>
@@ -224,8 +224,8 @@ const Stat: React.FC<{ label: string; value: string; tone: 'emerald' | 'blue' | 
         ? 'text-blue-600'
         : 'text-red-600';
   return (
-    <div className="rounded-lg border border-gray-100 p-2 dark:border-navy-700">
-      <p className="text-[10px] uppercase tracking-wide text-gray-400">{label}</p>
+    <div className="rounded-lg border border-c-border-subtle p-2">
+      <p className="text-[10px] uppercase tracking-wide text-c-text-muted">{label}</p>
       <p className={`text-xl font-bold ${color}`}>{value}</p>
     </div>
   );

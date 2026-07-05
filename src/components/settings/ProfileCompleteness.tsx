@@ -251,9 +251,9 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
   // Compact version for sidebar or card display
   if (compact) {
     return (
-      <div className="p-4 bg-gradient-to-r from-primary-50 to-crimson-50 dark:from-primary-500/10 dark:to-crimson-500/10 rounded-lg border border-primary-100 dark:border-primary-500/20">
+      <div className="p-4 bg-gradient-to-r from-c-accent-soft to-c-accent  rounded-lg border border-c-accent dark:border-c-accent">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+          <span className="text-sm font-medium text-c-text-secondary">
             Profile Completion
           </span>
           <div className="flex items-center gap-2">
@@ -268,14 +268,14 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
             <span className={`text-sm font-bold ${level.color}`}>{percentage}%</span>
           </div>
         </div>
-        <div className="h-2 bg-white dark:bg-white/10 rounded-full overflow-hidden">
+        <div className="h-2 bg-c-surface rounded-full overflow-hidden">
           <div
             className={`h-full ${level.bgColor} transition-all duration-500 ease-out`}
             style={{ width: `${percentage}%` }}
           />
         </div>
         {percentage < 100 && (
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+          <p className="text-xs text-c-text-muted mt-2">
             {incompleteItems.length} item{incompleteItems.length !== 1 ? 's' : ''} remaining
           </p>
         )}
@@ -285,27 +285,27 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
 
   // Full version
   return (
-    <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+    <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl overflow-hidden">
       {/* Header with Progress */}
-      <div className="p-6 bg-gradient-to-r from-primary-50 to-crimson-50 dark:from-primary-500/10 dark:to-crimson-500/10 border-b border-primary-100 dark:border-primary-500/20">
+      <div className="p-6 bg-gradient-to-r from-c-accent-soft to-c-accent  border-b border-c-accent dark:border-c-accent">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
               {percentage === 100 && <Sparkles size={20} className="text-yellow-500" />}
               Profile Completeness
             </h3>
             <p className={`text-sm font-medium mt-1 ${level.color}`}>{level.label}</p>
           </div>
           <div className="text-right">
-            <div className="text-3xl font-bold text-slate-900 dark:text-white">{percentage}%</div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <div className="text-3xl font-bold text-c-text">{percentage}%</div>
+            <p className="text-xs text-c-text-muted">
               {completedItems.length}/{COMPLETION_ITEMS.length} items
             </p>
           </div>
         </div>
 
         {/* Progress Bar */}
-        <div className="h-3 bg-white dark:bg-white/10 rounded-full overflow-hidden shadow-inner">
+        <div className="h-3 bg-c-surface rounded-full overflow-hidden shadow-inner">
           <div
             className={`h-full ${level.bgColor} transition-all duration-700 ease-out rounded-full`}
             style={{ width: `${percentage}%` }}
@@ -314,22 +314,22 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
       </div>
 
       {/* Items List */}
-      <div className="divide-y divide-slate-200 dark:divide-white/5">
+      <div className="divide-y divide-c-border-subtle dark:divide-white/5">
         {/* Incomplete Items First */}
         {incompleteItems.map((item: any) => {
           const Icon = item.icon || Circle;
           return (
             <div
               key={item.id}
-              className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group"
+              className="px-6 py-4 flex items-center justify-between hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors group"
             >
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-500">
+                <div className="p-2 rounded-lg bg-c-surface-raised text-c-text-secondary">
                   <Icon size={18} />
                 </div>
                 <div>
-                  <p className="font-medium text-slate-700 dark:text-slate-200">{item.label}</p>
-                  <p className="text-xs text-slate-600 dark:text-slate-500">
+                  <p className="font-medium text-c-text-secondary">{item.label}</p>
+                  <p className="text-xs text-c-text-secondary">
                     +{item.weight}% completion
                   </p>
                 </div>
@@ -337,7 +337,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
               {item.action && onNavigate && (
                 <button
                   onClick={() => onNavigate(item.action!)}
-                  className="flex items-center gap-1 px-3 py-1.5 text-sm text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm text-c-accent hover:bg-c-accent-soft dark:hover:bg-c-accent-soft rounded-lg transition-colors opacity-0 group-hover:opacity-100"
                 >
                   {item.actionLabel}
                   <ChevronRight size={14} />
@@ -357,7 +357,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
                   <Icon size={18} />
                 </div>
                 <div>
-                  <p className="font-medium text-slate-700 dark:text-slate-200">{item.label}</p>
+                  <p className="font-medium text-c-text-secondary">{item.label}</p>
                   <p className="text-xs text-green-600 dark:text-green-400">Completed</p>
                 </div>
               </div>
@@ -370,7 +370,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
       {/* Achievements Section */}
       {achievements.length > 0 && (
         <div className="px-6 py-4 bg-yellow-50 dark:bg-yellow-500/10 border-t border-yellow-100 dark:border-yellow-500/20">
-          <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+          <h4 className="text-sm font-semibold text-c-text mb-2 flex items-center gap-2">
             <Award size={16} className="text-yellow-500" />
             {t('settings.completeness.achievements', 'Achievements')}
           </h4>
@@ -391,7 +391,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
       {/* Role-based Suggestions */}
       {suggestions.length > 0 && (
         <div className="px-6 py-4 bg-blue-50 dark:bg-blue-500/10 border-t border-blue-100 dark:border-blue-500/20">
-          <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+          <h4 className="text-sm font-semibold text-c-text mb-2 flex items-center gap-2">
             <Lightbulb size={16} className="text-blue-500" />
             {t('settings.completeness.suggestions', 'Suggestions')}
           </h4>
@@ -399,7 +399,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
             {suggestions.map((suggestion, idx) => (
               <div
                 key={idx}
-                className="flex items-start gap-2 p-2 bg-white dark:bg-navy-800 rounded-lg"
+                className="flex items-start gap-2 p-2 bg-c-surface rounded-lg"
               >
                 <AlertCircle
                   size={16}
@@ -412,7 +412,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
                   }`}
                 />
                 <div className="flex-1">
-                  <p className="text-sm text-slate-700 dark:text-slate-300">{suggestion.message}</p>
+                  <p className="text-sm text-c-text-secondary">{suggestion.message}</p>
                   {suggestion.action && onNavigate && (
                     <button
                       onClick={() => onNavigate(suggestion.action!)}
@@ -441,8 +441,8 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
           </div>
         </div>
       ) : (
-        <div className="px-6 py-4 bg-slate-50 dark:bg-white/5 border-t border-slate-200 dark:border-navy-700">
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+        <div className="px-6 py-4 bg-c-surface-raised border-t border-c-border-subtle dark:border-navy-700">
+          <p className="text-sm text-c-text-muted">
             Complete your profile to unlock all features and get personalized recommendations.
           </p>
         </div>

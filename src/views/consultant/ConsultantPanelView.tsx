@@ -56,22 +56,22 @@ export const ConsultantPanelView = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950 p-6 overflow-y-auto">
+    <div className="flex flex-col h-full bg-c-surface-raised dark:bg-c-bg p-6 overflow-y-auto">
       <div className="max-w-6xl mx-auto w-full space-y-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-navy-900 dark:text-white">
+            <h1 className="text-3xl font-bold text-c-text">
               {t('consultant.panel.title')}
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-c-text-muted mt-1">
               {t('consultant.panel.welcome', { name: currentUser?.firstName || 'Consultant' })}
             </p>
           </div>
           <div className="flex gap-3">
             <button
               onClick={() => setCurrentView(AppView.CONSULTANT_INVITES)}
-              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-500/30 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors font-medium shadow-sm"
+              className="flex items-center gap-2 px-4 py-2 bg-c-surface-raised text-c-accent border border-c-accent rounded-lg hover:bg-c-accent-soft transition-colors font-medium shadow-sm"
             >
               <Plus size={18} />
               {t('consultant.panel.createInvite')}
@@ -81,59 +81,59 @@ export const ConsultantPanelView = () => {
 
         {/* Main Content */}
         <div className="grid grid-cols-1 gap-6">
-          <div className="bg-white dark:bg-navy-800 rounded-xl shadow-sm border border-slate-200 dark:border-navy-700 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between bg-slate-50/50 dark:bg-white/5">
-              <h2 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
-                <Building size={20} className="text-primary-500" />
+          <div className="bg-c-surface-raised rounded-xl shadow-sm border border-c-border-subtle overflow-hidden">
+            <div className="px-6 py-4 border-b border-c-border-subtle flex items-center justify-between bg-c-surface-raised dark:bg-c-surface-raised">
+              <h2 className="text-lg font-semibold text-c-text flex items-center gap-2">
+                <Building size={20} className="text-c-accent" />
                 {t('consultant.panel.linkedOrgs')}
               </h2>
-              <span className="text-xs font-medium px-2 py-1 bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300 rounded-full">
+              <span className="text-xs font-medium px-2 py-1 bg-c-surface-raised text-c-text-secondary rounded-full">
                 {t('consultant.panel.activeCount', { count: linkedOrgs.length })}
               </span>
             </div>
 
             {isLoading ? (
-              <div className="p-12 text-center text-slate-600 dark:text-slate-500">
+              <div className="p-12 text-center text-c-text-secondary dark:text-c-text-muted">
                 {t('consultant.panel.loading')}
               </div>
             ) : linkedOrgs.length === 0 ? (
               <div className="p-12 text-center">
-                <div className="w-16 h-16 bg-slate-100 dark:bg-navy-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Building size={32} className="text-slate-600 dark:text-slate-500" />
+                <div className="w-16 h-16 bg-c-surface-raised dark:bg-c-surface rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Building size={32} className="text-c-text-secondary dark:text-c-text-muted" />
                 </div>
-                <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-2">
+                <h3 className="text-lg font-medium text-c-text mb-2">
                   {t('consultant.panel.noOrgsTitle')}
                 </h3>
-                <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-6">
+                <p className="text-c-text-muted max-w-sm mx-auto mb-6">
                   {t('consultant.panel.noOrgsMessage')}
                 </p>
                 <button
                   onClick={() => setCurrentView(AppView.CONSULTANT_INVITES)}
-                  className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors font-medium"
+                  className="px-4 py-2 bg-c-text text-c-surface hover:opacity-90 rounded-lg transition-colors font-medium"
                 >
                   {t('consultant.panel.inviteClient')}
                 </button>
               </div>
             ) : (
-              <div className="divide-y divide-slate-200 dark:divide-white/5">
+              <div className="divide-y divide-c-border-subtle dark:divide-white/5">
                 {linkedOrgs.map((org) => (
                   <div
                     key={org.id}
-                    className="p-6 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group"
+                    className="p-6 hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors group"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xl uppercase">
+                        <div className="w-12 h-12 rounded-lg bg-c-tag-1 text-white flex items-center justify-center font-bold text-xl uppercase">
                           {org.name.substring(0, 2)}
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold text-navy-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                          <h3 className="text-lg font-semibold text-c-text group-hover:text-c-accent transition-colors">
                             {org.name}
                           </h3>
-                          <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 mt-1">
+                          <div className="flex items-center gap-3 text-sm text-c-text-muted mt-1">
                             <span className="capitalize">{org.status.toLowerCase()}</span>
-                            <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                            <span className="capitalize text-slate-600 dark:text-slate-500">
+                            <span className="w-1 h-1 bg-c-border rounded-full"></span>
+                            <span className="capitalize text-c-text-secondary dark:text-c-text-muted">
                               {t('consultant.panel.role', {
                                 role: org.role_in_org.toLowerCase(),
                               })}
@@ -144,7 +144,7 @@ export const ConsultantPanelView = () => {
                       <div className="flex items-center gap-3">
                         <button
                           onClick={() => handleSwitchToOrg(org.id)}
-                          className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 rounded-lg hover:border-primary-500 hover:text-primary-500 dark:hover:text-primary-400 transition-all font-medium text-sm"
+                          className="flex items-center gap-2 px-4 py-2 bg-c-surface-raised border border-c-border-subtle text-c-text-secondary rounded-lg hover:border-c-accent hover:text-c-accent dark:hover:text-c-accent transition-all font-medium text-sm"
                         >
                           {t('consultant.panel.openWorkspace')}
                           <ExternalLink size={16} />

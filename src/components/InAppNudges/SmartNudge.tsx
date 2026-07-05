@@ -75,7 +75,7 @@ export const SmartNudge: React.FC = () => {
   if (!isVisible || !activeNudge) return null;
 
   return (
-    <div className="fixed bottom-24 right-6 w-80 bg-white dark:bg-navy-800 rounded-xl shadow-2xl border border-amber-200 dark:border-amber-900/50 p-4 z-40 animate-in slide-in-from-right-10 fade-in duration-500">
+    <div className="fixed bottom-24 right-6 w-80 bg-white dark:bg-navy-800 rounded-xl shadow-2xl border border-amber-200 dark:border-amber-900/50 p-4 z-dropdown animate-in slide-in-from-right-10 fade-in duration-500">
       <button
         onClick={() => setIsVisible(false)}
         className="absolute top-2 right-2 text-slate-600 hover:text-slate-600 dark:text-slate-400"

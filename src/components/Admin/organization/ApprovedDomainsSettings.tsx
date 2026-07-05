@@ -276,7 +276,7 @@ export const ApprovedDomainsSettings: React.FC<ApprovedDomainsSettingsProps> = (
                       onClick={() => handleToggleAutoJoin(domain)}
                       className={cn(
                         'relative w-10 h-6 rounded-full transition-colors',
-                        domain.autoJoin ? 'bg-navy-900' : 'bg-slate-200 dark:bg-navy-700'
+                        domain.autoJoin ? 'bg-c-surface' : 'bg-slate-200 dark:bg-navy-700'
                       )}
                     >
                       <span
@@ -373,7 +373,7 @@ export const ApprovedDomainsSettings: React.FC<ApprovedDomainsSettingsProps> = (
               onClick={() => setAutoJoin(!autoJoin)}
               className={cn(
                 'relative w-10 h-6 rounded-full transition-colors',
-                autoJoin ? 'bg-navy-900' : 'bg-slate-200 dark:bg-navy-700'
+                autoJoin ? 'bg-c-surface' : 'bg-slate-200 dark:bg-navy-700'
               )}
             >
               <span

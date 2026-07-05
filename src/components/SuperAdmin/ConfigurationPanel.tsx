@@ -59,7 +59,7 @@ export const ConfigurationPanel: React.FC = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-2">System Configuration</h2>
+          <h2 className="text-2xl font-bold text-c-text mb-2">System Configuration</h2>
           <p className="text-slate-400 dark:text-slate-500 text-sm">Manage system-wide settings</p>
         </div>
       </div>
@@ -78,8 +78,8 @@ export const ConfigurationPanel: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="text-white font-medium">{config.config_key}</span>
-                    <span className="px-2 py-1 text-xs bg-slate-700 text-slate-300 rounded">
+                    <span className="text-c-text font-medium">{config.config_key}</span>
+                    <span className="px-2 py-1 text-xs bg-c-surface-raised text-slate-300 rounded">
                       {config.config_type}
                     </span>
                     {config.environment && (
@@ -99,7 +99,7 @@ export const ConfigurationPanel: React.FC = () => {
                         type={config.config_type === 'number' ? 'number' : 'text'}
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
-                        className="flex-1 px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+                        className="flex-1 px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-c-text"
                       />
                       <button
                         onClick={() => handleSave(config.config_key, editValue, config.config_type)}
@@ -109,7 +109,7 @@ export const ConfigurationPanel: React.FC = () => {
                       </button>
                       <button
                         onClick={() => setEditingKey(null)}
-                        className="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg"
+                        className="p-2 bg-c-surface-raised hover:bg-slate-600 rounded-lg"
                       >
                         <X size={16} />
                       </button>
@@ -128,7 +128,7 @@ export const ConfigurationPanel: React.FC = () => {
                       setEditingKey(config.config_key);
                       setEditValue(config.config_value);
                     }}
-                    className="p-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors"
+                    className="p-2 rounded-lg bg-c-surface-raised text-slate-300 hover:bg-slate-600 transition-colors"
                   >
                     <Edit size={16} />
                   </button>

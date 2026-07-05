@@ -8,7 +8,7 @@
  *
  * Shape intentionally matches the CONCLUSION_LAYER_STANDARD variant W2:
  *   input  -> scored priorities + decision context
- *   output -> { comparisons[], moves[] } with rationale/tradeOff/rejectedVariant
+ *   output -> { summary{verdict,tradeoffs,expectedEffect}, tradeoffs[], moves[], initiatives[], outputCandidates[] } (W2)
  */
 
 import type { FocusTradeoffData } from '@/store/useToolStore';
@@ -80,10 +80,35 @@ ${seqLines}
 Rules:
 ${rules.map((r) => `- ${r}`).join('\n')}
 
+W2 STRUCTURE (mandatory):
+1. "summary.verdict" — answer-first, 1-2 sentences: what to commit to FIRST, what to sequence, what to cut — a decision, not a scoring recap.
+2. "summary.executiveSummary" — 3-4 sentences: restates the verdict, then the why, anchored in the scored priorities and the commit/defer/cut sequence above (cite ids).
+3. "summary.tradeoffs" — >= 1 at recommendation level: what we commit to AT THE COST of what; the canonical rejected alternative is "do everything -> nothing ships".
+4. "tradeoffs" (2-4 cards) — the hardest tensions between competing priorities, each with an answer-first "insight" and a "recommendation" that takes a side.
+5. "moves" (3-5) — each a focus DECISION (commit/sequence/cut/rebalance/experiment) with its trade-off and rejected variant folded into "rationale", plus firstStep, linked to priority ids.
+6. "summary.expectedEffect" — focus outcome, behaviorally observable, WITH a time horizon.
+
+QUALITY BARS:
+- The ranking and lanes are the engine's — do not override them.
+- Zero filler and zero AI meta-phrases ("As an AI", "Based on the provided data", "In conclusion") — write like a partner signing the work with their name.
+- Numbers exclusively from the facts above; do not compute or invent new ones.
+- Every sentence falsifiable: with opposite facts it would read differently.
+- Respond in ${isPolish ? 'Polish' : 'English'}, active voice, partner tone.
+
 Return JSON:
 {
-  "comparisons": [{"title":"...","insight":"...","linkedPriorityIds":["priority-id"],"recommendation":"...","priority":"high|medium|low","confidence":4}],
-  "moves": [{"title":"...","category":"commit|sequence|cut|rebalance|experiment","rationale":"...","tradeOff":"...","rejectedVariant":"...","linkedTradeoffIds":[],"linkedPriorityIds":["priority-id"],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}]
+  "summary": {
+    "verdict": "answer-first: what to commit to first, what to sequence, what to cut",
+    "executiveSummary": "3-4 sentences: restate the verdict, then why — anchored in the scored priorities and the commit/defer/cut sequence above",
+    "keyInsights": ["3 insights, each tied to named session elements"],
+    "appliedConclusions": ["what to commit to", "what to sequence later", "what to cut", "what to validate next"],
+    "tradeoffs": [{"chosen":"...","rejected":"...","why":"..."}],
+    "expectedEffect": {"text":"focus outcome, behaviorally observable","horizon":"..."}
+  },
+  "tradeoffs": [{"title":"...","priorityIds":["priority-id"],"insight":"answer-first: the tension and which side wins","priority":"high|medium|low","urgency":"high|medium|low","recommendation":"...","confidence":4}],
+  "moves": [{"title":"...","category":"commit|sequence|cut|rebalance|experiment","rationale":"why — anchored in listed element ids; MUST name the trade-off (chosen at the cost of what) and the rejected variant","linkedTradeoffIds":[],"linkedPriorityIds":["priority-id"],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"verb + artifact + role"}],
+  "initiatives": [{"title":"...","description":"...","type":"strategic|operational|defensive|growth","estimatedImpact":"high|medium|low","estimatedEffort":"high|medium|low","rationale":"...","linkedItems":["priority-id"]}],
+  "outputCandidates": [{"outputType":"initiative|report|presentation|idea","title":"...","description":"...","linkedMoveIds":[],"linkedPriorityIds":["priority-id"],"rationale":"...","readiness":"ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
 }`;
 }
 

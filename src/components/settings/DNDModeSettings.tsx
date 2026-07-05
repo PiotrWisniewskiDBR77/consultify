@@ -111,32 +111,32 @@ export const DNDModeSettings: React.FC<DNDModeSettingsProps> = ({ currentUser, o
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+        <h3 className="text-lg font-semibold text-c-text mb-2 flex items-center gap-2">
           <Moon size={20} />
           {t('settings.notifications.dnd.title', 'Do Not Disturb')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-c-text-muted">
           {t('settings.notifications.dnd.subtitle', 'Temporarily pause all notifications')}
         </p>
       </div>
 
       {/* Current Status */}
       {dndEnabled && dndUntil && (
-        <div className="p-4 bg-primary-50 dark:bg-primary-500/20 border border-primary-200 dark:border-primary-500/30 rounded-lg">
+        <div className="p-4 bg-c-accent-soft dark:bg-c-accent-soft border border-c-accent dark:border-c-accent rounded-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-primary-900 dark:text-primary-100">
+              <p className="text-sm font-medium text-c-accent">
                 {t('settings.notifications.dnd.active', 'DND is active')}
               </p>
-              <p className="text-xs text-primary-700 dark:text-primary-300 mt-1">
+              <p className="text-xs text-c-accent mt-1">
                 {t('settings.notifications.dnd.until', 'Until')}: {formatUntil(dndUntil)}
               </p>
             </div>
             <button
               onClick={handleDisable}
-              className="p-2 hover:bg-primary-100 dark:hover:bg-primary-500/30 rounded-lg transition-colors"
+              className="p-2 hover:bg-c-accent-soft dark:hover:bg-c-accent-soft rounded-lg transition-colors"
             >
-              <X size={16} className="text-primary-600 dark:text-primary-400" />
+              <X size={16} className="text-c-accent" />
             </button>
           </div>
         </div>
@@ -145,7 +145,7 @@ export const DNDModeSettings: React.FC<DNDModeSettingsProps> = ({ currentUser, o
       {/* Quick Presets */}
       {!dndEnabled && (
         <div className="space-y-4">
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+          <label className="block text-sm font-medium text-c-text-secondary">
             {t('settings.notifications.dnd.quickPresets', 'Quick Presets')}
           </label>
           <div className="grid grid-cols-2 gap-3">
@@ -153,7 +153,7 @@ export const DNDModeSettings: React.FC<DNDModeSettingsProps> = ({ currentUser, o
               <button
                 key={preset.label}
                 onClick={() => handlePreset(preset)}
-                className="px-4 py-3 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg hover:border-primary-300 transition-colors text-sm font-medium text-slate-700 dark:text-slate-300"
+                className="px-4 py-3 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg hover:border-c-accent transition-colors text-sm font-medium text-c-text-secondary"
               >
                 {preset.label}
               </button>
@@ -164,7 +164,7 @@ export const DNDModeSettings: React.FC<DNDModeSettingsProps> = ({ currentUser, o
 
       {/* Custom Time */}
       <div className="space-y-4">
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+        <label className="block text-sm font-medium text-c-text-secondary flex items-center gap-2">
           <Clock size={16} />
           {t('settings.notifications.dnd.customTime', 'Custom End Time')}
         </label>
@@ -178,7 +178,7 @@ export const DNDModeSettings: React.FC<DNDModeSettingsProps> = ({ currentUser, o
             }
           }}
           min={new Date().toISOString().slice(0, 16)}
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
+          className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
         />
       </div>
 
@@ -187,7 +187,7 @@ export const DNDModeSettings: React.FC<DNDModeSettingsProps> = ({ currentUser, o
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2 bg-c-accent hover:bg-c-accent text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaving ? (
             <>

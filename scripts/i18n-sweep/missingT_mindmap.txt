@@ -1,0 +1,1 @@
+scripts/i18n-sweep/_moloch_scope/IdeaMapWorkspace.tsx

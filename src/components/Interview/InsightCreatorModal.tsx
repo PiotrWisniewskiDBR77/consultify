@@ -141,7 +141,7 @@ const StyledCheck: React.FC<{
     aria-hidden="true"
     className={`inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[6px] border transition ${
       checked
-        ? 'border-primary-500 bg-primary-600 text-white shadow-sm shadow-primary-500/30'
+        ? 'border-c-text bg-c-text text-c-bg shadow-sm shadow-black/10'
         : 'border-slate-300 bg-white text-transparent dark:border-white/[0.18] dark:bg-navy-900'
     } ${disabled ? 'opacity-50' : ''} ${className}`}
   >
@@ -2014,7 +2014,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             <button
               type="button"
               onClick={() => startNewLensFromBasket(activeBasket.id)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-3 py-2 text-sm font-medium text-white shadow-sm shadow-primary-500/30 transition-colors hover:bg-primary-500"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-c-text px-3 py-2 text-sm font-medium text-c-bg shadow-sm shadow-black/10 transition-colors hover:bg-c-text-secondary"
               title={
                 isPolish
                   ? 'Użyj tych źródeł i przejdź od razu do wyboru kąta analizy'
@@ -2058,7 +2058,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               type="button"
               onClick={handleSaveBasket}
               disabled={isSavingBasket}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-500 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-c-text px-3 py-1.5 text-sm font-medium text-c-bg transition-colors hover:bg-c-text-secondary disabled:opacity-50"
             >
               {isSavingBasket ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
               {isPolish ? 'Zapisz' : 'Save'}

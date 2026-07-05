@@ -430,7 +430,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                   {enableEnhancedMessages && msg.role === 'ai' && (
                     <div className="flex items-center gap-2 mb-2 text-xs text-slate-500 dark:text-slate-400">
                       <span className="font-medium text-primary-600 dark:text-primary-400 flex items-center gap-1">
-                        <Sparkles size={12} />
+                        <Sparkles size={14} />
                         {t('chat.aiAssistant', 'AI Assistant')}
                       </span>
                       {msg.focusMode && (
@@ -644,9 +644,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                     }`}
                   >
                     {msg.feedback.rating === 'positive' ? (
-                      <ThumbsUp size={12} />
+                      <ThumbsUp size={14} />
                     ) : (
-                      <ThumbsDown size={12} />
+                      <ThumbsDown size={14} />
                     )}
                     {msg.feedback.rating === 'positive'
                       ? t('chat.markedHelpful', 'Marked as helpful')
@@ -687,7 +687,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                       }`}
                       title={voiceState.isSpeaking ? 'Zatrzymaj' : 'Przeczytaj'}
                     >
-                      {voiceState.isSpeaking ? <Square size={12} /> : <Volume2 size={12} />}
+                      {voiceState.isSpeaking ? <Square size={14} /> : <Volume2 size={14} />}
                     </button>
                   )}
                 </div>
@@ -715,7 +715,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                               }`}
                             >
                               {option.label}
-                              {isSelected && <Check size={12} />}
+                              {isSelected && <Check size={14} />}
                             </button>
                           );
                         })}

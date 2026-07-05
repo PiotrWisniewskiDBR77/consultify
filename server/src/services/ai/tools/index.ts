@@ -12,6 +12,7 @@ import { getInitiative } from './getInitiativeCard.js';
 import { getProjectDetails } from './getProjectDetails.js';
 import { searchInsights } from './searchInsights.js';
 import { searchKnowledgeBase } from './searchKnowledgeBase.js';
+import { searchOrgMindmaps } from './searchOrgMindmaps.js';
 import { searchOrgNotes } from './searchOrgNotes.js';
 import { updateAssessmentScore } from './updateAssessmentScore.js';
 
@@ -26,6 +27,9 @@ export function registerAllTools(): void {
   mcpServer.registerHandler('search_org_notes', searchOrgNotes as any);
   mcpServer.registerHandler('search_insights', searchInsights as any);
   mcpServer.registerHandler('get_initiative', getInitiative as any);
+  // Teresa mind-map retrieval (ff_teresaMindmap · M06 Fala 2) — self-gates on
+  // ENABLE_TERESA_RETRIEVAL && ENABLE_TERESA_MINDMAP; empty envelope when off.
+  mcpServer.registerHandler('search_org_mindmaps', searchOrgMindmaps as any);
   // SPEC_01 kręgosłup czat→deliverable (Tryb A) — self-gate na flagę + rolę.
   mcpServer.registerHandler('generate_deliverable', generateDeliverable as any);
   // M13 Depth · C2 — Teresa creates a DRAFT initiative (reversible, no approval).

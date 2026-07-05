@@ -207,7 +207,7 @@ export const Toggle: React.FC<ToggleProps> = ({
       </div>
       {(label || description) && (
         <div className="flex-1">
-          {label && <span className="block text-sm text-slate-200">{label}</span>}
+          {label && <span className="block text-sm text-c-text-secondary">{label}</span>}
           {description && (
             <span className="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               {description}
@@ -268,7 +268,7 @@ export const Checkbox: React.FC<CheckboxProps> = ({
       </div>
       {(label || description) && (
         <div className="flex-1">
-          {label && <span className="block text-sm text-slate-200">{label}</span>}
+          {label && <span className="block text-sm text-c-text-secondary">{label}</span>}
           {description && (
             <span className="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               {description}

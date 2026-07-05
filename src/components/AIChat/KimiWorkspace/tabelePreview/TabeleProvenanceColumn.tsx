@@ -81,7 +81,7 @@ export const TabeleProvenanceColumn: React.FC<TabeleProvenanceColumnProps> = ({
     return (
       <span
         data-testid={`${testId}-empty`}
-        className="text-[11px] text-slate-600 dark:text-slate-500"
+        className="text-[11px] text-c-text-secondary"
         aria-label={t('kimi.preview.provenance.none', 'No provenance')}
       >
         —

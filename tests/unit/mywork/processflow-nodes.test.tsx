@@ -72,7 +72,7 @@ describe('ActivityNode', () => {
     const { container } = render(<ActivityNode id="a1" data={{ label: 'Review' }} selected />);
     const root = container.firstElementChild as HTMLElement;
     expect(root.className).toContain('ring-2');
-    expect(root.className).toContain('ring-slate-500/60');
+    expect(root.className).toContain('ring-c-border-strong');
   });
 
   it('shows metrics badges when data has duration/cost', () => {

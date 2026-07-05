@@ -133,7 +133,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
         width: '18%',
         render: (row) => (
           <div>
-            <div className="text-sm font-medium text-c-text dark:text-white">
+            <div className="text-sm font-medium text-c-text">
               {formatTemplateLabel(row.type)}
             </div>
             <div className="mt-1 text-xs text-c-text-muted dark:text-c-text-muted">KPI scorecard</div>
@@ -146,7 +146,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
         width: '44%',
         render: (row) => (
           <div>
-            <div className="text-sm font-medium text-c-text dark:text-white">{row.name}</div>
+            <div className="text-sm font-medium text-c-text">{row.name}</div>
             <div className="mt-1 flex flex-wrap gap-2 text-xs text-c-text-muted dark:text-c-text-muted">
               <span>{row.kpiCount ?? 0} KPI</span>
               <span>·</span>
@@ -445,7 +445,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
   );
 
   const inputCls =
-    'w-full h-9 px-3 text-sm rounded-lg border border-c-border-strong dark:border-c-border-strong bg-white dark:bg-c-surface-raised text-c-text dark:text-white placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid transition-colors';
+    'w-full h-9 px-3 text-sm rounded-lg border border-c-border-strong dark:border-c-border-strong bg-c-surface-raised text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid transition-colors';
   const labelCls = 'block text-xs font-medium text-c-text-muted dark:text-c-text-muted mb-1';
 
   const loadActionsForRow = useCallback(
@@ -675,7 +675,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                       <div className="text-c-text-muted dark:text-c-text-muted">
                         {t('common.period', 'Period')}
                       </div>
-                      <div className="text-c-text dark:text-white">
+                      <div className="text-c-text">
                         {String(item.period || '—')}
                       </div>
                     </div>
@@ -683,7 +683,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                       <div className="text-c-text-muted dark:text-c-text-muted">
                         {t('common.updated', 'Updated')}
                       </div>
-                      <div className="text-c-text dark:text-white">
+                      <div className="text-c-text">
                         {String(item.updatedAt || '—')}
                       </div>
                     </div>
@@ -695,20 +695,20 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                   text={item.summaryText}
                   compact
                 >
-                  <div className="mt-3 rounded-xl border border-c-border/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
+                  <div className="mt-3 rounded-xl border border-c-border-subtle bg-c-surface p-3">
                     <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted dark:text-c-text-muted">
                       {t('results.kpiReports.scorecardFlow', 'Scorecard and reconciliation flow')}
                     </div>
                     <div className="grid grid-cols-3 gap-2 text-xs text-c-text-muted dark:text-c-text-muted">
-                      <div className="rounded-lg bg-c-surface-raised/80 dark:bg-white/[0.03] px-3 py-2">
+                      <div className="rounded-lg bg-c-surface-raised px-3 py-2">
                         {t('results.kpi.queue.requiresReview', 'Requires review')}:{' '}
                         {reviewContext.requiresReview}
                       </div>
-                      <div className="rounded-lg bg-c-surface-raised/80 dark:bg-white/[0.03] px-3 py-2">
+                      <div className="rounded-lg bg-c-surface-raised px-3 py-2">
                         {t('results.kpi.queue.discrepancy', 'Discrepancy')}:{' '}
                         {reviewContext.discrepancy}
                       </div>
-                      <div className="rounded-lg bg-c-surface-raised/80 dark:bg-white/[0.03] px-3 py-2">
+                      <div className="rounded-lg bg-c-surface-raised px-3 py-2">
                         {t('results.filters.needsEntry', 'Needs entry')}: {reviewContext.needsEntry}
                       </div>
                     </div>
@@ -792,10 +792,10 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
       </div>
 
       <div className="px-4 pb-4">
-        <div className="rounded-2xl border border-c-border/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.03] p-4">
+        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-4">
           <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-c-text dark:text-white">
+              <h3 className="text-sm font-semibold text-c-text">
                 {t('results.kpiReports.scorecardFlow', 'Scorecard and reconciliation flow')}
               </h3>
               <p className="mt-1 text-xs text-c-text-muted dark:text-c-text-muted">
@@ -806,7 +806,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
               </p>
             </div>
             <div className="flex flex-wrap gap-2 text-xs">
-              <span className="inline-flex items-center gap-2 rounded-full bg-c-surface-raised px-3 py-1 text-c-text-secondary dark:bg-white/[0.06] dark:text-c-text-secondary">
+              <span className="inline-flex items-center gap-2 rounded-full bg-c-surface-raised px-3 py-1 text-c-text-secondary">
                 {t('results.kpi.queue.requiresReview', 'Requires review')}:{' '}
                 {reviewContext.requiresReview}
               </span>
@@ -830,13 +830,13 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
               setAiNarrativeHint('');
             }}
           />
-          <div className="relative w-full max-w-lg mx-4 bg-white dark:bg-c-surface border border-c-border dark:border-c-border rounded-2xl shadow-2xl">
+          <div className="relative w-full max-w-lg mx-4 bg-c-surface border border-c-border rounded-2xl shadow-2xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-c-border dark:border-c-border">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-lg bg-c-info/10">
                   <FileText size={16} className="text-c-info" />
                 </div>
-                <h2 className="text-lg font-semibold text-c-text dark:text-white">
+                <h2 className="text-lg font-semibold text-c-text">
                   {t('results.kpiReports.create.title', 'New KPI report')}
                 </h2>
               </div>
@@ -903,7 +903,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                     <option value="custom">{t('common.custom', 'Custom')}</option>
                   </select>
                 </div>
-                <div className="rounded-xl border border-c-border/70 dark:border-white/[0.08] bg-c-surface-raised/70 dark:bg-white/[0.03] p-3">
+                <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-3">
                   <div className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted dark:text-c-text-muted">
                     {t('results.kpiReports.create.scope', 'Snapshot scope')}
                   </div>
@@ -929,24 +929,24 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                 </div>
               ) : null}
 
-              <div className="rounded-xl border border-c-border/70 dark:border-white/[0.08] bg-c-surface-raised/70 dark:bg-white/[0.03] p-3">
+              <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-3">
                 <div className="text-xs font-semibold uppercase tracking-wider text-c-text-muted dark:text-c-text-muted">
                   {t('results.kpiReports.create.workflow', 'Closed-loop content')}
                 </div>
                 <div className="mt-2 grid grid-cols-1 gap-2 text-xs text-c-text-secondary dark:text-c-text-secondary md:grid-cols-3">
-                  <div className="rounded-lg border border-c-border/70 dark:border-white/[0.06] px-3 py-2">
+                  <div className="rounded-lg border border-c-border-subtle px-3 py-2">
                     {t(
                       'results.kpiReports.create.workflowSignal',
                       'Signal snapshot and KPI selection'
                     )}
                   </div>
-                  <div className="rounded-lg border border-c-border/70 dark:border-white/[0.06] px-3 py-2">
+                  <div className="rounded-lg border border-c-border-subtle px-3 py-2">
                     {t(
                       'results.kpiReports.create.workflowReconcile',
                       'Discrepancy and reconciliation evidence'
                     )}
                   </div>
-                  <div className="rounded-lg border border-c-border/70 dark:border-white/[0.06] px-3 py-2">
+                  <div className="rounded-lg border border-c-border-subtle px-3 py-2">
                     {t(
                       'results.kpiReports.create.workflowActions',
                       'Next actions ready for execution'
@@ -955,7 +955,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                 </div>
               </div>
 
-              <div className="rounded-xl border border-c-border/70 dark:border-white/[0.08] bg-c-surface-raised/70 dark:bg-white/[0.03] p-3">
+              <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-3">
                 <div className="text-xs font-semibold uppercase tracking-wider text-c-text-muted dark:text-c-text-muted">
                   {t('results.kpiReports.create.initiatives', 'Observed initiatives')}
                 </div>
@@ -971,7 +971,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                         return (
                           <label
                             key={initiative.id}
-                            className="flex items-start gap-2 p-3 cursor-pointer hover:bg-white/60 dark:hover:bg-c-surface-raised/70 transition-colors"
+                            className="flex items-start gap-2 p-3 cursor-pointer hover:bg-c-surface-raised transition-colors"
                           >
                             <input
                               type="checkbox"
@@ -987,7 +987,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                               }}
                             />
                             <div className="min-w-0">
-                              <div className="text-sm font-medium text-c-text dark:text-white truncate">
+                              <div className="text-sm font-medium text-c-text truncate">
                                 {initiative.name}
                               </div>
                               {initiative.status ? (
@@ -1073,7 +1073,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                         return (
                           <label
                             key={k.id}
-                            className="flex items-start gap-2 p-3 cursor-pointer hover:bg-white/60 dark:hover:bg-c-surface-raised/70 transition-colors"
+                            className="flex items-start gap-2 p-3 cursor-pointer hover:bg-c-surface-raised transition-colors"
                           >
                             <input
                               type="checkbox"
@@ -1089,7 +1089,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                               }}
                             />
                             <div className="min-w-0">
-                              <div className="text-sm font-medium text-c-text dark:text-white truncate">
+                              <div className="text-sm font-medium text-c-text truncate">
                                 {k.name}
                               </div>
                               {k.initiativeName ? (
@@ -1129,9 +1129,9 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
             className="absolute inset-0 bg-c-bg/60 backdrop-blur-sm"
             onClick={() => (tasksCreating ? null : setTasksModalOpen(false))}
           />
-          <div className="relative w-full max-w-2xl mx-4 bg-white dark:bg-c-surface border border-c-border dark:border-c-border rounded-2xl shadow-2xl">
+          <div className="relative w-full max-w-2xl mx-4 bg-c-surface border border-c-border rounded-2xl shadow-2xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-c-border dark:border-c-border">
-              <h2 className="text-lg font-semibold text-c-text dark:text-white">
+              <h2 className="text-lg font-semibold text-c-text">
                 {t('results.kpiReports.tasks.title', 'Create tasks from action plan')}
               </h2>
               <button
@@ -1154,7 +1154,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                   {actionItems.map((a) => (
                     <label
                       key={a.key}
-                      className="flex items-start gap-3 p-3 rounded-xl border border-c-border/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] hover:bg-c-surface-raised dark:hover:bg-white/[0.06] cursor-pointer"
+                      className="flex items-start gap-3 p-3 rounded-xl border border-c-border-subtle bg-c-surface hover:bg-c-surface-raised cursor-pointer"
                     >
                       <input
                         type="checkbox"
@@ -1167,7 +1167,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                         className="mt-1 rounded border-c-border-strong bg-c-surface-raised dark:bg-c-surface-raised text-c-focus-solid focus:ring-c-focus"
                       />
                       <div className="min-w-0">
-                        <div className="text-sm font-medium text-c-text dark:text-white truncate">
+                        <div className="text-sm font-medium text-c-text truncate">
                           {a.title}
                         </div>
                         <div className="text-xs text-c-text-muted dark:text-c-text-muted mt-0.5">
@@ -1186,7 +1186,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                   type="button"
                   disabled={tasksCreating}
                   onClick={() => setTasksModalOpen(false)}
-                  className="h-9 px-4 rounded-full text-sm font-medium border border-c-border/70 dark:border-white/[0.08] bg-transparent text-c-text-secondary dark:text-c-text-secondary hover:bg-c-surface-raised/60 dark:hover:bg-white/[0.05] transition-colors disabled:opacity-60"
+                  className="h-9 px-4 rounded-full text-sm font-medium border border-c-border bg-transparent text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-60"
                 >
                   {t('common.cancel', 'Cancel')}
                 </button>

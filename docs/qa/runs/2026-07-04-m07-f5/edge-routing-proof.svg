@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 440" font-family="system-ui, sans-serif">
+  <!-- OFFLINE PROOF: paths below are the VERBATIM output of the real
+       routeOrthogonal() function (not hand-drawn). Generated 2026-07-04.
+       Colors are neutral / --c-info equivalents (no crimson). -->
+  <rect x="0" y="0" width="360" height="440" fill="#ffffff"/>
+
+  <!-- Straight L (source/target aligned) -->
+  <text x="12" y="24" font-size="11" fill="#64748b">A1 · straight (single L, no corner)</text>
+  <path d="M 40,40 L 260,40" fill="none" stroke="#94a3b8" stroke-width="2"/>
+  <circle cx="40" cy="40" r="4" fill="#94a3b8"/>
+  <circle cx="260" cy="40" r="4" fill="#94a3b8"/>
+
+  <!-- Z-route (both axes differ → mid gutter) -->
+  <text x="12" y="104" font-size="11" fill="#64748b">A1 · Z-route (mid gutter, all H/V)</text>
+  <path d="M 40,120 L 150,120 L 150,200 L 260,200" fill="none" stroke="#94a3b8" stroke-width="2"/>
+  <circle cx="40" cy="120" r="4" fill="#94a3b8"/>
+  <circle cx="260" cy="200" r="4" fill="#94a3b8"/>
+
+  <!-- Waypoint route (two user waypoints, preserved as vertices) -->
+  <text x="12" y="284" font-size="11" fill="#64748b">A1 · waypoints (2 break points, orthogonal)</text>
+  <path d="M 40,300 L 85,300 L 85,360 L 130,360 L 210,360 L 255,360 L 255,300 L 300,300"
+        fill="none" stroke="#3b82f6" stroke-width="2"/>
+  <circle cx="40" cy="300" r="4" fill="#3b82f6"/>
+  <circle cx="300" cy="300" r="4" fill="#3b82f6"/>
+  <!-- waypoint handles (as rendered when edge selected) -->
+  <circle cx="130" cy="360" r="4.5" fill="#ffffff" stroke="#3b82f6" stroke-width="1.5"/>
+  <circle cx="210" cy="360" r="4.5" fill="#ffffff" stroke="#3b82f6" stroke-width="1.5"/>
+</svg>

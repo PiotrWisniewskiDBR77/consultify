@@ -1970,6 +1970,19 @@ if (startServer && shouldStartHttpServer) {
       logger.warn('[Server] Idea collab WebSocket not available:', err?.message);
     }
 
+    // P3.3: Presentation deck presence WebSocket /ws/presentations/:deckId.
+    // Fail-open: if this does not attach, the Deck Builder still works fully in
+    // solo mode (the FE useCollaboration hook just reports `disconnected`).
+    try {
+      const { attachPresentationCollabWs } = await import(
+        './gateways/presentationCollabWs.gateway.js'
+      );
+      attachPresentationCollabWs(server);
+      logger.info('[Server] Presentation collab WebSocket /ws/presentations/:deckId initialized');
+    } catch (err: any) {
+      logger.warn('[Server] Presentation collab WebSocket not available:', err?.message);
+    }
+
     // Table Platform real-time collaboration (Socket.IO /table-platform namespace)
     try {
       const { Server: SocketIOServer } = await import('socket.io');

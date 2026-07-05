@@ -246,8 +246,9 @@ describe('Inventory Autopilot engine — bridges', () => {
     expect(prompt).toContain('INVENTORY BASELINE');
     expect(prompt).toContain('W2 MOVE SEQUENCE');
     expect(prompt).toContain('rejected variant');
-    expect(prompt).toContain('"tradeOff"');
-    expect(prompt).toContain('"rejectedVariant"');
+    expect(prompt).toContain('"verdict"');
+    expect(prompt).toContain('"tradeoffs"');
+    expect(prompt).toContain('"initiatives"');
   });
 
   it('buildInventoryDeepenPrompt returns the localized rung question + framing', () => {

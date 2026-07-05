@@ -60,7 +60,7 @@ export const SecurityPanel: React.FC = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-2">Security & Compliance</h2>
+          <h2 className="text-2xl font-bold text-c-text mb-2">Security & Compliance</h2>
           <p className="text-slate-400 dark:text-slate-500 text-sm">
             Monitor security events and compliance status
           </p>
@@ -96,7 +96,7 @@ export const SecurityPanel: React.FC = () => {
             <div className="grid grid-cols-4 gap-4">
               <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
                 <div className="text-sm text-slate-400 dark:text-slate-500">Total Events</div>
-                <div className="text-2xl font-bold text-white">{stats.total || 0}</div>
+                <div className="text-2xl font-bold text-c-text">{stats.total || 0}</div>
               </div>
               <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
                 <div className="text-sm text-slate-400 dark:text-slate-500">Critical</div>
@@ -140,7 +140,7 @@ export const SecurityPanel: React.FC = () => {
                         >
                           {event.severity}
                         </span>
-                        <span className="text-white font-medium">{event.event_type}</span>
+                        <span className="text-c-text font-medium">{event.event_type}</span>
                         {event.resolved ? (
                           <CheckCircle size={16} className="text-green-400" />
                         ) : (
@@ -168,7 +168,7 @@ export const SecurityPanel: React.FC = () => {
       ) : (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">Compliance Records</h3>
+            <h3 className="text-lg font-semibold text-c-text">Compliance Records</h3>
             <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm">
               Add Record
             </button>
@@ -187,7 +187,7 @@ export const SecurityPanel: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="flex items-center gap-3 mb-2">
-                        <span className="text-white font-medium">{record.framework}</span>
+                        <span className="text-c-text font-medium">{record.framework}</span>
                         <span
                           className="px-2 py-1 text-xs rounded ${
                                                     record.status === 'compliant' ? 'bg-green-500/20 text-green-400' :

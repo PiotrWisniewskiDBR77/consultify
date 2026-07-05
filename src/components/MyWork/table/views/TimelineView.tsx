@@ -164,13 +164,13 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
 
   const getBarColor = useCallback(
     (record: TableNode): string => {
-      if (!colorCol) return '#6366f1';
+      if (!colorCol) return 'var(--c-tag-2)';
       const val = String(record.data?.[colorCol.key] || '');
-      if (!val) return '#6366f1';
+      if (!val) return 'var(--c-tag-2)';
       return (
         colorCol.optionColors?.[val] ||
         SELECT_COLORS[(colorCol.options || []).indexOf(val) % SELECT_COLORS.length] ||
-        '#6366f1'
+        'var(--c-tag-2)'
       );
     },
     [colorCol]
@@ -276,10 +276,10 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
 
   if (!startDateCol || !endDateCol) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center text-slate-600 dark:text-slate-500 gap-2 p-8">
+      <div className="flex-1 flex flex-col items-center justify-center text-c-text-muted gap-2 p-8">
         <Calendar size={32} />
         <span className="text-sm font-medium">{isPl ? 'Widok osi czasu' : 'Timeline View'}</span>
-        <span className="text-xs text-slate-600/70">
+        <span className="text-xs text-c-text-secondary">
           {isPl
             ? 'Skonfiguruj pola daty początkowej i końcowej w ustawieniach widoku'
             : 'Configure start and end date fields in view settings'}
@@ -296,22 +296,22 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
       onMouseLeave={dragState ? handleMouseUp : undefined}
     >
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-slate-200/60 dark:border-navy-700/60">
-        <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-c-border">
+        <span className="text-xs font-bold text-c-text-muted">
           {isPl ? 'Oś czasu' : 'Timeline'}
-          <span className="ml-2 text-[10px] font-normal text-slate-600">
+          <span className="ml-2 text-[10px] font-normal text-c-text-secondary">
             {timelineRecords.length} {isPl ? 'rekordów' : 'records'}
           </span>
         </span>
         <div className="flex items-center gap-1">
           <button
             onClick={() => cycleZoom('in')}
-            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-c-surface-raised transition-colors"
             title={isPl ? 'Przybliż' : 'Zoom in'}
           >
-            <ZoomIn size={14} className="text-slate-500" />
+            <ZoomIn size={14} className="text-c-text-muted" />
           </button>
-          <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 min-w-[50px] text-center capitalize">
+          <span className="text-[10px] font-medium text-c-text-muted min-w-[50px] text-center capitalize">
             {zoom === 'day'
               ? isPl
                 ? 'Dzień'
@@ -326,10 +326,10 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
           </span>
           <button
             onClick={() => cycleZoom('out')}
-            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-c-surface-raised transition-colors"
             title={isPl ? 'Oddal' : 'Zoom out'}
           >
-            <ZoomOut size={14} className="text-slate-500" />
+            <ZoomOut size={14} className="text-c-text-muted" />
           </button>
         </div>
       </div>
@@ -338,25 +338,25 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
       <div className="flex-1 flex overflow-hidden">
         {/* Left labels */}
         <div
-          className="flex-shrink-0 border-r border-slate-200/60 dark:border-navy-700/60 overflow-y-auto"
+          className="flex-shrink-0 border-r border-c-border overflow-y-auto"
           style={{ width: LABEL_WIDTH }}
         >
           <div
-            className="sticky top-0 z-10 bg-slate-50 dark:bg-navy-900 border-b border-slate-200/60 dark:border-navy-700/60 px-3 flex items-center"
+            className="sticky top-0 z-10 bg-c-surface border-b border-c-border px-3 flex items-center"
             style={{ height: HEADER_HEIGHT }}
           >
-            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            <span className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider">
               {isPl ? 'Rekord' : 'Record'}
             </span>
           </div>
           {timelineRecords.map((tr) => (
             <div
               key={tr.record.id}
-              className="flex items-center px-3 border-b border-slate-200/60 dark:border-navy-800/40 cursor-pointer hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
+              className="flex items-center px-3 border-b border-c-border cursor-pointer hover:bg-c-surface-raised transition-colors"
               style={{ height: ROW_HEIGHT }}
               onClick={() => onRecordClick?.(tr.record.id)}
             >
-              <span className="text-[11px] font-medium text-slate-700 dark:text-slate-200 truncate">
+              <span className="text-[11px] font-medium text-c-text truncate">
                 {tr.title}
               </span>
             </div>
@@ -367,16 +367,16 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
         <div ref={scrollRef} className="flex-1 overflow-auto relative">
           {/* Header row */}
           <div
-            className="sticky top-0 z-10 flex bg-slate-50 dark:bg-navy-900 border-b border-slate-200/60 dark:border-navy-700/60"
+            className="sticky top-0 z-10 flex bg-c-surface border-b border-c-border"
             style={{ width: totalWidth, height: HEADER_HEIGHT }}
           >
             {slots.map((slot, i) => (
               <div
                 key={i}
-                className={`flex-shrink-0 flex items-center justify-center border-r border-slate-200/60 dark:border-navy-800/40 text-[9px] font-medium ${
+                className={`flex-shrink-0 flex items-center justify-center border-r border-c-border text-[9px] font-medium ${
                   slot.isToday
-                    ? 'text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-500/5'
-                    : 'text-slate-600 dark:text-slate-500'
+                    ? 'text-c-accent bg-c-accent-soft'
+                    : 'text-c-text-muted'
                 }`}
                 style={{ width: colWidth }}
               >
@@ -394,7 +394,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
             {slots.map((_, i) => (
               <div
                 key={i}
-                className="absolute top-0 bottom-0 border-r border-slate-200/40 dark:border-navy-800/30"
+                className="absolute top-0 bottom-0 border-r border-c-border"
                 style={{ left: i * colWidth, width: 0 }}
               />
             ))}
@@ -402,10 +402,10 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
             {/* Today marker */}
             {todayOffset >= 0 && todayOffset <= totalWidth && (
               <div
-                className="absolute top-0 bottom-0 w-0.5 bg-primary-500/60 z-20"
+                className="absolute top-0 bottom-0 w-0.5 bg-c-accent-soft z-20"
                 style={{ left: todayOffset }}
               >
-                <div className="absolute -top-1 -left-1.5 w-3 h-3 rounded-full bg-navy-900 dark:bg-white" />
+                <div className="absolute -top-1 -left-1.5 w-3 h-3 rounded-full bg-c-surface" />
               </div>
             )}
 
@@ -413,7 +413,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
             {timelineRecords.map((_, i) => (
               <div
                 key={i}
-                className={`absolute left-0 right-0 ${i % 2 === 0 ? 'bg-transparent' : 'bg-slate-50/30 dark:bg-navy-900/20'}`}
+                className={`absolute left-0 right-0 ${i % 2 === 0 ? 'bg-transparent' : 'bg-[color-mix(in_srgb,var(--c-surface-raised)_30%25,transparent)] bg-[color-mix(in_srgb,var(--c-surface)_20%25,transparent)]'}`}
                 style={{ top: i * ROW_HEIGHT, height: ROW_HEIGHT }}
               />
             ))}
@@ -442,7 +442,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                     className="absolute left-0 top-0 bottom-0 w-2 cursor-col-resize z-10 opacity-0 group-hover:opacity-100 transition-opacity"
                     onMouseDown={(e) => handleMouseDown(tr.record.id, 'start', e, startStr, endStr)}
                   >
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-4 rounded-full bg-white/80" />
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-4 rounded-full bg-[color-mix(in_srgb,var(--c-surface)_80%25,transparent)]" />
                   </div>
 
                   {/* Bar body */}
@@ -452,7 +452,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                     onClick={() => onRecordClick?.(tr.record.id)}
                     onMouseDown={(e) => handleMouseDown(tr.record.id, 'move', e, startStr, endStr)}
                   >
-                    <span className="text-[9px] font-bold text-white truncate drop-shadow-sm">
+                    <span className="text-[9px] font-bold text-c-text truncate drop-shadow-sm">
                       {tr.title}
                     </span>
                   </div>
@@ -462,7 +462,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                     className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize z-10 opacity-0 group-hover:opacity-100 transition-opacity"
                     onMouseDown={(e) => handleMouseDown(tr.record.id, 'end', e, startStr, endStr)}
                   >
-                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-4 rounded-full bg-white/80" />
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-4 rounded-full bg-[color-mix(in_srgb,var(--c-surface)_80%25,transparent)]" />
                   </div>
                 </div>
               );

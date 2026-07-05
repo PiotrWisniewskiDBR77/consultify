@@ -56,7 +56,7 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
       Highlight.configure({ multicolor: false }),
       Link.configure({
         openOnClick: false,
-        HTMLAttributes: { class: 'text-primary-500 underline' },
+        HTMLAttributes: { class: 'text-c-accent underline' },
       }),
       Placeholder.configure({ placeholder }),
     ],
@@ -114,7 +114,7 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
       {/* Custom floating toolbar */}
       {showToolbar && (
         <div
-          className="absolute flex items-center gap-0.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg shadow-xl px-1 py-0.5 z-30"
+          className="absolute flex items-center gap-0.5 bg-c-surface border border-c-border-subtle rounded-lg shadow-xl px-1 py-0.5 z-30"
           style={{ top: toolbarPos.top, left: toolbarPos.left, transform: 'translateX(-50%)' }}
           onMouseDown={(e) => e.preventDefault()}
         >
@@ -146,7 +146,7 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
           >
             <Highlighter size={14} />
           </ToolbarBtn>
-          <div className="w-px h-4 bg-slate-200 dark:bg-navy-700 mx-0.5" />
+          <div className="w-px h-4 bg-c-border-subtle mx-0.5" />
           <ToolbarBtn
             active={editor.isActive('bulletList')}
             onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -161,7 +161,7 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
           >
             <ListOrdered size={14} />
           </ToolbarBtn>
-          <div className="w-px h-4 bg-slate-200 dark:bg-navy-700 mx-0.5" />
+          <div className="w-px h-4 bg-c-border-subtle mx-0.5" />
           <ToolbarBtn
             active={editor.isActive({ textAlign: 'left' })}
             onClick={() => editor.chain().focus().setTextAlign('left').run()}
@@ -183,7 +183,7 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
           >
             <AlignRight size={14} />
           </ToolbarBtn>
-          <div className="w-px h-4 bg-slate-200 dark:bg-navy-700 mx-0.5" />
+          <div className="w-px h-4 bg-c-border-subtle mx-0.5" />
           <ToolbarBtn
             active={editor.isActive('link')}
             onClick={() => {
@@ -215,8 +215,8 @@ const ToolbarBtn: React.FC<{
     title={title}
     className={`p-1.5 rounded transition-colors ${
       active
-        ? 'bg-primary-500/20 text-primary-600'
-        : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-700 hover:text-slate-700'
+        ? 'bg-c-accent-soft0 text-c-accent'
+        : 'text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text'
     }`}
   >
     {children}

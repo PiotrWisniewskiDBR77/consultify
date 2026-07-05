@@ -117,18 +117,18 @@ export const ConvertChecklistModal: React.FC<ConvertChecklistModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden border border-slate-200/60 dark:border-white/[0.06]">
+      <div className="bg-c-surface rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden border border-c-border-subtle">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200/60 dark:border-white/[0.06]">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-c-border-subtle">
           <div className="flex items-center gap-2">
-            <CheckSquare size={16} className="text-emerald-500" />
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+            <CheckSquare size={16} className="text-c-success" />
+            <h3 className="text-sm font-semibold text-c-text">
               {isPl ? 'Konwertuj checklistę na taski' : 'Convert checklist to tasks'}
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-md text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            className="p-1 rounded-md text-c-text-secondary hover:text-c-text-secondary transition-colors"
             aria-label={isPl ? 'Zamknij' : 'Close'}
           >
             <X size={16} />
@@ -138,7 +138,7 @@ export const ConvertChecklistModal: React.FC<ConvertChecklistModalProps> = ({
         {/* Body */}
         <div className="px-5 py-4 max-h-80 overflow-y-auto">
           {taskItems.length === 0 ? (
-            <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-6">
+            <p className="text-sm text-c-text-muted text-center py-6">
               {isPl
                 ? 'Nie znaleziono elementów checklisty w notatce.'
                 : 'No checklist items found in note.'}
@@ -146,12 +146,12 @@ export const ConvertChecklistModal: React.FC<ConvertChecklistModalProps> = ({
           ) : (
             <>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs text-slate-500 dark:text-slate-400">
+                <span className="text-xs text-c-text-muted">
                   {selected.size} / {taskItems.length} {isPl ? 'zaznaczonych' : 'selected'}
                 </span>
                 <button
                   onClick={toggleAll}
-                  className="text-xs text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 font-medium"
+                  className="text-xs text-c-accent hover:brightness-110 font-medium"
                 >
                   {selected.size === taskItems.length
                     ? isPl
@@ -166,16 +166,16 @@ export const ConvertChecklistModal: React.FC<ConvertChecklistModalProps> = ({
                 {taskItems.map((item, idx) => (
                   <label
                     key={idx}
-                    className="flex items-start gap-2.5 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/[0.03] cursor-pointer transition-colors"
+                    className="flex items-start gap-2.5 p-2 rounded-lg hover:bg-c-surface-raised cursor-pointer transition-colors"
                   >
                     <input
                       type="checkbox"
                       checked={selected.has(idx)}
                       onChange={() => toggleItem(idx)}
-                      className="mt-0.5 rounded border-slate-300 dark:border-slate-600 text-indigo-500 focus:ring-[var(--c-focus)]"
+                      className="mt-0.5 rounded border-c-border text-c-accent focus:ring-[var(--c-focus)]"
                     />
                     <span
-                      className={`text-sm ${item.checked ? 'line-through text-slate-600 dark:text-slate-500' : 'text-slate-700 dark:text-slate-300'}`}
+                      className={`text-sm ${item.checked ? 'line-through text-c-text-muted' : 'text-c-text-secondary'}`}
                     >
                       {item.text}
                     </span>
@@ -187,17 +187,17 @@ export const ConvertChecklistModal: React.FC<ConvertChecklistModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-slate-200/60 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.02]">
+        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-c-border-subtle bg-c-surface-raised">
           <button
             onClick={onClose}
-            className="px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+            className="px-3 py-1.5 text-xs font-medium text-c-text-secondary hover:text-c-text transition-colors"
           >
             {isPl ? 'Anuluj' : 'Cancel'}
           </button>
           <button
             onClick={handleCreate}
             disabled={creating || selected.size === 0}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-c-success text-white text-xs font-semibold hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             {creating && <Loader2 size={12} className="animate-spin" />}
             {isPl

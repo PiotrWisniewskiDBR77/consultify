@@ -50,10 +50,10 @@ export const LargeMapOptimizer: React.FC<LargeMapOptimizerProps> = ({
     <div
       className={`fixed bottom-4 right-4 z-50 flex items-center gap-2 px-3 py-2 rounded-xl shadow-lg border text-xs font-medium ${
         level === 'critical'
-          ? 'bg-danger-50 dark:bg-danger-900/30 border-danger-200 dark:border-danger-800 text-danger-700 dark:text-danger-300'
+          ? 'bg-c-surface-raised dark:bg-c-surface border-c-danger dark:border-c-danger text-c-danger dark:text-c-danger'
           : level === 'warning'
-            ? 'bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300'
-            : 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'
+            ? 'bg-c-surface-raised dark:bg-c-surface border-c-warning dark:border-c-warning text-c-warning dark:text-c-warning'
+            : 'bg-c-surface-raised dark:bg-c-surface border-c-info dark:border-c-info text-c-info dark:text-c-info'
       }`}
     >
       {level === 'critical' ? <AlertTriangle size={14} /> : <Zap size={14} />}
@@ -70,7 +70,7 @@ export const LargeMapOptimizer: React.FC<LargeMapOptimizerProps> = ({
       {!simplified && (
         <button
           onClick={toggleSimplified}
-          className="px-2 py-0.5 rounded-lg bg-white/50 dark:bg-black/20 hover:bg-white/80 dark:hover:bg-black/40 transition-colors"
+          className="px-2 py-0.5 rounded-lg bg-c-surface-raised dark:bg-c-bg hover:bg-c-surface-raised dark:hover:bg-c-bg transition-colors"
         >
           {isPl ? 'Włącz' : 'Enable'}
         </button>
@@ -78,7 +78,7 @@ export const LargeMapOptimizer: React.FC<LargeMapOptimizerProps> = ({
       {simplified && (
         <button
           onClick={toggleSimplified}
-          className="px-2 py-0.5 rounded-lg bg-white/50 dark:bg-black/20 hover:bg-white/80 dark:hover:bg-black/40 transition-colors"
+          className="px-2 py-0.5 rounded-lg bg-c-surface-raised dark:bg-c-bg hover:bg-c-surface-raised dark:hover:bg-c-bg transition-colors"
         >
           {isPl ? 'Wyłącz' : 'Disable'}
         </button>

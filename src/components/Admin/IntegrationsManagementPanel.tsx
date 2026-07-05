@@ -505,7 +505,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
               <button
                 disabled
                 title={APP_CONNECT_UNAVAILABLE}
-                className="px-3 py-1.5 text-sm bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors"
+                className="px-3 py-1.5 text-sm bg-c-text text-c-bg hover:bg-c-text-secondary rounded-lg transition-colors"
               >
                 {t('admin.integrations.connect', 'Connect')}
               </button>
@@ -650,7 +650,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
         <div className="flex items-center gap-3 pt-4 border-t border-slate-200 dark:border-navy-700">
           <button
             onClick={saveWebhook}
-            className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg flex items-center gap-2 transition-colors"
+            className="px-4 py-2 bg-c-text text-c-bg hover:bg-c-text-secondary rounded-lg flex items-center gap-2 transition-colors"
           >
             <Check size={16} />
             {t('common.save', 'Save')}
@@ -695,7 +695,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
               onClick={startCreating}
               disabled
               title={WEBHOOK_MUTATION_UNAVAILABLE}
-              className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg flex items-center gap-2 transition-colors"
+              className="px-4 py-2 bg-c-text text-c-bg hover:bg-c-text-secondary rounded-lg flex items-center gap-2 transition-colors"
             >
               <Plus size={18} />
               {t('admin.integrations.addWebhook', 'Add Webhook')}

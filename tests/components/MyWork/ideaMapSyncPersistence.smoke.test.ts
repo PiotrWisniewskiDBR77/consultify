@@ -92,7 +92,9 @@ describe.each(TOOLS)('useIdeaMapSync persistence [%s]', (tool) => {
     );
 
     await act(async () => {
-      await result.current.flushNow({ nodes: [], edges: [] }, { reason: 'manual' }).catch(() => {});
+      await result.current
+        .flushNow({ nodes: [{ id: 'root' }], edges: [] }, { reason: 'manual' })
+        .catch(() => {});
     });
 
     expect(result.current.syncState).toBe('conflict');
@@ -106,7 +108,9 @@ describe.each(TOOLS)('useIdeaMapSync persistence [%s]', (tool) => {
     const { result } = renderHook(() => useIdeaMapSync({ ideaId: 'idea-1', tool, open: true }));
 
     await act(async () => {
-      await result.current.flushNow({ nodes: [], edges: [] }, { reason: 'manual' }).catch(() => {});
+      await result.current
+        .flushNow({ nodes: [{ id: 'root' }], edges: [] }, { reason: 'manual' })
+        .catch(() => {});
     });
 
     expect(result.current.syncState).toBe('offline');
@@ -130,7 +134,7 @@ describe('L-03 — cross-tool version sharing (same ideaId)', () => {
     );
     await act(async () => {
       hookA.current.primeServerVersion(4);
-      await hookA.current.flushNow({ nodes: [], edges: [] }, { reason: 'manual' });
+      await hookA.current.flushNow({ nodes: [{ id: 'root' }], edges: [] }, { reason: 'manual' });
     });
     expect(hookA.current.currentVersionRef.current).toBe(5);
     unmountA();
@@ -144,7 +148,8 @@ describe('L-03 — cross-tool version sharing (same ideaId)', () => {
     // When it saves, baseVersion sent to server is 5 (not 1)
     syncMyIdeaMap.mockResolvedValue({ version: 6 });
     await act(async () => {
-      await hookB.current.flushNow({ nodes: [], edges: [] }, { reason: 'manual' });
+      hookB.current.primeServerVersion(5);
+      await hookB.current.flushNow({ nodes: [{ id: 'root' }], edges: [] }, { reason: 'manual' });
     });
     const [, body] = syncMyIdeaMap.mock.calls[syncMyIdeaMap.mock.calls.length - 1];
     expect(body.baseVersion).toBe(5); // not 1 — no spurious 409

@@ -6,6 +6,8 @@ import { createElement, useCallback, useMemo, useRef } from 'react';
 import toast from 'react-hot-toast';
 import type { Edge, Node } from 'reactflow';
 
+import i18n from '@/i18n';
+
 import { MAX_MINDMAP_NODES, resolveDeleteAnchor, wouldCreateCycle } from './mindmapCanonHelpers';
 
 // ── Clipboard ────────────────────────────────────────────────────────────────
@@ -92,6 +94,13 @@ export interface UseMindMapNodesOpts {
   autoLayout?: (nodes: Node[], edges: Edge[]) => Node[];
   partialLayoutSubtree?: (nodes: Node[], edges: Edge[], subtreeRootId: string) => Node[];
   confirmSubtreeDelete?: (childCount: number) => Promise<boolean>;
+  /**
+   * DP-3 (T7 Part A): emit graph CRUD ops to collaborators. Optional so
+   * this hook keeps working with the flag off / callers that don't wire
+   * collaboration (broadcast is itself a no-op while a remote patch is
+   * being applied — see useIdeaCollab's applyingRemoteRef guard).
+   */
+  broadcastGraphPatch?: (operations: Array<{ op: string; data: any }>) => void;
 }
 
 export function useMindMapNodes(opts: UseMindMapNodesOpts) {
@@ -108,7 +117,12 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     autoLayout,
     partialLayoutSubtree,
     confirmSubtreeDelete,
+    broadcastGraphPatch,
   } = opts;
+  const broadcast = useCallback(
+    (operations: Array<{ op: string; data: any }>) => broadcastGraphPatch?.(operations),
+    [broadcastGraphPatch]
+  );
 
   const editingNodeIdRef = useRef<string | null>(null);
   // The id of the most recently created/anchored node. A freshly created node is
@@ -198,9 +212,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       if (locked) return;
       if (nodes.length >= MAX_MINDMAP_NODES) {
         toast.error(
-          isPolish
-            ? `Mapa osiągnęła limit ${MAX_MINDMAP_NODES} węzłów`
-            : `Map reached ${MAX_MINDMAP_NODES} node limit`,
+          i18n.t('mindmap.nodes.mapLimitReached', { limit: MAX_MINDMAP_NODES }),
           { id: 'mm-limit' }
         );
         return;
@@ -212,7 +224,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         nodes.find((node) => node.id === 'branch-options') ||
         nodes.find((node) => node.id.startsWith('branch-'));
       if (!selected) {
-        toast(isPolish ? 'Zaznacz węzeł' : 'Select a node');
+        toast(i18n.t('mindmap.nodes.selectNode'));
         return;
       }
       pushUndo();
@@ -220,11 +232,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       const branchKey = selected.data?.branchKey || 'uncategorized';
       const isFirstChildFromStarterBranch =
         selected.id.startsWith('branch-') && findChildrenIds(selected.id).length === 0;
-      const initialLabel = isFirstChildFromStarterBranch
-        ? isPolish
-          ? 'Nowy pomysł'
-          : 'New idea'
-        : '';
+      const initialLabel = isFirstChildFromStarterBranch ? i18n.t('mindmap.nodes.newIdea') : '';
       const newId = `node-${uid()}`;
       const newNode: Node = {
         id: newId,
@@ -290,8 +298,12 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       setNodes(layoutedNodes.map((n) => (n.id === newId ? { ...n, selected: true } : n)));
       setEdges(updatedEdges);
       ensureCreatedNodePersists({ ...newNode, selected: true }, newEdge);
+      broadcast([
+        { op: 'add_node', data: { ...newNode, selected: true } },
+        { op: 'add_edge', data: newEdge },
+      ]);
 
-      toast.success(isPolish ? 'Dodano gałąź' : 'Child added', { id: 'mm-op-cue', duration: 1500 });
+      toast.success(i18n.t('mindmap.nodes.childAdded'), { id: 'mm-op-cue', duration: 1500 });
 
       setTimeout(() => {
         try {
@@ -302,6 +314,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       }, 150);
     },
     [
+      broadcast,
       edges,
       ensureCreatedNodePersists,
       fitView,
@@ -322,9 +335,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       if (locked) return;
       if (nodes.length >= MAX_MINDMAP_NODES) {
         toast.error(
-          isPolish
-            ? `Mapa osiągnęła limit ${MAX_MINDMAP_NODES} węzłów`
-            : `Map reached ${MAX_MINDMAP_NODES} node limit`,
+          i18n.t('mindmap.nodes.mapLimitReached', { limit: MAX_MINDMAP_NODES }),
           { id: 'mm-limit' }
         );
         return;
@@ -332,12 +343,12 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       const selected =
         getNodeById(anchorNodeId) || getSelectedNode() || getNodeById(lastActiveNodeIdRef.current);
       if (!selected) {
-        toast(isPolish ? 'Zaznacz węzeł' : 'Select a node');
+        toast(i18n.t('mindmap.nodes.selectNode'));
         return;
       }
       const parentId = findParentId(selected.id);
       if (!parentId) {
-        toast(isPolish ? 'Nie można dodać rodzeństwa do korzenia' : 'Cannot add sibling to root');
+        toast(i18n.t('mindmap.nodes.cannotAddSiblingToRoot'));
         return;
       }
       pushUndo();
@@ -402,8 +413,12 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       setNodes(layoutedNodes.map((n) => (n.id === newId ? { ...n, selected: true } : n)));
       setEdges(updatedEdges);
       ensureCreatedNodePersists({ ...newNode, selected: true }, newEdge);
+      broadcast([
+        { op: 'add_node', data: { ...newNode, selected: true } },
+        { op: 'add_edge', data: newEdge },
+      ]);
 
-      toast.success(isPolish ? 'Dodano sąsiada' : 'Sibling added', {
+      toast.success(i18n.t('mindmap.nodes.siblingAdded'), {
         id: 'mm-op-cue',
         duration: 1500,
       });
@@ -417,6 +432,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       }, 150);
     },
     [
+      broadcast,
       edges,
       ensureCreatedNodePersists,
       findChildrenIds,
@@ -456,9 +472,11 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
           // Fallback: inline toast confirm when dialog is unavailable
           toast(
             (t) => {
-              const msg = isPolish
-                ? `Usunięcie obejmie ${subtreeExtra} podwęzłów. Kontynuować?`
-                : `This will also delete ${subtreeExtra} child node${subtreeExtra === 1 ? '' : 's'}. Continue?`;
+              const msg = i18n.t('mindmap.nodes.subtreeDeleteConfirm', {
+                count: subtreeExtra,
+                defaultValue_one: 'This will also delete {{count}} child node. Continue?',
+                defaultValue_other: 'This will also delete {{count}} child nodes. Continue?',
+              } as any);
               return createElement(
                 'span',
                 { className: 'flex items-center gap-2 text-sm' },
@@ -467,22 +485,22 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
                   'button',
                   {
                     className:
-                      'ml-2 px-2 py-0.5 rounded bg-danger-600 text-white text-xs font-medium hover:bg-danger-700',
+                      'ml-2 px-2 py-0.5 rounded bg-c-danger text-c-text text-xs font-medium hover:bg-c-danger',
                     onClick: () => {
                       toast.dismiss(t.id);
                       deleteSelected({ confirmed: true });
                     },
                   },
-                  isPolish ? 'Usuń' : 'Delete'
+                  i18n.t('mindmap.nodes.actionDelete')
                 ),
                 createElement(
                   'button',
                   {
                     className:
-                      'px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-xs font-medium hover:bg-slate-300',
+                      'px-2 py-0.5 rounded bg-c-surface-raised dark:bg-c-surface text-xs font-medium hover:bg-c-surface-raised',
                     onClick: () => toast.dismiss(t.id),
                   },
-                  isPolish ? 'Anuluj' : 'Cancel'
+                  i18n.t('mindmap.nodes.actionCancel')
                 )
               ) as any;
             },
@@ -507,6 +525,10 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
 
       pushUndo();
 
+      const removedEdgeIds = edges
+        .filter((e: Edge) => e.selected || removedIds.has(e.source) || removedIds.has(e.target))
+        .map((e) => e.id);
+
       setNodes((prev: Node[]) =>
         prev
           .filter((n: Node) => !removedIds.has(n.id))
@@ -517,12 +539,18 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
           (e: Edge) => !e.selected && !removedIds.has(e.source) && !removedIds.has(e.target)
         )
       );
+      broadcast([
+        ...Array.from(removedIds).map((id) => ({ op: 'remove_node', data: { id } })),
+        ...removedEdgeIds.map((id) => ({ op: 'remove_edge', data: { id } })),
+      ]);
 
       const deletedCount = removedIds.size;
       toast.success(
-        isPolish
-          ? `Usunięto ${deletedCount} ${deletedCount === 1 ? 'węzeł' : 'węzłów'}`
-          : `Deleted ${deletedCount} node${deletedCount === 1 ? '' : 's'}`,
+        i18n.t('mindmap.nodes.deletedCount', {
+          count: deletedCount,
+          defaultValue_one: 'Deleted {{count}} node',
+          defaultValue_other: 'Deleted {{count}} nodes',
+        } as any),
         { id: 'mm-op-cue', duration: 2000 }
       );
 
@@ -536,7 +564,18 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         }, 60);
       }
     },
-    [edges, fitView, getSubtreeNodeIds, isPolish, locked, nodes, pushUndo, setEdges, setNodes]
+    [
+      broadcast,
+      edges,
+      fitView,
+      getSubtreeNodeIds,
+      isPolish,
+      locked,
+      nodes,
+      pushUndo,
+      setEdges,
+      setNodes,
+    ]
   );
 
   const duplicateSelected = useCallback(() => {
@@ -570,7 +609,11 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
 
     setNodes((prev: Node[]) => [...prev, newNode]);
     setEdges((prev: Edge[]) => [...prev, newEdge]);
-  }, [findParentId, getSelectedNode, locked, pushUndo, setEdges, setNodes]);
+    broadcast([
+      { op: 'add_node', data: newNode },
+      { op: 'add_edge', data: newEdge },
+    ]);
+  }, [broadcast, findParentId, getSelectedNode, locked, pushUndo, setEdges, setNodes]);
 
   const focusSelectedNode = useCallback(() => {
     const selected = getSelectedNode();
@@ -610,12 +653,10 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         if (isStructuralEdge(e)) parentMap.set(e.target, e.source);
       }
       if (wouldCreateCycle(nodeId, newParentId, parentMap)) {
-        toast.error(
-          isPolish
-            ? 'Nie można przenieść pod własnego potomka'
-            : 'Cannot move under own descendant',
-          { id: 'mm-op-cue', duration: 2500 }
-        );
+        toast.error(i18n.t('mindmap.nodes.cannotMoveUnderOwnDescendant'), {
+          id: 'mm-op-cue',
+          duration: 2500,
+        });
         return false;
       }
 
@@ -623,24 +664,29 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       if (!newParent) return false;
 
       pushUndo();
+      const oldEdgeId = edges.find((e) => e.target === nodeId && isStructuralEdge(e))?.id;
+      const branchKey =
+        nodes.find((n) => n.id === nodeId)?.data?.branchKey ||
+        newParent.data?.branchKey ||
+        'uncategorized';
+      const colors = branchColor(branchKey);
+      const newEdge: Edge = {
+        id: `edge-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+        source: newParentId,
+        target: nodeId,
+        type: 'gradient',
+        style: { stroke: colors.edge, strokeWidth: 1.5, opacity: 0.5 },
+        animated: true,
+        data: { userCreated: true, edgeRole: 'structural' },
+      } as any;
       setEdges((prev: Edge[]) => {
         const without = prev.filter((e) => !(e.target === nodeId && isStructuralEdge(e)));
-        const branchKey =
-          nodes.find((n) => n.id === nodeId)?.data?.branchKey ||
-          newParent.data?.branchKey ||
-          'uncategorized';
-        const colors = branchColor(branchKey);
-        const newEdge: Edge = {
-          id: `edge-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
-          source: newParentId,
-          target: nodeId,
-          type: 'gradient',
-          style: { stroke: colors.edge, strokeWidth: 1.5, opacity: 0.5 },
-          animated: true,
-          data: { userCreated: true, edgeRole: 'structural' },
-        } as any;
         return [...without, newEdge];
       });
+      broadcast([
+        ...(oldEdgeId ? [{ op: 'remove_edge', data: { id: oldEdgeId } }] : []),
+        { op: 'add_edge', data: newEdge },
+      ]);
 
       setNodes((prev) =>
         prev.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, _justMoved: true } } : n))
@@ -656,7 +702,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       }, 2500);
 
       const parentLabel = newParent.data?.label || newParentId;
-      toast.success(isPolish ? `Przeniesiono pod ${parentLabel}` : `Moved under ${parentLabel}`, {
+      toast.success(i18n.t('mindmap.nodes.movedUnder', { parentLabel }), {
         id: 'mm-op-cue',
         duration: 2000,
       });
@@ -665,6 +711,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       return true;
     },
     [
+      broadcast,
       edges,
       findParentId,
       focusSelectedNode,
@@ -684,12 +731,12 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       if (!isReparentable(nodeId)) return false;
       const parentId = findParentId(nodeId);
       if (!parentId) {
-        toast(isPolish ? 'Już na najwyższym poziomie' : 'Already at top level');
+        toast(i18n.t('mindmap.nodes.alreadyAtTopLevel'));
         return false;
       }
       const grandParentId = findParentId(parentId);
       if (!grandParentId) {
-        toast(isPolish ? 'Już na najwyższym poziomie' : 'Already at top level');
+        toast(i18n.t('mindmap.nodes.alreadyAtTopLevel'));
         return false;
       }
       return reparentNode(nodeId, grandParentId);
@@ -707,7 +754,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       const idx = siblings.indexOf(nodeId);
       const previousSibling = idx > 0 ? siblings[idx - 1] : null;
       if (!previousSibling) {
-        toast(isPolish ? 'Brak sąsiada do zagnieżdżenia' : 'No sibling to demote under');
+        toast(i18n.t('mindmap.nodes.noSiblingToDemoteUnder'));
         return false;
       }
       return reparentNode(nodeId, previousSibling);
@@ -723,27 +770,31 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       if (!parentId) return;
 
       pushUndo();
-      setEdges((prev: Edge[]) => {
-        const siblingEdges = prev.filter((e) => e.source === parentId && isStructuralEdge(e));
-        const siblingTargets = siblingEdges.map((e) => e.target);
-        const idx = siblingTargets.indexOf(nodeId);
-        if (idx < 0) return prev;
+      const siblingEdges = edges.filter((e) => e.source === parentId && isStructuralEdge(e));
+      const siblingTargets = siblingEdges.map((e) => e.target);
+      const idx = siblingTargets.indexOf(nodeId);
+      if (idx < 0) return;
 
-        const swapIdx = direction === 'left' ? idx - 1 : idx + 1;
-        if (swapIdx < 0 || swapIdx >= siblingTargets.length) return prev;
+      const swapIdx = direction === 'left' ? idx - 1 : idx + 1;
+      if (swapIdx < 0 || swapIdx >= siblingTargets.length) return;
 
-        const edgeA = siblingEdges[idx];
-        const edgeB = siblingEdges[swapIdx];
-        if (!edgeA || !edgeB) return prev;
+      const edgeA = siblingEdges[idx];
+      const edgeB = siblingEdges[swapIdx];
+      if (!edgeA || !edgeB) return;
 
-        return prev.map((e) => {
+      setEdges((prev: Edge[]) =>
+        prev.map((e) => {
           if (e.id === edgeA.id) return { ...e, target: edgeB.target };
           if (e.id === edgeB.id) return { ...e, target: edgeA.target };
           return e;
-        });
-      });
+        })
+      );
+      broadcast([
+        { op: 'update_edge', data: { id: edgeA.id, target: edgeB.target } },
+        { op: 'update_edge', data: { id: edgeB.id, target: edgeA.target } },
+      ]);
     },
-    [findParentId, isReparentable, locked, pushUndo, setEdges]
+    [broadcast, edges, findParentId, isReparentable, locked, pushUndo, setEdges]
   );
 
   const clearDropTargets = useCallback(() => {
@@ -834,7 +885,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     if (locked) return;
     const rootNode = nodes.find((node) => node.id === 'root');
     if (!rootNode) {
-      toast.error(isPolish ? 'Brak korzenia mapy' : 'Map root is missing');
+      toast.error(i18n.t('mindmap.nodes.mapRootMissing'));
       return;
     }
     pushUndo();
@@ -878,6 +929,10 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       { ...newNode, selected: true },
     ]);
     setEdges((prev: Edge[]) => [...prev, newEdge]);
+    broadcast([
+      { op: 'add_node', data: { ...newNode, selected: true } },
+      { op: 'add_edge', data: newEdge },
+    ]);
     setTimeout(() => {
       try {
         fitView({ padding: 0.3, duration: 300 });
@@ -885,7 +940,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         /* ignore */
       }
     }, 60);
-  }, [fitView, isPolish, locked, nodes, pushUndo, setEdges, setNodes]);
+  }, [broadcast, fitView, isPolish, locked, nodes, pushUndo, setEdges, setNodes]);
 
   // ── Copy / Cut / Paste ────────────────────────────────────────────────────
 
@@ -894,7 +949,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       (n) => n.selected && n.id !== 'root' && !n.id.startsWith('branch-')
     );
     if (selected.length === 0) {
-      toast(isPolish ? 'Zaznacz węzły do skopiowania' : 'Select nodes to copy');
+      toast(i18n.t('mindmap.nodes.selectNodesToCopy'));
       return;
     }
 
@@ -930,9 +985,11 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     }
 
     toast.success(
-      isPolish
-        ? `Skopiowano ${selected.length} ${selected.length === 1 ? 'węzeł' : 'węzłów'}`
-        : `Copied ${selected.length} node${selected.length === 1 ? '' : 's'}`,
+      i18n.t('mindmap.nodes.copiedCount', {
+        count: selected.length,
+        defaultValue_one: 'Copied {{count}} node',
+        defaultValue_other: 'Copied {{count}} nodes',
+      } as any),
       { duration: 1200 }
     );
   }, [edges, isPolish, nodes]);
@@ -942,7 +999,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       (n) => n.selected && n.id !== 'root' && !n.id.startsWith('branch-')
     );
     if (selected.length === 0) {
-      toast(isPolish ? 'Zaznacz węzły do wycięcia' : 'Select nodes to cut');
+      toast(i18n.t('mindmap.nodes.selectNodesToCut'));
       return;
     }
     if (locked) return;
@@ -954,18 +1011,38 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     for (const n of selected) {
       for (const tid of getSubtreeNodeIds(n.id)) removedIds.add(tid);
     }
+    const removedEdgeIds = edges
+      .filter((e) => removedIds.has(e.source) || removedIds.has(e.target))
+      .map((e) => e.id);
     setNodes((prev: Node[]) => prev.filter((n) => !removedIds.has(n.id)));
     setEdges((prev: Edge[]) =>
       prev.filter((e) => !removedIds.has(e.source) && !removedIds.has(e.target))
     );
+    broadcast([
+      ...Array.from(removedIds).map((id) => ({ op: 'remove_node', data: { id } })),
+      ...removedEdgeIds.map((id) => ({ op: 'remove_edge', data: { id } })),
+    ]);
 
     toast.success(
-      isPolish
-        ? `Wycięto ${removedIds.size} ${removedIds.size === 1 ? 'węzeł' : 'węzłów'}`
-        : `Cut ${removedIds.size} node${removedIds.size === 1 ? '' : 's'}`,
+      i18n.t('mindmap.nodes.cutCount', {
+        count: removedIds.size,
+        defaultValue_one: 'Cut {{count}} node',
+        defaultValue_other: 'Cut {{count}} nodes',
+      } as any),
       { duration: 1200 }
     );
-  }, [copySelected, getSubtreeNodeIds, isPolish, locked, nodes, pushUndo, setEdges, setNodes]);
+  }, [
+    broadcast,
+    copySelected,
+    edges,
+    getSubtreeNodeIds,
+    isPolish,
+    locked,
+    nodes,
+    pushUndo,
+    setEdges,
+    setNodes,
+  ]);
 
   const pasteNodes = useCallback(
     (targetPosition?: { x: number; y: number }) => {
@@ -986,7 +1063,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       }
 
       if (!clip || clip.nodes.length === 0) {
-        toast(isPolish ? 'Schowek jest pusty' : 'Clipboard is empty');
+        toast(i18n.t('mindmap.nodes.clipboardEmpty'));
         return;
       }
 
@@ -1058,11 +1135,17 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
 
       setNodes((prev: Node[]) => [...prev.map((n) => ({ ...n, selected: false })), ...newNodes]);
       setEdges((prev: Edge[]) => [...prev, ...newEdges]);
+      broadcast([
+        ...newNodes.map((n) => ({ op: 'add_node', data: n })),
+        ...newEdges.map((e) => ({ op: 'add_edge', data: e })),
+      ]);
 
       toast.success(
-        isPolish
-          ? `Wklejono ${newNodes.length} ${newNodes.length === 1 ? 'węzeł' : 'węzłów'}`
-          : `Pasted ${newNodes.length} node${newNodes.length === 1 ? '' : 's'}`,
+        i18n.t('mindmap.nodes.pastedCount', {
+          count: newNodes.length,
+          defaultValue_one: 'Pasted {{count}} node',
+          defaultValue_other: 'Pasted {{count}} nodes',
+        } as any),
         { duration: 1200 }
       );
 
@@ -1074,7 +1157,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         }
       }, 60);
     },
-    [fitView, isPolish, locked, nodes, pushUndo, setEdges, setNodes]
+    [broadcast, fitView, isPolish, locked, nodes, pushUndo, setEdges, setNodes]
   );
 
   return {

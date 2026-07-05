@@ -263,13 +263,13 @@ export const VoiceSettings: React.FC<{ className?: string }> = ({ className = ''
                       step="0.1"
                       value={preferences.speed}
                       onChange={(e) => update('speed', parseFloat(e.target.value))}
-                      className="flex-1 accent-primary-500"
+                      className="flex-1 accent-c-accent"
                     />
                     <span className="text-sm font-mono text-white w-10 text-right">
                       {preferences.speed.toFixed(1)}x
                     </span>
                   </div>
-                  <div className="flex justify-between text-[10px] text-slate-500">
+                  <div className="flex justify-between text-[10px] text-c-text-muted">
                     <span>0.5x</span>
                     <span>1.0x</span>
                     <span>2.0x</span>
@@ -282,8 +282,8 @@ export const VoiceSettings: React.FC<{ className?: string }> = ({ className = ''
                 <button
                   onClick={testing ? stopTest : testVoice}
                   className="flex items-center gap-2 px-4 py-2
-                    border border-white/10 text-slate-600 rounded-lg
-                    hover:bg-white/5 hover:text-white transition-all duration-200"
+                    border border-white/10 text-c-text-secondary rounded-lg
+                    hover:bg-c-surface-raised hover:text-white transition-all duration-200"
                 >
                   {testing ? <Square size={16} /> : <Play size={16} />}
                   {testing

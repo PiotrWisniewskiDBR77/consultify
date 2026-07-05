@@ -220,7 +220,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
           </div>
           <button
             onClick={onAddKPI}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-c-text hover:bg-c-text-secondary text-c-bg rounded-lg text-sm font-medium transition-colors"
           >
             <Plus size={16} />
             Add KPI
@@ -257,7 +257,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
           />
           <button
             onClick={onAddKPI}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-c-text hover:bg-c-text-secondary text-c-bg rounded-lg text-sm font-medium transition-colors"
           >
             <Plus size={16} />
             Add KPI

@@ -110,15 +110,15 @@ const TYPE_ICONS: Record<string, React.ComponentType<any>> = {
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  node_added: 'text-emerald-500',
-  node_deleted: 'text-danger-500',
-  node_edited: 'text-blue-500',
-  node_status: 'text-amber-500',
-  ai_expand: 'text-primary-500',
-  ai_suggestion: 'text-primary-500',
-  comment: 'text-sky-500',
-  vote: 'text-amber-500',
-  convert: 'text-amber-500',
+  node_added: 'text-c-success',
+  node_deleted: 'text-c-danger',
+  node_edited: 'text-c-info',
+  node_status: 'text-c-warning',
+  ai_expand: 'text-c-accent',
+  ai_suggestion: 'text-c-accent',
+  comment: 'text-c-info',
+  vote: 'text-c-warning',
+  convert: 'text-c-warning',
 };
 
 export const ActivityFeed: React.FC<ActivityFeedProps> = ({
@@ -187,25 +187,25 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed top-0 right-0 bottom-0 z-[84] w-[340px] max-w-[85vw] bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border-l border-slate-200/60 dark:border-navy-700/60 shadow-2xl flex flex-col overflow-hidden">
-      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-slate-200/40 dark:border-navy-700/40">
-        <Clock size={14} className="text-amber-500 shrink-0" />
-        <span className="text-[11px] font-bold text-slate-800 dark:text-white flex-1">
+    <div className="fixed top-0 right-0 bottom-0 z-[84] w-[340px] max-w-[85vw] bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border-l border-c-border-subtle dark:border-c-border shadow-2xl flex flex-col overflow-hidden">
+      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-c-border-subtle dark:border-c-border">
+        <Clock size={14} className="text-c-warning shrink-0" />
+        <span className="text-[11px] font-bold text-c-text dark:text-c-text flex-1">
           {isPl ? 'Aktywność' : 'Activity Feed'}
         </span>
-        <span className="text-[10px] text-slate-600">{entries.length}</span>
+        <span className="text-[10px] text-c-text-secondary">{entries.length}</span>
         <button
           onClick={onClose}
-          className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          className="p-1.5 rounded-lg text-c-text-secondary hover:text-c-text-secondary dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
         >
           <X size={14} />
         </button>
       </div>
 
-      <div className="px-4 py-2 border-b border-slate-200/30 dark:border-navy-700/30 flex items-center gap-1 overflow-x-auto">
+      <div className="px-4 py-2 border-b border-c-border-subtle dark:border-c-border flex items-center gap-1 overflow-x-auto">
         <button
           onClick={() => setFilter(null)}
-          className={`px-2 py-0.5 rounded-lg text-[9px] font-bold transition-colors shrink-0 ${!filter ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300' : 'text-slate-600 hover:text-slate-600'}`}
+          className={`px-2 py-0.5 rounded-lg text-[9px] font-bold transition-colors shrink-0 ${!filter ? 'bg-c-surface-raised text-c-warning dark:text-c-warning' : 'text-c-text-secondary hover:text-c-text-secondary'}`}
         >
           {isPl ? 'Wszystko' : 'All'}
         </button>
@@ -213,7 +213,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
           <button
             key={t}
             onClick={() => setFilter(t)}
-            className={`px-2 py-0.5 rounded-lg text-[9px] font-bold transition-colors shrink-0 ${filter === t ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300' : 'text-slate-600 hover:text-slate-600'}`}
+            className={`px-2 py-0.5 rounded-lg text-[9px] font-bold transition-colors shrink-0 ${filter === t ? 'bg-c-surface-raised text-c-warning dark:text-c-warning' : 'text-c-text-secondary hover:text-c-text-secondary'}`}
           >
             {t.replace(/_/g, ' ')}
           </button>
@@ -222,22 +222,22 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
       <div className="flex-1 overflow-y-auto px-4 py-2">
         {filtered.length === 0 ? (
-          <div className="text-center py-8 text-[11px] text-slate-600">
+          <div className="text-center py-8 text-[11px] text-c-text-secondary">
             {isPl ? 'Brak aktywności' : 'No activity yet'}
           </div>
         ) : (
           <div className="space-y-1">
             {filtered.map((entry) => {
               const Icon = TYPE_ICONS[entry.type] || Clock;
-              const color = TYPE_COLORS[entry.type] || 'text-slate-600';
+              const color = TYPE_COLORS[entry.type] || 'text-c-text-secondary';
               return (
                 <div
                   key={entry.id}
-                  className="flex items-start gap-2 p-2 rounded-xl hover:bg-slate-100/50 dark:hover:bg-white/[0.02] transition-colors cursor-default"
+                  className="flex items-start gap-2 p-2 rounded-xl hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors cursor-default"
                 >
                   <Icon size={12} className={`mt-0.5 shrink-0 ${color}`} />
                   <div className="min-w-0 flex-1">
-                    <div className="text-[10px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                    <div className="text-[10px] text-c-text-secondary dark:text-c-text-muted leading-relaxed">
                       <span className="font-bold">{entry.actor}</span>{' '}
                       {entry.type === 'node_added' && (isPl ? 'dodał' : 'added')}{' '}
                       {entry.type === 'node_deleted' && (isPl ? 'usunął' : 'deleted')}{' '}
@@ -251,21 +251,21 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
                       {entry.nodeLabel && (
                         <button
                           onClick={() => entry.nodeId && onNavigateToNode?.(entry.nodeId)}
-                          className="font-medium text-blue-500 hover:underline"
+                          className="font-medium text-c-info hover:underline"
                         >
                           "{entry.nodeLabel}"
                         </button>
                       )}
                     </div>
                     {entry.detail && entry.type === 'comment' ? (
-                      <div className="text-[9px] text-slate-600 mt-1 pl-2 border-l-2 border-sky-300/40 italic leading-relaxed">
+                      <div className="text-[9px] text-c-text-secondary mt-1 pl-2 border-l-2 border-c-info italic leading-relaxed">
                         "{entry.detail}"
                       </div>
                     ) : entry.detail ? (
-                      <div className="text-[9px] text-slate-600 mt-0.5">{entry.detail}</div>
+                      <div className="text-[9px] text-c-text-secondary mt-0.5">{entry.detail}</div>
                     ) : null}
                   </div>
-                  <span className="text-[8px] text-slate-600 shrink-0 mt-0.5">
+                  <span className="text-[8px] text-c-text-secondary shrink-0 mt-0.5">
                     {formatTime(entry.timestamp)}
                   </span>
                 </div>

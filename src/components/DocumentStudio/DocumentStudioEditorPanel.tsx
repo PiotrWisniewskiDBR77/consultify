@@ -103,7 +103,11 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
       const entries = await getDocumentStudioAuditTrail(artifactId);
       setAuditTrail(entries);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load audit trail');
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.editor.auditLoadFailed', 'Failed to load audit trail')
+      );
     } finally {
       setLoadingAudit(false);
     }
@@ -183,7 +187,11 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
       setNote(refinedNote);
       await refreshAuditTrail();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create proposal');
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.editor.createFailed', 'Failed to create proposal')
+      );
     } finally {
       setSubmitting(false);
     }
@@ -243,7 +251,11 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
       setNote(t('documentStudio.editor.executed', 'Proposal approved and executed.'));
       await refreshAuditTrail();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to approve proposal');
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.editor.approveFailed', 'Failed to approve proposal')
+      );
     } finally {
       setSubmitting(false);
     }
@@ -259,7 +271,11 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
       setNote(t('documentStudio.editor.rejected', 'Proposal rejected.'));
       await refreshAuditTrail();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to reject proposal');
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.editor.rejectFailed', 'Failed to reject proposal')
+      );
     } finally {
       setSubmitting(false);
     }
@@ -463,11 +479,11 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
           {pendingProposal.versionBeforeId || pendingProposal.versionAfterId ? (
             <div className="mt-2 text-[11px] text-c-text-muted">
               {pendingProposal.versionBeforeId
-                ? `Before snapshot: ${pendingProposal.versionBeforeId}`
+                ? `${t('documentStudio.editor.beforeSnapshot', 'Before snapshot')}: ${pendingProposal.versionBeforeId}`
                 : null}
               {pendingProposal.versionBeforeId && pendingProposal.versionAfterId ? ' · ' : ''}
               {pendingProposal.versionAfterId
-                ? `After snapshot: ${pendingProposal.versionAfterId}`
+                ? `${t('documentStudio.editor.afterSnapshot', 'After snapshot')}: ${pendingProposal.versionAfterId}`
                 : null}
             </div>
           ) : null}

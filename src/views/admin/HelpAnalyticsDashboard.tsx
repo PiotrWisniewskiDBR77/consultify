@@ -209,7 +209,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
           <p className="text-c-text-secondary">{error}</p>
           <button
             onClick={fetchData}
-            className="mt-4 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600"
+            className="mt-4 px-4 py-2 bg-c-text text-c-bg rounded-lg hover:bg-c-text-secondary"
           >
             {t.refresh[lang]}
           </button>
@@ -250,7 +250,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
           </select>
           <button
             onClick={fetchData}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600"
+            className="flex items-center gap-2 px-4 py-2 bg-c-text text-c-bg rounded-lg hover:bg-c-text-secondary"
           >
             <RefreshCw size={16} />
             {t.refresh[lang]}
@@ -263,25 +263,25 @@ export const HelpAnalyticsDashboard: React.FC = () => {
         <StatCard
           title={t.activeUsers[lang]}
           value={data.userEngagement?.activeUsers?.active_users || 0}
-          icon={<Users className="text-white" size={24} />}
+          icon={<Users className="text-c-text" size={24} />}
           color="bg-blue-500"
         />
         <StatCard
           title={t.totalEvents[lang]}
           value={(data.userEngagement?.activeUsers?.total_events || 0).toLocaleString()}
-          icon={<MousePointer className="text-white" size={24} />}
+          icon={<MousePointer className="text-c-text" size={24} />}
           color="bg-green-500"
         />
         <StatCard
           title={t.helpfulnessRate[lang]}
           value={`${data.feedbackSummary?.overall?.helpfulness_rate || 0}%`}
-          icon={<ThumbsUp className="text-white" size={24} />}
-          color="bg-navy-900"
+          icon={<ThumbsUp className="text-c-text" size={24} />}
+          color="bg-c-surface"
         />
         <StatCard
           title={t.avgRating[lang]}
           value={(data.feedbackSummary?.overall?.avg_rating || 0).toFixed(1)}
-          icon={<TrendingUp className="text-white" size={24} />}
+          icon={<TrendingUp className="text-c-text" size={24} />}
           color="bg-amber-500"
         />
       </div>
@@ -481,7 +481,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
               {/* Progress bar */}
               <div className="mt-2 h-1.5 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-navy-900 rounded-full"
+                  className="h-full bg-c-surface rounded-full"
                   style={{ width: `${video.completion_rate}%` }}
                 />
               </div>

@@ -17,13 +17,18 @@ import type {
   WorkbookSchema,
 } from './WorkbookSchema.js';
 import {
+  addAutoFilter,
   addInfoSheet,
   addSubtleColorScale,
   alignmentForType,
+  applyPrintSetup,
   classifyStatus,
   colLetter as colLetterLocal,
   colorScaleColumns,
   currencyFormat,
+  FONT_FAMILY,
+  FONT_SIZE_BODY,
+  FONT_SIZE_HEADER,
   HEADER_NAVY_HEX,
   inferCurrency,
   looksLikeStatusColumn,
@@ -322,7 +327,19 @@ export async function buildWorkbookBuffer(
       border: 'thin',
     };
     headerRow.eachCell((cell) => applyStyle(cell, { wrapText: true, ...defaultHeaderStyle }));
-    headerRow.height = 24;
+    headerRow.height = 26;
+
+    // Consistent header typography — one font family, one size. Preserves any
+    // color/bold the header style already set; only pins name+size.
+    if (applyStyling) {
+      headerRow.eachCell((cell) => {
+        cell.font = {
+          ...(cell.font ?? {}),
+          name: FONT_FAMILY,
+          size: (cell.font && cell.font.size) || FONT_SIZE_HEADER,
+        };
+      });
+    }
 
     // Consultant depth: a brand-teal underline rule under the header row — the
     // crisp "table starts here" line a designed sheet has and a raw grid lacks.
@@ -449,6 +466,17 @@ export async function buildWorkbookBuffer(
           }
         }
 
+        // Consistent body typography — pin the font family everywhere and a
+        // default body size where the schema didn't ask for a specific one.
+        // Preserves bold/italic/color already resolved above.
+        if (applyStyling) {
+          cell.font = {
+            ...(cell.font ?? {}),
+            name: FONT_FAMILY,
+            size: (cell.font && cell.font.size) || FONT_SIZE_BODY,
+          };
+        }
+
         if (cellDef.comment) {
           cell.note = cellDef.comment;
         }
@@ -543,6 +571,14 @@ export async function buildWorkbookBuffer(
         if (explicitCfRefs.includes(`${colL}2`) || explicitCfRefs.includes(`${colL}$`)) continue;
         addSubtleColorScale(ws, colIdx, sheetDef.rows.length);
       }
+    }
+
+    // Consultant depth: make the header a real, filterable table header and set
+    // up print so the sheet survives Ctrl+P. Both are additive and fail-soft —
+    // they never touch cell values or formula references.
+    if (applyStyling) {
+      addAutoFilter(ws, sheetDef.columns.length, sheetDef.rows.length);
+      applyPrintSetup(ws, sheetDef.name);
     }
   }
 

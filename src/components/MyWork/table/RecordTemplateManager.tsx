@@ -96,16 +96,16 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[150] flex items-center justify-center bg-black/20 backdrop-blur-[2px]"
+      className="fixed inset-0 z-[150] flex items-center justify-center bg-[color-mix(in_srgb,var(--c-text)_20%,transparent)] backdrop-blur-[2px]"
       onClick={onClose}
     >
       <div
-        className="w-[520px] max-w-[95vw] max-h-[80vh] flex flex-col rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 shadow-2xl"
+        className="w-[520px] max-w-[95vw] max-h-[80vh] flex flex-col rounded-2xl border border-c-border bg-c-surface shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
-          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
+          <h3 className="text-sm font-bold text-c-text">
             {isPl ? 'Szablony rekordów' : 'Record Templates'}
           </h3>
           <div className="flex items-center gap-1">
@@ -115,7 +115,7 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
                   setEditingTemplate(null);
                   setShowCreate(true);
                 }}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-c-accent hover:bg-c-accent-soft transition-colors"
               >
                 <Plus size={12} />
                 {isPl ? 'Nowy' : 'New'}
@@ -123,9 +123,9 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
             )}
             <button
               onClick={onClose}
-              className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+              className="p-1 rounded-lg hover:bg-c-surface-raised transition-colors"
             >
-              <X size={16} className="text-slate-600" />
+              <X size={16} className="text-c-text-muted" />
             </button>
           </div>
         </div>
@@ -134,12 +134,12 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
         <div className="flex-1 overflow-y-auto p-4">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-5 w-5 animate-spin text-slate-600" />
+              <Loader2 className="h-5 w-5 animate-spin text-c-text-muted" />
             </div>
           ) : templates.length === 0 ? (
             <div className="text-center py-12">
-              <FileText size={32} className="mx-auto text-slate-600 dark:text-slate-400 mb-3" />
-              <p className="text-[11px] text-slate-600">
+              <FileText size={32} className="mx-auto text-c-text-muted mb-3" />
+              <p className="text-[11px] text-c-text-muted">
                 {isPl
                   ? 'Brak szablonów. Utwórz pierwszy szablon, aby szybko dodawać rekordy.'
                   : 'No templates yet. Create one to quickly add pre-filled records.'}
@@ -150,17 +150,17 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
               {templates.map((tpl) => (
                 <div
                   key={tpl.id}
-                  className="group rounded-xl border border-slate-200/60 dark:border-navy-700/60 hover:border-slate-300 dark:hover:border-navy-600 transition-colors"
+                  className="group rounded-xl border border-c-border-subtle hover:border-c-border transition-colors"
                 >
                   <div className="flex items-center gap-3 px-4 py-3">
-                    <div className="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/20 flex items-center justify-center flex-shrink-0">
-                      <FileText size={14} className="text-primary-500" />
+                    <div className="w-8 h-8 rounded-lg bg-c-accent-soft flex items-center justify-center flex-shrink-0">
+                      <FileText size={14} className="text-c-accent" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-[12px] font-semibold text-slate-700 dark:text-slate-300 truncate">
+                      <div className="text-[12px] font-semibold text-c-text-secondary truncate">
                         {tpl.name}
                       </div>
-                      <div className="text-[9px] text-slate-600 mt-0.5">
+                      <div className="text-[9px] text-c-text-muted mt-0.5">
                         {Object.keys(tpl.data).filter((k) => !k.startsWith('_')).length}{' '}
                         {isPl ? 'pól wypełnionych' : 'fields pre-filled'}
                       </div>
@@ -168,7 +168,7 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => handleUse(tpl)}
-                        className="p-1.5 rounded-lg text-slate-600 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+                        className="p-1.5 rounded-lg text-c-text-muted hover:text-c-success hover:bg-[color-mix(in_srgb,var(--c-success)_12%,transparent)] transition-colors"
                         title={isPl ? 'Użyj szablonu' : 'Use template'}
                       >
                         <Copy size={12} />
@@ -180,14 +180,14 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
                               setEditingTemplate(tpl);
                               setShowCreate(true);
                             }}
-                            className="p-1.5 rounded-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                            className="p-1.5 rounded-lg text-c-text-muted hover:text-c-info hover:bg-[color-mix(in_srgb,var(--c-info)_12%,transparent)] transition-colors"
                             title={isPl ? 'Edytuj' : 'Edit'}
                           >
                             <Edit3 size={12} />
                           </button>
                           <button
                             onClick={() => handleDelete(tpl.id)}
-                            className="p-1.5 rounded-lg text-slate-600 hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors"
+                            className="p-1.5 rounded-lg text-c-text-muted hover:text-c-danger hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] transition-colors"
                             title={isPl ? 'Usuń' : 'Delete'}
                           >
                             <Trash2 size={12} />
@@ -209,7 +209,7 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
                           return (
                             <span
                               key={key}
-                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-[9px] text-slate-500 dark:text-slate-400"
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-c-surface-raised text-[9px] text-c-text-muted"
                             >
                               <span className="font-medium">{displayName}:</span>
                               <span className="truncate max-w-[80px]">{String(value ?? '')}</span>
@@ -330,16 +330,16 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[210] flex items-center justify-center bg-black/30 backdrop-blur-sm"
+      className="fixed inset-0 z-[210] flex items-center justify-center bg-[color-mix(in_srgb,var(--c-text)_30%,transparent)] backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="w-[480px] max-w-[95vw] max-h-[80vh] flex flex-col rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-2xl"
+        className="w-[480px] max-w-[95vw] max-h-[80vh] flex flex-col rounded-2xl border border-c-border bg-c-surface shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
-          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
+          <h3 className="text-sm font-bold text-c-text">
             {template
               ? isPl
                 ? 'Edytuj szablon'
@@ -350,30 +350,30 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
           </h3>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-1 rounded-lg hover:bg-c-surface-raised transition-colors"
           >
-            <X size={16} className="text-slate-600" />
+            <X size={16} className="text-c-text-muted" />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
           {/* Template name */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+            <label className="block text-[11px] font-bold text-c-text-secondary mb-1">
               {isPl ? 'Nazwa szablonu' : 'Template name'}
             </label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={isPl ? 'np. Zadanie standardowe' : 'e.g. Standard Task'}
-              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
+              className="w-full rounded-xl border border-c-border bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-c-focus"
               autoFocus
             />
           </div>
 
           {/* Field values */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-2">
+            <label className="block text-[11px] font-bold text-c-text-secondary mb-2">
               {isPl ? 'Wartości domyślne' : 'Default values'}
             </label>
             <div className="space-y-2">
@@ -387,7 +387,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                 />
               ))}
               {editableFields.length === 0 && (
-                <p className="text-[10px] text-slate-600 italic">
+                <p className="text-[10px] text-c-text-muted italic">
                   {isPl ? 'Brak edytowalnych pól' : 'No editable fields'}
                 </p>
               )}
@@ -396,17 +396,17 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-slate-200/60 dark:border-navy-700/60">
+        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-c-border-subtle">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="px-4 py-2 rounded-xl text-xs font-semibold text-c-text-secondary hover:bg-c-surface-raised transition-colors"
           >
             {isPl ? 'Anuluj' : 'Cancel'}
           </button>
           <button
             onClick={handleSave}
             disabled={!name.trim() || saving}
-            className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors disabled:opacity-40"
+            className="px-4 py-2 rounded-xl text-xs font-semibold bg-c-accent text-white hover:brightness-95 transition-colors disabled:opacity-40"
           >
             {saving ? (
               <Loader2 size={12} className="animate-spin" />
@@ -446,7 +446,7 @@ const TemplateFieldInput: React.FC<TemplateFieldInputProps> = ({
   isPl,
 }) => {
   const inputClass =
-    'w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500/30';
+    'w-full rounded-lg border border-c-border bg-c-surface px-2.5 py-1.5 text-[11px] text-c-text-secondary outline-none focus:ring-2 focus:ring-c-focus';
 
   const renderInput = () => {
     switch (field.fieldType) {
@@ -457,9 +457,9 @@ const TemplateFieldInput: React.FC<TemplateFieldInputProps> = ({
               type="checkbox"
               checked={!!value}
               onChange={(e) => onChange(e.target.checked)}
-              className="rounded border-slate-300 text-primary-500 focus:ring-primary-500/30"
+              className="rounded border-c-border text-c-accent focus:ring-c-focus"
             />
-            <span className="text-[11px] text-slate-600 dark:text-slate-400">
+            <span className="text-[11px] text-c-text-muted">
               {isPl ? 'Zaznaczony' : 'Checked'}
             </span>
           </label>
@@ -533,7 +533,7 @@ const TemplateFieldInput: React.FC<TemplateFieldInputProps> = ({
 
   return (
     <div className="flex items-start gap-3">
-      <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 w-28 flex-shrink-0 pt-1.5 truncate">
+      <span className="text-[10px] font-medium text-c-text-muted w-28 flex-shrink-0 pt-1.5 truncate">
         {field.name}
       </span>
       <div className="flex-1">{renderInput()}</div>
@@ -597,28 +597,28 @@ export const TemplateDropdown: React.FC<TemplateDropdownProps> = ({
     <div className="fixed inset-0 z-[150]" onClick={onClose}>
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-[240px] rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 shadow-2xl overflow-hidden"
+        className="w-[240px] rounded-2xl border border-c-border bg-c-surface shadow-2xl overflow-hidden"
         style={style}
       >
-        <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200/60 dark:border-navy-700/60">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
             {isPl ? 'Z szablonu' : 'From Template'}
           </span>
           <button
             onClick={onClose}
-            className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+            className="p-0.5 rounded hover:bg-c-surface-raised"
           >
-            <X size={11} className="text-slate-600" />
+            <X size={11} className="text-c-text-muted" />
           </button>
         </div>
 
         <div className="max-h-[260px] overflow-auto p-1.5">
           {loading ? (
             <div className="flex justify-center py-4">
-              <Loader2 size={14} className="animate-spin text-slate-600" />
+              <Loader2 size={14} className="animate-spin text-c-text-muted" />
             </div>
           ) : templates.length === 0 ? (
-            <p className="text-center py-4 text-[10px] text-slate-600">
+            <p className="text-center py-4 text-[10px] text-c-text-muted">
               {isPl ? 'Brak szablonów' : 'No templates'}
             </p>
           ) : (
@@ -632,10 +632,10 @@ export const TemplateDropdown: React.FC<TemplateDropdownProps> = ({
                   onUseTemplate(data);
                   onClose();
                 }}
-                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors text-left"
+                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl hover:bg-c-surface-raised transition-colors text-left"
               >
-                <FileText size={12} className="text-primary-500 flex-shrink-0" />
-                <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 truncate">
+                <FileText size={12} className="text-c-accent flex-shrink-0" />
+                <span className="text-[11px] font-medium text-c-text-secondary truncate">
                   {tpl.name}
                 </span>
               </button>
@@ -643,13 +643,13 @@ export const TemplateDropdown: React.FC<TemplateDropdownProps> = ({
           )}
         </div>
 
-        <div className="border-t border-slate-200/60 dark:border-navy-700/60 p-1.5">
+        <div className="border-t border-c-border-subtle p-1.5">
           <button
             onClick={() => {
               onClose();
               onManageTemplates();
             }}
-            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-[10px] font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
+            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-[10px] font-semibold text-c-accent hover:bg-c-accent-soft transition-colors"
           >
             <Edit3 size={11} />
             {isPl ? 'Zarządzaj szablonami' : 'Manage templates'}

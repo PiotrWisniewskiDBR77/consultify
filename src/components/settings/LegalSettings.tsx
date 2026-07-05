@@ -24,7 +24,7 @@ const DOC_TYPE_INFO: Record<string, { icon: React.ReactNode; color: string }> = 
   TOS: { icon: <FileText size={18} />, color: 'text-blue-500' },
   PRIVACY: { icon: <Shield size={18} />, color: 'text-green-500' },
   COOKIES: { icon: <FileText size={18} />, color: 'text-amber-500' },
-  AUP: { icon: <FileText size={18} />, color: 'text-primary-500' },
+  AUP: { icon: <FileText size={18} />, color: 'text-c-accent' },
   AI_POLICY: { icon: <FileText size={18} />, color: 'text-indigo-500' },
   DPA: { icon: <Shield size={18} />, color: 'text-rose-500' },
   SUBSCRIPTION: { icon: <FileText size={18} />, color: 'text-emerald-500' },
@@ -135,10 +135,10 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
   return (
     <div className="max-w-3xl relative">
       <InfoButton cardId="settings-legal" position="top-right" />
-      <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+      <h2 className="text-xl font-semibold text-c-text mb-2">
         {t('settings.menu.legal', 'Legal Documents')}
       </h2>
-      <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+      <p className="text-sm text-c-text-muted mb-6">
         {t('legal.settings.description', 'View and manage your legal document acceptances.')}
       </p>
 
@@ -152,13 +152,13 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
           return (
             <div
               key={doc.id}
-              className="flex items-center justify-between p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-800 transition-colors"
+              className="flex items-center justify-between p-4 rounded-lg border border-c-border-subtle bg-c-surface transition-colors"
             >
               <div className="flex items-center gap-3">
                 <div className={`${info.color}`}>{info.icon}</div>
                 <div>
-                  <h3 className="font-medium text-slate-900 dark:text-white">{doc.title}</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <h3 className="font-medium text-c-text">{doc.title}</h3>
+                  <p className="text-xs text-c-text-muted">
                     Version {doc.version} • Effective {formatDate(doc.effectiveFrom)}
                   </p>
                 </div>
@@ -180,10 +180,10 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
                 )}
                 <button
                   onClick={() => viewDocument(doc)}
-                  className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                  className="p-2 rounded-lg hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
                   title={t('legal.view', 'View Document')}
                 >
-                  <Eye size={18} className="text-slate-500 dark:text-slate-400" />
+                  <Eye size={18} className="text-c-text-muted" />
                 </button>
               </div>
             </div>
@@ -199,22 +199,22 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
       </div>
 
       {/* Legal Center Link */}
-      <div className="mt-6 p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-navy-700">
+      <div className="mt-6 p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle dark:border-navy-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Scale className="w-5 h-5 text-slate-600 dark:text-slate-500" />
+            <Scale className="w-5 h-5 text-c-text-secondary" />
             <div>
-              <h4 className="font-medium text-slate-700 dark:text-slate-200">
+              <h4 className="font-medium text-c-text-secondary">
                 {t('legal.centerTitle', 'Legal Center')}
               </h4>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t('legal.centerDescription', 'View all legal documents in one place')}
               </p>
             </div>
           </div>
           <Link
             to="/legal"
-            className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+            className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-c-accent hover:bg-c-accent-soft rounded-lg transition-colors"
           >
             {t('legal.viewAll', 'View All')}
             <ExternalLink className="w-4 h-4" />
@@ -225,19 +225,19 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
       {/* Document Viewer Modal */}
       {selectedDoc && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-navy-900 rounded-xl shadow-xl max-w-3xl w-full mx-4 max-h-[80vh] flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
+          <div className="bg-c-surface rounded-xl shadow-xl max-w-3xl w-full mx-4 max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
               <div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                <h3 className="text-lg font-semibold text-c-text">
                   {selectedDoc.title}
                 </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-c-text-muted">
                   Version {selectedDoc.version}
                 </p>
               </div>
               <button
                 onClick={() => setSelectedDoc(null)}
-                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10"
+                className="p-2 rounded-lg hover:bg-c-surface-raised dark:hover:bg-c-surface-raised"
               >
                 <X size={20} />
               </button>

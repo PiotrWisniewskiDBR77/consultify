@@ -203,7 +203,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
   };
 
   const sectionLabel =
-    'text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 mb-4';
+    'text-xs font-bold text-c-text-secondary uppercase tracking-wider flex items-center gap-2 mb-4';
 
   return (
     <SettingsSection
@@ -231,7 +231,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
             {/* ─── Online Status ─── */}
             <div>
               <h4 className={sectionLabel}>
-                <Eye size={14} className="text-primary-400" />
+                <Eye size={14} className="text-c-accent" />
                 {t('settings.privacy.statusTitle', 'Online Status')}
               </h4>
               <div className="space-y-3">
@@ -261,10 +261,10 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
             {/* ─── Activity Visibility ─── */}
             <div>
               <h4 className={sectionLabel}>
-                <Users size={14} className="text-primary-400" />
+                <Users size={14} className="text-c-accent" />
                 {t('settings.privacy.activityTitle', 'Activity Visibility')}
               </h4>
-              <p className="text-xs text-slate-500 mb-4">
+              <p className="text-xs text-c-text-muted mb-4">
                 {t(
                   'settings.privacy.activityDescription',
                   'Choose who can see your recent activity and contributions'
@@ -281,23 +281,23 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
                       className={cn(
                         'p-4 rounded-lg border transition-all text-left',
                         isSelected
-                          ? 'bg-slate-50 border-slate-700 shadow-sm dark:bg-white/[0.06] dark:border-white/30'
-                          : 'bg-white dark:bg-navy-800/50 border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20'
+                          ? 'bg-c-surface-raised border-c-border-strong shadow-sm.06]'
+                          : 'bg-c-surface-raised border-c-border-subtle hover:border-c-border dark:hover:border-white/20'
                       )}
                     >
                       <Icon
                         size={20}
-                        className={isSelected ? 'text-[var(--c-info)]' : 'text-slate-500'}
+                        className={isSelected ? 'text-[var(--c-info)]' : 'text-c-text-muted'}
                       />
                       <div
                         className={cn(
                           'mt-2 text-sm font-medium',
-                          isSelected ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'
+                          isSelected ? 'text-c-text' : 'text-c-text-secondary'
                         )}
                       >
                         {t(option.labelKey, option.labelDefault)}
                       </div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">
+                      <div className="text-[11px] text-c-text-muted mt-0.5">
                         {t(option.descKey, option.desc)}
                       </div>
                     </button>
@@ -311,10 +311,10 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
             {/* ─── Profile Visibility ─── */}
             <div>
               <h4 className={sectionLabel}>
-                <UserCircle size={14} className="text-primary-400" />
+                <UserCircle size={14} className="text-c-accent" />
                 {t('settings.privacy.profileTitle', 'Profile Visibility')}
               </h4>
-              <p className="text-xs text-slate-500 mb-4">
+              <p className="text-xs text-c-text-muted mb-4">
                 {t(
                   'settings.privacy.profileDescription',
                   'Control who can view your profile information'
@@ -331,23 +331,23 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
                       className={cn(
                         'p-4 rounded-lg border transition-all text-left',
                         isSelected
-                          ? 'bg-slate-50 border-slate-700 shadow-sm dark:bg-white/[0.06] dark:border-white/30'
-                          : 'bg-white dark:bg-navy-800/50 border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20'
+                          ? 'bg-c-surface-raised border-c-border-strong shadow-sm.06]'
+                          : 'bg-c-surface-raised border-c-border-subtle hover:border-c-border dark:hover:border-white/20'
                       )}
                     >
                       <Icon
                         size={20}
-                        className={isSelected ? 'text-[var(--c-info)]' : 'text-slate-500'}
+                        className={isSelected ? 'text-[var(--c-info)]' : 'text-c-text-muted'}
                       />
                       <div
                         className={cn(
                           'mt-2 text-sm font-medium',
-                          isSelected ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'
+                          isSelected ? 'text-c-text' : 'text-c-text-secondary'
                         )}
                       >
                         {t(option.labelKey, option.labelDefault)}
                       </div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">
+                      <div className="text-[11px] text-c-text-muted mt-0.5">
                         {t(option.descKey, option.desc)}
                       </div>
                     </button>
@@ -361,7 +361,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
             {/* ─── Communication & AI ─── */}
             <div>
               <h4 className={sectionLabel}>
-                <AtSign size={14} className="text-primary-400" />
+                <AtSign size={14} className="text-c-accent" />
                 {t('settings.privacy.communicationTitle', 'Communication & AI')}
               </h4>
               <div className="space-y-3">

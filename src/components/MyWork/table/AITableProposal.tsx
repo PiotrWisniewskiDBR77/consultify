@@ -133,8 +133,8 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
       }}
       className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${
         checked
-          ? 'bg-navy-900 border-navy-900'
-          : 'border-slate-300 dark:border-navy-600 hover:border-primary-400'
+          ? 'bg-c-surface border-c-border'
+          : 'border-c-border hover:border-c-accent'
       }`}
     >
       {checked && <Check size={10} className="text-white" />}
@@ -142,22 +142,22 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
   );
 
   return (
-    <div className="rounded-2xl border border-primary-500/30 bg-white dark:bg-navy-900 shadow-2xl overflow-hidden max-h-[70vh] flex flex-col">
-      <div className="flex items-center gap-2 px-4 py-3 bg-primary-500/5 border-b border-primary-500/10 flex-shrink-0">
-        <Sparkles size={16} className="text-primary-500" />
+    <div className="rounded-2xl border border-c-accent bg-c-surface shadow-2xl overflow-hidden max-h-[70vh] flex flex-col">
+      <div className="flex items-center gap-2 px-4 py-3 bg-c-accent-soft border-b border-c-accent flex-shrink-0">
+        <Sparkles size={16} className="text-c-accent" />
         <div className="flex-1">
-          <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
+          <div className="text-xs font-bold text-c-text">
             {proposal.title || (isPl ? 'Propozycja struktury tabeli' : 'Table Structure Proposal')}
           </div>
           {proposal.description && (
-            <div className="text-[10px] text-slate-500 mt-0.5">{proposal.description}</div>
+            <div className="text-[10px] text-c-text-muted mt-0.5">{proposal.description}</div>
           )}
         </div>
         <button
           onClick={onReject}
-          className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
+          className="p-1 rounded-lg hover:bg-c-surface-raised"
         >
-          <X size={14} className="text-slate-600" />
+          <X size={14} className="text-c-text-secondary" />
         </button>
       </div>
 
@@ -185,18 +185,18 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
           <div>
             <button
               onClick={() => toggleExpanded('columns')}
-              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-c-surface-raised transition-colors"
             >
               {expandedSections.has('columns') ? (
                 <ChevronDown size={12} />
               ) : (
                 <ChevronRight size={12} />
               )}
-              <span className="text-slate-500">{sectionIcons.columns}</span>
-              <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 flex-1 text-left">
+              <span className="text-c-text-muted">{sectionIcons.columns}</span>
+              <span className="text-[11px] font-bold text-c-text flex-1 text-left">
                 {isPl ? 'Kolumny' : 'Columns'}
               </span>
-              <span className="text-[9px] text-slate-600">
+              <span className="text-[9px] text-c-text-secondary">
                 {acceptedColumns.size}/{proposal.columns.length}
               </span>
               {renderCheckbox(acceptedColumns.size === proposal.columns.length, toggleAllColumns)}
@@ -207,14 +207,14 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
                   <div
                     key={col.key}
                     className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-colors ${
-                      acceptedColumns.has(col.key) ? 'bg-primary-500/5' : 'opacity-50'
+                      acceptedColumns.has(col.key) ? 'bg-c-accent-soft' : 'opacity-50'
                     }`}
                   >
                     {renderCheckbox(acceptedColumns.has(col.key), () => toggleColumn(col.key))}
-                    <span className="text-[10px] font-medium text-slate-700 dark:text-slate-200 flex-1">
+                    <span className="text-[10px] font-medium text-c-text flex-1">
                       {col.header}
                     </span>
-                    <span className="text-[8px] text-slate-600 bg-slate-100 dark:bg-navy-800 px-1.5 py-0.5 rounded">
+                    <span className="text-[8px] text-c-text-secondary bg-c-surface-raised px-1.5 py-0.5 rounded">
                       {col.type}
                     </span>
                   </div>
@@ -229,18 +229,18 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
           <div>
             <button
               onClick={() => toggleExpanded('views')}
-              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-c-surface-raised transition-colors"
             >
               {expandedSections.has('views') ? (
                 <ChevronDown size={12} />
               ) : (
                 <ChevronRight size={12} />
               )}
-              <span className="text-slate-500">{sectionIcons.views}</span>
-              <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 flex-1 text-left">
+              <span className="text-c-text-muted">{sectionIcons.views}</span>
+              <span className="text-[11px] font-bold text-c-text flex-1 text-left">
                 {isPl ? 'Widoki' : 'Views'}
               </span>
-              <span className="text-[9px] text-slate-600">
+              <span className="text-[9px] text-c-text-secondary">
                 {acceptedViews.size}/{proposal.views.length}
               </span>
               {renderCheckbox(acceptedViews.size === proposal.views.length, toggleAllViews)}
@@ -251,14 +251,14 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
                   <div
                     key={v.id}
                     className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-colors ${
-                      acceptedViews.has(v.id) ? 'bg-primary-500/5' : 'opacity-50'
+                      acceptedViews.has(v.id) ? 'bg-c-accent-soft' : 'opacity-50'
                     }`}
                   >
                     {renderCheckbox(acceptedViews.has(v.id), () => toggleView(v.id))}
-                    <span className="text-[10px] font-medium text-slate-700 dark:text-slate-200 flex-1">
+                    <span className="text-[10px] font-medium text-c-text flex-1">
                       {v.icon || '📋'} {v.name}
                     </span>
-                    {v.layout && <span className="text-[8px] text-slate-600">{v.layout}</span>}
+                    {v.layout && <span className="text-[8px] text-c-text-secondary">{v.layout}</span>}
                   </div>
                 ))}
               </div>
@@ -271,18 +271,18 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
           <div>
             <button
               onClick={() => toggleExpanded('rows')}
-              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-c-surface-raised transition-colors"
             >
               {expandedSections.has('rows') ? (
                 <ChevronDown size={12} />
               ) : (
                 <ChevronRight size={12} />
               )}
-              <span className="text-slate-500">{sectionIcons.rows}</span>
-              <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 flex-1 text-left">
+              <span className="text-c-text-muted">{sectionIcons.rows}</span>
+              <span className="text-[11px] font-bold text-c-text flex-1 text-left">
                 {isPl ? 'Wiersze startowe' : 'Starter rows'}
               </span>
-              <span className="text-[9px] text-slate-600">
+              <span className="text-[9px] text-c-text-secondary">
                 {acceptedRows.size}/{proposal.rows.length}
               </span>
               {renderCheckbox(acceptedRows.size === proposal.rows.length, toggleAllRows)}
@@ -293,11 +293,11 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
                   <div
                     key={r.id}
                     className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-colors ${
-                      acceptedRows.has(r.id) ? 'bg-primary-500/5' : 'opacity-50'
+                      acceptedRows.has(r.id) ? 'bg-c-accent-soft' : 'opacity-50'
                     }`}
                   >
                     {renderCheckbox(acceptedRows.has(r.id), () => toggleRow(r.id))}
-                    <span className="text-[10px] font-medium text-slate-700 dark:text-slate-200 flex-1 truncate">
+                    <span className="text-[10px] font-medium text-c-text flex-1 truncate">
                       {r.data?.label || r.id}
                     </span>
                   </div>
@@ -308,13 +308,13 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
         )}
 
         {proposal.contextHints && proposal.contextHints.length > 0 && (
-          <div className="pt-2 border-t border-slate-200/30 dark:border-white/[0.04]">
-            <div className="text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-1">
+          <div className="pt-2 border-t border-c-border-subtle">
+            <div className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-1">
               {isPl ? 'Kontekst AI' : 'AI Context'}
             </div>
             <div className="space-y-0.5">
               {proposal.contextHints.map((hint, i) => (
-                <div key={i} className="text-[10px] text-slate-500 dark:text-slate-400">
+                <div key={i} className="text-[10px] text-c-text-muted">
                   • {hint}
                 </div>
               ))}
@@ -323,21 +323,21 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
         )}
       </div>
 
-      <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200/30 dark:border-white/[0.04] flex-shrink-0">
-        <span className="text-[9px] text-slate-600">
+      <div className="flex items-center justify-between px-4 py-3 border-t border-c-border-subtle flex-shrink-0">
+        <span className="text-[9px] text-c-text-secondary">
           {totalAccepted} {isPl ? 'elementów zaznaczonych' : 'items selected'}
         </span>
         <div className="flex items-center gap-2">
           <button
             onClick={onReject}
-            className="px-3 py-1.5 rounded-xl text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="px-3 py-1.5 rounded-xl text-[11px] font-semibold text-c-text-secondary hover:bg-c-surface-raised transition-colors"
           >
             {isPl ? 'Odrzuć' : 'Reject'}
           </button>
           <button
             onClick={handleApply}
             disabled={totalAccepted === 0}
-            className="px-4 py-1.5 rounded-xl text-[11px] font-bold bg-primary-500 text-white hover:bg-primary-600 transition-colors disabled:opacity-40"
+            className="px-4 py-1.5 rounded-xl text-[11px] font-bold bg-c-accent text-white hover:bg-c-accent transition-colors disabled:opacity-40"
           >
             {isPl ? 'Zastosuj wybrane' : 'Apply selected'}
           </button>

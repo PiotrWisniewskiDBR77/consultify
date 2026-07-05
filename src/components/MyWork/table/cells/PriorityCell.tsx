@@ -25,32 +25,31 @@ const PRESETS: Record<NonNullable<PriorityFieldOptions['levels']>, readonly stri
   CRITICAL_HIGH_MEDIUM_LOW: ['critical', 'high', 'medium', 'low'],
 };
 
-function toneForIndex(index: number): { bg: string; text: string; border: string } {
+// Chip style built from a single semantic var + color-mix tint bg, so the label
+// stays legible (solid bg + solid same-hue text would be unreadable) and no
+// banned /NN alpha suffix touches a c-* token.
+function chipStyle(varName: string): React.CSSProperties {
+  return {
+    color: `var(${varName})`,
+    borderColor: `color-mix(in srgb, var(${varName}) 40%, transparent)`,
+    backgroundColor: `color-mix(in srgb, var(${varName}) 14%, transparent)`,
+  };
+}
+
+function toneForIndex(index: number): React.CSSProperties {
   // 0 = highest priority, last = lowest. Mirrors RiskScoreCell tone scale.
   switch (index) {
     case 0:
-      return {
-        bg: 'bg-danger-100 dark:bg-danger-900/30',
-        text: 'text-danger-700 dark:text-danger-300',
-        border: 'border-danger-200 dark:border-danger-800/50',
-      };
+      return chipStyle('--c-danger');
     case 1:
-      return {
-        bg: 'bg-amber-100 dark:bg-amber-900/30',
-        text: 'text-amber-700 dark:text-amber-300',
-        border: 'border-amber-200 dark:border-amber-800/50',
-      };
+      return chipStyle('--c-warning');
     case 2:
-      return {
-        bg: 'bg-sky-100 dark:bg-sky-900/30',
-        text: 'text-sky-700 dark:text-sky-300',
-        border: 'border-sky-200 dark:border-sky-800/50',
-      };
+      return chipStyle('--c-info');
     default:
       return {
-        bg: 'bg-slate-100 dark:bg-slate-800/40',
-        text: 'text-slate-600 dark:text-slate-300',
-        border: 'border-slate-200 dark:border-slate-700/60',
+        color: 'var(--c-text-muted)',
+        borderColor: 'var(--c-border)',
+        backgroundColor: 'var(--c-surface-raised)',
       };
   }
 }
@@ -62,7 +61,7 @@ export const PriorityCell: React.FC<PriorityCellProps> = ({ value, fieldOptions 
   if (value == null || value === '') {
     return (
       <span
-        className="text-xs text-slate-600 dark:text-slate-500 px-1"
+        className="text-xs text-c-text-muted px-1"
         data-testid="priority-empty"
       >
         —
@@ -76,7 +75,8 @@ export const PriorityCell: React.FC<PriorityCellProps> = ({ value, fieldOptions 
   if (index < 0) {
     return (
       <span
-        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-danger-200 dark:border-danger-800/50 text-[10px] font-semibold text-danger-700 dark:text-danger-300 bg-danger-50 dark:bg-danger-900/20"
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-semibold"
+        style={chipStyle('--c-danger')}
         data-testid="priority-invalid"
         title={`priority value '${str}' is not in preset '${String(levelsKey)}'`}
       >
@@ -90,7 +90,8 @@ export const PriorityCell: React.FC<PriorityCellProps> = ({ value, fieldOptions 
 
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-semibold ${tone.bg} ${tone.text} ${tone.border}`}
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-semibold"
+      style={tone}
       data-testid="priority-chip"
       data-level={str}
       data-preset={String(levelsKey)}

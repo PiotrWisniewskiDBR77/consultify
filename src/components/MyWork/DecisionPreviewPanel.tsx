@@ -504,8 +504,8 @@ export const DecisionPreviewFooter: React.FC<{
             </button>
             {snoozeOpen ? (
               <>
-                <div className="fixed inset-0 z-40" onClick={onCloseSnooze} />
-                <div className="absolute right-0 top-full mt-2 z-50 w-56 rounded-xl border border-c-border bg-c-surface-raised shadow-xl overflow-hidden">
+                <div className="fixed inset-0 z-dropdown" onClick={onCloseSnooze} />
+                <div className="absolute right-0 top-full mt-2 z-overlay w-56 rounded-xl border border-c-border bg-c-surface-raised shadow-xl overflow-hidden">
                   {(['1h', '4h', 'tomorrow', 'week'] as const).map((p) => (
                     <button
                       key={p}

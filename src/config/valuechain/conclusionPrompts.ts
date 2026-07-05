@@ -86,24 +86,30 @@ ${leverLines}
 ${buildValueChainMovePromptRules(isPolish ? 'pl' : 'en')}
 
 W2 STRUCTURE (mandatory):
-1. "verdict" — answer-first, 1-2 sentences: where margin is being made vs leaked and which lever to pull FIRST. Lead with the dominant drain/creator, not an average.
-2. "rationale" — why, anchored in the margin map and lever candidates above.
-3. "tradeoffs" — >= 1 at recommendation level: what we improve/cut AT THE COST of what; which option (e.g. outsource vs automate) was rejected and why.
-4. "moves" (3-5) — each a decision (IMPROVE/AUTOMATE/OUTSOURCE/INTEGRATE) on a lever activity, each with tradeOff + rejectedVariant + firstStep.
-5. "expectedEffect" — cost fall or value/differentiation rise, behaviorally observable, WITH a time horizon; no amounts absent from the facts.
+1. "summary.verdict" — answer-first, 1-2 sentences: where margin is being made vs leaked and which lever to pull FIRST. Lead with the dominant drain/creator, not an average.
+2. "summary.executiveSummary" — 3-4 sentences: restates the verdict, then the why, anchored in the margin map and lever candidates above.
+3. "summary.tradeoffs" — >= 1 at recommendation level: what we improve/cut AT THE COST of what; which option (e.g. outsource vs automate) was rejected and why.
+4. "moves" (3-5) — each a decision (IMPROVE/AUTOMATE/OUTSOURCE/INTEGRATE) on a lever activity, each with tradeoff {chosen, deferred, cost} + rejectedAlternative {option, reason} + firstStep.
+5. "summary.expectedEffect" — cost fall or value/differentiation rise, behaviorally observable, WITH a time horizon; no amounts absent from the facts.
 
 QUALITY BARS:
 - Numbers exclusively from the margin map; do not re-score activities.
-- Zero filler; every sentence falsifiable — with a different margin map it would read differently.
+- Zero filler and zero AI meta-phrases ("As an AI", "Based on the provided data", "In conclusion"); every sentence falsifiable — with a different margin map it would read differently.
 - Respond in ${isPolish ? 'Polish' : 'English'}, active voice, partner tone.
 
 Return JSON:
 {
-  "verdict": "answer-first: where margin leaks vs is made, which lever first",
-  "rationale": "why — anchored in the margin map and levers above",
-  "tradeoffs": [{"chosen":"...","rejected":"...","why":"..."}],
-  "moves": [{"title":"...","category":"cost-advantage|differentiation|linkage-optimization|capability-build|restructure","rationale":"...","tradeOff":"...","rejectedVariant":"...","linkedActivityIds":["operations"],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
-  "expectedEffect": {"text":"cost fall / value rise, behaviorally observable","horizon":"..."},
+  "summary": {
+    "verdict": "answer-first: where margin leaks vs is made, which lever first",
+    "executiveSummary": "3-4 sentences: restate the verdict, then why — anchored in the margin map and lever candidates above",
+    "keyInsights": ["3 insights, each tied to named session elements"],
+    "appliedConclusions": ["where to cut cost", "where to invest for differentiation", "what NOT to do", "what to validate next"],
+    "tradeoffs": [{"chosen":"...","rejected":"...","why":"..."}],
+    "expectedEffect": {"text":"cost fall / value rise, behaviorally observable","horizon":"..."}
+  },
+  "moves": [{"title":"...","category":"cost-advantage|differentiation|linkage-optimization|capability-build|restructure","rationale":"why — anchored in the named activities","linkedLeverIds":[],"linkedActivityIds":["operations"],"tradeoff":{"chosen":"...","deferred":"...","cost":"..."},"rejectedAlternative":{"option":"...","reason":"..."},"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"verb + artifact + role"}],
+  "initiatives": [{"title":"...","description":"...","type":"strategic|operational|defensive|growth","estimatedImpact":"high|medium|low","estimatedEffort":"high|medium|low","rationale":"...","linkedItems":["operations"]}],
+  "outputCandidates": [{"outputType":"initiative|report|presentation|idea","title":"...","description":"...","linkedActivityIds":["operations"],"rationale":"...","readiness":"ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}],
   "selfCheck": {"signature":"pass|fail","formulaComplete":"pass|fail","numbersFromFacts":"pass|fail","falsifiable":"pass|fail","tradeoffPresent":"pass|fail","effectHasHorizon":"pass|fail"}
 }`;
 }

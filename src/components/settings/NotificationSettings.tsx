@@ -279,8 +279,8 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
         {!loadError && (
           <>
             {/* Channel Headers */}
-            <div className="grid grid-cols-12 gap-4 pb-4 border-b border-white/10">
-              <div className="col-span-5 text-sm font-medium text-slate-600 dark:text-slate-500">
+            <div className="grid grid-cols-12 gap-4 pb-4 border-b border-c-border-subtle">
+              <div className="col-span-5 text-sm font-medium text-c-text-secondary">
                 {t('settings.notifications.activity', 'Activity')}
               </div>
               <div
@@ -366,9 +366,9 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
 
             {/* Info Box */}
             {integrations.length > 0 && (
-              <div className="p-4 bg-primary-600/5 border border-primary-500/20 rounded-lg">
-                <p className="text-sm text-slate-600 dark:text-slate-500">
-                  <Bell size={14} className="inline mr-2 text-primary-400" />
+              <div className="p-4 bg-c-accent-soft border border-c-accent rounded-lg">
+                <p className="text-sm text-c-text-secondary">
+                  <Bell size={14} className="inline mr-2 text-c-accent" />
                   {t(
                     'settings.notifications.integrationNote',
                     `You have ${integrations.length} connected integration(s). Notifications can be sent to these channels as well.`
@@ -389,7 +389,7 @@ const ChannelHeader: React.FC<{ icon: React.ElementType; label: string }> = ({
   label,
 }) => (
   <div className="text-center">
-    <div className="flex flex-col items-center gap-1 text-slate-600 dark:text-slate-500">
+    <div className="flex flex-col items-center gap-1 text-c-text-secondary">
       <Icon size={16} />
       <span className="text-xs font-medium">{label}</span>
     </div>
@@ -419,16 +419,16 @@ const NotificationRow: React.FC<NotificationRowProps> = ({
   <div
     className={cn(
       'grid grid-cols-12 gap-4 items-center py-4',
-      !isLast && 'border-b border-white/5'
+      !isLast && 'border-b border-c-border-subtle'
     )}
   >
     <div className="col-span-5 flex items-start gap-3">
-      <div className="p-2 bg-navy-700/50 rounded-lg flex-shrink-0">
-        <Icon size={16} className="text-slate-600 dark:text-slate-500" />
+      <div className="p-2 bg-c-surface-raised rounded-lg flex-shrink-0">
+        <Icon size={16} className="text-c-text-secondary" />
       </div>
       <div>
-        <h4 className="text-sm font-medium text-white">{title}</h4>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{description}</p>
+        <h4 className="text-sm font-medium text-c-text">{title}</h4>
+        <p className="text-xs text-c-text-muted mt-0.5">{description}</p>
       </div>
     </div>
     <div
@@ -470,13 +470,13 @@ const NotificationToggle: React.FC<{ checked: boolean; onChange: () => void }> =
     aria-checked={checked}
     className={cn(
       'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200',
-      'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-navy-900',
-      checked ? 'bg-navy-900' : 'bg-white/10'
+      'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:ring-offset-2 focus:ring-offset-navy-900',
+      checked ? 'bg-navy-900' : 'bg-c-surface-raised'
     )}
   >
     <span
       className={cn(
-        'inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform duration-200',
+        'inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform duration-200',
         checked ? 'translate-x-6' : 'translate-x-1'
       )}
     />

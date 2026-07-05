@@ -24,6 +24,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import ReactFlow, {
   addEdge,
+  applyNodeChanges,
   Background,
   type Connection,
   ConnectionMode,
@@ -42,6 +43,7 @@ import ReactFlow, {
 } from 'reactflow';
 
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
+import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { Api, getMapVersionFromPayload } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import {
@@ -53,9 +55,9 @@ import {
 } from '@/utils/artifactLinks';
 
 import TeresaMark from '../shared/TeresaMark';
-import { useConfirmDialog } from './shared/ConfirmDialog';
-import { CanvasZoomControls } from './canvas/CanvasZoomControls';
 import { getCanvasBg } from './canvas/canvasBackground';
+import { CanvasZoomControls } from './canvas/CanvasZoomControls';
+import { useIdeaCollab } from './canvas/useIdeaCollab';
 import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import {
   IDEA_STAGE_COLORS,
@@ -73,7 +75,6 @@ import {
   type MindMapInteractionMode,
 } from './ideaSelectionTypes';
 import { knowledgeNodeTypes } from './knowledge/KnowledgeCardNodes';
-import { useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
 import { ActivityFeed, pushActivity } from './mindmap/ActivityFeed';
 import { AddEvidenceModal } from './mindmap/AddEvidenceModal';
 import { AIAutoClustering, type Cluster } from './mindmap/AIAutoClustering';
@@ -102,6 +103,8 @@ import { EmbedInReports } from './mindmap/EmbedInReports';
 import { ExportDiagramCode } from './mindmap/ExportDiagramCode';
 import { ExportPowerPoint } from './mindmap/ExportPowerPoint';
 import { FloatingNodeToolbar } from './mindmap/FloatingNodeToolbar';
+import { type AlignMode, computeAlignDistribute } from './mindmap/alignDistribute';
+import { SmartGuidesOverlay } from './mindmap/SmartGuidesOverlay';
 import { GradientEdge } from './mindmap/GradientEdge';
 import { IdeaFunnelAnalytics } from './mindmap/IdeaFunnelAnalytics';
 import { ImageUrlModal } from './mindmap/ImageUrlModal';
@@ -109,6 +112,7 @@ import { ImportExternalMap } from './mindmap/ImportExternalMap';
 import { InterviewToMap } from './mindmap/InterviewToMap';
 import { LabeledEdge } from './mindmap/LabeledEdge';
 import { LargeMapOptimizer } from './mindmap/LargeMapOptimizer';
+import { shouldVirtualize } from './mindmap/virtualization';
 import { BranchHealthDot, computeBranchHealth, MapHealthScore } from './mindmap/MapHealthScore';
 import { MindMap3DView } from './mindmap/MindMap3DView';
 import { MindmapCommandPalette } from './mindmap/MindmapCommandPalette';
@@ -116,12 +120,14 @@ import { normalizeMindmapNodeQuickAction } from './mindmap/mindmapInteractionGra
 import {
   appendAIHistoryEntry,
   applyNodeStyle,
+  applyStyleToNodes,
   collectDescendantIds,
   copyNodeStyle,
 } from './mindmap/mindMapNodeModel';
 import { type NodeComment, NodeCommentThread } from './mindmap/NodeCommentThread';
 import { NodeContextMenu } from './mindmap/NodeContextMenu';
 import { type NodeDetailData, NodeDetailDrawer, type NodeStatus } from './mindmap/NodeDetailDrawer';
+import { UnifiedNodeDetailDrawer } from './mindmap/UnifiedNodeDetailDrawer';
 import {
   GlowWrapper,
   MaturityRing,
@@ -150,6 +156,8 @@ import {
 import { useMindMapPersistence } from './mindmap/useMindMapPersistence';
 import { useMindMapQuickActions } from './mindmap/useMindMapQuickActions';
 import { VoiceToNode } from './mindmap/VoiceToNode';
+import { useConfirmDialog } from './shared/ConfirmDialog';
+import { useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
 type IdeaNodeData = NodeDetailData & {
   _depth?: number;
 };
@@ -691,6 +699,14 @@ const BRANCH_COLORS: Record<
 // V5-IDEA-43: Hierarchical color system — depth-based opacity modulation
 const DEPTH_OPACITY = [1, 0.85, 0.7, 0.55, 0.4] as const;
 
+/** Edge colors for AI-detected dependency types (AIDependencyDetector). */
+const DEP_EDGE_COLOR: Record<string, string> = {
+  depends_on: 'var(--c-danger)',
+  enables: 'var(--c-success)',
+  conflicts_with: 'var(--c-warning)',
+  related_to: 'var(--c-info)',
+};
+
 function getNodeDepth(data: IdeaNodeData) {
   return data._depth ?? 0;
 }
@@ -917,8 +933,8 @@ const MindMapInteractionModeContext = React.createContext<MindMapInteractionMode
 const MindMapIdeaIdContext = React.createContext<string>('');
 
 const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, selected }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t, i18n } = useTranslation();
+  const isPolish = i18n.language?.startsWith('pl');
   const interactionMode = useContext(MindMapInteractionModeContext);
   const ideaId = useContext(MindMapIdeaIdContext);
   const { getNodes, getEdges } = useReactFlow();
@@ -1102,11 +1118,19 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
 
   const labelRef = useRef(data.label);
   labelRef.current = data.label;
-  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    setEditValue(String(labelRef.current || ''));
-    setEditing(true);
-  }, []);
+  // DP-3 (T7 Part B): a node locked by another collaborator cannot enter
+  // inline edit mode — the drawer/inline text editor stays read-only until
+  // the peer releases the lock.
+  const isRemoteLocked = !!data._remoteLocked;
+  const handleDoubleClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (isRemoteLocked) return;
+      setEditValue(String(labelRef.current || ''));
+      setEditing(true);
+    },
+    [isRemoteLocked]
+  );
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -1199,15 +1223,22 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
       <div
         onDoubleClick={handleDoubleClick}
         style={nodeSurfaceStyle}
+        title={
+          isRemoteLocked
+            ? t('mindmap.thisNodeIsBeingEditedBy')
+            : undefined
+        }
         className={`group px-3 py-2 ${shapeClass} border-2 ${!accentColor && tagColor ? tagColor.borderClass : colors.border} ${!accentColor && tagColor ? tagColor.bgClass : colors.bg} ${depthOpacity} ${
-          data._dropTarget
-            ? 'ring-3 ring-slate-400 ring-offset-2 border-slate-500 shadow-lg shadow-slate-500/30'
-            : data._justMoved
-              ? 'ring-2 ring-emerald-400 animate-pulse'
-              : selected
-                ? `ring-2 ${colors.ring}`
-                : ''
-        } cursor-pointer min-w-[120px] max-w-[210px] relative transition-colors duration-150`}
+          data._searchHit
+            ? 'ring-offset-2 shadow-hig-focus animate-pulse'
+            : data._dropTarget
+              ? 'ring-3 ring-slate-400 ring-offset-2 border-slate-500 shadow-lg shadow-slate-500/30'
+              : data._justMoved
+                ? 'ring-2 ring-emerald-400 animate-pulse'
+                : selected
+                  ? `ring-2 ${colors.ring}`
+                  : ''
+        } ${isRemoteLocked ? 'opacity-50 grayscale cursor-not-allowed' : 'cursor-pointer'} min-w-[120px] max-w-[210px] relative transition-colors duration-150`}
       >
         <Handle type="target" position={Position.Left} id="target-left" className={handleTarget} />
         <Handle type="target" position={Position.Top} id="target-top" className={handleTarget} />
@@ -1228,8 +1259,8 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
           <>
             <button
               type="button"
-              aria-label={isPl ? 'Otwórz właściwości węzła' : 'Open node properties'}
-              title={isPl ? 'Otwórz właściwości węzła' : 'Open node properties'}
+              aria-label={t('mindmap.openNodeProperties')}
+              title={t('mindmap.openNodeProperties')}
               onClick={(e) => {
                 e.stopPropagation();
                 window.dispatchEvent(
@@ -1248,7 +1279,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
           <div className="nodrag absolute -right-3 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-1">
             <button
               type="button"
-              title={isPl ? 'Dodaj gałąź (Tab)' : 'Add child (Tab)'}
+              title={t('mindmap.addChildTab')}
               className="w-6 h-6 flex items-center justify-center rounded-full bg-slate-600 text-white hover:bg-slate-700 active:scale-[0.98] transition-all"
               onClick={(e) => {
                 e.stopPropagation();
@@ -1267,7 +1298,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
           <div className="nodrag absolute -bottom-3 left-1/2 -translate-x-1/2 z-20">
             <button
               type="button"
-              title={isPl ? 'Dodaj sąsiada (Shift+Enter)' : 'Add sibling (Shift+Enter)'}
+              title={t('mindmap.addSiblingShiftEnter')}
               className="w-5 h-5 flex items-center justify-center rounded-full bg-slate-500 text-white hover:bg-slate-600 active:scale-[0.98] transition-all opacity-70 hover:opacity-100"
               onClick={(e) => {
                 e.stopPropagation();
@@ -1326,9 +1357,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
         {nodeStatus === 'converted' && data._convertedTo && (
           <div
             className="absolute -bottom-1 -left-1 flex items-center gap-0.5 rounded-full bg-navy-900 text-white px-1.5 py-0.5 text-[7px] font-bold shadow-sm dark:bg-white dark:text-navy-950"
-            title={
-              isPl ? `Skonwertowano na: ${data._convertedTo}` : `Converted to: ${data._convertedTo}`
-            }
+            title={t('mindmap.convertedToTarget', { target: data._convertedTo })}
           >
             <ExternalLink size={8} />
             <span className="uppercase">{String(data._convertedTo).replace('_', ' ')}</span>
@@ -1360,7 +1389,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                 onKeyDown={handleKeyDown}
                 rows={2}
                 className="w-full text-[11px] font-semibold text-slate-800 dark:text-slate-200 bg-transparent border-none outline-none resize-none p-0 leading-tight nodrag"
-                placeholder={isPl ? 'Wpisz…' : 'Type…'}
+                placeholder={t('mindmap.type')}
               />
               {loadingSuggestions && suggestions.length === 0 && editValue.trim() === '' && (
                 <div className="flex flex-wrap gap-1 mt-1 nodrag">
@@ -1408,7 +1437,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   <div
                     className={`text-[11px] font-semibold ${data.label ? colors.text : 'text-slate-600 dark:text-slate-500 italic'} line-clamp-2 leading-tight`}
                   >
-                    {data.label || (isPl ? 'Kliknij, aby wpisać…' : 'Click to type…')}
+                    {data.label || (t('mindmap.clickToType'))}
                   </div>
                   {data.nodeType && (
                     <div className="text-[9px] text-slate-600 dark:text-slate-500 mt-0.5 uppercase tracking-wide">
@@ -1462,7 +1491,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   }}
                   className="nodrag mt-0.5 flex items-center gap-0.5 text-slate-600 hover:bg-slate-100/80 dark:hover:bg-slate-700/50 rounded px-0.5 transition-colors"
                   title={
-                    data._collapsed ? (isPl ? 'Rozwiń' : 'Expand') : isPl ? 'Zwiń' : 'Collapse'
+                    data._collapsed ? (t('mindmap.expand')) : t('mindmap.collapse')
                   }
                 >
                   {data._collapsed ? <ChevronRight size={11} /> : <ChevronDown size={11} />}
@@ -1498,12 +1527,15 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   <StickyNote size={9} className="text-amber-400 dark:text-amber-500 shrink-0" />
                 )}
                 {data.riskNote && (
-                  <AlertTriangle size={9} className="text-danger-400 dark:text-danger-500 shrink-0" />
+                  <AlertTriangle
+                    size={9}
+                    className="text-danger-400 dark:text-danger-500 shrink-0"
+                  />
                 )}
                 {Array.isArray(data.evidenceLinks) && data.evidenceLinks.length > 0 && (
                   <span
                     className="inline-flex items-center gap-0.5 shrink-0"
-                    title={`${data.evidenceLinks.length} ${isPl ? 'dowodów' : 'evidence'}`}
+                    title={`${data.evidenceLinks.length} ${t('mindmap.evidence')}`}
                   >
                     <Link2 size={8} className="text-blue-400 dark:text-blue-500" />
                     <span className="text-[7px] font-bold text-blue-400 dark:text-blue-500">
@@ -1627,7 +1659,7 @@ function MindMapInner({
   onInteractionModeChange,
   externalRuntime,
 }: IdeaRecommendationMapProps) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const currentUser = useAppStore((state) => state.currentUser);
   const isPolish = useMemo(() => i18n.language?.startsWith('pl'), [i18n.language]);
   const isDarkMindmap = useIsDark();
@@ -1906,6 +1938,9 @@ function MindMapInner({
   }, [debugTick]);
 
   const [showMiniMap, setShowMiniMap] = useState(false);
+  // M06 Fala 3.1: snap-to-grid toggle (local, default OFF even when the flag is
+  // ON). 16px grid matches the mind-map spacing rhythm.
+  const [snapEnabled, setSnapEnabled] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -1948,10 +1983,10 @@ function MindMapInner({
     React.Dispatch<React.SetStateAction<Node[]>>,
     (changes: unknown) => void,
   ];
-  const [edges, setEdges, onEdgesChange] = useEdgesState([] as Edge[]) as [
+  const [edges, setEdges, baseOnEdgesChange] = useEdgesState([] as Edge[]) as [
     Edge[],
     React.Dispatch<React.SetStateAction<Edge[]>>,
-    (changes: unknown) => void,
+    (changes: import('reactflow').EdgeChange[]) => void,
   ];
 
   // Initial viewport: restore this idea's saved viewport, otherwise fit the whole
@@ -2000,8 +2035,7 @@ function MindMapInner({
     if (!locked) {
       const ae = document.activeElement as HTMLElement | null;
       const typingElsewhere =
-        ae &&
-        (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
+        ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
       if (!typingElsewhere) {
         try {
           containerRef.current?.focus({ preventScroll: true });
@@ -2013,25 +2047,44 @@ function MindMapInner({
   }, [nodesInitialized, nodes.length, ideaId, fitView, setViewport, locked]);
 
   // ── Graph CRUD collaboration ──────────────────────────────────────────────
-  const collabSendRef = useRef<((msg: any) => void) | null>(null);
-
-  const registerCollabSend = useCallback((sendFn: (msg: any) => void) => {
-    collabSendRef.current = sendFn;
-  }, []);
-
-  const broadcastGraphPatch = useCallback((operations: Array<{ op: string; data: any }>) => {
-    if (collabSendRef.current && operations.length > 0) {
-      collabSendRef.current({ type: 'graph_patch', operations });
-    }
-  }, []);
+  // DP-3 (T6): shared useIdeaCollab (same hook as the whiteboard) applies
+  // collaborators' graph_patch ops to the live canvas via functional
+  // setNodes/setEdges — remote-apply without re-hydration or canvas remount.
+  // DP-3 (T7 Part A): the mind map now also EMITS local mutations through the
+  // same hook (previously only the whiteboard called broadcast* — the map
+  // defined but never invoked these, so local edits never reached peers).
+  // `broadcast*` internally no-ops while `applyingRemoteRef` is held, so
+  // applying a remote patch never echoes back onto the wire.
+  const {
+    registerCollabSend,
+    broadcastGraphPatch,
+    broadcastNodeChanges,
+    broadcastEdgeChanges,
+    broadcastNodeUpdate,
+    broadcastEdgeAdd,
+  } = useIdeaCollab({
+    ideaId,
+    tool: 'mindmap',
+    currentUserId: currentUser?.id || 'anonymous',
+    setNodes,
+    setEdges,
+  });
 
   const updateNodeDataById = useCallback(
     (nodeId: string, updater: (data: any) => any) => {
+      let nextData: any = null;
       setNodes((prev: Node[]) =>
-        prev.map((n) => (n.id === nodeId ? { ...n, data: updater(n.data) } : n))
+        prev.map((n) => {
+          if (n.id !== nodeId) return n;
+          nextData = updater(n.data);
+          return { ...n, data: nextData };
+        })
       );
+      // DP-3 (T7 Part A): broadcast style/priority/assignee/image/artifact
+      // patches applied through the floating toolbar (shared setter).
+      if (nextData) broadcastNodeUpdate({ id: nodeId, data: nextData } as any);
     },
-    [setNodes]
+    [broadcastNodeUpdate, setNodes]
   );
 
   // ── Collapse/Expand ──────────────────────────────────────────────────────
@@ -2039,6 +2092,11 @@ function MindMapInner({
   const [drillPath, setDrillPath] = useState<BreadcrumbItem[]>([]);
   const [remoteLockedNodeIds, setRemoteLockedNodeIds] = useState<Set<string>>(new Set());
   const drillFocusId = drillPath.length > 0 ? drillPath[drillPath.length - 1].nodeId : null;
+
+  // M06 Fala 3.2: active search-result highlight (IdeaUnifiedSearch → this
+  // node id). Purely a rendering flag (mirrors _dropTarget/_justMoved) — no
+  // structural change, cleared after a short pulse so it doesn't linger.
+  const [searchHitNodeId, setSearchHitNodeId] = useState<string | null>(null);
 
   // Apply collapse visibility + drill-down filtering
   const visibleNodes = useMemo(() => {
@@ -2125,7 +2183,7 @@ function MindMapInner({
     );
 
     toast(
-      isPolish ? 'Zaznaczenie przeniesione — gałąź zwinięta' : 'Selection moved — branch collapsed',
+      t('mindmap.selectionMovedBranchCollapsed'),
       { id: 'mm-op-cue', duration: 2000 }
     );
   }, [edges, isPolish, setNodes, visibleNodes]);
@@ -2172,18 +2230,28 @@ function MindMapInner({
     return focusFilteredNodes.map((n) => {
       const extra: Record<string, unknown> = {};
       if (simplifiedMode) extra._simplified = true;
+      // DP-3 (T7 Part B): flag nodes locked by another collaborator so the
+      // node components can grey out + block inline editing. Functional-only
+      // (data flag), no layout/remount — matches the existing _dropTarget /
+      // _justMoved pattern.
+      const remoteLocked = remoteLockedNodeIds.has(n.id);
+      if (remoteLocked !== !!n.data?._remoteLocked) extra._remoteLocked = remoteLocked;
+      // M06 Fala 3.2: flag the active search-result node for a transient
+      // highlight ring — same pattern as _remoteLocked above.
+      const isSearchHit = searchHitNodeId != null && n.id === searchHitNodeId;
+      if (isSearchHit !== !!n.data?._searchHit) extra._searchHit = isSearchHit;
       if (n.type === 'branch') {
         const count = structuralChildCount.get(n.id) || 0;
-        if (count !== n.data?.count || simplifiedMode) {
+        if (count !== n.data?.count || simplifiedMode || Object.keys(extra).length > 0) {
           return { ...n, data: { ...n.data, count, ...extra } };
         }
       }
-      if (simplifiedMode) {
+      if (Object.keys(extra).length > 0) {
         return { ...n, data: { ...n.data, ...extra } };
       }
       return n;
     });
-  }, [edges, focusFilteredNodes, simplifiedMode]);
+  }, [edges, focusFilteredNodes, remoteLockedNodeIds, simplifiedMode, searchHitNodeId]);
 
   const visibleIdeaNodeCount = useMemo(
     () => enrichedNodes.filter((n) => n.type === 'idea' && !n.hidden).length,
@@ -2341,9 +2409,11 @@ function MindMapInner({
         setNodes((prev: Node[]) =>
           prev.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, ...dataPatch } } : n))
         );
+        // DP-3 (T7 Part A): broadcast drawer field edits (status/notes/context/…).
+        broadcastNodeUpdate({ id: nodeId, data: dataPatch } as any);
       }
     },
-    [setNodes]
+    [broadcastNodeUpdate, setNodes]
   );
 
   const handleConvertNode = useCallback(
@@ -2468,6 +2538,13 @@ function MindMapInner({
             source: 'handler',
           });
         }
+        // DP-3 (T7 Part A): emit final drag/resize positions + removals to
+        // collaborators — mirrors the proven whiteboard wiring (L-02). Only
+        // dragging===false / resizing===false / remove changes are sent
+        // (see useIdeaCollab.broadcastNodeChanges); selection churn and
+        // in-flight frames are filtered out there, so this is safe to call
+        // unconditionally on every change batch.
+        broadcastNodeChanges(changes, applyNodeChanges(changes, nodes));
         baseOnNodesChange(changes);
       } catch (err: any) {
         debugLog(`ERROR in onNodesChange: ${err?.message || err}`, {
@@ -2477,7 +2554,17 @@ function MindMapInner({
         console.error('[MindMap Debug] onNodesChange error:', err);
       }
     },
-    [baseOnNodesChange, debugLog]
+    [baseOnNodesChange, broadcastNodeChanges, debugLog, nodes]
+  );
+
+  // DP-3 (T7 Part A): broadcast edge removals (e.g. Delete on a selected edge)
+  // to collaborators — mirrors broadcastNodeChanges above / whiteboard L-02.
+  const onEdgesChange = useCallback(
+    (changes: import('reactflow').EdgeChange[]) => {
+      broadcastEdgeChanges(changes);
+      baseOnEdgesChange(changes);
+    },
+    [baseOnEdgesChange, broadcastEdgeChanges]
   );
 
   // ── GAP-3: Map structure type ─────────────────────────────────────
@@ -2579,14 +2666,15 @@ function MindMapInner({
     remoteLockedNodeIds,
     autoLayout,
     partialLayoutSubtree,
+    // DP-3 (T7 Part A): broadcast graph CRUD (add/remove node+edge, reparent)
+    // performed inside this hook so collaborators see them live.
+    broadcastGraphPatch,
     confirmSubtreeDelete: (childCount: number) =>
       confirmSubtreeDelete({
-        title: isPolish ? 'Usunąć węzły?' : 'Delete nodes?',
-        description: isPolish
-          ? `Usunięcie obejmie ${childCount} podwęzł${childCount === 1 ? '' : 'ów'}. Tej operacji nie można cofnąć po synchronizacji.`
-          : `This will also delete ${childCount} child node${childCount === 1 ? '' : 's'}. This cannot be undone after sync.`,
-        confirmLabel: isPolish ? 'Usuń' : 'Delete',
-        cancelLabel: isPolish ? 'Anuluj' : 'Cancel',
+        title: t('mindmap.deleteNodes'),
+        description: t('mindmap.deleteSubtreeWarning', { count: childCount }),
+        confirmLabel: t('mindmap.delete'),
+        cancelLabel: t('mindmap.cancel'),
         variant: 'danger',
       }),
   });
@@ -2608,10 +2696,10 @@ function MindMapInner({
   useEffect(() => {
     window.dispatchEvent(
       new CustomEvent('idea-mindmap-sidekick-context', {
-        detail: sidekickCtx,
+        detail: { ...sidekickCtx, ideaId, ideaTitle },
       })
     );
-  }, [sidekickCtx]);
+  }, [sidekickCtx, ideaId, ideaTitle]);
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -2686,7 +2774,7 @@ function MindMapInner({
       const wasCollapsed = collapsedNodeIds.has(nodeId);
       toggleCollapseNode(nodeId, setCollapsedNodeIds);
       toast(
-        wasCollapsed ? (isPolish ? 'Rozwinięto' : 'Expanded') : isPolish ? 'Zwinięto' : 'Collapsed',
+        wasCollapsed ? (t('mindmap.expanded')) : t('mindmap.collapsed'),
         { id: 'mm-op-cue', duration: 1200 }
       );
     },
@@ -2771,9 +2859,9 @@ function MindMapInner({
         const ok = reparentNode(node.id, validTarget.id);
         if (ok) {
           toast.success(
-            isPolish
-              ? `Przeniesiono pod „${validTarget.data?.label || validTarget.id}"`
-              : `Moved under "${validTarget.data?.label || validTarget.id}"`
+            t('mindmap.movedUnderTarget', {
+              label: validTarget.data?.label || validTarget.id,
+            })
           );
         }
       }
@@ -2797,14 +2885,12 @@ function MindMapInner({
       .filter(Boolean)
       .join(' ')
       .trim();
-    return fullName || currentUser?.email || (isPolish ? 'Ty' : 'You');
+    return fullName || currentUser?.email || (t('mindmap.you'));
   }, [currentUser?.email, currentUser?.firstName, currentUser?.lastName, isPolish]);
 
   const notifyLockedNode = useCallback(() => {
     toast.error(
-      isPolish
-        ? 'Ten węzeł jest aktualnie zablokowany przez inną osobę'
-        : 'This node is currently locked by another collaborator'
+      t('mindmap.thisNodeIsCurrentlyLockedBy')
     );
   }, [isPolish]);
 
@@ -2852,41 +2938,8 @@ function MindMapInner({
   }, [contextMenu, drawerNodeId, remoteLockedNodeIds, setNodes]);
 
   // ── Apply incoming graph patches from collaborators ──────────────────────
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      if (!detail?.operations || detail.userId === currentUser?.id) return;
-
-      for (const op of detail.operations) {
-        switch (op.op) {
-          case 'add_node':
-            setNodes((prev: Node[]) => [...prev, op.data]);
-            break;
-          case 'remove_node':
-            setNodes((prev: Node[]) => prev.filter((n: Node) => n.id !== op.data.id));
-            break;
-          case 'update_node':
-            setNodes((prev: Node[]) =>
-              prev.map((n: Node) => (n.id === op.data.id ? { ...n, ...op.data } : n))
-            );
-            break;
-          case 'add_edge':
-            setEdges((prev: Edge[]) => [...prev, op.data]);
-            break;
-          case 'remove_edge':
-            setEdges((prev: Edge[]) => prev.filter((e: Edge) => e.id !== op.data.id));
-            break;
-          case 'update_edge':
-            setEdges((prev: Edge[]) =>
-              prev.map((e: Edge) => (e.id === op.data.id ? { ...e, ...op.data } : e))
-            );
-            break;
-        }
-      }
-    };
-    window.addEventListener('idea-collab-graph-patch', handler);
-    return () => window.removeEventListener('idea-collab-graph-patch', handler);
-  }, [currentUser?.id, setNodes, setEdges]);
+  // DP-3 (T6): handled by the shared useIdeaCollab hook above (guarded by
+  // applyingRemoteRef, idempotent adds, functional updates — no remount).
 
   // Node operations (findParentId, findChildrenIds, addChildNode, addSiblingNode,
   // deleteSelected, duplicateSelected, focusSelectedNode, reparentSelectedPromote,
@@ -2951,9 +3004,11 @@ function MindMapInner({
           n.id === nodeId ? { ...n, data: { ...n.data, label, _startEditing: undefined } } : n
         )
       );
+      // DP-3 (T7 Part A): broadcast the committed label to collaborators.
+      broadcastNodeUpdate({ id: nodeId, data: { label } } as any);
 
       if (label !== originalLabel) {
-        toast.success(isPolish ? 'Zmieniono nazwę' : 'Renamed', {
+        toast.success(t('mindmap.renamed'), {
           id: 'mm-op-cue',
           duration: 1500,
         });
@@ -2961,7 +3016,7 @@ function MindMapInner({
     };
     window.addEventListener('idea-mindmap-node-edit', handler);
     return () => window.removeEventListener('idea-mindmap-node-edit', handler);
-  }, [debugLog, isPolish, nodes, pushUndo, setEdges, setNodes]);
+  }, [broadcastNodeUpdate, debugLog, isPolish, nodes, pushUndo, setEdges, setNodes]);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -2972,6 +3027,35 @@ function MindMapInner({
     window.addEventListener('idea-mindmap-open-drawer', handler);
     return () => window.removeEventListener('idea-mindmap-open-drawer', handler);
   }, []);
+
+  // M06 Fala 3.2: IdeaUnifiedSearch (⌘F) dispatches this on Enter/Shift+Enter
+  // navigation and on result click. Jump the viewport to the matched node and
+  // pulse-highlight it — the search overlay itself already tracks "X/Y" state,
+  // this is purely the canvas-side reaction that was previously missing.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail || {};
+      if (detail.ideaId && detail.ideaId !== ideaId) return;
+      const nodeId = String(detail.nodeId || '').trim();
+      if (!nodeId) return;
+      setSearchHitNodeId(nodeId);
+      try {
+        fitView({ nodes: [{ id: nodeId } as any], padding: 0.6, duration: 350 });
+      } catch {
+        /* fitView throws if the canvas is mid-teardown — safe to ignore */
+      }
+    };
+    window.addEventListener('idea-workspace-highlight-node', handler);
+    return () => window.removeEventListener('idea-workspace-highlight-node', handler);
+  }, [fitView, ideaId]);
+
+  // Clear the pulse after a short delay so it doesn't linger once the user
+  // moves on (matches the _justMoved ring's transient nature elsewhere).
+  useEffect(() => {
+    if (!searchHitNodeId) return;
+    const t = setTimeout(() => setSearchHitNodeId(null), 1600);
+    return () => clearTimeout(t);
+  }, [searchHitNodeId]);
 
   // ── Handle edge label edits ──────────────────────────────────────────────
   useEffect(() => {
@@ -3109,7 +3193,7 @@ function MindMapInner({
         setNodes((prev: Node[]) => [...prev, newNode]);
         setEdges((prev: Edge[]) => [...prev, newEdge]);
       }
-      toast.success(isPolish ? 'Wstawiono do mapy' : 'Inserted into map', { duration: 1000 });
+      toast.success(t('mindmap.insertedIntoMap'), { duration: 1000 });
     };
     window.addEventListener(IDEA_WORKSPACE_INSERT_EVENT, handler);
     return () => window.removeEventListener(IDEA_WORKSPACE_INSERT_EVENT, handler);
@@ -3268,7 +3352,7 @@ function MindMapInner({
           detail: `Alt+${e.key} → level ${level}`,
         });
         setFoldLevel(level);
-        toast.success(isPolish ? `Widok: poziom ${level}` : `Showing level ${level}`, {
+        toast.success(t('mindmap.quickActions.viewLevel', { level }), {
           duration: 1200,
         });
         return;
@@ -3281,7 +3365,7 @@ function MindMapInner({
           detail: 'Alt+9 → expand all',
         });
         setFoldLevel(Infinity);
-        toast.success(isPolish ? 'Wszystko rozwinięte' : 'All expanded', { duration: 1200 });
+        toast.success(t('mindmap.allExpanded'), { duration: 1200 });
         return;
       }
 
@@ -3575,9 +3659,10 @@ function MindMapInner({
         },
       };
       setEdges((prev: Edge[]) => addEdge(newEdge, prev));
+      broadcastEdgeAdd(newEdge);
       updateInteractionMode('select');
     },
-    [locked, pushUndo, setEdges, updateInteractionMode]
+    [broadcastEdgeAdd, locked, pushUndo, setEdges, updateInteractionMode]
   );
 
   const onEdgeClick = useCallback(
@@ -3591,7 +3676,7 @@ function MindMapInner({
       if (currentState === 'reversed' && isUser) {
         pushUndo();
         setEdges((prev: Edge[]) => (prev || []).filter((e: Edge) => e.id !== edge.id));
-        toast.success(isPolish ? 'Połączenie usunięte' : 'Connection removed', { duration: 1200 });
+        toast.success(t('mindmap.connectionRemoved'), { duration: 1200 });
         return;
       }
 
@@ -3660,7 +3745,7 @@ function MindMapInner({
       if (action === 'edge_add_label') {
         const current = targetEdge.data?.label || '';
         const label = window.prompt(
-          isPolish ? 'Etykieta połączenia:' : 'Connection label:',
+          t('mindmap.connectionLabel'),
           current
         );
         if (label !== null) {
@@ -3729,7 +3814,7 @@ function MindMapInner({
               : e
           )
         );
-        toast.success(isPolish ? 'Kierunek odwrócony' : 'Direction reversed', { duration: 800 });
+        toast.success(t('mindmap.directionReversed'), { duration: 800 });
       }
 
       if (action === 'edge_change_style') {
@@ -3755,9 +3840,7 @@ function MindMapInner({
         const current = targetEdge.data?.relation || '';
         const relations = ['related', 'depends_on', 'blocks', 'supports', 'contradicts'];
         const label = window.prompt(
-          isPolish
-            ? `Typ relacji (${relations.join(', ')}):`
-            : `Relation type (${relations.join(', ')}):`,
+          t('mindmap.relationTypePrompt', { relations: relations.join(', ') }),
           current
         );
         if (label !== null) {
@@ -3772,7 +3855,7 @@ function MindMapInner({
       if (action === 'edge_delete' && relationEdge) {
         pushUndo();
         setEdges((prev: Edge[]) => prev.filter((e) => e.id !== targetEdge.id));
-        toast.success(isPolish ? 'Połączenie usunięte' : 'Connection removed', { duration: 800 });
+        toast.success(t('mindmap.connectionRemoved'), { duration: 800 });
       }
 
       setEdgeContextMenu(null);
@@ -3787,6 +3870,17 @@ function MindMapInner({
     if (selected.type === 'idea') return String((selected as any).data?.branchKey || 'options');
     return 'options';
   }, [nodes]);
+
+  // ── Feature flags (DP-5: honest AI overlays) ─────────────────────────────
+  const { isEnabled: isFeatureEnabled } = useFeatureFlagsContext();
+  // Overlays whose displayed result is a client-side heuristic, not real LLM
+  // output (AIBranchBalancer, AISentimentOverlay, AIAutoClustering,
+  // AIDependencyDetector) — hidden until backed by real AI analysis.
+  // See DEFAULT_FLAGS in useFeatureFlags for the honesty audit details.
+  const heuristicAiOverlaysEnabled = isFeatureEnabled('mindmapHeuristicAiOverlays');
+  // M06 Fala 4.1b: render the single canonical UnifiedNodeDetailDrawer instead of
+  // the legacy NodeDetailDrawer. OFF (default) = today's separate drawer, no change.
+  const drawerUnifiedEnabled = isFeatureEnabled('mindmapDrawerUnified');
 
   // ── Visual modes ─────────────────────────────────────────────────────────
   const [showClusterBubbles, setShowClusterBubbles] = useState(false);
@@ -3907,7 +4001,7 @@ function MindMapInner({
     async (overrideSelectedIdx?: Record<number, boolean>) => {
       if (!aiProposal) return;
       if (locked) {
-        toast((isPolish ? 'Najpierw zaakceptuj wyzwanie.' : 'Accept the challenge first.') as any);
+        toast((t('mindmap.acceptTheChallengeFirst')) as any);
         return;
       }
       const effectiveIdx = overrideSelectedIdx ?? selectedAddIdx;
@@ -3915,7 +4009,7 @@ function MindMapInner({
       const toAddEdges = aiProposal.add?.edges || [];
 
       if (toAddNodes.length === 0) {
-        toast((isPolish ? 'Brak wybranych zmian' : 'No selected changes') as any);
+        toast((t('mindmap.noSelectedChanges')) as any);
         return;
       }
 
@@ -3944,7 +4038,7 @@ function MindMapInner({
                 ...(existing.data || {}),
                 aiExpansionHistory: appendAIHistoryEntry(existing.data?.aiExpansionHistory as any, {
                   timestamp: new Date().toISOString(),
-                  prompt: isPolish ? 'AI expand branch' : 'AI expand branch',
+                  prompt: t('mindmap.aiExpandBranch'),
                   resultSummary: labels.join(', '),
                 }),
               },
@@ -3990,25 +4084,21 @@ function MindMapInner({
         }
 
         toast.success(
-          isPolish
-            ? `Zastosowano propozycje AI (${toAddNodes.length} dodano)`
-            : `Applied AI proposals (${toAddNodes.length} added)`,
+          t('mindmap.appliedAiProposalsCount', { count: toAddNodes.length }),
           { duration: 1200 }
         );
         closeAIModal();
       } catch (err: any) {
         if (err?.status === 409) {
           toast(
-            isPolish
-              ? 'Wykryto konflikt zmian. Odświeżam mapę z serwera.'
-              : 'Change conflict detected. Refreshing map from server.',
+            t('mindmap.changeConflictDetectedRefreshingMapFrom'),
             { icon: '⚠️' }
           );
           closeAIModal();
         } else {
           toast.error(
             err?.message ||
-              (isPolish ? 'Nie udało się zastosować propozycji' : 'Failed to apply proposals')
+              (t('mindmap.failedToApplyProposals'))
           );
         }
       } finally {
@@ -4037,11 +4127,11 @@ function MindMapInner({
   const handleAIExpand = useCallback(
     async (targetNodeId?: string) => {
       if (locked) {
-        toast((isPolish ? 'Najpierw zaakceptuj wyzwanie.' : 'Accept the challenge first.') as any);
+        toast((t('mindmap.acceptTheChallengeFirst')) as any);
         return;
       }
       if (persistence !== 'online') {
-        toast((isPolish ? 'AI wymaga działającego backendu.' : 'AI requires backend.') as any);
+        toast((t('mindmap.aiRequiresBackend')) as any);
         return;
       }
       setSaving(true);
@@ -4086,7 +4176,7 @@ function MindMapInner({
           return [];
         })();
         if (!proposedNodes.length) {
-          toast((isPolish ? 'Brak nowych propozycji' : 'No new suggestions') as any);
+          toast((t('mindmap.noNewSuggestions')) as any);
           return;
         }
 
@@ -4105,7 +4195,7 @@ function MindMapInner({
         setApplySuggestedOrder(false);
         setShowAIModal(true);
       } catch (err: any) {
-        toast.error(err?.message || (isPolish ? 'AI nie zadziałało' : 'AI failed'));
+        toast.error(err?.message || (t('mindmap.aiFailed')));
       } finally {
         setSaving(false);
       }
@@ -4372,7 +4462,7 @@ function MindMapInner({
       const targetId = nodeId || getContextTargetNode()?.id;
       if (!targetId) return;
       setEdges((prev: Edge[]) => prev.filter((e) => e.target !== targetId));
-      toast.success(isPolish ? 'Gałąź odłączona' : 'Branch detached', { duration: 800 });
+      toast.success(t('mindmap.branchDetached'), { duration: 800 });
     },
     [getContextTargetNode, isPolish, setEdges]
   );
@@ -4429,9 +4519,7 @@ function MindMapInner({
       setNodes((prev: Node[]) => [...prev, ...newNodes]);
       setEdges((prev: Edge[]) => [...prev, ...newEdges]);
       toast.success(
-        isPolish
-          ? `Zduplikowano gałąź (${newNodes.length} węzłów)`
-          : `Duplicated branch (${newNodes.length} nodes)`,
+        t('mindmap.duplicatedBranchCount', { count: newNodes.length }),
         { duration: 1000 }
       );
     },
@@ -4449,9 +4537,10 @@ function MindMapInner({
         .map((id) => (nodes as Node[]).find((n) => n.id === id)?.data?.label)
         .filter(Boolean);
 
-      const prompt = isPolish
-        ? `Podsumuj gałąź "${target?.data?.label || targetId}":\n${branchLabels.map((l) => `- ${l}`).join('\n')}`
-        : `Summarize the branch "${target?.data?.label || targetId}":\n${branchLabels.map((l) => `- ${l}`).join('\n')}`;
+      const prompt = t('mindmap.summarizeBranchPrompt', {
+        label: target?.data?.label || targetId,
+        branchList: branchLabels.map((l) => `- ${l}`).join('\n'),
+      });
 
       window.dispatchEvent(
         new CustomEvent('idea-workspace-chat-prompt', { detail: { prompt, ideaId } })
@@ -4480,7 +4569,7 @@ function MindMapInner({
           detail: { action, nodeIds: branchNodeIds, ideaId },
         })
       );
-      toast.success(isPolish ? `Konwersja gałęzi do ${target}` : `Converting branch to ${target}`, {
+      toast.success(t('mindmap.convertingBranchTo', { target }), {
         duration: 1000,
       });
     },
@@ -4550,9 +4639,7 @@ function MindMapInner({
         const links = Array.isArray(ctxNode.data?.artifactLinks) ? ctxNode.data.artifactLinks : [];
         if (links.length === 0) {
           toast(
-            isPolish
-              ? 'Ten wezel nie ma jeszcze artefaktow'
-              : 'This node has no linked artifacts yet'
+            t('mindmap.thisNodeHasNoLinkedArtifacts')
           );
         } else if (links.length === 1) {
           const link = links[0];
@@ -4583,9 +4670,7 @@ function MindMapInner({
         const peer = peerId ? nodes.find((n) => n.id === peerId) : undefined;
         if (!peer) {
           toast(
-            isPolish
-              ? 'Zaznacz drugi wezel, aby utworzyc polaczenie'
-              : 'Select another node to create a connection'
+            t('mindmap.selectAnotherNodeToCreateA')
           );
         } else {
           setEdges((prev: Edge[]) => [
@@ -4626,7 +4711,7 @@ function MindMapInner({
       }
       if (action === 'ctx_copy_style' && ctxNode) {
         setStyleClipboard(copyNodeStyle(ctxNode));
-        toast.success(isPolish ? 'Styl skopiowany' : 'Style copied', { duration: 800 });
+        toast.success(t('mindmap.styleCopied'), { duration: 800 });
       }
       if (action === 'ctx_paste_style' && ctxNode && styleClipboard) {
         setNodes((prev: Node[]) =>
@@ -4639,10 +4724,10 @@ function MindMapInner({
           navigator.clipboard
             .writeText(url)
             .then(() => {
-              toast.success(isPolish ? 'Link skopiowany!' : 'Link copied!', { duration: 1200 });
+              toast.success(t('mindmap.linkCopied'), { duration: 1200 });
             })
             .catch(() => {
-              window.prompt(isPolish ? 'Skopiuj link:' : 'Copy link:', url);
+              window.prompt(t('mindmap.copyLink'), url);
             });
         }
       }
@@ -4723,7 +4808,7 @@ function MindMapInner({
           type: 'idea',
           position: pos,
           data: {
-            label: isPolish ? 'Nowy temat' : 'New topic',
+            label: t('mindmap.newTopic'),
             branchKey: 'uncategorized',
             sourceType: 'manual',
             priority: 50,
@@ -4764,21 +4849,21 @@ function MindMapInner({
 
       if (action === 'pane_collapse_all') {
         setFoldLevel(0);
-        toast.success(isPolish ? 'Widok: poziom 0' : 'Showing level 0', { duration: 1200 });
+        toast.success(t('mindmap.showingLevel0'), { duration: 1200 });
       }
 
       if (action === 'pane_expand_all') {
         setFoldLevel(Infinity);
-        toast.success(isPolish ? 'Wszystko rozwinięte' : 'All expanded', { duration: 1200 });
+        toast.success(t('mindmap.allExpanded'), { duration: 1200 });
       }
 
       if (action === 'pane_fold_1') {
         setFoldLevel(1);
-        toast.success(isPolish ? 'Widok: poziom 1' : 'Showing level 1', { duration: 1200 });
+        toast.success(t('mindmap.showingLevel1'), { duration: 1200 });
       }
       if (action === 'pane_fold_2') {
         setFoldLevel(2);
-        toast.success(isPolish ? 'Widok: poziom 2' : 'Showing level 2', { duration: 1200 });
+        toast.success(t('mindmap.showingLevel2'), { duration: 1200 });
       }
 
       if (action === 'pane_auto_layout') {
@@ -4862,20 +4947,20 @@ function MindMapInner({
 
   const savedLabel = useMemo(() => {
     if (persistence === 'no_route')
-      return isPolish ? 'Backend wymaga restartu' : 'Backend restart required';
+      return t('mindmap.backendRestartRequired');
     if (persistence === 'missing_table')
-      return isPolish ? 'Brakuje tabeli mapy' : 'Map table missing';
+      return t('mindmap.mapTableMissing');
     if (persistence === 'offline')
-      return isPolish ? 'Offline - brak zapisu' : 'Offline - not saving';
-    if (saving) return isPolish ? 'Zapisuję...' : 'Saving...';
-    if (!lastSavedAt) return isPolish ? 'Nie zapisano' : 'Not saved yet';
+      return t('mindmap.offlineNotSaving');
+    if (saving) return t('mindmap.saving2');
+    if (!lastSavedAt) return t('mindmap.notSavedYet');
     const sec = Math.max(1, Math.round((Date.now() - lastSavedAt) / 1000));
-    return isPolish ? `Zapisano ${sec}s temu` : `Saved ${sec}s ago`;
+    return t('mindmap.savedSecondsAgo', { count: sec });
   }, [isPolish, lastSavedAt, persistence, saving]);
   const interactionModeLabel = useMemo(() => {
-    if (interactionMode === 'pan') return isPolish ? 'Tryb: przesuwanie' : 'Mode: pan';
-    if (interactionMode === 'connect') return isPolish ? 'Tryb: łączenie' : 'Mode: connect';
-    return isPolish ? 'Tryb: zaznaczanie' : 'Mode: select';
+    if (interactionMode === 'pan') return t('mindmap.modePan');
+    if (interactionMode === 'connect') return t('mindmap.modeConnect');
+    return t('mindmap.modeSelect');
   }, [interactionMode, isPolish]);
 
   const containerClassName =
@@ -4883,30 +4968,136 @@ function MindMapInner({
       ? 'fixed inset-0 z-[80] bg-slate-50 dark:bg-navy-950'
       : `relative w-full h-full bg-slate-50 dark:bg-navy-950 isolate z-0 ${className || ''}`;
 
+  // M06 Fala 3.2: behind `mindmapMultiToolbar`, a >1 selection shows a shared
+  // styling toolbar anchored above the topmost selected node. OFF keeps the
+  // exact pre-existing behavior (null unless exactly one node is selected).
+  const multiToolbarEnabled = isFeatureEnabled('mindmapMultiToolbar');
+
+  // M06 Fala 3.1: align/distribute buttons + snap-to-grid + smart guides, all
+  // behind `mindmapAlignSnap`. Snap is opt-in even when the flag is ON — it
+  // starts OFF so the flag alone never changes drag behavior on the canvas.
+  const alignSnapEnabled = isFeatureEnabled('mindmapAlignSnap');
+
+  // M06 Fala 3.3: real viewport culling for large maps. We flip ReactFlow's
+  // built-in `onlyRenderVisibleElements` (DOM mounted only for viewport-visible
+  // nodes) instead of stripping nodes from the graph — so the store stays whole
+  // and the minimap, multi-select styling, SmartGuidesOverlay peers and edge
+  // endpoints all keep working for off-screen nodes. Engages only past the
+  // threshold so small/medium maps stay byte-identical to OFF.
+  const virtualizationEnabled = isFeatureEnabled('mindmapVirtualization');
+  const onlyRenderVisibleElements = shouldVirtualize(virtualizationEnabled, nodes.length);
+
   const floatingToolbarInfo = useMemo(() => {
     if (locked) return null;
-    if (selectedNodeIds.length !== 1) return null;
     if (contextMenu) return null;
-    const nodeId = selectedNodeIds[0];
-    const node = (nodes as Node[]).find((n) => n.id === nodeId);
-    if (!node || !node.position) return null;
+    if (selectedNodeIds.length === 1) {
+      const nodeId = selectedNodeIds[0];
+      const node = (nodes as Node[]).find((n) => n.id === nodeId);
+      if (!node || !node.position) return null;
+      const vp = getViewport();
+      const screenX = node.position.x * vp.zoom + vp.x;
+      const screenY = node.position.y * vp.zoom + vp.y;
+      return {
+        nodeId,
+        node,
+        position: { x: screenX + ((node.width || 160) * vp.zoom) / 2, y: screenY },
+        mode: 'single' as const,
+        nodeIds: selectedNodeIds,
+      };
+    }
+    if (!multiToolbarEnabled) return null;
+    if (selectedNodeIds.length <= 1) return null;
+    const selectedSet = new Set(selectedNodeIds);
+    const selected = (nodes as Node[]).filter((n) => selectedSet.has(n.id) && n.position);
+    if (selected.length === 0) return null;
     const vp = getViewport();
-    const screenX = node.position.x * vp.zoom + vp.x;
-    const screenY = node.position.y * vp.zoom + vp.y;
+    // Anchor above the topmost (lowest y) selected node, horizontally
+    // centered over the selection bbox — mirrors the single-node anchor math.
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    for (const n of selected) {
+      const w = n.width || 160;
+      minX = Math.min(minX, n.position.x);
+      maxX = Math.max(maxX, n.position.x + w);
+      minY = Math.min(minY, n.position.y);
+    }
+    const screenX = minX * vp.zoom + vp.x;
+    const screenWidth = (maxX - minX) * vp.zoom;
+    const screenY = minY * vp.zoom + vp.y;
+    // Use the first selected node as the representative node for style
+    // read-back (shows its current color/shape/etc. as the toolbar's value).
+    const repNode = selected[0];
     return {
-      nodeId,
-      node,
-      position: { x: screenX + ((node.width || 160) * vp.zoom) / 2, y: screenY },
+      nodeId: repNode.id,
+      node: repNode,
+      position: { x: screenX + screenWidth / 2, y: screenY },
+      mode: 'multi' as const,
+      nodeIds: selected.map((n) => n.id),
     };
-  }, [locked, selectedNodeIds, nodes, contextMenu, getViewport]);
+  }, [locked, selectedNodeIds, nodes, contextMenu, getViewport, multiToolbarEnabled]);
 
   const handleFloatingToolbarUpdate = useCallback(
     (patch: Record<string, any>) => {
       debugLog(`floatingToolbarUpdate: ${JSON.stringify(patch).slice(0, 100)}`);
       if (!floatingToolbarInfo) return;
+      if (floatingToolbarInfo.mode === 'multi' && floatingToolbarInfo.nodeIds.length > 1) {
+        const targetIds = floatingToolbarInfo.nodeIds;
+        setNodes((prev: Node[]) => applyStyleToNodes(prev, targetIds, patch));
+        for (const nodeId of targetIds) {
+          broadcastNodeUpdate({ id: nodeId, data: patch } as any);
+        }
+        return;
+      }
       updateNodeDataById(floatingToolbarInfo.nodeId, (data: any) => ({ ...data, ...patch }));
     },
-    [debugLog, floatingToolbarInfo, updateNodeDataById]
+    [debugLog, floatingToolbarInfo, updateNodeDataById, setNodes, broadcastNodeUpdate]
+  );
+
+  // M06 Fala 3.1: apply an align/distribute op to the current multi-selection.
+  // Pure geometry (computeAlignDistribute) → position patches; positions are
+  // written through setNodes (no data mutation), pushed onto the undo stack
+  // beforehand, broadcast per-node like a drag, and debounce-persisted. No-op
+  // when the flag is off or the selection is too small for the mode.
+  const applyAlignDistribute = useCallback(
+    (mode: AlignMode) => {
+      if (!alignSnapEnabled || locked) return;
+      const selectedSet = new Set(selectedNodeIds);
+      const selected = (nodes as Node[]).filter((n) => selectedSet.has(n.id) && n.position);
+      const patches = computeAlignDistribute(
+        selected.map((n) => ({
+          id: n.id,
+          position: n.position,
+          width: n.width,
+          height: n.height,
+          data: n.data as any,
+        })),
+        mode
+      );
+      if (patches.length === 0) return;
+      const patchById = new Map(patches.map((p) => [p.id, p.position]));
+      pushUndo();
+      setNodes((prev: Node[]) =>
+        prev.map((n) => {
+          const next = patchById.get(n.id);
+          return next ? { ...n, position: next } : n;
+        })
+      );
+      for (const p of patches) {
+        broadcastNodeUpdate({ id: p.id, position: p.position } as any);
+      }
+      debouncedSave();
+    },
+    [
+      alignSnapEnabled,
+      locked,
+      selectedNodeIds,
+      nodes,
+      pushUndo,
+      setNodes,
+      broadcastNodeUpdate,
+      debouncedSave,
+    ]
   );
 
   return (
@@ -4922,6 +5113,11 @@ function MindMapInner({
             floatingToolbarInfo.nodeId.startsWith('branch-')
           }
           hasChildren={findChildrenIds(floatingToolbarInfo.nodeId).length > 0}
+          mode={floatingToolbarInfo.mode}
+          selectionCount={floatingToolbarInfo.nodeIds.length}
+          showAlign={alignSnapEnabled && floatingToolbarInfo.mode === 'multi'}
+          onAlignDistribute={applyAlignDistribute}
+          canDistribute={floatingToolbarInfo.nodeIds.length >= 3}
           style={{
             color: floatingToolbarInfo.node.data?.color,
             fillOpacity: floatingToolbarInfo.node.data?.fillOpacity,
@@ -4978,7 +5174,7 @@ function MindMapInner({
                     ),
                   }));
                 }
-                toast.success(isPolish ? 'Artefakt odłączony' : 'Artifact detached', {
+                toast.success(t('mindmap.artifactDetached'), {
                   duration: 900,
                 });
               } catch (err: any) {
@@ -4991,7 +5187,7 @@ function MindMapInner({
                 }
                 toast.error(
                   err?.message ||
-                    (isPolish ? 'Nie udało się odłączyć artefaktu' : 'Failed to detach artifact')
+                    (t('mindmap.failedToDetachArtifact'))
                 );
               }
             })();
@@ -5058,6 +5254,7 @@ function MindMapInner({
           canPasteStyle={!!styleClipboard}
           canPasteNodes={hasMindMapClipboard()}
           hasChildren={findChildrenIds(contextMenu.nodeId).length > 0}
+          comingSoonIds={heuristicAiOverlaysEnabled ? [] : ['ctx_dependencies']}
           onClose={() => setContextMenu(null)}
           onAction={handleContextAction}
         />
@@ -5124,13 +5321,13 @@ function MindMapInner({
             <button
               onClick={onClose}
               className="p-0.5 rounded-md text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors shrink-0"
-              title={isPolish ? 'Zamknij mapę' : 'Close map'}
+              title={t('mindmap.closeMap')}
             >
               <X size={12} />
             </button>
           )}
           <h3 className="text-[12px] font-semibold text-slate-700 dark:text-slate-200 leading-snug truncate flex-1 min-w-0">
-            {ideaTitle || (isPolish ? 'Bez tytułu' : 'Untitled')}
+            {ideaTitle || (t('mindmap.untitled'))}
           </h3>
           <span className="hidden sm:inline-flex rounded-full border border-slate-200/80 dark:border-navy-700 px-2 py-0.5 text-[9px] text-slate-500 dark:text-slate-400 shrink-0">
             {interactionModeLabel}
@@ -5147,6 +5344,9 @@ function MindMapInner({
           selectedNodeId={selectedNodeIds[0] || null}
           showMiniMap={showMiniMap}
           onToggleMiniMap={() => setShowMiniMap((prev) => !prev)}
+          {...(alignSnapEnabled
+            ? { snapEnabled, onToggleSnap: () => setSnapEnabled((prev) => !prev) }
+            : {})}
           onFullscreenToggle={onFullscreenToggle}
           isFullscreen={isFullscreen}
         />
@@ -5155,9 +5355,7 @@ function MindMapInner({
       {/* Large map warning */}
       {nodes.length >= 500 && (
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[60] px-4 py-2 rounded-xl bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 text-xs font-medium shadow-lg">
-          {isPolish
-            ? 'Mapa osiągnęła limit 500 węzłów. Dodawanie zablokowane.'
-            : 'Map reached 500 node limit. Adding blocked.'}
+          {t('mindmap.mapReached500NodeLimitAdding')}
         </div>
       )}
 
@@ -5192,6 +5390,10 @@ function MindMapInner({
               onEdgeClick={onEdgeClick}
               onNodeDrag={onNodeDrag}
               onNodeDragStop={onNodeDragStop}
+              {...(alignSnapEnabled && snapEnabled
+                ? { snapToGrid: true, snapGrid: [16, 16] as [number, number] }
+                : {})}
+              {...(onlyRenderVisibleElements ? { onlyRenderVisibleElements: true } : {})}
               nodeTypes={reactFlowNodeTypes}
               edgeTypes={reactFlowEdgeTypes}
               // ReactFlow's built-in keyboard-a11y makes nodes focusable and binds
@@ -5208,9 +5410,7 @@ function MindMapInner({
                 interactionMode === 'connect' ? 'cursor-crosshair' : 'cursor-default'
               }`}
               aria-label={
-                isPolish
-                  ? 'Mapa rekomendacji pomysłu — nawigacja strzałkami, Enter/Tab dodawanie węzłów'
-                  : 'Idea recommendation map — arrow navigation, Enter/Tab add nodes'
+                t('mindmap.ideaRecommendationMapArrowNavigationEnte')
               }
               defaultEdgeOptions={reactFlowDefaultEdgeOptions}
               onDragOver={(event: React.DragEvent) => {
@@ -5303,7 +5503,19 @@ function MindMapInner({
               }}
             >
               {/* P2: background via SSOT canvasBackground.ts */}
-              {(() => { const bg = getCanvasBg('mindmap', isDarkMindmap ? 'dark' : 'light'); return <Background color={bg.color} gap={bg.gap} size={bg.size} variant={bg.variant as any} />; })()}
+              {(() => {
+                const bg = getCanvasBg('mindmap', isDarkMindmap ? 'dark' : 'light');
+                return (
+                  <Background
+                    color={bg.color}
+                    gap={bg.gap}
+                    size={bg.size}
+                    variant={bg.variant as any}
+                  />
+                );
+              })()}
+              {/* M06 Fala 3.1: alignment guides during drag (flag-gated, read-only). */}
+              {alignSnapEnabled && <SmartGuidesOverlay threshold={5} />}
               {showMiniMap && (
                 <MiniMap
                   nodeStrokeWidth={3}
@@ -5323,12 +5535,10 @@ function MindMapInner({
                           <Lightbulb size={28} className="text-white" />
                         </div>
                         <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100 mb-2">
-                          {isPolish ? 'Opisz swoje wyzwanie' : 'Describe your challenge'}
+                          {t('mindmap.describeYourChallenge')}
                         </h3>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
-                          {isPolish
-                            ? 'Wypełnij tytuł i opis w panelu Tools po prawej, a następnie zaakceptuj wyzwanie.'
-                            : 'Fill in the title and description in the Tools panel on the right, then accept.'}
+                          {t('mindmap.fillInTheTitleAndDescription')}
                         </p>
                         <div className="space-y-2 text-left mb-6">
                           {[
@@ -5360,7 +5570,7 @@ function MindMapInner({
                           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-500 to-amber-500 text-white shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30 transition-all"
                         >
                           <Sparkles size={16} />
-                          {isPolish ? 'Otwórz panel i zacznij' : 'Open panel & start'}
+                          {t('mindmap.openPanelStart')}
                         </button>
                       </div>
                     </Panel>
@@ -5369,9 +5579,7 @@ function MindMapInner({
                       <div className="mb-14 px-5 py-3 rounded-2xl bg-white/90 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200/40 dark:border-white/[0.06] shadow-xl text-sm text-slate-500 dark:text-slate-400 flex items-center gap-4 pointer-events-auto">
                         <Lightbulb size={16} className="text-amber-500 shrink-0" />
                         <span className="text-slate-600 dark:text-slate-300">
-                          {isPolish
-                            ? 'Wybierz gałąź i naciśnij Tab, aby dodać pierwszy węzeł'
-                            : 'Select a branch and press Tab to add the first node'}
+                          {t('mindmap.selectABranchAndPressTab')}
                         </span>
                         <div className="w-px h-5 bg-slate-200 dark:bg-white/10" />
                       </div>
@@ -5412,29 +5620,31 @@ function MindMapInner({
         </MindMapIdeaIdContext.Provider>
       )}
 
-      {/* AI Branch Balancer */}
-      <AIBranchBalancer
-        nodes={nodes.map((n) => ({ id: n.id, data: n.data, type: n.type }))}
-        edges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
-        locked={locked}
-        onFocusBranch={(branchKey) => {
-          const branchNode = nodes.find(
-            (n) => n.data?.branchKey === branchKey && n.id.startsWith('branch-')
-          );
-          if (branchNode) {
-            setNodes((prev: Node[]) =>
-              prev.map((n) => ({ ...n, selected: n.id === branchNode.id }))
+      {/* AI Branch Balancer — DP-5: client-side heuristic (no LLM), flag OFF by default */}
+      {heuristicAiOverlaysEnabled && (
+        <AIBranchBalancer
+          nodes={nodes.map((n) => ({ id: n.id, data: n.data, type: n.type }))}
+          edges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
+          locked={locked}
+          onFocusBranch={(branchKey) => {
+            const branchNode = nodes.find(
+              (n) => n.data?.branchKey === branchKey && n.id.startsWith('branch-')
             );
-            setTimeout(() => {
-              try {
-                fitView({ nodes: [{ id: branchNode.id } as any], padding: 0.5, duration: 400 });
-              } catch {
-                /* ignore */
-              }
-            }, 100);
-          }
-        }}
-      />
+            if (branchNode) {
+              setNodes((prev: Node[]) =>
+                prev.map((n) => ({ ...n, selected: n.id === branchNode.id }))
+              );
+              setTimeout(() => {
+                try {
+                  fitView({ nodes: [{ id: branchNode.id } as any], padding: 0.5, duration: 400 });
+                } catch {
+                  /* ignore */
+                }
+              }, 100);
+            }
+          }}
+        />
+      )}
 
       {/* AI What-If Scenarios */}
       {showWhatIf &&
@@ -5693,7 +5903,7 @@ function MindMapInner({
             setEdges(restoredEdges);
             scheduleSave(restoredNodes as any, restoredEdges as any);
             setShowSnapshots(false);
-            toast.success(isPolish ? 'Przywrócono wersję' : 'Version restored');
+            toast.success(t('mindmap.versionRestored'));
           }}
           onPreview={(previewNodes, previewEdges) => {
             setNodes(previewNodes);
@@ -5704,28 +5914,51 @@ function MindMapInner({
 
       {/* Node Detail Drawer */}
       {drawerNodeId ? (
-        <NodeDetailDrawer
-          open={!!drawerNodeId}
-          onClose={() => setDrawerNodeId(null)}
-          nodeData={drawerNodeData}
-          ideaId={ideaId}
-          ideaTitle={ideaTitle}
-          locked={locked}
-          allNodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
-          allEdges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
-          onUpdateNode={handleUpdateNode}
-          onAIExpandNode={(nodeId) => {
-            setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id === nodeId })));
-            handleAIExpand();
-          }}
-          onConvertNode={handleConvertNode}
-          onNavigateToNode={handleNavigateToNode}
-          onDrillDown={handleDrillDown}
-        />
+        drawerUnifiedEnabled ? (
+          // M06 Fala 4.1b: canonical unified drawer (mindmap variant). NodeDetailData
+          // already carries nodeId, so it maps 1:1 into UnifiedNodeData.
+          <UnifiedNodeDetailDrawer
+            variant="mindmap"
+            open={!!drawerNodeId}
+            onClose={() => setDrawerNodeId(null)}
+            nodeData={drawerNodeData}
+            ideaId={ideaId}
+            ideaTitle={ideaTitle}
+            locked={locked || remoteLockedNodeIds.has(drawerNodeId)}
+            allNodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+            allEdges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
+            onUpdateNode={handleUpdateNode}
+            onConvertNode={handleConvertNode}
+            onNavigateToNode={handleNavigateToNode}
+            onDrillDown={handleDrillDown}
+          />
+        ) : (
+          <NodeDetailDrawer
+            open={!!drawerNodeId}
+            onClose={() => setDrawerNodeId(null)}
+            nodeData={drawerNodeData}
+            ideaId={ideaId}
+            ideaTitle={ideaTitle}
+            // DP-3 (T7 Part B): read-only while another collaborator holds the
+            // lock on this node (defense-in-depth alongside the drawer-close
+            // effect above, in case a lock arrives mid-edit).
+            locked={locked || remoteLockedNodeIds.has(drawerNodeId)}
+            allNodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+            allEdges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
+            onUpdateNode={handleUpdateNode}
+            onAIExpandNode={(nodeId) => {
+              setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id === nodeId })));
+              handleAIExpand();
+            }}
+            onConvertNode={handleConvertNode}
+            onNavigateToNode={handleNavigateToNode}
+            onDrillDown={handleDrillDown}
+          />
+        )
       ) : null}
 
-      {/* R1.3: AI Dependency Detection */}
-      {showDependencyDetector ? (
+      {/* R1.3: AI Dependency Detection — DP-5: heuristic pair mapping, flag OFF by default */}
+      {heuristicAiOverlaysEnabled && showDependencyDetector ? (
         <AIDependencyDetector
           open={showDependencyDetector}
           onClose={() => setShowDependencyDetector(false)}
@@ -5738,12 +5971,6 @@ function MindMapInner({
             pushUndo();
             const edgeId = `dep-edge-${uid()}`;
             const depType = dep.type || 'related_to';
-            const DEP_EDGE_COLOR: Record<string, string> = {
-              depends_on: 'var(--c-danger)',
-              enables: 'var(--c-success)',
-              conflicts_with: 'var(--c-warning)',
-              related_to: 'var(--c-info)',
-            };
             const color = DEP_EDGE_COLOR[depType] ?? 'var(--c-info)';
             const newEdge: Edge = {
               id: edgeId,
@@ -5826,8 +6053,8 @@ function MindMapInner({
         />
       ) : null}
 
-      {/* R1.1: AI Auto-Clustering */}
-      {showAutoClustering ? (
+      {/* R1.1: AI Auto-Clustering — DP-5: substring-match membership, flag OFF by default */}
+      {heuristicAiOverlaysEnabled && showAutoClustering ? (
         <AIAutoClustering
           open={showAutoClustering}
           onClose={() => setShowAutoClustering(false)}
@@ -5856,8 +6083,8 @@ function MindMapInner({
         />
       ) : null}
 
-      {/* R1.4: AI Sentiment Analysis */}
-      {showSentimentOverlay ? (
+      {/* R1.4: AI Sentiment Analysis — DP-5: confidence-threshold heuristic, flag OFF by default */}
+      {heuristicAiOverlaysEnabled && showSentimentOverlay ? (
         <AISentimentOverlay
           open={showSentimentOverlay}
           onClose={() => setShowSentimentOverlay(false)}
@@ -5951,6 +6178,7 @@ function MindMapInner({
       <ExportPowerPoint
         open={showExportPPTX}
         onClose={() => setShowExportPPTX(false)}
+        ideaId={ideaId}
         ideaTitle={ideaTitle}
         branches={nodes
           .filter((n) => n.id.startsWith('branch-'))
@@ -6122,7 +6350,7 @@ function MindMapInner({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-1 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-600">
-              {isPolish ? 'Format eksportu' : 'Export format'}
+              {t('mindmap.exportFormat')}
             </div>
             {[
               { key: 'png', label: 'PNG', fn: () => exportAsPNG(`${ideaTitle || 'mindmap'}.png`) },
@@ -6134,7 +6362,7 @@ function MindMapInner({
               },
               {
                 key: 'md',
-                label: isPolish ? 'Markdown (konspekt)' : 'Markdown outline',
+                label: t('mindmap.markdownOutline'),
                 fn: () => {
                   exportAsMarkdown(
                     nodes,
@@ -6143,7 +6371,7 @@ function MindMapInner({
                     `${ideaTitle || 'mindmap'}.md`
                   );
                   toast.success(
-                    isPolish ? 'Markdown skopiowany do schowka' : 'Markdown copied to clipboard'
+                    t('mindmap.markdownCopiedToClipboard')
                   );
                 },
               },
@@ -6177,7 +6405,7 @@ function MindMapInner({
           onAssign={(name) => {
             if (assignModalNodeId) {
               updateNodeDataById(assignModalNodeId, (data: any) => ({ ...data, assignee: name }));
-              toast.success(isPolish ? `Przypisano: ${name}` : `Assigned: ${name}`, {
+              toast.success(t('mindmap.assignedName', { name }), {
                 duration: 1000,
               });
             }
@@ -6209,7 +6437,7 @@ function MindMapInner({
                       ],
                     }));
                   }
-                  toast.success(isPolish ? 'Artefakt dołączony' : 'Artifact attached', {
+                  toast.success(t('mindmap.artifactAttached'), {
                     duration: 900,
                   });
                 } catch (err: any) {
@@ -6225,7 +6453,7 @@ function MindMapInner({
                   }
                   toast.error(
                     err?.message ||
-                      (isPolish ? 'Nie udało się dołączyć artefaktu' : 'Failed to attach artifact')
+                      (t('mindmap.failedToAttachArtifact'))
                   );
                 }
               })();
@@ -6240,7 +6468,7 @@ function MindMapInner({
           onSubmit={(url) => {
             if (imageUrlNodeId) {
               updateNodeDataById(imageUrlNodeId, (data: any) => ({ ...data, imageUrl: url }));
-              toast.success(isPolish ? 'Obraz dodany' : 'Image added', { duration: 800 });
+              toast.success(t('mindmap.imageAdded'), { duration: 800 });
             }
           }}
         />

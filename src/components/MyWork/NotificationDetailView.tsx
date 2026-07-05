@@ -1902,7 +1902,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   <button
                     onClick={handleAddComment}
                     disabled={!newCommentText.trim() || submittingComment}
-                    className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium bg-c-text text-c-bg hover:bg-c-text-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   >
                     {submittingComment ? (
                       <Loader2 size={12} className="animate-spin" />

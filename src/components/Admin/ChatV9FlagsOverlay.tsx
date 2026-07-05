@@ -140,7 +140,7 @@ export const ChatV9FlagsOverlay: React.FC<ChatV9FlagsOverlayProps> = ({ isAuthor
       aria-modal="true"
       aria-label="Chat V9 feature flags"
       data-testid="chat-v9-flags-overlay"
-      className="fixed inset-0 z-[100] flex items-start justify-center bg-slate-900/50 backdrop-blur-sm p-4 md:p-8 overflow-y-auto"
+      className="fixed inset-0 z-toast flex items-start justify-center bg-c-surface/50 backdrop-blur-sm p-4 md:p-8 overflow-y-auto"
       onClick={(e) => {
         // Close on backdrop click. The panel swallows its own click so
         // interacting with buttons doesn't dismiss the overlay.

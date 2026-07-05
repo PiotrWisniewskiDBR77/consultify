@@ -544,7 +544,7 @@ const SavedReportsView: React.FC = () => {
                     </button>
                     <button
                       onClick={() => setShowScheduleModal(true)}
-                      className="flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg text-sm transition-colors"
+                      className="flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-c-text px-3 py-2 rounded-lg text-sm transition-colors"
                     >
                       <Calendar className="w-4 h-4" />
                       Schedule
@@ -565,7 +565,7 @@ const SavedReportsView: React.FC = () => {
                     <span className="text-gray-600 dark:text-gray-500 dark:text-gray-400">
                       Type
                     </span>
-                    <p className="text-white font-medium mt-1">
+                    <p className="text-c-text font-medium mt-1">
                       {getReportTypeInfo(selectedReport.report_type).label}
                     </p>
                   </div>
@@ -573,7 +573,7 @@ const SavedReportsView: React.FC = () => {
                     <span className="text-gray-600 dark:text-gray-500 dark:text-gray-400">
                       Created By
                     </span>
-                    <p className="text-white font-medium mt-1">
+                    <p className="text-c-text font-medium mt-1">
                       {selectedReport.created_by_email || 'Unknown'}
                     </p>
                   </div>
@@ -674,7 +674,7 @@ const SavedReportsView: React.FC = () => {
                                 .map((key) => (
                                   <td
                                     key={key}
-                                    className="py-2 px-3 text-white truncate max-w-[150px]"
+                                    className="py-2 px-3 text-c-text truncate max-w-[150px]"
                                   >
                                     {String(row[key] ?? '-')}
                                   </td>
@@ -695,7 +695,7 @@ const SavedReportsView: React.FC = () => {
 
               {/* Execution History */}
               <Card className="bg-gray-800 p-4">
-                <h4 className="text-lg font-semibold text-white mb-4">Execution History</h4>
+                <h4 className="text-lg font-semibold text-c-text mb-4">Execution History</h4>
                 {executionLoadError ? (
                   <DegradedState
                     title="Report executions unavailable"
@@ -720,7 +720,7 @@ const SavedReportsView: React.FC = () => {
                           ) : (
                             <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
                           )}
-                          <span className="text-white text-sm">{formatDate(exec.executed_at)}</span>
+                          <span className="text-c-text text-sm">{formatDate(exec.executed_at)}</span>
                         </div>
                         <span
                           className={`text-xs px-2 py-1 rounded ${
@@ -832,14 +832,14 @@ const SavedReportsView: React.FC = () => {
       {showScheduleModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold text-white mb-4">Schedule Report</h3>
+            <h3 className="text-xl font-bold text-c-text mb-4">Schedule Report</h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-600 mb-1">Frequency</label>
                 <select
                   value={schedule.frequency}
                   onChange={(e) => setSchedule({ ...schedule, frequency: e.target.value })}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-c-text"
                 >
                   <option value="daily">Daily</option>
                   <option value="weekly">Weekly</option>
@@ -852,7 +852,7 @@ const SavedReportsView: React.FC = () => {
                   type="time"
                   value={schedule.time}
                   onChange={(e) => setSchedule({ ...schedule, time: e.target.value })}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-c-text"
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -871,7 +871,7 @@ const SavedReportsView: React.FC = () => {
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowScheduleModal(false)}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-c-text rounded-lg transition-colors"
               >
                 Cancel
               </button>

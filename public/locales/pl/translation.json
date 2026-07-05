@@ -3,7 +3,8 @@
     "aiPanel": {
       "open": "Otwórz panel AI",
       "close": "Zamknij panel AI"
-    }
+    },
+    "openMenu": "Otwórz menu"
   },
   "common": {
     "more": "Więcej",
@@ -133,7 +134,16 @@
     "none": "brak",
     "runNow": "Uruchom teraz",
     "organization": "Organizacja",
-    "loadMore": "Załaduj więcej"
+    "loadMore": "Załaduj więcej",
+    "clear": "Wyczyść",
+    "bulk": {
+      "selectedCount": "Zaznaczono: {{count}}",
+      "done": "{{count}} {{noun}}",
+      "processedNoun": "przetworzono",
+      "partial": "Wykonano {{success}}, błędów: {{failed}}"
+    },
+    "export": "Eksportuj",
+    "decision": "Decyzja"
   },
   "superadmin": {
     "confirm": {
@@ -468,7 +478,33 @@
     "targetScore": "Wynik docelowy",
     "gap": "Luka",
     "evidenceCount": "Dowody",
-    "recommendationsCount": "Rekomendacje"
+    "recommendationsCount": "Rekomendacje",
+    "confidence": "Pewność",
+    "statuses": {
+      "draft": "Szkic",
+      "review": "W przeglądzie",
+      "approved": "Zatwierdzony",
+      "generated": "Wygenerowany",
+      "completed": "Ukończony"
+    },
+    "resume": "Wznów",
+    "requestReview": "Wyślij do przeglądu",
+    "approve": "Zatwierdź",
+    "sendBack": "Odeślij",
+    "generateInitiatives": "Generuj inicjatywy",
+    "aiHints": {
+      "execBrief": "Brief zarządczy",
+      "keyRisks": "Kluczowe ryzyka",
+      "initiativeAngles": "Kąty inicjatyw"
+    },
+    "noRelations": "Brak powiązań",
+    "loadingRelations": "Ładowanie powiązań…",
+    "aiUnavailable": "AI niedostępne",
+    "aiTimedOut": "Przekroczono czas AI",
+    "copyAsMarkdown": "Kopiuj jako Markdown",
+    "copyForSlack": "Kopiuj dla Slack",
+    "approvalSnapshot": "Snapshot zatwierdzenia",
+    "useAiHints": "Użyj AI hintów w stopce, aby wygenerować brief."
   },
   "presentations": {
     "wizard": {
@@ -728,7 +764,15 @@
         "chartsData": "Wykresy i dane",
         "media": "Media",
         "artifacts": "Artefakty",
-        "aiEdit": "Edycja AI"
+        "aiEdit": "Edycja AI",
+        "orgLibrary": "Biblioteka organizacji",
+        "orgLibraryDescription": "Przeglądaj obrazy Twojej organizacji",
+        "aiGenerate": "Generuj AI",
+        "aiGenerating": "Generowanie…",
+        "aiGenerateDescription": "Wygeneruj ten slajd ponownie z obrazem AI",
+        "aiGenerateInstruction": "Dodaj do tego slajdu pasujący obraz wygenerowany przez AI.",
+        "upload": "Prześlij",
+        "uploadDescription": "Prześlij obraz z urządzenia"
       },
       "blocks": {
         "heading": "Nagłówek",
@@ -872,7 +916,9 @@
       "regenerating": "Generowanie ponowne…",
       "rewritePlaceholder": "Przerób ten slajd…",
       "rewriteSlide": "Przerób",
-      "notesPlaceholder": "Notatki prelegenta do tego slajdu..."
+      "notesPlaceholder": "Notatki prelegenta do tego slajdu...",
+      "duplicate": "Duplikuj",
+      "delete": "Usuń"
     },
     "agent": {
       "title": "Agent AI",
@@ -993,7 +1039,15 @@
       "rename": "Zmień nazwę"
     },
     "exportBlocked": "Eksport zablokowany przez bramki jakości. Otwórz prezentację, aby przejrzeć blokady.",
-    "openInBuilder": "Otwórz tę prezentację w pełnym edytorze, aby wyświetlić i edytować slajdy."
+    "openInBuilder": "Otwórz tę prezentację w pełnym edytorze, aby wyświetlić i edytować slajdy.",
+    "versionConflictDetected": "Ten deck został zmieniony w innej sesji. Wybierz, jak to rozwiązać.",
+    "versionConflictReloaded": "Wczytano najnowszą wersję decka.",
+    "versionConflictKeptMine": "Zachowuję Twoją wersję — nadpisze ona pozostałe zmiany.",
+    "bulk": {
+      "confirmDeleteTitle": "Usunąć zaznaczone prezentacje?",
+      "confirmDeleteDesc": "Trwale usuniesz {{count}} prezentacji. Tej operacji nie można cofnąć.",
+      "deletedNoun": "usunięto"
+    }
   },
   "sidebar": {
     "module3_1": "Inicjatywy",
@@ -1043,7 +1097,9 @@
     },
     "realization": "Realizacja",
     "expand": "Rozwiń",
-    "finance": "Finanse"
+    "finance": "Finanse",
+    "mainNavigation": "Nawigacja główna",
+    "conclusions": "Wnioski"
   },
   "widgets": {
     "help": {
@@ -1501,7 +1557,11 @@
         "rejectedAll": "Odrzucono wszystkie propozycje AI",
         "generated": "AI wygenerowało propozycję",
         "proposalApplied": "Propozycja zastosowana",
-        "allProposalsApplied": "Wszystkie propozycje zastosowane"
+        "allProposalsApplied": "Wszystkie propozycje zastosowane",
+        "generating": "AI analizuje tablicę…",
+        "generateFailed": "Generowanie AI nie powiodło się",
+        "noProposals": "AI nie zwróciło propozycji dla tej tablicy",
+        "needsElements": "Najpierw dodaj elementy na tablicę"
       },
       "errors": {
         "saveFailed": "Błąd zapisu",
@@ -1518,7 +1578,11 @@
         "voteSyncFailed": "Błąd synchronizacji głosów",
         "missingSessionId": "Brak sessionId",
         "voteSaveFailed": "Nie udało się zapisać głosu",
-        "selectAtLeastTwo": "Zaznacz co najmniej 2 elementy"
+        "selectAtLeastTwo": "Zaznacz co najmniej 2 elementy",
+        "imageTooLarge": "Obraz za duży (maks. 10MB)",
+        "imageUploadFallback": "Obraz zapisany lokalnie (offline) — zapis w magazynie niedostępny",
+        "objectLimitWarning": "Zbliżasz się do limitu obiektów (200 obiektów). Rozważ archiwizację.",
+        "objectLimitReached": "Osiągnięto limit obiektów (maksymalnie 500). Usuń elementy lub podziel na wiele tablic."
       },
       "drawingsCleared": "Rysunki wyczyszczone",
       "boardMode": "Tryb tablicy",
@@ -2160,6 +2224,11 @@
     },
     "glossary": {
       "title": "Słownik konsultingowy"
+    },
+    "bulk": {
+      "confirmDeleteTitle": "Usunąć zaznaczone pozycje?",
+      "confirmDeleteDesc": "Trwale usuniesz {{count}} pozycji. Tej operacji nie można cofnąć.",
+      "deletedNoun": "usunięto"
     }
   },
   "initiatives": {
@@ -4241,6 +4310,24 @@
       "planCta": "Zaplanuj zadania",
       "advanceTitle": "Dalej w procesie",
       "advanceCta": "Prześlij do przeglądu"
+    },
+    "status": {
+      "pendingReview": "Do przeglądu",
+      "promoted": "Promowana",
+      "planning": "Planowanie",
+      "scheduled": "Zaplanowana",
+      "executing": "W realizacji",
+      "blocked": "Zablokowana",
+      "done": "Zakończona",
+      "tracking": "Śledzenie",
+      "cancelled": "Anulowana",
+      "archived": "Zarchiwizowana"
+    },
+    "priorityLevels": {
+      "critical": "Krytyczny",
+      "high": "Wysoki",
+      "medium": "Średni",
+      "low": "Niski"
     }
   },
   "execution": {
@@ -5189,7 +5276,9 @@
       "version": "wersja",
       "author": "Autor",
       "period": "Okres",
-      "immutable": "Wersja niezmienna"
+      "immutable": "Wersja niezmienna",
+      "startReview": "Rozpocznij przegląd",
+      "customType": "Niestandardowy"
     },
     "toast": {
       "chatOpened": "Czat otwarty",
@@ -7789,7 +7878,8 @@
       "desc": "Zarządzaj historią rozmów i przechowywaniem danych.",
       "export": "Eksportuj historię",
       "clear": "Wyczyść całą historię"
-    }
+    },
+    "sectionNotFoundHint": "Ta sekcja ustawień nie istnieje. Wybierz inną z paska bocznego."
   },
   "showcase": {
     "common": {
@@ -9771,7 +9861,8 @@
       },
       "mentions": {
         "empty": "Brak prezentacji."
-      }
+      },
+      "removeAttachment": "Usuń załącznik"
     },
     "voice": {
       "startVoice": "Rozmawiaj głosem",
@@ -10887,6 +10978,106 @@
     },
     "tabs": {
       "templates": "Wzorce"
+    },
+    "membersRoles": {
+      "title": "Członkowie i role",
+      "subtitle": "Kanoniczna powierzchnia P32 do zarządzania członkostwem, zmianami ról i zabezpieczeniami właściciela.",
+      "loadFailed": "Nie udało się załadować członków",
+      "loading": "Ładowanie członków…",
+      "empty": "Nie znaleziono członków dla tej przestrzeni roboczej.",
+      "unknownMember": "Nieznany członek",
+      "roles": {
+        "owner": "Właściciel",
+        "admin": "Administrator",
+        "member": "Członek",
+        "guest": "Gość"
+      },
+      "columns": {
+        "member": "Członek",
+        "email": "E-mail",
+        "role": "Rola",
+        "status": "Status"
+      },
+      "guidance": {
+        "owner": {
+          "description": "Pełna kontrola nad przestrzenią, przekazanie własności i zabezpieczenia zarezerwowane dla właściciela.",
+          "denial": "Tylko właściciel może przypisać lub usunąć innego właściciela."
+        },
+        "admin": {
+          "description": "Może zarządzać członkami zespołu, ich rolami i kodami zaproszeń.",
+          "denial": "Nie może zmienić członkostwa właściciela ani ominąć jego zabezpieczeń."
+        },
+        "member": {
+          "description": "Standardowy dostęp do przestrzeni bez uprawnień administracyjnych zespołu.",
+          "denial": "Nie może otworzyć administracji zespołu ani zmieniać członkostwa."
+        },
+        "guest": {
+          "description": "Ograniczona rola współpracownika bez dostępu administracyjnego.",
+          "denial": "Goście nie mają dostępu do narzędzi administracyjnych."
+        }
+      },
+      "invite": {
+        "cta": "Dodaj członka",
+        "placeholder": "czlonek@firma.com",
+        "emailLabel": "E-mail członka",
+        "noOrg": "Brak aktywnej organizacji — odśwież stronę i spróbuj ponownie.",
+        "denied": "Tylko właściciel lub administrator zespołu może dodawać członków.",
+        "ownerFlow": "Zmiany właściciela muszą przebiegać przez proces przekazania własności.",
+        "emptyEmail": "Podaj adres e-mail przed dodaniem członka.",
+        "invalidEmail": "Podaj prawidłowy adres e-mail (np. czlonek@firma.com).",
+        "added": "{{email}} dodano do przestrzeni roboczej.",
+        "addedToast": "Członek dodany do przestrzeni roboczej",
+        "notFound": "Dla tego adresu e-mail nie istnieje jeszcze konto. Użyj poniższego kodu zaproszenia zespołu, aby umożliwić samodzielną rejestrację, lub najpierw utwórz konto.",
+        "failed": "Nie udało się dodać członka."
+      },
+      "role": {
+        "denied": "Tylko właściciel lub administrator zespołu może zmieniać role członków",
+        "ownerFlow": "Zmiany właściciela muszą przebiegać przez proces przekazania własności",
+        "updated": "Zaktualizowano rolę członka",
+        "updateFailed": "Nie udało się zaktualizować roli"
+      },
+      "remove": {
+        "action": "Usuń",
+        "removed": "Członek usunięty",
+        "failed": "Nie udało się usunąć członka"
+      },
+      "code": {
+        "title": "Kod zaproszenia zespołu",
+        "subtitle": "Wygeneruj jeden wspólny kod do onboardingu zespołu. Domyślny limit to 50 członków, a gotowy link rejestracyjny możesz skopiować poniżej.",
+        "note": "Członkowie zespołu rejestrują się z użyciem e-maila i hasła po otwarciu linku zaproszenia. Numer telefonu pozostaje opcjonalny.",
+        "cta": "Wygeneruj kod",
+        "maxUsesLabel": "Maksymalna liczba rejestracji zespołu",
+        "noCode": "Serwer nie zwrócił kodu",
+        "generated": "Kod dostępu wygenerowany",
+        "generateFailed": "Nie udało się wygenerować kodu dostępu",
+        "ready": "Gotowe do onboardingu zespołu",
+        "accessCode": "Kod dostępu",
+        "copyCode": "Kopiuj kod",
+        "codeCopied": "Skopiowano kod dostępu",
+        "regLink": "Link rejestracyjny",
+        "copyLink": "Kopiuj link",
+        "linkCopied": "Skopiowano link rejestracyjny",
+        "copyFailed": "Nie udało się skopiować do schowka"
+      }
+    },
+    "operations": {
+      "title": "Operacje organizacji",
+      "subtitle": "Kluczowe operacje organizacji dla najemcy są dostępne od P32, natomiast głębsza edycja profilu biznesowego pozostaje dostępna w przestrzeni roboczej organizacji.",
+      "openProfile": "Otwórz profil organizacji",
+      "tabs": {
+        "domains": {
+          "label": "Domeny",
+          "desc": "Weryfikacja i routing domen najemcy"
+        },
+        "branding": {
+          "label": "Branding",
+          "desc": "Tożsamość, ustawienia regionalne i profil zaufania"
+        },
+        "competencies": {
+          "label": "Kompetencje",
+          "desc": "Katalog kompetencji używany w całej organizacji"
+        }
+      }
     }
   },
   "access": {
@@ -11197,7 +11388,8 @@
         "columns": {
           "status": "Status"
         }
-      }
+      },
+      "loadingSessions": "Ładowanie sesji narzędzi…"
     },
     "integrations": {
       "syncHub": {
@@ -11276,6 +11468,9 @@
         "ready": "Gotowy"
       },
       "next": "następne"
+    },
+    "session": {
+      "notLoadedYet": "Sesja wciąż się ładuje — spróbuj ponownie za chwilę"
     }
   },
   "aiAuthoring": {
@@ -13270,7 +13465,8 @@
       "source": "Źródło",
       "slides": "Slajdy",
       "reportType": "Typ",
-      "mode": "Tryb"
+      "mode": "Tryb",
+      "quality": "Jakość"
     },
     "filters": {
       "type": "Typ",
@@ -13541,6 +13737,14 @@
     "breadcrumb": {
       "presentationWizard": "Kreator prezentacji",
       "deckBuilder": "Kreator prezentacji"
+    },
+    "bulk": {
+      "confirmArchiveTitle": "Zarchiwizować zaznaczone outputy?",
+      "confirmArchiveDesc": "Zarchiwizujesz {{count}} pozycji. Operacja jest odwracalna.",
+      "confirmArchiveReportsTitle": "Zarchiwizować zaznaczone raporty?",
+      "confirmArchiveReportsDesc": "Zarchiwizujesz {{count}} raportów. Operacja jest odwracalna.",
+      "confirmArchiveDecksTitle": "Zarchiwizować zaznaczone prezentacje?",
+      "confirmArchiveDecksDesc": "Zarchiwizujesz {{count}} prezentacji. Operacja jest odwracalna."
     }
   },
   "rbHub": {
@@ -14071,6 +14275,252 @@
       },
       "filter": {
         "ariaLabel": "Filtr statusu szablonów"
+      }
+    },
+    "shell": {
+      "lane": {
+        "wordy": "Dokumenty",
+        "excele": "Tabele",
+        "prezentacje": "Prezentacje",
+        "tabele": "Tabele Studio"
+      },
+      "inputPlaceholder": {
+        "wordy": "Opisz dokument, który chcesz stworzyć...",
+        "excele": "Prześlij arkusz lub stwórz od zera",
+        "prezentacje": "Opisz prezentację, którą chcesz stworzyć...",
+        "tabele": "Opisz tabelę operacyjną, którą chcesz zbudować..."
+      }
+    },
+    "tabeleShell": {
+      "aiEditor": {
+        "ariaLabel": "Edytor AI dla Tabele",
+        "title": "Edytor AI",
+        "budgetLabel": "{{used}} / {{total}} tokenów",
+        "levelRadioGroup": "Poziom Edytora AI",
+        "requiresSuperAdmin": "{{label}} wymaga roli super-administratora",
+        "levelTitle": "{{label}} — {{description}}",
+        "promptLabel": "Polecenie: {{label}}",
+        "disclaimer": "AI nigdy nie wykonuje zmian samodzielnie. Zawsze przeglądasz i zatwierdzasz diff.",
+        "propose": "Zaproponuj",
+        "promptRequired": "Polecenie jest wymagane",
+        "softWarnBudget": "Ostrzeżenie: budżet AI na poziomie 70%.",
+        "proposeFailed": "Nie udało się utworzyć propozycji: {{reason}}",
+        "applied": "Zastosowano: {{reason}}",
+        "ok": "ok",
+        "applyFailed": "Zastosowanie nie powiodło się: {{reason}}",
+        "rejected": "Propozycja odrzucona",
+        "rejectFailed": "Odrzucenie nie powiodło się: {{reason}}",
+        "unknownError": "nieznany błąd",
+        "handlerLive": "aktywny",
+        "handlerStub": "zaślepka",
+        "softWarnDetail": "Budżet tokenów AI zbliża się do dziennego limitu (ostrzeżenie).",
+        "promptSection": "Polecenie",
+        "proposedOperations": "Proponowane operacje",
+        "noOperationsPreview": "Podgląd operacji niedostępny. Użyj dziennika audytu przestrzeni roboczej, aby zobaczyć pełny diff.",
+        "opFallback": "operacja",
+        "moreOperations": "+{{count}} więcej",
+        "reject": "Odrzuć",
+        "apply": "Zastosuj",
+        "level": {
+          "cell": {
+            "label": "Komórka",
+            "description": "Dopracuj wartość pojedynczej komórki."
+          },
+          "record": {
+            "label": "Rekord",
+            "description": "Uzupełnij brakujące pola jednego rekordu."
+          },
+          "column": {
+            "label": "Kolumna",
+            "description": "Masowo uzupełnij jedną kolumnę w widocznych rekordach."
+          },
+          "structure": {
+            "label": "Struktura",
+            "description": "Dodaj, zmień nazwę, typ lub usuń pola."
+          },
+          "view": {
+            "label": "Widok",
+            "description": "Utwórz lub zaktualizuj zapisaną konfigurację widoku."
+          },
+          "relational": {
+            "label": "Relacje",
+            "description": "Zaproponuj nowe relacje między rekordami."
+          },
+          "methodological": {
+            "label": "Metodologia",
+            "description": "Oznacz odstępstwa od zasad governance."
+          },
+          "source": {
+            "label": "Źródła",
+            "description": "Zaproponuj źródła dla rekordów, którym ich brakuje."
+          }
+        }
+      },
+      "leftRail": {
+        "ariaLabel": "Konspekt Tabele",
+        "empty": "Brak sekcji do wyświetlenia.",
+        "countAriaLabel": "{{label}} — liczba",
+        "cover": "Okładka",
+        "kpi": "KPI",
+        "schema": "Schemat",
+        "records": "Rekordy",
+        "relations": "Relacje",
+        "rationale": "Uzasadnienie"
+      },
+      "qa": {
+        "ariaLabel": "Raport QA dla Tabele",
+        "title": "Raport QA",
+        "recomputeAriaLabel": "Przelicz ponownie raport QA",
+        "recompute": "Przelicz ponownie",
+        "suggestions": "Sugestie",
+        "loadFailed": "Nie udało się wczytać raportu QA: {{reason}}",
+        "unknownError": "nieznany błąd",
+        "refreshed": "Raport QA odświeżony",
+        "recomputeFailed": "Nie udało się przeliczyć: {{reason}}",
+        "dismissed": "Sugestia oznaczona jako nieadekwatna",
+        "dismissFailed": "Nie udało się odrzucić: {{reason}}",
+        "health": "Kondycja",
+        "noReportYet": "Brak raportu QA — uruchom przeliczenie.",
+        "overallScoreAriaLabel": "Ogólny wynik QA: {{pct}} procent",
+        "axis": {
+          "completeness": "Kompletność",
+          "freshness": "Aktualność",
+          "sourceCoverage": "Pokrycie źródłami",
+          "methodology": "Metodologia",
+          "formulaConsistency": "Spójność formuł"
+        },
+        "band": {
+          "green": "zielony",
+          "amber": "pomarańczowy",
+          "red": "czerwony"
+        },
+        "noSuggestions": "Brak sugestii do działania. Tabela jest w świetnym stanie.",
+        "severityAriaLabel": "istotność {{severity}}",
+        "severity": {
+          "high": "wysoka",
+          "medium": "średnia",
+          "low": "niska"
+        },
+        "axisShort": {
+          "completeness": "kompletność",
+          "freshness": "aktualność",
+          "sourceCoverage": "źródła",
+          "methodology": "metodologia",
+          "formulaConsistency": "formuła"
+        },
+        "level": {
+          "cell": "komórka",
+          "record": "rekord",
+          "column": "kolumna",
+          "structure": "struktura",
+          "view": "widok",
+          "relational": "relacje",
+          "methodological": "metodologia",
+          "source": "źródła"
+        },
+        "openInAiEditor": "Otwórz w Edytorze AI",
+        "markNotApplicable": "Oznacz jako nieadekwatne"
+      },
+      "share": {
+        "ariaLabel": "Udostępnianie i konwersje Tabele",
+        "title": "Udostępnij",
+        "refreshAriaLabel": "Odśwież panel udostępniania",
+        "refresh": "Odśwież",
+        "convertTo": "Konwertuj do",
+        "conversionTargetAriaLabel": "Cel konwersji",
+        "targetDocument": "Dokument",
+        "targetDocumentDescription": "Otwórz w Wordy z konspektem sekcji",
+        "targetPresentation": "Prezentacja",
+        "targetPresentationDescription": "Otwórz w Prezentacjach z konspektem slajdów",
+        "statusDone": "Gotowe",
+        "statusFailed": "Niepowodzenie",
+        "statusRunning": "W toku",
+        "statusQueued": "W kolejce",
+        "statusCancelled": "Anulowano",
+        "listPacksFailed": "Nie udało się pobrać listy paczek: {{reason}}",
+        "listConversionsFailed": "Nie udało się pobrać listy konwersji: {{reason}}",
+        "unknownError": "nieznany",
+        "titleTooLong": "Tytuł musi mieć co najwyżej {{max}} znaków",
+        "conversionFailed": "Konwersja nie powiodła się. Zobacz ostatnie konwersje po szczegóły.",
+        "convertedTo": "Skonwertowano do: {{target}}",
+        "conversionStatus": "Konwersja: {{status}}",
+        "convertFailed": "Nie udało się skonwertować: {{reason}}",
+        "titleLabel": "Tytuł (opcjonalnie)",
+        "titlePlaceholder": "np. {{example}}",
+        "titlePlaceholderDoc": "Briefing inicjatywy",
+        "titlePlaceholderDeck": "Deck inicjatywy",
+        "titleAriaLabel": "Tytuł konwersji",
+        "sourceSnapshot": "Migawka źródła",
+        "liveRecords": "Rekordy na żywo",
+        "liveRecordsHint": "Przechwyć świeżą migawkę w momencie konwersji",
+        "loadingPacks": "Ładowanie zapisanych paczek…",
+        "noPacksYet": "Brak zapisanych paczek źródeł dla tej tabeli.",
+        "packMeta": "{{count}} rekordów · użyto {{used}}x",
+        "convertAriaLabel": "Konwertuj tabelę",
+        "converting": "Konwertowanie…",
+        "convertSubmit": "Konwertuj do: {{target}}",
+        "recentConversions": "Ostatnie konwersje",
+        "loading": "Ładowanie…",
+        "noConversionsYet": "Brak konwersji.",
+        "statusAriaLabel": "Status: {{status}}",
+        "conversionFallbackTitle": "{{target}} — {{id}}",
+        "openConversionResult": "Otwórz wynik konwersji"
+      },
+      "sourcePack": {
+        "recencyAny": "Dowolny czas",
+        "recency7": "Ostatnie 7 dni",
+        "recency30": "Ostatnie 30 dni",
+        "recency90": "Ostatnie 90 dni",
+        "searchFailed": "Nie udało się wyszukać rekordów: {{reason}}",
+        "unknownError": "nieznany",
+        "listPacksFailed": "Nie udało się pobrać listy paczek: {{reason}}",
+        "packLimit": "Paczka może zawierać maksymalnie {{max}} rekordów",
+        "nameRequired": "Nazwa paczki jest wymagana",
+        "atLeastOneRecord": "Dodaj co najmniej jeden rekord do paczki",
+        "saved": "Paczka „{{name}}” zapisana ({{count}} rekordów)",
+        "saveFailed": "Nie udało się zapisać paczki: {{reason}}",
+        "ariaLabel": "Kreator paczki źródeł Tabele",
+        "title": "Paczka źródeł",
+        "refreshAriaLabel": "Odśwież wyszukiwanie kandydatów",
+        "refresh": "Odśwież",
+        "searchPlaceholder": "Szukaj rekordów po treści",
+        "searchAriaLabel": "Szukaj rekordów",
+        "verifiedOnly": "tylko zweryfikowane",
+        "recencyAriaLabel": "Filtr aktualności",
+        "selectedCount": "{{count}} / {{max}} wybranych",
+        "searching": "Wyszukiwanie…",
+        "noCandidates": "Brak rekordów-kandydatów spełniających filtry.",
+        "savePack": "Zapisz paczkę",
+        "packNamePlaceholder": "Nazwa paczki",
+        "packNameAriaLabel": "Nazwa paczki",
+        "descriptionPlaceholder": "Opcjonalny opis",
+        "descriptionAriaLabel": "Opis paczki",
+        "savedPacks": "Zapisane paczki",
+        "loading": "Ładowanie…",
+        "noSavedPacks": "Brak zapisanych paczek.",
+        "packMeta": "{{count}} rekordów · użyto {{used}}×",
+        "useInAiEditorAriaLabel": "Użyj paczki w Edytorze AI",
+        "use": "Użyj",
+        "score": "wynik {{score}}",
+        "hasVerifiedSource": "ma zweryfikowane źródło",
+        "status": {
+          "verified": "zweryfikowany",
+          "inReview": "w recenzji",
+          "unverified": "niezweryfikowany",
+          "rejected": "odrzucony"
+        },
+        "removeFromPack": "Usuń z paczki",
+        "addToPack": "Dodaj do paczki",
+        "added": "Dodano",
+        "add": "Dodaj",
+        "relative": {
+          "today": "dzisiaj",
+          "yesterday": "wczoraj",
+          "daysAgo": "{{count}} dni temu",
+          "weeksAgo": "{{count}} tyg. temu",
+          "monthsAgo": "{{count}} mies. temu",
+          "yearsAgo": "{{count}} lat temu"
+        }
       }
     }
   },
@@ -14945,6 +15395,11 @@
     "operatorBriefError": "Nie udało się załadować briefu operatora.",
     "emptyState": {
       "description": "Zaplanuj pierwsze spotkanie, aby śledzić agendę i follow-upy."
+    },
+    "bulk": {
+      "confirmDeleteTitle": "Usunąć zaznaczone spotkania?",
+      "confirmDeleteDesc": "Trwale usuniesz {{count}} spotkań. Tej operacji nie można cofnąć.",
+      "deletedNoun": "usunięto"
     }
   },
   "manager": {
@@ -15687,7 +16142,9 @@
       "toolbar": {
         "insertTable": "Wstaw tabelę",
         "insertLink": "Wstaw link"
-      }
+      },
+      "stop": "Zatrzymaj",
+      "startTypingPlaceholder": "Zacznij pisać lub wciśnij / po komendy..."
     },
     "versionHistory": {
       "justNow": "przed chwilą",
@@ -15812,7 +16269,234 @@
       "newCanvas": "Nowy Canvas",
       "menuAria": "Menu Canvas",
       "save": "Zapisz",
-      "companyAiChat": "Firmowy czat AI"
+      "companyAiChat": "Firmowy czat AI",
+      "materialized": {
+        "idea": "Pomysł",
+        "note": "Notatka",
+        "initiative": "Inicjatywa",
+        "decision": "Decyzja",
+        "task": "Zadanie"
+      },
+      "lifecycle": {
+        "inReview": "W recenzji",
+        "approved": "Zatwierdzony",
+        "draft": "Szkic"
+      },
+      "projection": {
+        "stale": "Projekcja nieaktualna",
+        "failed": "Projekcja nieudana",
+        "missing": "Brak projekcji",
+        "synced": "Projekcja zsynchronizowana",
+        "refreshing": "Odświeżanie projekcji"
+      },
+      "saveState": {
+        "saving": "Zapisywanie",
+        "failed": "Zapis nieudany",
+        "unsaved": "Niezapisane zmiany",
+        "saved": "Zapisano"
+      },
+      "capability": {
+        "real": "Realne",
+        "partial": "Częściowe",
+        "scaffold": "Szkielet",
+        "missing": "Brak",
+        "outOfScope": "Poza zakresem"
+      },
+      "comingSoon": "Wkrótce",
+      "dismiss": "Odrzuć",
+      "markdownActions": "Akcje Markdown",
+      "saveMarkdown": "Zapisz Markdown",
+      "downloadMarkdown": "Pobierz Markdown",
+      "downloadCsv": "Pobierz CSV",
+      "copyMarkdown": "Kopiuj Markdown",
+      "downloadPdf": "Pobierz PDF",
+      "sendingToDocumentStudio": "Wysyłanie do Document Studio…",
+      "sendToDocumentStudio": "Wyślij do Document Studio",
+      "sendToTableStudioTitle": "Wyślij bieżącą tabelę do Table Studio",
+      "sendToTableStudioDisabledTitle": "Przekazanie do Table Studio wymaga Canvasa typu kind=table.",
+      "sendingToTableStudio": "Wysyłanie do Table Studio…",
+      "sendToTableStudio": "Wyślij do Table Studio",
+      "downloadWord": "Pobierz Word (.docx)",
+      "downloadExcelTitle": "Pobierz jako arkusz Excel",
+      "downloadExcelDisabledTitle": "Eksport do Excela jest dostępny tylko dla tabel Canvas (kind=table).",
+      "downloadExcel": "Pobierz Excel (.xlsx)",
+      "downloadPowerpoint": "Pobierz PowerPoint (.pptx)",
+      "exportMetadata": "Eksportuj metadane",
+      "uploadDataset": "Prześlij zbiór danych",
+      "diagnostics": {
+        "format": "Format",
+        "markdownCanonical": "Markdown kanoniczny",
+        "save": "Zapis",
+        "projection": "Projekcja",
+        "lifecycle": "Cykl życia",
+        "action": "Akcja",
+        "running": "W toku",
+        "idle": "Bezczynny",
+        "capability": "Możliwość",
+        "researchSession": "ResearchSession"
+      },
+      "workflowTemplate": "Szablon przepływu pracy"
+    },
+    "aiStream": {
+      "resolvePendingSuggestion": "Rozstrzygnij poprzednią propozycję AI (zaakceptuj lub odrzuć), zanim rozpoczniesz nową edycję.",
+      "streamRequestFailed": "Żądanie strumienia nie powiodło się",
+      "streamError": "Błąd strumienia",
+      "streamFailed": "Strumień nie powiódł się"
+    },
+    "toolbar": {
+      "undo": "Cofnij (Ctrl+Z)",
+      "redo": "Ponów (Ctrl+Shift+Z)",
+      "bold": "Pogrubienie (Ctrl+B)",
+      "italic": "Kursywa (Ctrl+I)",
+      "underline": "Podkreślenie (Ctrl+U)",
+      "strikethrough": "Przekreślenie",
+      "inlineCode": "Kod w linii",
+      "highlight": "Wyróżnienie",
+      "heading1": "Nagłówek 1",
+      "heading2": "Nagłówek 2",
+      "heading3": "Nagłówek 3",
+      "bulletList": "Lista punktowana",
+      "numberedList": "Lista numerowana",
+      "taskList": "Lista zadań",
+      "blockquote": "Cytat blokowy",
+      "insertTable": "Wstaw tabelę",
+      "insertLink": "Wstaw link",
+      "linkPrompt": "Adres URL linku:"
+    },
+    "workShell": {
+      "quickPromptNote": "Zrób z tej rozmowy krótką notatkę po prawej stronie.",
+      "quickPromptTable": "Zamień to w tabelę priorytetów.",
+      "quickPromptChecklist": "Przygotuj checklistę działań.",
+      "quickPromptResearch": "Uruchom głębsze badanie i pokaż dowody.",
+      "untitledCanvas": "Canvas roboczy bez nazwy",
+      "currentConversation": "Bieżąca rozmowa",
+      "startNote": "Rozpocznij firmową notatkę roboczą",
+      "workCanvas": "Work Canvas",
+      "newWorkCanvas": "Nowy canvas roboczy",
+      "chatTitle": "Firmowy czat AI",
+      "closeChat": "Zamknij czat",
+      "chat": "Czat",
+      "noActiveCanvas": "Brak aktywnego canvasa",
+      "saveArtifact": "Zapisz artefakt",
+      "versionLabel": "Wersja {{version}}",
+      "draftVersion": "Wersja robocza",
+      "versionHistoryPending": "Historia wersji będzie wczytywana z historii artefaktu w kolejnym kroku runtime.",
+      "prev": "Wstecz",
+      "next": "Dalej",
+      "saveLabel": "Zapis",
+      "lifecycleLabel": "Cykl życia",
+      "statusLabel": "Status",
+      "preview": "Podgląd",
+      "source": "Źródło",
+      "copy": "Kopiuj",
+      "download": "Pobierz",
+      "highlight": "Wyróżnij",
+      "improve": "Ulepsz",
+      "emptyTitle": "Zacznij pracę z AI",
+      "emptyHint": "Poproś czat o utworzenie notatki, tabeli, checklisty lub briefu badawczego.",
+      "governancePreview": "Podgląd nadzoru",
+      "governanceHint": "Lekkie chipy pozostają proste w UI, ale każda trwała konwersja jest traktowana jako podgląd/propozycja, zanim stanie się mutacją biznesową.",
+      "dismissProposal": "Odrzuć propozycję",
+      "approveProposal": "Zatwierdź propozycję",
+      "reject": "Odrzuć",
+      "selectTargetHint": "Wybierz Pomysł, Inicjatywę, Zadanie lub Brief, aby utworzyć podgląd propozycji.",
+      "artifactReadBack": "Odczyt artefaktu",
+      "artifactRuntime": "Środowisko artefaktów",
+      "artifactRuntimeHint": "Użyj istniejącego środowiska V8 do nadzorowanej materializacji dokumentów/arkuszy/prezentacji.",
+      "saved": "Zapisano",
+      "draft": "Szkic",
+      "sources": "Źródła",
+      "confidence": "Pewność",
+      "notSet": "nie ustawiono",
+      "kimiLaneBanner": "Ta ścieżka używa teraz wspólnego podziału ekranu: czat po lewej, podgląd canvasa po prawej. Natywny eksport KIMI pozostaje dostępny przez dedykowane środowisko ścieżki.",
+      "sheetCanvas": "Canvas arkusza",
+      "deckCanvas": "Canvas prezentacji",
+      "documentCanvas": "Canvas dokumentu",
+      "sheetHelper": "Użyj czatu po lewej, aby kształtować wiersze, założenia i formuły. Prawa strona pozostaje nadzorowanym podglądem canvasa.",
+      "deckHelper": "Użyj czatu po lewej, aby kształtować narrację i konspekt slajdów. Prawa strona pozostaje nadzorowanym podglądem canvasa.",
+      "documentHelper": "Użyj czatu po lewej, aby kształtować dokument. Prawa strona pozostaje nadzorowanym podglądem canvasa.",
+      "researchMission": "Misja pogłębionego badania",
+      "researchQuestions": "Pytania badawcze",
+      "governedResearchRuntime": "Nadzorowane środowisko badań",
+      "linkedSession": "Powiązana sesja",
+      "recommendation": "Rekomendacja",
+      "options": "Opcje",
+      "assumptionsRisks": "Założenia i ryzyka",
+      "improveQueued": "Ulepszenie zostało zakolejkowane jako propozycja AI; żadna treść canvasa nie została zmieniona bez akceptacji.",
+      "highlightQueued": "Tryb wyróżniania został zakolejkowany jako akcja recenzji; założenia i brakujące źródła zostaną oznaczone po akceptacji.",
+      "errCapabilityRequired": "Nie masz wymaganej capability do tej akcji canvasa.",
+      "errProjectScope": "Ten canvas wymaga członkostwa w projekcie.",
+      "errStaleProposal": "Propozycja jest nieaktualna, bo canvas zmienił się po jej utworzeniu. Wygeneruj propozycję ponownie.",
+      "errArtifactSaveFailed": "Środowisko artefaktów V8 nie zmaterializowało wyniku. Canvas oznaczono jako nieudany.",
+      "errActorRequired": "Nie można zatwierdzić propozycji bez poprawnego kontekstu użytkownika.",
+      "errDraftLoad": "Nie udało się wczytać szkicu canvasa.",
+      "errDraftListRefresh": "Nie udało się odświeżyć listy szkiców canvasa.",
+      "errDraftPersist": "Nie udało się zapisać szkicu canvasa.",
+      "errSaveArtifact": "Zapis jako artefakt nie powiódł się.",
+      "errConversionProposal": "Propozycja konwersji nie powiodła się.",
+      "errProposalApprove": "Zatwierdzenie propozycji nie powiodło się.",
+      "errProposalReject": "Odrzucenie propozycji nie powiodło się.",
+      "errChangesSave": "Nie udało się zapisać zmian canvasa.",
+      "errResearchLink": "Nie udało się zapisać powiązania sesji badawczej.",
+      "kind": {
+        "markdown": "markdown",
+        "table": "tabela",
+        "checklist": "checklista",
+        "research": "badanie",
+        "decision": "decyzja",
+        "document": "dokument",
+        "sheet": "arkusz",
+        "deck": "prezentacja"
+      },
+      "target": {
+        "idea": "Pomysł",
+        "initiative": "Inicjatywa",
+        "task": "Zadanie",
+        "project_brief": "Brief",
+        "decision": "Decyzja",
+        "research_report": "Raport badawczy",
+        "client_deliverable": "Materiał dla klienta"
+      },
+      "readBack": {
+        "target": "Cel",
+        "targetId": "Id celu",
+        "status": "Status",
+        "entityStatus": "Status encji",
+        "project": "Projekt",
+        "owner": "Właściciel",
+        "assignee": "Przypisany",
+        "artifact": "Artefakt",
+        "run": "Przebieg",
+        "audit": "Audyt"
+      },
+      "seed": {
+        "newTopic": "Nowy temat roboczy",
+        "colArea": "Obszar",
+        "colQuestion": "Pytanie",
+        "colNextStep": "Następny krok",
+        "rowContext": "Kontekst",
+        "rowContextStep": "Doprecyzować zakres i właściciela.",
+        "rowEvidence": "Dowody",
+        "rowEvidenceQuestion": "Jakie źródła potwierdzają kierunek?",
+        "rowEvidenceStep": "Dodać źródła lub uruchomić pogłębione badanie.",
+        "checkScope": "Doprecyzować cel i zakres pracy.",
+        "checkSources": "Dodać źródła, założenia i ograniczenia.",
+        "checkDecision": "Ustalić, czy wynik ma stać się pomysłem, inicjatywą albo zadaniem.",
+        "questionFacts": "Jakie fakty są już potwierdzone?",
+        "questionAssumptions": "Jakie założenia wymagają sprawdzenia?",
+        "questionDecisions": "Jakie decyzje powinny wynikać z badania?",
+        "optionProceed": "Kontynuuj z małą nadzorowaną propozycją",
+        "optionDiscovery": "Najpierw przeprowadź więcej rozpoznania",
+        "assumptionConversation": "Decyzja opiera się na bieżącej rozmowie, dopóki nie zostaną dołączone źródła.",
+        "riskConfidence": "Brak pewności źródeł może zablokować stan zaufany/finalny.",
+        "kimiIntro": "To jest szkic Work Canvas po prawej stronie. Zostaw czat otwarty po lewej i kształtuj tutaj wynik przed zapisaniem, zatwierdzeniem lub eksportem przez akcje nadzorowane.",
+        "requestHeading": "Zlecenie",
+        "workingNoteHeading": "Notatka robocza",
+        "nextQuestionsHeading": "Kolejne pytania",
+        "nextQuestionDecision": "Jaką decyzję ma to wspierać?",
+        "nextQuestionSources": "Jakie źródła lub kontekst firmowy powinny zostać dołączone?",
+        "nextQuestionTarget": "Czy to ma stać się pomysłem, inicjatywą, zadaniem czy briefem projektu?"
+      }
     }
   },
   "chatProposal": {
@@ -16965,7 +17649,8 @@
       "presenceSources": "{{count}} źródeł",
       "presenceAssumptions": "{{count}} założeń",
       "diffBaselinePicker": "Porównaj z migawką",
-      "diffBaselineLatest": "Najnowsza migawka"
+      "diffBaselineLatest": "Najnowsza migawka",
+      "exportPending": "Eksport {{format}} oczekuje na finalizację. Markdown jest dostępny już teraz."
     },
     "generationWarnings": {
       "summary_one": "Wygenerowano z ograniczeniami ({{count}})",
@@ -17301,5 +17986,400 @@
       "artifact": "Materiał",
       "assessment": "Ocena"
     }
+  },
+  "conclusions": {
+    "title": "Wnioski",
+    "subtitle": "Ugruntowane wnioski z Twoich narzędzi i ocen — werdykt, uzasadnienie i dowody w jednym miejscu.",
+    "verdict": "Werdykt",
+    "nextAction": "Rekomendowane następne działanie",
+    "evidence": "Dowody",
+    "evidenceCount": "{{count}} dowodów",
+    "noEvidence": "Do tego wniosku nie dołączono jeszcze dowodów.",
+    "limits": "Ograniczenia i zastrzeżenia",
+    "sources": "Źródła",
+    "viewSource": "Źródło",
+    "context": "Zapisany kontekst",
+    "conversions": "Wygenerowane z tego wniosku",
+    "backToList": "Wszystkie wnioski",
+    "source": {
+      "tool": "Narzędzie",
+      "assessment": "Ocena",
+      "siri": "Ocena SIRI",
+      "adma": "Ocena ADMA",
+      "interview": "Wywiad",
+      "readout": "Readout",
+      "other": "Inne"
+    },
+    "confidence": {
+      "high": "Wysoka pewność",
+      "medium": "Średnia pewność",
+      "low": "Niska pewność",
+      "insufficient": "Niewystarczające dowody",
+      "contradicted": "Podważony"
+    },
+    "status": {
+      "candidate": "Kandydat",
+      "needs_evidence": "Wymaga dowodów",
+      "needs_review": "Do przeglądu",
+      "ready_for_readout": "Gotowy do readoutu",
+      "published": "Opublikowany",
+      "converted": "Przekształcony",
+      "rejected": "Odrzucony"
+    },
+    "filter": {
+      "all": "Wszystkie",
+      "clear": "Pokaż wszystkie"
+    },
+    "empty": {
+      "title": "Brak wniosków",
+      "description": "Uruchom narzędzie lub ocenę — jej werdykt pojawi się tutaj jako ugruntowany wniosek.",
+      "cta": "Otwórz Narzędzia",
+      "ctaAssessment": "Otwórz Ocenę"
+    },
+    "filterEmpty": {
+      "title": "Żaden wniosek nie pasuje do filtra",
+      "description": "Wyczyść filtr, aby zobaczyć wszystkie wnioski."
+    },
+    "listError": {
+      "title": "Nie udało się wczytać wniosków",
+      "description": "Coś poszło nie tak. Sprawdź połączenie i spróbuj ponownie."
+    },
+    "detailError": {
+      "title": "Nie udało się wczytać tego wniosku",
+      "description": "Coś poszło nie tak podczas wczytywania readoutu. Spróbuj ponownie."
+    }
+  },
+  "superAdmin": {
+    "signalCenter": {
+      "loading": "Wczytywanie sygnałów…",
+      "empty": "Brak aktywnych sygnałów w tej kategorii.",
+      "loadFailed": "Nie udało się wczytać sygnałów.",
+      "dismissFailed": "Nie udało się odrzucić sygnału. Spróbuj ponownie."
+    },
+    "integrations": {
+      "loadFailed": "Nie udało się wczytać integracji."
+    }
+  },
+  "notificationDropdown": {
+    "title": "Skrzynka",
+    "new": "Nowe",
+    "inbox": "Skrzynka",
+    "center": "Centrum",
+    "openInbox": "Otwórz skrzynkę (kolejka działań)",
+    "openCenter": "Otwórz centrum powiadomień",
+    "markAllRead": "Oznacz wszystkie jako przeczytane",
+    "markAllReadShort": "Przeczytane",
+    "open": "Otwórz",
+    "openChat": "Otwórz czat",
+    "snooze": "Odłóż",
+    "markAsRead": "Oznacz jako przeczytane",
+    "clearRead": "Wyczyść przeczytane",
+    "clearReadFull": "Wyczyść przeczytane powiadomienia",
+    "clearAll": "Usuń wszystkie",
+    "deleteAllFull": "Usuń wszystkie powiadomienia",
+    "countLabel": "{{count}} powiadomień",
+    "countLabel_one": "{{count}} powiadomienie",
+    "countLabel_few": "{{count}} powiadomienia",
+    "countLabel_many": "{{count}} powiadomień",
+    "countLabel_other": "{{count}} powiadomień",
+    "snoozedLabel": "{{count}} odłożonych",
+    "snoozedLabel_one": "{{count}} odłożone",
+    "snoozedLabel_few": "{{count}} odłożone",
+    "snoozedLabel_many": "{{count}} odłożonych",
+    "snoozedLabel_other": "{{count}} odłożonych",
+    "time": {
+      "justNow": "Przed chwilą",
+      "minutesAgo": "{{count}} min temu",
+      "hoursAgo": "{{count}} godz. temu",
+      "daysAgo": "{{count}} dni temu"
+    },
+    "snoozePreset": {
+      "1h": "1 godz.",
+      "4h": "4 godz.",
+      "1d": "1 dzień",
+      "3d": "3 dni"
+    },
+    "toast": {
+      "markReadFailed": "Nie udało się oznaczyć jako przeczytane",
+      "allMarkedRead": "Oznaczono wszystkie jako przeczytane",
+      "actionFailed": "Akcja nie powiodła się",
+      "deleteFailed": "Nie udało się usunąć",
+      "allDeleted": "Usunięto wszystkie powiadomienia",
+      "deleteAllFailed": "Nie udało się usunąć wszystkich powiadomień",
+      "readCleared": "Wyczyszczono przeczytane powiadomienia",
+      "clearReadFailed": "Nie udało się wyczyścić przeczytanych powiadomień",
+      "chatOpened": "Otwarto czat",
+      "snoozedFor": "Powiadomienie odłożone na {{duration}}"
+    },
+    "snoozeDuration": {
+      "1h": "1 godzinę",
+      "4h": "4 godziny",
+      "1d": "1 dzień",
+      "3d": "3 dni"
+    }
+  },
+  "statusChangeToast": {
+    "updatedTo": "Status zmieniony na {{status}}",
+    "viewIn": "Zobacz w module {{module}}"
+  },
+  "aiFreezeBanner": {
+    "title": "BLOKADA AI AKTYWNA:",
+    "message": "Osiągnięto twardy limit budżetu ({{scope}}). Funkcje AI są tymczasowo ograniczone.",
+    "scopeGlobal": "Globalnie",
+    "protocol": "Protokół kontroli budżetu",
+    "increaseBudget": "Zwiększ budżet"
+  },
+  "mindmap": {
+    "nodeModel": {
+      "myIdea": "Moj pomysl",
+      "clickToEdit": "Kliknij, aby edytowac"
+    },
+    "persistence": {
+      "myIdea": "Mój pomysł",
+      "clickToEdit": "Kliknij, aby edytować",
+      "branchProblem": "Problem",
+      "branchOptions": "Opcje",
+      "branchEvidence": "Dowody",
+      "branchRisks": "Ryzyka",
+      "branchExperiments": "Eksperymenty",
+      "selectBranchHint": "Wybierz gałąź i naciśnij Tab",
+      "myIdeaAccented": "Mój pomysł",
+      "clickToEditAccented": "Kliknij, aby edytować",
+      "backendNeedsRestart": "Backend wymaga restartu (route mapy jeszcze nie działa).",
+      "mapTableMissing": "Brakuje tabeli mapy — uruchom migracje DB.",
+      "failedToLoadMap": "Nie udało się wczytać mapy",
+      "conflictDetected": "Wykryto konflikt zmian. Odświeżam mapę z serwera.",
+      "failedToSaveMap": "Nie udało się zapisać mapy"
+    },
+    "quickActions": {
+      "viewLevel": "Widok: poziom {{level}}",
+      "allExpanded": "Wszystko rozwinięte",
+      "selectNodeToAttach": "Zaznacz węzeł, do którego chcesz dodać",
+      "labelKnowledge": "Wiedza",
+      "labelNote": "Notatka",
+      "labelEvidence": "Dowód",
+      "exportFailedPng": "Nie udało się wyeksportować PNG",
+      "exportFailedSvg": "Nie udało się wyeksportować SVG",
+      "exportFailedJson": "Nie udało się wyeksportować JSON",
+      "csvExported": "CSV wyeksportowany",
+      "exportFailedCsv": "Nie udało się wyeksportować CSV",
+      "markdownCopied": "Markdown skopiowany do schowka",
+      "exportFailedMarkdown": "Nie udało się wyeksportować Markdown",
+      "mapRootMissing": "Brak korzenia mapy",
+      "selectAtLeast2Nodes": "Zaznacz co najmniej 2 węzły",
+      "labelGroup": "Grupa",
+      "groupedCount": "Zgrupowano {{count}} węzłów",
+      "labelFrame": "Ramka",
+      "promptSuggestBranches": "Zasugeruj nowe gałęzie dla mapy \"{{ideaTitle}}\". Podaj 5-7 propozycji z uzasadnieniem.",
+      "promptGapAnalysis": "Przeanalizuj luki w mapie \"{{ideaTitle}}\". Obecne węzły: {{nodeLabels}}. Czego brakuje?",
+      "notEnoughUngroupedNodes": "Za mało luźnych węzłów do grupowania",
+      "allNodesFitOneGroup": "Wszystkie węzły pasują do jednej grupy",
+      "autoClusteredHint": "Automatycznie zgrupowane",
+      "createdClusters": "Utworzono {{clusterCount}} grup z {{nodeCount}} węzłów",
+      "promptSummarizeMap": "Podsumuj mapę \"{{ideaTitle}}\" z {{nodeCount}} węzłami: {{nodeLabels}}",
+      "promptAutoConnect": "Zaproponuj połączenia między gałęziami w mapie \"{{ideaTitle}}\". Jakie cross-linki powinny istnieć?",
+      "promptDeepen": "Pogłęb temat \"{{nodeLabel}}\" w kontekście mapy \"{{ideaTitle}}\".{{ctxSuffix}} Podaj szczegółową analizę.",
+      "promptDeepenCtxSuffix": " Kontekst: {{ctx}}.",
+      "selectBranchFirst": "Zaznacz gałąź",
+      "promptChatAboutNode": "Porozmawiajmy o węźle \"{{nodeLabel}}\" w mapie \"{{ideaTitle}}\".{{ctxSuffix}}",
+      "promptChatAboutNodeCtxSuffix": " Kontekst: {{ctx}}",
+      "selectNodeFirst": "Zaznacz węzeł",
+      "noNotebookPages": "Brak stron w notatniku",
+      "labelNoteFallback": "Notatka",
+      "insertedNotebookPages": "Wstawiono {{count}} stron z notatnika",
+      "failedToFetchNotebook": "Nie udało się pobrać notatnika",
+      "importedNodes": "Zaimportowano {{count}} węzłów",
+      "unsupportedImportFile": "Nieobsługiwany plik. Użyj eksportu JSON z Consultify.",
+      "couldNotReadJsonFile": "Nie udało się odczytać pliku JSON",
+      "urlImportNotAvailable": "Import URL nie jest jeszcze dostępny. Użyj Import → Dokument lub XMind/FreeMind.",
+      "featureUnderDevelopment": "Ta funkcja jest w trakcie rozwoju",
+      "layoutChanged": "Układ: {{mode}}",
+      "structureChanged": "Struktura: {{label}}",
+      "linkCopied": "Link skopiowany!",
+      "copyFailed": "Nie udało się skopiować",
+      "embedCodeCopied": "Kod embed skopiowany!"
+    },
+    "nodes": {
+      "mapLimitReached": "Mapa osiągnęła limit {{limit}} węzłów",
+      "selectNode": "Zaznacz węzeł",
+      "newIdea": "Nowy pomysł",
+      "childAdded": "Dodano gałąź",
+      "cannotAddSiblingToRoot": "Nie można dodać rodzeństwa do korzenia",
+      "siblingAdded": "Dodano sąsiada",
+      "subtreeDeleteConfirm_one": "Usunięcie obejmie {{count}} podwęzeł. Kontynuować?",
+      "subtreeDeleteConfirm_other": "Usunięcie obejmie {{count}} podwęzłów. Kontynuować?",
+      "actionDelete": "Usuń",
+      "actionCancel": "Anuluj",
+      "deletedCount_one": "Usunięto {{count}} węzeł",
+      "deletedCount_other": "Usunięto {{count}} węzłów",
+      "cannotMoveUnderOwnDescendant": "Nie można przenieść pod własnego potomka",
+      "movedUnder": "Przeniesiono pod {{parentLabel}}",
+      "alreadyAtTopLevel": "Już na najwyższym poziomie",
+      "noSiblingToDemoteUnder": "Brak sąsiada do zagnieżdżenia",
+      "mapRootMissing": "Brak korzenia mapy",
+      "selectNodesToCopy": "Zaznacz węzły do skopiowania",
+      "selectNodesToCut": "Zaznacz węzły do wycięcia",
+      "clipboardEmpty": "Schowek jest pusty",
+      "copiedCount_one": "Skopiowano {{count}} węzeł",
+      "copiedCount_other": "Skopiowano {{count}} węzłów",
+      "cutCount_one": "Wycięto {{count}} węzeł",
+      "cutCount_other": "Wycięto {{count}} węzłów",
+      "pastedCount_one": "Wklejono {{count}} węzeł",
+      "pastedCount_other": "Wklejono {{count}} węzłów",
+      "subtreeDeleteConfirm": "Usunięcie obejmie {{count}} podwęzłów. Kontynuować?",
+      "deletedCount": "Usunięto {{count}} węzłów",
+      "copiedCount": "Skopiowano {{count}} węzłów",
+      "cutCount": "Wycięto {{count}} węzłów",
+      "pastedCount": "Wklejono {{count}} węzłów"
+    },
+    "acceptedProposalsCount_one": "Zaakceptowano {{count}} propozycję",
+    "acceptedProposalsCount_other": "Zaakceptowano {{count}} propozycji",
+    "transformingSelectionTo": "Przekształcanie zaznaczenia do: {{targetTool}}",
+    "linkSuggestionsFoundCount_one": "Znaleziono {{count}} propozycję powiązań",
+    "linkSuggestionsFoundCount_other": "Znaleziono {{count}} propozycji powiązań",
+    "appliedThemeName": "Zastosowano motyw: {{themeId}}",
+    "activeKitName": "Aktywny kit: {{semantic}}",
+    "savedReviewStatusName": "Zapisano status review: {{nextStatus}}",
+    "importedDiagramFormat": "Zaimportowano diagram ({{sourceFormat}})",
+    "discussMindMapKickoff": "Oto mapa myśli „{{mapTitle}}\". Omówmy ją i zaproponuj następne kroki:\n\n{{outline}}",
+    "startWorkspaceKickoffPrompt": "Zacznij budowę workspace dla pomysłu \"{{ideaTitle}}\". Preferowany system startowy: {{requestedSystem}}. Przygotuj pierwszą propozycję struktury na bazie:\n\n{{promptSeed}}",
+    "attachedRefTitle": "Dołączono: {{title}}",
+    "taskCreatedFromMindmapNode": "Zadanie utworzone z mapy myśli (węzeł: {{nodeId}})",
+    "startWorkspaceIntentPrompt": "Zacznij budowę workspace na bazie intencji: \"{{label}}\". Preferowany system: {{preferredSystem}}.\n\n{{seedText}}",
+    "savedSecondsAgo": "Zapisano {{count}}s temu",
+    "focusedOnTool": "Tryb skupiony: {{activeToolLabel}}",
+    "summarizeIdeaCardPrompt": "Podsumuj kartę pomysłu \"{{title}}\" — problem, szanse, ryzyka, następne kroki.",
+    "convertedToTarget": "Skonwertowano na: {{target}}",
+    "deleteSubtreeWarning_one": "Usunięcie obejmie {{count}} podwęzeł. Tej operacji nie można cofnąć po synchronizacji.",
+    "deleteSubtreeWarning_other": "Usunięcie obejmie {{count}} podwęzłów. Tej operacji nie można cofnąć po synchronizacji.",
+    "movedUnderTarget": "Przeniesiono pod „{{label}}\"",
+    "relationTypePrompt": "Typ relacji ({{relations}}):",
+    "appliedAiProposalsCount": "Zastosowano propozycje AI ({{count}} dodano)",
+    "duplicatedBranchCount": "Zduplikowano gałąź ({{count}} węzłów)",
+    "summarizeBranchPrompt": "Podsumuj gałąź \"{{label}}\":\n{{branchList}}",
+    "convertingBranchTo": "Konwersja gałęzi do {{target}}",
+    "assignedName": "Przypisano: {{name}}",
+    "changeConflictDetectedRefreshingMapFrom": "Wykryto konflikt zmian. Odświeżam mapę z serwera.",
+    "failedToApplyChanges": "Nie udało się zastosować zmian",
+    "selectAnObjectOnTheCanvas": "Najpierw zaznacz obiekt na canvasie",
+    "noMatchingArtifactsFound": "Nie znaleziono pasujących artefaktów",
+    "failedToFindLinks": "Nie udało się wyszukać powiązań",
+    "switchedToProcessFlow": "Przełączono na przepływ procesu",
+    "templateNotFound": "Nie znaleziono szablonu",
+    "templateApplied": "Szablon zastosowany",
+    "failedToApplyTemplate": "Nie udało się zastosować szablonu",
+    "aiReturnedNoProposalsToReview": "AI nie zwróciło propozycji do review",
+    "failedToRunAi": "Nie udało się uruchomić AI",
+    "failedToSaveReview": "Nie udało się zapisać review",
+    "importFailed": "Import nie powiódł się",
+    "newChallenge": "Nowe wyzwanie",
+    "failedToLoad": "Nie udało się wczytać",
+    "switchToolMindMapWhiteboardProcess": "Przełącz narzędzie (Mapa / Tablica / Przepływ / Tabela)",
+    "searchThisIdea": "Szukaj w tej idei",
+    "zoomToFit": "Dopasuj widok (zoom to fit)",
+    "workspaceTool": "Narzędzie workspace",
+    "openTemplateGallery": "Otwórz galerię szablonów",
+    "export": "Eksportuj…",
+    "keyboardShortcuts": "Skróty klawiszowe",
+    "challenge": "Wyzwanie",
+    "theMapIsEmpty": "Mapa jest pusta",
+    "mindMap": "Mapa myśli",
+    "saved": "Zapisano",
+    "failedToSave": "Nie udało się zapisać",
+    "describeTheChallengeFirst": "Najpierw opisz wyzwanie.",
+    "challengeAccepted": "Wyzwanie zaakceptowane",
+    "failed": "Nie udało się",
+    "thisConversionTargetIsNotYet": "Ten typ konwersji nie jest jeszcze wspierany",
+    "thisConversionIsComingSoon": "Ta konwersja będzie wkrótce",
+    "doneOutputAvailableInTargetModule": "Gotowe — wynik dostępny w module docelowym",
+    "failedToAttach": "Nie udało się dołączyć",
+    "aiProposedChangesToTheMap": "AI zaproponowało zmiany w mapie",
+    "noProjectContext": "Brak kontekstu projektu",
+    "failedToCreateTask": "Nie udało się utworzyć zadania",
+    "interviewEvidenceAttached": "Dodano dowód z wywiadu",
+    "saving": "Zapisuję…",
+    "refineTheCurrentSelectionInTools": "Dopracuj zaznaczenie w panelu Tools albo rozwiń je na aktywnym canvasie.",
+    "openTheToolsPanelToGive": "Otwórz panel Tools, aby nadać temu pomysłowi następny konkretny ruch.",
+    "startWithTheCoreProblemAnd": "Zacznij od głównego problemu i dołóż pierwszą gałąź rekomendacji.",
+    "sketchOptionsAndClusterTheStrongest": "Naszkicuj warianty i zgrupuj najmocniejszy kierunek.",
+    "mapTheMainStepsOwnersAnd": "Rozpisz główne kroki, właścicieli i blokery przepływu.",
+    "translateTheIdeaIntoStructuredRows": "Przełóż pomysł na uporządkowane wiersze, żeby przygotować dalsze decyzje.",
+    "giveThisIdeaTheNextConcrete": "Nadaj tej idei kolejny konkretny ruch.",
+    "ideaMapWorkspace": "Obszar roboczy mapy idei",
+    "ideaCanvasAndMapTools": "Płótno idei i narzędzia mapy",
+    "rootMap": "Główna mapa",
+    "objectFocus": "Tryb obiektu",
+    "fullCanvas": "← Pełny canvas",
+    "ideas": "Idee",
+    "untitled": "Bez tytułu",
+    "recommendationMap": "Mapa rekomendacji",
+    "failedToChangeStage": "Nie udało się zmienić etapu",
+    "thisNodeIsBeingEditedBy": "Ten węzeł jest edytowany przez inną osobę",
+    "openNodeProperties": "Otwórz właściwości węzła",
+    "addChildTab": "Dodaj gałąź (Tab)",
+    "addSiblingShiftEnter": "Dodaj sąsiada (Shift+Enter)",
+    "type": "Wpisz…",
+    "clickToType": "Kliknij, aby wpisać…",
+    "expand": "Rozwiń",
+    "collapse": "Zwiń",
+    "evidence": "dowodów",
+    "selectionMovedBranchCollapsed": "Zaznaczenie przeniesione — gałąź zwinięta",
+    "deleteNodes": "Usunąć węzły?",
+    "delete": "Usuń",
+    "cancel": "Anuluj",
+    "expanded": "Rozwinięto",
+    "collapsed": "Zwinięto",
+    "you": "Ty",
+    "thisNodeIsCurrentlyLockedBy": "Ten węzeł jest aktualnie zablokowany przez inną osobę",
+    "renamed": "Zmieniono nazwę",
+    "insertedIntoMap": "Wstawiono do mapy",
+    "allExpanded": "Wszystko rozwinięte",
+    "connectionRemoved": "Połączenie usunięte",
+    "connectionLabel": "Etykieta połączenia:",
+    "directionReversed": "Kierunek odwrócony",
+    "acceptTheChallengeFirst": "Najpierw zaakceptuj wyzwanie.",
+    "noSelectedChanges": "Brak wybranych zmian",
+    "aiExpandBranch": "AI expand branch",
+    "failedToApplyProposals": "Nie udało się zastosować propozycji",
+    "aiRequiresBackend": "AI wymaga działającego backendu.",
+    "noNewSuggestions": "Brak nowych propozycji",
+    "aiFailed": "AI nie zadziałało",
+    "branchDetached": "Gałąź odłączona",
+    "thisNodeHasNoLinkedArtifacts": "Ten wezel nie ma jeszcze artefaktow",
+    "selectAnotherNodeToCreateA": "Zaznacz drugi wezel, aby utworzyc polaczenie",
+    "styleCopied": "Styl skopiowany",
+    "linkCopied": "Link skopiowany!",
+    "copyLink": "Skopiuj link:",
+    "newTopic": "Nowy temat",
+    "showingLevel0": "Widok: poziom 0",
+    "showingLevel1": "Widok: poziom 1",
+    "showingLevel2": "Widok: poziom 2",
+    "backendRestartRequired": "Backend wymaga restartu",
+    "mapTableMissing": "Brakuje tabeli mapy",
+    "offlineNotSaving": "Offline - brak zapisu",
+    "saving2": "Zapisuję...",
+    "notSavedYet": "Nie zapisano",
+    "modePan": "Tryb: przesuwanie",
+    "modeConnect": "Tryb: łączenie",
+    "modeSelect": "Tryb: zaznaczanie",
+    "artifactDetached": "Artefakt odłączony",
+    "failedToDetachArtifact": "Nie udało się odłączyć artefaktu",
+    "closeMap": "Zamknij mapę",
+    "mapReached500NodeLimitAdding": "Mapa osiągnęła limit 500 węzłów. Dodawanie zablokowane.",
+    "ideaRecommendationMapArrowNavigationEnte": "Mapa rekomendacji pomysłu — nawigacja strzałkami, Enter/Tab dodawanie węzłów",
+    "describeYourChallenge": "Opisz swoje wyzwanie",
+    "fillInTheTitleAndDescription": "Wypełnij tytuł i opis w panelu Tools po prawej, a następnie zaakceptuj wyzwanie.",
+    "openPanelStart": "Otwórz panel i zacznij",
+    "selectABranchAndPressTab": "Wybierz gałąź i naciśnij Tab, aby dodać pierwszy węzeł",
+    "versionRestored": "Przywrócono wersję",
+    "exportFormat": "Format eksportu",
+    "markdownOutline": "Markdown (konspekt)",
+    "markdownCopiedToClipboard": "Markdown skopiowany do schowka",
+    "artifactAttached": "Artefakt dołączony",
+    "failedToAttachArtifact": "Nie udało się dołączyć artefaktu",
+    "imageAdded": "Obraz dodany",
+    "acceptedProposalsCount": "Zaakceptowano {{count}} propozycji",
+    "linkSuggestionsFoundCount": "Znaleziono {{count}} propozycji powiązań",
+    "deleteSubtreeWarning": "Usunięcie obejmie {{count}} podwęzłów. Tej operacji nie można cofnąć po synchronizacji."
   }
 }

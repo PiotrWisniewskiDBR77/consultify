@@ -290,7 +290,7 @@ function getSiriPathwayRecommendation(
     ? `Poziom ${toLabel} oznacza: ${toLevel.description} To przesunięcie z „${fromLevel.title}" do „${toLevel.title}" w Building Block ${dimension.buildingBlock}.`
     : `Level ${toLabel} means: ${toLevel.description} This is the shift from "${fromLevel.title}" to "${toLevel.title}" within the ${dimension.buildingBlock} Building Block.`;
 
-  const actions = buildActionsFromIndicators(toLevel.indicators, isPL);
+  const actions = buildActionsFromIndicators(toLevel.indicators ?? [], isPL);
 
   const targetEvidence = isPL
     ? `Dowód poziomu ${toLabel}: ${knowledge.evidenceGuidance}`
@@ -349,7 +349,7 @@ function getAdmaPathwayRecommendation(
     ? `Poziom ${toLabel} oznacza: ${toLevel.description} To przesunięcie z „${fromLevel.title}" do „${toLevel.title}" w filarze ${dimension.pillar}.`
     : `Level ${toLabel} means: ${toLevel.description} This is the shift from "${fromLevel.title}" to "${toLevel.title}" within the ${dimension.pillar} pillar.`;
 
-  const actions = buildActionsFromIndicators(toLevel.characteristics, isPL);
+  const actions = buildActionsFromIndicators(toLevel.characteristics ?? [], isPL);
 
   const targetEvidence = isPL
     ? `Dowód poziomu ${toLabel}: ${knowledge.evidenceGuidance}`

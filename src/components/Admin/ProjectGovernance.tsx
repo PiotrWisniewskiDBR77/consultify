@@ -256,7 +256,7 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
             <button
               onClick={() => toggleSetting(config.key)}
               className={`relative w-12 h-6 rounded-full transition-colors ${
-                settings[config.key] ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
+                settings[config.key] ? 'bg-c-surface' : 'bg-slate-300 dark:bg-slate-600'
               }`}
             >
               <div

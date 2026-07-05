@@ -52,11 +52,11 @@ const DigestsTab: React.FC<DigestsTabProps> = ({ preferences, onUpdateDigests })
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+        <h3 className="text-lg font-medium text-c-text flex items-center gap-2">
           <Calendar size={20} />
           {t('settings.notifications.digestsTitle', 'Email Digests')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        <p className="text-sm text-c-text-muted mt-1">
           {t(
             'settings.notifications.digestsDesc',
             'Receive summary emails instead of individual notifications.'
@@ -65,13 +65,13 @@ const DigestsTab: React.FC<DigestsTabProps> = ({ preferences, onUpdateDigests })
       </div>
 
       {/* Daily Digest */}
-      <div className="bg-slate-50 dark:bg-navy-800/50 rounded-lg p-4 space-y-4">
+      <div className="bg-c-surface-raised rounded-lg p-4 space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="font-medium text-slate-900 dark:text-white">
+            <p className="font-medium text-c-text">
               {t('settings.notifications.dailyDigest', 'Daily Digest')}
             </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t('settings.notifications.dailyDigestDesc', 'Get a daily summary of your activity')}
             </p>
           </div>
@@ -82,34 +82,34 @@ const DigestsTab: React.FC<DigestsTabProps> = ({ preferences, onUpdateDigests })
               onChange={(e) => handleToggle('dailyEnabled', e.target.checked)}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-brand rounded-full peer dark:bg-navy-700 peer-checked:after:translate-x-full peer-checked:bg-navy-900 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+            <div className="w-11 h-6 bg-c-surface-raised peer-focus:ring-2 peer-focus:ring-[color:var(--c-focus)] rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-navy-900 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-c-surface after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
           </label>
         </div>
 
         {localDigests.dailyEnabled && (
-          <div className="flex items-center gap-3 pt-2 border-t border-slate-200 dark:border-navy-600">
-            <Clock size={16} className="text-slate-600 dark:text-slate-500" />
-            <span className="text-sm text-slate-600 dark:text-slate-400">
+          <div className="flex items-center gap-3 pt-2 border-t border-c-border-subtle dark:border-navy-600">
+            <Clock size={16} className="text-c-text-secondary" />
+            <span className="text-sm text-c-text-secondary">
               {t('settings.notifications.deliveryTime', 'Delivery time:')}
             </span>
             <input
               type="time"
               value={localDigests.dailyTime}
               onChange={(e) => handleChange('dailyTime', e.target.value)}
-              className="px-2 py-1 border border-slate-300 dark:border-navy-600 rounded bg-white dark:bg-navy-800 text-sm"
+              className="px-2 py-1 border border-c-border dark:border-navy-600 rounded bg-c-surface text-sm"
             />
           </div>
         )}
       </div>
 
       {/* Weekly Digest */}
-      <div className="bg-slate-50 dark:bg-navy-800/50 rounded-lg p-4 space-y-4">
+      <div className="bg-c-surface-raised rounded-lg p-4 space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="font-medium text-slate-900 dark:text-white">
+            <p className="font-medium text-c-text">
               {t('settings.notifications.weeklyDigest', 'Weekly Digest')}
             </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t('settings.notifications.weeklyDigestDesc', 'Get a weekly summary every week')}
             </p>
           </div>
@@ -120,18 +120,18 @@ const DigestsTab: React.FC<DigestsTabProps> = ({ preferences, onUpdateDigests })
               onChange={(e) => handleToggle('weeklyEnabled', e.target.checked)}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-brand rounded-full peer dark:bg-navy-700 peer-checked:after:translate-x-full peer-checked:bg-navy-900 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+            <div className="w-11 h-6 bg-c-surface-raised peer-focus:ring-2 peer-focus:ring-[color:var(--c-focus)] rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-navy-900 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-c-surface after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
           </label>
         </div>
 
         {localDigests.weeklyEnabled && (
-          <div className="flex items-center gap-4 pt-2 border-t border-slate-200 dark:border-navy-600">
+          <div className="flex items-center gap-4 pt-2 border-t border-c-border-subtle dark:border-navy-600">
             <div className="flex items-center gap-2">
-              <Calendar size={16} className="text-slate-600 dark:text-slate-500" />
+              <Calendar size={16} className="text-c-text-secondary" />
               <select
                 value={localDigests.weeklyDay}
                 onChange={(e) => handleChange('weeklyDay', e.target.value)}
-                className="px-2 py-1 border border-slate-300 dark:border-navy-600 rounded bg-white dark:bg-navy-800 text-sm"
+                className="px-2 py-1 border border-c-border dark:border-navy-600 rounded bg-c-surface text-sm"
               >
                 {DAYS_OF_WEEK.map(({ value, label }) => (
                   <option key={value} value={value}>
@@ -141,12 +141,12 @@ const DigestsTab: React.FC<DigestsTabProps> = ({ preferences, onUpdateDigests })
               </select>
             </div>
             <div className="flex items-center gap-2">
-              <Clock size={16} className="text-slate-600 dark:text-slate-500" />
+              <Clock size={16} className="text-c-text-secondary" />
               <input
                 type="time"
                 value={localDigests.weeklyTime}
                 onChange={(e) => handleChange('weeklyTime', e.target.value)}
-                className="px-2 py-1 border border-slate-300 dark:border-navy-600 rounded bg-white dark:bg-navy-800 text-sm"
+                className="px-2 py-1 border border-c-border dark:border-navy-600 rounded bg-c-surface text-sm"
               />
             </div>
           </div>
@@ -155,7 +155,7 @@ const DigestsTab: React.FC<DigestsTabProps> = ({ preferences, onUpdateDigests })
 
       {/* Digest Content Options */}
       <div className="space-y-3">
-        <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300">
+        <h4 className="text-sm font-medium text-c-text-secondary">
           {t('settings.notifications.digestContent', 'Include in digests:')}
         </h4>
 
@@ -174,13 +174,13 @@ const DigestsTab: React.FC<DigestsTabProps> = ({ preferences, onUpdateDigests })
         ].map(({ key, label, desc }) => (
           <div
             key={key}
-            className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-800/50 rounded-lg"
+            className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg"
           >
             <div>
-              <p className="text-sm font-medium text-slate-900 dark:text-white">
+              <p className="text-sm font-medium text-c-text">
                 {t(`settings.notifications.${key}`, label)}
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-c-text-muted">
                 {t(`settings.notifications.${key}Desc`, desc)}
               </p>
             </div>
@@ -194,7 +194,7 @@ const DigestsTab: React.FC<DigestsTabProps> = ({ preferences, onUpdateDigests })
               className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${
                 localDigests[key as keyof DigestSettings]
                   ? 'bg-navy-900 border-brand text-white'
-                  : 'border-slate-300 dark:border-navy-600'
+                  : 'border-c-border dark:border-navy-600'
               }`}
             >
               {localDigests[key as keyof DigestSettings] && <Check size={14} />}

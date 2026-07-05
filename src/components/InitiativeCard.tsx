@@ -18,6 +18,7 @@ import {
   Zap,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Initiative, InitiativeStatus } from '../types';
 
@@ -38,6 +39,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
   onQuickAssign,
   onQuickFlag,
 }) => {
+  const { t } = useTranslation();
   const [isEnriching, setIsEnriching] = useState(false);
 
   const handleEnrich = async (e: React.MouseEvent) => {
@@ -171,8 +173,19 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      className="group bg-white dark:bg-navy-800/50 hover:bg-slate-50 dark:hover:bg-navy-800 border border-slate-200 dark:border-navy-700 hover:border-blue-500/30 rounded-xl p-4 transition-all cursor-pointer shadow-sm hover:shadow-md dark:shadow-blue-900/10 relative overflow-hidden"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      aria-label={t('initiatives.card.openInitiative', 'Open initiative: {{title}}', {
+        title: initiative.name,
+      })}
+      className="group bg-white dark:bg-navy-800/50 hover:bg-slate-50 dark:hover:bg-navy-800 border border-slate-200 dark:border-navy-700 hover:border-blue-500/30 rounded-xl p-4 transition-all cursor-pointer shadow-sm hover:shadow-md dark:shadow-blue-900/10 relative overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-navy-900"
     >
       {/* Decorative Gradient */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl -mr-16 -mt-16 group-hover:bg-blue-500/10 transition-colors"></div>
@@ -458,6 +471,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
                   }}
                   className="p-1.5 rounded-lg bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-500/20 border border-green-200 dark:border-green-500/20 transition-all"
                   title="Advance to next status"
+                  aria-label={t('initiatives.card.advanceStatus', 'Advance to next status')}
                 >
                   <Play size={12} />
                 </button>
@@ -470,6 +484,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
                 }}
                 className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 border border-blue-200 dark:border-blue-500/20 transition-all"
                 title="Assign owners"
+                aria-label={t('initiatives.card.assignOwners', 'Assign owners')}
               >
                 <UserPlus size={12} />
               </button>
@@ -482,6 +497,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
                 }}
                 className="p-1.5 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20 border border-amber-200 dark:border-amber-500/20 transition-all"
                 title="Flag for attention"
+                aria-label={t('initiatives.card.flagForAttention', 'Flag for attention')}
               >
                 <Flag size={12} />
               </button>

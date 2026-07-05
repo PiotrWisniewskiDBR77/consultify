@@ -567,7 +567,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-xl font-bold text-c-text flex items-center gap-2">
             <FileText size={24} className="text-primary-400" />
             Create Custom Compliance Template
           </h2>
@@ -590,9 +590,9 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
             <button
               key={base.id}
               onClick={() => selectBaseTemplate(base.id)}
-              className="p-6 bg-navy-900/50 border border-white/10 rounded-xl text-left hover:border-primary-500/50 hover:bg-primary-500/5 transition-all"
+              className="p-6 bg-c-surface/50 border border-white/10 rounded-xl text-left hover:border-c-accent/50 hover:bg-c-accent/5 transition-all"
             >
-              <h3 className="font-semibold text-white mb-2">{base.name}</h3>
+              <h3 className="font-semibold text-c-text mb-2">{base.name}</h3>
               <p className="text-sm text-slate-600 dark:text-slate-500">{base.description}</p>
             </button>
           ))}
@@ -602,7 +602,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
           <p className="text-sm text-slate-600 dark:text-slate-500 mb-3">
             Or import an existing template:
           </p>
-          <label className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg cursor-pointer transition-colors">
+          <label className="inline-flex items-center gap-2 px-4 py-2 bg-c-surface-raised hover:bg-c-surface-raised text-c-text rounded-lg cursor-pointer transition-colors">
             <Upload size={16} />
             Import JSON
             <input type="file" accept=".json" onChange={importTemplate} className="hidden" />
@@ -617,7 +617,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-xl font-bold text-c-text flex items-center gap-2">
             <FileText size={24} className="text-primary-400" />
             {existingTemplate ? 'Edit' : 'Create'} Compliance Template
           </h2>
@@ -630,7 +630,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
         <div className="flex items-center gap-3">
           <button
             onClick={exportTemplate}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-600 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-c-surface-raised hover:bg-c-surface-raised text-slate-600 rounded-lg transition-colors"
           >
             <Download size={16} />
             Export
@@ -665,7 +665,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
             value={template.name}
             onChange={(e) => setTemplate((prev) => ({ ...prev, name: e.target.value }))}
             placeholder="e.g. Custom AI Governance Framework"
-            className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-3 text-white focus:border-primary-500 outline-none"
+            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-3 text-c-text focus:border-primary-500 outline-none"
           />
         </div>
         <div>
@@ -675,7 +675,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
             value={template.version}
             onChange={(e) => setTemplate((prev) => ({ ...prev, version: e.target.value }))}
             placeholder="1.0.0"
-            className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-3 text-white focus:border-primary-500 outline-none"
+            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-3 text-c-text focus:border-primary-500 outline-none"
           />
         </div>
         <div className="md:col-span-2">
@@ -687,7 +687,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
             onChange={(e) => setTemplate((prev) => ({ ...prev, description: e.target.value }))}
             placeholder="Describe the purpose and scope of this compliance framework..."
             rows={2}
-            className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-3 text-white focus:border-primary-500 outline-none resize-none"
+            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-3 text-c-text focus:border-primary-500 outline-none resize-none"
           />
         </div>
       </div>
@@ -715,11 +715,11 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
             onChange={(e) => setNewTag(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && addTag()}
             placeholder="Add tag..."
-            className="flex-1 bg-slate-800/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:border-primary-500 outline-none"
+            className="flex-1 bg-c-surface-raised/50 border border-c-border rounded-lg px-3 py-2 text-c-text text-sm focus:border-primary-500 outline-none"
           />
           <button
             onClick={addTag}
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-600 rounded-lg text-sm transition-colors"
+            className="px-4 py-2 bg-c-surface-raised hover:bg-c-surface-raised text-slate-600 rounded-lg text-sm transition-colors"
           >
             Add
           </button>
@@ -728,17 +728,17 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
 
       {/* Summary Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-navy-900/50 border border-white/10 rounded-lg p-4">
+        <div className="bg-c-surface/50 border border-white/10 rounded-lg p-4">
           <p className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-1">Sections</p>
-          <p className="text-2xl font-bold text-white">{template.sections.length}</p>
+          <p className="text-2xl font-bold text-c-text">{template.sections.length}</p>
         </div>
-        <div className="bg-navy-900/50 border border-white/10 rounded-lg p-4">
+        <div className="bg-c-surface/50 border border-white/10 rounded-lg p-4">
           <p className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-1">
             Total Checkpoints
           </p>
-          <p className="text-2xl font-bold text-white">{totalCheckpoints}</p>
+          <p className="text-2xl font-bold text-c-text">{totalCheckpoints}</p>
         </div>
-        <div className="bg-navy-900/50 border border-white/10 rounded-lg p-4">
+        <div className="bg-c-surface/50 border border-white/10 rounded-lg p-4">
           <p className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-1">Required</p>
           <p className="text-2xl font-bold text-amber-400">{requiredCheckpoints}</p>
         </div>
@@ -747,7 +747,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
       {/* Sections */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-white">Sections</h3>
+          <h3 className="text-lg font-semibold text-c-text">Sections</h3>
           <button
             onClick={addSection}
             className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium transition-colors"
@@ -764,7 +764,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="bg-navy-900/50 border border-white/10 rounded-xl overflow-hidden"
+              className="bg-c-surface/50 border border-white/10 rounded-xl overflow-hidden"
             >
               {/* Section Header */}
               <div
@@ -781,7 +781,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                       value={section.name}
                       onChange={(e) => updateSection(section.id, { name: e.target.value })}
                       onClick={(e) => e.stopPropagation()}
-                      className="bg-transparent text-white font-semibold focus:outline-none focus:border-b focus:border-primary-500"
+                      className="bg-transparent text-c-text font-semibold focus:outline-none focus:border-b focus:border-primary-500"
                     />
                     <input
                       type="text"
@@ -836,7 +836,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                             })
                           }
                           placeholder="Checkpoint name"
-                          className="bg-slate-800/50 border border-slate-700 rounded px-2 py-1 text-white text-sm"
+                          className="bg-c-surface-raised/50 border border-c-border rounded px-2 py-1 text-c-text text-sm"
                         />
                         <input
                           type="text"
@@ -847,7 +847,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                             })
                           }
                           placeholder="Description"
-                          className="bg-slate-800/50 border border-slate-700 rounded px-2 py-1 text-white text-sm"
+                          className="bg-c-surface-raised/50 border border-c-border rounded px-2 py-1 text-c-text text-sm"
                         />
                         <select
                           value={checkpoint.validationType}
@@ -856,7 +856,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                               validationType: e.target.value as any,
                             })
                           }
-                          className="bg-slate-800/50 border border-slate-700 rounded px-2 py-1 text-white text-sm"
+                          className="bg-c-surface-raised/50 border border-c-border rounded px-2 py-1 text-c-text text-sm"
                         >
                           <option value="manual">Manual</option>
                           <option value="automatic">Automatic</option>
@@ -872,7 +872,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                                   required: e.target.checked,
                                 })
                               }
-                              className="rounded bg-slate-700 border-slate-600"
+                              className="rounded bg-c-surface-raised border-slate-600"
                             />
                             Required
                           </label>
@@ -886,7 +886,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                             }
                             min={1}
                             max={5}
-                            className="w-14 bg-slate-800/50 border border-slate-700 rounded px-2 py-1 text-white text-sm"
+                            className="w-14 bg-c-surface-raised/50 border border-c-border rounded px-2 py-1 text-c-text text-sm"
                             title="Weight (1-5)"
                           />
                         </div>
@@ -903,7 +903,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
 
                   <button
                     onClick={() => addCheckpoint(section.id)}
-                    className="w-full py-2 border border-dashed border-slate-700 rounded-lg text-slate-500 dark:text-slate-400 hover:text-primary-400 hover:border-primary-500 text-sm transition-colors flex items-center justify-center gap-2"
+                    className="w-full py-2 border border-dashed border-c-border rounded-lg text-slate-500 dark:text-slate-400 hover:text-primary-400 hover:border-primary-500 text-sm transition-colors flex items-center justify-center gap-2"
                   >
                     <Plus size={14} />
                     Add Checkpoint

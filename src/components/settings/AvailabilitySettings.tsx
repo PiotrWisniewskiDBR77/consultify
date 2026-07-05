@@ -250,11 +250,11 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
     return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
   };
 
-  const cardClass = 'bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-white/5 rounded-lg p-5';
+  const cardClass = 'bg-c-surface-raised border border-c-border-subtle rounded-lg p-5';
   const sectionLabel =
-    'text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 mb-4';
+    'text-xs font-bold text-c-text-secondary uppercase tracking-wider flex items-center gap-2 mb-4';
   const inputClass =
-    'w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all';
+    'w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none transition-all';
 
   return (
     <SettingsSection
@@ -284,29 +284,29 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
             {/* ═══════════════════════════════════════════════ */}
             <div>
               <h4 className={sectionLabel}>
-                <Moon size={14} className="text-primary-400" />
+                <Moon size={14} className="text-c-accent" />
                 {t('settings.availability.dnd', 'Do Not Disturb')}
               </h4>
-              <p className="text-xs text-slate-500 mb-4">
+              <p className="text-xs text-c-text-muted mb-4">
                 {t('settings.availability.dndDesc', 'Temporarily pause all notifications')}
               </p>
 
               {/* Active DND banner */}
               {dndEnabled && dndUntil && (
-                <div className="p-3 mb-4 bg-primary-600/10 border border-primary-500/20 rounded-lg flex items-center justify-between">
+                <div className="p-3 mb-4 bg-c-accent-soft border border-c-accent rounded-lg flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-primary-300">
+                    <p className="text-sm font-medium text-c-accent">
                       {t('settings.availability.dndActive', 'DND is active')}
                     </p>
-                    <p className="text-xs text-primary-400 mt-0.5">
+                    <p className="text-xs text-c-accent mt-0.5">
                       {t('settings.availability.until', 'Until')}: {formatUntil(dndUntil)}
                     </p>
                   </div>
                   <button
                     onClick={handleDisableDnd}
-                    className="p-1.5 hover:bg-primary-500/20 rounded-lg transition-colors"
+                    className="p-1.5 hover:bg-c-accent-soft rounded-lg transition-colors"
                   >
-                    <X size={14} className="text-primary-400" />
+                    <X size={14} className="text-c-accent" />
                   </button>
                 </div>
               )}
@@ -318,7 +318,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
                     <button
                       key={preset.label}
                       onClick={() => handleDndPreset(preset)}
-                      className="px-4 py-2.5 bg-white dark:bg-navy-800/50 border border-slate-200 dark:border-white/5 rounded-lg hover:border-primary-500/30 hover:bg-primary-600/5 transition-all text-sm text-slate-600"
+                      className="px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg hover:border-c-accent hover:bg-c-accent-soft transition-all text-sm text-c-text-secondary"
                     >
                       {t(`settings.availability.${preset.labelKey}`, preset.label)}
                     </button>
@@ -328,7 +328,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
 
               {/* Custom end time */}
               <div className="mt-4">
-                <label className="text-xs font-medium text-slate-600 flex items-center gap-1.5 mb-1.5">
+                <label className="text-xs font-medium text-c-text-secondary flex items-center gap-1.5 mb-1.5">
                   <Clock size={12} />
                   {t('settings.availability.customEndTime', 'Custom End Time')}
                 </label>
@@ -354,7 +354,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
             {/* ═══════════════════════════════════════════════ */}
             <div>
               <h4 className={sectionLabel}>
-                <BellOff size={14} className="text-primary-400" />
+                <BellOff size={14} className="text-c-accent" />
                 {t('settings.availability.quietHours', 'Scheduled Quiet Hours')}
               </h4>
 
@@ -389,12 +389,12 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
                   {/* Schedule */}
                   <div className={cardClass}>
                     <h5 className={sectionLabel}>
-                      <Clock size={14} className="text-primary-400" />
+                      <Clock size={14} className="text-c-accent" />
                       {t('settings.availability.schedule', 'Schedule')}
                     </h5>
                     <div className="grid grid-cols-2 gap-4 mb-5">
                       <div>
-                        <label className="text-xs font-medium text-slate-500 mb-1 block">
+                        <label className="text-xs font-medium text-c-text-muted mb-1 block">
                           {t('settings.availability.startTime', 'Start Time')}
                         </label>
                         <input
@@ -407,7 +407,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
                         />
                       </div>
                       <div>
-                        <label className="text-xs font-medium text-slate-500 mb-1 block">
+                        <label className="text-xs font-medium text-c-text-muted mb-1 block">
                           {t('settings.availability.endTime', 'End Time')}
                         </label>
                         <input
@@ -422,7 +422,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
                     </div>
 
                     {/* Days */}
-                    <label className="text-xs font-medium text-slate-500 mb-2 block">
+                    <label className="text-xs font-medium text-c-text-muted mb-2 block">
                       {t('settings.availability.activeDays', 'Active on these days')}
                     </label>
                     <div className="flex flex-wrap gap-2">
@@ -434,8 +434,8 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
                           className={cn(
                             'px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
                             quietHours.daysOfWeek.includes(day.value)
-                              ? 'bg-primary-600/20 text-primary-300 border-primary-500'
-                              : 'bg-white dark:bg-navy-800/50 text-slate-600 border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20'
+                              ? 'bg-c-accent-soft text-c-accent border-c-accent'
+                              : 'bg-c-surface-raised text-c-text-secondary border-c-border-subtle hover:border-c-border dark:hover:border-white/20'
                           )}
                         >
                           {t(`settings.availability.days.${day.key}.short`, day.label)}
@@ -449,7 +449,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
                         <button
                           key={preset.key}
                           onClick={() => applyQuietPreset(preset)}
-                          className="px-3 py-1.5 text-xs bg-white dark:bg-navy-800/50 border border-slate-200 dark:border-white/5 rounded-lg text-slate-600 hover:text-slate-900 dark:hover:text-white hover:border-primary-500/30 transition-all"
+                          className="px-3 py-1.5 text-xs bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text-secondary hover:text-c-text dark:hover:text-white hover:border-c-accent transition-all"
                         >
                           {t(`settings.availability.preset_${preset.key}`, preset.label)}
                         </button>
@@ -460,10 +460,10 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
                   {/* Exceptions */}
                   <div className={cardClass}>
                     <h5 className={sectionLabel}>
-                      <AlertTriangle size={14} className="text-primary-400" />
+                      <AlertTriangle size={14} className="text-c-accent" />
                       {t('settings.availability.exceptions', 'Exceptions')}
                     </h5>
-                    <p className="text-xs text-slate-500 mb-4">
+                    <p className="text-xs text-c-text-muted mb-4">
                       {t(
                         'settings.availability.exceptionsDesc',
                         'Allow certain notifications even during quiet hours'
@@ -507,7 +507,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
                   {/* Auto Reply */}
                   <div className={cardClass}>
                     <h5 className={sectionLabel}>
-                      <MessageCircle size={14} className="text-primary-400" />
+                      <MessageCircle size={14} className="text-c-accent" />
                       {t('settings.availability.autoReply', 'Auto Reply')}
                     </h5>
                     <SettingsToggle
@@ -523,7 +523,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
                     />
                     {quietHours.autoReplyEnabled && (
                       <div className="mt-3">
-                        <label className="text-xs font-medium text-slate-500 mb-1 block">
+                        <label className="text-xs font-medium text-c-text-muted mb-1 block">
                           {t('settings.availability.autoReplyMessage', 'Auto-reply message')}
                         </label>
                         <textarea

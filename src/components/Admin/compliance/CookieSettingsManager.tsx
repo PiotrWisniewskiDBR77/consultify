@@ -136,7 +136,7 @@ export const CookieSettingsManager: React.FC<CookieSettingsManagerProps> = ({
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center">
-              <Cookie size={24} className="text-white" />
+              <Cookie size={24} className="text-c-text" />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
@@ -346,7 +346,7 @@ export const CookieSettingsManager: React.FC<CookieSettingsManagerProps> = ({
           <div
             className={cn(
               'absolute left-0 right-0 p-4',
-              settings.theme === 'dark' ? 'bg-navy-800 text-white' : 'bg-white text-navy-900',
+              settings.theme === 'dark' ? 'bg-c-surface-raised text-c-text' : 'bg-white text-navy-900',
               settings.position === 'bottom' && 'bottom-0',
               settings.position === 'top' && 'top-0',
               settings.position === 'center' &&
@@ -375,7 +375,7 @@ export const CookieSettingsManager: React.FC<CookieSettingsManagerProps> = ({
                 className={cn(
                   'px-4 py-2 text-sm font-medium rounded-lg border',
                   settings.theme === 'dark'
-                    ? 'border-slate-600 hover:bg-navy-700'
+                    ? 'border-slate-600 hover:bg-c-surface-raised'
                     : 'border-slate-300 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-800/20'
                 )}
               >

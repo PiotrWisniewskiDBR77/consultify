@@ -2081,7 +2081,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                                         ? 'translateY(-100%)'
                                         : undefined,
                                   }}
-                                  className="z-[60] flex flex-col overflow-y-auto rounded-2xl border border-c-border bg-c-surface-raised p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:shadow-black/35"
+                                  className="z-modal flex flex-col overflow-y-auto rounded-2xl border border-c-border bg-c-surface-raised p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:shadow-black/35"
                                   onClick={(event) => event.stopPropagation()}
                                 >
                                   <div className="px-2 pb-2 pt-1">

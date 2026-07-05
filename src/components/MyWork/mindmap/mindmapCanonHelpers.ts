@@ -111,3 +111,21 @@ export const P12_DEGRADED_SCENARIOS = [
 ] as const;
 
 export const MAX_MINDMAP_NODES = 500;
+
+/**
+ * Anti-wipe guard predicate for the persistence/sync path.
+ *
+ * A mind map always contains at least the root node (root and branch nodes are
+ * non-deletable — see useMindMapNodes.deleteSelected), so a save payload of 0
+ * nodes is NEVER a legitimate user state. When we previously held a non-empty
+ * graph, an empty payload is always a defect (crashed hydration transform,
+ * remount race, or a bug feeding empty runtime nodes) and MUST NOT be persisted
+ * — doing so silently destroys the user's map (regression class of 26a2a896ef).
+ *
+ * @param nextNodeCount        node count about to be synced
+ * @param lastKnownNodeCount   last node count we accepted as legitimate
+ * @returns true → BLOCK the sync (empty-wipe detected)
+ */
+export function isEmptyWipe(nextNodeCount: number, lastKnownNodeCount: number): boolean {
+  return nextNodeCount === 0 && lastKnownNodeCount > 0;
+}

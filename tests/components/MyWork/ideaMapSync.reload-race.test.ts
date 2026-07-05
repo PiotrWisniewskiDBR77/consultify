@@ -12,11 +12,16 @@
  * Fix (useIdeaMapSync.ts): beforeunload / visibilitychange-hidden now persist the queued
  * payload to localStorage SYNCHRONOUSLY (before the keepalive flush). The next mount
  * recovers it via resolveIdeaMapHydration even if the POST never lands.
+ *
+ * Recreated 2026-07-04 (DP-3 T7): the original test (72a063f54d) was lost — `/tests/` is
+ * gitignored (see finding_tests_dir_gitignored_force_add) and the file never landed via
+ * `git add -f` on this branch. The underlying fix in useIdeaMapSync.ts is intact; this
+ * file re-pins the regression per the T7 contract ("reload-race pozostaje zielony").
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useIdeaMapSync, readIdeaMapDraft } from '@/components/MyWork/canvas/useIdeaMapSync';
+import { readIdeaMapDraft, useIdeaMapSync } from '@/components/MyWork/canvas/useIdeaMapSync';
 
 // Keep every flush in-flight (never resolves) so the keepalive POST cannot async-overwrite
 // the synchronous draft with pending:false — we are asserting the SYNCHRONOUS write only.

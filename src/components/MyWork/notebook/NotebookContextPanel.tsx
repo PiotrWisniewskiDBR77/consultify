@@ -56,36 +56,36 @@ const SECTION_CFG: Record<
     label: 'Ideas',
     labelPl: 'Pomysły',
     icon: Lightbulb,
-    color: 'text-amber-700 dark:text-amber-300',
-    bg: 'bg-amber-500/10',
+    color: 'text-c-warning',
+    bg: 'bg-c-warning/10',
   },
   initiative: {
     label: 'Initiatives',
     labelPl: 'Inicjatywy',
     icon: Target,
-    color: 'text-blue-600 dark:text-blue-400',
-    bg: 'bg-blue-500/10',
+    color: 'text-c-info',
+    bg: 'bg-c-info/10',
   },
   task: {
     label: 'Tasks',
     labelPl: 'Zadania',
     icon: CheckSquare,
-    color: 'text-emerald-600 dark:text-emerald-400',
-    bg: 'bg-emerald-500/10',
+    color: 'text-c-success',
+    bg: 'bg-c-success/10',
   },
   decision: {
     label: 'Decisions',
     labelPl: 'Decyzje',
     icon: Scale,
-    color: 'text-amber-600 dark:text-amber-400',
-    bg: 'bg-amber-500/10',
+    color: 'text-c-warning',
+    bg: 'bg-c-warning/10',
   },
   note: {
     label: 'Notes',
     labelPl: 'Notatki',
     icon: FileText,
-    color: 'text-slate-700 dark:text-slate-300',
-    bg: 'bg-slate-500/10',
+    color: 'text-c-text-secondary',
+    bg: 'bg-c-surface-raised',
   },
 };
 
@@ -494,7 +494,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
     const cfg = SECTION_CFG[k];
     const Icon = cfg.icon;
     return (
-      <div className="px-3 py-3 border-b border-slate-200 dark:border-navy-800">
+      <div className="px-3 py-3 border-b border-c-border">
         <div className="flex items-center justify-between gap-2 mb-2">
           <div className={`flex items-center gap-2 text-xs font-semibold ${cfg.color}`}>
             <Icon size={14} />
@@ -505,7 +505,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
             {count > 4 && (
               <button
                 onClick={() => setExpanded((p) => ({ ...p, [k]: !p[k] }))}
-                className="text-[10px] font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+                className="text-[10px] font-semibold text-c-text-muted hover:text-c-text-secondary px-2 py-1 rounded-md hover:bg-c-surface-raised transition-colors"
                 title={pl ? 'Więcej/mniej' : 'More/Less'}
               >
                 {expanded[k] ? (pl ? 'Mniej' : 'Less') : pl ? 'Więcej' : 'More'}
@@ -514,7 +514,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
             {onMore && (
               <button
                 onClick={onMore}
-                className="text-[10px] font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+                className="text-[10px] font-semibold text-c-text-muted hover:text-c-text-secondary px-2 py-1 rounded-md hover:bg-c-surface-raised transition-colors"
                 title={pl ? 'Przeglądaj wszystkie' : 'Browse all'}
               >
                 {pl ? 'Wszystkie' : 'All'}
@@ -534,25 +534,25 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
     onInsert: () => void;
     onOpen?: () => void;
   }> = ({ title, subtitle, badge, onInsert, onOpen }) => (
-    <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-900/60 px-3 py-2.5">
+    <div className="rounded-xl border border-c-border bg-c-surface-raised px-3 py-2.5">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
+          <div className="text-xs font-medium text-c-text truncate">
             {title}
           </div>
           {subtitle ? (
-            <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2">
+            <div className="mt-0.5 text-[11px] text-c-text-muted line-clamp-2">
               {subtitle}
             </div>
           ) : null}
           {badge ? (
-            <div className="mt-1 text-[10px] text-slate-600 dark:text-slate-500 capitalize">
+            <div className="mt-1 text-[10px] text-c-text-muted capitalize">
               {badge}
             </div>
           ) : null}
         </div>
         <button
-          className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+          className="p-1.5 rounded-lg text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised transition-colors"
           title={pl ? 'Akcje' : 'Actions'}
           onClick={onInsert}
         >
@@ -562,7 +562,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
       <div className="mt-2 flex items-center gap-2">
         <button
           onClick={onInsert}
-          className="flex-1 flex items-center justify-center gap-1 rounded-md bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 px-2 py-1 text-[11px] font-medium hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+          className="flex-1 flex items-center justify-center gap-1 rounded-md bg-c-surface border border-c-border-subtle text-c-text-secondary px-2 py-1 text-[11px] font-medium hover:bg-c-surface-raised transition-colors"
         >
           <ArrowRight size={12} />
           {pl ? 'Wstaw' : 'Insert'}
@@ -570,7 +570,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
         {onOpen ? (
           <button
             onClick={onOpen}
-            className="flex items-center justify-center gap-1 rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-400 px-2 py-1 text-[11px] font-medium hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-colors"
+            className="flex items-center justify-center gap-1 rounded-md bg-c-surface-raised text-c-text-secondary px-2 py-1 text-[11px] font-medium hover:bg-c-surface-raised transition-colors"
           >
             <ExternalLink size={12} />
             {pl ? 'Otwórz' : 'Open'}
@@ -581,15 +581,15 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
   );
 
   return (
-    <div className="w-80 shrink-0 rounded-2xl border border-slate-200/70 dark:border-white/[0.06] overflow-hidden bg-white dark:bg-navy-950 flex flex-col">
-      <div className="flex items-center justify-between px-3 py-3 border-b border-slate-200/60 dark:border-white/[0.06]">
-        <div className="flex items-center gap-2 text-sm font-semibold text-amber-700 dark:text-amber-300">
+    <div className="w-80 shrink-0 rounded-2xl border border-c-border-subtle overflow-hidden bg-c-surface flex flex-col">
+      <div className="flex items-center justify-between px-3 py-3 border-b border-c-border-subtle">
+        <div className="flex items-center gap-2 text-sm font-semibold text-c-warning">
           <Lightbulb size={16} />
           <span>{pl ? 'Kontekst notatki' : 'Note context'}</span>
         </div>
         <button
           onClick={onClose}
-          className="p-1 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+          className="p-1 rounded-lg text-c-text-muted hover:bg-c-surface-raised"
           title={pl ? 'Zamknij' : 'Close'}
         >
           <X size={14} />
@@ -599,11 +599,11 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
       <div className="flex-1 overflow-y-auto nb-scroll">
         {loading ? (
           <div className="flex items-center justify-center py-10">
-            <Loader2 size={18} className="animate-spin text-slate-600" />
+            <Loader2 size={18} className="animate-spin text-c-text-secondary" />
           </div>
         ) : (
           <>
-            <div className="px-3 py-3 border-b border-slate-200 dark:border-navy-800">
+            <div className="px-3 py-3 border-b border-c-border">
               <EmbeddedView
                 title={pl ? 'Użyte w (backlinks)' : 'Used in (backlinks)'}
                 count={usedIn.length}
@@ -612,7 +612,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                 viewModes={['list']}
               >
                 {usedIn.length === 0 && !backlinksLoading ? (
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
+                  <div className="text-[11px] text-c-text-muted px-1">
                     {pl ? 'Brak powiązań' : 'No links yet'}
                   </div>
                 ) : (
@@ -622,11 +622,11 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                       return (
                         <div
                           key={`${x.sourceType}:${x.sourceId}:${x.id || ''}:${idx}`}
-                          className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-900/60 px-3 py-2.5"
+                          className="rounded-xl border border-c-border bg-c-surface-raised px-3 py-2.5"
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
-                              <div className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
+                              <div className="text-xs font-medium text-c-text truncate">
                                 {chip?.title ||
                                   (() => {
                                     const TL: Record<string, string> = pl
@@ -654,12 +654,12 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                                   })()}
                               </div>
                               {chip?.snippet ? (
-                                <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                                <div className="mt-0.5 text-[11px] text-c-text-muted truncate">
                                   {chip.snippet}
                                 </div>
                               ) : null}
                               {chip?.status ? (
-                                <div className="mt-1 inline-flex items-center rounded-md bg-slate-100 dark:bg-white/[0.06] px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-400">
+                                <div className="mt-1 inline-flex items-center rounded-md bg-c-surface-raised px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-c-text-secondary">
                                   {chip.status}
                                 </div>
                               ) : null}
@@ -681,7 +681,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                                     `${x.sourceType} ${x.sourceId}`.slice(0, 120)
                                   )
                                 }
-                                className="flex items-center justify-center gap-1 rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-400 px-2 py-1 text-[11px] font-medium hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-colors"
+                                className="flex items-center justify-center gap-1 rounded-md bg-c-surface-raised text-c-text-secondary px-2 py-1 text-[11px] font-medium hover:bg-c-surface-raised transition-colors"
                               >
                                 <ExternalLink size={12} />
                                 {pl ? 'Otwórz' : 'Open'}
@@ -697,12 +697,12 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
             </div>
 
             {allLinkedOutputRows.length === 0 && !linkedOutputsBusy && !linkedOutputsErrorMessage ? (
-              <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-200 dark:border-navy-800 text-[11px] text-slate-400 dark:text-slate-500">
+              <div className="flex items-center gap-2 px-3 py-2 border-b border-c-border text-[11px] text-c-text-muted">
                 <Link2 size={12} />
                 <span>{pl ? 'Brak powiązanych outputów' : 'No linked outputs'}</span>
               </div>
             ) : (
-              <div className="px-3 py-3 border-b border-slate-200 dark:border-navy-800">
+              <div className="px-3 py-3 border-b border-c-border">
               <EmbeddedView
                 title={pl ? 'Powiązane outputy' : 'Linked outputs'}
                 count={allLinkedOutputRows.length}
@@ -711,7 +711,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                 viewModes={['list']}
               >
                 {linkedOutputsErrorMessage ? (
-                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-200">
+                  <div className="rounded-xl border border-c-warning/30 bg-c-warning/8 px-3 py-2 text-[11px] text-c-warning">
                     {linkedOutputsErrorMessage}
                   </div>
                 ) : (
@@ -719,14 +719,14 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                     {allLinkedOutputRows.slice(0, 8).map((row) => (
                       <div
                         key={row.artifactId || `${row.kind}:${row.originRecordId}`}
-                        className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-900/60 px-3 py-2.5"
+                        className="rounded-xl border border-c-border bg-c-surface-raised px-3 py-2.5"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
-                            <div className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
+                            <div className="text-xs font-medium text-c-text truncate">
                               {row.title}
                             </div>
-                            <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                            <div className="mt-0.5 text-[11px] text-c-text-muted truncate">
                               {row.kind} · {row.statusKey} ·{' '}
                               {row.governance?.visibilityScope || 'private'}
                             </div>
@@ -745,7 +745,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                                 row.title
                               )
                             }
-                            className="flex items-center justify-center gap-1 rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-400 px-2 py-1 text-[11px] font-medium hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-colors"
+                            className="flex items-center justify-center gap-1 rounded-md bg-c-surface-raised text-c-text-secondary px-2 py-1 text-[11px] font-medium hover:bg-c-surface-raised transition-colors"
                           >
                             <ExternalLink size={12} />
                             {pl ? 'Otwórz' : 'Open'}
@@ -779,7 +779,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
               onMore={() => setPickerType('initiative')}
             >
               {take('initiative', initiatives).length === 0 ? (
-                <div className="text-[11px] text-slate-400 dark:text-slate-500 px-1">
+                <div className="text-[11px] text-c-text-muted px-1">
                   {pl ? 'Brak — dodaj przez „Wszystkie”' : 'None — add via “All”'}
                 </div>
               ) : (
@@ -797,7 +797,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
 
             <Section k="task" count={tasks.length} onMore={() => setPickerType('task')}>
               {take('task', tasks).length === 0 ? (
-                <div className="text-[11px] text-slate-400 dark:text-slate-500 px-1">
+                <div className="text-[11px] text-c-text-muted px-1">
                   {pl ? 'Brak — dodaj przez „Wszystkie”' : 'None — add via “All”'}
                 </div>
               ) : (
@@ -815,7 +815,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
 
             <Section k="decision" count={decisions.length} onMore={() => setPickerType('decision')}>
               {take('decision', decisions).length === 0 ? (
-                <div className="text-[11px] text-slate-400 dark:text-slate-500 px-1">
+                <div className="text-[11px] text-c-text-muted px-1">
                   {pl ? 'Brak — dodaj przez „Wszystkie”' : 'None — add via “All”'}
                 </div>
               ) : (

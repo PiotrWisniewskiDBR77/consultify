@@ -78,23 +78,23 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-overlay flex items-center justify-center">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-lg mx-4 bg-navy-900 border border-white/10 rounded-2xl shadow-2xl">
+      <div className="relative w-full max-w-lg mx-4 bg-c-surface border border-c-border rounded-2xl shadow-2xl">
         {/* Header */}
-        <div className="flex items-center gap-3 px-6 py-4 border-b border-white/5">
-          <div className="p-2 rounded-lg bg-primary-500/10">
-            <Target className="h-5 w-5 text-primary-400" />
+        <div className="flex items-center gap-3 px-6 py-4 border-b border-c-border">
+          <div className="p-2 rounded-lg bg-c-accent-soft0">
+            <Target className="h-5 w-5 text-c-accent" />
           </div>
-          <h2 className="text-base font-semibold text-gray-100 flex-1">
+          <h2 className="text-base font-semibold text-c-text flex-1">
             {isPl ? 'Utwórz inicjatywę' : 'Create Initiative'}
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-gray-500 hover:text-gray-300 hover:bg-white/5 transition-colors"
+            className="p-1.5 rounded-lg text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
@@ -104,7 +104,7 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
         <div className="px-6 py-5 space-y-4">
           {/* Title */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1.5">
+            <label className="block text-xs font-medium text-c-text-secondary mb-1.5">
               {isPl ? 'Tytuł' : 'Title'}
             </label>
             <input
@@ -114,13 +114,13 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
               onChange={(e) => setTitle(e.target.value)}
               placeholder={isPl ? 'Nazwa inicjatywy…' : 'Initiative name…'}
               disabled={submitting || success}
-              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/30 disabled:opacity-50 transition-colors"
+              className="w-full px-3 py-2 bg-c-surface border border-c-border rounded-lg text-sm text-c-text placeholder:text-c-text-muted focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-c-focus disabled:opacity-50 transition-colors"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1.5">
+            <label className="block text-xs font-medium text-c-text-secondary mb-1.5">
               {isPl ? 'Opis' : 'Description'}
             </label>
             <textarea
@@ -129,11 +129,11 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
               placeholder={isPl ? 'Opis inicjatywy…' : 'Initiative description…'}
               rows={5}
               disabled={submitting || success}
-              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/30 disabled:opacity-50 resize-none transition-colors"
+              className="w-full px-3 py-2 bg-c-surface border border-c-border rounded-lg text-sm text-c-text placeholder:text-c-text-muted focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-c-focus disabled:opacity-50 resize-none transition-colors"
             />
           </div>
 
-          <p className="text-xs text-gray-600">
+          <p className="text-xs text-c-text-secondary">
             {isPl
               ? 'Inicjatywa zostanie powiązana z tym raportem i pojawi się w module Wykonanie.'
               : 'The initiative will be linked to this report and appear in the Execution module.'}
@@ -141,11 +141,11 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-white/5">
+        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-c-border">
           <button
             onClick={onClose}
             disabled={submitting}
-            className="px-4 py-2 text-sm text-gray-600 hover:text-gray-200 hover:bg-white/5 rounded-lg transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-sm text-c-text-secondary hover:text-c-text hover:bg-c-surface rounded-lg transition-colors disabled:opacity-50"
           >
             {isPl ? 'Anuluj' : 'Cancel'}
           </button>
@@ -153,7 +153,7 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
             onClick={handleSubmit}
             disabled={submitting || success || !title.trim()}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50
-              bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
+              bg-c-text text-c-bg hover:opacity-90"
           >
             {submitting ? (
               <Loader2 className="h-4 w-4 animate-spin" />

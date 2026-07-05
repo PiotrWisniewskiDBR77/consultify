@@ -202,7 +202,7 @@ export const TeresaProposalCard: React.FC<TeresaProposalCardProps> = ({
           <button
             onClick={() => handleAction('execute')}
             disabled={busyAction !== null}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-primary-700 disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-c-text px-3 py-1.5 text-xs font-medium text-c-bg transition-colors hover:bg-c-text-secondary disabled:opacity-60"
           >
             {busyAction === 'execute' ? (
               <Loader2 size={13} className="animate-spin" />

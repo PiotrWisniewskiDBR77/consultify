@@ -79,37 +79,37 @@ export const ConsultantInviteView = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950 p-6 overflow-y-auto">
+    <div className="flex flex-col h-full bg-c-surface-raised dark:bg-c-bg p-6 overflow-y-auto">
       <div className="max-w-4xl mx-auto w-full space-y-6">
         <button
           onClick={() => setCurrentView(AppView.CONSULTANT_PANEL)}
-          className="flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors text-sm font-medium"
+          className="flex items-center gap-2 text-c-text-muted hover:text-c-text dark:hover:text-c-text transition-colors text-sm font-medium"
         >
           <ArrowLeft size={16} />
           {t('consultant.invites.backToPanel')}
         </button>
 
-        <h1 className="text-2xl font-bold text-navy-900 dark:text-white">
+        <h1 className="text-2xl font-bold text-c-text">
           {t('consultant.invites.generateInvites')}
         </h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Access Generation Form */}
-          <div className="bg-white dark:bg-navy-800 rounded-xl shadow-sm border border-slate-200 dark:border-navy-700 p-6">
+          <div className="bg-c-surface-raised rounded-xl shadow-sm border border-c-border-subtle p-6">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Send size={18} className="text-primary-500" />
+              <Send size={18} className="text-c-accent" />
               {t('consultant.invites.newInvitation')}
             </h2>
 
             <form onSubmit={handleCreateInvite} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-c-text-secondary mb-1">
                   {t('consultant.invites.inviteType')}
                 </label>
                 <select
                   value={type}
                   onChange={(e) => setType(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:border-primary-500"
+                  className="w-full px-3 py-2 bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle rounded-lg text-sm focus:outline-none focus:border-c-accent"
                 >
                   <option value="TRIAL_ORG">{t('consultant.invites.typeTrialOrg')}</option>
                   <option value="TRIAL_USER">{t('consultant.invites.typeTrialUser')}</option>
@@ -118,7 +118,7 @@ export const ConsultantInviteView = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-c-text-secondary mb-1">
                   {t('consultant.invites.companyName')}
                 </label>
                 <input
@@ -126,12 +126,12 @@ export const ConsultantInviteView = () => {
                   value={targetCompany}
                   onChange={(e) => setTargetCompany(e.target.value)}
                   placeholder={t('consultant.invites.companyPlaceholder')}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:border-primary-500"
+                  className="w-full px-3 py-2 bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle rounded-lg text-sm focus:outline-none focus:border-c-accent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-c-text-secondary mb-1">
                   {t('consultant.invites.targetEmail')}
                 </label>
                 <input
@@ -139,9 +139,9 @@ export const ConsultantInviteView = () => {
                   value={targetEmail}
                   onChange={(e) => setTargetEmail(e.target.value)}
                   placeholder={t('consultant.invites.emailPlaceholder')}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:border-primary-500"
+                  className="w-full px-3 py-2 bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle rounded-lg text-sm focus:outline-none focus:border-c-accent"
                 />
-                <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
+                <p className="text-xs text-c-text-secondary dark:text-c-text-muted mt-1">
                   {t('consultant.invites.emailHint')}
                 </p>
               </div>
@@ -149,7 +149,7 @@ export const ConsultantInviteView = () => {
               <button
                 type="submit"
                 disabled={isCreating}
-                className="w-full py-2.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium shadow-md transition-colors disabled:opacity-50"
+                className="w-full py-2.5 bg-c-text text-c-surface hover:opacity-90 rounded-lg font-medium shadow-md transition-colors disabled:opacity-50"
               >
                 {isCreating
                   ? t('consultant.invites.generating')
@@ -159,18 +159,18 @@ export const ConsultantInviteView = () => {
           </div>
 
           {/* History */}
-          <div className="bg-white dark:bg-navy-800 rounded-xl shadow-sm border border-slate-200 dark:border-navy-700 flex flex-col">
-            <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 text-lg font-semibold flex items-center gap-2">
-              <Clock size={18} className="text-blue-500" />
+          <div className="bg-c-surface-raised rounded-xl shadow-sm border border-c-border-subtle flex flex-col">
+            <div className="px-6 py-4 border-b border-c-border-subtle text-lg font-semibold flex items-center gap-2">
+              <Clock size={18} className="text-c-info" />
               {t('consultant.invites.recentInvites')}
             </div>
             <div className="flex-1 overflow-y-auto max-h-[400px] p-2">
               {isLoading ? (
-                <div className="p-4 text-center text-slate-600 dark:text-slate-500">
+                <div className="p-4 text-center text-c-text-secondary dark:text-c-text-muted">
                   {t('consultant.panel.loading')}
                 </div>
               ) : invites.length === 0 ? (
-                <div className="p-8 text-center text-slate-600 dark:text-slate-500 text-sm">
+                <div className="p-8 text-center text-c-text-secondary dark:text-c-text-muted text-sm">
                   {t('consultant.invites.noInvites')}
                 </div>
               ) : (
@@ -178,23 +178,23 @@ export const ConsultantInviteView = () => {
                   {invites.map((invite) => (
                     <div
                       key={invite.id}
-                      className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-navy-700"
+                      className="p-3 bg-c-surface-raised dark:bg-c-surface-raised rounded-lg border border-c-border-subtle"
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <div className="font-mono font-bold text-lg tracking-wider text-primary-600 dark:text-primary-400">
+                        <div className="font-mono font-bold text-lg tracking-wider text-c-accent dark:text-c-accent">
                           {invite.invite_code}
                         </div>
                         <button
                           onClick={() => copyToClipboard(invite.invite_code)}
-                          className="p-1.5 hover:bg-slate-200 dark:hover:bg-white/10 rounded text-slate-500 dark:text-slate-400"
+                          className="p-1.5 hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded text-c-text-muted"
                         >
                           <Copy size={14} />
                         </button>
                       </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 space-y-1">
+                      <div className="text-xs text-c-text-muted space-y-1">
                         <div className="flex justify-between">
                           <span>{t('consultant.invites.labelType')}</span>
-                          <span className="font-medium text-slate-700 dark:text-slate-300">
+                          <span className="font-medium text-c-text-secondary">
                             {invite.invite_type}
                           </span>
                         </div>
@@ -210,7 +210,7 @@ export const ConsultantInviteView = () => {
                             <span className="truncate max-w-[120px]">{invite.target_email}</span>
                           </div>
                         )}
-                        <div className="pt-1 border-t border-slate-200 dark:border-navy-700 mt-1 opacity-70">
+                        <div className="pt-1 border-t border-c-border-subtle mt-1 opacity-70">
                           {t('consultant.invites.labelExp')}{' '}
                           {new Date(invite.expires_at).toLocaleDateString()}
                         </div>

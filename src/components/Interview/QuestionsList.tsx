@@ -1301,7 +1301,7 @@ Rules:
                 <button
                   onClick={handleChatSend}
                   disabled={!chatInput.trim() || chatLoading}
-                  className="bg-primary-500 hover:bg-primary-600 disabled:bg-slate-300 text-white p-3 rounded-xl transition-colors"
+                  className="bg-c-text hover:bg-c-text-secondary disabled:bg-slate-300 text-c-bg p-3 rounded-xl transition-colors"
                   title={isPolish ? 'Wyślij' : 'Send'}
                 >
                   <Send size={18} />

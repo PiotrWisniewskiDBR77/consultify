@@ -1,5 +1,6 @@
 import type { Edge, Node } from 'reactflow';
 
+import i18n from '@/i18n';
 import type { ArtifactLink } from '@/utils/artifactLinks';
 
 export interface MindMapEvidenceLink {
@@ -118,6 +119,7 @@ export function normalizeMindMapNodes(
   nodes: any[],
   edges: Edge[],
   ideaTitle: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept for call-site compatibility (molochs pass this positionally)
   isPolish: boolean
 ): Node[] {
   return nodes.map((node: any) => {
@@ -146,14 +148,10 @@ export function normalizeMindMapNodes(
         ...depthFields,
         label:
           node?.id === 'root'
-            ? ideaTitle || (isPolish ? 'Moj pomysl' : 'My idea')
+            ? ideaTitle || i18n.t('mindmap.nodeModel.myIdea')
             : (node?.data?.label ?? ''),
         hint:
-          node?.id === 'root'
-            ? isPolish
-              ? 'Kliknij, aby edytowac'
-              : 'Click to edit'
-            : node?.data?.hint,
+          node?.id === 'root' ? i18n.t('mindmap.nodeModel.clickToEdit') : node?.data?.hint,
         branchKey: node?.data?.branchKey || 'uncategorized',
         _depth: getNodeDepth(node.id, edges),
         tags: sanitizeTags(depthFields.tags ?? node?.data?.tags),
@@ -212,6 +210,23 @@ export function applyNodeStyle(node: Node, style: MindMapNodeStyle): Node {
   if (style.branchTheme) patch.branchTheme = style.branchTheme;
   if (typeof style.autoLayout === 'boolean') patch.autoLayout = style.autoLayout;
   return { ...node, data: { ...node.data, ...patch } };
+}
+
+/**
+ * M06 Fala 3.2 — multi-select toolbar: apply the same style patch to every
+ * node whose id is in `nodeIds`, leaving all other nodes referentially
+ * unchanged (so callers can cheaply detect "nothing changed").
+ * Pure function — no side effects, easy to unit-test in isolation from the
+ * 6400-LOC IdeaRecommendationMap component.
+ */
+export function applyStyleToNodes(
+  nodes: Node[],
+  nodeIds: string[] | Set<string>,
+  style: MindMapNodeStyle
+): Node[] {
+  const ids = nodeIds instanceof Set ? nodeIds : new Set(nodeIds);
+  if (ids.size === 0) return nodes;
+  return nodes.map((node) => (ids.has(node.id) ? applyNodeStyle(node, style) : node));
 }
 
 export function appendAIHistoryEntry(

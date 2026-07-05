@@ -1667,7 +1667,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         </p>
         <button
           onClick={onCreateIdea}
-          className="inline-flex h-9 items-center justify-center rounded-full border border-primary-500/30 bg-primary-600 px-4 text-sm font-semibold text-white transition-colors duration-150 hover:bg-primary-700 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 dark:border-primary-400/20 dark:bg-primary-500/80 dark:hover:bg-primary-500"
+          className="inline-flex h-9 items-center justify-center rounded-full border border-c-text bg-c-text px-4 text-sm font-semibold text-c-bg transition-colors duration-150 hover:bg-c-text-secondary active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 dark:border-c-text dark:bg-c-text dark:hover:bg-c-text-secondary"
         >
           {isPolish ? 'Zasiej pomysł' : 'Plant an idea'}
         </button>
@@ -1939,6 +1939,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             <div key={tag} className="rounded-xl border border-c-border-subtle overflow-hidden">
               <button
                 onClick={() => toggleTagCollapse(tag)}
+                aria-expanded={!isCollapsed}
                 className="w-full flex items-center gap-2.5 px-4 py-3 bg-c-surface-raised hover:bg-black/[0.04] dark:hover:bg-white/[0.04] transition-colors text-left"
               >
                 {isCollapsed ? (

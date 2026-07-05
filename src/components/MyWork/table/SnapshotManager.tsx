@@ -8,6 +8,8 @@ import { Archive, Camera, Clock, Database, Loader2, RotateCcw, Trash2, X } from 
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState, LoadingState } from '@/components/shared/states';
+
 // ── Types ────────────────────────────────────────────────────────────────────
 
 interface SnapshotSummary {
@@ -52,15 +54,15 @@ const SnapshotRow = React.memo(function SnapshotRow({
   restoring: string | null;
 }) {
   return (
-    <div className="flex items-center gap-3 px-3 py-2.5 border-b border-slate-200 dark:border-white/[0.04] last:border-0 group">
-      <div className="w-8 h-8 rounded-lg bg-primary-500/10 flex items-center justify-center flex-shrink-0">
-        <Archive size={14} className="text-primary-500" />
+    <div className="flex items-center gap-3 px-3 py-2.5 border-b border-c-border-subtle last:border-0 group">
+      <div className="w-8 h-8 rounded-lg bg-c-accent-soft flex items-center justify-center flex-shrink-0">
+        <Archive size={14} className="text-c-accent" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
+        <p className="text-xs font-semibold text-c-text truncate">
           {snapshot.name}
         </p>
-        <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-600 dark:text-slate-500">
+        <div className="flex items-center gap-2 mt-0.5 text-[10px] text-c-text-secondary">
           <span className="flex items-center gap-0.5">
             <Clock size={9} />
             {formatDate(snapshot.createdAt)}
@@ -191,25 +193,25 @@ export const SnapshotManager: React.FC<SnapshotManagerProps> = ({ open, onClose,
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-navy-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-navy-700 w-[420px] max-h-[70vh] flex flex-col overflow-hidden"
+        className="bg-c-surface rounded-2xl shadow-2xl border border-c-border-subtle w-[420px] max-h-[70vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200/60 dark:border-navy-700/60">
-          <Camera size={16} className="text-primary-500" />
-          <span className="text-sm font-bold text-slate-700 dark:text-slate-200 flex-1">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-c-border-subtle">
+          <Camera size={16} className="text-c-accent" />
+          <span className="text-sm font-bold text-c-text flex-1">
             {isPl ? 'Migawki' : 'Snapshots'}
           </span>
           <button
             onClick={onClose}
-            className="p-1 rounded text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            className="p-1 rounded text-c-text-secondary hover:text-c-text-secondary transition-colors"
           >
             <X size={16} />
           </button>
         </div>
 
         {/* Create */}
-        <div className="px-4 py-3 border-b border-slate-200 dark:border-white/[0.04]">
+        <div className="px-4 py-3 border-b border-c-border-subtle">
           {showCreateInput ? (
             <div className="flex items-center gap-2">
               <input
@@ -217,7 +219,7 @@ export const SnapshotManager: React.FC<SnapshotManagerProps> = ({ open, onClose,
                 value={snapshotName}
                 onChange={(e) => setSnapshotName(e.target.value)}
                 placeholder={isPl ? 'Nazwa migawki…' : 'Snapshot name…'}
-                className="flex-1 h-8 px-3 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 outline-none focus:ring-2 focus:ring-primary-500/30 text-slate-700 dark:text-slate-200"
+                className="flex-1 h-8 px-3 rounded-lg text-xs bg-c-surface-raised border border-c-border-subtle outline-none focus:ring-2 focus:ring-c-focus text-c-text"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleCreate();
                   if (e.key === 'Escape') setShowCreateInput(false);
@@ -226,14 +228,14 @@ export const SnapshotManager: React.FC<SnapshotManagerProps> = ({ open, onClose,
               <button
                 onClick={handleCreate}
                 disabled={creating}
-                className="h-8 px-3 rounded-lg text-xs font-semibold bg-primary-500 text-white hover:bg-primary-600 transition-colors disabled:opacity-40 flex items-center gap-1"
+                className="h-8 px-3 rounded-lg text-xs font-semibold bg-c-accent text-white hover:bg-c-accent transition-colors disabled:opacity-40 flex items-center gap-1"
               >
                 {creating ? <Loader2 size={12} className="animate-spin" /> : <Camera size={12} />}
                 {isPl ? 'Utwórz' : 'Create'}
               </button>
               <button
                 onClick={() => setShowCreateInput(false)}
-                className="p-1.5 rounded text-slate-600 hover:text-slate-600 dark:hover:text-slate-300"
+                className="p-1.5 rounded text-c-text-secondary hover:text-c-text-secondary"
               >
                 <X size={14} />
               </button>
@@ -241,7 +243,7 @@ export const SnapshotManager: React.FC<SnapshotManagerProps> = ({ open, onClose,
           ) : (
             <button
               onClick={() => setShowCreateInput(true)}
-              className="w-full py-2 rounded-lg text-xs font-semibold text-primary-600 dark:text-primary-400 bg-primary-500/5 hover:bg-primary-500/10 transition-colors flex items-center justify-center gap-1.5"
+              className="w-full py-2 rounded-lg text-xs font-semibold text-c-accent bg-c-accent-soft hover:bg-c-accent-soft transition-colors flex items-center justify-center gap-1.5"
             >
               <Camera size={13} />
               {isPl ? 'Utwórz migawkę' : 'Create snapshot'}
@@ -252,19 +254,19 @@ export const SnapshotManager: React.FC<SnapshotManagerProps> = ({ open, onClose,
         {/* List */}
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 size={20} className="animate-spin text-slate-600" />
-            </div>
+            <LoadingState template="list" rows={4} />
           ) : snapshots.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-slate-600 dark:text-slate-500 px-4 text-center">
-              <Archive size={24} className="mb-2 opacity-40" />
-              <span className="text-xs">{isPl ? 'Brak migawek' : 'No snapshots yet'}</span>
-              <span className="text-[10px] mt-1">
-                {isPl
-                  ? 'Utwórz migawkę, aby zachować aktualny stan danych'
-                  : 'Create a snapshot to preserve the current data state'}
-              </span>
-            </div>
+            <EmptyState
+              variant="new"
+              icon={Archive}
+              compact
+              title={isPl ? 'Brak migawek' : 'No snapshots yet'}
+              description={
+                isPl
+                  ? 'Utwórz migawkę, aby zachować aktualny stan danych.'
+                  : 'Create a snapshot to preserve the current data state.'
+              }
+            />
           ) : (
             snapshots.map((snap) => (
               <SnapshotRow
@@ -282,11 +284,11 @@ export const SnapshotManager: React.FC<SnapshotManagerProps> = ({ open, onClose,
         {/* Restore confirmation dialog */}
         {confirmRestore && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/30 rounded-2xl">
-            <div className="bg-white dark:bg-navy-900 rounded-xl shadow-xl border border-slate-200 dark:border-navy-700 p-4 w-72">
-              <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-2">
+            <div className="bg-c-surface rounded-xl shadow-xl border border-c-border-subtle p-4 w-72">
+              <h4 className="text-sm font-bold text-c-text mb-2">
                 {isPl ? 'Przywrócić migawkę?' : 'Restore snapshot?'}
               </h4>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
+              <p className="text-[11px] text-c-text-muted mb-4">
                 {isPl
                   ? 'Obecne dane zostaną zastąpione danymi z migawki. Tej operacji nie można cofnąć.'
                   : 'Current data will be replaced with snapshot data. This action cannot be undone.'}
@@ -294,7 +296,7 @@ export const SnapshotManager: React.FC<SnapshotManagerProps> = ({ open, onClose,
               <div className="flex justify-end gap-2">
                 <button
                   onClick={() => setConfirmRestore(null)}
-                  className="px-3 py-1.5 text-xs rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800"
+                  className="px-3 py-1.5 text-xs rounded-lg text-c-text-muted hover:bg-c-surface-raised"
                 >
                   {isPl ? 'Anuluj' : 'Cancel'}
                 </button>

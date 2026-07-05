@@ -304,10 +304,10 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
       {/* Header with Add Button */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+          <h3 className="text-lg font-semibold text-c-text">
             {t('settings.signatures.title', 'Email Signatures')}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-c-text-muted">
             {t('settings.signatures.description', 'Create and manage your email signatures')}
           </p>
         </div>
@@ -343,7 +343,7 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
               key={signature.id}
               className={cn(
                 'transition-all',
-                signature.isDefault && 'ring-2 ring-primary-500 dark:ring-primary-400'
+                signature.isDefault && 'ring-2 ring-c-focus'
               )}
             >
               <CardHeader className="pb-2">
@@ -351,7 +351,7 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
                   <div className="flex items-center gap-2">
                     <CardTitle className="text-base">{signature.name}</CardTitle>
                     {signature.isDefault && (
-                      <span className="px-2 py-0.5 text-xs font-medium bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 rounded-full">
+                      <span className="px-2 py-0.5 text-xs font-medium bg-c-accent-soft text-c-accent rounded-full">
                         {t('settings.signatures.default', 'Default')}
                       </span>
                     )}
@@ -396,7 +396,7 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
                 </div>
               </CardHeader>
               <CardContent>
-                <pre className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap font-sans bg-slate-50 dark:bg-navy-800/50 p-3 rounded-lg">
+                <pre className="text-sm text-c-text-secondary whitespace-pre-wrap font-sans bg-c-surface-raised p-3 rounded-lg">
                   {signature.content}
                 </pre>
               </CardContent>
@@ -447,8 +447,8 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
             {formData.content && (
               <div className="space-y-2">
                 <Label>{t('settings.signatures.preview', 'Preview')}</Label>
-                <div className="p-3 bg-slate-50 dark:bg-navy-800/50 rounded-lg">
-                  <pre className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap font-sans">
+                <div className="p-3 bg-c-surface-raised rounded-lg">
+                  <pre className="text-sm text-c-text-secondary whitespace-pre-wrap font-sans">
                     {formData.content}
                   </pre>
                 </div>

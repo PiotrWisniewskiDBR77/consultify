@@ -96,9 +96,9 @@ interface FinanceLinkData {
 }
 
 function fmtPLN(v: number): string {
-  if (Math.abs(v) >= 1_000_000) return `${(v / 1_000_000).toFixed(1)} M PLN`;
-  if (Math.abs(v) >= 1_000) return `${(v / 1_000).toFixed(0)} k PLN`;
-  return `${v.toFixed(0)} PLN`;
+  if (Math.abs(v) >= 1_000_000) return `€${(v / 1_000_000).toFixed(1)}M`;
+  if (Math.abs(v) >= 1_000) return `€${(v / 1_000).toFixed(0)}k`;
+  return `€${v.toFixed(0)}`;
 }
 
 function fmtPct(v: number | null | undefined): string {
@@ -108,10 +108,10 @@ function fmtPct(v: number | null | undefined): string {
 
 function stageLabel(stage: FunnelStageKey, t: (k: string, d: string) => string): string {
   switch (stage) {
-    case 'ideas': return t('results.portfolio.funnelStageIdeas', 'Pomysły');
-    case 'validated': return t('results.portfolio.funnelStageValidated', 'Zwalidowane');
-    case 'inflight': return t('results.portfolio.funnelStageInflight', 'W realizacji');
-    case 'realized': return t('results.portfolio.funnelStageRealized', 'Zrealizowane');
+    case 'ideas': return t('results.portfolio.funnelStageIdeas', 'Ideas');
+    case 'validated': return t('results.portfolio.funnelStageValidated', 'Validated');
+    case 'inflight': return t('results.portfolio.funnelStageInflight', 'In progress');
+    case 'realized': return t('results.portfolio.funnelStageRealized', 'Realized');
     default: return stage;
   }
 }
@@ -161,14 +161,14 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
   return (
     <div data-testid="portfolio-insights-panel" className="space-y-6">
 
-      {/* Value funnel (D6 — lejek wartości portfela) */}
+      {/* Value funnel (D6 — portfolio value funnel) */}
       {funnel?.stages && funnel.stages.length > 0 && (funnel.total ?? 0) > 0 && (
         <section data-testid="portfolio-funnel">
           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
             <Filter size={14} />
-            {t('results.portfolio.funnel', 'Lejek wartości portfela')}
+            {t('results.portfolio.funnel', 'Portfolio value funnel')}
             <span className="text-xs font-normal text-slate-400">
-              ({funnel.total} {t('results.portfolio.funnelInitiatives', 'inicjatyw')})
+              ({funnel.total} {t('results.portfolio.funnelInitiatives', 'initiatives')})
             </span>
           </h3>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -186,7 +186,7 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
           <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
             {funnel.stages.map((st) => (
               <div key={`ra-${st.stage}`} className="text-center text-xs text-slate-400">
-                {t('results.portfolio.funnelRiskAdjusted', 'po ryzyku')}: {fmtPLN(st.riskAdjustedValue)}
+                {t('results.portfolio.funnelRiskAdjusted', 'risk-adjusted')}: {fmtPLN(st.riskAdjustedValue)}
               </div>
             ))}
           </div>
@@ -201,7 +201,7 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                   <span className="font-medium text-slate-600 dark:text-slate-300">{Math.round(c.conversionPct)}%</span>
                   {c.leakageValue > 0 && (
                     <span className="text-amber-600 dark:text-amber-400">
-                      −{fmtPLN(c.leakageValue)} {t('results.portfolio.funnelLeakage', 'wyciek')}
+                      −{fmtPLN(c.leakageValue)} {t('results.portfolio.funnelLeakage', 'leakage')}
                     </span>
                   )}
                 </span>
@@ -213,9 +213,9 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
             <div className="mt-3 flex items-center gap-2 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 text-sm">
               <AlertTriangle size={14} className="text-amber-600 dark:text-amber-400 shrink-0" />
               <span className="text-slate-700 dark:text-slate-200">
-                {t('results.portfolio.funnelValueAtRisk', 'Wartość zagrożona')}:{' '}
+                {t('results.portfolio.funnelValueAtRisk', 'Value at risk')}:{' '}
                 <span className="font-semibold">{fmtPLN(funnel.valueAtRisk.atRiskValue)}</span>
-                {' '}({funnel.valueAtRisk.atRiskCount} {t('results.portfolio.funnelInitiatives', 'inicjatyw')})
+                {' '}({funnel.valueAtRisk.atRiskCount} {t('results.portfolio.funnelInitiatives', 'initiatives')})
               </span>
             </div>
           )}
@@ -227,16 +227,16 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
         <section>
           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
             <Zap size={14} />
-            {t('results.portfolio.signals', 'Sygnały do M14 Wdrożenie')}
+            {t('results.portfolio.signals', 'Signals to M14 Implementation')}
             {signals.summary.critical > 0 && (
               <span className="rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
-                {signals.summary.critical} krytycznych
+                {signals.summary.critical} critical
               </span>
             )}
             <a
               href="/implementation"
               className="ml-auto flex items-center gap-1 text-xs text-primary-600 dark:text-primary-400 hover:underline shrink-0"
-              title={t('results.portfolio.goToM14', 'Przejdź do M14 Wdrożenie')}
+              title={t('results.portfolio.goToM14', 'Go to M14 Implementation')}
             >
               <ExternalLink size={11} />
               M14
@@ -255,13 +255,13 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                 </div>
                 {sig.realizationPct != null && (
                   <div className="text-xs shrink-0 text-slate-500">
-                    {Math.round(sig.realizationPct * 100)}% realizacji
+                    {Math.round(sig.realizationPct * 100)}% realized
                   </div>
                 )}
               </div>
             ))}
             {signals.signals.length > 6 && (
-              <div className="text-xs text-slate-400 text-center">+{signals.signals.length - 6} więcej sygnałów</div>
+              <div className="text-xs text-slate-400 text-center">+{signals.signals.length - 6} more signals</div>
             )}
           </div>
         </section>
@@ -276,9 +276,9 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
           </h3>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {[
-              { label: t('results.portfolio.annualizedRunRate', 'Run-rate annualizowany'), value: fmtPLN(runRate.bridge.runRate) },
-              { label: t('results.portfolio.projectedFullYear', 'Prognoza do końca roku'), value: fmtPLN(runRate.bridge.projectedInYear) },
-              { label: t('results.portfolio.alreadyRealized', 'Zrealizowane'), value: fmtPLN(runRate.bridge.alreadyRealized) },
+              { label: t('results.portfolio.annualizedRunRate', 'Annualized run-rate'), value: fmtPLN(runRate.bridge.runRate) },
+              { label: t('results.portfolio.projectedFullYear', 'Projected to year-end'), value: fmtPLN(runRate.bridge.projectedInYear) },
+              { label: t('results.portfolio.alreadyRealized', 'Realized'), value: fmtPLN(runRate.bridge.alreadyRealized) },
             ].map((s) => (
               <div key={s.label} className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] p-4">
                 <div className="text-xs text-slate-500 dark:text-slate-400">{s.label}</div>
@@ -289,15 +289,15 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
           {runRate.timing && (
             <div className="mt-2 text-xs text-slate-400 flex flex-wrap gap-4">
               <span>Run-rate: {fmtPLN(runRate.timing.totalRunRate)}</span>
-              <span>Zrealizowane: {fmtPLN(runRate.timing.totalRealized)}</span>
+              <span>Realized: {fmtPLN(runRate.timing.totalRealized)}</span>
               {runRate.timing.aheadOfPlanCount != null && (
                 <span className="text-emerald-600 dark:text-emerald-400">
-                  {runRate.timing.aheadOfPlanCount} inicjatyw przed planem
+                  {runRate.timing.aheadOfPlanCount} initiatives ahead of plan
                 </span>
               )}
               {runRate.timing.behindPlanCount != null && runRate.timing.behindPlanCount > 0 && (
                 <span className="text-amber-600 dark:text-amber-400">
-                  {runRate.timing.behindPlanCount} inicjatyw za planem
+                  {runRate.timing.behindPlanCount} initiatives behind plan
                 </span>
               )}
             </div>
@@ -306,8 +306,8 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
           {runRate.periodMonths != null && (
             <div className="mt-1.5 text-xs text-slate-400 italic">
               {runRate.periodMonthsAssumed
-                ? t('results.portfolio.runRateAssumed', 'założenie: 6 mies. okno pomiaru')
-                : t('results.portfolio.runRateMeasured', 'okno pomiaru: {{months}} mies. (z danych)').replace('{{months}}', String(runRate.periodMonths))}
+                ? t('results.portfolio.runRateAssumed', 'assumption: 6-month measurement window')
+                : t('results.portfolio.runRateMeasured', 'measurement window: {{months}} mo. (from data)').replace('{{months}}', String(runRate.periodMonths))}
             </div>
           )}
         </section>
@@ -318,7 +318,7 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
         <section>
           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
             <MoveRight size={14} />
-            {t('results.portfolio.reallocation', 'Rekomendowane przesunięcia zasobów')}
+            {t('results.portfolio.reallocation', 'Recommended resource shifts')}
           </h3>
           <div className="space-y-2">
             {realloc.moves.slice(0, 4).map((m, i) => (
@@ -333,7 +333,7 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
           {/* D8 — capacity assumption flag */}
           {realloc.capacityAssumed && (
             <div className="mt-1.5 text-xs text-slate-400 italic">
-              {t('results.portfolio.reallocCapacityAssumed', 'pojemność FTE = założenie (brak danych kadrowych)')}
+              {t('results.portfolio.reallocCapacityAssumed', 'FTE capacity = assumption (no staffing data)')}
             </div>
           )}
         </section>
@@ -344,14 +344,14 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
         <section>
           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
             <TrendingUp size={14} />
-            {t('results.portfolio.scenarios', 'Scenariusze + IRR')}
-            <span className="text-xs font-normal text-slate-400">({scenarios.initiativeCount} inicjatyw)</span>
+            {t('results.portfolio.scenarios', 'Scenarios + IRR')}
+            <span className="text-xs font-normal text-slate-400">({scenarios.initiativeCount} initiatives)</span>
           </h3>
           <div className="overflow-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-white/[0.08] text-left text-xs text-slate-500 dark:text-slate-400">
-                  <th className="pb-2 pr-4">{t('results.portfolio.scenario', 'Scenariusz')}</th>
+                  <th className="pb-2 pr-4">{t('results.portfolio.scenario', 'Scenario')}</th>
                   <th className="pb-2 pr-4">NPV</th>
                   <th className="pb-2 pr-4">IRR</th>
                   <th className="pb-2">Payback</th>
@@ -364,7 +364,7 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                     <td className="py-2 pr-4">{fmtPLN(sc.npv)}</td>
                     <td className="py-2 pr-4">{fmtPct(sc.irr)}</td>
                     <td className="py-2 text-slate-400">
-                      {sc.paybackMonths != null ? `${sc.paybackMonths.toFixed(1)} lat` : '–'}
+                      {sc.paybackMonths != null ? `${sc.paybackMonths.toFixed(1)} yrs` : '–'}
                     </td>
                   </tr>
                 ))}
@@ -373,15 +373,15 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
           </div>
           {scenarios.irr != null && (
             <div className="mt-2 text-xs text-slate-400">
-              IRR bazowy: <span className="font-medium text-slate-600 dark:text-slate-300">{fmtPct(scenarios.irr)}</span>
+              Base IRR: <span className="font-medium text-slate-600 dark:text-slate-300">{fmtPct(scenarios.irr)}</span>
               {scenarios.paybackPeriod != null && (
-                <> · Payback: <span className="font-medium text-slate-600 dark:text-slate-300">{scenarios.paybackPeriod.toFixed(1)} lat</span></>
+                <> · Payback: <span className="font-medium text-slate-600 dark:text-slate-300">{scenarios.paybackPeriod.toFixed(1)} yrs</span></>
               )}
             </div>
           )}
           {/* D8 — derived-figures assumption note */}
           <div className="mt-1.5 text-xs text-slate-400 italic">
-            {t('results.portfolio.scenariosAssumptionNote', 'IRR / cashflow — model i założenia v1')}
+            {t('results.portfolio.scenariosAssumptionNote', 'IRR / cashflow — v1 model and assumptions')}
           </div>
         </section>
       )}
@@ -391,18 +391,18 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
         <section>
           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
             <DollarSign size={14} />
-            {t('results.portfolio.financeLink', 'Spięcie z Finansami (M16)')}
+            {t('results.portfolio.financeLink', 'Link to Finance (M16)')}
           </h3>
           {financeLink.mappingCount === 0 ? (
             <div className="rounded-xl border border-dashed border-slate-200 dark:border-white/[0.08] p-4 text-sm text-slate-400 text-center">
-              {t('results.portfolio.noFinanceLink', 'Brak mapowań KPI→Finanse. Skonfiguruj w module Finanse (M16) — tabela kpi_financial_mappings.')}
+              {t('results.portfolio.noFinanceLink', 'No KPI→Finance mappings. Configure them in the Finance module (M16) — kpi_financial_mappings table.')}
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-3">
               {financeLink.aggregate && [
-                { label: t('results.portfolio.positiveImpact', 'Pozytywny wpływ'), value: fmtPLN(financeLink.aggregate.totalPositiveImpact), color: 'text-emerald-600 dark:text-emerald-400' },
-                { label: t('results.portfolio.negativeImpact', 'Negatywny wpływ'), value: fmtPLN(financeLink.aggregate.totalNegativeImpact), color: 'text-red-600 dark:text-red-400' },
-                { label: t('results.portfolio.netImpact', 'Wpływ netto'), value: fmtPLN(financeLink.aggregate.netImpact), color: 'text-primary-600 dark:text-primary-400 font-bold' },
+                { label: t('results.portfolio.positiveImpact', 'Positive impact'), value: fmtPLN(financeLink.aggregate.totalPositiveImpact), color: 'text-emerald-600 dark:text-emerald-400' },
+                { label: t('results.portfolio.negativeImpact', 'Negative impact'), value: fmtPLN(financeLink.aggregate.totalNegativeImpact), color: 'text-red-600 dark:text-red-400' },
+                { label: t('results.portfolio.netImpact', 'Net impact'), value: fmtPLN(financeLink.aggregate.netImpact), color: 'text-primary-600 dark:text-primary-400 font-bold' },
               ].map((s) => (
                 <div key={s.label} className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] p-4">
                   <div className="text-xs text-slate-500 dark:text-slate-400">{s.label}</div>
@@ -422,10 +422,10 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-              {t('results.portfolio.boardPack', 'Board-pack / Auto-narracja wartości')}
+              {t('results.portfolio.boardPack', 'Board-pack / Auto value narrative')}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {t('results.portfolio.boardPackDesc', 'Eksportuj raport PDF / deck / tabelę przez generatory M17–M20. Dostępne po konfiguracji Deliverables.')}
+              {t('results.portfolio.boardPackDesc', 'Export a PDF report / deck / table via the M17–M20 generators. Available after configuring Deliverables.')}
             </div>
           </div>
           <button
@@ -433,7 +433,7 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
             className="shrink-0 text-xs px-3 py-1.5 rounded-lg border border-primary-200 dark:border-primary-700 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
             onClick={() => window.open('/outputs', '_blank')}
           >
-            {t('results.portfolio.boardPackGo', 'Przejdź do Outputs →')}
+            {t('results.portfolio.boardPackGo', 'Go to Outputs →')}
           </button>
         </div>
       </section>

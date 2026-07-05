@@ -170,21 +170,21 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
         <div className="flex items-center gap-2">
           <button
             onClick={onClose}
-            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-1 rounded-lg hover:bg-c-surface-raised transition-colors"
           >
-            <ChevronLeft size={16} className="text-slate-600" />
+            <ChevronLeft size={16} className="text-c-text-secondary" />
           </button>
-          <Webhook size={18} className="text-indigo-500" />
-          <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+          <Webhook size={18} className="text-c-tag-2" />
+          <h3 className="text-sm font-semibold text-c-text">
             {isPl ? 'Webhook Relay' : 'Webhook Relays'}
             {relays.length > 0 && (
-              <span className="text-slate-600 font-normal ml-1">({relays.length})</span>
+              <span className="text-c-text-secondary font-normal ml-1">({relays.length})</span>
             )}
           </h3>
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 px-2.5 py-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors"
+          className="inline-flex items-center gap-1 rounded-lg bg-c-tag-2 px-2.5 py-1.5 text-xs font-medium text-c-tag-2 hover:bg-c-tag-2 transition-colors"
         >
           <Plus size={12} />
           {isPl ? 'Dodaj' : 'Add'}
@@ -194,27 +194,27 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
       {/* Loading */}
       {loading && (
         <div className="flex items-center justify-center py-12">
-          <Loader2 size={20} className="animate-spin text-slate-600" />
+          <Loader2 size={20} className="animate-spin text-c-text-secondary" />
         </div>
       )}
 
       {/* Empty */}
       {!loading && relays.length === 0 && (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="rounded-2xl bg-slate-100 dark:bg-navy-800 p-4 mb-4">
-            <Webhook size={28} className="text-slate-600 dark:text-slate-500" />
+          <div className="rounded-2xl bg-c-surface-raised p-4 mb-4">
+            <Webhook size={28} className="text-c-text-muted" />
           </div>
-          <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+          <p className="text-sm font-medium text-c-text-muted mb-1">
             {isPl ? 'Brak skonfigurowanych webhooków' : 'No webhook relays configured'}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 max-w-xs">
+          <p className="text-xs text-c-text-muted mb-4 max-w-xs">
             {isPl
               ? 'Przekazuj zdarzenia z tabeli do Zapier, Make lub dowolnego URL.'
               : 'Forward table events to Zapier, Make, or any webhook URL.'}
           </p>
           <button
             onClick={() => setShowForm(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-600 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-c-tag-2 px-4 py-2 text-sm font-medium text-c-text hover:bg-c-tag-2 transition-colors"
           >
             <Plus size={14} />
             {isPl ? 'Dodaj webhook' : 'Add webhook'}
@@ -228,31 +228,31 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
           {relays.map((relay) => (
             <div
               key={relay.id}
-              className="group flex items-center gap-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 py-3 hover:border-slate-300 dark:hover:border-navy-600 transition-colors"
+              className="group flex items-center gap-3 rounded-xl border border-c-border bg-c-surface px-4 py-3 hover:border-c-border transition-colors"
             >
               <div className="flex-shrink-0">
                 <div
-                  className={`w-2 h-2 rounded-full ${relay.is_active ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}`}
+                  className={`w-2 h-2 rounded-full ${relay.is_active ? 'bg-c-success' : 'bg-c-surface-raised'}`}
                 />
               </div>
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-slate-800 dark:text-white truncate">
+                  <span className="text-sm font-medium text-c-text truncate">
                     {relay.name}
                   </span>
                   {!relay.is_active && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-600">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-c-surface-raised text-c-text-secondary">
                       {isPl ? 'Wył.' : 'Off'}
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-3 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                <div className="flex items-center gap-3 mt-0.5 text-[11px] text-c-text-muted">
                   <span className="truncate max-w-[180px]" title={relay.target_url}>
                     {truncateUrl(relay.target_url)}
                   </span>
                 </div>
-                <div className="flex items-center gap-3 mt-0.5 text-[10px] text-slate-600 dark:text-slate-500">
+                <div className="flex items-center gap-3 mt-0.5 text-[10px] text-c-text-muted">
                   <span>
                     {isPl ? 'Ostatnio:' : 'Last:'} {formatTime(relay.last_triggered_at)}
                   </span>
@@ -264,15 +264,15 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
               <div className="relative flex-shrink-0">
                 <button
                   onClick={() => setMenuOpen(menuOpen === relay.id ? null : relay.id)}
-                  className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                  className="p-1.5 rounded-lg text-c-text-secondary hover:text-c-text-muted hover:bg-c-surface-raised transition-colors"
                 >
                   <MoreHorizontal size={16} />
                 </button>
 
                 {menuOpen === relay.id && (
                   <>
-                    <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(null)} />
-                    <div className="absolute right-0 top-full mt-1 z-50 w-48 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1">
+                    <div className="fixed inset-0 z-dropdown" onClick={() => setMenuOpen(null)} />
+                    <div className="absolute right-0 top-full mt-1 z-overlay w-48 rounded-xl border border-c-border bg-c-surface shadow-xl py-1">
                       <MenuBtn
                         icon={
                           testingId === relay.id ? (
@@ -311,7 +311,7 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
                           setEditingRelay(relay);
                         }}
                       />
-                      <div className="my-1 border-t border-slate-200 dark:border-navy-800" />
+                      <div className="my-1 border-t border-c-border" />
                       <MenuBtn
                         icon={<Trash2 size={13} />}
                         label={isPl ? 'Usuń' : 'Delete'}
@@ -409,11 +409,11 @@ const RelayForm: React.FC<RelayFormProps> = ({ baseId, relay, isPl, onBack, onSa
       <div className="flex items-center gap-2 mb-5">
         <button
           onClick={onBack}
-          className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          className="p-1 rounded-lg hover:bg-c-surface-raised transition-colors"
         >
-          <ChevronLeft size={16} className="text-slate-600" />
+          <ChevronLeft size={16} className="text-c-text-secondary" />
         </button>
-        <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+        <h3 className="text-sm font-semibold text-c-text">
           {relay
             ? isPl
               ? 'Edytuj webhook'
@@ -427,20 +427,20 @@ const RelayForm: React.FC<RelayFormProps> = ({ baseId, relay, isPl, onBack, onSa
       <form onSubmit={handleSubmit} className="flex-1 space-y-4">
         {/* Name */}
         <div>
-          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+          <label className="block text-xs font-medium text-c-text-muted mb-1">
             {isPl ? 'Nazwa' : 'Name'}
           </label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={isPl ? 'np. Zapier — nowe rekordy' : 'e.g. Zapier — new records'}
-            className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-2 text-sm text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+            className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-tag-2 focus:border-c-tag-2"
           />
         </div>
 
         {/* URL */}
         <div>
-          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+          <label className="block text-xs font-medium text-c-text-muted mb-1">
             {isPl ? 'URL docelowy' : 'Target URL'}
           </label>
           <input
@@ -448,13 +448,13 @@ const RelayForm: React.FC<RelayFormProps> = ({ baseId, relay, isPl, onBack, onSa
             onChange={(e) => setTargetUrl(e.target.value)}
             placeholder="https://hooks.zapier.com/hooks/catch/..."
             type="url"
-            className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-2 text-sm text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+            className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-tag-2 focus:border-c-tag-2"
           />
         </div>
 
         {/* Secret */}
         <div>
-          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+          <label className="block text-xs font-medium text-c-text-muted mb-1">
             {isPl ? 'Sekret HMAC (opcjonalny)' : 'HMAC Secret (optional)'}
           </label>
           <input
@@ -463,9 +463,9 @@ const RelayForm: React.FC<RelayFormProps> = ({ baseId, relay, isPl, onBack, onSa
             placeholder={isPl ? 'Klucz do podpisu HMAC-SHA256' : 'Key for HMAC-SHA256 signing'}
             type="password"
             autoComplete="off"
-            className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-2 text-sm text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+            className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-tag-2 focus:border-c-tag-2"
           />
-          <p className="mt-1 text-[10px] text-slate-600">
+          <p className="mt-1 text-[10px] text-c-text-secondary">
             {isPl
               ? 'Nagłówek X-Consultify-Signature zostanie dodany do żądań.'
               : 'X-Consultify-Signature header will be added to requests.'}
@@ -474,27 +474,27 @@ const RelayForm: React.FC<RelayFormProps> = ({ baseId, relay, isPl, onBack, onSa
 
         {/* Event Types */}
         <div>
-          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
+          <label className="block text-xs font-medium text-c-text-muted mb-2">
             {isPl ? 'Zdarzenia' : 'Events'}
           </label>
           <div className="space-y-1.5">
             {EVENT_OPTIONS.map((opt) => (
               <label
                 key={opt.value}
-                className="flex items-center gap-2.5 cursor-pointer rounded-lg px-3 py-2 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                className="flex items-center gap-2.5 cursor-pointer rounded-lg px-3 py-2 hover:bg-c-surface-raised transition-colors"
               >
                 <div
                   className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
                     eventTypes.includes(opt.value)
-                      ? 'bg-indigo-500 border-indigo-500'
-                      : 'border-slate-300 dark:border-navy-600'
+                      ? 'bg-c-tag-2 border-c-tag-2'
+                      : 'border-c-border'
                   }`}
                   onClick={() => toggleEvent(opt.value)}
                 >
-                  {eventTypes.includes(opt.value) && <Check size={10} className="text-white" />}
+                  {eventTypes.includes(opt.value) && <Check size={10} className="text-c-text" />}
                 </div>
                 <span
-                  className="text-sm text-slate-700 dark:text-slate-300"
+                  className="text-sm text-c-text-muted"
                   onClick={() => toggleEvent(opt.value)}
                 >
                   {isPl ? opt.labelPl : opt.labelEn}
@@ -509,7 +509,7 @@ const RelayForm: React.FC<RelayFormProps> = ({ baseId, relay, isPl, onBack, onSa
           <button
             type="submit"
             disabled={saving}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-600 disabled:opacity-50 transition-colors"
+            className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-c-tag-2 px-4 py-2.5 text-sm font-medium text-c-text hover:bg-c-tag-2 disabled:opacity-50 transition-colors"
           >
             {saving && <Loader2 size={14} className="animate-spin" />}
             {relay
@@ -541,7 +541,7 @@ const MenuBtn: React.FC<{
     className={`flex items-center gap-2 w-full px-3 py-1.5 text-xs font-medium transition-colors ${
       danger
         ? 'text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-500/10'
-        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+        : 'text-c-text-muted hover:bg-c-surface-raised'
     }`}
   >
     {icon}

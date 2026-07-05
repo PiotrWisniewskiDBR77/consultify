@@ -81,7 +81,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
           flex items-center gap-1 p-1 rounded transition-colors
           ${
             activeCount > 0
-              ? 'text-[var(--c-info)] bg-[var(--c-info)]/10'
+              ? 'text-[var(--c-info)] bg-c-info/10'
               : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
           }
         `}

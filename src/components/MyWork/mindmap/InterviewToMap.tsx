@@ -118,18 +118,18 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/40">
-      <div className="w-full max-w-lg rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
-        <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-c-bg">
+      <div className="w-full max-w-lg rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
           <div className="flex items-center gap-2">
-            <MessageSquare size={16} className="text-slate-500" />
-            <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+            <MessageSquare size={16} className="text-c-text-secondary" />
+            <h3 className="text-sm font-bold text-c-text dark:text-c-text">
               {isPl ? 'Wywiady → Mapa' : 'Interviews → Map'}
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-c-text-secondary hover:text-c-text-secondary dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
           >
             <X size={16} />
           </button>
@@ -138,8 +138,8 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
         <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
           {loading ? (
             <div className="flex items-center justify-center gap-2 py-8">
-              <Loader2 size={16} className="animate-spin text-slate-500" />
-              <span className="text-[11px] text-slate-500">
+              <Loader2 size={16} className="animate-spin text-c-text-secondary" />
+              <span className="text-[11px] text-c-text-secondary">
                 {isPl ? 'Szukam insightów...' : 'Finding insights...'}
               </span>
             </div>
@@ -147,9 +147,9 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
             <div className="text-center py-8">
               <MessageSquare
                 size={32}
-                className="text-slate-600 dark:text-slate-400 mx-auto mb-3"
+                className="text-c-text-secondary dark:text-c-text-muted mx-auto mb-3"
               />
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted">
                 {isPl ? 'Brak insightów do zaimportowania' : 'No insights to import'}
               </p>
             </div>
@@ -160,25 +160,25 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
                 return (
                   <label
                     key={insight.id}
-                    className="flex items-start gap-2.5 p-3 rounded-xl hover:bg-slate-100/60 dark:hover:bg-white/[0.03] transition-colors cursor-pointer"
+                    className="flex items-start gap-2.5 p-3 rounded-xl hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors cursor-pointer"
                   >
                     <input
                       type="checkbox"
                       checked={selected.has(insight.id)}
                       onChange={() => toggleInsight(insight.id)}
-                      className="mt-0.5 rounded border-slate-300 text-slate-600 focus:ring-slate-400"
+                      className="mt-0.5 rounded border-c-border-subtle text-c-text-secondary focus:ring-c-border"
                     />
                     <div className="min-w-0 flex-1">
-                      <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200">
+                      <div className="text-[11px] font-medium text-c-text-secondary dark:text-c-text">
                         {insight.text}
                       </div>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-slate-900/[0.06] dark:bg-white/[0.10] text-slate-700 dark:text-slate-200">
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-c-surface dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text">
                           {insight.category.replace(/_/g, ' ')}
                         </span>
-                        <span className="text-[9px] text-slate-600">→ {branchKey}</span>
+                        <span className="text-[9px] text-c-text-secondary">→ {branchKey}</span>
                         {insight.confidence != null && (
-                          <span className="text-[8px] text-slate-600">
+                          <span className="text-[8px] text-c-text-secondary">
                             {Math.round(insight.confidence * 100)}%
                           </span>
                         )}
@@ -191,17 +191,17 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
           )}
         </div>
 
-        <div className="px-5 py-3 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center gap-2">
+        <div className="px-5 py-3 border-t border-c-border-subtle dark:border-c-border flex items-center gap-2">
           <button
             onClick={onClose}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+            className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle dark:border-c-border text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
           >
             {isPl ? 'Anuluj' : 'Cancel'}
           </button>
           <button
             onClick={handleApply}
             disabled={selected.size === 0 || locked}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-900 dark:bg-white text-white dark:text-navy-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-all disabled:opacity-40"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-c-surface dark:bg-c-surface-raised text-c-text dark:text-c-text-secondary hover:bg-c-surface dark:hover:bg-c-surface-raised transition-all disabled:opacity-40"
           >
             <Zap size={12} />
             {isPl ? `Importuj ${selected.size} insightów` : `Import ${selected.size} insights`}

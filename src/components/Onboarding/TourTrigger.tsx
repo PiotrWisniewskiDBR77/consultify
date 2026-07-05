@@ -12,12 +12,12 @@ import { Tour, useTour } from './TourProvider';
 const tourAnimationStyle = `
 @keyframes tourColorPulse {
     0%, 100% {
-        background: linear-gradient(135deg, #A51C30 0%, #651120 100%);
-        box-shadow: 0 0 8px rgba(165, 28, 48, 0.3);
+        background: var(--c-accent);
+        box-shadow: 0 0 8px color-mix(in srgb, var(--c-accent) 30%, transparent);
     }
     50% {
-        background: linear-gradient(135deg, #D42B3D 0%, #851627 100%);
-        box-shadow: 0 0 12px rgba(165, 28, 48, 0.4);
+        background: color-mix(in srgb, var(--c-accent) 85%, white);
+        box-shadow: 0 0 12px color-mix(in srgb, var(--c-accent) 40%, transparent);
     }
 }
 
@@ -73,12 +73,12 @@ export const TourTrigger: React.FC<TourTriggerProps> = ({
     return (
       <button
         onClick={handleClick}
-        className={`flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 transition-colors ${className}`}
+        className={`flex items-center gap-1.5 text-sm text-c-accent hover:text-c-accent dark:text-c-accent dark:hover:text-c-accent transition-colors ${className}`}
       >
         <Play size={14} />
         <span>{label}</span>
         {completed && (
-          <span className="text-xs text-slate-600 dark:text-slate-500">(ukończony)</span>
+          <span className="text-xs text-c-text-secondary dark:text-c-text-muted">(ukończony)</span>
         )}
       </button>
     );

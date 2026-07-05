@@ -138,6 +138,7 @@ export function useWorkspaceGraphRuntime({
     queueSync,
     flushNow,
     primeServerVersion,
+    getQueuedPayload,
     currentVersionRef,
   } = useIdeaMapSync({
     ideaId,
@@ -180,16 +181,64 @@ export function useWorkspaceGraphRuntime({
     setLoading(true);
     try {
       const res = await Api.getMyIdeaMap(ideaId, { language });
-      const hydration = resolveIdeaMapHydration(ideaId, res?.map || {});
-      const map = hydration.map || {};
+      const serverMap = res?.map || {};
+      const serverVersion = Math.max(1, Number(serverMap.version || 1));
+      // eslint-disable-next-line no-console
+      // DP-3 (T7 Part C): degraded→online soft-merge. A hard reconnect
+      // (WS conflict, or a manual refresh after a version rejection) used to
+      // unconditionally overwrite local state with the canonical GET,
+      // silently dropping any edit that hadn't round-tripped through
+      // POST /map/sync yet. Prefer the freshest in-memory queued payload —
+      // it is always this client's OWN latest unsaved edit (queuedPayloadRef
+      // is cleared the instant a flush succeeds), so it is never stale
+      // relative to our own work; the same trust model resolveIdeaMapHydration
+      // already applies to the localStorage draft, just without the ~800ms
+      // debounce lag. Falls back to that localStorage-draft path for the
+      // normal cold-hydration path (nothing queued in memory yet), and to the
+      // plain canonical graph when there is no pending local work at all —
+      // i.e. today's behavior is preserved whenever there is nothing to merge.
+      const queued = getQueuedPayload();
+      const serverNodeCount = Array.isArray(serverMap.nodes) ? serverMap.nodes.length : 0;
+      const queuedNodeCount = queued && Array.isArray(queued.nodes) ? queued.nodes.length : -1;
+      let map: IdeaMapHydrationPayload = serverMap;
+      // Anti-wipe (M06): a 0-node queued payload must NEVER clobber a non-empty
+      // server map on hydration. The queued payload is an unsaved local edit and
+      // is normally trusted over the canonical GET (DP-3 soft-merge) — but an
+      // empty payload here is never a legitimate edit: it is the empty initial
+      // ReactFlow/tool state captured before the GET resolved (mind/idea maps
+      // always carry a non-deletable root). Trusting it made refresh() overwrite
+      // the real graph with nodes:[], which then bootstrapped the 6-node starter
+      // and synced it back — silently destroying the user's map. Fall through to
+      // the canonical server graph instead. resolveIdeaMapHydration applies the
+      // same guard to the localStorage-draft path (draftNodeCount===0 branch).
+      if (
+        queued &&
+        Array.isArray(queued.nodes) &&
+        Array.isArray(queued.edges) &&
+        !(queuedNodeCount === 0 && serverNodeCount > 0)
+      ) {
+        map = {
+          ...serverMap,
+          nodes: queued.nodes,
+          edges: queued.edges,
+          preferredTool: queued.preferredTool ?? serverMap.preferredTool ?? null,
+          extensions: queued.extensions ?? serverMap.extensions ?? {},
+          version: serverVersion,
+        };
+      } else {
+        const hydration = resolveIdeaMapHydration(ideaId, serverMap);
+        map = hydration.map || serverMap;
+      }
       const nextGraph: WorkspaceGraphState = {
         nodes: Array.isArray(map.nodes) ? (map.nodes as Node[]) : [],
         edges: Array.isArray(map.edges) ? (map.edges as Edge[]) : [],
         extensions: isPlainObject(map.extensions) ? map.extensions : {},
-        version: Number(map.version || 1),
+        version: Number(map.version || serverVersion),
       };
       setGraph(nextGraph);
-      primeServerVersion(nextGraph.version);
+      // Pass the hydrated node count so the sync-layer anti-wipe guard has a
+      // baseline immediately after hydration (before the first captured edit).
+      primeServerVersion(nextGraph.version, nextGraph.nodes.length);
       const storedViewport =
         isPlainObject(nextGraph.extensions?.surfaceState) &&
         isPlainObject((nextGraph.extensions.surfaceState as Record<string, unknown>)?.viewport)
@@ -204,7 +253,7 @@ export function useWorkspaceGraphRuntime({
       setLoading(false);
       refreshInFlightRef.current = false;
     }
-  }, [ideaId, language, open, primeServerVersion]);
+  }, [getQueuedPayload, ideaId, language, open, primeServerVersion]);
 
   useEffect(() => {
     if (!open) return;
