@@ -3,6 +3,15 @@
  *
  * Lightweight implementation without external passport-saml / openid-client packages.
  * Uses native fetch + crypto for token exchange and XML parsing.
+ *
+ * SECURITY — SAML response handling FAILS CLOSED. Identity claims (NameID /
+ * attributes) are trusted ONLY after `verifySAMLResponse` confirms the XML
+ * signature against the IdP certificate via a registered
+ * `SAMLSignatureVerifier`. Until a real verifier (xml-crypto /
+ * @node-saml/node-saml) is wired in with `setSAMLSignatureVerifier`, every SAML
+ * response is rejected. The old signature-less regex extraction
+ * (`parseSAMLResponse`) was an authentication bypass and has been removed — do
+ * not reintroduce a path that reads identity from an unverified response.
  */
 
 import crypto from 'crypto';
@@ -131,11 +140,26 @@ export function buildSAMLAuthnRequest(
   ].join('');
 }
 
-export function parseSAMLResponse(samlResponse: string): {
+/**
+ * Extract identity claims (NameID + attributes) from an ALREADY-VERIFIED,
+ * decoded SAML XML string.
+ *
+ * SECURITY: This function performs NO trust decision. It must ONLY ever be
+ * called on XML whose enveloped signature has already been cryptographically
+ * verified against the IdP certificate (see `verifySAMLResponse`). Calling it
+ * on raw/unverified input is an authentication bypass — never do that.
+ *
+ * To defend against XML signature-wrapping, the caller must pass the exact
+ * assertion element that the signature covers (`assertionXml`), not the whole
+ * response envelope, so that an attacker cannot smuggle an unsigned assertion
+ * alongside a signed one. When `assertionXml` is provided we extract from it;
+ * we intentionally do NOT fall back to scanning the full document.
+ */
+export function extractVerifiedClaims(verifiedAssertionXml: string): {
   nameId: string;
   attributes: Record<string, string>;
 } {
-  const xml = Buffer.from(samlResponse, 'base64').toString('utf-8');
+  const xml = verifiedAssertionXml;
 
   const nameIdMatch = xml.match(/<(?:saml2?:)?NameID[^>]*>([^<]+)<\//);
   const nameId = nameIdMatch?.[1] || '';
@@ -149,6 +173,100 @@ export function parseSAMLResponse(samlResponse: string): {
   }
 
   return { nameId, attributes };
+}
+
+/**
+ * XML-signature verifier for a decoded SAML response.
+ *
+ * Given the decoded (base64-inflated) SAML response XML and the IdP's X.509
+ * certificate, returns the exact assertion element that the signature
+ * cryptographically covers — or throws / returns null if:
+ *   - no signature is present,
+ *   - the signature does not validate against the certificate,
+ *   - the signature does not actually reference the returned assertion
+ *     (signature-wrapping defense).
+ *
+ * Implement with a real library (xml-crypto / @node-saml/node-saml) and
+ * register via `setSAMLSignatureVerifier`. Until one is registered, SAML login
+ * FAILS CLOSED (every response is rejected).
+ */
+export type SAMLSignatureVerifier = (
+  decodedXml: string,
+  certificate: string
+) => { signedAssertionXml: string } | null | Promise<{ signedAssertionXml: string } | null>;
+
+let samlSignatureVerifier: SAMLSignatureVerifier | null = null;
+
+/**
+ * Register the process-wide SAML signature verifier. Pass `null` to disable
+ * SAML login (back to fail-closed). The verifier MUST reject (return null or
+ * throw) any response whose signature does not validate against the supplied
+ * certificate AND does not cover the returned assertion.
+ */
+export function setSAMLSignatureVerifier(verifier: SAMLSignatureVerifier | null): void {
+  samlSignatureVerifier = verifier;
+}
+
+export interface VerifiedSAMLResult {
+  valid: boolean;
+  nameId?: string;
+  attributes?: Record<string, string>;
+  error?: string;
+}
+
+/**
+ * Verify a SAML response FAIL-CLOSED, then (and only then) extract identity.
+ *
+ * SECURITY: The previous code path base64-decoded the response and regex-scraped
+ * a <NameID> with ZERO signature verification, which let anyone log in as any
+ * email by crafting XML. This function refuses to trust ANY assertion unless a
+ * real signature verifier is registered AND it confirms the signature over the
+ * specific assertion we read identity from. There is NO regex fallback on
+ * failure — when in doubt we reject.
+ *
+ * @param samlResponse base64-encoded SAML response (as received on the ACS POST)
+ * @param certificate  IdP X.509 certificate from the org's SAML config
+ */
+export async function verifySAMLResponse(
+  samlResponse: string,
+  certificate: string | undefined | null
+): Promise<VerifiedSAMLResult> {
+  let decoded: string;
+  try {
+    decoded = Buffer.from(samlResponse, 'base64').toString('utf-8');
+  } catch {
+    return { valid: false, error: 'malformed SAML response' };
+  }
+
+  // FAIL CLOSED: no verifier registered → trust nothing.
+  if (!samlSignatureVerifier) {
+    return { valid: false, error: 'SAML signature verification not configured' };
+  }
+
+  if (!certificate) {
+    return { valid: false, error: 'no SAML certificate configured' };
+  }
+
+  let verified: { signedAssertionXml: string } | null;
+  try {
+    verified = await samlSignatureVerifier(decoded, certificate);
+  } catch {
+    return { valid: false, error: 'signature verification failed' };
+  }
+
+  // Reject if the signature is missing/invalid or does not cover an assertion.
+  // NEVER fall back to scraping the unverified document here.
+  if (!verified || !verified.signedAssertionXml) {
+    return { valid: false, error: 'invalid SAML signature' };
+  }
+
+  // Only NOW, on the signature-covered assertion, extract identity claims.
+  const { nameId, attributes } = extractVerifiedClaims(verified.signedAssertionXml);
+  if (!nameId) {
+    return { valid: false, error: 'no NameID in signed assertion' };
+  }
+
+  return { valid: true, nameId, attributes };
 }
 
 // ==========================================

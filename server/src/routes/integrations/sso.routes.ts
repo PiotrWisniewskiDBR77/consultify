@@ -22,8 +22,8 @@ import {
   generateState,
   getUserInfo,
   type OIDCConfig,
-  parseSAMLResponse,
   type SAMLConfig,
+  verifySAMLResponse,
 } from '../../services/ssoService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { setAuthCookies } from '../../utils/cookieAuth.js';
@@ -429,6 +429,11 @@ router.post(
     const { SAMLResponse, RelayState } = req.body;
     if (!SAMLResponse) return res.status(400).json({ error: 'SAMLResponse required' });
 
+    // SECURITY: the organization (and thus the IdP certificate used to verify
+    // the signature) MUST be resolved from the trusted RelayState we minted at
+    // /saml/login — NEVER from the unverified SAML response body. Deriving org
+    // from a NameID we have not yet cryptographically verified would reopen the
+    // auth-bypass. If we cannot resolve org from RelayState, we fail closed.
     let orgId: string | null = null;
 
     if (RelayState) {
@@ -443,19 +448,24 @@ router.post(
       }
     }
 
-    const { nameId, attributes } = parseSAMLResponse(SAMLResponse);
-    if (!nameId) return res.status(400).json({ error: 'No NameID in SAML response' });
-
     if (!orgId) {
-      const emailDomain = nameId.split('@')[1];
-      if (emailDomain) {
-        orgId = await resolveOrganizationId(emailDomain);
-      }
+      logger.warn('[SSO] SAML callback rejected — no trusted org from RelayState');
+      return res.status(400).json({ error: 'Invalid or expired SAML relay state' });
     }
-    if (!orgId)
-      return res.status(400).json({ error: 'Cannot determine organization from SAML response' });
 
     const samlCfg = await loadSAMLConfig(orgId);
+
+    // FAIL CLOSED: verify the XML signature against the org's IdP certificate
+    // BEFORE reading any identity claim. No signature / bad signature / no
+    // verifier configured → reject. There is no regex fallback.
+    const verified = await verifySAMLResponse(SAMLResponse, samlCfg?.certificate);
+    if (!verified.valid || !verified.nameId) {
+      logger.warn(`[SSO] SAML signature verification failed for org ${orgId}: ${verified.error}`);
+      return res.status(401).json({ error: 'SAML response verification failed' });
+    }
+
+    const nameId = verified.nameId;
+    const attributes = verified.attributes || {};
     const mappings = samlCfg?.attributeMappings || {};
 
     const firstName =
