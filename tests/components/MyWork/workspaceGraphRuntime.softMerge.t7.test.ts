@@ -106,6 +106,53 @@ describe('useWorkspaceGraphRuntime.refresh — degraded→online soft-merge', ()
     ]);
   });
 
+  it('does NOT let a 0-node queued payload clobber a non-empty server map on refresh (M06 bootstrap-wipe regression)', async () => {
+    // Live regression (Londyn m06): on mount the mind/idea tool captures its
+    // empty initial ReactFlow state (nodes:[]) BEFORE the GET /map resolves, so
+    // useIdeaMapSync.queuedPayloadRef holds a 0-node payload. refresh() then
+    // trusted that queued payload over the canonical 3-node server graph
+    // (DP-3 soft-merge), setting the runtime graph to 0 nodes — which made the
+    // mind-map hydrate bootstrap the 6-node starter and sync it back, silently
+    // destroying the user's real map. refresh() must ignore an empty queued
+    // payload when the server map is non-empty.
+    getMyIdeaMap.mockResolvedValue({
+      map: {
+        nodes: [{ id: 'root', type: 'center' }, { id: 'n1', type: 'idea' }, { id: 'n2', type: 'idea' }],
+        edges: [{ id: 'e1', source: 'root', target: 'n1' }, { id: 'e2', source: 'root', target: 'n2' }],
+        extensions: {},
+        version: 1,
+      },
+    });
+
+    const { result } = renderHook(() =>
+      useWorkspaceGraphRuntime({
+        ideaId: 'idea-bootstrap-wipe',
+        open: true,
+        preferredTool: 'mindmap' as any,
+        language: 'en',
+      })
+    );
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(result.current.graph.nodes.map((n: any) => n.id)).toEqual(['root', 'n1', 'n2']);
+
+    // Queue an EMPTY payload (the pre-hydrate empty-capture from the repro).
+    act(() => {
+      result.current.captureToolGraph({ nodes: [], edges: [] });
+    });
+
+    // Reconnect / re-hydrate against the same non-empty canonical server map.
+    await act(async () => {
+      await result.current.refresh();
+    });
+
+    // The real 3-node server graph MUST survive — the 0-node queued payload is
+    // refused, so no bootstrap wipe follows.
+    expect(result.current.graph.nodes.map((n: any) => n.id)).toEqual(['root', 'n1', 'n2']);
+  });
+
   it('falls back to the plain canonical graph when nothing is queued (today’s behavior preserved)', async () => {
     getMyIdeaMap.mockResolvedValue({
       map: { nodes: [{ id: 'a' }], edges: [], extensions: {}, version: 2 },

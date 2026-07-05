@@ -302,10 +302,22 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
 
   // Keep a stable ref to runtime data so `hydrate` doesn't get a new identity
   // on every save cycle (which would cascade into effect re-runs).
-  const runtimeDataRef = useRef({ runtimeNodes, runtimeEdges, runtimeExtensions, runtimeVersion });
+  const runtimeDataRef = useRef({
+    runtimeNodes,
+    runtimeEdges,
+    runtimeExtensions,
+    runtimeVersion,
+    runtimeLoading,
+  });
   useEffect(() => {
-    runtimeDataRef.current = { runtimeNodes, runtimeEdges, runtimeExtensions, runtimeVersion };
-  }, [runtimeNodes, runtimeEdges, runtimeExtensions, runtimeVersion]);
+    runtimeDataRef.current = {
+      runtimeNodes,
+      runtimeEdges,
+      runtimeExtensions,
+      runtimeVersion,
+      runtimeLoading,
+    };
+  }, [runtimeNodes, runtimeEdges, runtimeExtensions, runtimeVersion, runtimeLoading]);
 
   const hydrate = useCallback(async () => {
     const {
@@ -313,8 +325,22 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
       runtimeEdges: rtEdges,
       runtimeExtensions: rtExt,
       runtimeVersion: rtVer,
+      runtimeLoading: rtLoading,
     } = runtimeDataRef.current;
     if (externalRuntime) {
+      // Bootstrap race guard (M06): hydrate() fires from the [ideaId] mount
+      // effect BEFORE the workspace runtime's GET /map has resolved, so
+      // runtimeDataRef still holds the initial EMPTY graph (nodes:[] version:1).
+      // shouldBootstrapStarterGraph() then returns true and seeds the 6-node
+      // default starter — which is captured + synced, overwriting the real
+      // server map. Because the server version is 1, it never changes, so the
+      // [runtimeVersion] re-hydrate effect below never re-fires with the loaded
+      // nodes and the wrong graph sticks. Refuse to bootstrap while the runtime
+      // is still loading; the loaded-transition effect re-runs hydrate() once
+      // the GET resolves and the real nodes are in runtimeDataRef.
+      if (rtLoading) {
+        return;
+      }
       localVersionRef.current = Math.max(1, Number(rtVer || 1));
       const runtimeNodesSafe = Array.isArray(rtNodes) ? rtNodes : [];
       const runtimeEdgesSafe = Array.isArray(rtEdges) ? rtEdges : [];
@@ -525,6 +551,36 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
     hydrate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ideaId]);
+
+  // Re-hydrate when the workspace runtime finishes its initial GET /map load
+  // (loading true→false). The [ideaId] mount hydrate above bails out while
+  // externalRuntime.loading is true (empty runtime state would bootstrap and
+  // clobber the real map), so this is the effect that actually hydrates the
+  // real server graph once it has arrived. Server maps at version 1 never bump
+  // the version, so the version-jump effect below cannot cover this — the
+  // loaded transition is the only reliable "the GET resolved" signal.
+  const didHydrateLoadedRef = useRef(false);
+  useEffect(() => {
+    didHydrateLoadedRef.current = false;
+  }, [ideaId]);
+  useEffect(() => {
+    if (!externalRuntime) return;
+    if (runtimeLoading) return;
+    // Runtime has finished loading (GET /map resolved). Hydrate the real graph
+    // exactly once per idea. Covers both the true→false transition AND the case
+    // where the runtime was already loaded before this hook mounted (in which
+    // case the [ideaId] mount hydrate bailed on stale loading state). Guard so
+    // we don't re-hydrate on every unrelated runtime re-render.
+    if (didHydrateLoadedRef.current) return;
+    didHydrateLoadedRef.current = true;
+    // Mark this version as hydrated so the version-jump effect does not
+    // immediately re-hydrate (and reset the viewport) right after us.
+    if (runtimeVersion !== null) {
+      lastHydratedRuntimeVersionRef.current = runtimeVersion;
+    }
+    hydrate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [runtimeLoading, ideaId]);
 
   // Re-hydrate ONLY when the runtime version jumps by more than 1 (external
   // change, e.g. conflict resolution or another user's save).  A +1 bump is

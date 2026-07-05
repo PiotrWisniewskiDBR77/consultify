@@ -183,6 +183,7 @@ export function useWorkspaceGraphRuntime({
       const res = await Api.getMyIdeaMap(ideaId, { language });
       const serverMap = res?.map || {};
       const serverVersion = Math.max(1, Number(serverMap.version || 1));
+      // eslint-disable-next-line no-console
       // DP-3 (T7 Part C): degraded→online soft-merge. A hard reconnect
       // (WS conflict, or a manual refresh after a version rejection) used to
       // unconditionally overwrite local state with the canonical GET,
@@ -197,8 +198,25 @@ export function useWorkspaceGraphRuntime({
       // plain canonical graph when there is no pending local work at all —
       // i.e. today's behavior is preserved whenever there is nothing to merge.
       const queued = getQueuedPayload();
+      const serverNodeCount = Array.isArray(serverMap.nodes) ? serverMap.nodes.length : 0;
+      const queuedNodeCount = queued && Array.isArray(queued.nodes) ? queued.nodes.length : -1;
       let map: IdeaMapHydrationPayload = serverMap;
-      if (queued && Array.isArray(queued.nodes) && Array.isArray(queued.edges)) {
+      // Anti-wipe (M06): a 0-node queued payload must NEVER clobber a non-empty
+      // server map on hydration. The queued payload is an unsaved local edit and
+      // is normally trusted over the canonical GET (DP-3 soft-merge) — but an
+      // empty payload here is never a legitimate edit: it is the empty initial
+      // ReactFlow/tool state captured before the GET resolved (mind/idea maps
+      // always carry a non-deletable root). Trusting it made refresh() overwrite
+      // the real graph with nodes:[], which then bootstrapped the 6-node starter
+      // and synced it back — silently destroying the user's map. Fall through to
+      // the canonical server graph instead. resolveIdeaMapHydration applies the
+      // same guard to the localStorage-draft path (draftNodeCount===0 branch).
+      if (
+        queued &&
+        Array.isArray(queued.nodes) &&
+        Array.isArray(queued.edges) &&
+        !(queuedNodeCount === 0 && serverNodeCount > 0)
+      ) {
         map = {
           ...serverMap,
           nodes: queued.nodes,
