@@ -193,17 +193,24 @@ const stripInsightMarkdownPreview = (raw: string): string => {
     .trim();
 };
 
-const INTERVIEW_INBOX_TABLE_VIEW_STORAGE_KEY = 'consultify-interview-inbox-table-view';
-const INTERVIEW_INBOX_ROW_DESCRIPTION_STORAGE_KEY =
-  'consultify-interview-inbox-show-row-description';
-const INTERVIEW_MANAGED_ASSIGNMENTS_TABLE_VIEW_STORAGE_KEY =
-  'consultify-interview-managed-assignments-table-view';
-const INTERVIEW_MANAGED_ASSIGNMENTS_ROW_DESCRIPTION_STORAGE_KEY =
-  'consultify-interview-managed-assignments-show-row-description';
 const INTERVIEW_INITIATIVES_TABLE_VIEW_STORAGE_KEY = 'consultify-interview-initiatives-table-view';
 const INTERVIEW_INITIATIVES_ROW_DESCRIPTION_STORAGE_KEY =
   'consultify-interview-initiatives-show-row-description';
 const INTERVIEW_CREATE_SESSION_TOAST_ID = 'interview-create-session';
+
+// #10 — assignment status filter option order (Assignments table columns),
+// used to derive the per-column filterOptions in a stable, canonical order.
+const ASSIGNMENT_STATUS_OPTION_ORDER = [
+  'assigned',
+  'in_progress',
+  'submitted',
+  'sent_back',
+  'review',
+  'approved',
+  'completed',
+  'rejected',
+  'accepted',
+];
 
 // L-07 / D-03 — canonical pipeline stage numerals ①–⑥ over the flat tabs. Lifted
 // to module scope so both the `tabs` labels (withStep) and the `pipelineSteps`
@@ -227,50 +234,12 @@ const INTERVIEW_PIPELINE_STAGE_ORDER = [
 ] as const;
 
 // V-B — column-width persistence storage keys (one per resizable table).
-const INTERVIEW_INBOX_COL_WIDTHS_KEY = 'consultify-interview-inbox-col-widths';
-const INTERVIEW_MANAGED_COL_WIDTHS_KEY = 'consultify-interview-managed-col-widths';
 const INTERVIEW_INITIATIVES_COL_WIDTHS_KEY = 'consultify-interview-initiatives-col-widths';
 
-// #9/#9b — opt-in columns are hidden by default; users reveal them via the
-// view-settings (hidden-columns) menu. submitted/overdue/aiScore/escalation.
-const INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [
-  'submitted',
-  'aiScore',
-  'escalation',
-];
-// (Sessions column-visibility defaults retired — StandardTable's own
-// TableSettingsPopover manages visible columns now; Triada standard.)
-const INTERVIEW_TEMPLATES_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [];
+// (Sessions/Templates/Assignments column-visibility + width defaults retired —
+// StandardTable's own TableSettingsPopover + `persistKey` manage these now;
+// Triada standard.)
 const INTERVIEW_INITIATIVES_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [];
-const INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_WIDTHS: ColumnWidths = {
-  select: 44,
-  template: 360,
-  assignee: 180,
-  status: 140,
-  progress: 150,
-  due: 150,
-  submitted: 150,
-  aiScore: 120,
-  escalation: 160,
-  actions: 56,
-};
-const INTERVIEW_ASSIGNMENTS_TABLE_RESIZE_BOUNDS: Record<
-  string,
-  { minWidth: number; maxWidth: number }
-> = {
-  select: { minWidth: 44, maxWidth: 44 },
-  template: { minWidth: 240, maxWidth: 680 },
-  assignee: { minWidth: 140, maxWidth: 280 },
-  status: { minWidth: 120, maxWidth: 220 },
-  progress: { minWidth: 130, maxWidth: 260 },
-  due: { minWidth: 130, maxWidth: 260 },
-  submitted: { minWidth: 130, maxWidth: 240 },
-  aiScore: { minWidth: 100, maxWidth: 200 },
-  escalation: { minWidth: 140, maxWidth: 260 },
-  actions: { minWidth: 52, maxWidth: 72 },
-};
-// (Sessions/Insights/Templates column-width defaults/resize-bounds retired —
-// StandardTable owns resize + persistence via `persistKey`.)
 const INTERVIEW_INITIATIVES_TABLE_DEFAULT_WIDTHS: ColumnWidths = {
   select: 44,
   title: 430,
@@ -292,27 +261,6 @@ const INTERVIEW_INITIATIVES_TABLE_RESIZE_BOUNDS: Record<
   date: { minWidth: 120, maxWidth: 220 },
   actions: { minWidth: 52, maxWidth: 72 },
 };
-
-function loadInterviewAssignmentsHiddenColumns(storageKey: string, showAssignee: boolean) {
-  try {
-    const raw = localStorage.getItem(storageKey);
-    if (!raw) return [...INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_HIDDEN_COLUMNS];
-    const parsed = JSON.parse(raw);
-    const list = Array.isArray(parsed) ? parsed.filter((x) => typeof x === 'string') : [];
-
-    // Always-visible columns
-    const sanitized = new Set(list);
-    sanitized.delete('template');
-    sanitized.delete('actions');
-
-    // Columns not present in view
-    if (!showAssignee) sanitized.delete('assignee');
-
-    return Array.from(sanitized);
-  } catch {
-    return [...INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_HIDDEN_COLUMNS];
-  }
-}
 
 function loadHiddenColumns(storageKey: string, defaults: string[], alwaysVisible: string[] = []) {
   try {
@@ -831,14 +779,8 @@ export const InterviewHub: React.FC = () => {
   // now lives inside StandardTable (Triada standard) via column `filterOptions`.
   const [sessionsTableFilters, setSessionsTableFilters] = useState<TableFilters>({});
 
-  // #10 — per-column header filters for the Assigned / Inbox tables (status /
-  // assignee / template). Keyed by view ('managed' = Assigned, 'inbox') so the
-  // two shared renderings don't clobber each other's filters.
-  const [assignmentsTableFilters, setAssignmentsTableFilters] = useState<{
-    managed: TableFilters;
-    inbox: TableFilters;
-  }>({ managed: {}, inbox: {} });
-  const [openAssignmentFilterId, setOpenAssignmentFilterId] = useState<string | null>(null);
+  // (Assigned/Inbox per-column header filters retired — StandardTable's
+  // built-in per-column filterOptions replace them; Triada standard.)
 
   // Reset preview expansion state when changing selection (KANON v3: stabilny panel)
   useEffect(() => {
@@ -4688,7 +4630,7 @@ export const InterviewHub: React.FC = () => {
       selectedId?: string | null;
     }
   ) => {
-    // #9 — Overdue computation, mirrors the Assignments-table `getDaysToDue`
+    // #9 — Overdue computation, mirrors the Assignments-table `getAssignmentDaysToDue`
     // logic. A session is overdue when it has a due date in the past AND has not
     // yet been submitted/approved. Returns the whole-day delta (negative = past).
     const getSessionDaysOverdue = (session: InterviewSession): number | null => {
@@ -6404,130 +6346,11 @@ export const InterviewHub: React.FC = () => {
     return null;
   };
 
-  // Sorting state for assignments
-  const [assignmentSortField, setAssignmentSortField] = useState<
-    'dueAt' | 'status' | 'progress' | null
-  >('dueAt');
-  const [assignmentSortAsc, setAssignmentSortAsc] = useState(true);
-
-  // (Sessions/Insights/Templates sort/filter now live inside StandardTable —
-  // Triada standard.)
-
-  // Table View Settings — Assignments (Inbox + Managed)
-  const [inboxHiddenColumns, setInboxHiddenColumns] = useState<string[]>(() =>
-    loadInterviewAssignmentsHiddenColumns(INTERVIEW_INBOX_TABLE_VIEW_STORAGE_KEY, true)
-  );
-  const [inboxAssignmentColumnWidths, setInboxAssignmentColumnWidths] = useState<ColumnWidths>(() =>
-    loadColumnWidths(INTERVIEW_INBOX_COL_WIDTHS_KEY, INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_WIDTHS)
-  );
-  const [showInboxAssignmentRowDescription, setShowInboxAssignmentRowDescription] = useState(() =>
-    loadBooleanSetting(INTERVIEW_INBOX_ROW_DESCRIPTION_STORAGE_KEY, true)
-  );
-  const [managedHiddenColumns, setManagedHiddenColumns] = useState<string[]>(() =>
-    loadInterviewAssignmentsHiddenColumns(
-      INTERVIEW_MANAGED_ASSIGNMENTS_TABLE_VIEW_STORAGE_KEY,
-      true
-    )
-  );
-  const [managedAssignmentColumnWidths, setManagedAssignmentColumnWidths] = useState<ColumnWidths>(
-    () =>
-      loadColumnWidths(INTERVIEW_MANAGED_COL_WIDTHS_KEY, INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_WIDTHS)
-  );
-
-  // V-B — persist every resizable table's column widths on change, so resizing
-  // survives reload (the module-wide bug). One effect per table.
-  // (Sessions/Templates moved to StandardTable — persistence now via
-  // persistKey inside the facade; no module-local width state left to persist.)
+  // (Sessions/Insights/Templates/Assignments sort/filter/column-widths/
+  // view-settings popover all now live inside StandardTable — Triada standard.)
   useEffect(() => {
     saveColumnWidths(INTERVIEW_INITIATIVES_COL_WIDTHS_KEY, initiativesColumnWidths);
   }, [initiativesColumnWidths]);
-  useEffect(() => {
-    saveColumnWidths(INTERVIEW_INBOX_COL_WIDTHS_KEY, inboxAssignmentColumnWidths);
-  }, [inboxAssignmentColumnWidths]);
-  useEffect(() => {
-    saveColumnWidths(INTERVIEW_MANAGED_COL_WIDTHS_KEY, managedAssignmentColumnWidths);
-  }, [managedAssignmentColumnWidths]);
-  const [showManagedAssignmentRowDescription, setShowManagedAssignmentRowDescription] = useState(
-    () => loadBooleanSetting(INTERVIEW_MANAGED_ASSIGNMENTS_ROW_DESCRIPTION_STORAGE_KEY, true)
-  );
-  const [isAssignmentsViewSettingsOpen, setIsAssignmentsViewSettingsOpen] = useState(false);
-  const [assignmentsViewSettingsShowAssignee, setAssignmentsViewSettingsShowAssignee] =
-    useState(false);
-  const assignmentsViewSettingsRef = useRef<HTMLDivElement | null>(null);
-  // Canon §16 — popover position for FIXED rendering (escapes overflow-clipping
-  // ancestors; `absolute` + max-height was insufficient — parent overflow clips).
-  const [assignmentsViewSettingsPos, setAssignmentsViewSettingsPos] = useState<{
-    top: number;
-    left: number;
-    maxH: number;
-  } | null>(null);
-  const assignmentsViewSettingsPanelRef = useRef<HTMLDivElement | null>(null);
-
-  const assignmentsViewStorageKey = assignmentsViewSettingsShowAssignee
-    ? INTERVIEW_MANAGED_ASSIGNMENTS_TABLE_VIEW_STORAGE_KEY
-    : INTERVIEW_INBOX_TABLE_VIEW_STORAGE_KEY;
-  const assignmentsViewHiddenColumns = assignmentsViewSettingsShowAssignee
-    ? managedHiddenColumns
-    : inboxHiddenColumns;
-  const assignmentsViewHiddenSet = useMemo(
-    () => new Set(assignmentsViewHiddenColumns),
-    [assignmentsViewHiddenColumns]
-  );
-  const updateAssignmentsViewHiddenColumns = useCallback(
-    (updater: (prev: string[]) => string[]) => {
-      if (assignmentsViewSettingsShowAssignee) {
-        setManagedHiddenColumns(updater);
-      } else {
-        setInboxHiddenColumns(updater);
-      }
-    },
-    [assignmentsViewSettingsShowAssignee]
-  );
-  const assignmentsViewShowRowDescription = assignmentsViewSettingsShowAssignee
-    ? showManagedAssignmentRowDescription
-    : showInboxAssignmentRowDescription;
-  const updateAssignmentsViewShowRowDescription = useCallback(
-    (next: boolean) => {
-      if (assignmentsViewSettingsShowAssignee) {
-        setShowManagedAssignmentRowDescription(next);
-        saveBooleanSetting(INTERVIEW_MANAGED_ASSIGNMENTS_ROW_DESCRIPTION_STORAGE_KEY, next);
-      } else {
-        setShowInboxAssignmentRowDescription(next);
-        saveBooleanSetting(INTERVIEW_INBOX_ROW_DESCRIPTION_STORAGE_KEY, next);
-      }
-    },
-    [assignmentsViewSettingsShowAssignee]
-  );
-
-  useEffect(() => {
-    if (!isAssignmentsViewSettingsOpen) return;
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (assignmentsViewSettingsRef.current?.contains(event.target as Node)) return;
-      if (assignmentsViewSettingsPanelRef.current?.contains(event.target as Node)) return;
-      setIsAssignmentsViewSettingsOpen(false);
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setIsAssignmentsViewSettingsOpen(false);
-    };
-
-    window.addEventListener('pointerdown', handlePointerDown);
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('pointerdown', handlePointerDown);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isAssignmentsViewSettingsOpen]);
-
-  const toggleAssignmentSort = (field: 'dueAt' | 'status' | 'progress') => {
-    if (assignmentSortField === field) {
-      setAssignmentSortAsc(!assignmentSortAsc);
-    } else {
-      setAssignmentSortField(field);
-      setAssignmentSortAsc(true);
-    }
-  };
 
   const getAssignmentTitle = useCallback(
     (a: InterviewAssignment) => a.template?.name || (isPolish ? 'Wywiad' : 'Interview'),
@@ -7052,1109 +6875,227 @@ Return ONLY the answer text (no markdown fences).`;
     assignments: InterviewAssignment[],
     showAssignee: boolean = false
   ) => {
-    const hiddenColumns = showAssignee ? managedHiddenColumns : inboxHiddenColumns;
-    const hiddenSet = new Set(hiddenColumns);
-    const hasAssigneeColumn = !hiddenSet.has('assignee');
-    const columnWidths = showAssignee ? managedAssignmentColumnWidths : inboxAssignmentColumnWidths;
-    const setColumnWidths = showAssignee
-      ? setManagedAssignmentColumnWidths
-      : setInboxAssignmentColumnWidths;
-
-    // #10 — per-column header filters for this table view. Keyed by view so the
-    // Assigned (managed) and Inbox renderings keep independent filter state.
-    const filterViewKey: 'managed' | 'inbox' = showAssignee ? 'managed' : 'inbox';
-    const tableFilters = assignmentsTableFilters[filterViewKey];
-    const setTableFilters = (updater: (prev: TableFilters) => TableFilters) =>
-      setAssignmentsTableFilters((prev) => ({
-        ...prev,
-        [filterViewKey]: updater(prev[filterViewKey]),
-      }));
     const getAssignmentTemplateValue = (a: InterviewAssignment) =>
       a.template?.name || (isPolish ? 'Wywiad' : 'Interview');
     const getAssignmentAssigneeValue = (a: InterviewAssignment) =>
       a.assignee?.name || a.assignee?.email || (isPolish ? 'Nieznany' : 'Unknown');
 
-    // #10 — apply per-column header filters (AND across columns, OR within a
-    // column) up front so selection / bulk / row rendering all share one list.
-    const columnFilteredAssignments = assignments.filter((a) => {
-      const statusF = tableFilters.status as string[] | undefined;
-      if (statusF?.length && !statusF.includes(a.status)) return false;
-      const assigneeF = tableFilters.assignee as string[] | undefined;
-      if (assigneeF?.length && !assigneeF.includes(getAssignmentAssigneeValue(a))) return false;
-      const templateF = tableFilters.template as string[] | undefined;
-      if (templateF?.length && !templateF.includes(getAssignmentTemplateValue(a))) return false;
-      return true;
-    });
-    const showRowDescription = showAssignee
-      ? showManagedAssignmentRowDescription
-      : showInboxAssignmentRowDescription;
-    const visibleAssignmentIds = columnFilteredAssignments.map((assignment) => assignment.id);
-    const selectedVisibleCount = visibleAssignmentIds.filter((id) =>
-      selectedAssignmentIds.has(id)
-    ).length;
-    const allVisibleSelected =
-      visibleAssignmentIds.length > 0 && selectedVisibleCount === visibleAssignmentIds.length;
-    const someVisibleSelected = selectedVisibleCount > 0 && !allVisibleSelected;
-    const toggleAssignmentSelection = (assignmentId: string) => {
-      setSelectedAssignmentIds((prev) => {
-        const next = new Set(prev);
-        if (next.has(assignmentId)) next.delete(assignmentId);
-        else next.add(assignmentId);
-        return next;
-      });
-    };
-    const toggleAllVisibleAssignments = () => {
-      setSelectedAssignmentIds((prev) => {
-        const next = new Set(prev);
-        if (allVisibleSelected) {
-          visibleAssignmentIds.forEach((id) => next.delete(id));
-        } else {
-          visibleAssignmentIds.forEach((id) => next.add(id));
-        }
-        return next;
-      });
-    };
-    // #9 — opt-in columns (submitted / aiScore / escalation) are only offered on
-    // the manager-facing Assigned view (showAssignee). They stay hidden in the
-    // worker Inbox where the data isn't actionable.
-    const showSubmittedColumn = showAssignee && !hiddenSet.has('submitted');
-    const showAiScoreColumn = showAssignee && !hiddenSet.has('aiScore');
-    const showEscalationColumn = showAssignee && !hiddenSet.has('escalation');
-    const visibleColumns = [
-      'select',
-      'template',
-      ...(hasAssigneeColumn ? ['assignee'] : []),
-      ...(!hiddenSet.has('status') ? ['status'] : []),
-      ...(!hiddenSet.has('progress') ? ['progress'] : []),
-      ...(!hiddenSet.has('due') ? ['due'] : []),
-      ...(showSubmittedColumn ? ['submitted'] : []),
-      ...(showAiScoreColumn ? ['aiScore'] : []),
-      ...(showEscalationColumn ? ['escalation'] : []),
-      'actions',
-    ];
-    const tableMinWidth = visibleColumns.reduce(
-      (sum, columnId) => sum + (columnWidths[columnId] ?? 120),
-      0
-    );
-    const handleAssignmentColumnResize = (columnId: string, newWidth: number) => {
-      setColumnWidths((prev) => {
-        const currentIndex = visibleColumns.indexOf(columnId);
-        const nextColumnId = visibleColumns[currentIndex + 1];
-        if (currentIndex < 0 || !nextColumnId) return prev;
-
-        const current = prev[columnId] ?? INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_WIDTHS[columnId];
-        const next = prev[nextColumnId] ?? INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_WIDTHS[nextColumnId];
-        const currentBounds = INTERVIEW_ASSIGNMENTS_TABLE_RESIZE_BOUNDS[columnId];
-        const nextBounds = INTERVIEW_ASSIGNMENTS_TABLE_RESIZE_BOUNDS[nextColumnId];
-        const requestedDelta = newWidth - current;
-        const minDelta = Math.max(currentBounds.minWidth - current, next - nextBounds.maxWidth);
-        const maxDelta = Math.min(currentBounds.maxWidth - current, next - nextBounds.minWidth);
-        const delta = Math.max(minDelta, Math.min(maxDelta, requestedDelta));
-        if (delta === 0) return prev;
-
-        return {
-          ...prev,
-          [columnId]: current + delta,
-          [nextColumnId]: next - delta,
-        };
-      });
-    };
-    const renderAssignmentResizer = (columnId: string) => {
-      if (visibleColumns[visibleColumns.indexOf(columnId) + 1] == null) return null;
-      const bounds = INTERVIEW_ASSIGNMENTS_TABLE_RESIZE_BOUNDS[columnId];
-      return (
-        <ColumnResizer
-          columnId={columnId}
-          currentWidth={
-            columnWidths[columnId] ?? INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_WIDTHS[columnId]
-          }
-          minWidth={bounds.minWidth}
-          maxWidth={bounds.maxWidth}
-          onResize={handleAssignmentColumnResize}
-        />
-      );
-    };
-
-    const getStatusColor = (status: string) => getAssignmentStatusColor(status);
-
-    const getStatusLabel = (status: string) => {
-      const labels: Record<string, { pl: string; en: string }> = {
-        assigned: { pl: 'Przydzielony', en: 'Assigned' },
-        drafting: { pl: 'Szkic', en: 'Drafting' },
-        in_progress: { pl: 'W trakcie', en: 'In Progress' },
-        review: { pl: 'Do przeglądu', en: 'In Review' },
-        submitted: { pl: 'Wysłany', en: 'Submitted' },
-        sent_back: { pl: 'Do poprawy', en: 'Sent Back' },
-        rejected: { pl: 'Odrzucony', en: 'Rejected' },
-        accepted: { pl: 'Zaakceptowany', en: 'Accepted' },
-        approved: { pl: 'Zatwierdzony', en: 'Approved' },
-        completed: { pl: 'Zakończony', en: 'Completed' },
-      };
-      return labels[status]?.[isPolish ? 'pl' : 'en'] || status;
-    };
-
-    const getPriorityColor = (priority: string) => {
-      switch (priority) {
-        case 'urgent':
-          return 'text-c-danger';
-        case 'high':
-          return 'text-amber-400';
-        case 'medium':
-          return 'text-amber-400';
-        case 'low':
-          return 'text-slate-600';
-        default:
-          return 'text-slate-600';
-      }
-    };
-
-    const isOverdue = (dueAt?: string) => {
-      if (!dueAt) return false;
-      return new Date(dueAt) < new Date();
-    };
-
-    /** E1.1 – "days to due" helper with color coding */
-    const getDaysToDue = (
-      dueAt?: string
-    ): { days: number; label: string; colorClass: string } | null => {
-      if (!dueAt) return null;
-      const now = new Date();
-      now.setHours(0, 0, 0, 0);
-      const due = new Date(dueAt);
-      due.setHours(0, 0, 0, 0);
-      const diffMs = due.getTime() - now.getTime();
-      const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-      if (days < 0) {
-        const absDays = Math.abs(days);
-        return {
-          days,
-          label: isPolish
-            ? `${absDays} ${absDays === 1 ? 'dzień' : 'dni'} po terminie`
-            : `${absDays}d overdue`,
-          colorClass:
-            'border-c-danger/30 bg-c-danger/[0.08] text-c-danger',
-        };
-      }
-      if (days === 0) {
-        return {
-          days,
-          label: isPolish ? 'Dziś!' : 'Today!',
-          colorClass:
-            'border-c-danger/30 bg-c-danger/[0.08] text-c-danger',
-        };
-      }
-      if (days <= 3) {
-        return {
-          days,
-          label: isPolish ? `${days} ${days === 1 ? 'dzień' : 'dni'} do terminu` : `${days}d left`,
-          colorClass:
-            'border-amber-300/80 bg-amber-50 text-amber-900 dark:border-amber-300/[0.25] dark:bg-amber-300/[0.12] dark:text-amber-100',
-        };
-      }
-      return {
-        days,
-        label: isPolish ? `${days} ${days === 1 ? 'dzień' : 'dni'} do terminu` : `${days}d left`,
-        colorClass:
-          'border-slate-300/80 bg-slate-100 text-slate-800 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200',
-      };
-    };
-
-    const handleStartAssignment = async (assignment: InterviewAssignment) => {
-      try {
-        const projectId = await ensureProjectId();
-        if (!projectId) {
-          toast.error(
-            isPolish
-              ? 'Wybierz projekt przed rozpoczęciem wywiadu'
-              : 'Select a project before starting'
+    const assignmentColumns: StandardTableColumn[] = [
+      {
+        id: 'template',
+        label: isPolish ? 'Szablon' : 'Template',
+        filterable: true,
+        filterOptions: Array.from(new Set(assignments.map(getAssignmentTemplateValue)))
+          .sort()
+          .map((v) => ({ value: v, label: v })),
+        sortAccessor: (row: InterviewAssignment) => getAssignmentTemplateValue(row),
+        sortable: true,
+        render: (row: InterviewAssignment) => (
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={INTERVIEW_TABLE_ICON_SURFACE_CLASS}>
+              <ClipboardList size={16} />
+            </div>
+            <div className="min-w-0 flex items-center gap-2">
+              <span
+                className="text-sm font-semibold text-c-text truncate min-w-0"
+                title={row.template?.name || 'Interview'}
+              >
+                {row.template?.name || 'Interview'}
+              </span>
+              {row.template?.category ? (
+                <span
+                  className="shrink-0 max-w-[160px] truncate inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[11px] font-medium border border-c-border bg-c-surface-raised text-c-text-secondary"
+                  title={row.template.category}
+                >
+                  {categoryTone(row.template.category) ? (
+                    <span
+                      aria-hidden="true"
+                      className="h-1.5 w-1.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: categoryTone(row.template.category)! }}
+                    />
+                  ) : null}
+                  {row.template.category}
+                </span>
+              ) : null}
+            </div>
+          </div>
+        ),
+      },
+      ...(showAssignee
+        ? [
+            {
+              id: 'assignee',
+              label: isPolish ? 'Przydzielony do' : 'Assignee',
+              width: '170px',
+              filterable: true,
+              filterOptions: Array.from(new Set(assignments.map(getAssignmentAssigneeValue)))
+                .sort()
+                .map((v) => ({ value: v, label: v })),
+              render: (row: InterviewAssignment) => (
+                <AssigneeCell
+                  name={row.assignee?.name || row.assignee?.email || null}
+                  unassignedLabel={isPolish ? 'Nieprzypisane' : 'Unassigned'}
+                />
+              ),
+            } as StandardTableColumn,
+          ]
+        : []),
+      {
+        id: 'status',
+        label: isPolish ? 'Status' : 'Status',
+        width: '150px',
+        filterable: true,
+        filterOptions: ASSIGNMENT_STATUS_OPTION_ORDER.filter((v) =>
+          assignments.some((a) => a.status === v)
+        ).map((v) => ({ value: v, label: getAssignmentStatusLabel(v) })),
+        sortable: true,
+        sortAccessor: (row: InterviewAssignment) => {
+          const statusOrder: Record<string, number> = {
+            sent_back: 0,
+            assigned: 1,
+            in_progress: 2,
+            submitted: 3,
+            approved: 4,
+            completed: 5,
+          };
+          return statusOrder[row.status] ?? 99;
+        },
+        render: (row: InterviewAssignment) => (
+          <Badge variant={getAssignmentStatusBadgeVariant(String(row.status || 'assigned'))} size="md">
+            {getAssignmentStatusLabel(row.status)}
+          </Badge>
+        ),
+      },
+      {
+        id: 'progress',
+        label: isPolish ? 'Postęp' : 'Progress',
+        width: '130px',
+        align: 'right',
+        sortable: true,
+        sortAccessor: (row: InterviewAssignment) => row.session?.completenessPercent || 0,
+        render: (row: InterviewAssignment) => (
+          <ProgressCell value={row.session?.completenessPercent || 0} />
+        ),
+      },
+      {
+        id: 'due',
+        label: isPolish ? 'Do terminu' : 'Days to Due',
+        width: '160px',
+        sortable: true,
+        sortAccessor: (row: InterviewAssignment) =>
+          row.dueAt ? new Date(row.dueAt).getTime() : Infinity,
+        render: (row: InterviewAssignment) => {
+          const dtd = getAssignmentDaysToDue(row.dueAt);
+          if (!dtd) return <span className="text-xs text-c-text-muted">—</span>;
+          return (
+            <DueChip
+              label={dtd.label}
+              risk={dtd.days < 0 ? 'overdue' : dtd.days <= 3 ? 'soon' : 'none'}
+              showIcon
+              title={row.dueAt ? new Date(row.dueAt).toLocaleDateString() : undefined}
+            />
           );
-          return;
-        }
-        toast.loading(isPolish ? 'Rozpoczynanie wywiadu...' : 'Starting interview...');
-        const result = (await V8InterviewApi.startAssignment(assignment.id, {
-          projectId,
-        }).catch(() =>
-          Api.post(`/interview/assignments/${assignment.id}/start`, {
-            projectId,
-          })
-        )) as any;
-        toast.dismiss();
-
-        // Open the session - backend returns { assignmentId, session }
-        const session = result?.session;
-        if (session?.id) {
-          toast.success(isPolish ? 'Wywiad rozpoczęty!' : 'Interview started!');
-          handleOpenDocument({
-            id: session.id,
-            type: 'interview_session',
-            subType: 'interview',
-            name: session.name || 'Interview Session',
-            status: (session.status || 'in_progress').toUpperCase() as any,
-          });
-        } else {
-          console.warn('[InterviewHub] No session in result:', result);
-          toast.error(
-            isPolish ? 'Brak sesji w odpowiedzi serwera' : 'No session in server response'
-          );
-        }
-
-        // Refresh all assignments
-        const [myRes, managedRes] = await Promise.all([
-          loadMyAssignments(),
-          canViewManaged ? loadManagedAssignments() : Promise.resolve([]),
-        ]);
-        setMyAssignments(myRes);
-        if (canViewManaged) {
-          setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
-        }
-      } catch (error: any) {
-        toast.dismiss();
-        console.error('[InterviewHub] Failed to start assignment:', error);
-        safeToastError(
-          error,
-          isPolish ? 'Nie udało się rozpocząć wywiadu' : 'Failed to start interview',
-          isPolish
-        );
-      }
-    };
-
-    const handleSendReminder = async (assignment: InterviewAssignment) => {
-      try {
-        await V8InterviewApi.remindAssignment(assignment.id).catch(() =>
-          Api.post(`/interview/assignments/${assignment.id}/remind`, {})
-        );
-        toast.success(isPolish ? 'Przypomnienie wysłane!' : 'Reminder sent!');
-      } catch (error: any) {
-        console.error('[InterviewHub] Failed to send reminder:', error);
-        safeToastError(
-          error,
-          isPolish ? 'Nie udało się wysłać przypomnienia' : 'Failed to send reminder',
-          isPolish
-        );
-      }
-    };
-
-    // Sort assignments based on current sort field
-    const sortedAssignments = [...columnFilteredAssignments].sort((a, b) => {
-      if (!assignmentSortField) return 0;
-      const dir = assignmentSortAsc ? 1 : -1;
-      if (assignmentSortField === 'dueAt') {
-        const aDate = a.dueAt ? new Date(a.dueAt).getTime() : Infinity;
-        const bDate = b.dueAt ? new Date(b.dueAt).getTime() : Infinity;
-        return (aDate - bDate) * dir;
-      }
-      if (assignmentSortField === 'progress') {
-        const aP = a.session?.completenessPercent || 0;
-        const bP = b.session?.completenessPercent || 0;
-        return (aP - bP) * dir;
-      }
-      if (assignmentSortField === 'status') {
-        const statusOrder: Record<string, number> = {
-          sent_back: 0,
-          assigned: 1,
-          in_progress: 2,
-          submitted: 3,
-          approved: 4,
-          completed: 5,
-        };
-        return ((statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99)) * dir;
-      }
-      return 0;
-    });
-
-    const handleOpenAssignmentRow = async (assignment: InterviewAssignment) => {
-      try {
-        // If assignment has a session, open it (read-only will be handled by workspace based on assignment status)
-        const sid = assignment.sessionId || assignment.session?.id;
-        if (sid) {
-          const session = await V8InterviewApi.getSession(sid)
-            .then((res) => res.session)
-            .catch(() => Api.get(`/interview/sessions/${sid}`));
-          handleOpenDocument({
-            id: (session as InterviewSession).id,
-            type: 'interview_session',
-            subType: 'interview',
-            name: (session as InterviewSession).name || 'Interview Session',
-            status: ((session as any)?.status || 'in_progress').toUpperCase() as any,
-          });
-          return;
-        }
-
-        // If user is assignee and the assignment hasn't started, start it.
-        if (!showAssignee && assignment.status === 'assigned') {
-          await handleStartAssignment(assignment);
-          return;
-        }
-
-        // If manager view and assignment hasn't started yet, show info message
-        if (showAssignee && !assignment.sessionId) {
-          const message = isPolish
-            ? 'Wywiad nie został jeszcze rozpoczęty przez przypisanego użytkownika'
-            : 'Interview has not been started by the assignee yet';
-          toast(message, {
-            icon: 'ℹ️',
-            duration: 4000,
-          });
-          return;
-        }
-
-        // Fallback - should not reach here, but log if it does
-        console.warn('[InterviewHub] No action taken for assignment:', assignment);
-      } catch (error: any) {
-        console.error('[InterviewHub] Failed to open assignment row:', error);
-        safeToastError(
-          error,
-          isPolish ? 'Nie udało się otworzyć assignmentu' : 'Failed to open assignment',
-          isPolish
-        );
-      }
-    };
-
-    // #10 — column defs + options for the header filter dropdowns. Options are
-    // derived from the (unfiltered) assignments so a value stays selectable even
-    // after it's filtered out.
-    const assignmentStatusOptionOrder = [
-      'assigned',
-      'in_progress',
-      'submitted',
-      'sent_back',
-      'review',
-      'approved',
-      'completed',
-      'rejected',
-      'accepted',
+        },
+      },
+      // #9/#9b — manager-only columns (Submitted / AI Score / Escalation); not
+      // meaningful in the worker Inbox view where the data isn't actionable.
+      ...(showAssignee
+        ? [
+            {
+              id: 'submitted',
+              label: isPolish ? 'Przesłano' : 'Submitted',
+              width: '150px',
+              render: (row: InterviewAssignment) =>
+                row.submittedAt ? (
+                  <span
+                    className="inline-flex items-center gap-1 text-xs text-c-text-secondary"
+                    title={new Date(row.submittedAt).toLocaleString()}
+                  >
+                    <Send size={11} className="text-c-text-muted" />
+                    {new Date(row.submittedAt).toLocaleDateString()}
+                  </span>
+                ) : (
+                  <span className="text-xs text-c-text-muted">—</span>
+                ),
+            } as StandardTableColumn,
+            {
+              id: 'aiScore',
+              label: isPolish ? 'Ocena AI' : 'AI Score',
+              width: '120px',
+              align: 'right',
+              render: (row: InterviewAssignment) => {
+                const score = row.aiReview?.overallScore;
+                if (typeof score !== 'number') {
+                  return <span className="text-xs text-c-text-muted">—</span>;
+                }
+                const pct = Math.round(score <= 1 ? score * 100 : score);
+                const tone =
+                  pct >= 75 ? 'text-c-success' : pct >= 50 ? 'text-c-warning' : 'text-c-danger';
+                return (
+                  <span
+                    className={`inline-flex items-center gap-1 text-xs font-semibold ${tone}`}
+                    title={isPolish ? 'Ocena jakości AI' : 'AI quality score'}
+                  >
+                    <Gauge size={12} />
+                    {pct}
+                  </span>
+                );
+              },
+            } as StandardTableColumn,
+            {
+              id: 'escalation',
+              label: isPolish ? 'Eskalacja' : 'Escalation',
+              width: '160px',
+              render: (row: InterviewAssignment) =>
+                row.escalatedAt || row.escalationTarget ? (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full border border-amber-300/70 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:border-amber-400/25 dark:bg-amber-400/10 dark:text-amber-200"
+                    title={
+                      row.escalationTarget?.name ||
+                      row.escalationTarget?.email ||
+                      (isPolish ? 'Eskalowano' : 'Escalated')
+                    }
+                  >
+                    <ArrowUpRight size={11} />
+                    {row.escalationTarget?.name ||
+                      row.escalationTarget?.email ||
+                      (isPolish ? 'Eskalowano' : 'Escalated')}
+                  </span>
+                ) : (
+                  <span className="text-xs text-c-text-muted">—</span>
+                ),
+            } as StandardTableColumn,
+          ]
+        : []),
     ];
-    const assignmentStatusValues = new Set<string>(assignments.map((a) => a.status));
-    const assignmentStatusFilterCol: ColumnDef = {
-      id: 'status',
-      label: isPolish ? 'Status' : 'Status',
-      width: columnWidths.status ?? 120,
-      minWidth: 80,
-      resizable: true,
-      filterable: true,
-      filterType: 'multiselect',
-      filterOptions: assignmentStatusOptionOrder
-        .filter((v) => assignmentStatusValues.has(v))
-        .map((v) => ({ value: v, label: getStatusLabel(v) })),
-    };
-    const assignmentTemplateFilterCol: ColumnDef = {
-      id: 'template',
-      label: isPolish ? 'Szablon' : 'Template',
-      width: columnWidths.template ?? 200,
-      minWidth: 120,
-      resizable: true,
-      filterable: true,
-      filterType: 'multiselect',
-      filterOptions: Array.from(new Set(assignments.map(getAssignmentTemplateValue)))
-        .sort()
-        .map((v) => ({ value: v, label: v })),
-    };
-    const assignmentAssigneeFilterCol: ColumnDef = {
-      id: 'assignee',
-      label: isPolish ? 'Przydzielony do' : 'Assignee',
-      width: columnWidths.assignee ?? 160,
-      minWidth: 100,
-      resizable: true,
-      filterable: true,
-      filterType: 'multiselect',
-      filterOptions: Array.from(new Set(assignments.map(getAssignmentAssigneeValue)))
-        .sort()
-        .map((v) => ({ value: v, label: v })),
-    };
-    const activeAssignmentFilterChips = (
-      [
-        { col: assignmentTemplateFilterCol, key: 'template' as const },
-        { col: assignmentAssigneeFilterCol, key: 'assignee' as const },
-        { col: assignmentStatusFilterCol, key: 'status' as const },
-      ] as const
-    ).flatMap(({ col, key }) => {
-      const values = (tableFilters[key] as string[] | undefined) ?? [];
-      return values.map((v) => {
-        const opt = col.filterOptions?.find((o) => o.value === v);
-        return { key, value: v, label: `${col.label}: ${opt?.label ?? v}` };
-      });
-    });
 
     return (
-      <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.08] rounded-xl backdrop-blur">
-        {activeAssignmentFilterChips.length > 0 ? (
-          <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-200/70 px-3 py-2 dark:border-white/[0.08]">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-c-text-muted">
-              {isPolish ? 'Filtry' : 'Filters'}
-            </span>
-            {activeAssignmentFilterChips.map((chip) => (
-              <button
-                key={`${chip.key}-${chip.value}`}
-                type="button"
-                onClick={() =>
-                  setTableFilters((prev) => ({
-                    ...prev,
-                    [chip.key]: ((prev[chip.key] as string[] | undefined) ?? []).filter(
-                      (v) => v !== chip.value
-                    ),
-                  }))
-                }
-                className="inline-flex items-center gap-1 rounded-full border border-primary-500/30 bg-primary-500/10 px-2 py-0.5 text-[11px] font-medium text-primary-600 transition-colors hover:bg-primary-500/20 dark:text-primary-300"
-              >
-                <span className="max-w-[200px] truncate">{chip.label}</span>
-                <X size={11} />
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => setTableFilters(() => ({}))}
-              className="ml-1 text-[11px] font-medium text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline dark:text-slate-400 dark:hover:text-slate-200"
-            >
-              {isPolish ? 'Wyczyść wszystkie' : 'Clear all'}
-            </button>
-          </div>
-        ) : null}
-        {/* §27-exempt: module-local resizable columns, custom FilterDropdown, checkbox
-            selection, and complex interactive row cells (assignment status, approval
-            flows, action menus, expand/collapse) are tightly coupled to local state;
-            FilterableTable migration requires full re-architecture of this tab. */}
-        <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
-          <thead className="sticky top-0 z-20 bg-c-surface border-b border-c-border-subtle">
-            <tr className="border-b border-c-border-subtle bg-c-surface-raised">
-              <th className="px-3 py-2 text-left" style={{ width: columnWidths.select }}>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleAllVisibleAssignments();
-                  }}
-                  className={[
-                    'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                    'border-c-border bg-c-surface text-white hover:border-c-info',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
-                    allVisibleSelected || someVisibleSelected
-                      ? 'border-c-info bg-c-info opacity-100'
-                      : 'opacity-70',
-                  ].join(' ')}
-                  aria-label={isPolish ? 'Zaznacz widoczne wiersze' : 'Select visible rows'}
-                  aria-pressed={allVisibleSelected}
-                >
-                  {allVisibleSelected ? <Check size={10} strokeWidth={3} /> : null}
-                  {someVisibleSelected ? <Minus size={10} strokeWidth={3} /> : null}
-                </button>
-              </th>
-              <th
-                className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
-                style={{ width: columnWidths.template }}
-              >
-                <div className="flex items-center gap-1">
-                  <span
-                    className={
-                      (tableFilters.template as string[] | undefined)?.length
-                        ? 'text-c-accent'
-                        : ''
-                    }
-                  >
-                    {isPolish ? 'Szablon' : 'Template'}
-                  </span>
-                  <FilterDropdown
-                    column={assignmentTemplateFilterCol}
-                    value={tableFilters.template as string[] | undefined}
-                    onChange={(v) => setTableFilters((f) => ({ ...f, template: v as string[] }))}
-                    isOpen={openAssignmentFilterId === `${filterViewKey}:template`}
-                    onToggle={() =>
-                      setOpenAssignmentFilterId((id) =>
-                        id === `${filterViewKey}:template` ? null : `${filterViewKey}:template`
-                      )
-                    }
-                    onClose={() => setOpenAssignmentFilterId(null)}
-                  />
-                </div>
-                {renderAssignmentResizer('template')}
-              </th>
-              {hasAssigneeColumn && (
-                <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
-                  style={{ width: columnWidths.assignee }}
-                >
-                  <div className="flex items-center justify-start gap-1">
-                    <span
-                      className={
-                        (tableFilters.assignee as string[] | undefined)?.length
-                          ? 'text-c-accent'
-                          : ''
-                      }
-                    >
-                      {isPolish ? 'Przydzielony do' : 'Assignee'}
-                    </span>
-                    <FilterDropdown
-                      column={assignmentAssigneeFilterCol}
-                      value={tableFilters.assignee as string[] | undefined}
-                      onChange={(v) => setTableFilters((f) => ({ ...f, assignee: v as string[] }))}
-                      isOpen={openAssignmentFilterId === `${filterViewKey}:assignee`}
-                      onToggle={() =>
-                        setOpenAssignmentFilterId((id) =>
-                          id === `${filterViewKey}:assignee` ? null : `${filterViewKey}:assignee`
-                        )
-                      }
-                      onClose={() => setOpenAssignmentFilterId(null)}
-                    />
-                  </div>
-                  {renderAssignmentResizer('assignee')}
-                </th>
-              )}
-              {!hiddenSet.has('status') && (
-                <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
-                  style={{ width: columnWidths.status }}
-                >
-                  <div className="flex items-center justify-start gap-1">
-                    <span
-                      className={[
-                        'cursor-pointer select-none transition-colors hover:text-c-text-secondary',
-                        (tableFilters.status as string[] | undefined)?.length
-                          ? 'text-c-accent'
-                          : '',
-                      ].join(' ')}
-                      onClick={() => toggleAssignmentSort('status')}
-                    >
-                      {isPolish ? 'Status' : 'Status'}
-                      {assignmentSortField === 'status' && (
-                        <ChevronDown
-                          size={12}
-                          className={`inline-block ml-0.5 transition-transform ${assignmentSortAsc ? '' : 'rotate-180'}`}
-                        />
-                      )}
-                    </span>
-                    <FilterDropdown
-                      column={assignmentStatusFilterCol}
-                      value={tableFilters.status as string[] | undefined}
-                      onChange={(v) => setTableFilters((f) => ({ ...f, status: v as string[] }))}
-                      isOpen={openAssignmentFilterId === `${filterViewKey}:status`}
-                      onToggle={() =>
-                        setOpenAssignmentFilterId((id) =>
-                          id === `${filterViewKey}:status` ? null : `${filterViewKey}:status`
-                        )
-                      }
-                      onClose={() => setOpenAssignmentFilterId(null)}
-                    />
-                  </div>
-                  {renderAssignmentResizer('status')}
-                </th>
-              )}
-              {!hiddenSet.has('progress') && (
-                <th
-                  className="relative px-3 py-2 text-right text-[11px] font-semibold text-c-text-muted uppercase tracking-wider cursor-pointer select-none hover:text-c-text-secondary transition-colors"
-                  style={{ width: columnWidths.progress }}
-                  onClick={() => toggleAssignmentSort('progress')}
-                >
-                  {isPolish ? 'Postęp' : 'Progress'}
-                  {assignmentSortField === 'progress' && (
-                    <ChevronDown
-                      size={12}
-                      className={`inline-block ml-0.5 transition-transform ${assignmentSortAsc ? '' : 'rotate-180'}`}
-                    />
-                  )}
-                  {renderAssignmentResizer('progress')}
-                </th>
-              )}
-              {!hiddenSet.has('due') && (
-                <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider cursor-pointer select-none hover:text-c-text-secondary transition-colors"
-                  style={{ width: columnWidths.due }}
-                  onClick={() => toggleAssignmentSort('dueAt')}
-                >
-                  {isPolish ? 'Do terminu' : 'Days to Due'}
-                  {assignmentSortField === 'dueAt' && (
-                    <ChevronDown
-                      size={12}
-                      className={`inline-block ml-0.5 transition-transform ${assignmentSortAsc ? '' : 'rotate-180'}`}
-                    />
-                  )}
-                  {renderAssignmentResizer('due')}
-                </th>
-              )}
-              {showSubmittedColumn && (
-                <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
-                  style={{ width: columnWidths.submitted }}
-                >
-                  {isPolish ? 'Przesłano' : 'Submitted'}
-                  {renderAssignmentResizer('submitted')}
-                </th>
-              )}
-              {showAiScoreColumn && (
-                <th
-                  className="relative px-3 py-2 text-right text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
-                  style={{ width: columnWidths.aiScore }}
-                >
-                  {isPolish ? 'Ocena AI' : 'AI Score'}
-                  {renderAssignmentResizer('aiScore')}
-                </th>
-              )}
-              {showEscalationColumn && (
-                <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
-                  style={{ width: columnWidths.escalation }}
-                >
-                  {isPolish ? 'Eskalacja' : 'Escalation'}
-                  {renderAssignmentResizer('escalation')}
-                </th>
-              )}
-              <th
-                className="px-3 py-2 text-right text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
-                style={{ width: columnWidths.actions }}
-              >
-                <div
-                  ref={assignmentsViewSettingsRef}
-                  className="relative flex items-center justify-end"
-                >
-                  <button
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      // Measure the CLICKED button (robust vs a shared ref that may
-                      // point at a different/hidden table instance).
-                      const r = event.currentTarget.getBoundingClientRect();
-                      const PANEL_W = 288; // w-72
-                      // Align panel's right edge to the button, but CLAMP to the
-                      // viewport so it never goes off-screen (button may be
-                      // off-screen-right in a horizontally-scrolled wide table).
-                      const left = Math.min(
-                        Math.max(8, Math.round(r.right - PANEL_W)),
-                        Math.round(window.innerWidth - PANEL_W - 8)
-                      );
-                      setAssignmentsViewSettingsPos({
-                        top: Math.round(r.bottom + 8),
-                        left,
-                        maxH: Math.max(180, Math.round(window.innerHeight - r.bottom - 24)),
-                      });
-                      setAssignmentsViewSettingsShowAssignee(showAssignee);
-                      setIsAssignmentsViewSettingsOpen((open) => !open);
-                    }}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
-                    aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
-                    aria-expanded={isAssignmentsViewSettingsOpen}
-                    title={isPolish ? 'Ustawienia widoku' : 'View settings'}
-                  >
-                    <Settings2 size={15} />
-                  </button>
-                  {isAssignmentsViewSettingsOpen && assignmentsViewSettingsPos
-                    ? createPortal(
-                        <div
-                          ref={assignmentsViewSettingsPanelRef}
-                          style={{
-                            position: 'fixed',
-                            top: assignmentsViewSettingsPos.top,
-                            left: assignmentsViewSettingsPos.left,
-                            maxHeight: assignmentsViewSettingsPos.maxH,
-                          }}
-                          className="z-[100] w-72 overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
-                          onClick={(event) => event.stopPropagation()}
-                        >
-                          <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
-                            {isPolish ? 'Widoczne kolumny' : 'Visible columns'}
-                          </div>
-                          {(
-                            [
-                              {
-                                id: 'template',
-                                label: isPolish ? 'Szablon' : 'Template',
-                                alwaysVisible: true,
-                              },
-                              {
-                                id: 'assignee',
-                                label: isPolish ? 'Przydzielony do' : 'Assignee',
-                                disabled: !assignmentsViewSettingsShowAssignee,
-                              },
-                              { id: 'status', label: isPolish ? 'Status' : 'Status' },
-                              { id: 'progress', label: isPolish ? 'Postęp' : 'Progress' },
-                              { id: 'due', label: isPolish ? 'Do terminu' : 'Days to Due' },
-                              // #9/#9b — opt-in columns, only meaningful on the
-                              // manager Assigned view.
-                              {
-                                id: 'submitted',
-                                label: isPolish ? 'Przesłano' : 'Submitted',
-                                disabled: !assignmentsViewSettingsShowAssignee,
-                              },
-                              {
-                                id: 'aiScore',
-                                label: isPolish ? 'Ocena AI' : 'AI Score',
-                                disabled: !assignmentsViewSettingsShowAssignee,
-                              },
-                              {
-                                id: 'escalation',
-                                label: isPolish ? 'Eskalacja' : 'Escalation',
-                                disabled: !assignmentsViewSettingsShowAssignee,
-                              },
-                              {
-                                id: 'actions',
-                                label: isPolish ? 'Akcje' : 'Actions',
-                                alwaysVisible: true,
-                              },
-                            ] as Array<{
-                              id: string;
-                              label: string;
-                              alwaysVisible?: boolean;
-                              disabled?: boolean;
-                            }>
-                          ).map((col) => {
-                            const alwaysVisible = !!col.alwaysVisible;
-                            const checked = alwaysVisible
-                              ? true
-                              : !assignmentsViewHiddenSet.has(col.id);
-                            return (
-                              <label
-                                key={col.id}
-                                className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.04] ${
-                                  alwaysVisible || col.disabled
-                                    ? 'cursor-default text-slate-600 dark:text-slate-500'
-                                    : 'cursor-pointer text-c-text-secondary'
-                                }`}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={checked}
-                                  disabled={alwaysVisible || col.disabled}
-                                  onChange={() => {
-                                    if (alwaysVisible || col.disabled) return;
-                                    updateAssignmentsViewHiddenColumns((prev) => {
-                                      const set = new Set(prev);
-                                      if (set.has(col.id)) set.delete(col.id);
-                                      else set.add(col.id);
-
-                                      set.delete('template');
-                                      set.delete('actions');
-
-                                      const next = Array.from(set);
-                                      try {
-                                        localStorage.setItem(
-                                          assignmentsViewStorageKey,
-                                          JSON.stringify(next)
-                                        );
-                                      } catch {
-                                        /* ignore */
-                                      }
-                                      return next;
-                                    });
-                                  }}
-                                  className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
-                                />
-                                <span className="flex-1">{col.label}</span>
-                                {alwaysVisible ? (
-                                  <span className="text-[10px]">
-                                    {isPolish ? 'Wymagane' : 'Required'}
-                                  </span>
-                                ) : null}
-                              </label>
-                            );
-                          })}
-                          <div className="my-2 border-t border-slate-200/70 dark:border-white/[0.08]" />
-                          <label className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-white/[0.04]">
-                            <input
-                              type="checkbox"
-                              checked={assignmentsViewShowRowDescription}
-                              onChange={(event) =>
-                                updateAssignmentsViewShowRowDescription(event.target.checked)
-                              }
-                              className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
-                            />
-                            <span>
-                              {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
-                            </span>
-                          </label>
-                        </div>,
-                        document.body
-                      )
-                    : null}
-                </div>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {sortedAssignments.map((assignment) => {
-              const progress = assignment.session?.completenessPercent || 0;
-              const overdue = isOverdue(assignment.dueAt) && assignment.status !== 'completed';
-              const rowDescription = getAssignmentDescription(assignment);
-              const isAssignmentSelected = selectedAssignmentIds.has(assignment.id);
-
-              return (
-                <tr
-                  key={assignment.id}
-                  onClick={(e) => {
-                    // Single click → selection + preview (KANON v3)
-                    const target = e.target as HTMLElement;
-                    if (target.tagName === 'BUTTON' || target.closest('button')) return;
-                    setPreviewAssignmentId(assignment.id);
-                    setPreviewAssignmentOpen(true);
-                  }}
-                  onDoubleClick={() => {
-                    // Double click → open full
-                    void openInterviewAssignmentFull(assignment, showAssignee);
-                  }}
-                  className={[
-                    'group transition-colors border-b border-c-border-subtle last:border-0 cursor-pointer',
-                    INTERVIEW_TABLE_HOVER_ROW_CLASS,
-                    'active:bg-c-surface-raised',
-                    previewAssignmentId === assignment.id || isAssignmentSelected
-                      ? INTERVIEW_TABLE_SELECTED_ROW_CLASS
-                      : '',
-                  ].join(' ')}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      void openInterviewAssignmentFull(assignment, showAssignee);
-                      return;
-                    }
-                    if (e.key === ' ') {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setPreviewAssignmentId(assignment.id);
-                      setPreviewAssignmentOpen(true);
-                    }
-                  }}
-                >
-                  <td className="px-3 py-3" style={{ width: columnWidths.select }}>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        toggleAssignmentSelection(assignment.id);
-                      }}
-                      className={[
-                        'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                        'border-c-border bg-c-surface text-white hover:border-c-info group-hover:opacity-100',
-                        'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
-                        'group-focus-within:opacity-100 group-focus-within:border-c-info',
-                        isAssignmentSelected
-                          ? 'border-c-info bg-c-info opacity-100'
-                          : 'opacity-0',
-                      ].join(' ')}
-                      aria-label={isPolish ? 'Zaznacz wiersz' : 'Select row'}
-                      aria-pressed={isAssignmentSelected}
-                    >
-                      {isAssignmentSelected ? <Check size={10} strokeWidth={3} /> : null}
-                    </button>
-                  </td>
-                  <td className="px-4 py-3" style={{ width: columnWidths.template }}>
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className={INTERVIEW_TABLE_ICON_SURFACE_CLASS}>
-                        <ClipboardList size={16} />
-                      </div>
-                      <div className="min-w-0 flex flex-col">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span
-                            className="text-sm font-semibold text-c-text truncate min-w-0"
-                            title={assignment.template?.name || 'Interview'}
-                          >
-                            {assignment.template?.name || 'Interview'}
-                          </span>
-                          {assignment.template?.category ? (
-                            <span
-                              className="shrink-0 max-w-[160px] truncate inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[11px] font-medium border border-c-border bg-c-surface-raised text-c-text-secondary"
-                              title={assignment.template.category}
-                            >
-                              {categoryTone(assignment.template.category) ? (
-                                <span
-                                  aria-hidden="true"
-                                  className="h-1.5 w-1.5 shrink-0 rounded-full"
-                                  style={{
-                                    backgroundColor: categoryTone(assignment.template.category)!,
-                                  }}
-                                />
-                              ) : null}
-                              {assignment.template.category}
-                            </span>
-                          ) : null}
-                        </div>
-                        {showRowDescription && rowDescription ? (
-                          <span
-                            className="mt-0.5 max-w-[620px] truncate text-[11px] font-normal leading-4 text-c-text-muted"
-                            title={rowDescription}
-                          >
-                            {rowDescription}
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-                  </td>
-                  {hasAssigneeColumn && (
-                    <td
-                      className="px-4 py-3 text-left align-middle"
-                      style={{ width: columnWidths.assignee }}
-                    >
-                      <AssigneeCell
-                        name={assignment.assignee?.name || assignment.assignee?.email || null}
-                        unassignedLabel={isPolish ? 'Nieprzypisane' : 'Unassigned'}
-                      />
-                    </td>
-                  )}
-                  {!hiddenSet.has('status') && (
-                    <td
-                      className="px-4 py-3 text-left align-middle"
-                      style={{ width: columnWidths.status }}
-                    >
-                      {/* VISUAL_STANDARD §5.3 — tinted status pill (Submitted=
-                          green / Assigned=blue), bilingual label. */}
-                      <Badge
-                        variant={getAssignmentStatusBadgeVariant(
-                          String(assignment.status || 'assigned')
-                        )}
-                        size="md"
-                      >
-                        {getAssignmentStatusLabel(assignment.status)}
-                      </Badge>
-                    </td>
-                  )}
-                  {!hiddenSet.has('progress') && (
-                    <td
-                      className="px-4 py-3 text-right align-middle"
-                      style={{ width: columnWidths.progress }}
-                    >
-                      <ProgressCell value={progress} />
-                    </td>
-                  )}
-                  {!hiddenSet.has('due') && (
-                    <td
-                      className="px-4 py-3 text-left align-middle"
-                      style={{ width: columnWidths.due }}
-                    >
-                      {(() => {
-                        const dtd = getAssignmentDaysToDue(assignment.dueAt);
-                        if (!dtd) return <span className="text-xs text-c-text-muted">—</span>;
-
-                        return (
-                          <div className="flex items-center">
-                            <DueChip
-                              label={dtd.label}
-                              risk={dtd.days < 0 ? 'overdue' : dtd.days <= 3 ? 'soon' : 'none'}
-                              showIcon
-                              title={
-                                assignment.dueAt
-                                  ? new Date(assignment.dueAt).toLocaleDateString()
-                                  : undefined
-                              }
-                            />
-                          </div>
-                        );
-                      })()}
-                    </td>
-                  )}
-                  {showSubmittedColumn && (
-                    <td
-                      className="px-4 py-3 text-left align-middle"
-                      style={{ width: columnWidths.submitted }}
-                    >
-                      {assignment.submittedAt ? (
-                        <span
-                          className="inline-flex items-center gap-1 text-xs text-c-text-secondary"
-                          title={new Date(assignment.submittedAt).toLocaleString()}
-                        >
-                          <Send size={11} className="text-c-text-muted" />
-                          {new Date(assignment.submittedAt).toLocaleDateString()}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-c-text-muted">—</span>
-                      )}
-                    </td>
-                  )}
-                  {showAiScoreColumn && (
-                    <td
-                      className="px-4 py-3 text-right align-middle"
-                      style={{ width: columnWidths.aiScore }}
-                    >
-                      {(() => {
-                        const score = assignment.aiReview?.overallScore;
-                        if (typeof score !== 'number') {
-                          return <span className="text-xs text-c-text-muted">—</span>;
-                        }
-                        const pct = Math.round(score <= 1 ? score * 100 : score);
-                        const tone =
-                          pct >= 75
-                            ? 'text-c-success'
-                            : pct >= 50
-                              ? 'text-c-warning'
-                              : 'text-c-danger';
-                        return (
-                          <span
-                            className={`inline-flex items-center gap-1 text-xs font-semibold ${tone}`}
-                            title={isPolish ? 'Ocena jakości AI' : 'AI quality score'}
-                          >
-                            <Gauge size={12} />
-                            {pct}
-                          </span>
-                        );
-                      })()}
-                    </td>
-                  )}
-                  {showEscalationColumn && (
-                    <td
-                      className="px-4 py-3 text-left align-middle"
-                      style={{ width: columnWidths.escalation }}
-                    >
-                      {assignment.escalatedAt || assignment.escalationTarget ? (
-                        <span
-                          className="inline-flex items-center gap-1 rounded-full border border-amber-300/70 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:border-amber-400/25 dark:bg-amber-400/10 dark:text-amber-200"
-                          title={
-                            assignment.escalationTarget?.name ||
-                            assignment.escalationTarget?.email ||
-                            (isPolish ? 'Eskalowano' : 'Escalated')
-                          }
-                        >
-                          <ArrowUpRight size={11} />
-                          {assignment.escalationTarget?.name ||
-                            assignment.escalationTarget?.email ||
-                            (isPolish ? 'Eskalowano' : 'Escalated')}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-c-text-muted">—</span>
-                      )}
-                    </td>
-                  )}
-                  <td
-                    className="px-3 py-3 text-right"
-                    style={{ width: columnWidths.actions }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="flex items-center justify-end">
-                      <RowActionsMenu
-                        iconVariant="vertical"
-                        className="opacity-40 transition-opacity group-hover:opacity-100"
-                        sections={buildAssignmentRowSections(assignment, showAssignee)}
-                      />
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-            {assignments.length === 0 && (
-              <tr>
-                <td
-                  colSpan={
-                    2 + // template + actions
-                    (hasAssigneeColumn ? 1 : 0) +
-                    (!hiddenSet.has('status') ? 1 : 0) +
-                    (!hiddenSet.has('progress') ? 1 : 0) +
-                    (!hiddenSet.has('due') ? 1 : 0) +
-                    (showSubmittedColumn ? 1 : 0) +
-                    (showAiScoreColumn ? 1 : 0) +
-                    (showEscalationColumn ? 1 : 0)
-                  }
-                  className="px-4 py-12 text-center"
-                >
-                  <div className="flex flex-col items-center">
-                    <Inbox className="w-12 h-12 text-c-text-muted mb-3" />
-                    <p className="text-c-text-muted text-sm">
-                      {isPolish ? 'Brak przydziałów' : 'No assignments'}
-                    </p>
-                  </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <StandardTable
+        columns={assignmentColumns}
+        data={assignments as unknown as Array<Record<string, unknown> & { id: string }>}
+        selectedRowId={previewAssignmentId}
+        onRowClick={(row) => {
+          setPreviewAssignmentId(String((row as any).id));
+          setPreviewAssignmentOpen(true);
+        }}
+        onRowDoubleClick={(row) => {
+          void openInterviewAssignmentFull(row as unknown as InterviewAssignment, showAssignee);
+        }}
+        rowDescription={(row) => getAssignmentDescription(row as unknown as InterviewAssignment)}
+        defaultSort={{ columnId: 'due', direction: 'asc' }}
+        persistKey={showAssignee ? 'interview.managed.list' : 'interview.myAssignments.list'}
+        selection={{ selectedIds: selectedAssignmentIds, onChange: setSelectedAssignmentIds }}
+        empty={{
+          icon: Inbox,
+          title: isPolish ? 'Brak przydziałów' : 'No assignments',
+        }}
+        rowActions={(row) =>
+          buildAssignmentRowSections(row as unknown as InterviewAssignment, showAssignee)
+        }
+      />
     );
   };
+
 
   // canon §8 / §8.1: LOCAL card grid for Inbox & Assigned — mirrors renderSessionsGrid.
   // Neutral surface (NO border-l status accent), EntityStatusChip status, single-click →
