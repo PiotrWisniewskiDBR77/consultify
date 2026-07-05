@@ -23,6 +23,11 @@ import {
 } from './WorkbookBuilder.js';
 import { type WorkbookSchema, WorkbookSchemaValidator } from './WorkbookSchema.js';
 import { critiqueWorkbook, type WorkbookQualityReport } from './workbookQualityGate.js';
+import {
+  buildFromTemplate,
+  listWorkbookTemplates,
+  WORKBOOK_TEMPLATES,
+} from './templates/index.js';
 
 // ---------------------------------------------------------------------------
 // Phase prompts
@@ -352,6 +357,32 @@ RULES:
 5. Keep the same title, sheet names, and column keys unless a defect explicitly requires changing them.`;
 
 // ---------------------------------------------------------------------------
+// Phase 0: TEMPLATE MATCH — route a request to a proven, math-certain template
+//
+// Runs BEFORE the free-form 5-phase design. Given the user request + the list of
+// REGISTERED templates (id/title/description injected below), the classifier
+// decides whether the request maps onto a known template and, if so, extracts the
+// template's params. `templateId: null` ⇒ no template fits ⇒ free-form fallback.
+// The whole path is fail-soft: any classifier error falls through to free-form.
+// ---------------------------------------------------------------------------
+
+const TEMPLATE_MATCH_SYSTEM_PROMPT = `You are a routing classifier for a workbook (Excel model) generator. You receive a USER REQUEST and a REGISTERED TEMPLATE LIBRARY. Your ONLY job is to decide whether the request maps onto ONE of the registered templates, and if so, to extract that template's parameters.
+
+A template is a PROVEN, pre-built financial/spreadsheet model. Prefer a template ONLY when the request clearly matches what that template models — otherwise return null so the system designs a bespoke model instead. Do NOT force-fit: a partial or vague match should return null.
+
+Return your decision as strict JSON, nothing else:
+{
+  "templateId": "<one of the registered ids>" | null,
+  "params": { ...parameters for that template, best-effort extracted from the request... }
+}
+
+RULES:
+1. Return ONLY the JSON object. No markdown fences, no prose.
+2. "templateId" MUST be exactly one of the registered ids, or null. Never invent an id.
+3. Put only parameters you can reasonably infer into "params"; omit the rest (the template fills sensible defaults). Percentages MUST be fractions (0.08 = 8%).
+4. When in doubt, or when no template clearly fits, return {"templateId": null, "params": {}}.`;
+
+// ---------------------------------------------------------------------------
 // Schema extraction from LLM response
 // ---------------------------------------------------------------------------
 
@@ -474,9 +505,117 @@ class WorkbookGeneratorService {
         '\n\nUse Polish headers and labels where appropriate, but keep column keys in English.';
     }
 
+    // Schema + review score are hoisted so the TEMPLATE-MATCH path (Phase 0) can
+    // populate them and SHORT-CIRCUIT the free-form design (Phases 1–4). Phase 5
+    // (structural validation + deterministic critic + repair + build + return)
+    // then runs identically for BOTH paths off the same `schema`.
+    let schema: WorkbookSchema | undefined;
+    let qualityScore: number | null = null;
+    let templateMatched = false;
+
+    // =====================================================================
+    // PHASE 0: TEMPLATE MATCH — route to a proven template when one fits
+    //
+    // Fail-soft by construction: ANY error here (classifier failure, unknown id,
+    // build throw, schema-invalid, critic CRITICAL) falls through to the UNCHANGED
+    // free-form flow below. A template is used ONLY when it validates AND the
+    // deterministic critic passes — otherwise we prefer the free-form design.
+    // =====================================================================
+    const p0Start = Date.now();
+    try {
+      const templates = listWorkbookTemplates();
+      const templateCatalog = templates
+        .map((t) => `- id: "${t.id}"\n  title: ${t.title}\n  description: ${t.description}`)
+        .join('\n');
+
+      const matchResponse = await this.callLLM(
+        TEMPLATE_MATCH_SYSTEM_PROMPT,
+        `USER REQUEST:\n${userPrompt}\n\nREGISTERED TEMPLATE LIBRARY:\n${templateCatalog}\n\nDecide the templateId (or null) and extract params. Return ONLY the JSON.`,
+        llmParams,
+        1500
+      );
+
+      const matchResult = extractJsonFromResponse(matchResponse) as
+        | { templateId?: unknown; params?: unknown }
+        | null;
+      const templateId =
+        matchResult && typeof matchResult.templateId === 'string'
+          ? matchResult.templateId
+          : null;
+      const templateParams =
+        matchResult && matchResult.params && typeof matchResult.params === 'object'
+          ? matchResult.params
+          : {};
+
+      if (
+        templateId &&
+        Object.prototype.hasOwnProperty.call(WORKBOOK_TEMPLATES, templateId)
+      ) {
+        const built = buildFromTemplate(templateId, templateParams);
+        if (!built) {
+          throw new Error(`buildFromTemplate returned null for id "${templateId}"`);
+        }
+        const validated = WorkbookSchemaValidator.safeParse(built);
+        if (!validated.success) {
+          const errorSummary = validated.error.issues
+            .map((e) => `${e.path.join('.')}: ${e.message}`)
+            .join('; ');
+          throw new Error(`template schema failed validation: ${errorSummary}`);
+        }
+        const report = critiqueWorkbook(validated.data);
+        if (!report.passed) {
+          pipelineLog.push({
+            phase: 'template-match',
+            status: 'warning',
+            durationMs: Date.now() - p0Start,
+            detail: `Template "${templateId}" matched but critic did not pass (score ${report.score}/100, ${report.issues.filter((i) => i.severity === 'CRITICAL').length} critical) — falling back to free-form design.`,
+          });
+          logger.warn(
+            `[WorkbookGenerator] Phase 0 TEMPLATE MATCH: "${templateId}" critic failed (score=${report.score}), falling back to free-form`
+          );
+        } else {
+          // Template wins: use its schema, skip Phases 1–4.
+          schema = validated.data;
+          templateMatched = true;
+          pipelineLog.push({
+            phase: 'template-match',
+            status: 'ok',
+            durationMs: Date.now() - p0Start,
+            detail: `Matched template "${templateId}" (critic score ${report.score}/100, passed). Skipping free-form Phases 1–4.`,
+          });
+          logger.info(
+            `[WorkbookGenerator] Phase 0 TEMPLATE MATCH: OK — "${templateId}" critic score=${report.score}, passed`
+          );
+        }
+      } else {
+        pipelineLog.push({
+          phase: 'template-match',
+          status: 'ok',
+          durationMs: Date.now() - p0Start,
+          detail: templateId
+            ? `Classifier returned unknown templateId "${templateId}" — free-form design.`
+            : 'No template matched — free-form design.',
+        });
+        logger.info(
+          `[WorkbookGenerator] Phase 0 TEMPLATE MATCH: no template (${templateId ?? 'null'}), free-form`
+        );
+      }
+    } catch (err) {
+      // Fail-soft: routing NEVER breaks generate(). Fall through to free-form.
+      pipelineLog.push({
+        phase: 'template-match',
+        status: 'warning',
+        durationMs: Date.now() - p0Start,
+        detail: `Template routing errored (${String(err)}) — falling back to free-form design.`,
+      });
+      logger.warn(`[WorkbookGenerator] Phase 0 TEMPLATE MATCH: errored, free-form fallback`, err);
+    }
+
     // =====================================================================
     // PHASE 1: PLAN — LLM analyzes request and decomposes into structure
+    // Free-form design path (Phases 1–4) — SKIPPED when a template matched.
     // =====================================================================
+    if (!templateMatched) {
     let plan = '';
     const p1Start = Date.now();
     try {
@@ -596,7 +735,6 @@ class WorkbookGeneratorService {
     // PHASE 3: GENERATE — LLM produces the WorkbookSchema JSON
     // =====================================================================
     const p3Start = Date.now();
-    let schema: WorkbookSchema;
     const maxAttempts = 3;
 
     const generationPrompt = confirmedPlan
@@ -664,7 +802,6 @@ class WorkbookGeneratorService {
     // PHASE 4: REVIEW — LLM self-reviews schema quality before build
     // =====================================================================
     const p4Start = Date.now();
-    let qualityScore: number | null = null;
 
     try {
       const schemaJson = JSON.stringify(schema!, null, 2);
@@ -779,9 +916,11 @@ class WorkbookGeneratorService {
         err
       );
     }
+    } // end if (!templateMatched) — free-form Phases 1–4
 
     // =====================================================================
     // PHASE 5: BUILD — ExcelJS materializes the validated schema
+    // (shared by BOTH the template-match and free-form paths)
     // =====================================================================
     const p5Start = Date.now();
     const classifiedErrors: P23ClassifiedError[] = [];
