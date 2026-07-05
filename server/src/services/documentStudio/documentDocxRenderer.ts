@@ -40,6 +40,7 @@ import {
   formatAppendixHeading,
   formatBodyHeading,
   partitionSections,
+  pruneUnrenderableBlocks,
 } from './documentDocxStructure.js';
 import {
   buildDocxStyleConfig,
@@ -1189,9 +1190,13 @@ function renderSources(ctx: RenderContext): (Paragraph | Table)[] {
 }
 
 export async function renderDocumentSchemaToDocxBuffer(
-  schema: DocumentSchema,
+  schemaInput: DocumentSchema,
   options: DocumentRenderOptions = {}
 ): Promise<Buffer> {
+  // Render-time prune of data-less visual shells (empty tables / charts) so a
+  // generated export never carries a "[… placeholder …]" line. Does not mutate
+  // the stored schema — the editor still shows empty blocks as affordances.
+  const schema = pruneUnrenderableBlocks(schemaInput);
   const formatting = schema.formattingSchema;
   const chartPngByBlockId = await buildChartPngByBlockId(schema);
   const ctx = buildRenderContext(schema, chartPngByBlockId, options.warnings);

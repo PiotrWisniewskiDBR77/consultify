@@ -42,6 +42,7 @@ import {
   formatBodyHeading,
   partitionSections,
   planSectionHeadings,
+  pruneUnrenderableBlocks,
 } from './documentDocxStructure.js';
 import { type FormattingClass, resolveFormattingClass } from './documentDocxStyles.js';
 import type { DocumentGenerationWarningCollector } from './documentGenerationWarnings.js';
@@ -1130,9 +1131,13 @@ function drawHeaderFooter(
 }
 
 export async function renderDocumentSchemaToPdfBuffer(
-  schema: DocumentSchema,
+  schemaInput: DocumentSchema,
   options: DocumentPdfRenderOptions = {}
 ): Promise<Buffer> {
+  // Render-time prune of data-less visual shells (empty tables / charts) so a
+  // generated export never carries a "[… placeholder …]" line. Mirrors the DOCX
+  // renderer so both formats stay structurally identical.
+  const schema = pruneUnrenderableBlocks(schemaInput);
   const formatting = schema.formattingSchema;
   const margins = marginsInPoints(formatting);
   const chartPngByBlockId = await buildChartPngByBlockId(schema);
