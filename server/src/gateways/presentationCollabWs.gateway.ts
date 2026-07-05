@@ -342,6 +342,10 @@ export function attachPresentationCollabWs(server: HttpServer): void {
       }
     });
   }, HEARTBEAT_INTERVAL_MS);
+  // Don't let the presence heartbeat keep the process alive on its own — the
+  // HTTP server owns the lifecycle. (Also keeps test runners from hanging on
+  // teardown.) `unref` is a no-op in environments without it.
+  (heartbeatInterval as { unref?: () => void }).unref?.();
 
   wss.on('close', () => clearInterval(heartbeatInterval));
 
