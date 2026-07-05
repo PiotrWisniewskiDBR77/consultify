@@ -1,37 +1,36 @@
 /**
  * PresentationsTabContent — "Prezentacje" tab
- * Golden standard: FilterableTable (6 columns) + GridView cards + Preview pane
- * Connected to /api/presentations/decks backend
+ * Triada standard (docs/ui-standards/CANON.md + 03-modules/TABLE_AND_PREVIEW_CANON.md):
+ * 'table' view mode → StandardTable + StandardPreview, 1:1 with the
+ * Assessment 'list' / Interview Inbox / Results KPI catalog adopters.
+ * Grid view mode stays on GridView (out of scope for this pass).
+ * Connected to /api/presentations/decks backend.
  */
 
-import {
-  Archive,
-  ChevronRight,
-  Download,
-  Edit,
-  ExternalLink,
-  MessageCircle,
-  Share2,
-} from 'lucide-react';
+import { Download, ExternalLink, MessageCircle } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { LoadingState, StatusChip } from '@/components/ui/primitives';
+import { AssigneeCell } from '@/components/ui/primitives/cells';
+import { EntityStatusChip, statusChipTone } from '@/components/ui/primitives/chips';
+import { LoadingState } from '@/components/ui/primitives';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 
 import {
-  FilterableTable,
   type FilterChip,
   type GridItem,
   GridView,
-  type TableColumn,
   type ViewMode,
 } from '../shared/ModuleHub';
-import type { RowAction } from '../shared/RowActionsMenu';
-import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import {
+  type MetaPill,
+  StandardPreview,
+  StandardTable,
+  type StandardRowMenu,
+  type TableColumn as StandardTableColumn,
+} from '../standard';
 import { appendArtifactOpenAction, resolveArtifactOpenPath } from './artifactNavigation';
-import { PresentationPreviewBody, PresentationPreviewFooter } from './previews/PresentationPreview';
 import { PRESENTATION_STATUS_META, type PresentationItem, SOURCE_TYPE_META } from './types';
 import type { useRapActions } from './useRapData';
 import { useTrustState } from './useTrustState';
@@ -84,22 +83,23 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
     return data;
   }, [presentations, searchQuery, activeFilters]);
 
-  const columns: TableColumn[] = useMemo(
+  const columns: StandardTableColumn[] = useMemo(
     () => [
       {
         id: 'title',
         label: t('rap.columns.title', 'Tytuł'),
         width: '300px',
-        render: (row: PresentationItem) => (
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-8 h-6 rounded bg-c-surface-raised border border-c-border-subtle shrink-0 flex items-center justify-center">
-              <span className="text-[8px] font-bold text-c-text-muted">PPT</span>
+        render: (row: Record<string, unknown>) => {
+          const item = row as unknown as PresentationItem;
+          return (
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-8 h-6 rounded bg-c-surface-raised border border-c-border-subtle shrink-0 flex items-center justify-center">
+                <span className="text-[8px] font-bold text-c-text-muted">PPT</span>
+              </div>
+              <span className="text-sm font-semibold text-c-text truncate">{item.title}</span>
             </div>
-            <span className="text-sm font-medium text-c-text truncate">
-              {row.title}
-            </span>
-          </div>
-        ),
+          );
+        },
       },
       {
         id: 'sourceType',
@@ -107,13 +107,14 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
         width: '130px',
         filterable: true,
         filterOptions: [
-          { value: 'tool', label: t('reports.tool'), color: 'bg-emerald-400' },
-          { value: 'assessment', label: t('reports.assessment'), color: 'bg-blue-400' },
-          { value: 'finance', label: t('reports.finance'), color: 'bg-blue-400' },
-          { value: 'upload', label: t('reports.upload'), color: 'bg-amber-400' },
+          { value: 'tool', label: t('reports.tool') },
+          { value: 'assessment', label: t('reports.assessment') },
+          { value: 'finance', label: t('reports.finance') },
+          { value: 'upload', label: t('reports.upload') },
         ],
-        render: (row: PresentationItem) => {
-          const meta = SOURCE_TYPE_META[row.sourceType] || SOURCE_TYPE_META.tool;
+        render: (row: Record<string, unknown>) => {
+          const item = row as unknown as PresentationItem;
+          const meta = SOURCE_TYPE_META[item.sourceType] || SOURCE_TYPE_META.tool;
           return (
             <span className="text-xs font-medium text-c-text-secondary">
               {isPolish ? meta.labelPl : meta.label}
@@ -125,6 +126,15 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
         id: 'owner',
         label: t('rap.columns.owner', 'Właściciel'),
         width: '160px',
+        render: (row: Record<string, unknown>) => {
+          const item = row as unknown as PresentationItem;
+          return (
+            <AssigneeCell
+              name={item.owner || null}
+              unassignedLabel={t('common.unassigned', 'Unassigned')}
+            />
+          );
+        },
       },
       {
         id: 'status',
@@ -132,24 +142,17 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
         width: '120px',
         filterable: true,
         filterOptions: [
-          { value: 'draft', label: t('reports.draft'), color: 'bg-slate-400' },
-          {
-            value: 'generated',
-            label: t('reports.generated'),
-            color: 'bg-blue-400',
-          },
-          { value: 'editing', label: t('reports.editing'), color: 'bg-amber-400' },
-          { value: 'ready', label: t('reports.ready2'), color: 'bg-emerald-400' },
-          { value: 'shared', label: t('reports.shared2'), color: 'bg-blue-400' },
-          {
-            value: 'archived',
-            label: t('reports.archived2'),
-            color: 'bg-slate-500',
-          },
+          { value: 'draft', label: t('reports.draft') },
+          { value: 'generated', label: t('reports.generated') },
+          { value: 'editing', label: t('reports.editing') },
+          { value: 'ready', label: t('reports.ready2') },
+          { value: 'shared', label: t('reports.shared2') },
+          { value: 'archived', label: t('reports.archived2') },
         ],
-        render: (row: PresentationItem) => {
-          const meta = PRESENTATION_STATUS_META[row.status] || PRESENTATION_STATUS_META.draft;
-          return <StatusChip label={isPolish ? meta.labelPl : meta.label} tone={meta.tone} />;
+        render: (row: Record<string, unknown>) => {
+          const item = row as unknown as PresentationItem;
+          const meta = PRESENTATION_STATUS_META[item.status] || PRESENTATION_STATUS_META.draft;
+          return <EntityStatusChip status={item.status} label={isPolish ? meta.labelPl : meta.label} />;
         },
       },
       {
@@ -158,24 +161,32 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
         width: '120px',
         filterable: true,
         filterOptions: [
-          { value: 'show', label: 'Show', color: 'bg-blue-400' },
-          { value: 'document', label: 'Document', color: 'bg-emerald-400' },
-          { value: 'briefing', label: 'Briefing', color: 'bg-amber-400' },
-          { value: 'workshop', label: 'Workshop', color: 'bg-blue-400' },
+          { value: 'show', label: 'Show' },
+          { value: 'document', label: 'Document' },
+          { value: 'briefing', label: 'Briefing' },
+          { value: 'workshop', label: 'Workshop' },
         ],
-        render: (row: PresentationItem) => (
-          <span className="text-xs font-medium text-c-text-secondary capitalize">
-            {row.presentationMode || 'briefing'}
-          </span>
-        ),
+        render: (row: Record<string, unknown>) => {
+          const item = row as unknown as PresentationItem;
+          return (
+            <span className="text-xs font-medium text-c-text-secondary capitalize">
+              {item.presentationMode || 'briefing'}
+            </span>
+          );
+        },
       },
       {
         id: 'createdAt',
         label: t('rap.columns.date', 'Data'),
         width: '130px',
         sortable: true,
-        render: (row: PresentationItem) => {
-          const d = new Date(row.createdAt);
+        sortAccessor: (row: Record<string, unknown>) => {
+          const item = row as unknown as PresentationItem;
+          return item.createdAt ? new Date(item.createdAt).getTime() : 0;
+        },
+        render: (row: Record<string, unknown>) => {
+          const item = row as unknown as PresentationItem;
+          const d = new Date(item.createdAt);
           return (
             <span className="text-sm text-c-text-muted">
               {d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
@@ -191,9 +202,11 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
         id: 'slideCount',
         label: t('rap.columns.slides', 'Slajdy'),
         width: '90px',
-        render: (row: PresentationItem) => (
-          <span className="text-sm text-c-text-secondary">{row.slideCount}</span>
-        ),
+        align: 'right' as const,
+        render: (row: Record<string, unknown>) => {
+          const item = row as unknown as PresentationItem;
+          return <span className="text-sm tabular-nums text-c-text-secondary">{item.slideCount ?? '—'}</span>;
+        },
       },
     ],
     [t, isPolish]
@@ -208,83 +221,82 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
     if (openPath) navigate(openPath);
   };
 
-  const getRowActions = (row: PresentationItem): RowAction[] => [
-    // canon §9.2 FIXED BOTTOM MANIFEST position 1
-    {
-      id: 'open_preview',
-      label: t('rap.actions.openPreview', 'Otwórz podgląd'),
-      icon: ChevronRight,
-      onClick: () => setSelectedId(row.id),
-    },
-    {
-      id: 'open',
-      label: t('rap.actions.open', 'Otwórz'),
-      icon: ExternalLink,
-      variant: 'primary',
-      onClick: () => openPresentation(row),
-    },
-    {
-      id: 'discuss',
-      label: t('rap.actions.discuss', 'Discuss'),
-      icon: MessageCircle,
-      onClick: () => {
-        void openChatWithContext({
-          entityType: 'presentation',
-          entityId: row.id,
-          entityName: row.title,
-        });
+  const openShare = (row: PresentationItem) => {
+    const sharePath = appendArtifactOpenAction(
+      resolveArtifactOpenPath({
+        kind: 'presentation',
+        originRecordId: row.id,
+        governance: row.governance,
+      }),
+      'share'
+    );
+    if (sharePath) navigate(sharePath);
+  };
+
+  const openRename = (row: PresentationItem) => {
+    const renamePath = appendArtifactOpenAction(
+      resolveArtifactOpenPath({
+        kind: 'presentation',
+        originRecordId: row.id,
+        governance: row.governance,
+      }),
+      'rename'
+    );
+    if (renamePath) navigate(renamePath);
+  };
+
+  // Triada standard (StandardTable rowMenu contract, ANEKS #4): module declares
+  // ONLY blocks 1-3 (primary/statusTransitions/timeActions); StandardTable
+  // itself appends block 4 (Open preview · Edit · Archive) and block 5
+  // (Delete, danger, always last).
+  const getRowMenu = (row: PresentationItem): StandardRowMenu => ({
+    primary: [
+      {
+        id: 'open',
+        label: t('rap.actions.open', 'Otwórz'),
+        icon: ExternalLink,
+        onClick: () => openPresentation(row),
       },
-    },
-    {
-      id: 'export',
-      label: t('rap.actions.exportPptx', 'Eksportuj PPTX'),
-      icon: Download,
-      onClick: () => actions.exportDeckPptx(row),
-    },
-    {
-      id: 'share',
-      label: t('rap.actions.share', 'Udostępnij'),
-      icon: Share2,
-      onClick: () => {
-        const sharePath = appendArtifactOpenAction(
-          resolveArtifactOpenPath({
-            kind: 'presentation',
-            originRecordId: row.id,
-            governance: row.governance,
-          }),
-          'share'
-        );
-        if (sharePath) navigate(sharePath);
+      {
+        id: 'discuss',
+        label: t('rap.actions.discuss', 'Discuss'),
+        icon: MessageCircle,
+        onClick: () => {
+          void openChatWithContext({
+            entityType: 'presentation',
+            entityId: row.id,
+            entityName: row.title,
+          });
+        },
       },
-    },
-    {
-      id: 'rename',
-      label: t('rap.actions.rename', 'Zmień nazwę'),
-      icon: Edit,
-      onClick: () => {
-        const renamePath = appendArtifactOpenAction(
-          resolveArtifactOpenPath({
-            kind: 'presentation',
-            originRecordId: row.id,
-            governance: row.governance,
-          }),
-          'rename'
-        );
-        if (renamePath) navigate(renamePath);
+      {
+        id: 'export',
+        label: t('rap.actions.exportPptx', 'Eksportuj PPTX'),
+        icon: Download,
+        onClick: () => actions.exportDeckPptx(row),
       },
-    },
-    {
-      // canon §14: Archive = soft-delete (reversible) — label "Archiwizuj", NOT "Usuń"
-      id: 'archive',
-      label: t('rap.actions.archive', 'Archiwizuj'),
-      icon: Archive,
-      divider: true,
-      onClick: async () => {
+      {
+        id: 'share',
+        label: t('rap.actions.share', 'Udostępnij'),
+        onClick: () => openShare(row),
+      },
+    ],
+    universalHandlers: {
+      preview: () => setSelectedId(row.id),
+      // Rename = closest live analog to "Edit" for a presentation record
+      // (no in-place field editor; opens the editor with rename UI armed).
+      edit: () => openRename(row),
+      // canon §14: Archive = soft-delete (reversible) — real endpoint
+      // (`archiveDeck`, DELETE /presentations/decks/:id).
+      archive: async () => {
         const ok = await actions.archiveDeck(row);
         if (ok) onRefresh();
       },
     },
-  ];
+    // No separate hard-delete endpoint exists beyond archive/DELETE above —
+    // destructive stays disabled with "Coming soon (backend)" note (StandardTable
+    // default) rather than wiring the same call twice under two labels.
+  });
 
   useEffect(() => {
     if (!initialArtifactId || deepLinkConsumed.current || filteredData.length === 0) return;
@@ -306,7 +318,6 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
         governance: selectedGovernance || selectedItem.governance,
       }
     : null;
-  const itemIds = filteredData.map((i) => i.id);
   const reviewDisabled =
     !previewItem?.artifactId ||
     reviewBusyArtifactId === previewItem?.artifactId ||
@@ -367,62 +378,134 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
     );
   }
 
+  // Triada standard (docs/ui-standards/CANON.md + 03-modules/TABLE_AND_PREVIEW_CANON.md):
+  // 'table' view → StandardTable + StandardPreview, 1:1 with the Assessment
+  // 'list' / Interview Inbox / Results KPI catalog adopters. Module declares
+  // ONLY data + rowMenu/preview contract; all chrome comes from Standard* facades.
+  const previewMeta: MetaPill[] | undefined = previewItem
+    ? [
+        {
+          label: isPolish
+            ? (PRESENTATION_STATUS_META[previewItem.status] || PRESENTATION_STATUS_META.draft).labelPl
+            : (PRESENTATION_STATUS_META[previewItem.status] || PRESENTATION_STATUS_META.draft).label,
+          tone: statusChipTone(previewItem.status),
+        },
+        {
+          label: isPolish
+            ? SOURCE_TYPE_META[previewItem.sourceType]?.labelPl || previewItem.sourceType
+            : SOURCE_TYPE_META[previewItem.sourceType]?.label || previewItem.sourceType,
+          tone: 'neutral',
+        },
+        ...(previewItem.governance?.validationState
+          ? [
+              {
+                label: previewItem.governance.validationState,
+                tone:
+                  previewItem.governance.validationState === 'validated'
+                    ? ('success' as const)
+                    : previewItem.governance.validationState === 'attention_required'
+                      ? ('danger' as const)
+                      : ('warning' as const),
+              },
+            ]
+          : []),
+      ]
+    : undefined;
+
   return (
     <div className="h-full overflow-hidden">
-      <TableWithPreviewLayout<PresentationItem & { title: string }>
-        selectedId={selectedId}
-        selectedItem={previewItem}
-        onSelect={setSelectedId}
-        onOpenFull={(id) => {
-          const row = filteredData.find((x) => x.id === id);
-          if (row) openPresentation(row);
-        }}
-        itemIds={itemIds}
-        getItemById={(id) => filteredData.find((x) => x.id === id) ?? null}
-        renderPreview={(item) => (
-          <PresentationPreviewBody
-            presentation={item}
-            trustProps={{
-              governance: item.governance,
-              artifactId: item.artifactId,
-              exportFormats: item.exportFormats,
+      <div className="h-full flex overflow-hidden">
+        <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
+          <StandardTable
+            columns={columns}
+            data={filteredData as unknown as Array<Record<string, unknown> & { id: string }>}
+            selectedRowId={selectedId}
+            onRowClick={(row) => setSelectedId(String((row as unknown as PresentationItem).id))}
+            onRowDoubleClick={(row) => openPresentation(row as unknown as PresentationItem)}
+            rowDescription={() => null}
+            defaultSort={{ columnId: 'createdAt', direction: 'desc' }}
+            persistKey="rap.presentations.list"
+            activeFilters={activeFilters}
+            onFilterChange={onFilterChange}
+            empty={{
+              title: t('rap.empty.presentations', 'Brak prezentacji'),
             }}
+            rowMenu={(row) => getRowMenu(row as unknown as PresentationItem)}
           />
-        )}
-        renderPreviewFooter={(item) => (
-          <PresentationPreviewFooter
-            presentation={item}
-            onStartReview={
-              item.artifactId
-                ? async () => {
-                    const aid = item.artifactId as string;
-                    setReviewBusyArtifactId(aid);
-                    const ok = await actions.startArtifactReview(aid);
-                    setReviewBusyArtifactId(null);
-                    if (ok) onRefresh();
-                  }
-                : undefined
-            }
-            reviewActionDisabled={item.id === previewItem?.id ? reviewDisabled : !item.artifactId}
-            onExport={() => {
-              actions.exportDeckPptx(item);
-            }}
-          />
-        )}
-      >
-        <FilterableTable
-          columns={columns}
-          data={filteredData}
-          selectedRowId={selectedId}
-          onRowClick={(row) => setSelectedId(row.id)}
-          onRowDoubleClick={(row) => openPresentation(row as PresentationItem)}
-          getRowActions={(row) => getRowActions(row as unknown as PresentationItem)}
-          activeFilters={activeFilters}
-          onFilterChange={onFilterChange}
-          emptyMessage={t('rap.empty.presentations', 'Brak prezentacji')}
-          canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
-        />
-      </TableWithPreviewLayout>
+        </div>
+
+        {previewItem ? (
+          <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+            <StandardPreview
+              title={previewItem.title || t('rap.columns.title', 'Prezentacja')}
+              onClose={() => setSelectedId(null)}
+              onOpenFull={() => openPresentation(previewItem)}
+              meta={previewMeta ? { pills: previewMeta } : undefined}
+              details={{
+                text: [
+                  `${t('rap.columns.owner', 'Właściciel')}: ${previewItem.owner || '—'}`,
+                  `${t('rap.columns.slides', 'Slajdy')}: ${previewItem.slideCount ?? '—'}`,
+                  `${t('common.updated', 'Updated')}: ${
+                    previewItem.updatedAt
+                      ? new Date(previewItem.updatedAt).toLocaleDateString(undefined, {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })
+                      : '—'
+                  }`,
+                ].join('\n'),
+                onCopy: () => {
+                  void navigator.clipboard?.writeText(
+                    `${previewItem.title} — ${previewItem.status} (${previewItem.slideCount ?? '—'} slides)`
+                  );
+                },
+                onExport: () => actions.exportDeckPptx(previewItem),
+                exportLabel: t('rap.actions.exportPptx', 'Eksportuj PPTX'),
+              }}
+              ai={{
+                hints: [
+                  t('rap.actions.discuss', 'Discuss'),
+                ],
+                disabled: true,
+                disabledTooltip: t('common.comingSoon', 'Coming soon'),
+              }}
+              relations={
+                previewItem.sourceId
+                  ? [{ label: `${t('rap.columns.source', 'Źródło')}: ${previewItem.sourceId}` }]
+                  : []
+              }
+              actions={{
+                resolutions: previewItem.artifactId
+                  ? [
+                      {
+                        id: 'start-review',
+                        variant: 'positive',
+                        label: t('rap.actions.startReview', 'Start review'),
+                        onClick: async () => {
+                          const aid = previewItem.artifactId as string;
+                          setReviewBusyArtifactId(aid);
+                          const ok = await actions.startArtifactReview(aid);
+                          setReviewBusyArtifactId(null);
+                          if (ok) onRefresh();
+                        },
+                        disabled: reviewDisabled,
+                      },
+                    ]
+                  : undefined,
+                informational: [
+                  {
+                    id: 'share',
+                    variant: 'neutral',
+                    label: t('rap.actions.share', 'Udostępnij'),
+                    onClick: () => openShare(previewItem),
+                  },
+                ],
+              }}
+            />
+          </aside>
+        ) : null}
+      </div>
     </div>
   );
 };
