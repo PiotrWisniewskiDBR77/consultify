@@ -42,6 +42,7 @@ import { DeckBuilderBottomBar } from './DeckBuilderBottomBar';
 import type { DeckBuilderTopBarChipsState } from './DeckBuilderMelsChips';
 import { DeckBuilderMelsView } from './DeckBuilderMelsView';
 import { DeckBuilderTopBar } from './DeckBuilderTopBar';
+import { DeckPresenceStack } from './DeckPresenceStack';
 import { DeckGovernanceCardModal } from './DeckGovernanceCardModal';
 import { DeckQualityGatesPanel } from './DeckQualityGatesPanel';
 import type { BrandKit } from './DeckThemeContext';
@@ -53,6 +54,7 @@ import { ConflictBanner } from './ConflictBanner';
 import { ShareModal } from './ShareModal';
 import { SlideSorter } from './SlideSorter';
 import { ThemeSwitcher } from './ThemeSwitcher';
+import { useCollaboration } from './useCollaboration';
 import { useDataRefresh } from './useDataRefresh';
 import { useDeckState } from './useDeckState';
 import { useVersionHistory } from './useVersionHistory';
@@ -306,6 +308,30 @@ export const DeckBuilder: React.FC = () => {
     canUndo,
     canRedo,
   } = useDeckState(null);
+
+  // P3.3 — live presence (behind VITE_ENABLE_DECK_COLLABORATE). Fail-open:
+  // resolving the current user or connecting the WS is entirely best-effort;
+  // when the flag is off or anything fails, `collab.connectedUsers` stays empty
+  // and the presence stack renders nothing — the editor is never blocked.
+  const collaborateEnabled = import.meta.env.VITE_ENABLE_DECK_COLLABORATE === 'true';
+  const currentUser = useMemo(() => {
+    if (!collaborateEnabled) return null;
+    try {
+      const raw = localStorage.getItem('user');
+      if (!raw) return null;
+      const u = JSON.parse(raw);
+      const userId = u?.id || u?.userId;
+      if (!userId) return null;
+      return {
+        userId: String(userId),
+        name: u?.name || u?.email || 'User',
+        avatarUrl: u?.avatarUrl || u?.avatar_url,
+      };
+    } catch {
+      return null;
+    }
+  }, [collaborateEnabled]);
+  const collab = useCollaboration(deckId, currentUser, collaborateEnabled);
 
   const [loadingDeck, setLoadingDeck] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -1262,6 +1288,15 @@ export const DeckBuilder: React.FC = () => {
             lastAgentActivityAt={lastAgentActivityAt}
           />
           <ThemeSwitcher isOpen={themeSwitcherOpen} onClose={() => setThemeSwitcherOpen(false)} />
+          {collaborateEnabled && (
+            <div className="absolute top-1/2 -translate-y-1/2 right-40 z-sticky pointer-events-none">
+              <DeckPresenceStack
+                users={collab.connectedUsers}
+                localUserId={collab.localUser?.userId}
+                connectionStatus={collab.connectionStatus}
+              />
+            </div>
+          )}
         </div>
 
         {conflict && (

@@ -44,11 +44,12 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   const [publicLink, setPublicLink] = useState(false);
   const [shareToken, setShareToken] = useState<string | null>(null);
   const [generatingLink, setGeneratingLink] = useState(false);
-  // P3.1 — invite state (Collaborate tab). Full per-user membership needs a DB
-  // schema (see report / separate ticket); until then invite = share-link +
-  // email hand-off, with the chosen permission captured for the message copy.
+  // P3.3 — invite state (Collaborate tab). Invite now creates a real per-user
+  // membership row (presentation_deck_collaborators) with the chosen role, and
+  // ALSO mints/hands off a share-link as a fail-open fallback (so the invite
+  // still lands even if the membership layer is degraded).
   const [inviteEmail, setInviteEmail] = useState('');
-  const [invitePermission, setInvitePermission] = useState<'view' | 'comment'>('view');
+  const [invitePermission, setInvitePermission] = useState<'viewer' | 'editor'>('viewer');
   const [inviting, setInviting] = useState(false);
 
   // Ensures a share token exists, returning it. Reuses the existing
@@ -83,11 +84,12 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     await ensureShareToken();
   }, [ensureShareToken]);
 
-  // P3.1 — real invite handler. Reuses the share-link model: mints (or reuses)
-  // a share token, builds the collaborator URL, and hands it to the invitee via
-  // the OS mail client (mailto:) plus clipboard fallback. This is a working
-  // invite with today's schema; per-user membership + accept flow is a
-  // follow-up ticket (needs presentation_deck_collaborators table).
+  // P3.3 — real invite handler. Creates a per-user membership row
+  // (POST /decks/:id/collaborators with the chosen role), then hands the
+  // invitee a share-link via the OS mail client (mailto:) + clipboard so the
+  // invite lands immediately. Membership creation is fail-open: if the backend
+  // reports `degraded` (table unavailable) we still complete the share-link
+  // hand-off rather than blocking the invite.
   const handleInvite = useCallback(async () => {
     const email = inviteEmail.trim();
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -96,18 +98,43 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     }
     setInviting(true);
     try {
+      // 1) Create the collaborator membership row (best-effort / fail-open).
+      let degraded = false;
+      try {
+        const res = await Api.post(`/presentations/decks/${deckId}/collaborators`, {
+          email,
+          role: invitePermission,
+        });
+        const payload = res?.data;
+        const data =
+          payload && typeof payload === 'object' && 'data' in payload ? payload.data : payload;
+        degraded = !!data?.degraded || !data?.collaborator;
+      } catch {
+        // Membership layer unreachable — fall through to the share-link hand-off.
+        degraded = true;
+      }
+
+      // 2) Hand off a share-link so the invite works right now.
       const token = await ensureShareToken();
-      if (!token) return;
+      if (!token) {
+        // Even the share-link failed; the membership row (if created) still stands.
+        if (!degraded) {
+          toast.success(
+            t('presentations.builder.share.inviteAdded', 'Collaborator added')
+          );
+          setInviteEmail('');
+        }
+        return;
+      }
       const url = `${window.location.origin}/presentations/shared/${token}`;
       const roleLabel =
-        invitePermission === 'comment'
-          ? t('presentations.builder.share.permComment', 'view and comment on')
+        invitePermission === 'editor'
+          ? t('presentations.builder.share.permEdit', 'edit')
           : t('presentations.builder.share.permView', 'view');
       const subject = encodeURIComponent(`${deckTitle} — shared with you`);
       const body = encodeURIComponent(
         `You've been invited to ${roleLabel} the deck "${deckTitle}".\n\nOpen it here: ${url}`
       );
-      // Copy link too, so the invite works even without a configured mail client.
       try {
         await navigator.clipboard.writeText(url);
       } catch {
@@ -115,13 +142,18 @@ export const ShareModal: React.FC<ShareModalProps> = ({
       }
       window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
       toast.success(
-        t('presentations.builder.share.inviteSent', 'Invite ready — link copied and email opened')
+        degraded
+          ? t('presentations.builder.share.inviteSent', 'Invite ready — link copied and email opened')
+          : t(
+              'presentations.builder.share.inviteAddedAndSent',
+              'Collaborator added — link copied and email opened'
+            )
       );
       setInviteEmail('');
     } finally {
       setInviting(false);
     }
-  }, [inviteEmail, invitePermission, ensureShareToken, deckTitle, t]);
+  }, [inviteEmail, invitePermission, ensureShareToken, deckId, deckTitle, t]);
 
   if (!isOpen) return null;
 
@@ -226,16 +258,16 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 </p>
                 {[
                   {
-                    value: 'view' as const,
+                    value: 'viewer' as const,
                     icon: Eye,
                     label: t('presentations.builder.share.viewLabel', 'View'),
                     desc: t('presentations.builder.share.viewDesc', 'Can view the deck'),
                   },
                   {
-                    value: 'comment' as const,
+                    value: 'editor' as const,
                     icon: MessageCircle,
-                    label: t('presentations.builder.share.commentLabel', 'Comment'),
-                    desc: t('presentations.builder.share.commentDesc', 'Can view and comment'),
+                    label: t('presentations.builder.share.editLabel', 'Edit'),
+                    desc: t('presentations.builder.share.editDesc', 'Can view and edit'),
                   },
                 ].map((perm) => (
                   <button
@@ -262,7 +294,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 <p className="text-[10px] text-c-text-secondary pt-1">
                   {t(
                     'presentations.builder.share.inviteNote',
-                    'Invite generates a share link and opens an email. Per-user access levels are coming soon.'
+                    'Invite adds the person as a collaborator with this role and sends them a link.'
                   )}
                 </p>
               </div>

@@ -115,19 +115,21 @@ describe('ShareModal — Collaborate invite (P3.1)', () => {
     expect(toastError).toHaveBeenCalled();
   });
 
-  it('lets the user pick a permission level (View default → Comment)', async () => {
+  it('lets the user pick a role (Viewer default → Editor)', async () => {
+    // P3.3: the permission model is now role-based (viewer/editor) — invite
+    // creates a real presentation_deck_collaborators row with the chosen role.
     const user = userEvent.setup();
     renderModal();
 
     await user.click(screen.getByRole('button', { name: /collaborate/i }));
-    const viewBtn = screen.getByTestId('deck-invite-perm-view');
-    const commentBtn = screen.getByTestId('deck-invite-perm-comment');
+    const viewerBtn = screen.getByTestId('deck-invite-perm-viewer');
+    const editorBtn = screen.getByTestId('deck-invite-perm-editor');
 
-    expect(viewBtn).toHaveAttribute('aria-pressed', 'true');
-    expect(commentBtn).toHaveAttribute('aria-pressed', 'false');
+    expect(viewerBtn).toHaveAttribute('aria-pressed', 'true');
+    expect(editorBtn).toHaveAttribute('aria-pressed', 'false');
 
-    await user.click(commentBtn);
-    expect(commentBtn).toHaveAttribute('aria-pressed', 'true');
-    expect(viewBtn).toHaveAttribute('aria-pressed', 'false');
+    await user.click(editorBtn);
+    expect(editorBtn).toHaveAttribute('aria-pressed', 'true');
+    expect(viewerBtn).toHaveAttribute('aria-pressed', 'false');
   });
 });
