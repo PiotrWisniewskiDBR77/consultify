@@ -114,7 +114,20 @@ export function useWhiteboardCollab({
               setNodes((prev) => prev.filter((n) => n.id !== op.data.id));
               break;
             case 'update_node':
-              setNodes((prev) => prev.map((n) => (n.id === op.data.id ? { ...n, ...op.data } : n)));
+              setNodes((prev) =>
+                prev.map((n) => {
+                  if (n.id !== op.data.id) return n;
+                  // Shallow-merge the node, but DEEP-merge `data` when the patch
+                  // carries a partial data slice (B4 reactions send only
+                  // `{ id, data: { reactions } }`) so we don't clobber label/etc.
+                  // Position/style-only patches (no `data`) keep prior behaviour.
+                  const merged = { ...n, ...op.data } as Node;
+                  if (op.data.data && typeof op.data.data === 'object') {
+                    merged.data = { ...n.data, ...op.data.data };
+                  }
+                  return merged;
+                })
+              );
               break;
             case 'add_edge':
               setEdges((prev) =>

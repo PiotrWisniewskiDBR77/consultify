@@ -2,6 +2,7 @@ import React from 'react';
 import { Handle, type NodeProps, Position } from 'reactflow';
 
 import { CommentPinBadge, commentCountOf } from './CommentPinBadge';
+import { WhiteboardNodeReactions } from './WhiteboardNodeReactions';
 import { STICKY_COLORS, STICKY_SIZES, useIsDark } from './whiteboardNodeHelpers';
 
 export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) => {
@@ -39,7 +40,7 @@ export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected
 
   return (
     <div
-      className={`relative p-3 rounded-xl border shadow-lg transition-all ${color.bg} ${color.border} ${priorityBorder} ${selected ? 'ring-2 ring-c-border-strong shadow-xl' : ''} ${data?.isAI ? 'ring-1 ring-c-border-strong' : ''} ${data?._isNew ? 'animate-[pulse_1s_ease-in-out_1]' : ''}`}
+      className={`group relative p-3 rounded-xl border shadow-lg transition-all ${color.bg} ${color.border} ${priorityBorder} ${selected ? 'ring-2 ring-c-border-strong shadow-xl' : ''} ${data?.isAI ? 'ring-1 ring-c-border-strong' : ''} ${data?._isNew ? 'animate-[pulse_1s_ease-in-out_1]' : ''}`}
       style={{
         width: size.w,
         minHeight: size.h,
@@ -121,6 +122,17 @@ export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected
           {data.author}
         </div>
       )}
+      <WhiteboardNodeReactions
+        reactions={data?.reactions}
+        currentUserId={String(data?.currentUserId || '')}
+        enabled={Boolean(data?.reactionsEnabled)}
+        selected={selected}
+        onToggle={
+          typeof data?.onToggleReaction === 'function'
+            ? (emoji: string) => data.onToggleReaction(nodeId, emoji)
+            : undefined
+        }
+      />
       <Handle
         type="source"
         position={Position.Bottom}
