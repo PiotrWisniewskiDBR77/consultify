@@ -197,6 +197,19 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     allowLocalOverride: true,
   },
   {
+    id: 'mindmapVirtualization',
+    name: 'Mind Map: Viewport Virtualization (M06 Fala 3.3)',
+    description:
+      'Real viewport culling for large mind maps (M06 Fala 3.3): once a map crosses the node ' +
+      'threshold, ReactFlow only mounts DOM for nodes intersecting the visible viewport ' +
+      '(onlyRenderVisibleElements). All nodes stay in the graph store, so selection, the ' +
+      'minimap, smart guides and multi-select styling keep working for off-screen nodes. ' +
+      'OFF = today’s behavior where every node is always mounted in the DOM.',
+    defaultValue: false,
+    category: 'beta',
+    allowLocalOverride: true,
+  },
+  {
     id: 'ENABLE_TERESA_MINDMAP',
     name: 'Teresa: Mind Map Bridge',
     description:
