@@ -182,6 +182,15 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     category: 'ai',
     allowLocalOverride: true,
   },
+  {
+    id: 'mindmapDrawerUnified',
+    name: 'Mind Map: Unified Node Detail Drawer (Fala 4.1b)',
+    description:
+      'M06 Fala 4.1b consolidation: renders the single canonical UnifiedNodeDetailDrawer in both consumers (IdeaRecommendationMap M06 + IdeaMapWorkspace M05) instead of the two duplicated drawers (NodeDetailDrawer ~1042 LOC + IdeaNodeDetailDrawer ~1383 LOC). Superset of both capabilities (status enum, editable ExtendedNodeData fields, comments, evidence, convert, AI context). OFF = today’s two separate drawers (zero visual change).',
+    defaultValue: false,
+    category: 'beta',
+    allowLocalOverride: true,
+  },
 ];
 
 // ============================================

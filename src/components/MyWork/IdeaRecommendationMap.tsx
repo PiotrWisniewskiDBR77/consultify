@@ -123,6 +123,7 @@ import {
 import { type NodeComment, NodeCommentThread } from './mindmap/NodeCommentThread';
 import { NodeContextMenu } from './mindmap/NodeContextMenu';
 import { type NodeDetailData, NodeDetailDrawer, type NodeStatus } from './mindmap/NodeDetailDrawer';
+import { UnifiedNodeDetailDrawer } from './mindmap/UnifiedNodeDetailDrawer';
 import {
   GlowWrapper,
   MaturityRing,
@@ -3840,6 +3841,9 @@ function MindMapInner({
   // AIDependencyDetector) — hidden until backed by real AI analysis.
   // See DEFAULT_FLAGS in useFeatureFlags for the honesty audit details.
   const heuristicAiOverlaysEnabled = isFeatureEnabled('mindmapHeuristicAiOverlays');
+  // M06 Fala 4.1b: render the single canonical UnifiedNodeDetailDrawer instead of
+  // the legacy NodeDetailDrawer. OFF (default) = today's separate drawer, no change.
+  const drawerUnifiedEnabled = isFeatureEnabled('mindmapDrawerUnified');
 
   // ── Visual modes ─────────────────────────────────────────────────────────
   const [showClusterBubbles, setShowClusterBubbles] = useState(false);
@@ -5770,27 +5774,47 @@ function MindMapInner({
 
       {/* Node Detail Drawer */}
       {drawerNodeId ? (
-        <NodeDetailDrawer
-          open={!!drawerNodeId}
-          onClose={() => setDrawerNodeId(null)}
-          nodeData={drawerNodeData}
-          ideaId={ideaId}
-          ideaTitle={ideaTitle}
-          // DP-3 (T7 Part B): read-only while another collaborator holds the
-          // lock on this node (defense-in-depth alongside the drawer-close
-          // effect above, in case a lock arrives mid-edit).
-          locked={locked || remoteLockedNodeIds.has(drawerNodeId)}
-          allNodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
-          allEdges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
-          onUpdateNode={handleUpdateNode}
-          onAIExpandNode={(nodeId) => {
-            setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id === nodeId })));
-            handleAIExpand();
-          }}
-          onConvertNode={handleConvertNode}
-          onNavigateToNode={handleNavigateToNode}
-          onDrillDown={handleDrillDown}
-        />
+        drawerUnifiedEnabled ? (
+          // M06 Fala 4.1b: canonical unified drawer (mindmap variant). NodeDetailData
+          // already carries nodeId, so it maps 1:1 into UnifiedNodeData.
+          <UnifiedNodeDetailDrawer
+            variant="mindmap"
+            open={!!drawerNodeId}
+            onClose={() => setDrawerNodeId(null)}
+            nodeData={drawerNodeData}
+            ideaId={ideaId}
+            ideaTitle={ideaTitle}
+            locked={locked || remoteLockedNodeIds.has(drawerNodeId)}
+            allNodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+            allEdges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
+            onUpdateNode={handleUpdateNode}
+            onConvertNode={handleConvertNode}
+            onNavigateToNode={handleNavigateToNode}
+            onDrillDown={handleDrillDown}
+          />
+        ) : (
+          <NodeDetailDrawer
+            open={!!drawerNodeId}
+            onClose={() => setDrawerNodeId(null)}
+            nodeData={drawerNodeData}
+            ideaId={ideaId}
+            ideaTitle={ideaTitle}
+            // DP-3 (T7 Part B): read-only while another collaborator holds the
+            // lock on this node (defense-in-depth alongside the drawer-close
+            // effect above, in case a lock arrives mid-edit).
+            locked={locked || remoteLockedNodeIds.has(drawerNodeId)}
+            allNodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+            allEdges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
+            onUpdateNode={handleUpdateNode}
+            onAIExpandNode={(nodeId) => {
+              setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id === nodeId })));
+              handleAIExpand();
+            }}
+            onConvertNode={handleConvertNode}
+            onNavigateToNode={handleNavigateToNode}
+            onDrillDown={handleDrillDown}
+          />
+        )
       ) : null}
 
       {/* R1.3: AI Dependency Detection — DP-5: heuristic pair mapping, flag OFF by default */}
