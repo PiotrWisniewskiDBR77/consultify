@@ -980,6 +980,21 @@ export function setW7FillCanvas(on: boolean): void {
 }
 
 /**
+ * GROW-CONTENT flag. ON by default in the app. The grow-content proof harness
+ * flips it OFF (`setGrowContent(false)`, driven by ?mode=before) so BEFORE shows
+ * the W7 rhythm ALONE (blocks centered but rendered at their old small scale) and
+ * AFTER adds the grow (hero metrics / dashboard tiles / tall charts) — isolating
+ * exactly this package's contribution on top of W7.
+ */
+let _growContent = true;
+export function isGrowContentEnabled(): boolean {
+  return _growContent;
+}
+export function setGrowContent(on: boolean): void {
+  _growContent = on;
+}
+
+/**
  * W7 FILL-CANVAS — decide how a column/stack of blocks should distribute
  * itself down the available height, so sparse content is not glued to the top
  * with a dead bottom (M17-DECK-PERFEKCJA §rytm pionowy, DoD#2). Pure function
@@ -1028,6 +1043,69 @@ export function verticalFillMode(
   // — the premium "sparse but composed" look (M17-DECK-PERFEKCJA §rytm pionowy:
   // "rozłóż bloki, dodaj oddech" — NOT "rozciągaj absurdalnie").
   return 'center';
+}
+
+/**
+ * GROW-CONTENT (2026-07-05) — decide whether a block should render at 'hero'
+ * density (much larger type / taller chart) because it is the DOMINANT content
+ * of its region. Gated on the SAME `_w7FillCanvas` flag as the rhythm work so
+ * the proof harness can toggle grow-content on/off on one axis, and so that with
+ * the flag off (`?mode=before`) the render is byte-identical to pre-grow.
+ *
+ * A block is dominant when it is a single big-signal block (a lone metric, or a
+ * chart that owns a tall slot) and the region carries little competing text —
+ * exactly the slides W7 could only center, not fill.
+ *
+ * `siblings` = the blocks that share this block's region (INCLUDING the block
+ * itself). `intent`/`variant` come from the card so `big_number` / single-insight
+ * slides promote their metric even when a short callout shares the region.
+ */
+export function blockDensityFor(
+  block: { type: string; content?: Record<string, unknown> },
+  siblings: { type: string; content?: Record<string, unknown> }[],
+  opts: { intent?: string; variant?: string } = {}
+): 'default' | 'hero' {
+  if (!_growContent) return 'default';
+
+  const isHeroMetric = block.type === 'kpi_widget';
+  const isStrip = block.type === 'metric_strip';
+  const isChart = block.type === 'chart';
+  if (!isHeroMetric && !isStrip && !isChart) return 'default';
+
+  // How much OTHER weight competes in the region (excludes this block + chrome).
+  const competing = siblings
+    .filter((b) => b !== block && b.type !== 'divider' && b.type !== 'icon_row' && b.type !== 'heading')
+    .reduce((s, b) => s + estimateBlockWeight(b), 0);
+
+  // A hero metric on a single-insight / big_number slide is the archetype's
+  // whole point — promote it even when supporting narrative (callout / bullets)
+  // shares the slide. Off-archetype, only promote when it is truly alone.
+  if (isHeroMetric) {
+    const bigNumberContext = opts.variant === 'big_number' || opts.intent === 'single_insight';
+    if (bigNumberContext) return 'hero';
+    if (competing === 0) return 'hero';
+    return 'default';
+  }
+
+  // A KPI strip that owns its region (only a heading beside it) reads as a
+  // dashboard row — give the tiles real weight.
+  if (isStrip) {
+    return competing <= 2 ? 'hero' : 'default';
+  }
+
+  // A chart fills its region tall unless it competes with ANOTHER tall block
+  // (chart / image / table / diagram) that would also want the height. A short
+  // metric strip or a caption paragraph beside it does not block the grow.
+  if (isChart) {
+    const TALL = new Set(['chart', 'image', 'table', 'smart_diagram', 'smart_layout']);
+    const competingTall = siblings.some((b) => b !== block && TALL.has(b.type));
+    const competingText = siblings
+      .filter((b) => b !== block && b.type !== 'divider' && b.type !== 'icon_row' && b.type !== 'heading')
+      .reduce((s, b) => s + estimateBlockWeight(b), 0);
+    return !competingTall && competingText <= 3 ? 'hero' : 'default';
+  }
+
+  return 'default';
 }
 
 export function getLayoutById(id: string): LayoutTemplate | undefined {
