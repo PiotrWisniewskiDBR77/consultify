@@ -18,7 +18,13 @@
  * structural output in sync.
  */
 
-import type { DocumentSection, FormattingSchema } from './documentStudioTypes.js';
+import type {
+  DocumentBlock,
+  DocumentSchema,
+  DocumentSection,
+  FormattingSchema,
+} from './documentStudioTypes.js';
+import { summarizeDocumentChartBlock } from './documentStudioTypes.js';
 
 /**
  * Title prefixes the heuristic falls back on when a section does not
@@ -57,6 +63,60 @@ export function partitionSections(sections: readonly DocumentSection[]): Partiti
     else body.push(section);
   }
   return { body, appendix };
+}
+
+/**
+ * Detect a TABLE block that carries no data rows. The renderers accept
+ * two shapes: keyed `{rows:[{cells:{col:{value}}}]}` and legacy
+ * array-of-arrays `{headers, rows:[[...]]}`. A block with an empty (or
+ * absent) `rows` array — under either shape — has nothing to draw.
+ */
+function isEmptyTableBlock(block: DocumentBlock): boolean {
+  if (block.type !== 'table') return false;
+  const content = block.content as { rows?: unknown } | undefined | null;
+  const rows = content && typeof content === 'object' ? content.rows : undefined;
+  return !Array.isArray(rows) || rows.length === 0;
+}
+
+/**
+ * Detect a CHART block with no plottable data (zero valid numeric
+ * values across all series). Rasterization cannot draw such a chart, so
+ * the renderers fall through to a `[chart placeholder]` line — a
+ * fidelity regression (G4/K6) in a *generated* export. Pruning the block
+ * upstream removes the placeholder entirely.
+ */
+function isEmptyChartBlock(block: DocumentBlock): boolean {
+  if (block.type !== 'chart') return false;
+  return summarizeDocumentChartBlock(block).totalValueCount === 0;
+}
+
+/**
+ * Remove visual blocks that would render as a bare placeholder line:
+ * data-less tables and data-less charts. Content generation is
+ * LLM-driven and occasionally emits an empty visual shell; surfacing
+ * "[Table placeholder …]" / "[Figure N chart placeholder …]" in a
+ * client-grade DOCX/PDF export fails rubric K4 (no placeholders), K5
+ * (tables fed), K6 (charts render) and G4 (charts render visually).
+ *
+ * The prune is render-time only: it never mutates the stored schema, so
+ * the editor still shows the empty block as an affordance ("populate
+ * this table"). It is deliberately conservative — it drops ONLY blocks
+ * with no data at all, never a block that has partial content.
+ */
+export function pruneUnrenderableBlocks(schema: DocumentSchema): DocumentSchema {
+  let dropped = 0;
+  const sections = schema.sections.map((section) => {
+    const kept = section.blocks.filter((block) => {
+      if (isEmptyTableBlock(block) || isEmptyChartBlock(block)) {
+        dropped += 1;
+        return false;
+      }
+      return true;
+    });
+    return kept.length === section.blocks.length ? section : { ...section, blocks: kept };
+  });
+  if (dropped === 0) return schema;
+  return { ...schema, sections };
 }
 
 /**

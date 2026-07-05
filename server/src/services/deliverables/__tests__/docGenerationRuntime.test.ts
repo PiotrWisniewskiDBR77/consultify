@@ -54,6 +54,11 @@ vi.mock('../../tableSchemaGeneratorService.js', () => ({
   generateTableSchema: vi.fn().mockResolvedValue({ tierUsed: 'STANDARD', fallbackUsed: true, fields: [], seedRows: [], conditionalFormatting: [], hasFormulas: false, sheets: [] }),
 }));
 
+const registerArtifactOriginMock = vi.fn();
+vi.mock('../../v8/artifactRegistryService.js', () => ({
+  registerArtifactOrigin: (...args: unknown[]) => registerArtifactOriginMock(...args),
+}));
+
 const searchInsightsMock = vi.fn();
 vi.mock('../../ai/tools/searchInsights.js', () => ({
   searchInsights: (...args: unknown[]) => searchInsightsMock(...args),
@@ -136,6 +141,7 @@ beforeEach(() => {
   buildContextPackMock.mockResolvedValue({ key_points: [], data_points: [] });
   searchInsightsMock.mockResolvedValue({ results: [], truncated: false });
   searchOrgNotesMock.mockResolvedValue({ results: [], truncated: false });
+  registerArtifactOriginMock.mockResolvedValue({ artifactId: 'registry-1' });
   featureFlagsMock.ENABLE_DELIVERABLES_DOC_STREAMING = false;
   renderMarkdownMock.mockReturnValue(
     '# Raport o transformacji\n\n## Synteza\n\nRealna treść konsultingowa oparta o kontekst.'
@@ -252,6 +258,73 @@ describe('startDoc + statusDoc — szczęśliwa ścieżka', () => {
     await expect(
       startDoc({ generationId: 'draft-1', setup: {}, organizationId: ORG, userId: USER })
     ).rejects.toMatchObject({ code: 'invalid_state' });
+  });
+});
+
+describe('startDoc — tor streaming zunifikowany z Document Studio (C3)', () => {
+  it('materializuje encję Studio + rejestruje w Outputs, mimo streamingu do draftu', async () => {
+    // Streaming ON: sekcje rosną w draftcie (per-sekcja LLM), ale artefakt
+    // KANONICZNY nadal powstaje przez materializeDocumentArtifact (encja Studio).
+    featureFlagsMock.ENABLE_DELIVERABLES_DOC_STREAMING = true;
+    generateChatResponseMock.mockResolvedValue({
+      content: 'Realna, konkretna treść sekcji oparta o kontekst konsultingowy.',
+    });
+
+    const started = await startDoc({
+      generationId: 'draft-1',
+      setup: {},
+      organizationId: ORG,
+      userId: USER,
+    });
+    expect(started.state).toBe('generating');
+
+    await flushBackgroundWork();
+    // Streaming woła LLM raz na sekcję (2 sekcje w outline).
+    expect(generateChatResponseMock).toHaveBeenCalledTimes(2);
+
+    // Kanoniczna unifikacja: encja Studio powstaje TAKŻE na torze streaming.
+    expect(materializeMock).toHaveBeenCalledWith(
+      expect.objectContaining({ useLlm: true, organizationId: ORG, userId: USER })
+    );
+    // Draft dostaje referencję do encji Studio (artifactId) — eksport DOCX/PDF.
+    expect(updateDraftMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        draftId: 'draft-1',
+        patch: expect.objectContaining({ artifactId: 'doc-artifact-1' }),
+      })
+    );
+    // Rejestr Outputs: dokument z czatu istnieje jako 'report'/'document'.
+    expect(registerArtifactOriginMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        outputType: 'report',
+        artifactFamily: 'document',
+        originRecordId: 'doc-artifact-1',
+      })
+    );
+
+    // statusDoc zwraca referencję encji Studio (nie fallback na draft.id).
+    const status = await statusDoc({ generationId: 'draft-1', organizationId: ORG });
+    expect(status.state).toBe('draft');
+    expect(status.artifact).toMatchObject({ artifactId: 'doc-artifact-1', format: 'doc' });
+  });
+
+  it('awaria materializacji Studio nie psuje gotowego draftu (best-effort)', async () => {
+    featureFlagsMock.ENABLE_DELIVERABLES_DOC_STREAMING = true;
+    generateChatResponseMock.mockResolvedValue({
+      content: 'Realna, konkretna treść sekcji oparta o kontekst konsultingowy.',
+    });
+    materializeMock.mockRejectedValueOnce(new Error('wave5 down'));
+
+    await startDoc({ generationId: 'draft-1', setup: {}, organizationId: ORG, userId: USER });
+    await flushBackgroundWork();
+
+    // Draft nadal zapisany z treścią (bez artifactId) — użytkownik ma dokument.
+    const lastUpdate = updateDraftMock.mock.calls.at(-1)?.[0];
+    expect(lastUpdate?.patch?.content).toContain('Realna');
+    expect(lastUpdate?.patch?.artifactId).toBeUndefined();
+
+    const status = await statusDoc({ generationId: 'draft-1', organizationId: ORG });
+    expect(status.state).toBe('draft');
   });
 });
 
@@ -577,8 +650,10 @@ describe('A3 — streaming per-sekcja (flaga ENABLE_DELIVERABLES_DOC_STREAMING)'
     await flushBackgroundWork();
     await flushBackgroundWork();
 
-    // one-shot NIE został użyty
-    expect(materializeMock).not.toHaveBeenCalled();
+    // C3: treść draftu powstaje per-sekcja (streaming), a NIE z one-shot
+    // renderu materializeDocumentArtifact — dowodzą tego 2 wywołania LLM (2 sekcje)
+    // oraz progresywne zapisy treści niżej. Sam materialize jest teraz wołany
+    // DODATKOWO (kanoniczna encja Studio), co pokrywa osobny opis „C3".
     // dwa wywołania = dwie sekcje
     expect(generateChatResponseMock).toHaveBeenCalledTimes(2);
     // drugie wywołanie zna pierwszą sekcję (koherencja)
