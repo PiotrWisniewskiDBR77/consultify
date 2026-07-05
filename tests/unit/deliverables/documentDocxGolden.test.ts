@@ -30,6 +30,7 @@ interface UnzippedDocx {
   contentTypes: string;
   coreProps: string;
   footnotes: string | null;
+  numbering: string | null;
 }
 
 async function unzipDocx(buffer: Buffer): Promise<UnzippedDocx> {
@@ -39,10 +40,11 @@ async function unzipDocx(buffer: Buffer): Promise<UnzippedDocx> {
   const contentTypes = await zip.file('[Content_Types].xml')?.async('string');
   const coreProps = await zip.file('docProps/core.xml')?.async('string');
   const footnotes = (await zip.file('word/footnotes.xml')?.async('string')) ?? null;
+  const numbering = (await zip.file('word/numbering.xml')?.async('string')) ?? null;
   if (!document || !styles || !contentTypes || !coreProps) {
     throw new Error('golden DOCX buffer is missing a required OOXML part');
   }
-  return { document, styles, contentTypes, coreProps, footnotes };
+  return { document, styles, contentTypes, coreProps, footnotes, numbering };
 }
 
 /** List the embedded media parts (images) inside a DOCX ZIP package. */
@@ -96,6 +98,29 @@ describe('Document Studio golden DOCX export (C4)', () => {
     expect(document).toContain(`w:val="${DOCX_STYLE_IDS.TITLE}"`);
     expect(document).toContain(`w:val="${DOCX_STYLE_IDS.SUBTITLE}"`);
     expect(document).toContain(`w:val="${DOCX_STYLE_IDS.TOC_HEADING}"`);
+  });
+
+  it('renders bullet and numbered lists as real Word list paragraphs (G7 — not manual "• " / "N. " text prefixes)', async () => {
+    const buffer = await renderDocumentSchemaToDocxBuffer(makeGoldenDocumentSchema());
+    const { document, numbering } = await unzipDocx(buffer);
+
+    // A real numbering part must exist, with our two declared abstract
+    // configs (bullet + decimal), and every list paragraph in the body
+    // must reference one of them via <w:numPr> — that is what makes Word
+    // recognize the paragraphs as an editable, styled list outline
+    // instead of plain text that happens to start with a glyph.
+    expect(numbering).not.toBeNull();
+    expect(numbering).toContain('w:numFmt w:val="bullet"');
+    expect(numbering).toContain('w:numFmt w:val="decimal"');
+    expect(document).toContain('<w:numPr>');
+    expect(countOccurrences(document, '<w:numPr>')).toBeGreaterThanOrEqual(6); // 3 bullet + 3 numbered golden items
+
+    // The old manual-prefix rendering is gone: list item text is no longer
+    // literally prefixed with "• " or "1. " / "2. " / "3. " inside the run.
+    expect(document).not.toContain('>• Enterprise ARR');
+    expect(document).not.toContain('>1. Confirm Q2 budget');
+    expect(document).toContain('Enterprise ARR +18%');
+    expect(document).toContain('Confirm Q2 budget');
   });
 
   it('renders the cover title/subtitle/audience and a hard page break before the body', async () => {
