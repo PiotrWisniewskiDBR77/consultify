@@ -74,11 +74,20 @@ export async function recordFailedLogin(
     .toLowerCase();
   const normalizedIp = String(ip || '').trim();
 
-  const targets: Array<{ key: string; label: string }> = [];
-  if (normalizedEmail) targets.push({ key: `email:${normalizedEmail}`, label: `konto ${normalizedEmail}` });
-  if (normalizedIp) targets.push({ key: `ip:${normalizedIp}`, label: `adres IP ${normalizedIp}` });
+  // `suffix` adds the source IP to the ACCOUNT-keyed alert only; the IP-keyed
+  // alert already names the IP in its label, so it stays suffix-free (avoids
+  // "na adres IP X (IP X)").
+  const targets: Array<{ key: string; label: string; suffix: string }> = [];
+  if (normalizedEmail)
+    targets.push({
+      key: `email:${normalizedEmail}`,
+      label: `konto ${normalizedEmail}`,
+      suffix: normalizedIp ? ` (IP ${normalizedIp})` : '',
+    });
+  if (normalizedIp)
+    targets.push({ key: `ip:${normalizedIp}`, label: `adres IP ${normalizedIp}`, suffix: '' });
 
-  for (const { key, label } of targets) {
+  for (const { key, label, suffix } of targets) {
     const count = bumpAndCount(key);
     // Fire on the crossing edge; sendSystemAlert's throttle is the backstop.
     if (count === FAILED_LOGIN_THRESHOLD) {
@@ -87,7 +96,7 @@ export async function recordFailedLogin(
           title: 'Podejrzenie ataku brute-force',
           message:
             `${count} nieudanych prób logowania w ciągu ${Math.round(WINDOW_MS / 60000)} min na ${label}` +
-            (normalizedEmail && normalizedIp ? ` (IP ${normalizedIp})` : '') +
+            suffix +
             '. Możliwe zgadywanie hasła.',
           severity: 'WARNING',
           source: 'Security',
