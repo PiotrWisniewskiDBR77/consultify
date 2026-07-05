@@ -104,6 +104,7 @@ interface DocxRuntime {
   Header: new (options: Record<string, unknown>) => unknown;
   HeadingLevel: { HEADING_1: unknown; HEADING_2: unknown; HEADING_3: unknown };
   ImageRun: new (options: Record<string, unknown>) => DocxTextRun;
+  LevelFormat: { BULLET: unknown; DECIMAL: unknown };
   PageBreak: new () => DocxTextRun;
   PageNumber: { CURRENT: unknown; TOTAL_PAGES: unknown };
   Packer: { toBuffer: (doc: unknown) => Promise<Buffer> };
@@ -134,6 +135,7 @@ const {
   Header,
   HeadingLevel,
   ImageRun,
+  LevelFormat,
   PageBreak,
   PageNumber,
   Packer,
@@ -145,6 +147,63 @@ const {
   TextRun,
   WidthType,
 } = docxModule as unknown as DocxRuntime;
+
+/**
+ * G7 fix — real Word list outline (not manual `• ` / `1. ` text prefixes).
+ *
+ * `docx` requires every numbered/bulleted paragraph to reference a
+ * `numbering.config[].reference` id declared on the `Document` itself
+ * (`Document({ numbering: { config: [...] } })`). We declare exactly two
+ * single-level abstract numbering definitions up front — one bullet, one
+ * decimal — and every list paragraph in the document (regardless of which
+ * section/block emitted it) references the matching one via
+ * `numbering: { reference, level: 0 }`. Word then renders these as true
+ * "List Paragraph" items: editable numbering, correct outline semantics,
+ * `<w:numPr>` in `document.xml`, and a real `numbering.xml` part — exactly
+ * what rubric dimension G7 checks for.
+ *
+ * The content model (`BlockListContent.items: string[]`) is flat — no
+ * nested/sub-list levels are authored anywhere upstream — so a single
+ * level (0) per reference is sufficient. If nested lists are introduced
+ * later, add more `levels` entries to each config and thread a `level`
+ * argument through `renderListBlocks`.
+ */
+const DOCX_NUMBERING_REFERENCE = Object.freeze({
+  BULLET: 'docStudioBulletList',
+  DECIMAL: 'docStudioNumberedList',
+} as const);
+
+/** Passed as `numbering.config` to the `Document` constructor (see above). */
+const DOCX_NUMBERING_CONFIG = [
+  {
+    reference: DOCX_NUMBERING_REFERENCE.BULLET,
+    levels: [
+      {
+        level: 0,
+        format: LevelFormat.BULLET,
+        text: '•',
+        alignment: AlignmentType.LEFT,
+        style: {
+          paragraph: { indent: { left: 720, hanging: 360 } },
+        },
+      },
+    ],
+  },
+  {
+    reference: DOCX_NUMBERING_REFERENCE.DECIMAL,
+    levels: [
+      {
+        level: 0,
+        format: LevelFormat.DECIMAL,
+        text: '%1.',
+        alignment: AlignmentType.LEFT,
+        style: {
+          paragraph: { indent: { left: 720, hanging: 360 } },
+        },
+      },
+    ],
+  },
+];
 
 // Re-declare the names in the type namespace so call sites can keep using
 // `: Paragraph`, `: Table`, `: TextRun` for nominal typing. These coexist with
@@ -422,15 +481,21 @@ function renderListBlocks(block: DocumentBlock, ctx: RenderContext): Paragraph[]
   const value = (block.content ?? {}) as BlockListContent;
   const items = Array.isArray(value.items) ? value.items : [];
   const numbered = value.style === 'numbered' || block.type === 'numbered_list';
+  const numberingReference = numbered
+    ? DOCX_NUMBERING_REFERENCE.DECIMAL
+    : DOCX_NUMBERING_REFERENCE.BULLET;
   return items.map((raw, index) => {
     const itemText = asString(raw);
-    const prefix = numbered ? `${index + 1}. ` : '• ';
-    const children: TextRun[] = [new TextRun({ text: `${prefix}${itemText}`, font: ctx.bodyFont })];
+    // G7 fix: no manual "• " / "N. " text prefix — the bullet/number glyph
+    // comes from the `numbering` reference below, which Word renders as a
+    // real, editable list marker (`<w:numPr>`), not literal characters.
+    const children: TextRun[] = [new TextRun({ text: itemText, font: ctx.bodyFont })];
     if (block.isAssumption && index === items.length - 1) {
       children.push(buildAssumptionMarker(ctx.bodyFont));
     }
     return new Paragraph({
       style: DOCX_STYLE_IDS.BODY_TEXT,
+      numbering: { reference: numberingReference, level: 0 },
       children,
       spacing: { after: 60 },
     });
@@ -1358,6 +1423,7 @@ export async function renderDocumentSchemaToDocxBuffer(
     title: schema.title,
     description: `Consultify Document Studio · ${schema.documentType} · ${formattingClass}`,
     styles,
+    numbering: { config: DOCX_NUMBERING_CONFIG },
     ...(footnotesPayload ? { footnotes: footnotesPayload } : {}),
     sections: [
       {
