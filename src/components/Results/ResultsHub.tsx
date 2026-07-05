@@ -1861,7 +1861,7 @@ export const ResultsHub: React.FC = () => {
               {
                 id: 'initiativeName',
                 label: t('results.columns.initiative', 'Initiative'),
-                width: '18%',
+                width: '200px',
                 filterable: true,
                 filterOptions: [
                   ...new Set(
@@ -1882,7 +1882,7 @@ export const ResultsHub: React.FC = () => {
               {
                 id: 'current',
                 label: t('results.columns.current', 'Current'),
-                width: '11%',
+                width: '110px',
                 align: 'right' as const,
                 render: (row: Record<string, unknown>) => {
                   const k = row as unknown as ResultsKPI;
@@ -1899,7 +1899,7 @@ export const ResultsHub: React.FC = () => {
               {
                 id: 'target',
                 label: t('results.columns.target', 'Target'),
-                width: '11%',
+                width: '110px',
                 align: 'right' as const,
                 render: (row: Record<string, unknown>) => {
                   const k = row as unknown as ResultsKPI;
@@ -1916,7 +1916,7 @@ export const ResultsHub: React.FC = () => {
               {
                 id: 'ownerName',
                 label: t('results.columns.owner', 'Owner'),
-                width: '16%',
+                width: '160px',
                 filterable: true,
                 filterOptions: Array.from(
                   new Set(filteredKpis.map((k) => String(k.ownerName || '').trim()).filter(Boolean))
@@ -1931,7 +1931,7 @@ export const ResultsHub: React.FC = () => {
               {
                 id: 'status',
                 label: t('results.columns.status', 'Status'),
-                width: '13%',
+                width: '140px',
                 filterable: true,
                 filterOptions: [
                   {
@@ -1955,7 +1955,7 @@ export const ResultsHub: React.FC = () => {
               {
                 id: 'needsEntry',
                 label: t('results.columns.needsEntry', 'Needs entry'),
-                width: '11%',
+                width: '140px',
                 filterable: true,
                 filterOptions: [
                   { value: 'yes', label: t('common.yes', 'Yes') },
@@ -1973,7 +1973,7 @@ export const ResultsHub: React.FC = () => {
               {
                 id: 'updatedAt',
                 label: t('common.updated', 'Updated'),
-                width: '11%',
+                width: '130px',
                 sortable: true,
                 sortAccessor: (row: Record<string, unknown>) => {
                   const k = row as unknown as ResultsKPI;
