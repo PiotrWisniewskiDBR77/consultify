@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import { cn } from '../../utils/cn';
 import { ApiKeysManagementView } from '../../views/admin/ApiKeysManagementView';
+import { ServiceAccountsPanel } from '../MyWork/table/serviceAccounts/ServiceAccountsPanel';
 import { AdminCollaborationControlsPanel } from './AdminCollaborationControlsPanel';
 import { AdminIamPolicyPanel } from './AdminIamPolicyPanel';
 import { AdminRiskSummaryPanel } from './AdminRiskSummaryPanel';
@@ -77,7 +78,23 @@ export const AdminSecurityIdentityPanel: React.FC = () => {
 
       {activeTab === 'policy' && <AdminSecurityPolicyPanel />}
       {activeTab === 'collaboration' && <AdminCollaborationControlsPanel />}
-      {activeTab === 'api-access' && <ApiKeysManagementView />}
+      {activeTab === 'api-access' && (
+        <div className="space-y-6">
+          <ApiKeysManagementView />
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-c-border-subtle dark:bg-white/5">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Table Platform tokens
+            </h3>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+              Personal access tokens scoped to the Table Platform REST API, for scripts and
+              automations like Zapier or Make.
+            </p>
+            <div className="mt-4">
+              <ServiceAccountsPanel />
+            </div>
+          </div>
+        </div>
+      )}
       {activeTab === 'iam' && <AdminIamPolicyPanel />}
       {activeTab === 'scim' && <AdminScimLifecyclePanel />}
       {activeTab === 'risk' && <AdminRiskSummaryPanel />}
