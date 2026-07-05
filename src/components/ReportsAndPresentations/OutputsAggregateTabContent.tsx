@@ -162,6 +162,13 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   const { isEnabled } = useFeatureFlagsContext();
   const openChatWithContext = useOpenChatWithContext();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Triada canon A4/pkt.13: checkbox po lewej każdego wiersza — obowiązkowy
+  // niezależnie od bulk-toolbara. Ten Hub NIE jest jeszcze przeniesiony na
+  // StandardModuleBar (Menu 3 bulk mode) — osobny, większy program migracji
+  // ModuleHub→StandardModuleBar, poza zakresem tego zadania. Checkbox tu
+  // działa jako lokalny toggle (zaznaczenie widoczne, przetrwa re-render);
+  // bulk-akcje podepniemy razem z tamtą migracją.
+  const [selectedOutputIds, setSelectedOutputIds] = useState<Set<string>>(new Set());
   const deepLinkConsumed = useRef(false);
   // selectedGovernance is provided by useTrustState hook below
   const [lineageOpen, setLineageOpen] = useState(false);
@@ -1043,6 +1050,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
               title: t('rap.empty.outputs', 'Brak outputów'),
             }}
             rowMenu={(row) => buildRowMenu(row as unknown as AggregateRow)}
+            selection={{ selectedIds: selectedOutputIds, onChange: setSelectedOutputIds }}
           />
         </div>
 
