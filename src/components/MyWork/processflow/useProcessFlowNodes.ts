@@ -10,6 +10,12 @@ export interface Lane {
   id: string;
   label: string;
   color: string;
+  /** F5a A3: swimlane collapsed — its nodes are hidden and the band shrinks. */
+  collapsed?: boolean;
+  /** F5a A3: user-resized lane band height (px). Falls back to LANE_HEIGHT. */
+  height?: number;
+  /** F5a A3: reserved for horizontal lane sizing (vertical-lane layouts). */
+  width?: number;
 }
 
 export interface UseProcessFlowNodesOpts {
@@ -23,10 +29,25 @@ export interface UseProcessFlowNodesOpts {
   isPl: boolean;
   pushUndo: () => void;
   onNodeDetail?: ((nodeId: string, data: any) => void) | undefined;
-  /** Fire-and-forget hook for persisting node deletions to the V8 tables. */
+  /**
+   * Optional callback fired with the ids of deleted nodes. Previously wired
+   * to useProcessFlowCRUD (V8 mirror persistence); that hook was removed as
+   * dead code (M07/F1, DP-7) since the V8 process-flow routes were cut. Kept
+   * as a generic extension point — no current caller passes it.
+   */
   onNodesDeleted?: ((nodeIds: string[]) => void) | undefined;
   /** Injected confirm for bulk deletes (≥2 nodes). Returns true = proceed. */
   confirmBulkDelete?: (count: number) => Promise<boolean>;
+  /**
+   * M07 F3 realtime emission. Optional so this hook stays usable without a
+   * collab layer (tests, single-user). Each fires AFTER local state is set.
+   */
+  collab?: {
+    broadcastNodeRemove?: (ids: string[]) => void;
+    broadcastEdgeRemove?: (ids: string[]) => void;
+    broadcastOps?: (ops: Array<{ op: string; data: any }>) => void;
+    broadcastLanes?: (lanes: Lane[], nodeUpdates?: Node[]) => void;
+  };
 }
 
 export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
@@ -43,6 +64,7 @@ export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
     onNodeDetail,
     onNodesDeleted,
     confirmBulkDelete,
+    collab,
   } = opts;
 
   const deleteSelected = useCallback(async () => {
@@ -60,12 +82,25 @@ export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
       if (removedNodeIds.size) onNodesDeleted?.(Array.from(removedNodeIds));
       return prev.filter((n: Node) => !n.selected);
     });
+    const removedEdgeIds: string[] = [];
     setEdges((prev: Edge[]) =>
-      prev.filter(
-        (e: Edge) => !e.selected && !removedNodeIds!.has(e.source) && !removedNodeIds!.has(e.target)
-      )
+      prev.filter((e: Edge) => {
+        const keep =
+          !e.selected && !removedNodeIds!.has(e.source) && !removedNodeIds!.has(e.target);
+        if (!keep) removedEdgeIds.push(e.id);
+        return keep;
+      })
     );
-  }, [locked, nodes, confirmBulkDelete, onNodesDeleted, pushUndo, setEdges, setNodes]);
+    // F3: emit removed edges then nodes as one batch (edges first so peers drop
+    // dangling connectors before their endpoints disappear).
+    const removedNodeIdList = Array.from(removedNodeIds!);
+    if (removedEdgeIds.length > 0 || removedNodeIdList.length > 0) {
+      collab?.broadcastOps?.([
+        ...removedEdgeIds.map((id) => ({ op: 'remove_edge', data: { id } })),
+        ...removedNodeIdList.map((id) => ({ op: 'remove_node', data: { id } })),
+      ]);
+    }
+  }, [locked, nodes, confirmBulkDelete, onNodesDeleted, pushUndo, setEdges, setNodes, collab]);
 
   const duplicateSelected = useCallback(() => {
     if (locked) return;
@@ -111,17 +146,24 @@ export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
     if (newEdges.length > 0) {
       setEdges((prev) => [...prev, ...newEdges]);
     }
-  }, [edges, locked, nodes, onNodeDetail, pushUndo, setEdges, setNodes]);
+    // F3: emit the duplicated nodes + edges as one batch.
+    collab?.broadcastOps?.([
+      ...newNodes.map((n) => ({ op: 'add_node', data: n })),
+      ...newEdges.map((e) => ({ op: 'add_edge', data: e })),
+    ]);
+  }, [edges, locked, nodes, onNodeDetail, pushUndo, setEdges, setNodes, collab]);
 
   const handleLaneRename = useCallback(
     (laneId: string, next: string) => {
       if (locked) return;
       pushUndo();
-      setLanes((prev: Lane[]) =>
-        prev.map((l: Lane) => (l.id === laneId ? { ...l, label: next } : l))
-      );
+      setLanes((prev: Lane[]) => {
+        const nextLanes = prev.map((l: Lane) => (l.id === laneId ? { ...l, label: next } : l));
+        collab?.broadcastLanes?.(nextLanes);
+        return nextLanes;
+      });
     },
-    [locked, pushUndo, setLanes]
+    [locked, pushUndo, setLanes, collab]
   );
 
   const handleLaneDelete = useCallback(
@@ -129,37 +171,53 @@ export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
       if (locked || lanes.length <= 1) return;
       pushUndo();
       const fallbackLane = lanes.find((l) => l.id !== laneId) || lanes[0];
+      const reassigned: Node[] = [];
       setNodes((prev) =>
-        prev.map((n) =>
-          n.data?.laneId === laneId
-            ? {
-                ...n,
-                data: {
-                  ...n.data,
-                  laneId: fallbackLane.id,
-                  laneColor: fallbackLane.color,
-                },
-              }
-            : n
-        )
+        prev.map((n) => {
+          if (n.data?.laneId !== laneId) return n;
+          const nextNode = {
+            ...n,
+            data: {
+              ...n.data,
+              laneId: fallbackLane.id,
+              laneColor: fallbackLane.color,
+            },
+          };
+          reassigned.push(nextNode);
+          return nextNode;
+        })
       );
-      setLanes((prev) => prev.filter((l) => l.id !== laneId));
+      const nextLanes = lanes.filter((l) => l.id !== laneId);
+      setLanes(nextLanes);
+      // F3: lane removal + node reassignment as ONE batch (update_lanes carries
+      // the new Lane[]; the reassigned nodes ride as update_node[]).
+      collab?.broadcastLanes?.(nextLanes, reassigned);
     },
-    [locked, lanes, pushUndo, setLanes, setNodes]
+    [locked, lanes, pushUndo, setLanes, setNodes, collab]
   );
 
   const handleLaneColorChange = useCallback(
     (laneId: string, color: string) => {
       if (locked) return;
       pushUndo();
-      setLanes((prev) => prev.map((l) => (l.id === laneId ? { ...l, color } : l)));
+      const recolored: Node[] = [];
+      let nextLanes: Lane[] = lanes;
+      setLanes((prev) => {
+        nextLanes = prev.map((l) => (l.id === laneId ? { ...l, color } : l));
+        return nextLanes;
+      });
       setNodes((prev) =>
-        prev.map((n) =>
-          n.data?.laneId === laneId ? { ...n, data: { ...n.data, laneColor: color } } : n
-        )
+        prev.map((n) => {
+          if (n.data?.laneId !== laneId) return n;
+          const nextNode = { ...n, data: { ...n.data, laneColor: color } };
+          recolored.push(nextNode);
+          return nextNode;
+        })
       );
+      // F3: lane color + affected node laneColor as one batch.
+      collab?.broadcastLanes?.(nextLanes, recolored);
     },
-    [locked, pushUndo, setLanes, setNodes]
+    [locked, lanes, pushUndo, setLanes, setNodes, collab]
   );
 
   const handleLaneMoveUp = useCallback(
@@ -171,10 +229,11 @@ export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
         if (idx <= 0) return prev;
         const next = [...prev];
         [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+        collab?.broadcastLanes?.(next);
         return next;
       });
     },
-    [locked, pushUndo, setLanes]
+    [locked, pushUndo, setLanes, collab]
   );
 
   const handleLaneMoveDown = useCallback(
@@ -186,10 +245,11 @@ export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
         if (idx < 0 || idx >= prev.length - 1) return prev;
         const next = [...prev];
         [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+        collab?.broadcastLanes?.(next);
         return next;
       });
     },
-    [locked, pushUndo, setLanes]
+    [locked, pushUndo, setLanes, collab]
   );
 
   return {

@@ -1,9 +1,8 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import type { Node, Edge } from 'reactflow';
 
 import { useProcessFlowUndoRedo } from '../../../src/components/MyWork/processflow/useProcessFlowUndoRedo';
-import { useProcessFlowDegraded } from '../../../src/components/MyWork/processflow/useProcessFlowDegraded';
 
 describe('useProcessFlowUndoRedo', () => {
   const makeOpts = () => {
@@ -106,35 +105,7 @@ describe('useProcessFlowUndoRedo', () => {
   });
 });
 
-const originalFetch = global.fetch;
-const mockFetch = vi.fn();
-
-beforeEach(() => {
-  mockFetch.mockReset();
-  global.fetch = mockFetch as typeof fetch;
-});
-
-afterEach(() => {
-  global.fetch = originalFetch;
-});
-
-describe('useProcessFlowDegraded', () => {
-  // The V8 process-flow mirror was cut (DP-7), so useProcessFlowDegraded was
-  // neutralized to a no-op: it must NOT poll the (gone) /health endpoint and must
-  // always report healthy. (M07 2026-06-20 — see useProcessFlowDegraded.ts)
-  it('never reports degraded (V8 mirror cut)', () => {
-    const { result } = renderHook(() => useProcessFlowDegraded({ processId: 'p1' }));
-    expect(result.current.isDegraded).toBe(false);
-    expect(result.current.activeScenarios).toHaveLength(0);
-  });
-
-  it('checkHealth is a no-op and performs no network request', async () => {
-    const { result } = renderHook(() => useProcessFlowDegraded({ processId: 'p2' }));
-    await act(async () => {
-      await result.current.checkHealth();
-    });
-    expect(mockFetch).not.toHaveBeenCalled();
-    expect(result.current.isDegraded).toBe(false);
-    expect(result.current.activeScenarios).toHaveLength(0);
-  });
-});
+// Note: useProcessFlowDegraded (V8 health-poll no-op) was removed as dead code
+// (M07/F1, DP-7) — the canonical persistence path is blob-sync (my_idea_maps)
+// with no V8 mirror to be "degraded" from. Its degraded-mode banner in
+// IdeaProcessFlowTool.tsx was removed alongside it.

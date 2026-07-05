@@ -2,6 +2,7 @@ import {
   AlertTriangle,
   BarChart3,
   Copy,
+  GitBranch,
   GitMerge,
   LayoutGrid,
   Loader2,
@@ -21,6 +22,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import TeresaMark from '../../shared/TeresaMark';
 import { type ProcessFlowSemanticKit } from '../canvas/canvasOsContract';
 import { type FlowShape, SHAPE_CONFIG } from './FlowNodeComponent';
+
+// M07 F2: useProcessFlowAIProposal / AIProposalPanel now consume the real
+// blob backend (POST /api/my-work/my-ideas/:id/ai-generate). This constant
+// stays in the code as an emergency kill-switch (spec decision 7) — flip to
+// false to hide the "Propozycja AI" button without touching the wiring.
+export const AI_PROPOSAL_ENABLED = true;
+
 // ── Re-export types ──────────────────────────────────────────────────────────
 
 export type ProcessFlowMode = 'classic' | 'automation' | 'vsm';
@@ -135,6 +143,10 @@ export interface ProcessFlowToolbarProps {
   generateSummary: () => void;
   showKPIDashboard: boolean;
   setShowKPIDashboard: React.Dispatch<React.SetStateAction<boolean>>;
+  showReadbackPanel?: boolean;
+  onOpenReadback?: () => void;
+  showAIPanel?: boolean;
+  onOpenAIProposal?: () => void;
   canUndo: boolean;
   canRedo: boolean;
   undo: () => void;
@@ -188,6 +200,10 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
   generateSummary,
   showKPIDashboard,
   setShowKPIDashboard,
+  showReadbackPanel,
+  onOpenReadback,
+  showAIPanel,
+  onOpenAIProposal,
   canUndo,
   canRedo,
   undo,
@@ -437,27 +453,35 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               )}
               {isPl ? 'Podsumuj' : 'Summary'}
             </button>
-            {onAIProposal && (
+            {onOpenReadback && (
               <button
                 type="button"
-                onClick={onAIProposal}
+                onClick={onOpenReadback}
+                className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
+                  showReadbackPanel
+                    ? 'text-indigo-700 bg-indigo-50 dark:bg-indigo-900/20 dark:text-indigo-300'
+                    : 'text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
+                }`}
+                title={isPl ? 'Odczyt semantyczny' : 'Semantic readback'}
+              >
+                <GitBranch size={14} />
+                {isPl ? 'Odczyt' : 'Readback'}
+              </button>
+            )}
+            {AI_PROPOSAL_ENABLED && onOpenAIProposal && (
+              <button
+                type="button"
+                onClick={onOpenAIProposal}
                 disabled={locked}
-                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors disabled:opacity-40"
-                title={isPl ? 'Propozycja AI — zmiany w przepływie' : 'AI Proposal — flow edits'}
+                className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors disabled:opacity-40 ${
+                  showAIPanel
+                    ? 'text-primary-700 bg-primary-50 dark:bg-primary-900/20 dark:text-primary-300'
+                    : 'text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20'
+                }`}
+                title={isPl ? 'Propozycja AI' : 'AI proposal'}
               >
                 <Sparkles size={14} />
                 {isPl ? 'Propozycja AI' : 'AI Proposal'}
-              </button>
-            )}
-            {onReadback && (
-              <button
-                type="button"
-                onClick={onReadback}
-                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors"
-                title={isPl ? 'Odczyt semantyczny przepływu' : 'Semantic readback of the flow'}
-              >
-                <ScanText size={14} />
-                {isPl ? 'Odczyt' : 'Readback'}
               </button>
             )}
           </div>

@@ -2,7 +2,7 @@ import { ChevronDown, Clock, DollarSign, Layers, Server, Tag, User } from 'lucid
 import React, { useCallback, useEffect, useState } from 'react';
 import type { Edge, Node } from 'reactflow';
 
-import { CONDITION_TYPES } from './FlowEdgeComponent';
+import { CONDITION_TYPES, EDGE_KINDS, type EdgeKind } from './FlowEdgeComponent';
 
 const inputClass =
   'w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500/40 outline-none';
@@ -30,6 +30,10 @@ interface ProcessFlowPropertiesPanelProps {
   ) => void;
   /** Persist edge `data.conditionType` (yes / no / default / exception). */
   onEdgeConditionChange?: (edgeId: string, conditionType: EdgeCondition) => void;
+  /** F5a A2: persist edge `data.edgeKind` (sequence / conditional / message). */
+  onEdgeKindChange?: (edgeId: string, kind: EdgeKind) => void;
+  /** F5a A1: toggle orthogonal routing (`data.orthogonal`) for the edge. */
+  onEdgeOrthogonalToggle?: (edgeId: string, orthogonal: boolean) => void;
   /** Persist description, assignee, and system fields on node `data`. */
   onNodeMetadataChange?: (
     nodeId: string,
@@ -48,6 +52,8 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
   onLaneChange,
   onEdgeLabelChange,
   onEdgeConditionChange = () => {},
+  onEdgeKindChange = () => {},
+  onEdgeOrthogonalToggle = () => {},
   onNodeMetricsChange,
   onNodeMetadataChange = () => {},
 }) => {
@@ -153,6 +159,24 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
 
   if (selectedEdge && !selectedNode) {
     const condition = (selectedEdge.data?.conditionType ?? '') as EdgeCondition;
+    const edgeKind: EdgeKind = EDGE_KINDS.includes(selectedEdge.data?.edgeKind)
+      ? selectedEdge.data.edgeKind
+      : selectedEdge.data?.conditionType
+        ? 'conditional'
+        : 'sequence';
+    const orthogonal = Boolean(selectedEdge.data?.orthogonal);
+    const edgeKindLabel = (k: EdgeKind) =>
+      k === 'sequence'
+        ? isPl
+          ? 'Sekwencja'
+          : 'Sequence'
+        : k === 'conditional'
+          ? isPl
+            ? 'Warunkowa'
+            : 'Conditional'
+          : isPl
+            ? 'Komunikat'
+            : 'Message';
     return (
       <div className="space-y-4 p-4 text-sm">
         <div>
@@ -171,6 +195,42 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
               onKeyDown={(e) => {
                 if (e.key === 'Enter') commitEdgeLabel();
               }}
+            />
+          </label>
+        </div>
+        <div>
+          <h3 className={sectionHeaderClass}>{isPl ? 'Typ krawędzi' : 'Edge type'}</h3>
+          <div className="relative">
+            <select
+              className={`${inputClass} appearance-none pr-9`}
+              value={edgeKind}
+              disabled={locked}
+              onChange={(e) => onEdgeKindChange(selectedEdge.id, e.target.value as EdgeKind)}
+            >
+              {EDGE_KINDS.map((k) => (
+                <option key={k} value={k}>
+                  {edgeKindLabel(k)}
+                </option>
+              ))}
+            </select>
+            <ChevronDown
+              size={16}
+              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-600"
+              aria-hidden
+            />
+          </div>
+        </div>
+        <div>
+          <label className="flex cursor-pointer items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-navy-700 dark:bg-navy-900/40">
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+              {isPl ? 'Routing ortogonalny' : 'Orthogonal routing'}
+            </span>
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-[var(--c-info)]"
+              checked={orthogonal}
+              disabled={locked}
+              onChange={(e) => onEdgeOrthogonalToggle(selectedEdge.id, e.target.checked)}
             />
           </label>
         </div>
