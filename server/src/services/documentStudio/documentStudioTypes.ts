@@ -9,6 +9,16 @@
  * full multi-scope support, and the full QA Engine are deferred to later waves.
  */
 
+// A4 — re-export the generation-warning type so consumers that already
+// import from the types barrel get it here too. The warnings module is
+// standalone (imports nothing from this file) so there is no cycle.
+export type {
+  DocumentGenerationWarning,
+  DocumentGenerationWarningCode,
+  DocumentGenerationWarningScope,
+} from './documentGenerationWarnings.js';
+import type { DocumentGenerationWarning } from './documentGenerationWarnings.js';
+
 export type DocumentStudioMode = 'mode_1' | 'mode_2' | 'mode_3';
 
 export type DocumentTypeKey =
@@ -846,6 +856,15 @@ export interface DocumentQaReport {
 export interface DocumentRunResult {
   artifactId: string;
   schema: DocumentSchema;
+  /**
+   * A4 — generation-time warnings recorded when the pipeline degraded
+   * via a silent fallback (e.g. LLM prose failure → deterministic
+   * stubs). Optional / backwards-compatible: absent or empty means the
+   * document generated at full fidelity. Persisted on the artifact
+   * metadata and surfaced to the FE as a "generated with limitations"
+   * chip.
+   */
+  generationWarnings?: DocumentGenerationWarning[];
 }
 
 export interface DocumentExportResult {
@@ -854,6 +873,13 @@ export interface DocumentExportResult {
   contentBase64?: string;
   contentText?: string;
   manifest: Record<string, unknown>;
+  /**
+   * A4 — export-time warnings recorded when a binary render degraded
+   * (chart rasterization fell back to a text placeholder, requested
+   * cover logo unavailable). Optional; absent means the export rendered
+   * at full fidelity. Also mirrored inside `manifest.generationWarnings`.
+   */
+  generationWarnings?: DocumentGenerationWarning[];
 }
 
 /**
@@ -1053,6 +1079,31 @@ export interface DocumentEditorProposal {
    * between approval and execute on contended workflows).
    */
   versionAfterId?: string;
+  /**
+   * C2 hardening — durable-persistence outcome for THIS write of the
+   * proposal (create / approve / reject / execute all re-stamp it).
+   * Additive + optional so existing consumers that only read the
+   * proposal fields above are unaffected.
+   *
+   * `persisted: true`  — the durable-write survived a DB round trip
+   *   (INSERT/UPSERT confirmed `success`). The in-process cache and
+   *   the DB row agree.
+   * `persisted: false` — the durable write did NOT confirm; the
+   *   caller is running on the in-process cache only. `degraded`
+   *   distinguishes *why*:
+   *     - `degraded: 'schema_missing'` — the backing table doesn't
+   *       exist yet (pre-migration environment). Expected/tolerated;
+   *       not a production incident by itself.
+   *     - `degraded: 'db_error'` — the table exists but the write
+   *       failed (connection loss, constraint violation, etc.). A
+   *       real signal that this proposal is at risk of being lost on
+   *       process restart.
+   */
+  persistence?: {
+    persisted: boolean;
+    degraded?: 'schema_missing' | 'db_error';
+    reason?: string;
+  };
 }
 
 /**

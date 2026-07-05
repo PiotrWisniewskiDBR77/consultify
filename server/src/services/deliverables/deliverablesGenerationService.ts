@@ -5,12 +5,18 @@
  * z presentationGeneratorService w jeden async kontrakt generacji
  * (`docs/plans/DELIVERABLES_LIGHT_TARGET.md` §2.2, §10.2 pkt 2).
  *
- * ZERO przepisywania generatora: plan = generateOutline, start = generateDeck
+ * ZERO przepisywania generatora deck: plan = generateOutline, start = generateDeck
  * odpalony w tle (nie await). SSOT stanu = wiersz `presentation_decks.status`
  * (draft → generating → ready|failed); mapa in-memory dodaje jedynie stany
  * przejściowe niewidoczne w DB (`validating`) i treść błędu po restarcie nieobecną.
  *
- * `doc` i `sheet` są w kontrakcie, ale do faz L2/L3 zwracają `not_implemented`.
+ * `doc` i `sheet` są W PEŁNI zaimplementowane (L2/L3) i delegowane do
+ * `docGenerationRuntime` (planDoc/startDoc/statusDoc, planSheet/startSheet). Gałąź
+ * DOC jest KANONICZNIE zunifikowana z Document Studio: startDoc materializuje encję
+ * `document_studio_artifacts` przez `materializeDocumentArtifact` (ten sam pipeline
+ * intake→plan→schema→Wave5 co Studio i most „Send to Document Studio"), więc
+ * artefakt z czatu jest tożsamy z artefaktem Studio (ten sam typ encji, eksport
+ * DOCX/PDF, rejestr Outputs). `not_implemented` pada TYLKO dla nieznanego formatu.
  */
 
 import type {

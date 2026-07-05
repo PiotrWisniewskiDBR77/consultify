@@ -48,7 +48,8 @@ class NapiChartCanvas {
   }
   async renderToBuffer(configuration: ChartConfiguration, _mimeType = 'image/png'): Promise<Buffer> {
     const { createCanvas } = await import('@napi-rs/canvas');
-    const ChartJS = (await import('chart.js/auto')).default;
+    const ChartJSModule = await import('chart.js/auto');
+    const ChartJS = ChartJSModule.default;
     const canvas = createCanvas(this.width, this.height);
     const ctx = canvas.getContext('2d');
     // Shim: chart.js v4 czyta canvas.style przy sizing w środowisku bez DOM.
@@ -58,7 +59,19 @@ class NapiChartCanvas {
     // Tło (chart.js domyślnie rysuje na przezroczystym).
     ctx.fillStyle = this.bg;
     ctx.fillRect(0, 0, this.width, this.height);
-    const chart = new ChartJS(ctx as unknown as CanvasRenderingContext2D, configuration);
+    // C5 — chart.js v4 auto-detects `DomPlatform` vs `BasicPlatform` via
+    // `_isDomSupported()` (checks for a global `window`/`document`). Pod
+    // Vitest środowisko testowe jest `jsdom`, więc te globale ISTNIEJĄ mimo
+    // że renderujemy do @napi-rs/canvas (nie prawdziwy DOM canvas) — Chart.js
+    // wybiera wtedy DomPlatform i wywołuje `canvas.getAttribute(...)`, którego
+    // @napi-rs/canvas nie implementuje → throw → cały render pada na `null` →
+    // eksport degraduje do placeholdera, mimo że w produkcji (bez jsdom
+    // globali) renderowanie działa poprawnie. Wymuszamy `BasicPlatform`
+    // jawnie, żeby zachowanie było identyczne pod Vitest i w produkcji.
+    const chart = new ChartJS(ctx as unknown as CanvasRenderingContext2D, {
+      ...configuration,
+      platform: ChartJSModule.BasicPlatform as unknown as ChartConfiguration['platform'],
+    });
     chart.update();
     const buffer = canvas.toBuffer('image/png');
     chart.destroy();

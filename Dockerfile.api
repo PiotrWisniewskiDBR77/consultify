@@ -258,6 +258,17 @@ RUN test -d /app/server/node_modules/express || (echo "ERROR: express not found!
 RUN test -d /app/server/node_modules/zod || (echo "ERROR: zod not found!" && exit 1)
 RUN test -d /app/server/node_modules/pptxgenjs || (echo "ERROR: pptxgenjs not found!" && ls -la /app/server/node_modules/ | grep -i pptx || echo "pptxgenjs not in node_modules" && exit 1)
 RUN test -d /app/server/node_modules/rrule || (echo "ERROR: rrule not found!" && ls -la /app/server/node_modules/ | grep -i rrule || echo "rrule not in node_modules" && exit 1)
+# C5 (M18 document-studio chart export) — documentChartRasterizer.ts imports
+# `@napi-rs/canvas` (prebuilt binaries, no native build) directly, but it is
+# only declared in ROOT package.json, not server/package.json (adding it there
+# would desync server/package-lock.json — regenerating that lock requires an
+# `npm install`, out of scope for this fix). It ships today because this stage
+# installs root deps into /app/node_modules FIRST, then layers server deps
+# into that SAME node_modules, and the whole tree is copied to
+# /app/server/node_modules above. This check fails the build loudly (instead
+# of silently shipping documents whose charts degrade to text placeholders)
+# if that coupling ever breaks. See docs/qa/CHART_EXPORT_PROVISIONING.md.
+RUN test -d /app/server/node_modules/@napi-rs/canvas || (echo "ERROR: @napi-rs/canvas not found — chart export (DOCX/PDF) will silently degrade to text placeholders!" && ls -la /app/server/node_modules/@napi-rs 2>&1 || echo "@napi-rs namespace missing entirely" && exit 1)
 
 WORKDIR /app/server
 

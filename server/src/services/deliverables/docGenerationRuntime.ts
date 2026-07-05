@@ -1267,15 +1267,55 @@ export async function startDoc(params: {
           usedRefsEarly,
           docLangEarly
         );
+
+        // C3 — unifikacja toru doc: streaming daje żywy podgląd sekcji w draftcie,
+        // ale artefakt KANONICZNY to encja Document Studio (document_studio_artifacts
+        // przez wave5) — tak samo jak w ścieżce one-shot niżej i w moście
+        // „Send to Document Studio". Bez tego kroku streamowany dokument nie ma
+        // encji Studio → brak eksportu DOCX/PDF z FormattingSchema i brak wpisu w
+        // rejestrze Outputs. Materializujemy Studio-artefakt z tego samego
+        // intake+outline (useLlm:true → generateBlockProse/Wave5 wypełnia schema),
+        // a treść streamowaną trzymamy w draftcie dla podglądu. Best-effort:
+        // awaria materializacji NIE psuje gotowego draftu (użytkownik ma treść).
+        let streamedArtifactId: string | undefined;
+        try {
+          const materialized = await materializeDocumentArtifact({
+            organizationId: params.organizationId,
+            userId: params.userId,
+            intake,
+            outline,
+            sourceRefs: stored.intake.sourceHints,
+            useLlm: true,
+          });
+          streamedArtifactId = materialized.artifactId;
+          await registerDocArtifactBestEffort({
+            organizationId: params.organizationId,
+            userId: params.userId,
+            documentArtifactId: materialized.artifactId,
+            title: String(materialized.schema?.title || stored.intake.title || draft.title),
+            generationDraftId: draft.id,
+            sourceRefs: stored.intake.sourceHints,
+          });
+        } catch (materializeErr) {
+          logger.warn(
+            `${LOG_PREFIX} streamed doc: Studio artifact materialize failed (draft still saved): generation=${draft.id} — ${
+              materializeErr instanceof Error ? materializeErr.message : String(materializeErr)
+            }`
+          );
+        }
+
         await updateDraft({
           organizationId: params.organizationId,
           draftId: draft.id,
-          patch: { content: withSources },
+          patch: streamedArtifactId
+            ? { content: withSources, artifactId: streamedArtifactId }
+            : { content: withSources },
         });
         setDocRuntime(draft.id, {
           state: 'draft',
           warnings: [],
           sectionCount: outline.sections.length,
+          documentArtifactId: streamedArtifactId,
         });
         void trackDeliverableEvent({
           organizationId: params.organizationId,
@@ -1289,7 +1329,7 @@ export async function startDoc(params: {
           groundingMode: `${groundingModeDoc}+stream`,
         });
         logger.info(
-          `${LOG_PREFIX} draft ready (streamed): generation=${draft.id} sections=${outline.sections.length}`
+          `${LOG_PREFIX} draft ready (streamed): generation=${draft.id} sections=${outline.sections.length} artifact=${streamedArtifactId ?? 'none'}`
         );
         return;
       }

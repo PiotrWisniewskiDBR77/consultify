@@ -7,7 +7,9 @@
  */
 
 import {
+  AlertTriangle,
   Bot,
+  ChevronDown,
   Download,
   FileText,
   FileWarning,
@@ -21,6 +23,7 @@ import {
   Table2,
   Users,
 } from 'lucide-react';
+import type { TFunction } from 'i18next';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -43,11 +46,10 @@ import {
 
 import {
   cancelDocumentStudioApproval,
-  createDocumentStudioComment,
   createDocumentStudioShareLink,
   exportDocumentStudioArtifact,
   getDocumentStudioAccessHistory,
-  getDocumentStudioCommentThreads,
+  getDocumentStudioCommentCounts,
   getDocumentStudioPolicy,
   getDocumentStudioSchemaDiff,
   getDocumentStudioVariant,
@@ -56,12 +58,16 @@ import {
   listDocumentStudioApprovals,
   listDocumentStudioContentBlocks,
   listDocumentStudioShareLinks,
+  listDocumentStudioSnapshots,
   listDocumentStudioVariants,
   QaBlockingError,
   QaOverrideUnauthorizedError,
   recordDocumentStudioApprovalDecision,
   requestDocumentStudioApproval,
 } from './api';
+import { DocumentCommentsPanel } from './DocumentCommentsPanel';
+import { DocumentExportSuccessNote } from './DocumentExportSuccessNote';
+import { DocumentSchemaDiffView } from './DocumentSchemaDiffView';
 import { DocumentStudioQaPanel } from './DocumentStudioQaPanel';
 import { DocumentTipTapEditor } from './editor';
 import type {
@@ -70,8 +76,9 @@ import type {
   DocumentApprovalQuorumPolicy,
   DocumentApprovalRequest,
   DocumentBlock,
-  DocumentCommentThread,
+  DocumentCommentSectionCounts,
   DocumentContentBlockTemplate,
+  DocumentGenerationWarning,
   DocumentQaReport,
   DocumentSchema,
   DocumentSchemaDiffResponse,
@@ -81,46 +88,194 @@ import type {
   DocumentSourceRef,
   DocumentStudioPolicy,
   DocumentVariantSummary,
+  DocumentVersionSnapshotSummary,
 } from './types';
 
 interface DocumentStudioDocumentPanelProps {
   artifactId: string;
   schema: DocumentSchema;
+  /**
+   * A4 — generation-time warnings recorded when the pipeline degraded via
+   * a silent fallback (LLM prose failure, chart rasterization fallback,
+   * cover-logo unavailable). Rendered as a discreet, dismissible-by-
+   * expand "generated with limitations" chip. Defaults to none.
+   */
+  generationWarnings?: DocumentGenerationWarning[];
   onStartOver: () => void;
   onSchemaUpdated: (nextSchema: DocumentSchema) => void;
 }
 
-function metadataLabel(value: string | string[] | undefined): string {
-  if (Array.isArray(value)) return value.length > 0 ? value.join(', ') : 'Not set';
-  return value && value.trim().length > 0 ? value : 'Not set';
-}
+type TFn = TFunction;
 
 /**
- * Render a comment author identifier in a human-friendly way. Comment threads
- * only carry the author id; when that id is a raw UUID we shorten it so the UI
- * never shows a full 36-char identifier.
+ * A4 — discreet "generated with limitations" chip. Collapsed by default to
+ * a single amber (c-warning) pill showing the count; expands to a list of
+ * the individual warnings. Zero crimson: uses only neutral `c-*` tokens +
+ * the amber warning accent, matching the panel's existing inline banners.
  */
-function formatAuthorLabel(authorId: string | undefined | null): string {
-  const id = String(authorId || '').trim();
-  if (!id) return '—';
-  return id.length > 8 ? `${id.slice(0, 8)}…` : id;
+export const DocumentGenerationWarningsChip: React.FC<{
+  warnings: DocumentGenerationWarning[];
+  /**
+   * B4 — override for the collapsed-summary i18n key so the chip can be
+   * reused for export-time warnings ("Exported with limitations") without
+   * duplicating the component. Defaults to the generation-time summary.
+   */
+  summaryKey?: string;
+}> = ({ warnings, summaryKey = 'documentStudio.generationWarnings.summary' }) => {
+  const { t } = useTranslation();
+  const [expanded, setExpanded] = useState(false);
+  if (warnings.length === 0) return null;
+
+  const labelFor = (code: string): string => {
+    // Per-code friendly label with a safe fallback to the raw code so an
+    // unknown future code still renders something meaningful.
+    const key = `documentStudio.generationWarnings.codes.${code}`;
+    const translated = t(key);
+    return translated === key ? code : translated;
+  };
+
+  return (
+    <div
+      className="rounded-md border border-c-warning/40 bg-c-warning/10 px-3 py-2 text-xs text-c-text"
+      data-testid="document-generation-warnings-chip"
+    >
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        className="flex w-full items-center justify-between gap-2 text-left"
+      >
+        <span className="flex items-center gap-1.5 font-medium text-c-text">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-c-warning" aria-hidden />
+          {t(summaryKey, { count: warnings.length })}
+        </span>
+        <ChevronDown
+          className={`h-3.5 w-3.5 shrink-0 text-c-text-muted transition-transform ${
+            expanded ? 'rotate-180' : ''
+          }`}
+          aria-hidden
+        />
+      </button>
+      {expanded ? (
+        <ul className="mt-2 space-y-1.5 border-t border-c-warning/20 pt-2 text-c-text-secondary">
+          {warnings.map((w, i) => (
+            <li key={`${w.code}-${i}`} className="flex flex-col gap-0.5">
+              <span className="font-medium text-c-text">{labelFor(w.code)}</span>
+              <span className="text-c-text-muted">{w.message}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+};
+
+function renderSectionPreview(section: DocumentSection, idx: number): React.ReactNode {
+  return (
+    <section
+      key={section.sectionId}
+      id={section.sectionId}
+      className="rounded-lg border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900"
+    >
+      <header className="mb-2 flex items-baseline justify-between gap-2">
+        <h3 className="text-base font-semibold text-navy-900 dark:text-white">
+          {idx + 1}. {section.title}
+        </h3>
+        {section.purpose ? <span className="text-xs text-slate-600">{section.purpose}</span> : null}
+      </header>
+      <div className="flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-300">
+        {section.blocks.map((block) => {
+          const isAssumption = Boolean(block.isAssumption);
+          const blockClass = isAssumption
+            ? 'rounded border border-amber-400/30 bg-amber-50 px-2 py-1 dark:border-amber-400/30 dark:bg-amber-500/10'
+            : '';
+          const content = (() => {
+            if (block.type === 'heading') {
+              const value = block.content as { text?: string };
+              return (
+                <div className="font-semibold text-navy-900 dark:text-white">{value.text}</div>
+              );
+            }
+            if (block.type === 'paragraph') {
+              const value = block.content as { text?: string };
+              return <p>{value.text}</p>;
+            }
+            if (block.type === 'list') {
+              const value = block.content as { style?: string; items?: string[] };
+              const items = Array.isArray(value.items) ? value.items : [];
+              if (value.style === 'numbered') {
+                return (
+                  <ol className="list-decimal pl-5">
+                    {items.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ol>
+                );
+              }
+              return (
+                <ul className="list-disc pl-5">
+                  {items.map((item, i) => (
+                    <li key={i}>{item}</li>
+                  ))}
+                </ul>
+              );
+            }
+            if (block.type === 'callout') {
+              const value = block.content as { variant?: string; text?: string };
+              return (
+                <div className="rounded-md border border-primary-500/30 bg-primary-500/5 px-3 py-2 italic">
+                  {value.text}
+                </div>
+              );
+            }
+            return (
+              <pre className="whitespace-pre-wrap text-xs text-slate-500">
+                {JSON.stringify(block.content, null, 2)}
+              </pre>
+            );
+          })();
+          return (
+            <div key={block.blockId} className={blockClass}>
+              {content}
+              {isAssumption ? (
+                <div className="mt-1 text-xs font-medium uppercase tracking-wide text-amber-600">
+                  Assumption — needs source
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
 }
 
-function getConnectorState(sourceType: string): {
+function metadataLabel(value: string | string[] | undefined, notSet: string): string {
+  if (Array.isArray(value)) return value.length > 0 ? value.join(', ') : notSet;
+  return value && value.trim().length > 0 ? value : notSet;
+}
+
+function getConnectorState(
+  sourceType: string,
+  t: TFn
+): {
   label: string;
   tone: 'success' | 'warning' | 'muted';
 } {
   const normalized = sourceType.toLowerCase();
   if (['notion', 'drive', 'google_drive', 'sharepoint', 'confluence'].includes(normalized)) {
     return {
-      label: 'degraded: external connector gate',
+      label: t('documentStudio.panel.connectorDegraded', 'degraded: external connector gate'),
       tone: 'warning',
     };
   }
   if (['table', 'v8_artifact', 'file', 'url', 'raw_text', 'chat'].includes(normalized)) {
-    return { label: 'connector ready', tone: 'success' };
+    return { label: t('documentStudio.panel.connectorReady', 'connector ready'), tone: 'success' };
   }
-  return { label: 'connector state unknown', tone: 'muted' };
+  return {
+    label: t('documentStudio.panel.connectorUnknown', 'connector state unknown'),
+    tone: 'muted',
+  };
 }
 
 function collectBlockSourceKeys(sections: DocumentSection[]): Set<string> {
@@ -143,6 +298,7 @@ function SourceListPanel({
   sections: DocumentSection[];
   assumptionCount: number;
 }): React.ReactElement {
+  const { t } = useTranslation();
   const usedSourceKeys = useMemo(() => collectBlockSourceKeys(sections), [sections]);
   const assumptionBlockCount = useMemo(
     () =>
@@ -156,7 +312,7 @@ function SourceListPanel({
     const key = `${ref.sourceType}:${ref.sourceId}`;
     const used = usedSourceKeys.has(key);
     const pinned = Boolean(ref.sourceVersion || ref.sourceSnapshotId);
-    const connector = getConnectorState(ref.sourceType);
+    const connector = getConnectorState(ref.sourceType, t);
     return { ref, key, used, pinned, connector };
   });
   const matrix = {
@@ -170,45 +326,52 @@ function SourceListPanel({
   return (
     <div className="flex h-full flex-col overflow-y-auto p-4">
       <div className="mb-3">
-        <h3 className="text-sm font-semibold text-navy-900 dark:text-slate-100">Sources</h3>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          {sourceRefs.length} attached · {assumptionCount} assumption
-          {assumptionCount === 1 ? '' : 's'} flagged
+        <h3 className="text-sm font-semibold text-c-text">
+          {t('documentStudio.panel.sourcesTitle', 'Sources')}
+        </h3>
+        <p className="text-xs text-c-text-secondary">
+          {t('documentStudio.panel.sourcesSummary', {
+            defaultValue: '{{attached}} attached · {{assumptions}} assumptions flagged',
+            attached: sourceRefs.length,
+            assumptions: assumptionCount,
+          })}
         </p>
       </div>
       <div className="mb-3 grid grid-cols-2 gap-2 text-xs">
         {[
-          ['Used', matrix.used],
-          ['Skipped', matrix.skipped],
-          ['Missing', matrix.missing],
-          ['Assumption', matrix.assumption],
-          ['Pinned', matrix.pinned],
+          [t('documentStudio.panel.matrixUsed', 'Used'), matrix.used],
+          [t('documentStudio.panel.matrixSkipped', 'Skipped'), matrix.skipped],
+          [t('documentStudio.panel.matrixMissing', 'Missing'), matrix.missing],
+          [t('documentStudio.panel.matrixAssumption', 'Assumption'), matrix.assumption],
+          [t('documentStudio.panel.matrixPinned', 'Pinned'), matrix.pinned],
         ].map(([label, value]) => (
           <div
             key={label}
-            className="rounded-lg border border-slate-200 bg-white p-2 dark:border-navy-700 dark:bg-navy-900"
+            className="rounded-lg border border-c-border-subtle bg-c-surface p-2"
           >
-            <div className="text-[10px] uppercase tracking-wide text-slate-600">{label}</div>
-            <div className="mt-1 font-semibold text-navy-900 dark:text-slate-100">{value}</div>
+            <div className="text-[10px] uppercase tracking-wide text-c-text-secondary">{label}</div>
+            <div className="mt-1 font-semibold text-c-text">{value}</div>
           </div>
         ))}
       </div>
       {sourceRefs.length === 0 ? (
         <div className="rounded-lg border border-amber-300/40 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-300">
-          No sources are attached to this document. Analytical claims should stay marked as
-          assumptions until a source pack is bound.
+          {t(
+            'documentStudio.panel.noSources',
+            'No sources are attached to this document. Analytical claims should stay marked as assumptions until a source pack is bound.'
+          )}
         </div>
       ) : (
         <ul className="space-y-2">
           {sourceRows.map(({ ref, key, used, connector }, index) => (
             <li
               key={`${key}:${index}`}
-              className="rounded-lg border border-slate-200 bg-white p-3 text-xs dark:border-navy-700 dark:bg-navy-900"
+              className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
             >
-              <div className="font-medium text-navy-900 dark:text-slate-100">
+              <div className="font-medium text-c-text">
                 {ref.sourceTitle || ref.sourceId}
               </div>
-              <div className="mt-1 text-slate-500 dark:text-slate-400">
+              <div className="mt-1 text-c-text-secondary">
                 {ref.sourceType} · {ref.sourceId}
               </div>
               <div className="mt-2 flex flex-wrap gap-1.5">
@@ -216,23 +379,28 @@ function SourceListPanel({
                   className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
                     used
                       ? 'bg-success-500/10 text-success-700 dark:text-emerald-300'
-                      : 'bg-slate-500/10 text-slate-600 dark:text-slate-300'
+                      : 'bg-c-surface-raised text-c-text-secondary'
                   }`}
                 >
-                  {used ? 'used' : 'skipped'}
+                  {used
+                    ? t('documentStudio.panel.badgeUsed', 'used')
+                    : t('documentStudio.panel.badgeSkipped', 'skipped')}
                 </span>
                 {ref.sourceVersion ? (
                   <span className="rounded-full bg-success-500/10 px-2 py-0.5 text-[10px] font-medium text-success-700 dark:text-emerald-300">
-                    version {ref.sourceVersion}
+                    {t('documentStudio.panel.badgeVersion', {
+                      defaultValue: 'version {{version}}',
+                      version: ref.sourceVersion,
+                    })}
                   </span>
                 ) : (
                   <span className="rounded-full bg-warning-500/10 px-2 py-0.5 text-[10px] font-medium text-warning-700 dark:text-amber-300">
-                    unpinned
+                    {t('documentStudio.panel.badgeUnpinned', 'unpinned')}
                   </span>
                 )}
                 {ref.sourceSnapshotId ? (
                   <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-medium text-sky-700 dark:text-sky-300">
-                    snapshot ready
+                    {t('documentStudio.panel.badgeSnapshotReady', 'snapshot ready')}
                   </span>
                 ) : null}
                 <span
@@ -241,7 +409,7 @@ function SourceListPanel({
                       ? 'bg-success-500/10 text-success-700 dark:text-emerald-300'
                       : connector.tone === 'warning'
                         ? 'bg-warning-500/10 text-warning-700 dark:text-amber-300'
-                        : 'bg-slate-500/10 text-slate-600 dark:text-slate-300'
+                        : 'bg-c-surface-raised text-c-text-secondary'
                   }`}
                 >
                   {connector.label}
@@ -264,46 +432,53 @@ function PropertiesPanel({
   sourceCount: number;
   assumptionCount: number;
 }): React.ReactElement {
+  const { t } = useTranslation();
+  const notSet = t('documentStudio.panel.notSet', 'Not set');
   const rows: Array<[string, string]> = [
-    ['Type', schema.documentType],
-    ['Language', schema.language.toUpperCase()],
-    ['Audience', metadataLabel(schema.audience)],
-    ['Goal', schema.goal],
-    ['Register', schema.communicationRegister],
-    ['Density', schema.density],
-    ['Style', schema.languageStyle],
-    ['Confidentiality', schema.confidentiality],
+    [t('documentStudio.panel.propType', 'Type'), schema.documentType],
+    [t('documentStudio.panel.propLanguage', 'Language'), schema.language.toUpperCase()],
+    [t('documentStudio.panel.propAudience', 'Audience'), metadataLabel(schema.audience, notSet)],
+    [t('documentStudio.panel.propGoal', 'Goal'), schema.goal],
+    [t('documentStudio.panel.propRegister', 'Register'), schema.communicationRegister],
+    [t('documentStudio.panel.propDensity', 'Density'), schema.density],
+    [t('documentStudio.panel.propStyle', 'Style'), schema.languageStyle],
+    [t('documentStudio.panel.propConfidentiality', 'Confidentiality'), schema.confidentiality],
     [
-      'Template',
+      t('documentStudio.panel.propTemplate', 'Template'),
       schema.templateRef
         ? `${schema.templateRef.templateId} v${schema.templateRef.templateVersion}`
-        : 'Not set',
+        : notSet,
     ],
-    ['Source pack', schema.sourcePackId ?? 'Not set'],
-    ['Client', schema.clientId ?? 'Not set'],
-    ['Owner', schema.owner ?? 'Not set'],
-    ['Sources', String(sourceCount)],
-    ['Assumptions', String(assumptionCount)],
+    [t('documentStudio.panel.propSourcePack', 'Source pack'), schema.sourcePackId ?? notSet],
+    [t('documentStudio.panel.propClient', 'Client'), schema.clientId ?? notSet],
+    [t('documentStudio.panel.propOwner', 'Owner'), schema.owner ?? notSet],
+    [t('documentStudio.panel.propSources', 'Sources'), String(sourceCount)],
+    [t('documentStudio.panel.propAssumptions', 'Assumptions'), String(assumptionCount)],
   ];
 
   return (
     <div className="flex h-full flex-col overflow-y-auto p-4">
       <div className="mb-3">
-        <h3 className="text-sm font-semibold text-navy-900 dark:text-slate-100">Properties</h3>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          Artifact metadata and template/source pointers.
+        <h3 className="text-sm font-semibold text-c-text">
+          {t('documentStudio.panel.propertiesTitle', 'Properties')}
+        </h3>
+        <p className="text-xs text-c-text-secondary">
+          {t(
+            'documentStudio.panel.propertiesSubtitle',
+            'Artifact metadata and template/source pointers.'
+          )}
         </p>
       </div>
       <dl className="space-y-2">
         {rows.map(([label, value]) => (
           <div
             key={label}
-            className="rounded-lg border border-slate-200 bg-white p-3 dark:border-navy-700 dark:bg-navy-900"
+            className="rounded-lg border border-c-border-subtle bg-c-surface p-3"
           >
-            <dt className="text-[10px] font-medium uppercase tracking-wide text-slate-600">
+            <dt className="text-[10px] font-medium uppercase tracking-wide text-c-text-secondary">
               {label}
             </dt>
-            <dd className="mt-1 break-words text-xs text-navy-900 dark:text-slate-100">{value}</dd>
+            <dd className="mt-1 break-words text-xs text-c-text">{value}</dd>
           </div>
         ))}
       </dl>
@@ -323,12 +498,19 @@ function OutlinePanel({
   const { t } = useTranslation();
   return (
     <div className="flex h-full flex-col overflow-y-auto p-3">
-      <div className="mb-3 rounded-lg border border-slate-200 bg-white p-3 text-xs dark:border-navy-700 dark:bg-navy-900">
-        <div className="font-medium text-navy-900 dark:text-slate-100">
-          {sections.length} sections
+      <div className="mb-3 rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs">
+        <div className="font-medium text-c-text">
+          {t('documentStudio.panel.sectionsCount', {
+            defaultValue: '{{count}} sections',
+            count: sections.length,
+          })}
         </div>
-        <div className="mt-1 text-slate-500 dark:text-slate-400">
-          {sourceCount} sources · {assumptionCount} assumptions
+        <div className="mt-1 text-c-text-secondary">
+          {t('documentStudio.panel.sourcesAssumptions', {
+            defaultValue: '{{sources}} sources · {{assumptions}} assumptions',
+            sources: sourceCount,
+            assumptions: assumptionCount,
+          })}
         </div>
       </div>
       <nav aria-label={t('documentStudio.documentPanel.outlineAria', 'Document outline')}>
@@ -337,13 +519,16 @@ function OutlinePanel({
             <li key={section.sectionId}>
               <a
                 href={`#${section.sectionId}`}
-                className="block rounded-lg px-3 py-2 text-xs text-slate-700 transition-colors hover:bg-slate-100 hover:text-navy-900 dark:text-slate-300 dark:hover:bg-navy-800 dark:hover:text-slate-100"
+                className="block rounded-lg px-3 py-2 text-xs text-c-text transition-colors hover:bg-c-surface-raised hover:text-c-text"
               >
                 <span className="font-medium">
                   {index + 1}. {section.title}
                 </span>
-                <span className="mt-0.5 block text-[10px] text-slate-600">
-                  {section.blocks.length} block{section.blocks.length === 1 ? '' : 's'}
+                <span className="mt-0.5 block text-[10px] text-c-text-secondary">
+                  {t('documentStudio.panel.blocksCount', {
+                    defaultValue: '{{count}} blocks',
+                    count: section.blocks.length,
+                  })}
                 </span>
               </a>
             </li>
@@ -355,6 +540,7 @@ function OutlinePanel({
 }
 
 function ActivityPanel({ artifactId }: { artifactId: string }): React.ReactElement {
+  const { t } = useTranslation();
   const [entries, setEntries] = useState<DocumentAccessHistoryEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -365,11 +551,15 @@ function ActivityPanel({ artifactId }: { artifactId: string }): React.ReactEleme
     try {
       setEntries(await getDocumentStudioAccessHistory(artifactId, { limit: 80 }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load activity');
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.panel.activityLoadFailed', 'Failed to load activity')
+      );
     } finally {
       setLoading(false);
     }
-  }, [artifactId]);
+  }, [artifactId, t]);
 
   useEffect(() => {
     void refresh();
@@ -379,13 +569,20 @@ function ActivityPanel({ artifactId }: { artifactId: string }): React.ReactEleme
     <div className="flex h-full flex-col overflow-y-auto p-4">
       <div className="mb-3 flex items-start justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold text-navy-900 dark:text-slate-100">Activity</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Unified document, share-link and approval history.
+          <h3 className="text-sm font-semibold text-c-text">
+            {t('documentStudio.panel.activityTitle', 'Activity')}
+          </h3>
+          <p className="text-xs text-c-text-secondary">
+            {t(
+              'documentStudio.panel.activitySubtitle',
+              'Unified document, share-link and approval history.'
+            )}
           </p>
         </div>
         <Button type="button" size="sm" variant="ghost" onClick={refresh} disabled={loading}>
-          {loading ? 'Loading…' : 'Refresh'}
+          {loading
+            ? t('documentStudio.panel.loading', 'Loading…')
+            : t('documentStudio.panel.refresh', 'Refresh')}
         </Button>
       </div>
       {error ? (
@@ -394,134 +591,25 @@ function ActivityPanel({ artifactId }: { artifactId: string }): React.ReactEleme
         </div>
       ) : null}
       {!loading && !error && entries.length === 0 ? (
-        <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-500 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-400">
-          No activity has been recorded yet.
+        <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs text-c-text-secondary">
+          {t('documentStudio.panel.activityEmpty', 'No activity has been recorded yet.')}
         </div>
       ) : null}
       <ul className="space-y-2">
         {entries.map((entry) => (
           <li
             key={entry.entryId}
-            className="rounded-lg border border-slate-200 bg-white p-3 text-xs dark:border-navy-700 dark:bg-navy-900"
+            className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
           >
             <div className="flex items-start justify-between gap-2">
-              <div className="font-medium text-navy-900 dark:text-slate-100">{entry.action}</div>
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500 dark:bg-navy-800 dark:text-slate-300">
+              <div className="font-medium text-c-text">{entry.action}</div>
+              <span className="rounded-full bg-c-surface-raised px-2 py-0.5 text-[10px] text-c-text-secondary">
                 {entry.source}
               </span>
             </div>
-            <div className="mt-1 text-slate-500 dark:text-slate-400">
+            <div className="mt-1 text-c-text-secondary">
               {entry.actorId} · {new Date(entry.occurredAt).toLocaleString()}
             </div>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function CommentsPanel({ artifactId }: { artifactId: string }): React.ReactElement {
-  const { t } = useTranslation();
-  const [threads, setThreads] = useState<DocumentCommentThread[]>([]);
-  const [draft, setDraft] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      setThreads(await getDocumentStudioCommentThreads(artifactId));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load comments');
-    } finally {
-      setLoading(false);
-    }
-  }, [artifactId]);
-
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  const submit = async (): Promise<void> => {
-    if (!draft.trim()) return;
-    setSubmitting(true);
-    setError(null);
-    try {
-      setThreads(
-        await createDocumentStudioComment(artifactId, {
-          body: draft.trim(),
-          anchor: { kind: 'document' },
-        })
-      );
-      setDraft('');
-      toast.success(t('documentStudio.documentPanel.commentAdded', 'Comment added'));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add comment');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <div className="flex h-full flex-col overflow-y-auto p-4">
-      <div className="mb-3 flex items-start justify-between gap-2">
-        <div>
-          <h3 className="text-sm font-semibold text-navy-900 dark:text-slate-100">Comments</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Document-level review threads. Block anchors stay visible in each thread.
-          </p>
-        </div>
-        <Button type="button" size="sm" variant="ghost" onClick={refresh} disabled={loading}>
-          {loading ? 'Loading…' : 'Refresh'}
-        </Button>
-      </div>
-      <div className="mb-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-navy-700 dark:bg-navy-900">
-        <textarea
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          placeholder="Add document-level review comment…"
-          className="min-h-[80px] w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-navy-900 outline-none focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-950 dark:text-slate-100"
-        />
-        <div className="mt-2 flex justify-end">
-          <Button type="button" size="sm" onClick={submit} disabled={submitting || !draft.trim()}>
-            {submitting ? 'Adding…' : 'Add comment'}
-          </Button>
-        </div>
-      </div>
-      {error ? (
-        <div className="mb-3 rounded-lg border border-danger-500/30 bg-danger-500/10 p-3 text-xs text-danger-700 dark:text-danger-300">
-          {error}
-        </div>
-      ) : null}
-      {!loading && threads.length === 0 ? (
-        <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-500 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-400">
-          No comments yet.
-        </div>
-      ) : null}
-      <ul className="space-y-2">
-        {threads.map((thread) => (
-          <li
-            key={thread.threadId}
-            className="rounded-lg border border-slate-200 bg-white p-3 text-xs dark:border-navy-700 dark:bg-navy-900"
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div className="font-medium text-navy-900 dark:text-slate-100">
-                {thread.root.body || 'Deleted comment'}
-              </div>
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500 dark:bg-navy-800 dark:text-slate-300">
-                {thread.status}
-              </span>
-            </div>
-            <div className="mt-1 text-slate-500 dark:text-slate-400">
-              {formatAuthorLabel(thread.root.authorId)} · {thread.anchor.kind}
-            </div>
-            {thread.replies.length > 0 ? (
-              <div className="mt-2 border-l border-slate-200 pl-2 dark:border-navy-700">
-                {thread.replies.length} repl{thread.replies.length === 1 ? 'y' : 'ies'}
-              </div>
-            ) : null}
           </li>
         ))}
       </ul>
@@ -545,11 +633,15 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
     try {
       setLinks(await listDocumentStudioShareLinks(artifactId));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load share links');
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.panel.shareLoadFailed', 'Failed to load share links')
+      );
     } finally {
       setLoading(false);
     }
-  }, [artifactId]);
+  }, [artifactId, t]);
 
   useEffect(() => {
     void refresh();
@@ -568,7 +660,11 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
       setLinks(await listDocumentStudioShareLinks(artifactId));
       toast.success(t('documentStudio.documentPanel.shareLinkCreated', 'Share link created'));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create share link');
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.panel.shareCreateFailed', 'Failed to create share link')
+      );
     } finally {
       setSubmitting(false);
     }
@@ -577,30 +673,35 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
   return (
     <div className="flex h-full flex-col overflow-y-auto p-4">
       <div className="mb-3">
-        <h3 className="text-sm font-semibold text-navy-900 dark:text-slate-100">Share links</h3>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          Create scoped links. The plaintext token is shown only after creation.
+        <h3 className="text-sm font-semibold text-c-text">
+          {t('documentStudio.panel.shareTitle', 'Share links')}
+        </h3>
+        <p className="text-xs text-c-text-secondary">
+          {t(
+            'documentStudio.panel.shareSubtitle',
+            'Create scoped links. The plaintext token is shown only after creation.'
+          )}
         </p>
       </div>
-      <div className="mb-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-navy-700 dark:bg-navy-900">
-        <label className="mb-2 block text-xs text-slate-600 dark:text-slate-300">
-          Label
+      <div className="mb-3 rounded-lg border border-c-border-subtle bg-c-surface p-3">
+        <label className="mb-2 block text-xs text-c-text-secondary">
+          {t('documentStudio.panel.shareLabel', 'Label')}
           <input
             value={label}
             onChange={(event) => setLabel(event.target.value)}
-            className="mt-1 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-950"
+            className="mt-1 h-9 w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 text-sm"
             placeholder={t('documentStudio.documentPanel.reviewNamePlaceholder', 'Client review')}
           />
         </label>
-        <label className="mb-3 block text-xs text-slate-600 dark:text-slate-300">
-          Scope
+        <label className="mb-3 block text-xs text-c-text-secondary">
+          {t('documentStudio.panel.shareScope', 'Scope')}
           <select
             value={scope}
             onChange={(event) => setScope(event.target.value as DocumentShareLinkAccessScope)}
-            className="mt-1 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-950"
+            className="mt-1 h-9 w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 text-sm"
           >
-            <option value="read">Read</option>
-            <option value="comment">Comment</option>
+            <option value="read">{t('documentStudio.panel.scopeRead', 'Read')}</option>
+            <option value="comment">{t('documentStudio.panel.scopeComment', 'Comment')}</option>
             <option value="download">
               {t('documentStudio.documentPanel.actionDownload', 'Download')}
             </option>
@@ -608,11 +709,14 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
           </select>
         </label>
         <Button type="button" size="sm" onClick={createLink} disabled={submitting}>
-          {submitting ? 'Creating…' : 'Create link'}
+          {submitting
+            ? t('documentStudio.panel.shareCreating', 'Creating…')
+            : t('documentStudio.panel.shareCreate', 'Create link')}
         </Button>
         {createdToken ? (
           <div className="mt-3 rounded-lg border border-success-500/30 bg-success-500/10 p-2 text-xs text-success-700 dark:text-emerald-300">
-            Token: <span className="break-all font-mono">{createdToken}</span>
+            {t('documentStudio.panel.shareToken', 'Token')}:{' '}
+            <span className="break-all font-mono">{createdToken}</span>
           </div>
         ) : null}
       </div>
@@ -622,27 +726,30 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
         </div>
       ) : null}
       {!loading && links.length === 0 ? (
-        <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-500 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-400">
-          No share links yet.
+        <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs text-c-text-secondary">
+          {t('documentStudio.panel.shareEmpty', 'No share links yet.')}
         </div>
       ) : null}
       <ul className="space-y-2">
         {links.map((link) => (
           <li
             key={link.shareLinkId}
-            className="rounded-lg border border-slate-200 bg-white p-3 text-xs dark:border-navy-700 dark:bg-navy-900"
+            className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
           >
             <div className="flex items-start justify-between gap-2">
-              <div className="font-medium text-navy-900 dark:text-slate-100">
+              <div className="font-medium text-c-text">
                 {link.label || link.shareLinkId}
               </div>
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500 dark:bg-navy-800 dark:text-slate-300">
+              <span className="rounded-full bg-c-surface-raised px-2 py-0.5 text-[10px] text-c-text-secondary">
                 {link.runtimeStatus?.effectiveStatus ?? link.status}
               </span>
             </div>
-            <div className="mt-1 text-slate-500 dark:text-slate-400">
-              {link.accessScope} · used {link.consumeCount} time
-              {link.consumeCount === 1 ? '' : 's'}
+            <div className="mt-1 text-c-text-secondary">
+              {link.accessScope} ·{' '}
+              {t('documentStudio.panel.shareUsedTimes', {
+                defaultValue: 'used {{count}} times',
+                count: link.consumeCount,
+              })}
             </div>
           </li>
         ))}
@@ -652,6 +759,7 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
 }
 
 function AudienceVariantsPanel({ artifactId }: { artifactId: string }): React.ReactElement {
+  const { t } = useTranslation();
   const [variants, setVariants] = useState<DocumentVariantSummary[]>([]);
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -663,11 +771,15 @@ function AudienceVariantsPanel({ artifactId }: { artifactId: string }): React.Re
     try {
       setVariants(await listDocumentStudioVariants(artifactId));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load audience variants');
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.panel.variantsLoadFailed', 'Failed to load audience variants')
+      );
     } finally {
       setLoading(false);
     }
-  }, [artifactId]);
+  }, [artifactId, t]);
 
   useEffect(() => {
     void refresh();
@@ -678,21 +790,35 @@ function AudienceVariantsPanel({ artifactId }: { artifactId: string }): React.Re
     try {
       const variant = await getDocumentStudioVariant(artifactId, profileId);
       setPreview(
-        `${variant.schema.title}: ${variant.provenance.sectionsKept.length} sections kept, ${variant.provenance.sectionsDropped.length} dropped, ${variant.provenance.blocksDropped} blocks dropped.`
+        t('documentStudio.panel.variantPreviewSummary', {
+          defaultValue:
+            '{{title}}: {{kept}} sections kept, {{dropped}} dropped, {{blocksDropped}} blocks dropped.',
+          title: variant.schema.title,
+          kept: variant.provenance.sectionsKept.length,
+          dropped: variant.provenance.sectionsDropped.length,
+          blocksDropped: variant.provenance.blocksDropped,
+        })
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to render variant');
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.panel.variantRenderFailed', 'Failed to render variant')
+      );
     }
   };
 
   return (
     <div className="flex h-full flex-col overflow-y-auto p-4">
       <div className="mb-3">
-        <h3 className="text-sm font-semibold text-navy-900 dark:text-slate-100">
-          Audience variants
+        <h3 className="text-sm font-semibold text-c-text">
+          {t('documentStudio.panel.variantsTitle', 'Audience variants')}
         </h3>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          Render read-only projections for board, client, team, or custom audience profiles.
+        <p className="text-xs text-c-text-secondary">
+          {t(
+            'documentStudio.panel.variantsSubtitle',
+            'Render read-only projections for board, client, team, or custom audience profiles.'
+          )}
         </p>
       </div>
       {error ? (
@@ -706,25 +832,26 @@ function AudienceVariantsPanel({ artifactId }: { artifactId: string }): React.Re
         </div>
       ) : null}
       {!loading && variants.length === 0 ? (
-        <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-500 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-400">
-          No active audience profiles are available.
+        <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs text-c-text-secondary">
+          {t('documentStudio.panel.variantsEmpty', 'No active audience profiles are available.')}
         </div>
       ) : null}
       <ul className="space-y-2">
         {variants.map((variant) => (
           <li
             key={variant.profile.profileId}
-            className="rounded-lg border border-slate-200 bg-white p-3 text-xs dark:border-navy-700 dark:bg-navy-900"
+            className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
           >
-            <div className="font-medium text-navy-900 dark:text-slate-100">
+            <div className="font-medium text-c-text">
               {variant.profile.name}
             </div>
-            <div className="mt-1 text-slate-500 dark:text-slate-400">
-              {variant.profile.audienceLabels.join(', ') || 'inherits audience'} · v
-              {variant.profile.version}
+            <div className="mt-1 text-c-text-secondary">
+              {variant.profile.audienceLabels.join(', ') ||
+                t('documentStudio.panel.inheritsAudience', 'inherits audience')}{' '}
+              · v{variant.profile.version}
             </div>
             {variant.plan.length > 0 ? (
-              <ul className="mt-2 list-disc space-y-1 pl-4 text-slate-600 dark:text-slate-300">
+              <ul className="mt-2 list-disc space-y-1 pl-4 text-c-text-secondary">
                 {variant.plan.slice(0, 3).map((item) => (
                   <li key={item}>{item}</li>
                 ))}
@@ -737,7 +864,7 @@ function AudienceVariantsPanel({ artifactId }: { artifactId: string }): React.Re
               className="mt-2"
               onClick={() => void previewVariant(variant.profile.profileId)}
             >
-              Preview projection
+              {t('documentStudio.panel.previewProjection', 'Preview projection')}
             </Button>
           </li>
         ))}
@@ -747,7 +874,10 @@ function AudienceVariantsPanel({ artifactId }: { artifactId: string }): React.Re
 }
 
 function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactElement {
+  const { t } = useTranslation();
   const [result, setResult] = useState<DocumentSchemaDiffResponse | null>(null);
+  const [snapshots, setSnapshots] = useState<DocumentVersionSnapshotSummary[]>([]);
+  const [selectedVersionId, setSelectedVersionId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -755,32 +885,56 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
     setLoading(true);
     setError(null);
     try {
-      setResult(await getDocumentStudioSchemaDiff(artifactId));
+      setResult(await getDocumentStudioSchemaDiff(artifactId, selectedVersionId || undefined));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load schema diff');
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.panel.diffLoadFailed', 'Failed to load schema diff')
+      );
     } finally {
       setLoading(false);
     }
-  }, [artifactId]);
+  }, [artifactId, selectedVersionId, t]);
 
   useEffect(() => {
     void refresh();
   }, [refresh]);
 
-  const changedSections =
-    result?.diff.sectionDiffs.filter((section) => section.kind !== 'unchanged') ?? [];
+  useEffect(() => {
+    // Best-effort: the baseline picker is optional sugar — the diff itself
+    // defaults to the latest snapshot when the list cannot be loaded.
+    let cancelled = false;
+    void listDocumentStudioSnapshots(artifactId)
+      .then((items) => {
+        if (!cancelled) setSnapshots(items);
+      })
+      .catch(() => {
+        if (!cancelled) setSnapshots([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [artifactId]);
 
   return (
     <div className="flex h-full flex-col overflow-y-auto p-4">
       <div className="mb-3 flex items-start justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold text-navy-900 dark:text-slate-100">Schema diff</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Read-only comparison between live schema and the latest snapshot.
+          <h3 className="text-sm font-semibold text-c-text">
+            {t('documentStudio.panel.diffTitle', 'Schema diff')}
+          </h3>
+          <p className="text-xs text-c-text-secondary">
+            {t(
+              'documentStudio.panel.diffSubtitle',
+              'Read-only comparison between live schema and the latest snapshot.'
+            )}
           </p>
         </div>
         <Button type="button" size="sm" variant="ghost" onClick={refresh} disabled={loading}>
-          {loading ? 'Loading…' : 'Refresh'}
+          {loading
+            ? t('documentStudio.panel.loading', 'Loading…')
+            : t('documentStudio.panel.refresh', 'Refresh')}
         </Button>
       </div>
       {error ? (
@@ -788,75 +942,65 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
           {error}
         </div>
       ) : null}
+      {snapshots.length > 0 ? (
+        <label className="mb-3 block text-xs text-c-text-secondary">
+          {t('documentStudio.panel.diffBaselinePicker', 'Compare against snapshot')}
+          <select
+            value={selectedVersionId}
+            onChange={(event) => setSelectedVersionId(event.target.value)}
+            className="mt-1 h-9 w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 text-sm"
+            data-testid="schema-diff-baseline-select"
+          >
+            <option value="">
+              {t('documentStudio.panel.diffBaselineLatest', 'Latest snapshot')}
+            </option>
+            {[...snapshots].reverse().map((snapshot) => (
+              <option key={snapshot.versionId} value={snapshot.versionId}>
+                {`v${snapshot.versionNumber} · ${new Date(snapshot.capturedAt).toLocaleString()}${
+                  snapshot.label ? ` · ${snapshot.label}` : ''
+                }`}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
       {result ? (
         <div className="space-y-3">
-          <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs dark:border-navy-700 dark:bg-navy-900">
-            <div className="font-medium text-navy-900 dark:text-slate-100">{result.summary}</div>
-            <div className="mt-1 text-slate-500 dark:text-slate-400">
-              Baseline v{result.baseSnapshot.versionNumber} ·{' '}
-              {new Date(result.baseSnapshot.capturedAt).toLocaleString()}
+          <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs">
+            <div className="font-medium text-c-text">{result.summary}</div>
+            <div className="mt-1 text-c-text-secondary">
+              {t('documentStudio.panel.diffBaseline', {
+                defaultValue: 'Baseline v{{version}}',
+                version: result.baseSnapshot.versionNumber,
+              })}{' '}
+              · {new Date(result.baseSnapshot.capturedAt).toLocaleString()}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
             {[
-              ['Sections +', result.diff.stats.addedSectionCount],
-              ['Sections Δ', result.diff.stats.modifiedSectionCount],
-              ['Blocks +', result.diff.stats.addedBlockCount],
-              ['Blocks Δ', result.diff.stats.modifiedBlockCount],
+              [t('documentStudio.panel.diffSectionsAdded', 'Sections +'), result.diff.stats.addedSectionCount],
+              [t('documentStudio.panel.diffSectionsModified', 'Sections Δ'), result.diff.stats.modifiedSectionCount],
+              [t('documentStudio.panel.diffBlocksAdded', 'Blocks +'), result.diff.stats.addedBlockCount],
+              [t('documentStudio.panel.diffBlocksModified', 'Blocks Δ'), result.diff.stats.modifiedBlockCount],
             ].map(([label, value]) => (
               <div
                 key={label}
-                className="rounded-lg border border-slate-200 bg-white p-2 dark:border-navy-700 dark:bg-navy-900"
+                className="rounded-lg border border-c-border-subtle bg-c-surface p-2"
               >
-                <div className="text-[10px] uppercase tracking-wide text-slate-600">{label}</div>
-                <div className="mt-1 font-semibold text-navy-900 dark:text-slate-100">{value}</div>
+                <div className="text-[10px] uppercase tracking-wide text-c-text-secondary">{label}</div>
+                <div className="mt-1 font-semibold text-c-text">{value}</div>
               </div>
             ))}
           </div>
-          {changedSections.length === 0 ? (
+          {!result.diff.hasChanges ? (
             <div className="rounded-lg border border-success-500/30 bg-success-500/10 p-3 text-xs text-success-700 dark:text-emerald-300">
-              Live schema matches the selected snapshot structurally.
+              {t(
+                'documentStudio.panel.diffNoChanges',
+                'Live schema matches the selected snapshot structurally.'
+              )}
             </div>
           ) : (
-            <ul className="space-y-2">
-              {changedSections.map((section) => {
-                const changedBlocks = section.blockDiffs.filter(
-                  (block) => block.kind !== 'unchanged'
-                );
-                return (
-                  <li
-                    key={section.sectionId}
-                    className="rounded-lg border border-slate-200 bg-white p-3 text-xs dark:border-navy-700 dark:bg-navy-900"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="font-medium text-navy-900 dark:text-slate-100">
-                        {section.afterTitle ?? section.beforeTitle ?? section.sectionId}
-                      </div>
-                      <span className="rounded-full bg-primary-500/10 px-2 py-0.5 text-[10px] font-medium text-primary-700 dark:text-primary-300">
-                        {section.kind}
-                      </span>
-                    </div>
-                    <div className="mt-1 text-slate-500 dark:text-slate-400">
-                      {changedBlocks.length} changed block
-                      {changedBlocks.length === 1 ? '' : 's'}
-                    </div>
-                    {changedBlocks.slice(0, 3).map((block) => (
-                      <div
-                        key={block.blockId}
-                        className="mt-2 rounded border border-slate-200 bg-slate-50 p-2 dark:border-navy-800 dark:bg-navy-950"
-                      >
-                        <div className="font-medium text-slate-600 dark:text-slate-300">
-                          {block.kind} · {block.blockType ?? 'unknown'}
-                        </div>
-                        <div className="mt-1 line-clamp-2 text-slate-500 dark:text-slate-400">
-                          {block.afterText ?? block.beforeText ?? block.blockId}
-                        </div>
-                      </div>
-                    ))}
-                  </li>
-                );
-              })}
-            </ul>
+            <DocumentSchemaDiffView diff={result.diff} />
           )}
         </div>
       ) : null}
@@ -865,6 +1009,7 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
 }
 
 function ManifestGatePanel(): React.ReactElement {
+  const { t } = useTranslation();
   const [result, setResult] = useState<ExecutionModuleValidationResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -876,11 +1021,15 @@ function ManifestGatePanel(): React.ReactElement {
       const manifest = await fetchExecutionModuleManifest('doc-builder');
       setResult(await validateExecutionModuleManifest('doc-builder', manifest));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to validate DOC_BUILDER_MANIFEST');
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.panel.manifestValidateFailed', 'Failed to validate DOC_BUILDER_MANIFEST')
+      );
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void refresh();
@@ -890,13 +1039,20 @@ function ManifestGatePanel(): React.ReactElement {
     <div className="flex h-full flex-col overflow-y-auto p-4">
       <div className="mb-3 flex items-start justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold text-navy-900 dark:text-slate-100">Manifest gate</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Server-side validation for DOC_BUILDER_MANIFEST.
+          <h3 className="text-sm font-semibold text-c-text">
+            {t('documentStudio.panel.manifestTitle', 'Manifest gate')}
+          </h3>
+          <p className="text-xs text-c-text-secondary">
+            {t(
+              'documentStudio.panel.manifestSubtitle',
+              'Server-side validation for DOC_BUILDER_MANIFEST.'
+            )}
           </p>
         </div>
         <Button type="button" size="sm" variant="ghost" onClick={refresh} disabled={loading}>
-          {loading ? 'Checking…' : 'Recheck'}
+          {loading
+            ? t('documentStudio.panel.manifestChecking', 'Checking…')
+            : t('documentStudio.panel.manifestRecheck', 'Recheck')}
         </Button>
       </div>
       {error ? (
@@ -914,10 +1070,16 @@ function ManifestGatePanel(): React.ReactElement {
             }`}
           >
             <div className="font-semibold">
-              {result.ok ? 'DOC_BUILDER_MANIFEST passes' : 'DOC_BUILDER_MANIFEST has violations'}
+              {result.ok
+                ? t('documentStudio.panel.manifestPasses', 'DOC_BUILDER_MANIFEST passes')
+                : t('documentStudio.panel.manifestViolations', 'DOC_BUILDER_MANIFEST has violations')}
             </div>
             <div className="mt-1">
-              {result.mustViolations.length} MUST · {result.shouldViolations.length} SHOULD
+              {t('documentStudio.panel.manifestCounts', {
+                defaultValue: '{{must}} MUST · {{should}} SHOULD',
+                must: result.mustViolations.length,
+                should: result.shouldViolations.length,
+              })}
             </div>
           </div>
           {[...result.mustViolations, ...result.shouldViolations].length > 0 ? (
@@ -925,12 +1087,12 @@ function ManifestGatePanel(): React.ReactElement {
               {[...result.mustViolations, ...result.shouldViolations].map((violation) => (
                 <li
                   key={`${violation.ruleId}:${violation.message}`}
-                  className="rounded-lg border border-slate-200 bg-white p-3 text-xs dark:border-navy-700 dark:bg-navy-900"
+                  className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
                 >
-                  <div className="font-medium text-navy-900 dark:text-slate-100">
+                  <div className="font-medium text-c-text">
                     {violation.ruleId} · {violation.severity.toUpperCase()}
                   </div>
-                  <p className="mt-1 text-slate-500 dark:text-slate-400">{violation.message}</p>
+                  <p className="mt-1 text-c-text-secondary">{violation.message}</p>
                 </li>
               ))}
             </ul>
@@ -958,11 +1120,15 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
     try {
       setApprovals(await listDocumentStudioApprovals(artifactId));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load approvals');
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.panel.approvalsLoadFailed', 'Failed to load approvals')
+      );
     } finally {
       setLoading(false);
     }
-  }, [artifactId]);
+  }, [artifactId, t]);
 
   useEffect(() => {
     void refresh();
@@ -975,7 +1141,9 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
       .filter(Boolean)
       .map((userId) => ({ userId, required: true }));
     if (participants.length === 0) {
-      setError('Add at least one reviewer user id.');
+      setError(
+        t('documentStudio.panel.approvalsReviewerRequired', 'Add at least one reviewer user id.')
+      );
       return;
     }
     setSubmitting(true);
@@ -994,7 +1162,11 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
       setReason('');
       toast.success(t('documentStudio.documentPanel.approvalRequested', 'Approval requested'));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to request approval');
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.panel.approvalRequestFailed', 'Failed to request approval')
+      );
     } finally {
       setSubmitting(false);
     }
@@ -1019,7 +1191,11 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
         t('documentStudio.documentPanel.approvalDecisionRecorded', 'Approval decision recorded')
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to record decision');
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.panel.decisionFailed', 'Failed to record decision')
+      );
     } finally {
       setSubmitting(false);
     }
@@ -1039,7 +1215,11 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
       );
       toast.success(t('documentStudio.documentPanel.approvalCancelled', 'Approval cancelled'));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to cancel approval');
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.panel.approvalCancelFailed', 'Failed to cancel approval')
+      );
     } finally {
       setSubmitting(false);
     }
@@ -1049,57 +1229,70 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
     <div className="flex h-full flex-col overflow-y-auto p-4">
       <div className="mb-3 flex items-start justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold text-navy-900 dark:text-slate-100">Approvals</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Review tickets and quorum state for this document.
+          <h3 className="text-sm font-semibold text-c-text">
+            {t('documentStudio.panel.approvalsTitle', 'Approvals')}
+          </h3>
+          <p className="text-xs text-c-text-secondary">
+            {t(
+              'documentStudio.panel.approvalsSubtitle',
+              'Review tickets and quorum state for this document.'
+            )}
           </p>
         </div>
         <Button type="button" size="sm" variant="ghost" onClick={refresh} disabled={loading}>
-          {loading ? 'Loading…' : 'Refresh'}
+          {loading
+            ? t('documentStudio.panel.loading', 'Loading…')
+            : t('documentStudio.panel.refresh', 'Refresh')}
         </Button>
       </div>
-      <div className="mb-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-navy-700 dark:bg-navy-900">
-        <label className="mb-2 block text-xs text-slate-600 dark:text-slate-300">
-          Reviewers (comma-separated user ids)
+      <div className="mb-3 rounded-lg border border-c-border-subtle bg-c-surface p-3">
+        <label className="mb-2 block text-xs text-c-text-secondary">
+          {t('documentStudio.panel.reviewersLabel', 'Reviewers (comma-separated user ids)')}
           <input
             value={participantInput}
             onChange={(event) => setParticipantInput(event.target.value)}
             placeholder="user-1,user-2"
-            className="mt-1 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-950"
+            className="mt-1 h-9 w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 text-sm"
           />
         </label>
-        <label className="mb-2 block text-xs text-slate-600 dark:text-slate-300">
-          Quorum
+        <label className="mb-2 block text-xs text-c-text-secondary">
+          {t('documentStudio.panel.quorumLabel', 'Quorum')}
           <select
             value={quorumPolicy}
             onChange={(event) =>
               setQuorumPolicy(event.target.value as DocumentApprovalQuorumPolicy)
             }
-            className="mt-1 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-950"
+            className="mt-1 h-9 w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 text-sm"
           >
-            <option value="single_approval">Single approval</option>
-            <option value="majority">Majority</option>
-            <option value="unanimous">Unanimous</option>
+            <option value="single_approval">
+              {t('documentStudio.panel.quorumSingle', 'Single approval')}
+            </option>
+            <option value="majority">{t('documentStudio.panel.quorumMajority', 'Majority')}</option>
+            <option value="unanimous">
+              {t('documentStudio.panel.quorumUnanimous', 'Unanimous')}
+            </option>
           </select>
         </label>
-        <label className="mb-2 block text-xs text-slate-600 dark:text-slate-300">
-          Reason
+        <label className="mb-2 block text-xs text-c-text-secondary">
+          {t('documentStudio.panel.reasonLabel', 'Reason')}
           <textarea
             value={reason}
             onChange={(event) => setReason(event.target.value)}
-            className="mt-1 min-h-[64px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
+            className="mt-1 min-h-[64px] w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm"
           />
         </label>
         <Button type="button" size="sm" onClick={requestApproval} disabled={submitting}>
-          {submitting ? 'Working…' : 'Request approval'}
+          {submitting
+            ? t('documentStudio.panel.working', 'Working…')
+            : t('documentStudio.panel.requestApproval', 'Request approval')}
         </Button>
       </div>
-      <label className="mb-3 block text-xs text-slate-600 dark:text-slate-300">
-        Decision comment
+      <label className="mb-3 block text-xs text-c-text-secondary">
+        {t('documentStudio.panel.decisionCommentLabel', 'Decision comment')}
         <input
           value={decisionComment}
           onChange={(event) => setDecisionComment(event.target.value)}
-          className="mt-1 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-950"
+          className="mt-1 h-9 w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 text-sm"
           placeholder={t(
             'documentStudio.documentPanel.reviewerCommentPlaceholder',
             'Optional reviewer comment'
@@ -1112,27 +1305,31 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
         </div>
       ) : null}
       {!loading && approvals.length === 0 ? (
-        <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-500 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-400">
-          No approval requests yet.
+        <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs text-c-text-secondary">
+          {t('documentStudio.panel.approvalsEmpty', 'No approval requests yet.')}
         </div>
       ) : null}
       <ul className="space-y-2">
         {approvals.map((approval) => (
           <li
             key={approval.approvalId}
-            className="rounded-lg border border-slate-200 bg-white p-3 text-xs dark:border-navy-700 dark:bg-navy-900"
+            className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
           >
             <div className="flex items-start justify-between gap-2">
-              <div className="font-medium text-navy-900 dark:text-slate-100">
+              <div className="font-medium text-c-text">
                 {approval.reason || approval.approvalId}
               </div>
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500 dark:bg-navy-800 dark:text-slate-300">
+              <span className="rounded-full bg-c-surface-raised px-2 py-0.5 text-[10px] text-c-text-secondary">
                 {approval.status}
               </span>
             </div>
-            <div className="mt-1 text-slate-500 dark:text-slate-400">
-              {approval.participants.length} participants · {approval.quorumPolicy} ·{' '}
-              {approval.decisions.length} decisions
+            <div className="mt-1 text-c-text-secondary">
+              {t('documentStudio.panel.approvalMeta', {
+                defaultValue: '{{participants}} participants · {{quorum}} · {{decisions}} decisions',
+                participants: approval.participants.length,
+                quorum: approval.quorumPolicy,
+                decisions: approval.decisions.length,
+              })}
             </div>
             {approval.status === 'pending' ? (
               <div className="mt-2 flex flex-wrap gap-1.5">
@@ -1143,7 +1340,7 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
                   onClick={() => void submitDecision(approval.approvalId, 'approve')}
                   disabled={submitting}
                 >
-                  Approve
+                  {t('documentStudio.panel.approve', 'Approve')}
                 </Button>
                 <Button
                   type="button"
@@ -1152,7 +1349,7 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
                   onClick={() => void submitDecision(approval.approvalId, 'request_changes')}
                   disabled={submitting}
                 >
-                  Request changes
+                  {t('documentStudio.panel.requestChanges', 'Request changes')}
                 </Button>
                 <Button
                   type="button"
@@ -1161,7 +1358,7 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
                   onClick={() => void submitDecision(approval.approvalId, 'reject')}
                   disabled={submitting}
                 >
-                  Reject
+                  {t('documentStudio.panel.reject', 'Reject')}
                 </Button>
                 <Button
                   type="button"
@@ -1170,7 +1367,7 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
                   onClick={() => void cancelApproval(approval.approvalId)}
                   disabled={submitting}
                 >
-                  Cancel
+                  {t('documentStudio.panel.cancel', 'Cancel')}
                 </Button>
               </div>
             ) : null}
@@ -1190,6 +1387,7 @@ function ContentLibraryPanel({
   schema: DocumentSchema;
   onSchemaUpdated: (nextSchema: DocumentSchema) => void;
 }): React.ReactElement {
+  const { t } = useTranslation();
   const [blocks, setBlocks] = useState<DocumentContentBlockTemplate[]>([]);
   const [instantiatedBlock, setInstantiatedBlock] = useState<DocumentBlock | null>(null);
   const [targetSectionId, setTargetSectionId] = useState(schema.sections[0]?.sectionId ?? '');
@@ -1209,11 +1407,15 @@ function ContentLibraryPanel({
         })
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load content library');
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.panel.libraryLoadFailed', 'Failed to load content library')
+      );
     } finally {
       setLoading(false);
     }
-  }, [schema.documentType, schema.language]);
+  }, [schema.documentType, schema.language, t]);
 
   useEffect(() => {
     void refresh();
@@ -1235,9 +1437,13 @@ function ContentLibraryPanel({
     try {
       const result = await instantiateDocumentStudioContentBlock(contentBlockId);
       setInstantiatedBlock(result.block);
-      toast.success('Content block instantiated');
+      toast.success(t('documentStudio.panel.blockInstantiated', 'Content block instantiated'));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to instantiate content block');
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.panel.blockInstantiateFailed', 'Failed to instantiate content block')
+      );
     } finally {
       setSubmitting(false);
     }
@@ -1245,7 +1451,12 @@ function ContentLibraryPanel({
 
   const insertBlock = async (contentBlockId: string): Promise<void> => {
     if (!targetSectionId) {
-      setError('Select a target section before inserting a content block.');
+      setError(
+        t(
+          'documentStudio.panel.selectTargetSection',
+          'Select a target section before inserting a content block.'
+        )
+      );
       return;
     }
     setSubmitting(true);
@@ -1258,9 +1469,15 @@ function ContentLibraryPanel({
       setInstantiatedBlock(result.insertedBlock);
       setLastInsertedBlockId(result.insertedBlock.blockId);
       onSchemaUpdated(result.schema);
-      toast.success('Content block inserted into document');
+      toast.success(
+        t('documentStudio.panel.blockInserted', 'Content block inserted into document')
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to insert content block');
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.panel.blockInsertFailed', 'Failed to insert content block')
+      );
     } finally {
       setSubmitting(false);
     }
@@ -1270,15 +1487,20 @@ function ContentLibraryPanel({
     <div className="flex h-full flex-col overflow-y-auto p-4">
       <div className="mb-3 flex items-start justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold text-navy-900 dark:text-slate-100">
-            Content library
+          <h3 className="text-sm font-semibold text-c-text">
+            {t('documentStudio.panel.libraryTitle', 'Content library')}
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Active reusable blocks matching this document type and language.
+          <p className="text-xs text-c-text-secondary">
+            {t(
+              'documentStudio.panel.librarySubtitle',
+              'Active reusable blocks matching this document type and language.'
+            )}
           </p>
         </div>
         <Button type="button" size="sm" variant="ghost" onClick={refresh} disabled={loading}>
-          {loading ? 'Loading…' : 'Refresh'}
+          {loading
+            ? t('documentStudio.panel.loading', 'Loading…')
+            : t('documentStudio.panel.refresh', 'Refresh')}
         </Button>
       </div>
       {error ? (
@@ -1290,18 +1512,18 @@ function ContentLibraryPanel({
         <div className="mb-3 rounded-lg border border-success-500/30 bg-success-500/10 p-3 text-xs text-success-700 dark:text-emerald-300">
           <div className="mb-1 font-semibold">
             {lastInsertedBlockId === instantiatedBlock.blockId
-              ? 'Inserted block read-back'
-              : 'Instantiated block preview'}
+              ? t('documentStudio.panel.insertedReadback', 'Inserted block read-back')
+              : t('documentStudio.panel.instantiatedPreview', 'Instantiated block preview')}
           </div>
           <pre className="max-h-40 overflow-auto whitespace-pre-wrap">
             {JSON.stringify(instantiatedBlock, null, 2)}
           </pre>
         </div>
       ) : null}
-      <label className="mb-3 block text-xs font-medium text-slate-600 dark:text-slate-300">
-        Insert into section
+      <label className="mb-3 block text-xs font-medium text-c-text-secondary">
+        {t('documentStudio.panel.insertIntoSection', 'Insert into section')}
         <select
-          className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-navy-900 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-100"
+          className="mt-1 w-full rounded-lg border border-c-border-subtle bg-c-surface px-2 py-1 text-xs text-c-text"
           value={targetSectionId}
           onChange={(event) => setTargetSectionId(event.target.value)}
         >
@@ -1313,22 +1535,22 @@ function ContentLibraryPanel({
         </select>
       </label>
       {!loading && blocks.length === 0 ? (
-        <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-500 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-400">
-          No reusable blocks match this document yet.
+        <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs text-c-text-secondary">
+          {t('documentStudio.panel.libraryEmpty', 'No reusable blocks match this document yet.')}
         </div>
       ) : null}
       <ul className="space-y-2">
         {blocks.map((block) => (
           <li
             key={block.contentBlockId}
-            className="rounded-lg border border-slate-200 bg-white p-3 text-xs dark:border-navy-700 dark:bg-navy-900"
+            className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
           >
-            <div className="font-medium text-navy-900 dark:text-slate-100">{block.name}</div>
-            <div className="mt-1 text-slate-500 dark:text-slate-400">
+            <div className="font-medium text-c-text">{block.name}</div>
+            <div className="mt-1 text-c-text-secondary">
               {block.languageScope} · v{block.version} · {block.block.type}
             </div>
             {block.description ? (
-              <p className="mt-2 text-slate-600 dark:text-slate-300">{block.description}</p>
+              <p className="mt-2 text-c-text-secondary">{block.description}</p>
             ) : null}
             <Button
               type="button"
@@ -1338,7 +1560,7 @@ function ContentLibraryPanel({
               onClick={() => void instantiateBlock(block.contentBlockId)}
               disabled={submitting}
             >
-              Instantiate preview
+              {t('documentStudio.panel.instantiatePreview', 'Instantiate preview')}
             </Button>
             <Button
               type="button"
@@ -1347,7 +1569,7 @@ function ContentLibraryPanel({
               onClick={() => void insertBlock(block.contentBlockId)}
               disabled={submitting || !targetSectionId}
             >
-              Insert into document
+              {t('documentStudio.panel.insertIntoDocument', 'Insert into document')}
             </Button>
           </li>
         ))}
@@ -1365,16 +1587,19 @@ function TeresaDrawerPanel({
   schema: DocumentSchema;
   onSchemaUpdated: (nextSchema: DocumentSchema) => void;
 }): React.ReactElement {
+  const { t } = useTranslation();
   return (
     <div className="flex h-full flex-col overflow-y-auto p-3">
-      <div className="mb-3 rounded-lg border border-primary-500/20 bg-primary-500/5 p-3">
-        <h3 className="text-sm font-semibold text-navy-900 dark:text-slate-100">Teresa</h3>
-        <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
-          AI document co-editor. Use source/methodology prompts here for governed proposal flows;
-          all changes still require review and approval before execution.
+      <div className="mb-3 rounded-lg border border-c-accent bg-c-accent-soft0 p-3">
+        <h3 className="text-sm font-semibold text-c-text">Teresa</h3>
+        <p className="mt-1 text-xs text-c-text-secondary">
+          {t(
+            'documentStudio.panel.teresaSubtitle',
+            'AI document co-editor. Use source/methodology prompts here for governed proposal flows; all changes still require review and approval before execution.'
+          )}
         </p>
       </div>
-      <p className="text-xs text-slate-500 dark:text-slate-400">
+      <p className="text-xs text-c-text-secondary">
         Zaznacz tekst w dokumencie, aby poprawić go z pomocą Teresy.
       </p>
     </div>
@@ -1384,12 +1609,18 @@ function TeresaDrawerPanel({
 export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelProps> = ({
   artifactId,
   schema,
+  generationWarnings = [],
   onStartOver,
   onSchemaUpdated,
 }) => {
+  const { t } = useTranslation();
   const [exporting, setExporting] = useState<'markdown' | 'docx' | 'pdf' | null>(null);
   const [exportNote, setExportNote] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
+  /** B4 — last successfully exported format; drives the inline success note. */
+  const [exportSuccess, setExportSuccess] = useState<'markdown' | 'docx' | 'pdf' | null>(null);
+  /** B4 — export-time warnings (chart raster / logo fallbacks) from the last export. */
+  const [exportWarnings, setExportWarnings] = useState<DocumentGenerationWarning[]>([]);
   const [openingBuilder, setOpeningBuilder] = useState(false);
   /** When set, the previous export attempt was QA-blocked. The user can resolve findings or invoke the audited override. */
   const [qaBlock, setQaBlock] = useState<{
@@ -1473,49 +1704,64 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       setExporting(format);
       setExportError(null);
       setExportNote(null);
+      setExportSuccess(null);
+      setExportWarnings([]);
       if (!options.qaOverride) setQaBlock(null);
       try {
         const payload = await exportDocumentStudioArtifact(artifactId, format, {
           qaOverride: options.qaOverride === true,
         });
         const manifest = (payload.manifest ?? {}) as Record<string, unknown>;
-        const pending = manifest.pendingRendering as string | undefined;
-        const pendingNote = manifest.pendingRenderingNote as string | undefined;
 
-        if (typeof payload.contentBase64 === 'string' && payload.contentBase64.length > 0) {
-          triggerBinaryDownload(payload.filename, payload.contentBase64, mimeForFormat(format));
-          if (manifest.qaOverride === true) {
-            setExportNote(
-              'Exported with QA override. The override has been recorded in the audit trail.'
-            );
-          }
-          setQaBlock(null);
+        const hasBinary =
+          typeof payload.contentBase64 === 'string' && payload.contentBase64.length > 0;
+        const hasText = typeof payload.contentText === 'string' && payload.contentText.length > 0;
+        if (!hasBinary && !hasText) {
+          setExportNote(t('documentStudio.panel.exportNoContent', 'Export returned no content.'));
           return;
         }
-        if (typeof payload.contentText === 'string' && payload.contentText.length > 0) {
-          triggerTextDownload(payload.filename, payload.contentText, mimeForFormat(format));
-          if (pending) {
-            // Backwards-compatible fallback: if a deployment still returns the
-            // pending tag, surface its note rather than failing silently.
-            setExportNote(
-              pendingNote ??
-                `${format.toUpperCase()} export is pending finalization. Markdown is available now.`
-            );
-          }
-          if (manifest.qaOverride === true) {
-            setExportNote(
-              'Exported with QA override. The override has been recorded in the audit trail.'
-            );
-          }
-          setQaBlock(null);
-          return;
+
+        if (hasBinary) {
+          triggerBinaryDownload(
+            payload.filename,
+            payload.contentBase64 as string,
+            mimeForFormat(format)
+          );
+        } else {
+          triggerTextDownload(
+            payload.filename,
+            payload.contentText as string,
+            mimeForFormat(format)
+          );
         }
-        setExportNote('Export returned no content.');
+
+        setQaBlock(null);
+        setExportSuccess(format);
+        // B4 — export-time warnings (e.g. chart_raster_failed, logo_unavailable)
+        // were previously dropped on the floor; surface them next to the note.
+        setExportWarnings(payload.generationWarnings ?? []);
+        toast.success(
+          t('documentStudio.panel.exportSuccess', {
+            defaultValue: '{{format}} exported — the download has started.',
+            format: format.toUpperCase(),
+          })
+        );
+        if (manifest.qaOverride === true) {
+          setExportNote(
+            t(
+              'documentStudio.panel.exportedWithOverride',
+              'Exported with QA override. The override has been recorded in the audit trail.'
+            )
+          );
+        }
       } catch (err) {
         if (err instanceof QaBlockingError) {
           setQaBlock({ format, report: err.report });
           setExportError(
-            'Export blocked by Quality QA. Resolve the findings below or use the audited override.'
+            t(
+              'documentStudio.panel.exportQaBlocked',
+              'Export blocked by Quality QA. Resolve the findings below or use the audited override.'
+            )
           );
           return;
         }
@@ -1526,21 +1772,43 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           setPolicy({ canOverrideQa: false, role: err.role ?? null });
           setExportError(
             err.message ||
-              'You are not authorized to override the export QA gate. Ask a privileged reviewer.'
+              t(
+                'documentStudio.panel.overrideUnauthorized',
+                'You are not authorized to override the export QA gate. Ask a privileged reviewer.'
+              )
           );
           return;
         }
-        setExportError(err instanceof Error ? err.message : 'Export failed');
+        // B4 — readable i18n framing instead of a bare technical message;
+        // the underlying detail is kept as context when available.
+        const detail = err instanceof Error && err.message.trim().length > 0 ? err.message : null;
+        setExportError(
+          detail
+            ? t('documentStudio.panel.exportFailedWithDetail', {
+                defaultValue: '{{format}} export failed: {{detail}}',
+                format: format.toUpperCase(),
+                detail,
+              })
+            : t('documentStudio.panel.exportFailedFormat', {
+                defaultValue: '{{format}} export failed. Please try again.',
+                format: format.toUpperCase(),
+              })
+        );
       } finally {
         setExporting(null);
       }
     },
-    [artifactId]
+    [artifactId, t]
   );
 
   const handleOpenBuilder = async (): Promise<void> => {
     if (!tableSourceRef?.sourceId) {
-      setExportNote('No sheet/table source is attached to this document.');
+      setExportNote(
+        t(
+          'documentStudio.panel.noTableSource',
+          'No sheet/table source is attached to this document.'
+        )
+      );
       return;
     }
     setOpeningBuilder(true);
@@ -1548,14 +1816,23 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     try {
       const workspaceId = await resolveTablePlatformWorkspaceIdForTable(tableSourceRef.sourceId);
       if (!workspaceId) {
-        setExportError('Could not resolve workspace for the linked table source.');
+        setExportError(
+          t(
+            'documentStudio.panel.workspaceResolveFailed',
+            'Could not resolve workspace for the linked table source.'
+          )
+        );
         return;
       }
       const targetPath = buildMyWorkSheetTableOpenPath(workspaceId, tableSourceRef.sourceId);
-      toast.success('Opening sheets builder lane…');
+      toast.success(t('documentStudio.panel.openingBuilder', 'Opening sheets builder lane…'));
       window.location.assign(targetPath);
     } catch (err) {
-      setExportError(err instanceof Error ? err.message : 'Failed to open sheets builder');
+      setExportError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.panel.openBuilderFailed', 'Failed to open sheets builder')
+      );
     } finally {
       setOpeningBuilder(false);
     }
@@ -1565,105 +1842,120 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     () => [
       {
         id: 'history',
-        label: 'History',
+        label: t('documentStudio.panel.chipHistory', 'History'),
         icon: History,
-        tooltip: 'Open the unified activity feed from the right rail.',
+        tooltip: t(
+          'documentStudio.panel.chipHistoryTooltip',
+          'Open the unified activity feed from the right rail.'
+        ),
       },
       {
         id: 'qa',
-        label: qaBlock ? 'QA blocked' : 'QA',
+        label: qaBlock
+          ? t('documentStudio.panel.chipQaBlocked', 'QA blocked')
+          : t('documentStudio.panel.chipQa', 'QA'),
         icon: ShieldCheck,
         dotTone: qaBlock ? 'danger' : 'success',
-        tooltip: 'Open the QA panel from the right rail.',
+        tooltip: t('documentStudio.panel.chipQaTooltip', 'Open the QA panel from the right rail.'),
       },
       {
         id: 'governance',
-        label: policy?.canOverrideQa ? 'Override allowed' : 'Governance',
+        label: policy?.canOverrideQa
+          ? t('documentStudio.panel.chipOverrideAllowed', 'Override allowed')
+          : t('documentStudio.panel.chipGovernance', 'Governance'),
         icon: FileWarning,
         dotTone: policy?.canOverrideQa ? 'warning' : 'neutral',
-        tooltip: 'Export governance policy for this user.',
+        tooltip: t(
+          'documentStudio.panel.chipGovernanceTooltip',
+          'Export governance policy for this user.'
+        ),
       },
       {
         id: 'share',
-        label: 'Share',
+        label: t('documentStudio.panel.chipShare', 'Share'),
         icon: Share2,
-        tooltip: 'Open share-link management from the right rail.',
+        tooltip: t(
+          'documentStudio.panel.chipShareTooltip',
+          'Open share-link management from the right rail.'
+        ),
       },
       {
         id: 'agent',
-        label: 'AI Editor',
+        label: t('documentStudio.panel.chipAiEditor', 'AI Editor'),
         icon: Bot,
-        tooltip: 'Open Teresa from the right rail.',
+        tooltip: t('documentStudio.panel.chipAiEditorTooltip', 'Open Teresa from the right rail.'),
       },
       {
         id: 'run',
-        label: exporting ? 'Exporting' : 'Export DOCX',
+        label: exporting
+          ? t('documentStudio.panel.chipExporting', 'Exporting')
+          : t('documentStudio.panel.chipExportDocx', 'Export DOCX'),
         icon: Download,
         kind: 'primary',
         disabled: exporting !== null,
         onClick: () => void handleExport('docx'),
       },
     ],
-    [exporting, handleExport, policy?.canOverrideQa, qaBlock]
+    [exporting, handleExport, policy?.canOverrideQa, qaBlock, t]
   );
 
   const rightRailTools = useMemo<RightRailToolDescriptor[]>(
     () => [
       {
         id: 'sources',
-        label: 'Sources',
+        label: t('documentStudio.panel.toolSources', 'Sources'),
         icon: FileText,
         badge: sourceCount > 0 ? sourceCount : undefined,
         dotTone: assumptionCount > 0 ? 'warning' : sourceCount > 0 ? 'success' : 'warning',
       },
       {
         id: 'properties',
-        label: 'Properties',
+        label: t('documentStudio.panel.toolProperties', 'Properties'),
         icon: Table2,
       },
       {
         id: 'activity',
-        label: 'Activity',
+        label: t('documentStudio.panel.toolActivity', 'Activity'),
         icon: History,
       },
       {
         id: 'diff',
-        label: 'Schema diff',
+        label: t('documentStudio.panel.toolDiff', 'Schema diff'),
         icon: FileWarning,
       },
       {
         id: 'variants',
-        label: 'Audience variants',
+        label: t('documentStudio.panel.toolVariants', 'Audience variants'),
         icon: Users,
       },
       {
         id: 'comments',
-        label: 'Comments',
+        label: t('documentStudio.panel.toolComments', 'Comments'),
         icon: MessageSquare,
       },
       {
         id: 'share',
-        label: 'Share links',
+        label: t('documentStudio.panel.toolShare', 'Share links'),
         icon: Share2,
       },
       {
         id: 'approvals',
-        label: 'Approvals',
+        label: t('documentStudio.panel.toolApprovals', 'Approvals'),
         icon: ShieldCheck,
       },
       {
         id: 'manifest',
-        label: 'Manifest gate',
+        label: t('documentStudio.panel.toolManifest', 'Manifest gate'),
         icon: ShieldCheck,
       },
       {
         id: 'library',
-        label: 'Content library',
+        label: t('documentStudio.panel.toolLibrary', 'Content library'),
         icon: FileText,
       },
       {
         id: 'qa',
-        label: 'Quality QA',
+        label: t('documentStudio.panel.toolQa', 'Quality QA'),
         icon: ShieldCheck,
         dotTone: qaBlock ? 'danger' : null,
       },
@@ -1674,11 +1966,11 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       },
       {
         id: 'editor',
-        label: 'AI Editor',
+        label: t('documentStudio.panel.toolAiEditor', 'AI Editor'),
         icon: Sparkles,
       },
     ],
-    [assumptionCount, qaBlock, sourceCount]
+    [assumptionCount, qaBlock, sourceCount, t]
   );
 
   const renderRightRailPanel = (activeToolId: string | null): React.ReactNode => {
@@ -1707,7 +1999,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       return <SchemaDiffPanel artifactId={artifactId} />;
     }
     if (activeToolId === 'comments') {
-      return <CommentsPanel artifactId={artifactId} />;
+      return <DocumentCommentsPanel artifactId={artifactId} sections={schema.sections} />;
     }
     if (activeToolId === 'share') {
       return <ShareLinksPanel artifactId={artifactId} />;
@@ -1749,7 +2041,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     if (activeToolId === 'editor') {
       return (
         <div className="h-full overflow-y-auto p-3">
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-c-text-secondary">
             Zaznacz tekst w dokumencie, aby poprawić go z pomocą Teresy.
           </p>
         </div>
@@ -1760,8 +2052,30 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
 
   const canvas = (
     <div className="flex min-h-full flex-col">
-      {(exportNote || exportError || qaBlock) && (
+      {generationWarnings.length > 0 && (
+        <div className="px-6 pt-4">
+          <DocumentGenerationWarningsChip warnings={generationWarnings} />
+        </div>
+      )}
+      {(exportSuccess || exportWarnings.length > 0 || exportNote || exportError || qaBlock) && (
         <div className="space-y-3 px-6 pt-4">
+          {exportSuccess ? (
+            <DocumentExportSuccessNote
+              format={exportSuccess}
+              onDismiss={() => {
+                setExportSuccess(null);
+                setExportWarnings([]);
+              }}
+            />
+          ) : null}
+
+          {exportWarnings.length > 0 ? (
+            <DocumentGenerationWarningsChip
+              warnings={exportWarnings}
+              summaryKey="documentStudio.generationWarnings.exportSummary"
+            />
+          ) : null}
+
           {exportNote ? (
             <div className="rounded-md border border-amber-400/30 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
               {exportNote}
@@ -1784,29 +2098,39 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
             >
               <div className="mb-1.5 flex items-center justify-between gap-2">
                 <span className="font-semibold text-danger-700 dark:text-danger-300">
-                  QA blocked the {qaBlock.format.toUpperCase()} export
+                  {t('documentStudio.panel.qaBlockedExport', {
+                    defaultValue: 'QA blocked the {{format}} export',
+                    format: qaBlock.format.toUpperCase(),
+                  })}
                 </span>
                 <span className="rounded-full bg-danger-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-danger-700 dark:text-danger-300">
-                  {qaBlock.report.categories.filter((c) => c.blocking).length} blocking categor
-                  {qaBlock.report.categories.filter((c) => c.blocking).length === 1 ? 'y' : 'ies'}
+                  {t('documentStudio.panel.blockingCategories', {
+                    defaultValue: '{{count}} blocking categories',
+                    count: qaBlock.report.categories.filter((c) => c.blocking).length,
+                  })}
                 </span>
               </div>
-              <ul className="mb-2 space-y-1 text-slate-700 dark:text-slate-200">
+              <ul className="mb-2 space-y-1 text-c-text">
                 {qaBlock.report.categories
                   .filter((c) => c.blocking)
                   .map((c) => (
                     <li key={c.category}>
                       <span className="font-medium uppercase tracking-wide">{c.category}</span>
-                      <span className="ml-2 text-slate-500 dark:text-slate-400">
-                        score {c.score}/100 · {c.findings.length} finding
-                        {c.findings.length === 1 ? '' : 's'}
+                      <span className="ml-2 text-c-text-secondary">
+                        {t('documentStudio.panel.scoreFindings', {
+                          defaultValue: 'score {{score}}/100 · {{count}} findings',
+                          score: c.score,
+                          count: c.findings.length,
+                        })}
                       </span>
                     </li>
                   ))}
               </ul>
-              <p className="mb-2 text-slate-600 dark:text-slate-300">
-                Resolve the findings in the QA panel, or proceed with an audited override if the
-                export is time-critical and you accept the risk.
+              <p className="mb-2 text-c-text-secondary">
+                {t(
+                  'documentStudio.panel.qaBlockedHint',
+                  'Resolve the findings in the QA panel, or proceed with an audited override if the export is time-critical and you accept the risk.'
+                )}
               </p>
               <div className="flex flex-wrap items-center gap-2">
                 <Button
@@ -1816,7 +2140,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
                   onClick={() => setQaBlock(null)}
                   disabled={exporting !== null}
                 >
-                  Dismiss
+                  {t('documentStudio.panel.dismiss', 'Dismiss')}
                 </Button>
                 {policy?.canOverrideQa ? (
                   <Button
@@ -1831,13 +2155,22 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
                       {exporting === qaBlock.format ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       ) : null}
-                      Override and export (audited)
+                      {t('documentStudio.panel.overrideAndExport', 'Override and export (audited)')}
                     </span>
                   </Button>
                 ) : (
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Override requires admin or manager role
-                    {policy?.role ? ` — your role: ${policy.role}` : ''}.
+                  <span className="text-[11px] text-c-text-secondary">
+                    {t(
+                      'documentStudio.panel.overrideRequiresRole',
+                      'Override requires admin or manager role'
+                    )}
+                    {policy?.role
+                      ? ` — ${t('documentStudio.panel.yourRole', {
+                          defaultValue: 'your role: {{role}}',
+                          role: policy.role,
+                        })}`
+                      : ''}
+                    .
                   </span>
                 )}
               </div>
@@ -1847,12 +2180,12 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       )}
 
       <div className="flex flex-col gap-3 overflow-y-auto p-6">
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white p-3 dark:border-navy-700 dark:bg-navy-900">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-c-border-subtle bg-c-surface p-3">
           <div>
-            <h2 className="text-sm font-semibold text-navy-900 dark:text-slate-100">
-              Document preview
+            <h2 className="text-sm font-semibold text-c-text">
+              {t('documentStudio.panel.documentPreview', 'Document preview')}
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-c-text-secondary">
               {schema.documentType} · {schema.language.toUpperCase()} · {schema.density} ·{' '}
               {schema.confidentiality}
             </p>
@@ -1867,7 +2200,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
             >
               <span className="inline-flex items-center gap-1">
                 {openingBuilder ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                Open in Sheets Builder
+                {t('documentStudio.panel.openInSheetsBuilder', 'Open in Sheets Builder')}
               </span>
             </Button>
             <Button
@@ -1921,7 +2254,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
             <Button type="button" variant="ghost" size="sm" onClick={onStartOver}>
               <span className="inline-flex items-center gap-1">
                 <RotateCcw className="h-3.5 w-3.5" />
-                Start over
+                {t('documentStudio.panel.startOver', 'Start over')}
               </span>
             </Button>
           </div>
@@ -1934,23 +2267,31 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
   return (
     <ExecutiveModuleShell
       moduleKey="document-studio"
-      moduleLabel="Document Studio"
+      moduleLabel={t('documentStudio.view.moduleLabel', 'Document Studio')}
       title={schema.title}
       onBack={onStartOver}
-      backLabel="Start over"
+      backLabel={t('documentStudio.panel.startOver', 'Start over')}
       topBarChips={topBarChips}
       presenceSlot={
-        <div className="text-right text-[11px] text-slate-500 dark:text-slate-400">
+        <div className="text-right text-[11px] text-c-text-secondary">
           <div>
             {schema.language.toUpperCase()} · {schema.confidentiality}
           </div>
           <div>
-            {sourceCount} sources
-            {assumptionCount > 0 ? ` · ${assumptionCount} assumptions` : ''}
+            {t('documentStudio.panel.presenceSources', {
+              defaultValue: '{{count}} sources',
+              count: sourceCount,
+            })}
+            {assumptionCount > 0
+              ? ` · ${t('documentStudio.panel.presenceAssumptions', {
+                  defaultValue: '{{count}} assumptions',
+                  count: assumptionCount,
+                })}`
+              : ''}
           </div>
         </div>
       }
-      leftRailTitle="Outline"
+      leftRailTitle={t('documentStudio.panel.outlineTitle', 'Outline')}
       leftRailContent={
         <OutlinePanel
           sections={schema.sections}

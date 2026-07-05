@@ -8,6 +8,8 @@ import auditEventsService from '../services/AuditEventsService.js';
 import { hasColumn } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 import { flagOn } from '../utils/pgFlags.js';
+import { alertPrivilegeEscalation } from '../services/securityAlerts.js';
+import { buildSeedExclusion, isSeedRequested } from '../utils/superadminSeedFilter.js';
 import * as customerCtrl from './superadmin/customerController.js';
 import {
   createContractAmendment,
@@ -148,6 +150,10 @@ const getOrganizations = catchAsync(async (req, res, next) => {
   const hasDiscountPercent = await hasColumn('organizations', 'discount_percent').catch(
     () => false
   );
+  // Non-destructive seed filter: hide ephemeral `demo-org-session-*` scaffolding
+  // orgs from the default listing (hundreds of them). `?includeSeed=true` shows all.
+  const orgSeed = isSeedRequested(req.query) ? { clause: '', params: [] } : buildSeedExclusion({ orgIdCol: 'o.id' });
+  const orgWhere = orgSeed.clause ? `WHERE ${orgSeed.clause}` : '';
   // Feedback #d11ec6b0 (restored after merge d675885189 dropped it): membership
   // lives in TWO places — users.organization_id (primary tenant) and the
   // organization_members join table. Counting only the former hides users whose
@@ -172,10 +178,11 @@ const getOrganizations = catchAsync(async (req, res, next) => {
                 ) combined
             ) as user_count
         FROM organizations o
+        ${orgWhere}
         ORDER BY o.name ASC
     `;
 
-  deps.db.all(sql, [], (err, rows) => {
+  deps.db.all(sql, orgSeed.params, (err, rows) => {
     if (err) {
       logger.error('[SuperAdmin] Organizations query error:', err);
       return next(new AppError('Failed to fetch organizations', 500));
@@ -457,6 +464,19 @@ const getUsers = catchAsync(async (req, res, next) => {
     whereClauses.push(`COALESCE(LOWER(u.status), 'active') != 'deleted'`);
   }
 
+  // Non-destructive seed filter: hide seed/test accounts (demo.ateliertoys.com,
+  // local.test, test.com, … and ephemeral demo-org-session-* orgs) from the
+  // default listing. `?includeSeed=true` returns the full unfiltered set.
+  // Skipped when the caller already scopes to a single org, so drilling into a
+  // (possibly demo) org still shows all of its members.
+  if (!organizationId && !isSeedRequested(req.query)) {
+    const userSeed = buildSeedExclusion({ emailCol: 'u.email', orgIdCol: 'u.organization_id' });
+    if (userSeed.clause) {
+      whereClauses.push(userSeed.clause);
+      queryParams.push(...userSeed.params);
+    }
+  }
+
   const whereClause = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
   const sql = `
@@ -547,6 +567,17 @@ const updateUser = catchAsync(async (req, res, next) => {
 
   const updates: string[] = [];
   const params: any[] = [];
+
+  // Snapshot the target's current role/email BEFORE the update so a privilege
+  // escalation (→ SUPER_ADMIN/OWNER) can be alerted with old→new context.
+  let priorUser: { role?: string; email?: string } | null = null;
+  if (role !== undefined) {
+    priorUser = await new Promise((resolve) => {
+      deps.db.get('SELECT role, email FROM users WHERE id = ?', [id], (err, row) =>
+        resolve((err ? null : (row as { role?: string; email?: string })) || null)
+      );
+    });
+  }
 
   if (organizationId !== undefined) {
     const targetOrganization = await new Promise((resolve, reject) => {
@@ -685,6 +716,17 @@ const updateUser = catchAsync(async (req, res, next) => {
           projectRole,
         },
       });
+
+      // Security signal: page when this update granted a privileged role.
+      if (role !== undefined) {
+        void alertPrivilegeEscalation({
+          actorEmail: req.user?.email,
+          targetEmail: email ?? priorUser?.email,
+          targetUserId: id,
+          oldRole: priorUser?.role,
+          newRole: role,
+        });
+      }
 
       res.json({ message: 'User updated successfully' });
     });
