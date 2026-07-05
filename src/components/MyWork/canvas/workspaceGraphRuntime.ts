@@ -218,7 +218,9 @@ export function useWorkspaceGraphRuntime({
         version: Number(map.version || serverVersion),
       };
       setGraph(nextGraph);
-      primeServerVersion(nextGraph.version);
+      // Pass the hydrated node count so the sync-layer anti-wipe guard has a
+      // baseline immediately after hydration (before the first captured edit).
+      primeServerVersion(nextGraph.version, nextGraph.nodes.length);
       const storedViewport =
         isPlainObject(nextGraph.extensions?.surfaceState) &&
         isPlainObject((nextGraph.extensions.surfaceState as Record<string, unknown>)?.viewport)
