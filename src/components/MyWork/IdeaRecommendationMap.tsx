@@ -112,6 +112,7 @@ import { ImportExternalMap } from './mindmap/ImportExternalMap';
 import { InterviewToMap } from './mindmap/InterviewToMap';
 import { LabeledEdge } from './mindmap/LabeledEdge';
 import { LargeMapOptimizer } from './mindmap/LargeMapOptimizer';
+import { shouldVirtualize } from './mindmap/virtualization';
 import { BranchHealthDot, computeBranchHealth, MapHealthScore } from './mindmap/MapHealthScore';
 import { MindMap3DView } from './mindmap/MindMap3DView';
 import { MindmapCommandPalette } from './mindmap/MindmapCommandPalette';
@@ -4992,6 +4993,15 @@ function MindMapInner({
   // starts OFF so the flag alone never changes drag behavior on the canvas.
   const alignSnapEnabled = isFeatureEnabled('mindmapAlignSnap');
 
+  // M06 Fala 3.3: real viewport culling for large maps. We flip ReactFlow's
+  // built-in `onlyRenderVisibleElements` (DOM mounted only for viewport-visible
+  // nodes) instead of stripping nodes from the graph — so the store stays whole
+  // and the minimap, multi-select styling, SmartGuidesOverlay peers and edge
+  // endpoints all keep working for off-screen nodes. Engages only past the
+  // threshold so small/medium maps stay byte-identical to OFF.
+  const virtualizationEnabled = isFeatureEnabled('mindmapVirtualization');
+  const onlyRenderVisibleElements = shouldVirtualize(virtualizationEnabled, nodes.length);
+
   const floatingToolbarInfo = useMemo(() => {
     if (locked) return null;
     if (contextMenu) return null;
@@ -5400,6 +5410,7 @@ function MindMapInner({
               {...(alignSnapEnabled && snapEnabled
                 ? { snapToGrid: true, snapGrid: [16, 16] as [number, number] }
                 : {})}
+              {...(onlyRenderVisibleElements ? { onlyRenderVisibleElements: true } : {})}
               nodeTypes={reactFlowNodeTypes}
               edgeTypes={reactFlowEdgeTypes}
               // ReactFlow's built-in keyboard-a11y makes nodes focusable and binds
