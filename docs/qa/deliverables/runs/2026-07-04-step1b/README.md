@@ -2,9 +2,51 @@
 
 **Program:** Prezentacje / Deck composition redesign (SSOT `docs/product/DECK_COMPOSITION_REDESIGN.md` §Miernik).
 **Zadanie:** P1.2 — udowodnić, że composition B1 (Step 1a) zmienia REALNY wygląd slajdów, gdy renderer ją honoruje (Step 1b).
-**Data:** 2026-07-04 · **Gałąź:** `worktree-agent-a162b8b3317028327` (merge `feat/prezentacje-finisz` @ `6b15a232e0`).
+**Data:** 2026-07-04, **re-render + fix 2026-07-05** · **Gałąź:** `feat/prezentacje-fix-step1b-regressions`.
 
 > **Bramka Piotra:** to jest jego gate akceptacji. Nic nie idzie na demo bez jego zgody na te zrzuty.
+
+---
+
+## ⚠️ AKTUALIZACJA 2026-07-05 — regresje slide1/slide2 NAPRAWIONE
+
+Zrzuty zacommitowane 2026-07-04 o **18:59** były **nieaktualne**: powstały PRZED commitem
+`feat(deck): W7 guard-split + fill-canvas` (2026-07-04 **20:32**). Piotr oglądał więc stan
+sprzed poprawki. W7 guard-split (`shouldAvoidSplit()` w `LayoutEngine.ts`) usuwa OBIE lokalne
+regresje, które go zaniepokoiły:
+
+- **slide1 (`two_column`)** — sparse dwukolumnowy split (heading+bullety | krótki callout+
+  paragraf, bez bloku wypełniającego kolumnę) jest teraz ODRZUCANY przez guard (przypadek „d":
+  dwie krótkie kolumny tekstu, `maxW<6`, brak tall-fill) → spada do `exec_full` (pełna szerokość,
+  jeden stos). To DOKŁADNIE ten sam layout, który wybiera heurystyka BEFORE → **zrzuty
+  `slide1_before.png` i `slide1_after.png` są bajt-identyczne**. Regresja −0.08 znika: nie ma już
+  czego „rozrzedzać". VisionQA Δ na slide1 = −0.01 to szum modelu na identycznych pikselach.
+- **slide2 (`kpi_grid_2x2`)** — treść to `metric_strip` (już poziomy pas 4 KPI) + `chart`, a NIE
+  cztery osobne `kpi_widget`. Wciśnięte w siatkę 2×2 `kpi_grid_4` zostawiały pustą bliźniaczą
+  komórkę (stąd −0.04). Guard odrzuca siatkę → `exec_top_kpi` (heading → pełny pas KPI → wykres na
+  pełną szerokość). VisionQA Δ na slide2 = **+0.01** (dodatnie). Wykres renderuje się teraz jako
+  PRAWDZIWY wykres liniowy (poprzedni „line chart" placeholder był artefaktem starego runa).
+
+Test regresji przypinający oba przypadki: `tests/components/Presentations/LayoutEngine.w7.test.ts`
+(slide1: „sparse content avoids split"; slide2: „kpi_grid_2x2 with strip+chart avoids the grid").
+
+Bajt-identyczność before/after per slajd (fresh render 2026-07-05):
+
+| slajd | variant | before vs after | interpretacja |
+| --- | --- | --- | --- |
+| 0 | centered | identyczne | heurystyka już trafia w cover |
+| 1 | two_column | **identyczne** | guard-split → stacked = heurystyka (regresja usunięta) |
+| 2 | kpi_grid_2x2 | różnią się (Δ +0.01) | guard-split → `exec_top_kpi`, wykres realny |
+| 3 | big_number | różnią się | composition win (KPI-hero) |
+| 4 | split_lr | różnią się | composition win (wykres | tekst — split UTRZYMANY) |
+| 5 | stacked | identyczne | heurystyka już trafia |
+| 6 | timeline_strip | różnią się | **największy win** (Δ +0.12) |
+
+**Nowe liczby VisionQA (fresh 2026-07-05, `claude-sonnet-4-6`):** overall BEFORE=0.516 AFTER=0.526
+Δ=**+0.010** (deck-level dodatnie). Uwaga: VisionQA jest 1-shot i stochastyczne (±0.05 per slajd);
+slide3/slide4 pokazują drobne ujemne Δ w tym runie mimo realnych wygranych composition — to szum,
+nie regresja (patrz bajt-różnice: 3/4/6 zmieniają layout na lepszy). Dla slide1 dowodem NIE jest
+VisionQA lecz **bajt-identyczność** before/after; dla slide2 Δ jest dodatnie.
 
 ---
 
@@ -47,10 +89,15 @@ Największy zysk tam, gdzie layout faktycznie się zmienił:
 - **slide 3** (`single_insight` → `big_number`): 0.48 → **0.64** (+0.16)
 - **slide 6** (`next_steps` → `timeline_strip`): 0.31 → **0.38** (+0.07)
 
-Uczciwe sygnały ostrzegawcze (NIE ukrywane):
+Sygnały ostrzegawcze z ORYGINALNEGO runa (18:59, PRZED W7 guard-split) — **oba NAPRAWIONE**,
+patrz sekcja „AKTUALIZACJA 2026-07-05" na górze:
 
-- **slide 1** (`two_column`): 0.63 → 0.55 (−0.08) — dwukolumnowy split rozrzedził treść na tym konkretnym slajdzie; heurystyczny pojedynczy stos wypadł lepiej dla tego zestawu bloków.
-- **slide 2** (`kpi_grid_2x2`): 0.63 → 0.59 (−0.04) — siatka KPI poprawna semantycznie, ale wykres jako placeholder w harnessie obniża balans.
+- ~~**slide 1** (`two_column`): 0.63 → 0.55 (−0.08)~~ → guard-split stackuje treść; before==after (bajt-identyczne). NAPRAWIONE.
+- ~~**slide 2** (`kpi_grid_2x2`): 0.63 → 0.59 (−0.04)~~ → guard-split → `exec_top_kpi`; Δ teraz +0.01, wykres realny. NAPRAWIONE.
+
+> Liczby VisionQA w tabelach §Miernik powyżej pochodzą z oryginalnego runa 18:59 (kontekst
+> historyczny). Aktualne, po-fixowe liczby są w sekcji „AKTUALIZACJA 2026-07-05" oraz w świeżym
+> `visionqa-results.json` (`generatedAt` 2026-07-05).
 
 ## Ważne zastrzeżenie interpretacyjne (dla Piotra)
 

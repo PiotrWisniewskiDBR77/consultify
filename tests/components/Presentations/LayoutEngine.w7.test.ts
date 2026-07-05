@@ -165,6 +165,56 @@ describe('W7 guard-split — balanced content KEEPS the split (slide4)', () => {
   });
 });
 
+describe('W7 guard-split — kpi_grid_2x2 with strip+chart avoids the grid (slide2)', () => {
+  // Reproduces slide2: B1 picks variant kpi_grid_2x2, but the content is a SINGLE
+  // metric_strip (already a horizontal 4-KPI row) + a chart — NOT four separate
+  // kpi_widget blocks. Routed into kpi_grid_4's 2×2 the strip lands in one cell
+  // and the twin cell renders EMPTY, squeezing everything to the left half with a
+  // dead vertical gap (the −0.04 regression on the P1.2 shots). The guard must
+  // reject the grid and stack it full-width (heading → strip → chart).
+  const stripChartBlocks = [
+    block('heading', { text: 'Stan obecny — wskaźniki dojrzałości', level: 2 }),
+    block('metric_strip', {
+      metrics: [
+        { label: 'Automatyzacja', value: '18%', trend: 'down' },
+        { label: 'NPS klienta', value: '31', trend: 'flat' },
+        { label: 'Adopcja narzędzi', value: '54%', trend: 'down' },
+        { label: 'Koszt operacyjny', value: '+9%', trend: 'up' },
+      ],
+    }),
+    block('chart', {
+      chartType: 'line',
+      title: 'Trend adopcji narzędzi (12 mies.)',
+      series: [{ name: 'Adopcja', data: [66, 63, 61, 59, 58, 56, 55, 54, 54, 53, 54, 54] }],
+    }),
+  ];
+  const comp = {
+    layoutVariantId: 'kpi_grid_2x2',
+    regions: [
+      { area: 'top', blockTypes: ['heading', 'metric_strip'] },
+      { area: 'bottom', blockTypes: ['chart'] },
+    ],
+  };
+
+  it('shouldAvoidSplit=true — kpi_grid_4 leaves an empty twin cell for strip+chart', () => {
+    const grid = getLayoutById('kpi_grid_4')!;
+    expect(isSplitLikeLayout(grid)).toBe(true);
+    expect(shouldAvoidSplit(stripChartBlocks, grid, comp)).toBe(true);
+  });
+
+  it('resolveExplicitLayout downgrades kpi_grid_2x2 → a non-split (stacked) layout', () => {
+    const c = card({ intent: 'performance_overview', composition: comp, blocks: stripChartBlocks });
+    const resolved = resolveExplicitLayout(c);
+    expect(resolved).toBeDefined();
+    expect(isSplitLikeLayout(resolved!)).toBe(false);
+  });
+
+  it('selectLayout never returns a split-like layout for this strip+chart card', () => {
+    const c = card({ intent: 'performance_overview', composition: comp, blocks: stripChartBlocks });
+    expect(isSplitLikeLayout(selectLayout(c))).toBe(false);
+  });
+});
+
 describe('W7 block-weight estimator', () => {
   it('weights a chart heavier than a one-line heading', () => {
     expect(estimateBlockWeight(block('chart', { series: [] }))).toBeGreaterThan(
