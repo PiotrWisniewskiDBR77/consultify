@@ -93,3 +93,65 @@ Budowę ArtifactRightPanel robię SAM (wspólna powłoka = jak standard/ w triad
 Piotr pytał **jak mają WYGLĄDAĆ** artefakty → rdzeń = **wyrównanie wizualne do SPEC-A** (tokeny c.*, zero crimson, wspólny accordion, kolejność sekcji, stany). To re-skin: tani, niskie ryzyko, dla WSZYSTKICH artefaktów włącznie z Initiative (bo jego chrome już wspólny — wystarczy accordion + audyt tokenów, BEZ ruszania switcha).
 Rozbicie Initiative mega-switch na 25 sekcji (12-17 dni) = **osobny dług techniczny (czytelność kodu), NIE wygląd** → ODŁOŻONE, nie mieszać z re-skinem. Zgłosić Piotrowi jako osobny workstream.
 **Skorygowany plan Fazy 1:** wyrównanie WIZUALNE wszystkich artefaktów C do SPEC-A (accordion + tokeny + crimson), Initiative wchodzi WIZUALNIE (bez refaktoru). Refaktor Initiative = backlog.
+
+---
+# CZĘŚĆ WYKONAWCZA — od 0 do końca (gotowe do startu "po powrocie")
+
+## 10. INFRASTRUKTURA (gotowa 2026-07-05)
+- **SSOT standardu:** `Harvard/wdrozenie-100/ARTIFACT_ANATOMY_STANDARD.md` (§10.2/§11.2 SPEC-A, §13 instancjacja, §18.1 DoD).
+- **Skill:** `.claude/skills/consultify-artefakty/` — auto-ładuje kanon przy pracy nad ekranem-artefaktem. Wołać ZAWSZE (jak consultify-triada dla list). ✅ gotowy.
+- **Hook:** `.claude/hooks/check-artefakt.sh` (w settings.json obok check-triada) — blokuje KAŻDY `primary-*`/navy/slate/hex w plikach WSPÓLNEJ POWŁOKI (shared/PreviewPane, shared/NModeLayout, standard/Artifact*, standard/StandardPreview). Chroni fundament przed crimson-leak. ✅ gotowy + przetestowany.
+- **Fundament komponentowy:** `src/components/standard/ArtifactRightPanel.tsx` (accordion 5 sekcji) ✅ zbudowany, na demo (2f587e657b), NIEWPIĘTY.
+- **CLAUDE.md:** reguła artefaktów dopisana (pkt 6). ✅
+- **Wzorzec jakości:** Task na NModeShell (docelowo) — jak MyWork był dla list.
+
+## 11. HIGIENA WYKONANIA (jak triada — żelazne)
+- Robotnicy: Sonnet, worktree per artefakt z `/private/tmp/tr-art-<nazwa>` bazujący na `triada-standard`, symlink node_modules. NIE tykają wspólnej powłoki (ArtifactRightPanel/NModeShell/PreviewPane) — TĘ robi nadzorca sam (kolizje). esbuild per plik, ZAKAZ tsc/vitest, commit-per-krok, NIE push, ZERO wnuków. Prompt = "WYKONAJ, nie deleguj".
+- Baza = `triada-standard` (= demo). Sprawdzać `git -C /private/tmp/triada log -1` przed użyciem (worktree bywa wyrejestrowany — praca żyje w branchu).
+- Load: `uptime` + `ps aux|grep tsc/vitest/esbuild<8` PRZED dispatchem. Load<100.
+- Odbiór OCZAMI (zrzuty) przed deployem — DoD §18.1. Demo scalać `git merge origin/demo`, NIGDY force-push (spotkano 3× cudzy push, wszystkie scalone czysto).
+- primary-* KAŻDY numer = crimson (nauczka crimson-leak); grep `primary-[0-9]` w audycie, nie tylko `[4567]00`.
+
+## 12. HARMONOGRAM FAL — od 0 do końca
+
+### FAZA 0 — Fundament (bramka G0 = pierwszy wizualny dowód)
+1. ✅ Zbudować `ArtifactRightPanel` (done, na demo).
+2. **Wpiąć w NModeShell:** dodać prop `rightPanel?: React.ReactNode` + 3. kolumnę w gridzie (dziś 2-kol: lewy nav + canvas). Bez przebudowy — tylko slot.
+3. **Dowód na Task:** przenieść sekcje Task (Właściwości/Powiązania/Komentarze/Historia) z canvasu do `ArtifactRightPanel`, treść z prymitywów PreviewPane. Doprowadzić Task do 100% DoD §18.1.
+4. Audyt oczami (Task: prawy panel accordion, Menu1, kebab, dark+light) → zrzuty → **G0 = akceptacja Piotra** → deploy. To odblokowuje fale 1-5 (jak G0 triady).
+
+### FAZA 1 — C Rekord (wyrównanie WIZUALNE; największy dług)
+- Decision → jak Task (accordion). KPI/Insight/Idea/RAID/Milestone/ChangeRequest/StageGate/ActionProposal (C-S drawery) → wyrównać do NModeShell+accordion (drawer §12.2).
+- **Initiative — WIZUALNIE tylko:** wpiąć ArtifactRightPanel + audyt tokenów/crimson w chrome. NIE ruszać mega-switcha (to backlog §13). Cel = wygląd wg SPEC-A, nie refaktor.
+- Interview = wariant Rekordu z centrum-czatem (§20 Q2) — audyt zgodności.
+- Bramka G1: golden-path Rekordów oczami → deploy.
+
+### FAZA 2 — B Dokument
+- Report (`PremiumReportEditor`) → ExecutiveModuleShell (jak DocumentStudio). Notatka → accordion. Assessment Report / Audit Report / Executive Summary / KB / Legal / Partner / Meeting Notes → audyt + accordion.
+- Menu2 formatowania spójne (§13.2). Bramka G2.
+
+### FAZA 3 — D Matryca
+- Assessment Session: Menu3 → standard (dziś własny topbar). Nawigacja wewn. Ocena·Mapa·Raporty (§13.4). Table Platform / Idea Table / Megatrend → audyt zgodności powłoki. Bramka G3.
+
+### FAZA 4 — E Deck
+- Włączyć MELS variant (ExecutiveModuleShell) domyślnie (flaga `isMelsDeckBuilderEnabled`→ON), wygasić legacy DeckBuilder TopBar. Nawigator slajdów=rail, prawy panel layout/brand→accordion. Bramka G4 (decyzja flagi + odbiór).
+
+### FAZA 5 — A Canvas (audyt-only, najniższy wysiłek)
+- IdeaMapWorkspace ~100% — tylko swap WorkspacePanelStrip→ArtifactRightPanel dla spójności + audyt DoD §18.1 (Mind Map/Process Flow/Whiteboard/Discovery Tool/Studio/Playbook). Bramka G5.
+
+### SIEROTY (D-NAV §20 — decyzje są, wykonać)
+Context Builder MARTWY (redirect→/organization) → potwierdzić usunięcie. KB `/knowledge` orphan → sprzątnąć. Reszta ma domy: Studio→Materiały, KB→Settings/Help, Legal/Partner→dbr77-internal, Megatrend→Context, ProjIntel→Execution, ExecSummary→Materiały.
+
+## 13. BACKLOG (osobne workstreamy — NIE ta runda)
+- **Refaktor Initiative:** mega-switch 2699 linii → 25 sekcji do `Initiatives/sections/` (SECTION_REGISTRY już istnieje). 12-17 dni, wysokie ryzyko (state interdependencje decisions↔tasks↔RAID, approval/gates). Dług CZYTELNOŚCI, nie wygląd. Robić po re-skinie, etapami (5 sekcji/PR).
+- Wzmocnienie ExecutiveModuleShell do pełnego SPEC-A gdzie <100%.
+
+## 14. DEFINITION OF DONE (per artefakt = §18.1, egzekwowalne)
+Menu1(back·ikona·tytuł-inline·status·zapis-osobno·[indeks]·1 primary) · powłoka wg archetypu (tylko centrum różne) · prawy panel `ArtifactRightPanel` accordion w kolejności Akcje·Właściwości·Powiązania·Komentarze·Historia/AI · powiązania klikalne first-class · slot AI stały · otwieranie §12.2 (L=pełna/S=drawer)+guard niezapisanych · stany empty/loading/error uczciwe · light+dark tokeny c.* (zero navy/slate/hex) · zero crimson (fokus/status/badge/selection). Odbiór OCZAMI na demo, zrzuty do Piotra.
+
+## 15. HANDOFF — jak wznowić (dla następnej sesji/agenta)
+1. Czytaj: TEN plik + `ARTIFACT_ANATOMY_STANDARD.md` (§10.2/§11.2/§13/§18.1) + pamięć [[finding_three_artifact_shells]] [[project_artifact_anatomy_standard]].
+2. Wołaj skill `consultify-artefakty` przy KAŻDEJ pracy nad artefaktem.
+3. Start = FAZA 0 krok 2 (wpiąć ArtifactRightPanel w NModeShell) → dowód na Task → G0 Piotra.
+4. Baza kodu = `triada-standard` (/private/tmp/triada = demo). Deploy jak triada (merge origin/demo, nigdy force-push).
+5. Stan: fundament ArtifactRightPanel na demo (niewpięty), skill+hook+CLAUDE.md gotowe. Następny klocek = wpięcie.

@@ -17,11 +17,18 @@ Właściciel: Piotr (product/strategy, nie-koder, komunikacja PO POLSKU, krótko
    pstryczek, kebab, preview, kanban, dark+light). Weryfikacja WZROKIEM (zrzuty), nigdy „testy przeszły".
 5. **Nic nie wchodzi na demo bez akceptacji właściciela na zrzutach.** `origin/demo` = święta baza;
    push/deploy tylko nadzorca sesji głównej.
+6. **ARTEFAKTY (ekrany-obiekty, nie listy): analogiczny standard = SPEC-A.** SSOT wyglądu:
+   `Harvard/wdrozenie-100/ARTIFACT_ANATOMY_STANDARD.md` (§10.2/§11.2 powłoka, §13 per archetyp, §18.1 DoD).
+   Powłoka wspólna (Menu 1 + prawy panel accordion `ArtifactRightPanel` + kebab + stany), archetyp
+   zmienia TYLKO centrum (A Canvas·B Dokument·C Rekord·D Matryca·E Deck). Przy każdej pracy nad
+   artefaktem użyj skilla `consultify-artefakty`. Pułapka: `primary-*` KAŻDY numer = crimson
+   (hook `check-artefakt.sh` blokuje w powłoce). Odbiór = DoD §18.1 oczami. Plan: `_ROLLOUT_ARTEFAKTY_PLAN.md`.
 
 ## STRUKTURA PRAC (2026-07)
 - Program 7 rozbudów narzędzi = mechanika NAJPIERW; artefakty (frontend) dorabiamy PO gotowej
   mechanice — patrz `Harvard/wdrozenie-100/_STRUKTURA_PRAC_UI.md`.
-- Rollout triady tabel: `Harvard/wdrozenie-100/_ROLLOUT_TRIADA_INWENTARZ.md` (fale, statusy).
+- Rollout triady tabel (LISTA/SPEC-L): `Harvard/wdrozenie-100/_ROLLOUT_TRIADA_INWENTARZ.md` — ✅ KOMPLETNY na demo.
+- Rollout artefaktów (ARTEFAKT/SPEC-A): `Harvard/wdrozenie-100/_ROLLOUT_ARTEFAKTY_PLAN.md` — fundament gotowy, fale G0-G5.
 
 ## HIGIENA WYKONANIA
 Robotnicy: modele tanie (Sonnet/Haiku) do mechaniki, Opus tylko trudny kod; świeża gałąź per krok
