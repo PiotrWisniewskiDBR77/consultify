@@ -99,6 +99,7 @@ import {
   type WhiteboardVoteEntry,
 } from './whiteboard/whiteboardContracts';
 import { WhiteboardEmptyState } from './whiteboard/WhiteboardEmptyState';
+import { toggleReaction } from './whiteboard/whiteboardReactions';
 import {
   getWhiteboardModeCopy,
   getWhiteboardShortcuts,
@@ -672,6 +673,59 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     });
   // M09 L-02: realtime graph sync (org-scoped WS, mirrors M06 Mind Map).
   const collab = useWhiteboardCollab({ currentUserId, setNodes, setEdges });
+
+  // B4: emoji reactions on nodes. Gated behind the (previously-dead)
+  // session.reactionsEnabled flag + an active facilitation session. Toggling a
+  // reaction mutates the node's own `data.reactions`, which persists through the
+  // existing setNodes → onGraphChange → /map autosave path (no new endpoint),
+  // and broadcasts via the existing collab `update_node` op so collaborators see
+  // it live (reuse only — no new WS message type).
+  const handleToggleReaction = useCallback(
+    (nodeId: string, emoji: string) => {
+      setNodes((nds) => {
+        let updated: Node | null = null;
+        const next = nds.map((n) => {
+          if (n.id !== nodeId) return n;
+          const nextReactions = toggleReaction(n.data?.reactions, emoji, currentUserId);
+          updated = { ...n, data: { ...n.data, reactions: nextReactions } };
+          return updated;
+        });
+        if (updated) {
+          // Broadcast only the persistable slice (id + data.reactions); the
+          // collab receiver shallow-merges node + node.data.
+          collab.broadcastNodeUpdate({
+            id: (updated as Node).id,
+            data: { reactions: (updated as Node).data?.reactions },
+          } as Node);
+        }
+        return next;
+      });
+    },
+    [collab, currentUserId, setNodes]
+  );
+
+  // Reactions are live only during an active facilitation session with the flag on.
+  const reactionsActive = Boolean(sessionState.active && sessionState.reactionsEnabled);
+  // Ref mirror so the (open-scoped) hydrate closure can seed reactionsEnabled with
+  // the current value without taking reactionsActive as a dep (which would trigger a
+  // full re-hydrate/network fetch every time the flag flips). The sync effect below
+  // keeps live nodes correct after hydration.
+  const reactionsActiveRef = useRef(reactionsActive);
+  reactionsActiveRef.current = reactionsActive;
+
+  // Hydration injects reactionsEnabled once; keep every node's copy in sync when
+  // the session flag flips mid-board so the affordance appears/disappears live.
+  useEffect(() => {
+    setNodes((nds) => {
+      if (nds.every((n) => Boolean(n.data?.reactionsEnabled) === reactionsActive)) return nds;
+      return nds.map((n) =>
+        Boolean(n.data?.reactionsEnabled) === reactionsActive
+          ? n
+          : { ...n, data: { ...n.data, reactionsEnabled: reactionsActive } }
+      );
+    });
+  }, [reactionsActive, setNodes]);
+
   const lastSnapshotRef = useRef<WhiteboardCanvasSnapshot | null>(null);
   const undoStackRef = useRef<WhiteboardCanvasSnapshot[]>([]);
   const redoStackRef = useRef<WhiteboardCanvasSnapshot[]>([]);
@@ -881,6 +935,12 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
                 )
               );
             },
+            // B4: reaction wiring. `reactionsEnabled` is refreshed by a
+            // dedicated effect whenever the session flag flips; the persisted
+            // `reactions` array survives via the normalizedNode.data spread.
+            currentUserId,
+            reactionsEnabled: reactionsActiveRef.current,
+            onToggleReaction: handleToggleReaction,
           };
           if (normalizedNode?.type === 'frameNode') {
             nodeData.onCollapseToggle = (next: boolean) => {
@@ -1015,7 +1075,17 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       setLoading(false);
       hydrateInFlightRef.current = false;
     }
-  }, [i18n.language, ideaId, isPl, open, setEdges, setNodes, toolSessionId]);
+  }, [
+    currentUserId,
+    handleToggleReaction,
+    i18n.language,
+    ideaId,
+    isPl,
+    open,
+    setEdges,
+    setNodes,
+    toolSessionId,
+  ]);
 
   useEffect(() => {
     if (!open) return;
@@ -1586,6 +1656,13 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             )
           );
         },
+        // B4: seed reactions wiring on freshly-created nodes too — otherwise a
+        // node added mid-session (after the one-shot hydrate/flag-flip sync
+        // effect ran) would silently lack `onToggleReaction`/`currentUserId`
+        // and never render the affordance even while a session is active.
+        currentUserId,
+        reactionsEnabled: reactionsActiveRef.current,
+        onToggleReaction: handleToggleReaction,
         ...(extraData || {}),
       };
       delete nodeData.position;
@@ -1675,7 +1752,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       }
       return newNode;
     },
-    [isPl, locked]
+    [currentUserId, handleToggleReaction, isPl, locked, setNodes]
   );
 
   const createOutcomeRecord = useCallback(
