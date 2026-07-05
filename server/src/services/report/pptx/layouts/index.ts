@@ -1,14 +1,26 @@
 /**
  * Layout Definitions — barrel export + registry
  * 15 immutable layouts, 1:1 mapped to intents.
+ *
+ * P13 — ekran = eksport parity. The registry is keyed by `intent` because each
+ * PPTX layout renders a strictly intent-bound `SlideContent` shape (swapping the
+ * layout function for another content shape would mis-render). Parity with the
+ * on-screen editor is therefore achieved at the DECISION level: the pipeline
+ * computes the same canonical layout-template id the FE `LayoutEngine` resolves
+ * (`resolveDeckLayoutTemplateId`, honouring `composition.layoutVariantId` + W7
+ * guard-split) and passes it to the resolved layout as an optional
+ * `LayoutContext`, so composition-variant-aware layouts (e.g. Cover) render the
+ * same shape the screen shows.
  */
 import type {
   DesignTokens,
+  LayoutContext,
   LayoutResult,
   SlideIntent,
   UnifiedReportMeta,
   UnifiedSlide,
 } from '../types.js';
+import { resolveDeckLayoutTemplateId, topologyOfTemplate } from './deckLayoutDecision.js';
 import { AppendixLayout } from './AppendixLayout.js';
 import { ComparisonLayout } from './ComparisonLayout.js';
 import { CoverLayout } from './CoverLayout.js';
@@ -34,7 +46,9 @@ import { SingleInsightLayout } from './SingleInsightLayout.js';
 type LayoutFn = (
   slide: UnifiedSlide,
   meta: UnifiedReportMeta,
-  tokens: DesignTokens
+  tokens: DesignTokens,
+  /** P13 — optional; composition-variant-aware layouts honour it (see Cover). */
+  ctx?: LayoutContext
 ) => LayoutResult;
 
 const LAYOUT_REGISTRY: Record<SlideIntent, LayoutFn> = {
@@ -69,7 +83,27 @@ export function resolveLayout(intent: SlideIntent): LayoutFn {
   return layout;
 }
 
+/**
+ * P13 — build the per-slide `LayoutContext` the pipeline passes into the
+ * resolved layout: the SAME canonical layout-template id the on-screen FE
+ * `LayoutEngine` resolves for this slide (honouring `composition.layoutVariantId`
+ * + W7 guard-split) plus its coarse topology. This is the parity hook — it makes
+ * the export aware of the on-screen layout choice instead of using intent alone.
+ */
+export function resolveLayoutContext(slide: UnifiedSlide): LayoutContext {
+  const resolvedLayoutTemplateId = resolveDeckLayoutTemplateId(slide);
+  return {
+    resolvedLayoutTemplateId,
+    topology: topologyOfTemplate(resolvedLayoutTemplateId),
+  };
+}
+
 export { LAYOUT_REGISTRY };
+export {
+  resolveDeckLayoutTemplateId,
+  topologyOfTemplate,
+  ARCHETYPE_TO_TEMPLATE,
+} from './deckLayoutDecision.js';
 
 // Re-export individual layouts
 export { AppendixLayout } from './AppendixLayout.js';

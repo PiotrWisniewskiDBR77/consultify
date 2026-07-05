@@ -15,6 +15,7 @@ import { Image } from '../atomics/Image.js';
 import type {
   CoverContent,
   DesignTokens,
+  LayoutContext,
   LayoutResult,
   RenderedElement,
   UnifiedReportMeta,
@@ -44,13 +45,23 @@ function accentRect(
 export function CoverLayout(
   slide: UnifiedSlide,
   meta: UnifiedReportMeta,
-  tokens: DesignTokens
+  tokens: DesignTokens,
+  ctx?: LayoutContext
 ): LayoutResult {
   const c = slide.content as CoverContent;
   const elements: RenderedElement[] = [];
   const isPolish = meta.language === 'pl';
   const inverse = tokens.colors.textInverse;
   const accent = tokens.colors.accent;
+
+  // P13 — ekran = eksport parity. The on-screen editor picks one of three cover
+  // templates (cover_centered / cover_left_image / cover_bottom_strip). Honour
+  // that choice so the exported cover matches the screen: `cover_left_image`
+  // reserves a LEFT image band with the text shifted right; `cover_bottom_strip`
+  // adds a bottom accent strip; otherwise the editorial full-bleed default.
+  const variant = ctx?.resolvedLayoutTemplateId;
+  const isLeftImage = variant === 'cover_left_image';
+  const isBottomStrip = variant === 'cover_bottom_strip';
 
   // Optional Gamma-like hero/background visual (render first, so text sits on top)
   const visual = (slide.visuals || []).find(
@@ -59,25 +70,35 @@ export function CoverLayout(
   const asset = visual?.asset;
   const hasHero = !!(asset?.path || asset?.dataUri);
   if (hasHero) {
+    // cover_left_image renders the hero in a LEFT band (45% of width, matching
+    // the FE `cover_left_image` grid `45% 55%`); other variants keep the
+    // full-bleed background treatment.
+    const imgPos = isLeftImage
+      ? { x: 0, y: 0, w: tokens.grid.slideW * 0.45, h: tokens.grid.slideH }
+      : { x: 0, y: 0, w: tokens.grid.slideW, h: tokens.grid.slideH };
     elements.push(
       Image(
         {
-          position: { x: 0, y: 0, w: tokens.grid.slideW, h: tokens.grid.slideH },
+          position: imgPos,
           path: asset?.path,
           data: asset?.dataUri,
           fit: 'cover',
-          transparency: 10, // keep cover text readable
+          transparency: isLeftImage ? 0 : 10, // keep full-bleed cover text readable
         },
         tokens
       )
     );
   }
 
-  // Left accent spine — a premium vertical bar anchoring the composition.
-  elements.push(accentRect({ x: 0, y: 0, w: 0.16, h: tokens.grid.slideH }, accent));
+  // Left accent spine — a premium vertical bar anchoring the composition. On the
+  // left-image variant the image already anchors the left, so the spine sits at
+  // the seam between the image band and the text column instead.
+  const spineX = isLeftImage && hasHero ? tokens.grid.slideW * 0.45 : 0;
+  elements.push(accentRect({ x: spineX, y: 0, w: 0.16, h: tokens.grid.slideH }, accent));
 
-  const LEFT = 0.85;
-  const TEXT_W = 8.3;
+  // Text column origin — shifted into the right 55% when a left image is shown.
+  const LEFT = isLeftImage && hasHero ? tokens.grid.slideW * 0.45 + 0.35 : 0.85;
+  const TEXT_W = isLeftImage && hasHero ? tokens.grid.slideW * 0.55 - 0.7 : 8.3;
 
   // Eyebrow / kicker — uppercase, letter-spaced, accent color.
   const rawKicker = (meta.framework || meta.sourceType || '').trim();
@@ -149,7 +170,7 @@ export function CoverLayout(
       BodyText(
         {
           text: metaLine,
-          position: { x: LEFT, y: 4.92, w: 6.0, h: 0.4 },
+          position: { x: LEFT, y: 4.92, w: Math.min(6.0, TEXT_W), h: 0.4 },
           fontSize: 13,
           bold: true,
           color: inverse,
@@ -162,12 +183,15 @@ export function CoverLayout(
     );
   }
 
-  // Consultify wordmark — bottom-right.
+  // Consultify wordmark — bottom-right of the text column (kept inside the
+  // narrower right column on the left-image variant so it never sits on the
+  // image band).
+  const wordmarkRight = LEFT + TEXT_W;
   elements.push(
     BodyText(
       {
         text: 'CONSULTIFY',
-        position: { x: 7.0, y: 4.92, w: 2.65, h: 0.4 },
+        position: { x: wordmarkRight - 2.65, y: 4.92, w: 2.65, h: 0.4 },
         fontSize: 11,
         bold: true,
         color: inverse,
@@ -179,6 +203,13 @@ export function CoverLayout(
       tokens
     )
   );
+
+  // P13 — cover_bottom_strip: a full-width accent strip along the bottom edge
+  // (mirrors the FE `cover_bottom_strip` `70% / 30%` main+strip grid). Purely
+  // additive to the editorial cover; the other variants omit it.
+  if (isBottomStrip) {
+    elements.push(accentRect({ x: 0, y: tokens.grid.slideH - 0.55, w: tokens.grid.slideW, h: 0.55 }, accent));
+  }
 
   // Confidentiality
   if (meta.confidentiality && meta.confidentiality !== 'public') {

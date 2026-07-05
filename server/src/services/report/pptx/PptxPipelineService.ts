@@ -13,7 +13,7 @@ import { createRequire } from 'module';
 import logger from '../../../utils/Logger.js';
 import { buildLayoutTruncationMarker } from './composites/LayoutTruncationMarker.js';
 import { getDesignTokens } from './designTokens.js';
-import { resolveLayout } from './layouts/index.js';
+import { resolveLayout, resolveLayoutContext } from './layouts/index.js';
 import { validateReport } from './RulesEngine.js';
 import type {
   DesignTokens,
@@ -142,8 +142,15 @@ export class PptxPipelineService {
         // Resolve layout for this intent
         const layoutFn = resolveLayout(slideData.intent);
 
+        // P13 — ekran = eksport parity. Resolve the SAME layout-template id the
+        // on-screen FE `LayoutEngine` picks for this slide (honouring
+        // `composition.layoutVariantId` + W7 guard-split) and pass it to the
+        // layout so composition-variant-aware layouts (e.g. Cover) render the
+        // shape shown on screen instead of an intent-only default.
+        const layoutCtx = resolveLayoutContext(slideData);
+
         // Execute layout → get LayoutResult with elements
-        const layoutResult: LayoutResult = layoutFn(slideData, report.meta, tokens);
+        const layoutResult: LayoutResult = layoutFn(slideData, report.meta, tokens, layoutCtx);
 
         // Create pptxgenjs slide with the correct master
         const slide = pptx.addSlide({ masterName: layoutResult.masterName });
