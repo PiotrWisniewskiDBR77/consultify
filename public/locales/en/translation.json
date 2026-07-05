@@ -16204,6 +16204,14 @@
       "validation": "Select a target block and provide an instruction.",
       "sectionValidation": "Pick the section the instruction should apply to.",
       "transformativeConfirm": "This can dramatically rebuild the document. Continue?",
+      "transformativeConfirmTitle": "Rebuild the whole document?",
+      "transformativeConsequences": [
+        "Every section and block in the document may be rewritten.",
+        "The current structure, headings, and wording can all change.",
+        "You will still review a before/after diff and can reject the proposal before anything is applied."
+      ],
+      "transformativeCancel": "Cancel",
+      "transformativeContinue": "Continue",
       "unsupportedScope": "Unsupported editor scope.",
       "proposalReadyRefined": "Proposal ready (AI rewrite applied). Review the diff and approve or reject.",
       "proposalReadyFallback": "Proposal ready (AI rewrite unavailable; deterministic edit shown). Review and approve or reject.",
@@ -16231,7 +16239,8 @@
       "before": "Before",
       "after": "After",
       "structuredChanges": "Structured changes",
-      "auditTrail": "Audit trail"
+      "auditTrail": "Audit trail",
+      "rawBeforeAfter": "Raw before / after"
     },
     "documentPanel": {
       "commentAdded": "Comment added",
@@ -16536,7 +16545,10 @@
       "insertIntoDocument": "Insert into document",
       "teresaSubtitle": "AI document co-editor. Use source/methodology prompts here for governed proposal flows; all changes still require review and approval before execution.",
       "exportedWithOverride": "Exported with QA override. The override has been recorded in the audit trail.",
-      "exportPending": "{{format}} export is pending finalization. Markdown is available now.",
+      "exportSuccess": "{{format}} exported — the download has started.",
+      "exportShareHint": "Want to share it? Open “Share links” in the right-hand panel.",
+      "exportFailedWithDetail": "{{format}} export failed: {{detail}}",
+      "exportFailedFormat": "{{format}} export failed. Please try again.",
       "exportNoContent": "Export returned no content.",
       "exportQaBlocked": "Export blocked by Quality QA. Resolve the findings below or use the audited override.",
       "overrideUnauthorized": "You are not authorized to override the export QA gate. Ask a privileged reviewer.",
@@ -16597,7 +16609,44 @@
       "blockingCategories": "{{count}} blocking categories",
       "scoreFindings": "score {{score}}/100 · {{count}} findings",
       "presenceSources": "{{count}} sources",
-      "presenceAssumptions": "{{count}} assumptions"
+      "presenceAssumptions": "{{count}} assumptions",
+      "diffBaselinePicker": "Compare against snapshot",
+      "diffBaselineLatest": "Latest snapshot"
+    },
+    "generationWarnings": {
+      "summary_one": "Generated with limitations ({{count}})",
+      "summary_other": "Generated with limitations ({{count}})",
+      "exportSummary_one": "Exported with limitations ({{count}})",
+      "exportSummary_other": "Exported with limitations ({{count}})",
+      "codes": {
+        "llm_prose_fallback": "AI prose unavailable",
+        "citation_fallback": "Citations unavailable",
+        "chart_raster_failed": "Chart could not be rendered",
+        "logo_unavailable": "Cover logo unavailable"
+      }
+    },
+    "diff": {
+      "kindAdded": "Added",
+      "kindRemoved": "Removed",
+      "kindModified": "Modified",
+      "kindReordered": "Reordered",
+      "structuralAdded": "Added block: {{type}}",
+      "structuralRemoved": "Removed block: {{type}}",
+      "structuralChanged": "Changed block: {{type}}",
+      "unknownBlockType": "unknown",
+      "before": "Before",
+      "after": "After",
+      "blockMoved": "position {{from}} → {{to}}",
+      "sectionMoved": "Position {{from}} → {{to}}",
+      "wholeDocument": "Whole document",
+      "noChanges": "No changes to display.",
+      "legendAdded": "added",
+      "legendRemoved": "removed"
+    },
+    "generating": {
+      "title": "Generating your document…",
+      "planning": "Planning the outline…",
+      "progress": "Writing sections… {{done}} of {{total}} ready"
     }
   },
   "priority": {

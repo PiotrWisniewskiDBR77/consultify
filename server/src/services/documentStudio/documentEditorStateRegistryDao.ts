@@ -78,6 +78,45 @@ function parseJson<T>(raw: unknown, fallback: T): T {
   }
 }
 
+/**
+ * C2 hardening — outcome of a single durable-write attempt. `ok: true`
+ * means the INSERT/UPSERT was confirmed by the driver. `ok: false`
+ * always carries `degraded` so the caller can tell a missing migration
+ * (tolerated degradation) apart from a live DB failure (real risk of
+ * data loss — should be surfaced, not swallowed silently).
+ */
+export interface PersistOutcome {
+  ok: boolean;
+  degraded?: 'schema_missing' | 'db_error';
+  reason?: string;
+}
+
+/**
+ * Best-effort classifier: is this error message consistent with the
+ * backing table/relation not existing yet (pre-migration environment)?
+ * Mirrors the "table not found" detection already used by
+ * `DbPromise.ts`'s internal fallback logging so the signal stays
+ * consistent across the codebase.
+ */
+function isSchemaMissingError(message: string | undefined): boolean {
+  if (!message) return false;
+  return (
+    message.includes('no such table') ||
+    message.includes('does not exist') ||
+    message.includes('relation') ||
+    message.includes('Database not initialized')
+  );
+}
+
+function toPersistOutcome(result: { success: boolean; error?: string }): PersistOutcome {
+  if (result.success) return { ok: true };
+  return {
+    ok: false,
+    degraded: isSchemaMissingError(result.error) ? 'schema_missing' : 'db_error',
+    reason: result.error,
+  };
+}
+
 // ============================================================
 // PROPOSALS
 // ============================================================
@@ -114,12 +153,18 @@ export async function loadProposalsForArtifact(
 }
 
 /**
- * Upsert a proposal. Best-effort; never throws. Returns `{ ok: false }`
- * on an empty input so the service can degrade silently.
+ * Upsert a proposal (write-through, idempotent via `ON CONFLICT ... DO
+ * UPDATE`). Never throws — every failure path resolves to a
+ * `PersistOutcome` with `ok: false` plus a `degraded` reason so the
+ * caller (the service's `persistProposalWriteThrough`) can decide
+ * whether to log loudly (`db_error`) or tolerate quietly
+ * (`schema_missing`, i.e. pre-migration environment).
  */
-export async function persistProposal(proposal: DocumentEditorProposal): Promise<{ ok: boolean }> {
+export async function persistProposal(
+  proposal: DocumentEditorProposal
+): Promise<PersistOutcome> {
   if (!proposal?.proposalId || !proposal.artifactId || !proposal.organizationId) {
-    return { ok: false };
+    return { ok: false, degraded: 'db_error', reason: 'invalid_proposal_input' };
   }
   try {
     const result = await dbRun(
@@ -146,14 +191,28 @@ export async function persistProposal(proposal: DocumentEditorProposal): Promise
         JSON.stringify(proposal),
       ]
     );
-    return { ok: result.success === true };
+    const outcome = toPersistOutcome(result);
+    if (!outcome.ok) {
+      logger.warn('[DocumentStudio][EditorStateDao] persistProposal did not confirm', {
+        proposalId: proposal.proposalId,
+        organizationId: proposal.organizationId,
+        degraded: outcome.degraded,
+        reason: outcome.reason,
+      });
+    }
+    return outcome;
   } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
     logger.warn('[DocumentStudio][EditorStateDao] persistProposal failed', {
       proposalId: proposal.proposalId,
       organizationId: proposal.organizationId,
-      message: err instanceof Error ? err.message : String(err),
+      message,
     });
-    return { ok: false };
+    return {
+      ok: false,
+      degraded: isSchemaMissingError(message) ? 'schema_missing' : 'db_error',
+      reason: message,
+    };
   }
 }
 

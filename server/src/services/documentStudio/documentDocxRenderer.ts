@@ -40,6 +40,7 @@ import {
   formatAppendixHeading,
   formatBodyHeading,
   partitionSections,
+  pruneUnrenderableBlocks,
 } from './documentDocxStructure.js';
 import {
   buildDocxStyleConfig,
@@ -53,6 +54,7 @@ import {
   resolveDocxFonts,
   resolveFormattingClass,
 } from './documentDocxStyles.js';
+import type { DocumentGenerationWarningCollector } from './documentGenerationWarnings.js';
 import {
   type DocumentAsset,
   type DocumentBlock,
@@ -83,6 +85,15 @@ export interface DocumentRenderOptions {
     /** Embed width in centimetres. Default 4cm. */
     widthCm?: number;
   };
+  /**
+   * A4 — optional generation-warnings collector. When provided, the
+   * renderer records `chart_raster_failed` for any chart that fell
+   * through to the typographic placeholder, and `logo_unavailable` when
+   * the schema asked for a cover-page logo but no asset bytes reached the
+   * renderer. Passing `undefined` is the legacy behaviour (no recording).
+   * The renderer stays pure and never throws on recording.
+   */
+  warnings?: DocumentGenerationWarningCollector;
 }
 
 interface DocxRuntime {
@@ -93,6 +104,7 @@ interface DocxRuntime {
   Header: new (options: Record<string, unknown>) => unknown;
   HeadingLevel: { HEADING_1: unknown; HEADING_2: unknown; HEADING_3: unknown };
   ImageRun: new (options: Record<string, unknown>) => DocxTextRun;
+  LevelFormat: { BULLET: unknown; DECIMAL: unknown };
   PageBreak: new () => DocxTextRun;
   PageNumber: { CURRENT: unknown; TOTAL_PAGES: unknown };
   Packer: { toBuffer: (doc: unknown) => Promise<Buffer> };
@@ -123,6 +135,7 @@ const {
   Header,
   HeadingLevel,
   ImageRun,
+  LevelFormat,
   PageBreak,
   PageNumber,
   Packer,
@@ -134,6 +147,63 @@ const {
   TextRun,
   WidthType,
 } = docxModule as unknown as DocxRuntime;
+
+/**
+ * G7 fix — real Word list outline (not manual `• ` / `1. ` text prefixes).
+ *
+ * `docx` requires every numbered/bulleted paragraph to reference a
+ * `numbering.config[].reference` id declared on the `Document` itself
+ * (`Document({ numbering: { config: [...] } })`). We declare exactly two
+ * single-level abstract numbering definitions up front — one bullet, one
+ * decimal — and every list paragraph in the document (regardless of which
+ * section/block emitted it) references the matching one via
+ * `numbering: { reference, level: 0 }`. Word then renders these as true
+ * "List Paragraph" items: editable numbering, correct outline semantics,
+ * `<w:numPr>` in `document.xml`, and a real `numbering.xml` part — exactly
+ * what rubric dimension G7 checks for.
+ *
+ * The content model (`BlockListContent.items: string[]`) is flat — no
+ * nested/sub-list levels are authored anywhere upstream — so a single
+ * level (0) per reference is sufficient. If nested lists are introduced
+ * later, add more `levels` entries to each config and thread a `level`
+ * argument through `renderListBlocks`.
+ */
+const DOCX_NUMBERING_REFERENCE = Object.freeze({
+  BULLET: 'docStudioBulletList',
+  DECIMAL: 'docStudioNumberedList',
+} as const);
+
+/** Passed as `numbering.config` to the `Document` constructor (see above). */
+const DOCX_NUMBERING_CONFIG = [
+  {
+    reference: DOCX_NUMBERING_REFERENCE.BULLET,
+    levels: [
+      {
+        level: 0,
+        format: LevelFormat.BULLET,
+        text: '•',
+        alignment: AlignmentType.LEFT,
+        style: {
+          paragraph: { indent: { left: 720, hanging: 360 } },
+        },
+      },
+    ],
+  },
+  {
+    reference: DOCX_NUMBERING_REFERENCE.DECIMAL,
+    levels: [
+      {
+        level: 0,
+        format: LevelFormat.DECIMAL,
+        text: '%1.',
+        alignment: AlignmentType.LEFT,
+        style: {
+          paragraph: { indent: { left: 720, hanging: 360 } },
+        },
+      },
+    ],
+  },
+];
 
 // Re-declare the names in the type namespace so call sites can keep using
 // `: Paragraph`, `: Table`, `: TextRun` for nominal typing. These coexist with
@@ -208,11 +278,14 @@ interface RenderContext {
   sourceRefIndex: Map<string, number>;
   /** Optional chart raster bytes keyed by `blockId`. */
   chartPngByBlockId: Map<string, Buffer>;
+  /** A4 — optional generation-warnings collector (chart / logo fallbacks). */
+  warnings?: DocumentGenerationWarningCollector;
 }
 
 function buildRenderContext(
   schema: DocumentSchema,
-  chartPngByBlockId: Map<string, Buffer>
+  chartPngByBlockId: Map<string, Buffer>,
+  warnings?: DocumentGenerationWarningCollector
 ): RenderContext {
   const formattingClass = resolveFormattingClass(schema);
   const fonts = resolveDocxFonts(schema, formattingClass);
@@ -231,6 +304,7 @@ function buildRenderContext(
     footnotes: new Map(),
     sourceRefIndex,
     chartPngByBlockId,
+    warnings,
   };
 }
 
@@ -407,15 +481,21 @@ function renderListBlocks(block: DocumentBlock, ctx: RenderContext): Paragraph[]
   const value = (block.content ?? {}) as BlockListContent;
   const items = Array.isArray(value.items) ? value.items : [];
   const numbered = value.style === 'numbered' || block.type === 'numbered_list';
+  const numberingReference = numbered
+    ? DOCX_NUMBERING_REFERENCE.DECIMAL
+    : DOCX_NUMBERING_REFERENCE.BULLET;
   return items.map((raw, index) => {
     const itemText = asString(raw);
-    const prefix = numbered ? `${index + 1}. ` : '• ';
-    const children: TextRun[] = [new TextRun({ text: `${prefix}${itemText}`, font: ctx.bodyFont })];
+    // G7 fix: no manual "• " / "N. " text prefix — the bullet/number glyph
+    // comes from the `numbering` reference below, which Word renders as a
+    // real, editable list marker (`<w:numPr>`), not literal characters.
+    const children: TextRun[] = [new TextRun({ text: itemText, font: ctx.bodyFont })];
     if (block.isAssumption && index === items.length - 1) {
       children.push(buildAssumptionMarker(ctx.bodyFont));
     }
     return new Paragraph({
       style: DOCX_STYLE_IDS.BODY_TEXT,
+      numbering: { reference: numberingReference, level: 0 },
       children,
       spacing: { after: 60 },
     });
@@ -811,6 +891,16 @@ function renderChartBlock(block: DocumentBlock, ctx: RenderContext): Paragraph[]
         const seriesText = summary.seriesCount === 1 ? '1 series' : `${summary.seriesCount} series`;
         const valuesText =
           summary.totalValueCount === 1 ? '1 value' : `${summary.totalValueCount} values`;
+        // A4 — the chart fell through to a typographic placeholder because
+        // rasterization produced no PNG. Record it so the export surfaces a
+        // "generated with limitations" warning. Rendering behaviour is
+        // unchanged: the placeholder paragraph is still returned.
+        ctx.warnings?.record({
+          code: 'chart_raster_failed',
+          scope: 'block',
+          blockId: block.blockId,
+          message: `Chart "${titleText}" could not be rasterized; a text placeholder was inserted (${kindText} chart, ${seriesText}, ${valuesText}).`,
+        });
         return new Paragraph({
           style: DOCX_STYLE_IDS.CAPTION,
           children: [
@@ -959,6 +1049,18 @@ function renderCoverBlock(ctx: RenderContext, options: DocumentRenderOptions = {
   const includeLogo = coverDetailed?.includeLogo ?? false;
   const logoParagraph =
     includeLogo && options.coverLogoAsset ? buildCoverLogoParagraph(options.coverLogoAsset) : null;
+  // A4 — the schema asked for a cover-page logo but no logo paragraph was
+  // produced (asset bytes never reached the renderer, or decoding the
+  // bytes failed). Record it so the export flags the missing logo instead
+  // of silently rendering a logo-less cover. Behaviour unchanged.
+  if (includeLogo && !logoParagraph) {
+    ctx.warnings?.record({
+      code: 'logo_unavailable',
+      scope: 'export',
+      message:
+        'Cover-page logo was requested but no usable logo asset was available; the cover was rendered without it.',
+    });
+  }
 
   // Subtitle composition — strip out parts that the override
   // explicitly disables. Status = `<density> · <type-language>` line;
@@ -1153,12 +1255,16 @@ function renderSources(ctx: RenderContext): (Paragraph | Table)[] {
 }
 
 export async function renderDocumentSchemaToDocxBuffer(
-  schema: DocumentSchema,
+  schemaInput: DocumentSchema,
   options: DocumentRenderOptions = {}
 ): Promise<Buffer> {
+  // Render-time prune of data-less visual shells (empty tables / charts) so a
+  // generated export never carries a "[… placeholder …]" line. Does not mutate
+  // the stored schema — the editor still shows empty blocks as affordances.
+  const schema = pruneUnrenderableBlocks(schemaInput);
   const formatting = schema.formattingSchema;
   const chartPngByBlockId = await buildChartPngByBlockId(schema);
-  const ctx = buildRenderContext(schema, chartPngByBlockId);
+  const ctx = buildRenderContext(schema, chartPngByBlockId, options.warnings);
   const formattingClass = resolveFormattingClass(schema);
   const styles = buildDocxStyleConfig(schema, formattingClass);
   const margins = formatting.page.marginsCm;
@@ -1317,6 +1423,7 @@ export async function renderDocumentSchemaToDocxBuffer(
     title: schema.title,
     description: `Consultify Document Studio · ${schema.documentType} · ${formattingClass}`,
     styles,
+    numbering: { config: DOCX_NUMBERING_CONFIG },
     ...(footnotesPayload ? { footnotes: footnotesPayload } : {}),
     sections: [
       {

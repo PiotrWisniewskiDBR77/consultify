@@ -7,7 +7,9 @@
  */
 
 import {
+  AlertTriangle,
   Bot,
+  ChevronDown,
   Download,
   FileText,
   FileWarning,
@@ -44,11 +46,10 @@ import {
 
 import {
   cancelDocumentStudioApproval,
-  createDocumentStudioComment,
   createDocumentStudioShareLink,
   exportDocumentStudioArtifact,
   getDocumentStudioAccessHistory,
-  getDocumentStudioCommentThreads,
+  getDocumentStudioCommentCounts,
   getDocumentStudioPolicy,
   getDocumentStudioSchemaDiff,
   getDocumentStudioVariant,
@@ -57,12 +58,16 @@ import {
   listDocumentStudioApprovals,
   listDocumentStudioContentBlocks,
   listDocumentStudioShareLinks,
+  listDocumentStudioSnapshots,
   listDocumentStudioVariants,
   QaBlockingError,
   QaOverrideUnauthorizedError,
   recordDocumentStudioApprovalDecision,
   requestDocumentStudioApproval,
 } from './api';
+import { DocumentCommentsPanel } from './DocumentCommentsPanel';
+import { DocumentExportSuccessNote } from './DocumentExportSuccessNote';
+import { DocumentSchemaDiffView } from './DocumentSchemaDiffView';
 import { DocumentStudioQaPanel } from './DocumentStudioQaPanel';
 import { DocumentTipTapEditor } from './editor';
 import type {
@@ -71,8 +76,9 @@ import type {
   DocumentApprovalQuorumPolicy,
   DocumentApprovalRequest,
   DocumentBlock,
-  DocumentCommentThread,
+  DocumentCommentSectionCounts,
   DocumentContentBlockTemplate,
+  DocumentGenerationWarning,
   DocumentQaReport,
   DocumentSchema,
   DocumentSchemaDiffResponse,
@@ -82,31 +88,171 @@ import type {
   DocumentSourceRef,
   DocumentStudioPolicy,
   DocumentVariantSummary,
+  DocumentVersionSnapshotSummary,
 } from './types';
 
 interface DocumentStudioDocumentPanelProps {
   artifactId: string;
   schema: DocumentSchema;
+  /**
+   * A4 — generation-time warnings recorded when the pipeline degraded via
+   * a silent fallback (LLM prose failure, chart rasterization fallback,
+   * cover-logo unavailable). Rendered as a discreet, dismissible-by-
+   * expand "generated with limitations" chip. Defaults to none.
+   */
+  generationWarnings?: DocumentGenerationWarning[];
   onStartOver: () => void;
   onSchemaUpdated: (nextSchema: DocumentSchema) => void;
 }
 
 type TFn = TFunction;
 
+/**
+ * A4 — discreet "generated with limitations" chip. Collapsed by default to
+ * a single amber (c-warning) pill showing the count; expands to a list of
+ * the individual warnings. Zero crimson: uses only neutral `c-*` tokens +
+ * the amber warning accent, matching the panel's existing inline banners.
+ */
+export const DocumentGenerationWarningsChip: React.FC<{
+  warnings: DocumentGenerationWarning[];
+  /**
+   * B4 — override for the collapsed-summary i18n key so the chip can be
+   * reused for export-time warnings ("Exported with limitations") without
+   * duplicating the component. Defaults to the generation-time summary.
+   */
+  summaryKey?: string;
+}> = ({ warnings, summaryKey = 'documentStudio.generationWarnings.summary' }) => {
+  const { t } = useTranslation();
+  const [expanded, setExpanded] = useState(false);
+  if (warnings.length === 0) return null;
+
+  const labelFor = (code: string): string => {
+    // Per-code friendly label with a safe fallback to the raw code so an
+    // unknown future code still renders something meaningful.
+    const key = `documentStudio.generationWarnings.codes.${code}`;
+    const translated = t(key);
+    return translated === key ? code : translated;
+  };
+
+  return (
+    <div
+      className="rounded-md border border-c-warning/40 bg-c-warning/10 px-3 py-2 text-xs text-c-text"
+      data-testid="document-generation-warnings-chip"
+    >
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        className="flex w-full items-center justify-between gap-2 text-left"
+      >
+        <span className="flex items-center gap-1.5 font-medium text-c-text">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-c-warning" aria-hidden />
+          {t(summaryKey, { count: warnings.length })}
+        </span>
+        <ChevronDown
+          className={`h-3.5 w-3.5 shrink-0 text-c-text-muted transition-transform ${
+            expanded ? 'rotate-180' : ''
+          }`}
+          aria-hidden
+        />
+      </button>
+      {expanded ? (
+        <ul className="mt-2 space-y-1.5 border-t border-c-warning/20 pt-2 text-c-text-secondary">
+          {warnings.map((w, i) => (
+            <li key={`${w.code}-${i}`} className="flex flex-col gap-0.5">
+              <span className="font-medium text-c-text">{labelFor(w.code)}</span>
+              <span className="text-c-text-muted">{w.message}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+};
+
+function renderSectionPreview(section: DocumentSection, idx: number): React.ReactNode {
+  return (
+    <section
+      key={section.sectionId}
+      id={section.sectionId}
+      className="rounded-lg border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900"
+    >
+      <header className="mb-2 flex items-baseline justify-between gap-2">
+        <h3 className="text-base font-semibold text-navy-900 dark:text-white">
+          {idx + 1}. {section.title}
+        </h3>
+        {section.purpose ? <span className="text-xs text-slate-600">{section.purpose}</span> : null}
+      </header>
+      <div className="flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-300">
+        {section.blocks.map((block) => {
+          const isAssumption = Boolean(block.isAssumption);
+          const blockClass = isAssumption
+            ? 'rounded border border-amber-400/30 bg-amber-50 px-2 py-1 dark:border-amber-400/30 dark:bg-amber-500/10'
+            : '';
+          const content = (() => {
+            if (block.type === 'heading') {
+              const value = block.content as { text?: string };
+              return (
+                <div className="font-semibold text-navy-900 dark:text-white">{value.text}</div>
+              );
+            }
+            if (block.type === 'paragraph') {
+              const value = block.content as { text?: string };
+              return <p>{value.text}</p>;
+            }
+            if (block.type === 'list') {
+              const value = block.content as { style?: string; items?: string[] };
+              const items = Array.isArray(value.items) ? value.items : [];
+              if (value.style === 'numbered') {
+                return (
+                  <ol className="list-decimal pl-5">
+                    {items.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ol>
+                );
+              }
+              return (
+                <ul className="list-disc pl-5">
+                  {items.map((item, i) => (
+                    <li key={i}>{item}</li>
+                  ))}
+                </ul>
+              );
+            }
+            if (block.type === 'callout') {
+              const value = block.content as { variant?: string; text?: string };
+              return (
+                <div className="rounded-md border border-primary-500/30 bg-primary-500/5 px-3 py-2 italic">
+                  {value.text}
+                </div>
+              );
+            }
+            return (
+              <pre className="whitespace-pre-wrap text-xs text-slate-500">
+                {JSON.stringify(block.content, null, 2)}
+              </pre>
+            );
+          })();
+          return (
+            <div key={block.blockId} className={blockClass}>
+              {content}
+              {isAssumption ? (
+                <div className="mt-1 text-xs font-medium uppercase tracking-wide text-amber-600">
+                  Assumption — needs source
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function metadataLabel(value: string | string[] | undefined, notSet: string): string {
   if (Array.isArray(value)) return value.length > 0 ? value.join(', ') : notSet;
   return value && value.trim().length > 0 ? value : notSet;
-}
-
-/**
- * Render a comment author identifier in a human-friendly way. Comment threads
- * only carry the author id; when that id is a raw UUID we shorten it so the UI
- * never shows a full 36-char identifier.
- */
-function formatAuthorLabel(authorId: string | undefined | null): string {
-  const id = String(authorId || '').trim();
-  if (!id) return '—';
-  return id.length > 8 ? `${id.slice(0, 8)}…` : id;
 }
 
 function getConnectorState(
@@ -471,138 +617,6 @@ function ActivityPanel({ artifactId }: { artifactId: string }): React.ReactEleme
   );
 }
 
-function CommentsPanel({ artifactId }: { artifactId: string }): React.ReactElement {
-  const { t } = useTranslation();
-  const [threads, setThreads] = useState<DocumentCommentThread[]>([]);
-  const [draft, setDraft] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      setThreads(await getDocumentStudioCommentThreads(artifactId));
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('documentStudio.panel.commentsLoadFailed', 'Failed to load comments')
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [artifactId, t]);
-
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  const submit = async (): Promise<void> => {
-    if (!draft.trim()) return;
-    setSubmitting(true);
-    setError(null);
-    try {
-      setThreads(
-        await createDocumentStudioComment(artifactId, {
-          body: draft.trim(),
-          anchor: { kind: 'document' },
-        })
-      );
-      setDraft('');
-      toast.success(t('documentStudio.documentPanel.commentAdded', 'Comment added'));
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('documentStudio.panel.commentAddFailed', 'Failed to add comment')
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <div className="flex h-full flex-col overflow-y-auto p-4">
-      <div className="mb-3 flex items-start justify-between gap-2">
-        <div>
-          <h3 className="text-sm font-semibold text-c-text">
-            {t('documentStudio.panel.commentsTitle', 'Comments')}
-          </h3>
-          <p className="text-xs text-c-text-secondary">
-            {t(
-              'documentStudio.panel.commentsSubtitle',
-              'Document-level review threads. Block anchors stay visible in each thread.'
-            )}
-          </p>
-        </div>
-        <Button type="button" size="sm" variant="ghost" onClick={refresh} disabled={loading}>
-          {loading
-            ? t('documentStudio.panel.loading', 'Loading…')
-            : t('documentStudio.panel.refresh', 'Refresh')}
-        </Button>
-      </div>
-      <div className="mb-3 rounded-lg border border-c-border-subtle bg-c-surface p-3">
-        <textarea
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          placeholder={t(
-            'documentStudio.panel.commentPlaceholder',
-            'Add document-level review comment…'
-          )}
-          className="min-h-[80px] w-full resize-y rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text outline-none focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus"
-        />
-        <div className="mt-2 flex justify-end">
-          <Button type="button" size="sm" onClick={submit} disabled={submitting || !draft.trim()}>
-            {submitting
-              ? t('documentStudio.panel.commentAdding', 'Adding…')
-              : t('documentStudio.panel.commentAdd', 'Add comment')}
-          </Button>
-        </div>
-      </div>
-      {error ? (
-        <div className="mb-3 rounded-lg border border-danger-500/30 bg-danger-500/10 p-3 text-xs text-danger-700 dark:text-danger-300">
-          {error}
-        </div>
-      ) : null}
-      {!loading && threads.length === 0 ? (
-        <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs text-c-text-secondary">
-          {t('documentStudio.panel.commentsEmpty', 'No comments yet.')}
-        </div>
-      ) : null}
-      <ul className="space-y-2">
-        {threads.map((thread) => (
-          <li
-            key={thread.threadId}
-            className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div className="font-medium text-c-text">
-                {thread.root.body || t('documentStudio.panel.deletedComment', 'Deleted comment')}
-              </div>
-              <span className="rounded-full bg-c-surface-raised px-2 py-0.5 text-[10px] text-c-text-secondary">
-                {thread.status}
-              </span>
-            </div>
-            <div className="mt-1 text-c-text-secondary">
-              {formatAuthorLabel(thread.root.authorId)} · {thread.anchor.kind}
-            </div>
-            {thread.replies.length > 0 ? (
-              <div className="mt-2 border-l border-c-border-subtle pl-2">
-                {t('documentStudio.panel.repliesCount', {
-                  defaultValue: '{{count}} replies',
-                  count: thread.replies.length,
-                })}
-              </div>
-            ) : null}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
 function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactElement {
   const { t } = useTranslation();
   const [links, setLinks] = useState<DocumentShareLink[]>([]);
@@ -862,6 +876,8 @@ function AudienceVariantsPanel({ artifactId }: { artifactId: string }): React.Re
 function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactElement {
   const { t } = useTranslation();
   const [result, setResult] = useState<DocumentSchemaDiffResponse | null>(null);
+  const [snapshots, setSnapshots] = useState<DocumentVersionSnapshotSummary[]>([]);
+  const [selectedVersionId, setSelectedVersionId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -869,7 +885,7 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
     setLoading(true);
     setError(null);
     try {
-      setResult(await getDocumentStudioSchemaDiff(artifactId));
+      setResult(await getDocumentStudioSchemaDiff(artifactId, selectedVersionId || undefined));
     } catch (err) {
       setError(
         err instanceof Error
@@ -879,14 +895,27 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
     } finally {
       setLoading(false);
     }
-  }, [artifactId, t]);
+  }, [artifactId, selectedVersionId, t]);
 
   useEffect(() => {
     void refresh();
   }, [refresh]);
 
-  const changedSections =
-    result?.diff.sectionDiffs.filter((section) => section.kind !== 'unchanged') ?? [];
+  useEffect(() => {
+    // Best-effort: the baseline picker is optional sugar — the diff itself
+    // defaults to the latest snapshot when the list cannot be loaded.
+    let cancelled = false;
+    void listDocumentStudioSnapshots(artifactId)
+      .then((items) => {
+        if (!cancelled) setSnapshots(items);
+      })
+      .catch(() => {
+        if (!cancelled) setSnapshots([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [artifactId]);
 
   return (
     <div className="flex h-full flex-col overflow-y-auto p-4">
@@ -912,6 +941,28 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
         <div className="rounded-lg border border-danger-500/30 bg-danger-500/10 p-3 text-xs text-danger-700 dark:text-danger-300">
           {error}
         </div>
+      ) : null}
+      {snapshots.length > 0 ? (
+        <label className="mb-3 block text-xs text-c-text-secondary">
+          {t('documentStudio.panel.diffBaselinePicker', 'Compare against snapshot')}
+          <select
+            value={selectedVersionId}
+            onChange={(event) => setSelectedVersionId(event.target.value)}
+            className="mt-1 h-9 w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 text-sm"
+            data-testid="schema-diff-baseline-select"
+          >
+            <option value="">
+              {t('documentStudio.panel.diffBaselineLatest', 'Latest snapshot')}
+            </option>
+            {[...snapshots].reverse().map((snapshot) => (
+              <option key={snapshot.versionId} value={snapshot.versionId}>
+                {`v${snapshot.versionNumber} · ${new Date(snapshot.capturedAt).toLocaleString()}${
+                  snapshot.label ? ` · ${snapshot.label}` : ''
+                }`}
+              </option>
+            ))}
+          </select>
+        </label>
       ) : null}
       {result ? (
         <div className="space-y-3">
@@ -941,7 +992,7 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
               </div>
             ))}
           </div>
-          {changedSections.length === 0 ? (
+          {!result.diff.hasChanges ? (
             <div className="rounded-lg border border-success-500/30 bg-success-500/10 p-3 text-xs text-success-700 dark:text-emerald-300">
               {t(
                 'documentStudio.panel.diffNoChanges',
@@ -949,47 +1000,7 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
               )}
             </div>
           ) : (
-            <ul className="space-y-2">
-              {changedSections.map((section) => {
-                const changedBlocks = section.blockDiffs.filter(
-                  (block) => block.kind !== 'unchanged'
-                );
-                return (
-                  <li
-                    key={section.sectionId}
-                    className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="font-medium text-c-text">
-                        {section.afterTitle ?? section.beforeTitle ?? section.sectionId}
-                      </div>
-                      <span className="rounded-full bg-c-accent-soft0 px-2 py-0.5 text-[10px] font-medium text-c-accent">
-                        {section.kind}
-                      </span>
-                    </div>
-                    <div className="mt-1 text-c-text-secondary">
-                      {t('documentStudio.panel.diffChangedBlocks', {
-                        defaultValue: '{{count}} changed blocks',
-                        count: changedBlocks.length,
-                      })}
-                    </div>
-                    {changedBlocks.slice(0, 3).map((block) => (
-                      <div
-                        key={block.blockId}
-                        className="mt-2 rounded border border-c-border-subtle bg-c-surface-raised p-2"
-                      >
-                        <div className="font-medium text-c-text-secondary">
-                          {block.kind} · {block.blockType ?? 'unknown'}
-                        </div>
-                        <div className="mt-1 line-clamp-2 text-c-text-secondary">
-                          {block.afterText ?? block.beforeText ?? block.blockId}
-                        </div>
-                      </div>
-                    ))}
-                  </li>
-                );
-              })}
-            </ul>
+            <DocumentSchemaDiffView diff={result.diff} />
           )}
         </div>
       ) : null}
@@ -1598,6 +1609,7 @@ function TeresaDrawerPanel({
 export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelProps> = ({
   artifactId,
   schema,
+  generationWarnings = [],
   onStartOver,
   onSchemaUpdated,
 }) => {
@@ -1605,6 +1617,10 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
   const [exporting, setExporting] = useState<'markdown' | 'docx' | 'pdf' | null>(null);
   const [exportNote, setExportNote] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
+  /** B4 — last successfully exported format; drives the inline success note. */
+  const [exportSuccess, setExportSuccess] = useState<'markdown' | 'docx' | 'pdf' | null>(null);
+  /** B4 — export-time warnings (chart raster / logo fallbacks) from the last export. */
+  const [exportWarnings, setExportWarnings] = useState<DocumentGenerationWarning[]>([]);
   const [openingBuilder, setOpeningBuilder] = useState(false);
   /** When set, the previous export attempt was QA-blocked. The user can resolve findings or invoke the audited override. */
   const [qaBlock, setQaBlock] = useState<{
@@ -1688,54 +1704,56 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       setExporting(format);
       setExportError(null);
       setExportNote(null);
+      setExportSuccess(null);
+      setExportWarnings([]);
       if (!options.qaOverride) setQaBlock(null);
       try {
         const payload = await exportDocumentStudioArtifact(artifactId, format, {
           qaOverride: options.qaOverride === true,
         });
         const manifest = (payload.manifest ?? {}) as Record<string, unknown>;
-        const pending = manifest.pendingRendering as string | undefined;
-        const pendingNote = manifest.pendingRenderingNote as string | undefined;
 
-        if (typeof payload.contentBase64 === 'string' && payload.contentBase64.length > 0) {
-          triggerBinaryDownload(payload.filename, payload.contentBase64, mimeForFormat(format));
-          if (manifest.qaOverride === true) {
-            setExportNote(
-              t(
-                'documentStudio.panel.exportedWithOverride',
-                'Exported with QA override. The override has been recorded in the audit trail.'
-              )
-            );
-          }
-          setQaBlock(null);
+        const hasBinary =
+          typeof payload.contentBase64 === 'string' && payload.contentBase64.length > 0;
+        const hasText = typeof payload.contentText === 'string' && payload.contentText.length > 0;
+        if (!hasBinary && !hasText) {
+          setExportNote(t('documentStudio.panel.exportNoContent', 'Export returned no content.'));
           return;
         }
-        if (typeof payload.contentText === 'string' && payload.contentText.length > 0) {
-          triggerTextDownload(payload.filename, payload.contentText, mimeForFormat(format));
-          if (pending) {
-            // Backwards-compatible fallback: if a deployment still returns the
-            // pending tag, surface its note rather than failing silently.
-            setExportNote(
-              pendingNote ??
-                t('documentStudio.panel.exportPending', {
-                  defaultValue:
-                    '{{format}} export is pending finalization. Markdown is available now.',
-                  format: format.toUpperCase(),
-                })
-            );
-          }
-          if (manifest.qaOverride === true) {
-            setExportNote(
-              t(
-                'documentStudio.panel.exportedWithOverride',
-                'Exported with QA override. The override has been recorded in the audit trail.'
-              )
-            );
-          }
-          setQaBlock(null);
-          return;
+
+        if (hasBinary) {
+          triggerBinaryDownload(
+            payload.filename,
+            payload.contentBase64 as string,
+            mimeForFormat(format)
+          );
+        } else {
+          triggerTextDownload(
+            payload.filename,
+            payload.contentText as string,
+            mimeForFormat(format)
+          );
         }
-        setExportNote(t('documentStudio.panel.exportNoContent', 'Export returned no content.'));
+
+        setQaBlock(null);
+        setExportSuccess(format);
+        // B4 — export-time warnings (e.g. chart_raster_failed, logo_unavailable)
+        // were previously dropped on the floor; surface them next to the note.
+        setExportWarnings(payload.generationWarnings ?? []);
+        toast.success(
+          t('documentStudio.panel.exportSuccess', {
+            defaultValue: '{{format}} exported — the download has started.',
+            format: format.toUpperCase(),
+          })
+        );
+        if (manifest.qaOverride === true) {
+          setExportNote(
+            t(
+              'documentStudio.panel.exportedWithOverride',
+              'Exported with QA override. The override has been recorded in the audit trail.'
+            )
+          );
+        }
       } catch (err) {
         if (err instanceof QaBlockingError) {
           setQaBlock({ format, report: err.report });
@@ -1761,10 +1779,20 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           );
           return;
         }
+        // B4 — readable i18n framing instead of a bare technical message;
+        // the underlying detail is kept as context when available.
+        const detail = err instanceof Error && err.message.trim().length > 0 ? err.message : null;
         setExportError(
-          err instanceof Error
-            ? err.message
-            : t('documentStudio.panel.exportFailed', 'Export failed')
+          detail
+            ? t('documentStudio.panel.exportFailedWithDetail', {
+                defaultValue: '{{format}} export failed: {{detail}}',
+                format: format.toUpperCase(),
+                detail,
+              })
+            : t('documentStudio.panel.exportFailedFormat', {
+                defaultValue: '{{format}} export failed. Please try again.',
+                format: format.toUpperCase(),
+              })
         );
       } finally {
         setExporting(null);
@@ -1971,7 +1999,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       return <SchemaDiffPanel artifactId={artifactId} />;
     }
     if (activeToolId === 'comments') {
-      return <CommentsPanel artifactId={artifactId} />;
+      return <DocumentCommentsPanel artifactId={artifactId} sections={schema.sections} />;
     }
     if (activeToolId === 'share') {
       return <ShareLinksPanel artifactId={artifactId} />;
@@ -2024,8 +2052,30 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
 
   const canvas = (
     <div className="flex min-h-full flex-col">
-      {(exportNote || exportError || qaBlock) && (
+      {generationWarnings.length > 0 && (
+        <div className="px-6 pt-4">
+          <DocumentGenerationWarningsChip warnings={generationWarnings} />
+        </div>
+      )}
+      {(exportSuccess || exportWarnings.length > 0 || exportNote || exportError || qaBlock) && (
         <div className="space-y-3 px-6 pt-4">
+          {exportSuccess ? (
+            <DocumentExportSuccessNote
+              format={exportSuccess}
+              onDismiss={() => {
+                setExportSuccess(null);
+                setExportWarnings([]);
+              }}
+            />
+          ) : null}
+
+          {exportWarnings.length > 0 ? (
+            <DocumentGenerationWarningsChip
+              warnings={exportWarnings}
+              summaryKey="documentStudio.generationWarnings.exportSummary"
+            />
+          ) : null}
+
           {exportNote ? (
             <div className="rounded-md border border-amber-400/30 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
               {exportNote}

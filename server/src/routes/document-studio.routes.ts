@@ -283,6 +283,7 @@ import {
   getDocumentArtifact,
   getDocumentComment,
   getDocumentCommentSectionCounts,
+  getDocumentGenerationWarnings,
   getDocumentLifecycleState,
   getDocumentVersionSnapshot,
   insertDocumentContentBlock,
@@ -437,6 +438,109 @@ router.post(
   })
 );
 
+/**
+ * Shared payload shape parsed from a generate / generate-stream request body.
+ * Keeps the sync `/generate` route and the streaming `/generate/stream` route
+ * byte-identical in how they interpret the input, so `done.schema` on the
+ * stream matches the `schema` returned by the sync path for the same input.
+ */
+interface ParsedGenerateRequest {
+  intake: DocumentIntake;
+  outline: DocumentOutline | undefined;
+  sourceRefs: DocumentSourceRef[];
+  projectId: string | null;
+  useLlm: boolean;
+  templateId: string | null;
+}
+
+/** Parse & validate a generate request body. Returns `null` when intake is missing. */
+function parseGenerateRequest(body: unknown): ParsedGenerateRequest | null {
+  const b = (body ?? {}) as Record<string, unknown>;
+  const intake = (b.intake ?? null) as DocumentIntake | null;
+  if (!intake || typeof intake !== 'object') return null;
+  return {
+    intake,
+    outline: (b.outline ?? undefined) as DocumentOutline | undefined,
+    sourceRefs: Array.isArray(b.sourceRefs) ? (b.sourceRefs as DocumentSourceRef[]) : [],
+    projectId:
+      typeof b.projectId === 'string' && b.projectId.length > 0 ? (b.projectId as string) : null,
+    useLlm: b.useLlm === true,
+    templateId:
+      typeof b.templateId === 'string' && (b.templateId as string).trim().length > 0
+        ? (b.templateId as string)
+        : null,
+  };
+}
+
+/**
+ * G5 + X6 — register a freshly materialized document in the Outputs registry.
+ * Shared by the sync `/generate` and streaming `/generate/stream` routes so
+ * both surface the document in the Outputs Library identically. Best-effort:
+ * every registration hiccup is swallowed (fail-open) so generation is never
+ * affected by a registry failure.
+ */
+function registerGeneratedDocumentOrigin(args: {
+  organizationId: string;
+  userId: string;
+  artifactId: string;
+  title: string;
+  projectId: string | null;
+  templateId: string | null;
+}): void {
+  const { organizationId, userId, artifactId, title, projectId, templateId } = args;
+  // G5 — canonical origin registration (Outputs Library).
+  void artifactRegistryService
+    .registerArtifactOrigin({
+      organizationId,
+      outputType: 'report',
+      artifactFamily: 'document',
+      originRuntime: 'native_artifact',
+      originRecordId: artifactId,
+      titleSnapshot: title,
+      ownerUserId: userId,
+      createdBy: userId,
+      visibilityScope: undefined,
+      projectId,
+      originSummary: {
+        sourceType: 'document_studio',
+        templateId: templateId ? String(templateId) : null,
+        sourceTable: 'document_studio_artifacts',
+      },
+    })
+    .catch((regErr: unknown) => {
+      logger.warn('[DocumentStudio] Outputs registration failed (document still saved)', {
+        message: regErr instanceof Error ? regErr.message : String(regErr),
+      });
+    });
+
+  // X6 — W5 Transactional Outputs Registry (v8_output_artifacts + origin links).
+  import('../services/v8/outputsTransactionalRegistry.js')
+    .then(({ registerOutputArtifactTransactional }) =>
+      registerOutputArtifactTransactional({
+        organizationId,
+        outputType: 'report',
+        artifactFamily: 'document',
+        originRuntime: 'native_artifact',
+        originRecordId: artifactId,
+        titleSnapshot: title,
+        ownerUserId: userId,
+        createdBy: userId,
+        projectId,
+        originSummary: {
+          sourceType: 'document_studio',
+          templateId: templateId ? String(templateId) : null,
+          sourceTable: 'document_studio_artifacts',
+        },
+      })
+    )
+    .catch((x6Err: unknown) => {
+      logger.warn('[DocumentStudio] X6 transactional registration failed (non-blocking)', {
+        artifactId,
+        message: x6Err instanceof Error ? x6Err.message : String(x6Err),
+      });
+    });
+}
+
 router.post(
   '/generate',
   asyncHandler(async (req: Request, res: Response) => {
@@ -445,24 +549,12 @@ router.post(
       res.status(401).json({ error: 'Unauthorized' });
       return;
     }
-    const intake = (req.body?.intake ?? null) as DocumentIntake | null;
-    if (!intake || typeof intake !== 'object') {
+    const parsed = parseGenerateRequest(req.body);
+    if (!parsed) {
       res.status(400).json({ error: 'intake is required' });
       return;
     }
-    const outline = (req.body?.outline ?? undefined) as DocumentOutline | undefined;
-    const sourceRefs = Array.isArray(req.body?.sourceRefs)
-      ? (req.body.sourceRefs as DocumentSourceRef[])
-      : [];
-    const projectId =
-      typeof req.body?.projectId === 'string' && req.body.projectId.length > 0
-        ? (req.body.projectId as string)
-        : null;
-    const useLlm = req.body?.useLlm === true;
-    const templateId =
-      typeof req.body?.templateId === 'string' && req.body.templateId.trim().length > 0
-        ? (req.body.templateId as string)
-        : null;
+    const { intake, outline, sourceRefs, projectId, useLlm, templateId } = parsed;
 
     try {
       const result = await materializeDocumentArtifact({
@@ -476,67 +568,23 @@ router.post(
         templateId,
       });
 
-      // G5 fix — register the authored document in the Outputs registry so it
-      // appears in the Outputs Library (previously documents only reached Outputs
-      // via the Teresa pipeline). Best-effort: never fail generation on a registry
-      // hiccup.
-      try {
-        await artifactRegistryService.registerArtifactOrigin({
-          organizationId,
-          // outputType enum is ['report','presentation','sheet']; documents register
-          // as 'report' with artifactFamily 'document' (same convention as report-builder).
-          outputType: 'report',
-          artifactFamily: 'document',
-          originRuntime: 'native_artifact',
-          originRecordId: String(result.artifactId),
-          titleSnapshot: String(result.schema?.title || intake.title || 'Untitled document'),
-          ownerUserId: String(userId),
-          createdBy: String(userId),
-          visibilityScope: undefined,
-          projectId,
-          originSummary: {
-            sourceType: 'document_studio',
-            templateId: templateId ? String(templateId) : null,
-            sourceTable: 'document_studio_artifacts',
-          },
-        });
-      } catch (regErr) {
-        logger.warn('[DocumentStudio] Outputs registration failed (document still saved)', {
-          message: regErr instanceof Error ? regErr.message : String(regErr),
-        });
-      }
+      registerGeneratedDocumentOrigin({
+        organizationId,
+        userId,
+        artifactId: String(result.artifactId),
+        title: String(result.schema?.title || intake.title || 'Untitled document'),
+        projectId,
+        templateId,
+      });
 
-      // X6 — W5 Transactional Outputs Registry: fire-and-forget parallel registration
-      // ensuring both v8_output_artifacts + v8_artifact_origin_links are inserted
-      // atomically. Additive to the registerArtifactOrigin call above (idempotent
-      // on originRecordId). Fail-open — errors are swallowed so generation is unaffected.
-      import('../services/v8/outputsTransactionalRegistry.js')
-        .then(({ registerOutputArtifactTransactional }) =>
-          registerOutputArtifactTransactional({
-            organizationId,
-            outputType: 'report',
-            artifactFamily: 'document',
-            originRuntime: 'native_artifact',
-            originRecordId: String(result.artifactId),
-            titleSnapshot: String(result.schema?.title || intake.title || 'Untitled document'),
-            ownerUserId: String(userId),
-            createdBy: String(userId),
-            projectId,
-            originSummary: {
-              sourceType: 'document_studio',
-              templateId: templateId ? String(templateId) : null,
-              sourceTable: 'document_studio_artifacts',
-            },
-          })
-        )
-        .catch((x6Err: unknown) => {
-          logger.warn('[DocumentStudio] X6 transactional registration failed (non-blocking)', {
-            artifactId: String(result.artifactId),
-            message: x6Err instanceof Error ? x6Err.message : String(x6Err),
-          });
-        });
-
-      res.json({ artifactId: result.artifactId, schema: result.schema });
+      res.json({
+        artifactId: result.artifactId,
+        schema: result.schema,
+        // A4 — surface any generation-time warnings (e.g. LLM prose
+        // fallback) so the FE can show the "generated with limitations"
+        // chip. Absent / empty for full-fidelity documents.
+        generationWarnings: result.generationWarnings ?? [],
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to generate document artifact';
       logger.error('[DocumentStudio] generate failed', { message });
@@ -553,6 +601,162 @@ router.post(
         error: status === 400 ? 'template_not_usable' : 'generate_failed',
         message: status === 400 ? message : GENERIC_5XX_MESSAGE,
       });
+    }
+  })
+);
+
+// =============================================================================
+// C1 — Streaming generation (SSE).
+//
+//   POST /api/document-studio/generate/stream
+//     Body: identical to POST /generate.
+//     Content-Type: text/event-stream
+//     Events (each `event:` + `data:` JSON):
+//       plan     { outline }                                — after outline resolved
+//       section  { sectionId, index, total, title, blocks } — per finalized section
+//       warning  DocumentGenerationWarning                  — on any soft-fallback
+//       done     { artifactId, schema, generationWarnings } — after persistence
+//       error    { code, message }                          — fatal; stream closes
+//     Heartbeat: `:\n\n` comment every ~15s to defeat proxy idle timeouts.
+//
+// The `done.schema` is guaranteed byte-identical to what the sync `/generate`
+// route would return for the same input, because both delegate to the SAME
+// `materializeDocumentArtifact` pipeline — streaming only adds pure observer
+// hooks that never influence the result. The existing sync `/generate` route
+// is untouched (chat `generate_deliverable` depends on it).
+// =============================================================================
+
+/** Serialize a single SSE frame (`event:` + `data:`). */
+function sseFrame(event: string, data: unknown): string {
+  return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+}
+
+router.post(
+  '/generate/stream',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const parsed = parseGenerateRequest(req.body);
+    if (!parsed) {
+      res.status(400).json({ error: 'intake is required' });
+      return;
+    }
+    const { intake, outline, sourceRefs, projectId, useLlm, templateId } = parsed;
+
+    // Long-running SSE: raise socket timeout + disable Nagle so events flush
+    // in real time (mirrors ai.routes streaming setup).
+    if (req.socket) {
+      req.socket.setTimeout(120_000);
+      req.socket.setNoDelay(true);
+    }
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no'); // Disable Nginx buffering for SSE
+    res.flushHeaders();
+
+    let clientConnected = true;
+    let finished = false;
+    req.on('close', () => {
+      clientConnected = false;
+    });
+
+    const write = (chunk: string): void => {
+      if (!clientConnected) return;
+      try {
+        res.write(chunk);
+      } catch {
+        clientConnected = false;
+      }
+    };
+
+    // Heartbeat: SSE comment every 15s so proxies / ALB don't kill an idle
+    // connection while prose generation runs.
+    const heartbeat = setInterval(() => {
+      if (!clientConnected || finished) {
+        clearInterval(heartbeat);
+        return;
+      }
+      write(':\n\n');
+    }, 15_000);
+
+    const closeStream = (): void => {
+      finished = true;
+      clearInterval(heartbeat);
+      try {
+        res.end();
+      } catch {
+        /* connection already gone */
+      }
+    };
+
+    try {
+      const result = await materializeDocumentArtifact({
+        organizationId,
+        userId,
+        intake,
+        outline,
+        sourceRefs,
+        projectId,
+        useLlm,
+        templateId,
+        hooks: {
+          onPlan: (resolvedOutline) => {
+            write(sseFrame('plan', { outline: resolvedOutline }));
+          },
+          onSection: (section, index, total) => {
+            write(
+              sseFrame('section', {
+                sectionId: section.sectionId,
+                index,
+                total,
+                title: section.title,
+                blocks: section.blocks,
+              })
+            );
+          },
+          onWarning: (warning) => {
+            write(sseFrame('warning', warning));
+          },
+        },
+      });
+
+      registerGeneratedDocumentOrigin({
+        organizationId,
+        userId,
+        artifactId: String(result.artifactId),
+        title: String(result.schema?.title || intake.title || 'Untitled document'),
+        projectId,
+        templateId,
+      });
+
+      write(
+        sseFrame('done', {
+          artifactId: result.artifactId,
+          schema: result.schema,
+          generationWarnings: result.generationWarnings ?? [],
+        })
+      );
+      closeStream();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to generate document artifact';
+      logger.error('[DocumentStudio] stream generate failed', { message });
+      let code = 'generate_failed';
+      let clientMessage = GENERIC_5XX_MESSAGE;
+      if (err instanceof MissingRequiredSourceError) {
+        code = 'missing_required_source';
+        clientMessage = message;
+      } else if (message === 'template_not_usable') {
+        code = 'template_not_usable';
+        clientMessage = message;
+      }
+      // Headers are already flushed (SSE), so a fatal error is delivered as an
+      // `error` event rather than an HTTP status code.
+      write(sseFrame('error', { code, message: clientMessage }));
+      closeStream();
     }
   })
 );
@@ -3414,7 +3618,11 @@ router.get(
       res.status(404).json({ error: 'not_found' });
       return;
     }
-    res.json({ schema });
+    // A4 — hydrate the persisted generation-warnings channel so the FE
+    // can render the "generated with limitations" chip on reload, not
+    // just immediately after generation. Best-effort ([] on any miss).
+    const generationWarnings = await getDocumentGenerationWarnings(artifactId, organizationId);
+    res.json({ schema, generationWarnings });
   })
 );
 

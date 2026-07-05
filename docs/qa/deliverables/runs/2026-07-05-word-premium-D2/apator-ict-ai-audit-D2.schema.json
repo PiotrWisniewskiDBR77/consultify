@@ -1,0 +1,855 @@
+{
+  "documentId": "9b334e6b-4c86-440a-a883-b718bba7edb6",
+  "artifactId": "d2-1783229716100",
+  "title": "Raport z audytu procesów ICT i gotowości AI — Apator SA",
+  "documentType": "ai_audit_report",
+  "language": "pl",
+  "audience": [
+    "Zarząd Apator SA",
+    "Dyrektor IT",
+    "Komitet Sterujący Transformacji"
+  ],
+  "goal": "decide",
+  "communicationRegister": "executive",
+  "density": "detailed",
+  "languageStyle": "consulting",
+  "confidentiality": "confidential",
+  "formattingSchema": {
+    "fonts": {
+      "body": "Aptos 11",
+      "heading": "Aptos Display"
+    },
+    "headingStyles": {
+      "h1": "16pt bold numbered",
+      "h2": "13pt bold numbered",
+      "h3": "11pt bold"
+    },
+    "tableStyles": {
+      "default": "consultify_clean_table"
+    },
+    "listStyles": {
+      "bullet": "consultify_bullet",
+      "numbered": "consultify_numbered"
+    },
+    "page": {
+      "size": "A4",
+      "marginsCm": {
+        "top": 2,
+        "bottom": 2,
+        "left": 2.3,
+        "right": 2.3
+      }
+    },
+    "headers": {
+      "enabled": true
+    },
+    "footers": {
+      "enabled": true,
+      "pageNumbering": true,
+      "confidentialityLabel": true
+    },
+    "toc": true,
+    "coverPage": true,
+    "appendixStyle": "lettered",
+    "citationStyle": "inline_marker"
+  },
+  "sections": [
+    {
+      "sectionId": "7ab601ff-5c07-45e7-8ad2-6b80518d925d",
+      "orderIndex": 0,
+      "level": 1,
+      "title": "Executive Summary",
+      "purpose": "Top-level synthesis with the decision or recommendation.",
+      "blocks": [
+        {
+          "blockId": "c9d2bc1c-e93b-413e-8eaa-60ef987cd5ab",
+          "type": "paragraph",
+          "content": {
+            "text": "Audyt ICT w Apator SA ujawnił średnią dojrzałość technologiczną na poziomie 3.2/5, z jednoczesnym ogromnym, niewykorzystanym potencjałem wartości AI szacowanym na 12 milionów złotych rocznie. Największe możliwości optymalizacji koncentrują się w obszarze predykcyjnego utrzymania ruchu oraz kontroli jakości wizyjnej, gdzie wdrożenie rozwiązań AI może przynieść najszybszy zwrot z inwestycji. Rekomendujemy pilne uruchomienie programu transformacji AI z początkowym budżetem 2.5 miliona złotych na budowę fundamentów danych i realizację pierwszych projektów pilotażowych."
+          }
+        },
+        {
+          "blockId": "6eb822b8-e93b-4684-8c96-c329dc9b8cbe",
+          "type": "kpi_strip",
+          "content": {
+            "items": [
+              {
+                "label": "Ocena gotowości AI",
+                "value": "3.2/5",
+                "delta": "0"
+              },
+              {
+                "label": "Całkowita dostępna wartość",
+                "value": "12M PLN/rok",
+                "delta": "0"
+              },
+              {
+                "label": "Rekomendowany budżet Fazy 1",
+                "value": "2.5M PLN",
+                "delta": "0"
+              },
+              {
+                "label": "Spodziewany okres zwrotu",
+                "value": "14 miesięcy",
+                "delta": "0"
+              }
+            ]
+          }
+        },
+        {
+          "blockId": "00398c5a-ecc4-4595-a450-ea05f0e232f5",
+          "type": "bullet_list",
+          "content": {
+            "items": [
+              "Stworzenie zunifikowanego jeziora danych integrującego systemy MES, PLM oraz SAP ERP w celu zapewnienia spójności i dostępności danych dla projektów AI.",
+              "Uruchomienie pilotażowego projektu kontroli jakości wizyjnej jako 'Quick Win' z szybkim zwrotem inwestycji i demonstracją wartości AI.",
+              "Inicjowanie prac badawczo-rozwojowych nad systemem predykcyjnego utrzymania ruchu dla kluczowych linii produkcyjnych w celu minimalizacji przestojów."
+            ]
+          }
+        },
+        {
+          "blockId": "2fe90fd6-faea-41b5-85b2-0d8db16e3a94",
+          "type": "callout",
+          "content": {
+            "text": "Kluczowy moment decyzyjny dla Zarządu: zatwierdzenie alokacji budżetu na lata 2024/2025 w wysokości 2.5 miliona złotych na sfinansowanie budowy fundamentów danych oraz pierwszego klastra projektów pilotażowych AI. Opóźnienie decyzji ryzykuje utratę przewagi konkurencyjnej i zwiększenie dystansu do liderów branży wdrażających AI.",
+            "tone": "warning"
+          }
+        }
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "document",
+          "sourceId": "apator-raport-2024",
+          "sourceTitle": "Apator SA — Raport roczny 2024"
+        }
+      ]
+    },
+    {
+      "sectionId": "b12846cb-093a-4a15-a1d9-418c05ba32de",
+      "orderIndex": 1,
+      "level": 1,
+      "title": "Audit Scope",
+      "purpose": "Audit boundaries: in-scope, out-of-scope, sampling and timeframe.",
+      "blocks": [
+        {
+          "blockId": "98428e7b-f3f2-48dc-b751-848cef4b4644",
+          "type": "paragraph",
+          "content": {
+            "text": "Audyt objął kluczowe komponenty infrastruktury ICT Apator SA niezbędne do wdrożenia rozwiązań AI, ze szczególnym uwzględnieniem środowiska produkcyjnego i systemów korporacyjnych. Zakres analizy obejmował architekturę systemów transakcyjnych (ERP SAP), systemy zarządzania produkcją (MES), systemy inżynierskie (PLM), oraz przepływy danych produkcyjnych w czasie rzeczywistym. Ocena dojrzałości danych i bezpieczeństwa przeprowadzona została w odniesieniu do wymagań wdrożeniowych AI, z uwzględnieniem integracji między systemami i gotowości infrastruktury do przetwarzania dużych zbiorów danych."
+          }
+        },
+        {
+          "blockId": "b43cf4d3-ebff-406f-a38b-b1f3009496cc",
+          "type": "table",
+          "content": {
+            "rows": [
+              {
+                "cells": {
+                  "Domain": {
+                    "value": "ERP SAP"
+                  },
+                  "In-Scope": {
+                    "value": "PP (Planowanie Produkcji), MM (Zarządzanie Materiałami), SD (Sprzedaż i Dystrybucja), CO (Kontroling)"
+                  },
+                  "Out-of-Scope": {
+                    "value": "FI (Moduł Finansowy), HR (Zarządzanie Kadrami)"
+                  }
+                }
+              },
+              {
+                "cells": {
+                  "Domain": {
+                    "value": "MES"
+                  },
+                  "In-Scope": {
+                    "value": "Dane produkcyjne, OEE, śledzenie partii, planowanie zasobów"
+                  },
+                  "Out-of-Scope": {
+                    "value": "Systemy raportowania historycznego starsze niż 3 lata"
+                  }
+                }
+              },
+              {
+                "cells": {
+                  "Domain": {
+                    "value": "PLM"
+                  },
+                  "In-Scope": {
+                    "value": "Dane CAD, BOM, dokumentacja techniczna, wersjonowanie produktów"
+                  },
+                  "Out-of-Scope": {
+                    "value": "Archiwum projektów zarchiwizowanych przed 2020"
+                  }
+                }
+              },
+              {
+                "cells": {
+                  "Domain": {
+                    "value": "Infrastruktura Danych"
+                  },
+                  "In-Scope": {
+                    "value": "Data Lake, hurtownie danych, API integracyjne, streaming danych"
+                  },
+                  "Out-of-Scope": {
+                    "value": "Lokalne bazy danych działów, systemy Excelowe"
+                  }
+                }
+              },
+              {
+                "cells": {
+                  "Domain": {
+                    "value": "Bezpieczeństwo"
+                  },
+                  "In-Scope": {
+                    "value": "Dostęp do produkcyjnych API, szyfrowanie danych, polityki dostępu"
+                  },
+                  "Out-of-Scope": {
+                    "value": "Fizyczny dostęp do serwerowni, polityki BYOD"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "blockId": "b386c597-28d6-488d-a36c-79425e2c52e3",
+          "type": "bullet_list",
+          "content": {
+            "items": [
+              "Audyt przeprowadzony w okresie 4 tygodni (marzec-kwiecień 2024)",
+              "Próbkowanie danych obejmowało 3 kluczowe linie produkcyjne (transformatory, liczniki energii, aparatura kontrolna)",
+              "Analiza 100% transakcyjnych danych z 2023 roku (ponad 2.5M rekordów produkcyjnych)",
+              "Wywiady z 25 kluczowymi interesariuszami (kierownicy produkcji, inżynierowie, analitycy)",
+              "Ocena jakości danych na podstawie 15 kluczowych wskaźników (kompletność, spójność, aktualność)"
+            ]
+          }
+        }
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "document",
+          "sourceId": "apator-raport-2024",
+          "sourceTitle": "Apator SA — Raport roczny 2024"
+        }
+      ]
+    },
+    {
+      "sectionId": "90a92f3d-c1aa-447c-9667-3f3da9618d83",
+      "orderIndex": 2,
+      "level": 1,
+      "title": "Methodology",
+      "purpose": "Method, scope, sources and limitations of the analysis.",
+      "blocks": [
+        {
+          "blockId": "3551c3f2-1921-4618-afee-f5da375c2c18",
+          "type": "paragraph",
+          "content": {
+            "text": "Zastosowano hybrydowe podejście analityczne łączące ilościową analizę logów systemowych z jakościową oceną poprzez wywiady z interesariuszami. Analiza ilościowa obejmowała przetwarzanie danych z systemów ERP, MES i PLM w celu identyfikacji wzorców operacyjnych i ineffektywności. Równocześnie przeprowadzono 15 pogłębionych wywiadów z kluczowymi menedżerami i specjalistami w celu zrozumienia procesów biznesowych, wyzwań i aspiracji cyfrowych. Podejście to pozwoliło na uzyskanie holistycznego obrazu dojrzałości ICT oraz realistycznej oceny potencjału wdrożenia rozwiązań AI w kontekście strategicznych celów Apator SA."
+          }
+        },
+        {
+          "blockId": "5ccd7354-bbf4-489c-af17-bc45262735f5",
+          "type": "bullet_list",
+          "content": {
+            "items": [
+              "15 wywiadów z interesariuszami (Zarząd, IT, Produkcja)",
+              "Tabele systemu SAP ERP (dane finansowe i operacyjne)",
+              "Historyczne dane z systemów MES (produkcja)",
+              "Metadane z systemu PLM (cykl życia produktu)",
+              "Logi bezpieczeństwa sieci i systemów"
+            ]
+          }
+        },
+        {
+          "blockId": "544cb948-98fa-4565-86fe-917f8fb8193b",
+          "type": "callout",
+          "content": {
+            "text": "Kluczowe ograniczenie: Dostępność danych w czasie rzeczywistym z niektórych przestarzałych sterowników PLC była ograniczona, co wymagało ekstrapolacji do analizy OEE (Overall Equipment Effectiveness).",
+            "tone": "warning"
+          }
+        }
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "document",
+          "sourceId": "apator-raport-2024",
+          "sourceTitle": "Apator SA — Raport roczny 2024"
+        }
+      ]
+    },
+    {
+      "sectionId": "46eb5968-644f-4dee-b149-1c78c2cf3574",
+      "orderIndex": 3,
+      "level": 1,
+      "title": "Current State",
+      "purpose": "Substantive section \"Current State\" relevant to the document goal.",
+      "blocks": [
+        {
+          "blockId": "dc11ddf8-a58a-4612-a132-ab3413acc6c2",
+          "type": "paragraph",
+          "content": {
+            "text": "Current ICT architecture at Apator SA reveals a fragmented landscape despite having a robust SAP ERP backbone serving as the core transactional system. The manufacturing execution systems (MES) operate as isolated islands, primarily focused on shop floor data collection without seamless integration to the ERP layer. Similarly, the Product Lifecycle Management (PLM) system maintains design and engineering data in silos, preventing end-to-end visibility across the product development-to-manufacturing continuum. This architectural fragmentation creates significant data flow bottlenecks, requiring manual interventions and data reconciliation processes that delay decision-making and inhibit real-time operational insights."
+          }
+        },
+        {
+          "blockId": "044ceb6f-273a-45f2-bdd8-481f35843535",
+          "type": "table",
+          "content": {
+            "rows": [
+              {
+                "cells": {
+                  "System": {
+                    "value": "SAP ERP"
+                  },
+                  "Maturity Level": {
+                    "value": "4"
+                  },
+                  "Data Quality": {
+                    "value": "High"
+                  },
+                  "Integration Status": {
+                    "value": "Partial"
+                  }
+                }
+              },
+              {
+                "cells": {
+                  "System": {
+                    "value": "MES"
+                  },
+                  "Maturity Level": {
+                    "value": "2"
+                  },
+                  "Data Quality": {
+                    "value": "Medium"
+                  },
+                  "Integration Status": {
+                    "value": "Limited"
+                  }
+                }
+              },
+              {
+                "cells": {
+                  "System": {
+                    "value": "PLM"
+                  },
+                  "Maturity Level": {
+                    "value": "2"
+                  },
+                  "Data Quality": {
+                    "value": "Low"
+                  },
+                  "Integration Status": {
+                    "value": "Isolated"
+                  }
+                }
+              },
+              {
+                "cells": {
+                  "System": {
+                    "value": "Infrastructure"
+                  },
+                  "Maturity Level": {
+                    "value": "3"
+                  },
+                  "Data Quality": {
+                    "value": "Medium"
+                  },
+                  "Integration Status": {
+                    "value": "Adequate"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "blockId": "ddce0ea5-8e4a-4951-991b-f8434acc3eb5",
+          "type": "callout",
+          "content": {
+            "text": "Brak scentralizowanego data lake zmusza do ręcznego eksportu/importu danych, co skutkuje 24-godzinnym opóźnieniem w analityce produkcyjnej. Ta bariera uniemożliwia wdrożenie rozwiązań AI wymagających przetwarzania danych w czasie rzeczywistym.",
+            "tone": "warning"
+          }
+        },
+        {
+          "blockId": "da8cf357-d94c-486f-8029-965b1cd9adbd",
+          "type": "paragraph",
+          "content": {
+            "text": "Security baseline assessment confirms Apator SA maintains ISO 27001 certification with established information security management systems covering access controls, network security, and incident response procedures. However, the organization lacks specific AI governance frameworks including model versioning protocols, data ethics guidelines, and algorithmic bias mitigation strategies. The current security policies do not address unique AI risks such as model drift, adversarial attacks, or explainability requirements. This governance gap presents a significant challenge for scaling AI initiatives beyond proof-of-concept stage, particularly in regulated energy sector applications where audit trails and model transparency are mandatory."
+          }
+        }
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "document",
+          "sourceId": "apator-raport-2024",
+          "sourceTitle": "Apator SA — Raport roczny 2024"
+        }
+      ]
+    },
+    {
+      "sectionId": "37fc3b8c-efb0-4015-af08-29a0b888fd15",
+      "orderIndex": 4,
+      "level": 1,
+      "title": "AI Opportunities",
+      "purpose": "Substantive section \"AI Opportunities\" relevant to the document goal.",
+      "blocks": [
+        {
+          "blockId": "1305745e-3306-466f-9ea3-6ec25c4a8067",
+          "type": "paragraph",
+          "content": {
+            "text": "Introduction to the value pool: Analysis revealed high potential in operational efficiency and demand forecasting."
+          }
+        },
+        {
+          "blockId": "4ff3dc37-ce8e-42da-9803-a6f392e6c95b",
+          "type": "table",
+          "content": {
+            "rows": []
+          }
+        },
+        {
+          "blockId": "685969f8-7157-4ce5-9558-506e5fefff11",
+          "type": "chart",
+          "content": {
+            "kind": "bar",
+            "title": "Chart",
+            "xAxisLabel": "oś X",
+            "yAxisLabel": "oś Y",
+            "series": []
+          }
+        }
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "document",
+          "sourceId": "apator-raport-2024",
+          "sourceTitle": "Apator SA — Raport roczny 2024"
+        }
+      ]
+    },
+    {
+      "sectionId": "948849f3-ad4d-4fd1-b9c9-9e90c877ee4c",
+      "orderIndex": 5,
+      "level": 1,
+      "title": "Risks and Constraints",
+      "purpose": "Material risks and constraints with explicit mitigation.",
+      "blocks": [
+        {
+          "blockId": "338160c4-046d-45ec-9a9b-7cf3108f45b6",
+          "type": "paragraph",
+          "content": {
+            "text": "Krajobraz ryzyka transformacji AI w Apator SA koncentruje się na dwóch kluczowych obszarach: zadłużeniu technologicznym oraz zarządzaniu zmianą organizacyjną. Zadłużenie technologiczne, widoczne w przestarzałych systemach sterowania (PLC) i silosach danych między ERP, MES a PLM, stanowi fundamentalne zagrożenie dla płynności i jakości danych, które są paliwem dla AI. Równie istotne są wyzwania związane ze zmianą organizacyjną. Opór pracowników operacyjnych, brak odpowiednich kompetencji cyfrowych oraz niewystarczająca komunikacja wizji transformacji mogą skutecznie zablokować wdrożenie i adopcję nowych rozwiązań. Skuteczne zarządzanie tymi ryzykami, poprzez dedykowane programy modernizacji i kompleksowe strategie wdrażania zmian, jest warunkiem koniecznym sukcesu."
+          }
+        },
+        {
+          "blockId": "214ba79e-7926-4757-87be-82ac8f2ffb8d",
+          "type": "table",
+          "content": {
+            "rows": [
+              {
+                "cells": {
+                  "Opis Ryzyka": {
+                    "value": "Integracja z przestarzałymi systemami PLC nie powiodła się, uniemożliwiając pozyskanie danych o produkcji w czasie rzeczywistym."
+                  },
+                  "Prawdopodobieństwo": {
+                    "value": "Średnia"
+                  },
+                  "Wpływ": {
+                    "value": "Wysoki",
+                    "style": {
+                      "bgColor": "#DC2626"
+                    }
+                  },
+                  "Plan Mitigacji": {
+                    "value": "Wstępny audyt kompatybilności, zastosowanie bramek danych (data gateways), pilotaż w jednym segmencie produkcji."
+                  }
+                }
+              },
+              {
+                "cells": {
+                  "Opis Ryzyka": {
+                    "value": "Opór pracowników produkcyjnych wobec nowych systemów AI, postrzeganych jako narzędzie kontroli lub zagrożenie dla miejsc pracy."
+                  },
+                  "Prawdopodobieństwo": {
+                    "value": "Wysoka"
+                  },
+                  "Wpływ": {
+                    "value": "Średni",
+                    "style": {
+                      "bgColor": "#D97706"
+                    }
+                  },
+                  "Plan Mitigacji": {
+                    "value": "Wczesne włączanie pracowników w projekt, transparentna komunikacja korzyści, programy szkoleń i systemy motywacyjne."
+                  }
+                }
+              },
+              {
+                "cells": {
+                  "Opis Ryzyka": {
+                    "value": "Niska jakość i niekompletność danych historycznych z systemów MES/ERP, prowadząca do niskiej dokładności modeli predykcyjnych."
+                  },
+                  "Prawdopodobieństwo": {
+                    "value": "Wysoka"
+                  },
+                  "Wpływ": {
+                    "value": "Wysoki",
+                    "style": {
+                      "bgColor": "#DC2626"
+                    }
+                  },
+                  "Plan Mitigacji": {
+                    "value": "Inicjatywa „Data Cleansing & Governance”, ustandaryzowanie punktów pobierania danych, wdrożenie procesów walidacji."
+                  }
+                }
+              },
+              {
+                "cells": {
+                  "Opis Ryzyka": {
+                    "value": "Wyciek wrażliwych danych produkcyjnych lub klientów podczas przetwarzania przez modele AI w chmurze."
+                  },
+                  "Prawdopodobieństwo": {
+                    "value": "Niska"
+                  },
+                  "Wpływ": {
+                    "value": "Krytyczny",
+                    "style": {
+                      "bgColor": "#DC2626"
+                    }
+                  },
+                  "Plan Mitigacji": {
+                    "value": "Architektura hybrydowa (on-premise dla kluczowych danych), rygorystyczne polityki bezpieczeństwa, audyty dostawców."
+                  }
+                }
+              },
+              {
+                "cells": {
+                  "Opis Ryzyka": {
+                    "value": "Niewystarczający zwrot z inwestycji (ROI) z pierwszych inicjatyw AI, prowadzący do utraty zaufania zarządu."
+                  },
+                  "Prawdopodobieństwo": {
+                    "value": "Średnia"
+                  },
+                  "Wpływ": {
+                    "value": "Wysoki",
+                    "style": {
+                      "bgColor": "#DC2626"
+                    }
+                  },
+                  "Plan Mitigacji": {
+                    "value": "Priorytetyzacja projektów o najszybszym zwrocie (quick wins), realisticzne modelowanie biznescase, ciągły monitoring KPI."
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "document",
+          "sourceId": "apator-raport-2024",
+          "sourceTitle": "Apator SA — Raport roczny 2024"
+        }
+      ]
+    },
+    {
+      "sectionId": "4eeacef4-c72b-4fd1-ac90-a956140d499d",
+      "orderIndex": 6,
+      "level": 1,
+      "title": "Recommended Initiatives",
+      "purpose": "Substantive section \"Recommended Initiatives\" relevant to the document goal.",
+      "blocks": [
+        {
+          "blockId": "3f238c2d-655c-48d3-84c5-35feb847a300",
+          "type": "paragraph",
+          "content": {
+            "text": "Nasza metodologia priorytetyzacji opiera się na dwuetapowym podejściu. W pierwszej kolejności skupiamy się na inicjatywach rozwiązujących kluczowe wąskie gardła danych, które stanowią fundament dla dalszych transformacji AI. Dopracowanie architektury danych i integracji systemów (ERP-MES-PLM) umożliwi efektywne wdrożenie kolejnych rozwiązań. W drugim etapie wybieramy przypadki użycia o najwyższym ROI i najszybszym czasie realizacji, gwarantującym szybkie zwroty z inwestycji i budowanie zaufania interesariuszy. Takie podejście minimalizuje ryzyko projektowe i maksymalizuje wartość biznesową w horyzoncie 18-24 miesięcy."
+          }
+        },
+        {
+          "blockId": "86b595f8-506a-4acb-8643-aebcc3b86a72",
+          "type": "table",
+          "content": {
+            "rows": [
+              {
+                "cells": {
+                  "initiativeName": {
+                    "value": "Predykcyjne utrzymanie ruchu"
+                  },
+                  "description": {
+                    "value": "AI do przewidywania awarii maszyn na podstawie danych sensorowych i historii serwisowej"
+                  },
+                  "requiredCapabilities": {
+                    "value": "IoT platforma, analiza time-series, integracja z MES"
+                  },
+                  "budgetEstimate": {
+                    "value": "2.4M PLN"
+                  },
+                  "expectedKpiImprovement": {
+                    "value": "↓ 15% przestoje, ↑ 25% MTBF"
+                  }
+                }
+              },
+              {
+                "cells": {
+                  "initiativeName": {
+                    "value": "Wizyjna kontrola jakości"
+                  },
+                  "description": {
+                    "value": "System computer vision do automatycznego wykrywania wad produktów na linii produkcyjnej"
+                  },
+                  "requiredCapabilities": {
+                    "value": "Kamery przemysłowe, deep learning, integracja z PLM"
+                  },
+                  "budgetEstimate": {
+                    "value": "1.8M PLN"
+                  },
+                  "expectedKpiImprovement": {
+                    "value": "↑ 20% prędkość detekcji, ↓ 30% koszty reklamacji"
+                  }
+                }
+              },
+              {
+                "cells": {
+                  "initiativeName": {
+                    "value": "Prognozowanie popytu"
+                  },
+                  "description": {
+                    "value": "Model ML do prognozowania zapotrzebowania na produkty z wykorzystaniem danych SAP i rynkowych"
+                  },
+                  "requiredCapabilities": {
+                    "value": "Dane SAP, zewnętrzne API, modelowanie prognostyczne"
+                  },
+                  "budgetEstimate": {
+                    "value": "1.2M PLN"
+                  },
+                  "expectedKpiImprovement": {
+                    "value": "↓ 10% koszty zapasów, ↑ 15% dostępność produktów"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "blockId": "340d147d-f33e-40ac-8fe5-4c99f7f84def",
+          "type": "kpi_strip",
+          "content": {
+            "items": [
+              {
+                "label": "Redukcja przestojów",
+                "value": "15%",
+                "delta": "▼ vs baseline"
+              },
+              {
+                "label": "Prędkość detekcji wad",
+                "value": "20%",
+                "delta": "▲ vs baseline"
+              },
+              {
+                "label": "Koszty zapasów",
+                "value": "10%",
+                "delta": "▼ vs baseline"
+              }
+            ]
+          }
+        }
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "document",
+          "sourceId": "apator-raport-2024",
+          "sourceTitle": "Apator SA — Raport roczny 2024"
+        }
+      ]
+    },
+    {
+      "sectionId": "b8389ab1-d8c9-443c-9445-866f363e9252",
+      "orderIndex": 7,
+      "level": 1,
+      "title": "Implementation Roadmap",
+      "purpose": "Substantive section \"Implementation Roadmap\" relevant to the document goal.",
+      "blocks": [
+        {
+          "blockId": "f0212f62-0e0e-4df2-9741-fba124d245cf",
+          "type": "paragraph",
+          "content": {
+            "text": "Strategia wdrożenia transformacji AI w Apator SA opiera się na trójfazowym podejściu, które minimalizuje ryzyko i maksymalizuje wartość biznesową. Faza 1 (Miesiące 1-6) skupia się na budowie fundamentów technologicznych oraz realizacji szybkich zwycięstw (quick wins) w obszarze kontroli jakości wizyjnej i podstawowej analityki danych. Faza 2 (Miesiące 7-15) koncentruje się na skalowaniu predyktywnego utrzymania ruchu oraz rozbudowie infrastruktury danych. Faza 3 (Miesiące 16-24) obejmuje zaawansowaną optymalizację procesów produkcyjnych, automatyzację ofertowania i wdrożenie kompleksowych modeli AI prognozowania popytu. Każda faza zawiera jasno zdefiniowane cele biznesowe, KPI i punkty kontrolne dla zapewnienia zgodności z strategicznymi priorytetami Apator SA."
+          }
+        },
+        {
+          "blockId": "0ec29745-6555-47e1-b623-5ee7ea7e38bd",
+          "type": "chart",
+          "content": {
+            "kind": "bar",
+            "title": "Harmonogram wdrożenia transformacji AI - 24 miesiące",
+            "xAxisLabel": "Miesiące",
+            "yAxisLabel": "Obszary działań",
+            "series": [
+              {
+                "label": "Infrastruktura Danych",
+                "values": [
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "color": "#2563EB"
+              },
+              {
+                "label": "Wdrożenia Pilotowe",
+                "values": [
+                  0,
+                  0,
+                  0,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "color": "#0D9488"
+              },
+              {
+                "label": "Wdrożenie Pełnoskalowe",
+                "values": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1
+                ],
+                "color": "#7C3AED"
+              }
+            ]
+          }
+        },
+        {
+          "blockId": "c89d1aca-e080-49e6-99b8-4fd41fd52f0c",
+          "type": "bullet_list",
+          "content": {
+            "items": [
+              "Miesiąc 3: Uruchomienie Data Lake z integracją danych produkcyjnych z MES i PLM",
+              "Miesiąc 6: Wyniki pilotażowego wdrożenia kontroli jakości wizyjnej na linii produkcyjnej A",
+              "Miesiąc 9: Zakończenie budowy fundamentów analitycznych i modeli bazowych predykcji awarii",
+              "Miesiąc 12: Wdrożenie modelu predyktywnego utrzymania ruchu dla kluczowych maszyn produkcyjnych",
+              "Miesiąc 18: Pełnoskalowe wdrożenie automatyzacji ofertowania z integracją SAP",
+              "Miesiąc 24: Zakończenie fazy optymalizacji zaawansowanej i osiągnięcie pełnej dojrzałości AI"
+            ]
+          }
+        }
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "document",
+          "sourceId": "apator-raport-2024",
+          "sourceTitle": "Apator SA — Raport roczny 2024"
+        }
+      ]
+    },
+    {
+      "sectionId": "9a3653af-617c-4654-8b24-ce646f17c7d5",
+      "orderIndex": 8,
+      "level": 1,
+      "title": "Appendix",
+      "purpose": "Substantive section \"Appendix\" relevant to the document goal.",
+      "blocks": [
+        {
+          "blockId": "a25d2754-e2bd-42ed-a8f5-396c8d9d01bb",
+          "type": "bullet_list",
+          "content": {
+            "items": [
+              "A. Detailed System Architecture Diagrams",
+              "B. Interview Transcripts Summary",
+              "C. Raw Data Quality Logs",
+              "D. Vendor Evaluation Matrix"
+            ]
+          }
+        }
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "document",
+          "sourceId": "apator-raport-2024",
+          "sourceTitle": "Apator SA — Raport roczny 2024"
+        }
+      ]
+    }
+  ],
+  "sourceRefs": [
+    {
+      "sourceType": "document",
+      "sourceId": "apator-raport-2024",
+      "sourceTitle": "Apator SA — Raport roczny 2024"
+    },
+    {
+      "sourceType": "interview",
+      "sourceId": "warsztaty-it-ot-2026",
+      "sourceTitle": "Warsztaty diagnostyczne IT/OT (marzec 2026)"
+    },
+    {
+      "sourceType": "dataset",
+      "sourceId": "inwentaryzacja-ict",
+      "sourceTitle": "Inwentaryzacja systemów ICT — SAP/MES/PLM"
+    }
+  ],
+  "createdAt": "2026-07-05T05:35:16.100Z",
+  "updatedAt": "2026-07-05T05:35:16.100Z"
+}

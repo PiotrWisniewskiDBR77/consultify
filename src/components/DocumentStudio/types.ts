@@ -159,6 +159,24 @@ export interface DocumentSchema {
   owner?: string;
 }
 
+/**
+ * A4 — frontend mirror of the backend generation-warnings channel. A
+ * warning records a point where the generation / export pipeline degraded
+ * via a silent fallback (LLM prose failure, chart rasterization fallback,
+ * cover-logo unavailable). Surfaced to the user as a discreet "generated
+ * with limitations" chip on the document panel.
+ */
+export type DocumentGenerationWarningScope = 'document' | 'section' | 'block' | 'export';
+
+export interface DocumentGenerationWarning {
+  code: string;
+  scope: DocumentGenerationWarningScope;
+  sectionId?: string;
+  blockId?: string;
+  message: string;
+  occurredAt: string;
+}
+
 // Slice E3.5 widened from 3 → 5 scopes to match the SSOT 5-scope
 // editor doctrine (local / section / global / methodology / source).
 // Slice E3.6 completes the 6-scope doctrine by adding `transformative`:
@@ -461,6 +479,22 @@ export interface DocumentCommentThread {
   updatedAt: string;
 }
 
+/**
+ * B5 — frontend mirror of the server's `DocumentCommentSectionCounts`
+ * (GET /:artifactId/comments/counts). Powers the right-rail tool badge
+ * and the Open/Resolved filter counters.
+ */
+export interface DocumentCommentSectionCounts {
+  artifactId: string;
+  organizationId: string;
+  totalOpen: number;
+  totalResolved: number;
+  /** Per-section breakdown; sections with zero threads are omitted. */
+  perSection: Record<string, { open: number; resolved: number }>;
+  /** Per-block breakdown — only `'block'`-anchored threads contribute. */
+  perBlock: Record<string, { open: number; resolved: number }>;
+}
+
 export type DocumentAccessHistorySource = 'document_audit' | 'share_link' | 'approval';
 
 export interface DocumentAccessHistoryEntry {
@@ -671,4 +705,21 @@ export interface DocumentSchemaDiffResponse {
   comparedAt: string;
   summary: string;
   diff: DocumentSchemaDiff;
+}
+
+/**
+ * B3 — summary projection of a server-side `DocumentVersionSnapshot`
+ * (documentStudioTypes.ts) as listed by `GET /:artifactId/snapshots`.
+ * The full snapshot also carries `schema`; the diff panel only needs
+ * the identity/metadata fields to populate the baseline picker.
+ */
+export interface DocumentVersionSnapshotSummary {
+  versionId: string;
+  artifactId: string;
+  versionNumber: number;
+  capturedAt: string;
+  capturedBy: string;
+  label?: string;
+  reason?: string;
+  origin?: string;
 }

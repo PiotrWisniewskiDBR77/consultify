@@ -14,6 +14,9 @@ import {
   getDocumentStudioAuditTrail,
   rejectDocumentStudioProposal,
 } from './api';
+import { TransformativeConfirmDialog } from './TransformativeConfirmDialog';
+import { proposalToSchemaDiff } from './documentDiffModel';
+import { DocumentSchemaDiffView } from './DocumentSchemaDiffView';
 import type {
   DocumentAuditEntry,
   DocumentEditorProposal,
@@ -68,6 +71,7 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  const [showTransformativeConfirm, setShowTransformativeConfirm] = useState(false);
 
   const editableTargets = useMemo<EditableTarget[]>(() => {
     const targets: EditableTarget[] = [];
@@ -109,28 +113,7 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
     }
   };
 
-  const handleCreateProposal = async (): Promise<void> => {
-    if (!instruction.trim()) {
-      setError(
-        t('documentStudio.editor.validation', 'Select a target block and provide an instruction.')
-      );
-      return;
-    }
-    if (scope === 'local' && !selectedTarget) {
-      setError(
-        t('documentStudio.editor.validation', 'Select a target block and provide an instruction.')
-      );
-      return;
-    }
-    if (scope === 'section' && !sectionTargetId) {
-      setError(
-        t(
-          'documentStudio.editor.sectionValidation',
-          'Pick the section the instruction should apply to.'
-        )
-      );
-      return;
-    }
+  const submitProposal = async (): Promise<void> => {
     setSubmitting(true);
     setError(null);
     setNote(null);
@@ -177,17 +160,6 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
           { useLlm }
         );
       } else if (scope === 'transformative') {
-        if (
-          !window.confirm(
-            t(
-              'documentStudio.editor.transformativeConfirm',
-              'This can dramatically rebuild the document. Continue?'
-            )
-          )
-        ) {
-          setSubmitting(false);
-          return;
-        }
         proposal = await createDocumentStudioTransformativeProposal(
           artifactId,
           { instruction: instruction.trim() },
@@ -223,6 +195,49 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleCreateProposal = async (): Promise<void> => {
+    if (!instruction.trim()) {
+      setError(
+        t('documentStudio.editor.validation', 'Select a target block and provide an instruction.')
+      );
+      return;
+    }
+    if (scope === 'local' && !selectedTarget) {
+      setError(
+        t('documentStudio.editor.validation', 'Select a target block and provide an instruction.')
+      );
+      return;
+    }
+    if (scope === 'section' && !sectionTargetId) {
+      setError(
+        t(
+          'documentStudio.editor.sectionValidation',
+          'Pick the section the instruction should apply to.'
+        )
+      );
+      return;
+    }
+    // B1 — transformative scope is destructive (may rewrite every section),
+    // so it always requires an explicit confirmation modal before the
+    // request is sent. The actual submission happens in
+    // handleConfirmTransformative once the user opts in.
+    if (scope === 'transformative') {
+      setError(null);
+      setShowTransformativeConfirm(true);
+      return;
+    }
+    await submitProposal();
+  };
+
+  const handleConfirmTransformative = async (): Promise<void> => {
+    setShowTransformativeConfirm(false);
+    await submitProposal();
+  };
+
+  const handleCancelTransformative = (): void => {
+    setShowTransformativeConfirm(false);
   };
 
   const handleApprove = async (): Promise<void> => {
@@ -437,53 +452,30 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
               </span>
             ) : null}
           </div>
-          <div className="grid gap-2 md:grid-cols-2">
-            <div className="rounded-md border border-c-border p-2 text-xs">
-              <div className="mb-1 font-semibold text-c-text-muted">
-                {t('documentStudio.editor.before', 'Before')}
+          <DocumentSchemaDiffView diff={proposalToSchemaDiff(pendingProposal, schema)} />
+          <details className="mt-2 text-xs">
+            <summary className="cursor-pointer select-none text-c-text-muted">
+              {t('documentStudio.editor.rawBeforeAfter', 'Raw before / after')}
+            </summary>
+            <div className="mt-2 grid gap-2 md:grid-cols-2">
+              <div className="rounded-md border border-c-border p-2">
+                <div className="mb-1 font-semibold text-c-text-muted">
+                  {t('documentStudio.editor.before', 'Before')}
+                </div>
+                <pre className="whitespace-pre-wrap text-c-text">
+                  {pendingProposal.diff.before}
+                </pre>
               </div>
-              <pre className="whitespace-pre-wrap text-c-text">
-                {pendingProposal.diff.before}
-              </pre>
-            </div>
-            <div className="rounded-md border border-sky-300/60 bg-sky-50 p-2 text-xs dark:border-sky-400/30 dark:bg-sky-500/10">
-              <div className="mb-1 font-semibold text-sky-700 dark:text-sky-300">
-                {t('documentStudio.editor.after', 'After')}
+              <div className="rounded-md border border-c-border p-2">
+                <div className="mb-1 font-semibold text-c-text-muted">
+                  {t('documentStudio.editor.after', 'After')}
+                </div>
+                <pre className="whitespace-pre-wrap text-c-text">
+                  {pendingProposal.diff.after}
+                </pre>
               </div>
-              <pre className="whitespace-pre-wrap text-c-text">
-                {pendingProposal.diff.after}
-              </pre>
             </div>
-          </div>
-          {pendingProposal.proposedChanges && pendingProposal.proposedChanges.length > 0 ? (
-            <div className="mt-3 rounded-md border border-c-border bg-c-surface-raised p-2 text-xs">
-              <div className="mb-2 font-semibold text-c-text-secondary">
-                {t('documentStudio.editor.structuredChanges', 'Structured changes')}
-              </div>
-              <ul className="space-y-2">
-                {pendingProposal.proposedChanges.map((change, index) => (
-                  <li
-                    key={`${change.targetSectionId}:${change.targetBlockId ?? 'section'}:${index}`}
-                    className="rounded border border-c-border bg-c-surface p-2"
-                  >
-                    <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
-                      {change.targetSectionId}
-                      {change.targetBlockId ? ` · ${change.targetBlockId}` : ''} ·{' '}
-                      {change.editType ?? 'rewrite'}
-                    </div>
-                    <div className="grid gap-2 md:grid-cols-2">
-                      <pre className="whitespace-pre-wrap rounded bg-c-surface-raised p-2 text-c-text">
-                        {change.before}
-                      </pre>
-                      <pre className="whitespace-pre-wrap rounded bg-sky-50 p-2 text-c-text dark:bg-sky-500/10">
-                        {change.after}
-                      </pre>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
+          </details>
           {pendingProposal.versionBeforeId || pendingProposal.versionAfterId ? (
             <div className="mt-2 text-[11px] text-c-text-muted">
               {pendingProposal.versionBeforeId
@@ -527,6 +519,13 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
           </ul>
         </div>
       ) : null}
+
+      <TransformativeConfirmDialog
+        open={showTransformativeConfirm}
+        onCancel={handleCancelTransformative}
+        onConfirm={handleConfirmTransformative}
+        submitting={submitting}
+      />
     </section>
   );
 };
