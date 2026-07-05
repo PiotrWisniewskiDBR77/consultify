@@ -13871,7 +13871,10 @@
         "generated": "Generated"
       }
     },
-    "operatorBriefError": "Could not load the operator brief."
+    "operatorBriefError": "Could not load the operator brief.",
+    "emptyState": {
+      "description": "Schedule your first meeting to start tracking agendas and follow-ups."
+    }
   },
   "manager": {
     "col": {

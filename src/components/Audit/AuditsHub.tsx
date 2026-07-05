@@ -1,43 +1,66 @@
 /**
- * AuditsHub — lists audit programs and shows a simple per-program dashboard
- * (owner flagged direction ⭐⭐⭐, audit #19d / #19e). Mounted at /audits.
+ * AuditsHub — lists audit programs and shows a per-program preview (owner
+ * flagged direction ⭐⭐⭐, audit #19d / #19e). Mounted at /audits.
+ *
+ * Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7): the list is
+ * StandardTable + StandardPreview, 1:1 with the Assessment 'list' / Results
+ * KPI catalog adopters. Kebab (canon A6): Open · Generate surveys · Open
+ * preview/Edit/Archive (Edit gated by isAuditProgramEditEnabled() — real
+ * backend, no wired screen yet; Archive has no backend at all — both shown
+ * disabled with a note, never hidden) · Delete (destructive, always last).
  *
  * What it does (works end-to-end):
  *  - Lists the org's audit programs from GET /api/audit/programs.
- *  - Client-side filter by name/objective + status filter.
+ *  - Server-side search by name/objective + status filter (L-02).
  *  - "New audit program" + quick "ISO 27001" launcher open the wizard.
- *  - Selecting a program shows a dashboard panel: status, counts (templates,
- *    assignees), and a completion indicator derived from config.
- *  - Delete a program.
+ *  - Selecting a program shows a StandardPreview: status, objective, counts
+ *    (templates, assignees), and a completion % derived from the real rollup.
+ *  - Delete a program (row kebab, preview action, or Menu 3 bulk bar).
  *
  * Scale note (#19e): for the 400-assignee scale the owner targets, this list
  * would move to server-side pagination + saved views + batch-AI summaries. For
  * the MVP we use a clean client-side filtered list. The TODO markers below pin
  * exactly where those upgrades slot in.
  *
- * Completion (#19e): a true completion % requires joining to the underlying
- * interview sessions/assignments. The MVP shows the planned counts and a
- * "surveys generated" flag from config; the real rollup is a documented TODO.
- *
  * Self-contained page (rendered as a standalone route): includes its own
  * header/back affordance so it works whether or not it sits inside the app shell.
  * Bilingual (pl/en).
  */
 
-import { AlertTriangle, ClipboardList, Loader2, RefreshCw, Send, ShieldCheck, Trash2, Users } from 'lucide-react';
+import {
+  AlertTriangle,
+  ClipboardList,
+  ExternalLink,
+  Loader2,
+  RefreshCw,
+  Send,
+  ShieldCheck,
+  Trash2,
+  Users,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
-  FilterableTable,
   type FilterChip,
   ModuleHub,
-  type TableColumn,
 } from '@/components/shared/ModuleHub';
 import type { ModuleTab, ViewMode } from '@/components/shared/ModuleHub/types';
-import type { RowAction } from '@/components/shared/RowActionsMenu';
-import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
-import { EntityStatusChip, MetaChip } from '@/components/ui/primitives/chips';
+import {
+  StandardPreview,
+  standardPreviewShortcuts,
+  type StandardPreviewActions,
+  type StandardRowMenu,
+  StandardTable,
+  type TableColumn as StandardTableColumn,
+} from '@/components/standard';
+import { EntityStatusChip, MetaChip, statusChipTone } from '@/components/ui/primitives/chips';
+import {
+  MENU_3_ACTION_DANGER,
+  MENU_3_LEFT_CLASS,
+  MENU_3_RIGHT_CLASS,
+  Menu3Chip,
+} from '@/components/shared/ModuleMenu3';
 
 import {
   type AuditProgram,
@@ -49,7 +72,7 @@ import {
   type ProgramCompletion,
 } from './auditApi';
 import { AuditOrchestratorWizard } from './AuditOrchestratorWizard';
-import { getPresetById } from './auditPresets';
+import { isAuditProgramEditEnabled } from '@/utils/auditProgramEditStubFlag';
 
 const PAGE_SIZE = 50;
 
@@ -92,9 +115,12 @@ export const AuditsHub: React.FC = () => {
 
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardPresetId, setWizardPresetId] = useState<string | null>(null);
-  // FilterableTable owns the (unused-here) column filter chips. Search + status
+  // StandardTable owns the (unused-here) column filter chips. Search + status
   // remain SERVER-SIDE via ModuleHub (load()); these stay empty by design.
   const [tableFilters, setTableFilters] = useState<FilterChip[]>([]);
+  // Triada standard (canon A3/A6): checkbox selection on the program list
+  // switches Menu 3 into bulk mode (1:1 markup with Assessment/Results catalog).
+  const [selectedListIds, setSelectedListIds] = useState<Set<string>>(new Set());
 
   // Load the first page (resets the list). Used on mount, after mutations, and
   // whenever the server-side search/status filter changes.
@@ -167,9 +193,8 @@ export const AuditsHub: React.FC = () => {
     return map[s];
   };
 
-  // §27 — FilterableTable is the canonical list surface. The table consumes
-  // PreviewableItem rows ({ id, title, ... }) so it also feeds the right-side
-  // TableWithPreviewLayout. We keep the AuditProgram on the row so row actions
+  // Triada standard (StandardTable/StandardPreview): the table consumes rows
+  // with an `id`; we keep the full AuditProgram on the row so row actions
   // (generate / delete) and the preview dashboard can read the full record.
   type AuditRow = AuditProgram & {
     title: string;
@@ -250,27 +275,42 @@ export const AuditsHub: React.FC = () => {
     setWizardOpen(true);
   };
 
-  // §27 columns: name (+status chip), objective, templates / assignees counts,
-  // surveys-generated indicator. Counts are right-aligned per canon §3.3.
-  const columns = useMemo<TableColumn[]>(
+  // Triada standard (docs/ui-standards/TRIADA_KANON.md A4): name (+status
+  // chip), objective, templates / assignees counts, surveys indicator, updated.
+  // RYGOR: width is ALWAYS a literal px string — parsePx's digit-strip
+  // fallback silently turns a '%' string into a tiny px value (see
+  // ResultsHub fix 45e2a15408), so '18%' would render as '18px' and overlap
+  // headers. Never use percentage widths here.
+  const columns = useMemo<StandardTableColumn[]>(
     () => [
       {
         id: 'name',
         label: t('audit.program'),
+        width: '240px',
         render: (row: AuditRow) => (
-          <div className="flex items-center gap-2">
-            <span className="truncate text-sm font-semibold text-c-text">{row.name}</span>
-            <EntityStatusChip
-              status={STATUS_PILL_ALIAS[row.status]}
-              label={statusLabel(row.status)}
-              hideDot
-            />
-          </div>
+          <span className="truncate text-sm font-semibold text-c-text block">{row.name}</span>
+        ),
+      },
+      {
+        id: 'status',
+        label: t('common.status', 'Status'),
+        width: '140px',
+        filterable: true,
+        // NOTE: filtering matches `row.status` (this column's id) — must stay a
+        // dedicated column separate from `name`, otherwise FilterableTable's
+        // `row[column.id]` lookup (canon mechanic) silently never matches.
+        filterOptions: STATUS_FILTERS.filter((s) => s !== 'all').map((s) => ({
+          value: s,
+          label: statusLabel(s),
+        })),
+        render: (row: AuditRow) => (
+          <EntityStatusChip status={STATUS_PILL_ALIAS[row.status]} label={statusLabel(row.status)} />
         ),
       },
       {
         id: 'objective',
         label: t('audit.objective'),
+        width: '260px',
         render: (row: AuditRow) => (
           <span className="line-clamp-1 text-sm text-c-text-muted">{row.objective || '—'}</span>
         ),
@@ -278,7 +318,8 @@ export const AuditsHub: React.FC = () => {
       {
         id: 'templates',
         label: t('audit.templates'),
-        align: 'right',
+        width: '120px',
+        align: 'right' as const,
         render: (row: AuditRow) => (
           <MetaChip icon={ClipboardList} label={String(row.templateCount)} />
         ),
@@ -286,13 +327,15 @@ export const AuditsHub: React.FC = () => {
       {
         id: 'assignees',
         label: t('audit.assignees'),
-        align: 'right',
+        width: '120px',
+        align: 'right' as const,
         render: (row: AuditRow) => <MetaChip icon={Users} label={String(row.assigneeCount)} />,
       },
       {
         id: 'surveys',
         label: t('audit.surveys'),
-        align: 'right',
+        width: '120px',
+        align: 'right' as const,
         render: (row: AuditRow) =>
           row.surveysGenerated ? (
             <span className="inline-flex items-center gap-1 text-sm text-c-success">
@@ -303,41 +346,227 @@ export const AuditsHub: React.FC = () => {
             <span className="text-sm text-c-text-muted/60">—</span>
           ),
       },
+      {
+        id: 'updatedAt',
+        label: t('common.updated', 'Updated'),
+        width: '130px',
+        sortable: true,
+        sortAccessor: (row: Record<string, unknown>) => {
+          const r = row as unknown as AuditRow;
+          return r.updatedAt ? new Date(r.updatedAt).getTime() : 0;
+        },
+        render: (row: Record<string, unknown>) => {
+          const r = row as unknown as AuditRow;
+          return r.updatedAt ? (
+            <span className="text-[11px] text-c-text-muted">
+              {new Date(r.updatedAt).toLocaleDateString(undefined, {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })}
+            </span>
+          ) : (
+            <span className="text-c-text-muted">—</span>
+          );
+        },
+      },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [isPolish]
   );
 
-  // Row actions menu (canon §9): generate surveys + delete. Generate is disabled
-  // once surveys exist (idempotency) or while a generation run is in flight.
-  const buildRowActions = useCallback(
-    (row: AuditRow): RowAction[] => {
+  // Triada kebab (canon A6): 5-block contract. Module declares blocks 1-2
+  // only; StandardTable always appends block 4 (Open preview/Edit/Archive)
+  // and block 5 (Delete, red, last). Generate surveys is a domain state
+  // transition (block 2) — idempotent, disabled once already generated.
+  const buildRowMenu = useCallback(
+    (row: AuditRow): StandardRowMenu => {
       const isGenerating = generatingId === row.id;
-      return [
-        {
-          id: 'generate',
-          label: row.surveysGenerated ? t('audit.surveysGenerated') : t('audit.generateSurveys'),
-          icon: Send,
-          disabled: row.surveysGenerated || isGenerating,
-          onClick: () => void handleGenerate(row),
+      return {
+        primary: [
+          {
+            id: 'open',
+            label: t('common.open', 'Open'),
+            icon: ExternalLink,
+            onClick: () => setSelectedId(row.id),
+          },
+        ],
+        statusTransitions: [
+          {
+            id: 'generate',
+            label: row.surveysGenerated ? t('audit.surveysGenerated') : t('audit.generateSurveys'),
+            icon: Send,
+            disabled: row.surveysGenerated || isGenerating,
+            onClick: () => void handleGenerate(row),
+          },
+        ],
+        universalHandlers: {
+          preview: () => setSelectedId(row.id),
+          // DP-5 (src/utils/auditProgramEditStubFlag.ts): backend PATCH exists
+          // but no wired edit screen yet — gated OFF by default, disabled with
+          // a note rather than hidden, until the edit UI ships.
+          edit: isAuditProgramEditEnabled() ? () => setSelectedId(row.id) : undefined,
+          editNote: isAuditProgramEditEnabled()
+            ? undefined
+            : t('common.comingSoonBackend', 'Coming soon (backend)'),
+          // No archive endpoint exists for audit programs at all — disabled
+          // with a note, never hidden (canon A6 block 4).
+          archiveNote: t('common.comingSoonBackend', 'Coming soon (backend)'),
         },
-        {
-          id: 'delete',
-          label: t('audit.delete'),
-          icon: Trash2,
-          variant: 'danger',
+        destructive: {
           onClick: () => void handleDelete(row.id),
         },
-      ];
+      };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [generatingId, isPolish]
   );
 
+  // Triada standard (StandardPreview, canon A7): selected row for the preview
+  // pane, kept in sync with `selectedId` (shared with the kebab's Open/preview).
+  const selectedProgram: AuditRow | null = selectedId
+    ? (rows.find((r) => r.id === selectedId) ?? null)
+    : null;
+
+  // Real completion rollup (#19e): fetched when the selected program has
+  // generated surveys — feeds the `details` block of the preview.
+  const [completionSummary, setCompletionSummary] = useState<ProgramCompletion | null>(null);
+  useEffect(() => {
+    if (!selectedProgram?.surveysGenerated) {
+      setCompletionSummary(null);
+      return;
+    }
+    let cancelled = false;
+    getCompletion(selectedProgram.id)
+      .then((c) => {
+        if (!cancelled) setCompletionSummary(c);
+      })
+      .catch(() => {
+        if (!cancelled) setCompletionSummary(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedProgram?.id, selectedProgram?.surveysGenerated]);
+
+  // Triada standard (StandardPreview actions, canon A8): Generate surveys
+  // (neutral, domain transition) + Delete (destructive). No "Open" action here
+  // — the preview pane already IS the full view for the selected row (see
+  // `onOpenFull` note above), so a same-row "Open" button would be a no-op.
+  const previewActions: StandardPreviewActions | undefined = useMemo(
+    () =>
+      selectedProgram
+        ? {
+            informational: [
+              {
+                id: 'generate',
+                variant: 'neutral',
+                label: selectedProgram.surveysGenerated
+                  ? t('audit.surveysGenerated')
+                  : t('audit.generateSurveys'),
+                icon: Send,
+                shortcut: 'G',
+                disabled: selectedProgram.surveysGenerated || generatingId === selectedProgram.id,
+                onClick: () => void handleGenerate(selectedProgram),
+              },
+            ],
+            resolutions: [
+              {
+                id: 'delete',
+                variant: 'destructive',
+                label: t('audit.delete'),
+                icon: Trash2,
+                shortcut: 'D',
+                onClick: () => void handleDelete(selectedProgram.id),
+              },
+            ],
+          }
+        : undefined,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedProgram, generatingId, isPolish]
+  );
+
+  // Esc closes preview; single-key shortcuts (G/D) active while preview open
+  // (kanon B.24/B.31 — mirrors Assessment/Results catalog adopters).
+  useEffect(() => {
+    if (!selectedId) return;
+    const shortcuts = standardPreviewShortcuts(previewActions);
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable) return;
+      if (e.key === 'Escape') {
+        setSelectedId(null);
+        return;
+      }
+      const handler = shortcuts[e.key.toUpperCase()];
+      if (handler) {
+        e.preventDefault();
+        handler();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [selectedId, previewActions]);
+
+  // Bulk delete (Triada canon A3/A6): Menu 3 bulk bar Delete action for the
+  // checkbox-selected rows. Sequential to reuse the existing single-delete
+  // endpoint/confirmation semantics; no bulk API exists for audit programs.
+  const handleBulkDelete = useCallback(async () => {
+    if (selectedListIds.size === 0) return;
+    if (
+      !window.confirm(
+        isPolish
+          ? `Usunąć ${selectedListIds.size} program(ów) audytowych?`
+          : `Delete ${selectedListIds.size} audit program(s)?`
+      )
+    ) {
+      return;
+    }
+    for (const id of Array.from(selectedListIds)) {
+      try {
+        await deleteProgram(id);
+      } catch {
+        /* best-effort — continue with remaining rows */
+      }
+    }
+    setSelectedListIds(new Set());
+    if (selectedId && selectedListIds.has(selectedId)) setSelectedId(null);
+    await load();
+  }, [selectedListIds, selectedId, isPolish, load]);
+
+  // Triada standard (canon A3/A6): checkbox selection switches Menu 3 into
+  // bulk mode via ModuleHub's `commandRowContent` override.
+  const bulkCommandRowContent =
+    selectedListIds.size > 0 ? (
+      <div className={MENU_3_LEFT_CLASS + ' w-full justify-between flex'}>
+        <div className={MENU_3_LEFT_CLASS}>
+          <span className="inline-flex h-7 items-center rounded-full px-2.5 text-[11px] font-semibold text-c-text whitespace-nowrap">
+            {`${selectedListIds.size} ${t('common.selected', isPolish ? 'zaznaczono' : 'selected')}`}
+          </span>
+          <Menu3Chip onClick={() => setSelectedListIds(new Set(rows.map((r) => r.id)))}>
+            {t('common.selectAll', 'Select all')}
+          </Menu3Chip>
+          <Menu3Chip onClick={() => setSelectedListIds(new Set())}>
+            {t('common.clear', isPolish ? 'Wyczyść' : 'Clear')}
+          </Menu3Chip>
+        </div>
+        <div className={MENU_3_RIGHT_CLASS}>
+          <button
+            type="button"
+            onClick={() => void handleBulkDelete()}
+            className={MENU_3_ACTION_DANGER}
+          >
+            <Trash2 size={12} />
+            {t('common.delete', 'Delete')}
+          </button>
+        </div>
+      </div>
+    ) : null;
+
   // L-05: adopt the canonical ModuleHub shell (standard header / search / tabs /
   // view-mode / primary CTA / filter controls), the same shell Results &
-  // Initiatives use. The list + dashboard internals below are unchanged — this is
-  // the structural shell only, NOT the §27 FilterableTable refactor (Faza 4).
+  // Initiatives use. The list surface itself is StandardTable/StandardPreview
+  // (Triada standard, see above).
   const tabs = useMemo(
     () => [
       {
@@ -388,6 +617,7 @@ export const AuditsHub: React.FC = () => {
         activeStatusFilter={statusFilter === 'all' ? null : statusFilter}
         onStatusFilterChange={(s) => setStatusFilter((s as AuditProgramStatus | null) ?? 'all')}
         availableViewModes={['table']}
+        commandRowContent={bulkCommandRowContent}
         rightControls={
           <button
             type="button"
@@ -423,39 +653,114 @@ export const AuditsHub: React.FC = () => {
             </div>
           ) : (
             <>
-              {/* §27 — canonical FilterableTable + preview. Single click selects a
-                  row and opens the per-program dashboard in the preview pane. Row
-                  actions (⋮) carry Generate surveys / Delete. */}
-              <div className="rounded-xl border border-c-border bg-c-surface">
-                <TableWithPreviewLayout<AuditRow>
-                  selectedId={selectedId}
-                  selectedItem={rows.find((r) => r.id === selectedId) ?? null}
-                  onSelect={setSelectedId}
-                  itemIds={rows.map((r) => r.id)}
-                  getItemById={(id) => rows.find((r) => r.id === id) ?? null}
-                  renderPreview={(item) => <ProgramDashboard program={item} isPolish={isPolish} />}
-                >
-                  <FilterableTable
+              {/* Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7):
+                  StandardTable + StandardPreview, 1:1 with the Assessment
+                  'list' / Results KPI catalog adopters. Single click selects a
+                  row and opens the program preview in the right pane. Kebab
+                  (⋮) carries Open · Generate surveys · Open preview/Edit/Archive
+                  (Edit+Archive disabled — no wired UI/API yet, see
+                  auditProgramEditStubFlag.ts) · Delete. */}
+              <div className="h-[calc(100vh-260px)] min-h-[420px] flex overflow-hidden rounded-xl border border-c-border bg-c-surface">
+                <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
+                  <StandardTable
                     columns={columns}
-                    data={rows}
+                    data={rows as unknown as Array<Record<string, unknown> & { id: string }>}
                     selectedRowId={selectedId}
-                    persistKey="audits-programs"
-                    onRowClick={(row) => setSelectedId(String(row.id))}
-                    getRowActions={(row) => {
-                      const r = rows.find((x) => x.id === row.id);
-                      return r ? buildRowActions(r) : [];
+                    onRowClick={(row) => setSelectedId(String((row as unknown as AuditRow).id))}
+                    rowDescription={() => null}
+                    defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
+                    persistKey="audits.programs.list"
+                    selection={{ selectedIds: selectedListIds, onChange: setSelectedListIds }}
+                    empty={{
+                      icon: ShieldCheck,
+                      title:
+                        query.trim() || statusFilter !== 'all'
+                          ? t('audit.noProgramsMatchFilters')
+                          : t('audit.noAuditProgramsYet'),
+                      actionLabel: t('audit.newAuditProgram'),
+                      onAction: () => openWizard(null),
                     }}
-                    activeFilters={tableFilters}
-                    onFilterChange={setTableFilters}
-                    emptyMessage={
-                      query.trim() || statusFilter !== 'all'
-                        ? t('audit.noProgramsMatchFilters')
-                        : t('audit.noAuditProgramsYet')
-                    }
-                    canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
-                    density="compact"
+                    rowMenu={(row) => buildRowMenu(row as unknown as AuditRow)}
                   />
-                </TableWithPreviewLayout>
+                </div>
+
+                {selectedProgram ? (
+                  <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+                    <StandardPreview
+                      title={selectedProgram.name || t('audit.program')}
+                      onClose={() => setSelectedId(null)}
+                      // No `onOpenFull`: the preview pane IS the program's full
+                      // view (no separate detail route exists for /audits) —
+                      // omitting the header's "Open" button rather than wiring
+                      // a same-row no-op is the honest choice here.
+                      meta={{
+                        pills: [
+                          {
+                            label: statusLabel(selectedProgram.status),
+                            tone: statusChipTone(selectedProgram.status),
+                          },
+                          ...(selectedProgram.surveysGenerated
+                            ? [
+                                {
+                                  label: t('audit.surveysGenerated'),
+                                  tone: 'success' as const,
+                                },
+                              ]
+                            : []),
+                        ],
+                        trailing: (
+                          <span className="text-[11px] font-semibold text-c-text-secondary">
+                            {selectedProgram.updatedAt
+                              ? new Date(selectedProgram.updatedAt).toLocaleDateString(undefined, {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric',
+                                })
+                              : '—'}
+                          </span>
+                        ),
+                      }}
+                      details={{
+                        text: [
+                          `${t('audit.objective')}: ${selectedProgram.objective || '—'}`,
+                          `${t('audit.templates')}: ${selectedProgram.templateCount}`,
+                          `${t('audit.assignees')}: ${selectedProgram.assigneeCount}`,
+                          `${t('audit.completion')}: ${
+                            completionSummary ? `${completionSummary.percent}%` : '—'
+                          }`,
+                          '',
+                          selectedProgram.description?.trim() || t('common.noDescription', 'No description'),
+                        ].join('\n'),
+                        onCopy: () => {
+                          void navigator.clipboard?.writeText(
+                            `${selectedProgram.name} — ${statusLabel(selectedProgram.status)}`
+                          );
+                        },
+                      }}
+                      ai={{
+                        hints: [
+                          isPolish ? 'Podsumuj audyt' : 'Summarize audit',
+                          isPolish ? 'Następne kroki' : 'Next steps',
+                        ],
+                        disabled: true,
+                        disabledTooltip: t('common.comingSoon', 'Coming soon'),
+                      }}
+                      relations={
+                        Array.isArray(selectedProgram.config.plan)
+                          ? selectedProgram.config.plan.map((row, i) => ({
+                              id: String((row as { areaKey?: string })?.areaKey ?? i),
+                              label: String((row as { area?: string })?.area ?? '') || '—',
+                              value: String((row as { suggestedRole?: string })?.suggestedRole ?? '') || '—',
+                            }))
+                          : []
+                      }
+                      relationsEmptyLabel={
+                        isPolish ? 'Brak sugerowanego planu' : 'No suggested plan'
+                      }
+                      actions={previewActions}
+                    />
+                  </aside>
+                ) : null}
               </div>
 
               {/* Load more (#19e server-side pagination). Only when more rows exist
@@ -497,130 +802,5 @@ export const AuditsHub: React.FC = () => {
     </div>
   );
 };
-
-// ---------------------------------------------------------------------------
-// Per-program dashboard (#19d/#19e)
-// ---------------------------------------------------------------------------
-
-const ProgramDashboard: React.FC<{
-  program: AuditProgram;
-  isPolish: boolean;
-}> = ({ program, isPolish }) => {
-  const { t } = useTranslation();
-  const templateCount = program.config.templateIds?.length ?? 0;
-  const assigneeCount = program.config.assigneeIds?.length ?? 0;
-  const surveysGenerated = program.config.surveysGenerated === true;
-  const preset = getPresetById(program.preset);
-  const plan = Array.isArray(program.config.plan) ? program.config.plan : [];
-
-  // Real completion rollup (#19e): fetch when the program is generated.
-  const [completion, setCompletion] = useState<ProgramCompletion | null>(null);
-  const [completionLoading, setCompletionLoading] = useState(false);
-
-  useEffect(() => {
-    if (!surveysGenerated) {
-      setCompletion(null);
-      return;
-    }
-    let cancelled = false;
-    setCompletionLoading(true);
-    getCompletion(program.id)
-      .then((c) => {
-        if (!cancelled) setCompletion(c);
-      })
-      .catch(() => {
-        if (!cancelled) setCompletion(null);
-      })
-      .finally(() => {
-        if (!cancelled) setCompletionLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [program.id, surveysGenerated]);
-
-  return (
-    <div className="space-y-4 rounded-xl border border-c-border bg-c-surface p-5">
-      <div>
-        <h3 className="font-semibold text-c-text">{program.name}</h3>
-        {preset && (
-          <p className="text-xs text-c-text-muted">
-            {isPolish ? preset.label.pl : preset.label.en}
-          </p>
-        )}
-      </div>
-
-      <div className="grid grid-cols-2 gap-2">
-        <Stat label={t('audit.templates')} value={templateCount} />
-        <Stat label={t('audit.assignees')} value={assigneeCount} />
-      </div>
-
-      {/* Completion (#19e): real rollup over the program's generated interview
-          assignments (submitted/approved/completed vs total). */}
-      <div className="rounded-xl bg-c-surface-raised p-3">
-        <div className="mb-1 flex items-center justify-between">
-          <span className="text-xs font-medium text-c-text-secondary">
-            {t('audit.completion')}
-          </span>
-          {surveysGenerated && completion && (
-            <span className="text-xs font-semibold text-c-text">
-              {completion.percent}%
-            </span>
-          )}
-        </div>
-        {!surveysGenerated ? (
-          <p className="text-xs text-c-text-muted">{t('audit.notGeneratedUseGenerateSurveys')}</p>
-        ) : completionLoading ? (
-          <div className="flex items-center gap-2 text-xs text-c-text-muted">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            {t('audit.loading')}
-          </div>
-        ) : completion ? (
-          <div className="space-y-1.5">
-            <div className="h-2 w-full overflow-hidden rounded-full bg-c-border-subtle">
-              <div
-                className="h-full rounded-full bg-c-success transition-all"
-                style={{ width: `${completion.percent}%` }}
-              />
-            </div>
-            <p className="text-xs text-c-text-muted">
-              {t('audit.surveysCompletedOfTotal', {
-                done: completion.done,
-                total: completion.total,
-              })}
-            </p>
-          </div>
-        ) : (
-          <p className="text-xs text-c-text-muted">{t('audit.completionUnavailable')}</p>
-        )}
-      </div>
-
-      {plan.length > 0 && (
-        <div>
-          <div className="mb-1 text-xs font-medium text-c-text-secondary">
-            {t('audit.suggestedPlan')}
-          </div>
-          <ul className="space-y-1">
-            {plan.map((row, i) => (
-              <li key={(row?.areaKey as string) ?? i} className="flex justify-between text-xs">
-                <span className="text-c-text-secondary">
-                  {String(row?.area ?? '') || '—'}
-                </span>
-                <span className="text-c-text-muted">{String(row?.suggestedRole ?? '') || '—'}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const Stat: React.FC<{ label: string; value: number }> = ({ label, value }) => (
-  <div className="rounded-xl bg-c-surface-raised p-3">
-    <div className="text-2xl font-semibold text-c-text">{value}</div>
-    <div className="text-xs text-c-text-muted">{label}</div>
-  </div>
-);
 
 export default AuditsHub;

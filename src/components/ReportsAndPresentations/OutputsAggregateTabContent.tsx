@@ -4,13 +4,12 @@
  */
 
 import {
-  Archive,
   BookTemplate,
   CheckCircle2,
-  ChevronRight,
   Copy,
   Download,
   ExternalLink,
+  Eye,
   FileSpreadsheet,
   FileText,
   Loader2,
@@ -32,7 +31,7 @@ import {
 } from '@/components/ui/dialog';
 import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 import { Button, ErrorState } from '@/components/ui/primitives';
-import { EntityStatusChip } from '@/components/ui/primitives/chips';
+import { EntityStatusChip, statusChipTone } from '@/components/ui/primitives/chips';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { buildMyWorkSheetTableOpenPath } from '@/utils/artifactLinks';
@@ -43,15 +42,19 @@ import {
 
 import { API_URL, getHeaders } from '../../services/api';
 import {
-  FilterableTable,
   type FilterChip,
   type GridItem,
   GridView,
-  type TableColumn,
   type ViewMode,
 } from '../shared/ModuleHub';
-import type { RowAction } from '../shared/RowActionsMenu';
-import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import {
+  StandardPreview,
+  standardPreviewShortcuts,
+  type StandardPreviewActions,
+  StandardTable,
+  type StandardRowMenu,
+  type TableColumn as StandardTableColumn,
+} from '../standard';
 import { resolveArtifactOpenPath } from './artifactNavigation';
 import { duplicateArtifactToCanvasDraft } from './duplicateArtifactToDraft';
 import { TrustStatePreviewSection } from './TrustStatePreviewSection';
@@ -160,6 +163,13 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   const { isEnabled } = useFeatureFlagsContext();
   const openChatWithContext = useOpenChatWithContext();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Triada canon A4/pkt.13: checkbox po lewej każdego wiersza — obowiązkowy
+  // niezależnie od bulk-toolbara. Ten Hub NIE jest jeszcze przeniesiony na
+  // StandardModuleBar (Menu 3 bulk mode) — osobny, większy program migracji
+  // ModuleHub→StandardModuleBar, poza zakresem tego zadania. Checkbox tu
+  // działa jako lokalny toggle (zaznaczenie widoczne, przetrwa re-render);
+  // bulk-akcje podepniemy razem z tamtą migracją.
+  const [selectedOutputIds, setSelectedOutputIds] = useState<Set<string>>(new Set());
   const deepLinkConsumed = useRef(false);
   // selectedGovernance is provided by useTrustState hook below
   const [lineageOpen, setLineageOpen] = useState(false);
@@ -323,28 +333,29 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
     [isPolish]
   );
 
-  const columns: TableColumn[] = useMemo(
+  const columns: StandardTableColumn[] = useMemo(
     () => [
       {
         id: 'title',
         label: t('rap.columns.title', 'Tytuł'),
         width: '280px',
-        render: (row: AggregateRow) => (
-          <div className="flex items-center gap-2 min-w-0">
-            {/* L-07 (§27): neutral type icons — color is a signal owned by the
-                status chip, not ad-hoc icon tints (TABLE_AND_PREVIEW_CANON §4.1). */}
-            {row.kind === 'document' ? (
-              <FileText size={16} className="shrink-0 text-c-text-muted" />
-            ) : row.kind === 'presentation' ? (
-              <Presentation size={16} className="shrink-0 text-c-text-muted" />
-            ) : (
-              <FileSpreadsheet size={16} className="shrink-0 text-c-text-muted" />
-            )}
-            <span className="text-sm font-medium text-c-text truncate">
-              {row.title}
-            </span>
-          </div>
-        ),
+        render: (rawRow: Record<string, unknown>) => {
+          const row = rawRow as unknown as AggregateRow;
+          return (
+            <div className="flex items-center gap-2 min-w-0">
+              {/* L-07 (§27): neutral type icons — color is a signal owned by the
+                  status chip, not ad-hoc icon tints (TABLE_AND_PREVIEW_CANON §4.1). */}
+              {row.kind === 'document' ? (
+                <FileText size={16} className="shrink-0 text-c-text-muted" />
+              ) : row.kind === 'presentation' ? (
+                <Presentation size={16} className="shrink-0 text-c-text-muted" />
+              ) : (
+                <FileSpreadsheet size={16} className="shrink-0 text-c-text-muted" />
+              )}
+              <span className="text-sm font-medium text-c-text truncate">{row.title}</span>
+            </div>
+          );
+        },
       },
       {
         id: 'outputKind',
@@ -355,28 +366,28 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
           {
             value: 'document',
             label: t('rap.outputs.kind.document', 'Document'),
-            color: 'bg-blue-400',
           },
           {
             value: 'presentation',
             label: t('rap.outputs.kind.presentation', 'Presentation'),
-            color: 'bg-blue-400',
           },
           {
             value: 'sheet',
             label: t('rap.outputs.kind.sheet', 'Sheet'),
-            color: 'bg-emerald-400',
           },
         ],
-        render: (row: AggregateRow) => (
-          <span className="text-xs font-medium text-c-text-secondary capitalize">
-            {row.kind === 'document'
-              ? t('rap.outputs.kind.document', 'Document')
-              : row.kind === 'presentation'
-                ? t('rap.outputs.kind.presentation', 'Presentation')
-                : t('rap.outputs.kind.sheet', 'Sheet')}
-          </span>
-        ),
+        render: (rawRow: Record<string, unknown>) => {
+          const row = rawRow as unknown as AggregateRow;
+          return (
+            <span className="text-xs font-medium text-c-text-secondary capitalize">
+              {row.kind === 'document'
+                ? t('rap.outputs.kind.document', 'Document')
+                : row.kind === 'presentation'
+                  ? t('rap.outputs.kind.presentation', 'Presentation')
+                  : t('rap.outputs.kind.sheet', 'Sheet')}
+            </span>
+          );
+        },
       },
       {
         id: 'status',
@@ -384,84 +395,95 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         width: '120px',
         filterable: true,
         filterOptions: [
-          { value: 'draft', label: t('reports.draft'), color: 'bg-slate-400' },
-          {
-            value: 'generated',
-            label: t('reports.generated'),
-            color: 'bg-blue-400',
-          },
-          { value: 'editing', label: t('reports.editing'), color: 'bg-amber-400' },
-          { value: 'ready', label: t('reports.ready'), color: 'bg-emerald-400' },
-          {
-            value: 'exported',
-            label: t('reports.exported'),
-            color: 'bg-blue-400',
-          },
-          { value: 'shared', label: t('reports.shared'), color: 'bg-blue-400' },
-          {
-            value: 'archived',
-            label: t('reports.archived'),
-            color: 'bg-slate-500',
-          },
+          { value: 'draft', label: t('reports.draft') },
+          { value: 'generated', label: t('reports.generated') },
+          { value: 'editing', label: t('reports.editing') },
+          { value: 'ready', label: t('reports.ready') },
+          { value: 'exported', label: t('reports.exported') },
+          { value: 'shared', label: t('reports.shared') },
+          { value: 'archived', label: t('reports.archived') },
         ],
         // L-07 (§27): canonical EntityStatusChip (semantic dot tone) instead of a
         // raw text/colored-class status. Localized label kept; tone is derived
         // from the raw statusKey by the chip's statusChipTone() mapping.
-        render: (row: AggregateRow) => (
-          <EntityStatusChip status={row.statusKey} label={statusLabel(row.statusKey)} />
-        ),
+        render: (rawRow: Record<string, unknown>) => {
+          const row = rawRow as unknown as AggregateRow;
+          return <EntityStatusChip status={row.statusKey} label={statusLabel(row.statusKey)} />;
+        },
       },
       {
         id: 'owner',
         label: t('rap.columns.owner', 'Właściciel'),
         width: '160px',
+        render: (rawRow: Record<string, unknown>) => {
+          const row = rawRow as unknown as AggregateRow;
+          return <span className="text-sm text-c-text-secondary truncate block">{row.owner || '—'}</span>;
+        },
       },
       {
         id: 'visibility',
         label: t('rap.outputs.columns.visibility', 'Visibility'),
         width: '120px',
-        render: (row: AggregateRow) => (
-          <span className="text-xs text-c-text-secondary">
-            {formatLabel(row.governance?.visibilityScope)}
-          </span>
-        ),
+        render: (rawRow: Record<string, unknown>) => {
+          const row = rawRow as unknown as AggregateRow;
+          return (
+            <span className="text-xs text-c-text-secondary">
+              {formatLabel(row.governance?.visibilityScope)}
+            </span>
+          );
+        },
       },
       {
         id: 'source',
         label: t('rap.outputs.columns.source', 'Source'),
         width: '150px',
-        render: (row: AggregateRow) => (
-          <span className="text-xs text-c-text-secondary">
-            {formatSourceSummary(row, translate)}
-          </span>
-        ),
+        render: (rawRow: Record<string, unknown>) => {
+          const row = rawRow as unknown as AggregateRow;
+          return (
+            <span className="text-xs text-c-text-secondary">
+              {formatSourceSummary(row, translate)}
+            </span>
+          );
+        },
       },
       {
         id: 'review',
         label: t('rap.outputs.columns.review', 'Review'),
         width: '130px',
-        render: (row: AggregateRow) => (
-          <span className="text-xs text-c-text-secondary">
-            {formatReviewSummary(row, translate)}
-          </span>
-        ),
+        render: (rawRow: Record<string, unknown>) => {
+          const row = rawRow as unknown as AggregateRow;
+          return (
+            <span className="text-xs text-c-text-secondary">
+              {formatReviewSummary(row, translate)}
+            </span>
+          );
+        },
       },
       {
         id: 'exports',
         label: t('rap.outputs.columns.exports', 'Exports'),
         width: '120px',
-        render: (row: AggregateRow) => (
-          <span className="text-xs text-c-text-secondary">
-            {row.exportFormats.length ? row.exportFormats.join(', ').toUpperCase() : '—'}
-          </span>
-        ),
+        render: (rawRow: Record<string, unknown>) => {
+          const row = rawRow as unknown as AggregateRow;
+          return (
+            <span className="text-xs text-c-text-secondary">
+              {row.exportFormats.length ? row.exportFormats.join(', ').toUpperCase() : '—'}
+            </span>
+          );
+        },
       },
       {
         id: 'updatedAt',
         label: t('rap.columns.date', 'Data'),
         width: '130px',
         sortable: true,
-        render: (row: AggregateRow) => {
+        sortAccessor: (rawRow: Record<string, unknown>) => {
+          const row = rawRow as unknown as AggregateRow;
+          const d = new Date(row.updatedAt);
+          return Number.isNaN(d.getTime()) ? 0 : d.getTime();
+        },
+        render: (rawRow: Record<string, unknown>) => {
+          const row = rawRow as unknown as AggregateRow;
           const d = new Date(row.updatedAt);
           return (
             <span className="text-sm text-c-text-muted">
@@ -475,7 +497,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         },
       },
     ],
-    [t, isPolish, statusLabel]
+    [t, isPolish, statusLabel, translate]
   );
 
   const openRow = (row: UnifiedOutputRow) => {
@@ -491,213 +513,210 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
     if (row.kind === 'sheet') void openGovernedSheetRow(row.originRecordId);
   };
 
-  const getRowActions = (row: AggregateRow): RowAction[] => {
-    const isTemplateArtifact = Boolean((row.governance?.originSummary as any)?.template);
-    const base: RowAction[] = [
-      // canon §9.2 FIXED BOTTOM MANIFEST position 1
-      {
-        id: 'open_preview',
-        label: t('rap.actions.openPreview', 'Otwórz podgląd'),
-        icon: ChevronRight,
-        onClick: () => setSelectedId(row.id),
-      },
-      {
-        id: 'open',
-        label: t('rap.actions.open', 'Otwórz'),
-        icon: ExternalLink,
-        variant: 'primary',
-        onClick: () => openRow(row),
-      },
-      {
-        id: 'discuss',
-        label: t('rap.actions.discuss', 'Discuss'),
-        icon: MessageCircle,
-        onClick: () => {
-          void openChatWithContext({
-            entityType: row.kind === 'document' ? 'report' : row.kind,
-            entityId: row.originRecordId,
-            entityName: row.title,
-            pmoContext: row.kind === 'document' ? { reportId: row.originRecordId } : undefined,
-          });
-        },
-      },
-    ];
+  // Triada standard (TRIADA_KANON.md A6 / ANEKS #4): moduł deklaruje TYLKO
+  // bloki 1-3 (primary/statusTransitions/timeActions); StandardTable dokłada
+  // SAMA blok 4 (Open preview · Edit · Archive) i blok 5 (Delete/Reject).
+  // Outputs nie mają "Edit" w kebabie sensu stricto (edycja = otwarcie
+  // dokumentu/decka w jego edytorze) ani terminów (blok 3 = n/d).
+  const buildRowMenu = useCallback(
+    (row: AggregateRow): StandardRowMenu => {
+      const isTemplateArtifact = Boolean((row.governance?.originSummary as any)?.template);
 
-    // D2 "Duplikuj / Użyj jako szablonu" — Claude-Artifacts "Remix" analog.
-    // Copies a document/sheet artifact into a NEW Work Canvas draft + opens the
-    // chat canvas; the original is untouched. Decks are not markdown canvas
-    // drafts → gated to document/sheet (see duplicateArtifactToDraft.ts).
-    if (row.kind === 'document' || row.kind === 'sheet') {
-      base.push({
-        id: 'duplicate_as_template',
-        label: t('rap.actions.duplicateAsTemplate', 'Duplikuj / Użyj jako szablonu'),
-        icon: Copy,
-        onClick: async () => {
-          const toastId = toast.loading(
-            t('reports.creatingACopy')
-          );
-          try {
-            const { chatUrl } = await duplicateArtifactToCanvasDraft(
+      const primary: StandardRowMenu['primary'] = [
+        {
+          id: 'open',
+          label: t('rap.actions.open', 'Otwórz'),
+          icon: ExternalLink,
+          onClick: () => openRow(row),
+        },
+        {
+          id: 'discuss',
+          label: t('rap.actions.discuss', 'Discuss'),
+          icon: MessageCircle,
+          onClick: () => {
+            void openChatWithContext({
+              entityType: row.kind === 'document' ? 'report' : row.kind,
+              entityId: row.originRecordId,
+              entityName: row.title,
+              pmoContext: row.kind === 'document' ? { reportId: row.originRecordId } : undefined,
+            });
+          },
+        },
+      ];
+
+      // D2 "Duplikuj / Użyj jako szablonu" — Claude-Artifacts "Remix" analog.
+      // Copies a document/sheet artifact into a NEW Work Canvas draft + opens
+      // the chat canvas; the original is untouched. Decks are not markdown
+      // canvas drafts → gated to document/sheet (see duplicateArtifactToDraft.ts).
+      if (row.kind === 'document' || row.kind === 'sheet') {
+        primary.push({
+          id: 'duplicate_as_template',
+          label: t('rap.actions.duplicateAsTemplate', 'Duplikuj / Użyj jako szablonu'),
+          icon: Copy,
+          onClick: async () => {
+            const toastId = toast.loading(t('reports.creatingACopy'));
+            try {
+              const { chatUrl } = await duplicateArtifactToCanvasDraft(
+                {
+                  kind: row.kind as 'document' | 'sheet',
+                  originRecordId: row.originRecordId,
+                  artifactId: row.artifactId,
+                  title: row.title,
+                },
+                { isPolish }
+              );
+              toast.success(t('reports.createdAnEditableCopy'), { id: toastId });
+              navigate(chatUrl);
+            } catch (e: any) {
+              toast.error(
+                e?.message ? String(e.message) : t('reports.couldNotCreateACopy'),
+                { id: toastId }
+              );
+            }
+          },
+        });
+      }
+
+      if (
+        !isTemplateArtifact &&
+        row.artifactId &&
+        (row.kind === 'document' || row.kind === 'presentation')
+      ) {
+        primary.push({
+          id: 'save_as_template',
+          label: t('rap.actions.saveAsTemplate', 'Save as template'),
+          icon: BookTemplate,
+          onClick: async () => {
+            const aid = row.artifactId;
+            if (!aid) return;
+
+            const defaultName = `${row.title} Template`;
+            const name = window.prompt(t('reports.newTemplateName'), defaultName);
+            if (!name?.trim()) return;
+            const description = window.prompt(t('reports.descriptionOptional'), '');
+            const scopeIsOrg = window.confirm(t('reports.shouldThisBeAnOrganizationTemplate'));
+
+            try {
+              const res = await fetch(`${API_URL}/artifacts/${aid}/save-as-template`, {
+                method: 'POST',
+                headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  name: name.trim(),
+                  description: String(description || '').trim(),
+                  scope: scopeIsOrg ? 'org' : 'user',
+                }),
+              });
+              if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(String(err?.error || 'Failed to save template'));
+              }
+              const payload = (await res.json().catch(() => ({}))) as {
+                data?: { artifactId?: string };
+              };
+              const templateArtifactId =
+                typeof payload?.data?.artifactId === 'string' ? payload.data.artifactId : null;
+              toast.success(t('reports.savedAsTemplate'));
+              const params = new URLSearchParams(location.search || '');
+              params.set('tab', 'templates');
+              if (templateArtifactId) {
+                params.set('artifactId', templateArtifactId);
+              }
+              navigate(`/presentations?${params.toString()}`);
+            } catch (e: any) {
+              toast.error(e?.message ? String(e.message) : t('reports.failed'));
+            }
+          },
+        });
+      }
+
+      if (row.kind === 'document') {
+        primary.push({
+          id: 'export',
+          label: t('rap.actions.exportPdf', 'Eksportuj PDF'),
+          icon: Download,
+          onClick: () => actions.exportReportPdf(row),
+        });
+      } else if (row.kind === 'presentation') {
+        primary.push({
+          id: 'export',
+          label: t('rap.actions.exportPptx', 'Eksportuj PPTX'),
+          icon: Download,
+          onClick: () => actions.exportDeckPptx(row),
+        });
+      }
+
+      // Blok 2 — przejście stanu: review → published (tylko szablony w review).
+      const statusTransitions: StandardRowMenu['statusTransitions'] =
+        isTemplateArtifact &&
+        row.artifactId &&
+        row.governance?.visibilityScope === 'review_shared' &&
+        (row.governance?.publishState === 'reviewable_share' ||
+          row.governance?.publishState === 'in_review')
+          ? [
               {
-                kind: row.kind as 'document' | 'sheet',
-                originRecordId: row.originRecordId,
-                artifactId: row.artifactId,
-                title: row.title,
+                id: 'approve_template',
+                label: t('rap.actions.approveTemplate', 'Approve & publish'),
+                icon: CheckCircle2,
+                onClick: async () => {
+                  try {
+                    const res = await fetch(`${API_URL}/artifacts/${row.artifactId}/publish`, {
+                      method: 'POST',
+                      headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ reviewType: 'peer_review' }),
+                    });
+                    if (!res.ok) {
+                      const err = await res.json().catch(() => ({}));
+                      throw new Error(String(err?.error || 'Publish failed'));
+                    }
+                    toast.success(t('reports.published'));
+                    onRefresh();
+                  } catch (e: any) {
+                    toast.error(e?.message ? String(e.message) : t('reports.publishFailed'));
+                  }
+                },
               },
-              { isPolish }
-            );
-            toast.success(
-              t('reports.createdAnEditableCopy'),
-              { id: toastId }
-            );
-            navigate(chatUrl);
-          } catch (e: any) {
-            toast.error(
-              e?.message
-                ? String(e.message)
-                : t('reports.couldNotCreateACopy'),
-              { id: toastId }
-            );
-          }
-        },
-      });
-    }
+            ]
+          : undefined;
 
-    if (
-      !isTemplateArtifact &&
-      row.artifactId &&
-      (row.kind === 'document' || row.kind === 'presentation')
-    ) {
-      base.push({
-        id: 'save_as_template',
-        label: t('rap.actions.saveAsTemplate', 'Save as template'),
-        icon: BookTemplate,
-        onClick: async () => {
-          const aid = row.artifactId;
-          if (!aid) return;
-
-          const defaultName = `${row.title} Template`;
-          const name = window.prompt(
-            t('reports.newTemplateName'),
-            defaultName
-          );
-          if (!name?.trim()) return;
-          const description = window.prompt(
-            t('reports.descriptionOptional'),
-            ''
-          );
-          const scopeIsOrg = window.confirm(
-            t('reports.shouldThisBeAnOrganizationTemplate')
-          );
-
-          try {
-            const res = await fetch(`${API_URL}/artifacts/${aid}/save-as-template`, {
-              method: 'POST',
-              headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                name: name.trim(),
-                description: String(description || '').trim(),
-                scope: scopeIsOrg ? 'org' : 'user',
-              }),
-            });
-            if (!res.ok) {
-              const err = await res.json().catch(() => ({}));
-              throw new Error(String(err?.error || 'Failed to save template'));
+      // Blok 4 (uniwersalny) — Archive jest REALNYM soft-delete API (canon §14:
+      // label "Archiwizuj", NIE "Usuń"). Sheets nie mają jeszcze archive API
+      // (Wave 2) → disabled z notą, StandardTable dokłada ją sama.
+      const archiveHandler =
+        row.kind === 'document'
+          ? async () => {
+              const ok = await actions.archiveReport(row);
+              if (ok) onRefresh();
             }
-            const payload = (await res.json().catch(() => ({}))) as {
-              data?: { artifactId?: string };
-            };
-            const templateArtifactId =
-              typeof payload?.data?.artifactId === 'string' ? payload.data.artifactId : null;
-            toast.success(t('reports.savedAsTemplate'));
-            const params = new URLSearchParams(location.search || '');
-            params.set('tab', 'templates');
-            if (templateArtifactId) {
-              params.set('artifactId', templateArtifactId);
-            }
-            navigate(`/presentations?${params.toString()}`);
-          } catch (e: any) {
-            toast.error(
-              e?.message ? String(e.message) : t('reports.failed')
-            );
-          }
-        },
-      });
-    }
+          : row.kind === 'presentation'
+            ? async () => {
+                const ok = await actions.archiveDeck(row);
+                if (ok) onRefresh();
+              }
+            : undefined;
 
-    if (
-      isTemplateArtifact &&
-      row.artifactId &&
-      row.governance?.visibilityScope === 'review_shared' &&
-      (row.governance?.publishState === 'reviewable_share' ||
-        row.governance?.publishState === 'in_review')
-    ) {
-      base.push({
-        id: 'approve_template',
-        label: t('rap.actions.approveTemplate', 'Approve & publish'),
-        icon: CheckCircle2,
-        variant: 'primary',
-        onClick: async () => {
-          try {
-            const res = await fetch(`${API_URL}/artifacts/${row.artifactId}/publish`, {
-              method: 'POST',
-              headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-              body: JSON.stringify({ reviewType: 'peer_review' }),
-            });
-            if (!res.ok) {
-              const err = await res.json().catch(() => ({}));
-              throw new Error(String(err?.error || 'Publish failed'));
-            }
-            toast.success(t('reports.published'));
-            onRefresh();
-          } catch (e: any) {
-            toast.error(
-              e?.message ? String(e.message) : t('reports.publishFailed')
-            );
-          }
+      return {
+        primary,
+        statusTransitions,
+        // Blok 3 (czas) — n/d: outputy nie mają terminów/SLA.
+        universalHandlers: {
+          preview: () => setSelectedId(row.id),
+          archive: archiveHandler,
+          archiveNote: archiveHandler
+            ? undefined
+            : t('rap.outputs.archive.sheetsComingSoon', 'Coming soon (backend)'),
+          // Brak dedykowanego ekranu edycji poza otwarciem dokumentu/decka —
+          // "Edit" disabled z notą (StandardTable dokłada ją sama, edycja
+          // realna dzieje się przez "Otwórz").
         },
-      });
-    }
-
-    if (row.kind === 'document') {
-      base.push({
-        id: 'export',
-        label: t('rap.actions.exportPdf', 'Eksportuj PDF'),
-        icon: Download,
-        onClick: () => actions.exportReportPdf(row),
-      });
-      base.push({
-        // canon §14: Archive = soft-delete (reversible) — label "Archiwizuj", NOT "Usuń"
-        id: 'archive',
-        label: t('rap.actions.archive', 'Archiwizuj'),
-        icon: Archive,
-        divider: true,
-        onClick: async () => {
-          const ok = await actions.archiveReport(row);
-          if (ok) onRefresh();
+        // Brak API twardego usuwania outputów (tylko archive) — destructive
+        // celowo disabled z notą.
+        destructive: {
+          note: t('rap.outputs.delete.comingSoon', 'Coming soon (backend)'),
         },
-      });
-    } else if (row.kind === 'presentation') {
-      base.push({
-        id: 'export',
-        label: t('rap.actions.exportPptx', 'Eksportuj PPTX'),
-        icon: Download,
-        onClick: () => actions.exportDeckPptx(row),
-      });
-      base.push({
-        // canon §14: Archive = soft-delete (reversible) — label "Archiwizuj", NOT "Usuń"
-        id: 'archive',
-        label: t('rap.actions.archive', 'Archiwizuj'),
-        icon: Archive,
-        divider: true,
-        onClick: async () => {
-          const ok = await actions.archiveDeck(row);
-          if (ok) onRefresh();
-        },
-      });
-    }
-    return base;
-  };
+      };
+    },
+    [t, isPolish, navigate, location.search, openChatWithContext, actions, onRefresh]
+  );
 
   useEffect(() => {
     if (!initialArtifactId || deepLinkConsumed.current || filteredData.length === 0) return;
@@ -716,7 +735,78 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         governance: selectedGovernance || selectedItem.governance,
       }
     : null;
-  const itemIds = filteredData.map((i) => i.id);
+
+  const previewActions: StandardPreviewActions | undefined = useMemo(() => {
+    if (!previewItem) return undefined;
+    const informational: NonNullable<StandardPreviewActions['informational']> = [
+      {
+        id: 'open',
+        variant: 'neutral',
+        label: t('rap.actions.open', 'Otwórz'),
+        icon: ExternalLink,
+        shortcut: 'O',
+        onClick: () => openRow(previewItem),
+      },
+    ];
+    if (previewItem.kind === 'sheet') {
+      informational.push({
+        id: 'open_sheet',
+        variant: 'neutral',
+        label: isEnabled('tablePlatformMetadataFirst')
+          ? t('rap.actions.openInWorkspace', 'Open in workspace')
+          : t('rap.actions.exportXlsx', 'Download XLSX'),
+        icon: Download,
+        shortcut: 'D',
+        onClick: () => openRow(previewItem),
+      });
+    }
+    if (previewItem.artifactId) {
+      const reviewBlocked =
+        previewItem.governance?.validationState === 'pending' ||
+        previewItem.governance?.validationState === 'attention_required' ||
+        (!!previewItem.governance?.publishState &&
+          previewItem.governance.publishState !== 'private_draft');
+      informational.push({
+        id: 'start_review',
+        variant: 'neutral',
+        label: t('rap.actions.startReview', 'Start review'),
+        icon: Eye,
+        shortcut: 'R',
+        disabled: reviewBlocked,
+        onClick: async () => {
+          const aid = previewItem.artifactId;
+          if (!aid) return;
+          const ok = await actions.startArtifactReview(aid);
+          if (ok) onRefresh();
+        },
+      });
+    }
+    return { informational };
+  }, [previewItem, t, isEnabled, actions, onRefresh]);
+
+  // Esc closes preview; single-key shortcuts (O/D/R) active while preview
+  // open (kanon B.24/B.31 — wzór 1:1 z Assessment/Results adopterami).
+  useEffect(() => {
+    if (!selectedId) return;
+    const shortcuts = standardPreviewShortcuts(previewActions);
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable) {
+        return;
+      }
+      if (e.key === 'Escape') {
+        setSelectedId(null);
+        return;
+      }
+      const handler = shortcuts[e.key.toUpperCase()];
+      if (handler) {
+        e.preventDefault();
+        handler();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [selectedId, previewActions]);
 
   if (loading) {
     return (
@@ -1006,103 +1096,122 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         </DialogContent>
       </Dialog>
 
-      <TableWithPreviewLayout<AggregateRow>
-        selectedId={selectedId}
-        selectedItem={previewItem}
-        onSelect={setSelectedId}
-        onOpenFull={(id) => {
-          const row = filteredData.find((x) => x.id === id);
-          if (row) openRow(row);
-        }}
-        itemIds={itemIds}
-        getItemById={(id) => filteredData.find((x) => x.id === id) ?? null}
-        renderPreview={(item) => (
-          <div className="space-y-3 text-sm text-c-text-secondary">
-            <div className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
-              {item.kind === 'document'
-                ? t('rap.outputs.kind.document', 'Document')
-                : item.kind === 'presentation'
-                  ? t('rap.outputs.kind.presentation', 'Presentation')
-                  : t('rap.outputs.kind.sheet', 'Sheet')}
-            </div>
-            <div className="text-xs text-c-text-muted">
-              {t('rap.outputs.preview.status', 'Status')}:{' '}
-              <span className="font-medium text-c-text-secondary">
-                {formatLabel(item.statusKey)}
-              </span>
-            </div>
-            <div className="text-xs text-c-text-muted">
-              {t('rap.columns.owner', 'Owner')}:{' '}
-              <span className="font-medium text-c-text-secondary">{item.owner}</span>
-            </div>
-            <TrustStatePreviewSection
-              governance={item.governance}
-              artifactId={item.artifactId}
-              exportFormats={item.exportFormats}
-              onTrace={openLineage}
-            />
-            {item.kind === 'sheet' ? (
-              <p className="text-xs text-c-text-muted leading-relaxed">
-                {t(
-                  'rap.outputs.preview.sheetHint',
-                  'Governed sheet artifacts use the same registry; authoring and export paths are rolling out in Wave 2.'
-                )}
-              </p>
-            ) : null}
-          </div>
-        )}
-        renderPreviewFooter={(item) => (
-          <div className="flex items-center gap-2">
-            {item.kind === 'sheet' ? (
-              <button
-                type="button"
-                onClick={() => openRow(item)}
-                className="h-9 px-4 rounded-full text-sm font-medium bg-c-text text-c-surface hover:opacity-90 transition-opacity"
-              >
-                {isEnabled('tablePlatformMetadataFirst')
-                  ? t('rap.actions.openInWorkspace', 'Open in workspace')
-                  : t('rap.actions.exportXlsx', 'Download XLSX')}
-              </button>
-            ) : null}
-            {item.artifactId ? (
-              <button
-                type="button"
-                disabled={
-                  item.governance?.validationState === 'pending' ||
-                  item.governance?.validationState === 'attention_required' ||
-                  (!!item.governance?.publishState &&
-                    item.governance.publishState !== 'private_draft')
-                }
-                onClick={async () => {
-                  const aid = item.artifactId;
-                  if (!aid) return;
-                  const ok = await actions.startArtifactReview(aid);
-                  if (ok) onRefresh();
-                }}
-                className="h-9 px-4 rounded-full text-sm font-medium border border-c-border text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {t('rap.actions.startReview', 'Start review')}
-              </button>
-            ) : null}
-          </div>
-        )}
-      >
-        <FilterableTable
-          columns={columns}
-          data={filteredData}
-          selectedRowId={selectedId}
-          onRowClick={(row) => setSelectedId((row as AggregateRow).id)}
-          onRowDoubleClick={(row) => openRow(row as AggregateRow)}
-          getRowActions={(row) => getRowActions(row as AggregateRow)}
-          activeFilters={activeFilters}
-          onFilterChange={onFilterChange}
-          emptyMessage={t('rap.empty.outputs', 'Brak outputów')}
-          canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
-          // L-06 (§27): persist column widths/visibility/order across reload —
-          // canonical FilterableTable localStorage path, one key for this table.
-          persistKey="rap.outputs.aggregate"
-        />
-      </TableWithPreviewLayout>
+      {/* Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7): Outputs
+          aggregate list (All/Mine/Review share this component) →
+          StandardTable + StandardPreview, hand-rolled flex/aside layout 1:1
+          with the Assessment 'list' / Interview inbox / Results KPI catalog
+          adopters (NOT TableWithPreviewLayout, which those adopters also
+          bypass). */}
+      <div className="h-full flex overflow-hidden">
+        <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
+          <StandardTable
+            columns={columns}
+            data={filteredData as unknown as Array<Record<string, unknown> & { id: string }>}
+            selectedRowId={selectedId}
+            onRowClick={(row) => setSelectedId(String((row as any).id))}
+            onRowDoubleClick={(row) => openRow(row as unknown as AggregateRow)}
+            rowDescription={() => null}
+            defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
+            // L-06 (§27): persist column widths/visibility/order across reload —
+            // canonical StandardTable/FilterableTable localStorage path, one
+            // key for this table (kept identical to the pre-triada key).
+            persistKey="rap.outputs.aggregate"
+            activeFilters={activeFilters}
+            onFilterChange={onFilterChange}
+            empty={{
+              icon: FileText,
+              title: t('rap.empty.outputs', 'Brak outputów'),
+            }}
+            rowMenu={(row) => buildRowMenu(row as unknown as AggregateRow)}
+            selection={{ selectedIds: selectedOutputIds, onChange: setSelectedOutputIds }}
+          />
+        </div>
+
+        {previewItem ? (
+          <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+            <StandardPreview
+              title={previewItem.title}
+              onClose={() => setSelectedId(null)}
+              onOpenFull={() => openRow(previewItem)}
+              meta={{
+                pills: [
+                  {
+                    label:
+                      previewItem.kind === 'document'
+                        ? t('rap.outputs.kind.document', 'Document')
+                        : previewItem.kind === 'presentation'
+                          ? t('rap.outputs.kind.presentation', 'Presentation')
+                          : t('rap.outputs.kind.sheet', 'Sheet'),
+                    tone: 'neutral',
+                  },
+                  {
+                    label: statusLabel(previewItem.statusKey),
+                    tone: statusChipTone(previewItem.statusKey),
+                  },
+                ],
+                trailing: (
+                  <span className="text-[11px] font-semibold text-c-text-secondary">
+                    {new Date(previewItem.updatedAt).toLocaleDateString(
+                      isPolish ? 'pl-PL' : 'en-US',
+                      { day: 'numeric', month: 'short', year: 'numeric' }
+                    )}
+                  </span>
+                ),
+              }}
+              details={{
+                text: [
+                  `${t('rap.columns.owner', 'Owner')}: ${previewItem.owner || '—'}`,
+                  `${t('rap.outputs.columns.visibility', 'Visibility')}: ${formatLabel(previewItem.governance?.visibilityScope)}`,
+                  `${t('rap.outputs.columns.source', 'Source')}: ${formatSourceSummary(previewItem, translate)}`,
+                  `${t('rap.outputs.columns.review', 'Review')}: ${formatReviewSummary(previewItem, translate)}`,
+                  `${t('rap.outputs.columns.exports', 'Exports')}: ${previewItem.exportFormats.length ? previewItem.exportFormats.join(', ').toUpperCase() : '—'}`,
+                ].join('\n'),
+                onCopy: () => {
+                  void navigator.clipboard?.writeText(
+                    `${previewItem.title} — ${statusLabel(previewItem.statusKey)}`
+                  );
+                },
+              }}
+              ai={{
+                hints: [
+                  t('rap.outputs.ai.summarize', 'Summarize'),
+                  t('rap.outputs.ai.suggestNext', 'Suggest next steps'),
+                ],
+                disabled: true,
+                disabledTooltip: t('common.comingSoon', 'Coming soon'),
+              }}
+              relations={
+                previewItem.sourceInitiativeId
+                  ? [
+                      {
+                        label: t(
+                          'rap.outputs.source.initiativeLinked',
+                          'Initiative linked'
+                        ),
+                      },
+                    ]
+                  : []
+              }
+              actions={previewActions}
+            >
+              <TrustStatePreviewSection
+                governance={previewItem.governance}
+                artifactId={previewItem.artifactId}
+                exportFormats={previewItem.exportFormats}
+                onTrace={openLineage}
+              />
+              {previewItem.kind === 'sheet' ? (
+                <p className="mt-3 text-xs text-c-text-muted leading-relaxed">
+                  {t(
+                    'rap.outputs.preview.sheetHint',
+                    'Governed sheet artifacts use the same registry; authoring and export paths are rolling out in Wave 2.'
+                  )}
+                </p>
+              ) : null}
+            </StandardPreview>
+          </aside>
+        ) : null}
+      </div>
     </div>
   );
 };

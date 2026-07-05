@@ -16,16 +16,16 @@ export const PreviewAIBrief: React.FC<PreviewAIBriefProps> = ({ brief, loading }
       animate={{ opacity: 1, height: 'auto' }}
       exit={{ opacity: 0, height: 0 }}
       transition={{ duration: 0.15 }}
-      className="flex items-start gap-2 rounded-lg bg-primary-50/40 dark:bg-primary-500/[0.05] border border-primary-200/30 dark:border-primary-500/10 px-2.5 py-2 mb-2"
+      className="flex items-start gap-2 rounded-lg bg-[color-mix(in_srgb,var(--c-info)_6%,transparent)] dark:bg-[color-mix(in_srgb,var(--c-info)_5%,transparent)] border border-c-info/20 dark:border-c-info/10 px-2.5 py-2 mb-2"
     >
-      <Sparkles size={12} className="text-primary-400 dark:text-primary-500 shrink-0 mt-0.5" />
+      <Sparkles size={12} className="text-c-info shrink-0 mt-0.5" />
       {loading ? (
         <div className="flex-1 space-y-1 animate-pulse">
-          <div className="h-3 w-4/5 rounded bg-primary-200/40 dark:bg-primary-500/10" />
-          <div className="h-3 w-3/5 rounded bg-primary-200/30 dark:bg-primary-500/[0.06]" />
+          <div className="h-3 w-4/5 rounded bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)]" />
+          <div className="h-3 w-3/5 rounded bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)]" />
         </div>
       ) : (
-        <span className="flex-1 text-[11px] leading-relaxed text-primary-700 dark:text-primary-300">
+        <span className="flex-1 text-[11px] leading-relaxed text-c-text-secondary">
           {brief}
         </span>
       )}

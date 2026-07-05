@@ -1,5 +1,4 @@
 import {
-  Archive,
   CalendarDays,
   CheckSquare2,
   ChevronLeft,
@@ -8,9 +7,7 @@ import {
   ExternalLink,
   FileText,
   Loader2,
-  Pencil,
   Sparkles,
-  Trash2,
   Users,
   X,
 } from 'lucide-react';
@@ -25,7 +22,6 @@ import {
   type ModuleTab,
   type ViewMode,
 } from '@/components/shared/ModuleHub';
-import { FilterableTable, type TableColumn } from '@/components/shared/ModuleHub';
 import { getMenu3AiButtonClass } from '@/components/shared/ModuleHub/menu3ActionButtonStyles';
 import { Menu3Row } from '@/components/shared/ModuleHub/Menu3Row';
 import { useModuleOpenDocuments } from '@/components/shared/ModuleHub/useModuleOpenDocuments';
@@ -36,10 +32,16 @@ import {
   MENU_3_CHIP_ACTIVE,
   MENU_3_CHIP_INACTIVE,
 } from '@/components/shared/ModuleMenu3';
-import { type MetaPill, PreviewMetaCard } from '@/components/shared/PreviewPane';
-import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
-import { ErrorState, LoadingState, StatusChip } from '@/components/ui/primitives';
-import { EntityStatusChip } from '@/components/ui/primitives/chips';
+import {
+  standardPreviewShortcuts,
+  StandardPreview,
+  type StandardPreviewActions,
+  type StandardRowMenu,
+  StandardTable,
+  type TableColumn as StandardTableColumn,
+} from '@/components/standard';
+import { ErrorState, LoadingState } from '@/components/ui/primitives';
+import { EntityStatusChip, statusChipTone } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
 
 type FollowUpStatus = 'open' | 'done';
@@ -80,6 +82,8 @@ export const MeetingHub: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Triada standard (StandardTable MUST #7): checkbox selection, left of each row.
+  const [selectedListIds, setSelectedListIds] = useState<Set<string>>(new Set());
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showDecisionModal, setShowDecisionModal] = useState(false);
@@ -246,7 +250,7 @@ export const MeetingHub: React.FC = () => {
     };
   }, [meetings]);
 
-  const columns: TableColumn[] = useMemo(
+  const columns: StandardTableColumn[] = useMemo(
     () => [
       {
         id: 'title',
@@ -278,8 +282,11 @@ export const MeetingHub: React.FC = () => {
         id: 'attendees',
         label: t('meeting.columns.attendees', 'Attendees'),
         width: '120px',
+        align: 'right' as const,
         render: (row: MeetingItem) => (
-          <span className="text-sm text-c-text-secondary">{row.attendees.length}</span>
+          <span className="text-sm tabular-nums text-c-text-secondary">
+            {row.attendees.length}
+          </span>
         ),
       },
       {
@@ -315,8 +322,9 @@ export const MeetingHub: React.FC = () => {
         id: 'followUps',
         label: t('meeting.columns.followUps', 'Follow-ups'),
         width: '110px',
+        align: 'right' as const,
         render: (row: MeetingItem) => (
-          <span className="text-sm text-c-text-secondary">
+          <span className="text-sm tabular-nums text-c-text-secondary">
             {row.followUps.filter((item) => item.status === 'open').length}
           </span>
         ),
@@ -601,7 +609,60 @@ export const MeetingHub: React.FC = () => {
     }
   };
 
-  const previewItem = selectedMeeting ? { ...selectedMeeting, title: selectedMeeting.title } : null;
+  // Triada standard (StandardPreview, canon A7): selected row + actions for the
+  // table 'list' view preview pane.
+  const listPreviewActions: StandardPreviewActions | undefined = useMemo(
+    () =>
+      selectedMeeting
+        ? {
+            informational: [
+              {
+                id: 'open',
+                variant: 'neutral',
+                label: t('common.open', 'Open'),
+                icon: ExternalLink,
+                shortcut: 'O',
+                onClick: () => openMeetingDocument(selectedMeeting),
+              },
+            ],
+            resolutions: [
+              {
+                id: 'toggle-status',
+                variant: 'neutral',
+                label:
+                  selectedMeeting.status === 'completed'
+                    ? t('meeting.markScheduled', 'Mark scheduled')
+                    : t('meeting.markCompleted', 'Mark completed'),
+                icon: CheckSquare2,
+                onClick: () => handleToggleMeetingStatus(selectedMeeting.id),
+              },
+            ],
+          }
+        : undefined,
+    [selectedMeeting, t, openMeetingDocument, handleToggleMeetingStatus]
+  );
+
+  // Esc closes preview; single-key shortcuts (O) active while preview open (kanon B.24/B.31).
+  useEffect(() => {
+    if (viewMode !== 'table' || activeDocumentId || !selectedId) return;
+    const shortcuts = standardPreviewShortcuts(listPreviewActions);
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable)
+        return;
+      if (e.key === 'Escape') {
+        setSelectedId(null);
+        return;
+      }
+      const handler = shortcuts[e.key.toUpperCase()];
+      if (handler) {
+        e.preventDefault();
+        handler();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [viewMode, activeDocumentId, selectedId, listPreviewActions]);
 
   return (
     <>
@@ -683,82 +744,161 @@ export const MeetingHub: React.FC = () => {
             onSelectMeeting={(meeting) => openMeetingDocument(meeting)}
           />
         ) : (
-          <div className="h-full overflow-hidden">
-            <TableWithPreviewLayout<MeetingItem & { title: string }>
-              selectedId={selectedId}
-              selectedItem={previewItem}
-              onSelect={setSelectedId}
-              onOpenFull={(id) => {
-                const meeting = meetings.find((item) => item.id === id);
-                if (meeting) openMeetingDocument(meeting);
-              }}
-              itemIds={filteredMeetings.map((item) => item.id)}
-              getItemById={(id) => filteredMeetings.find((x) => x.id === id) ?? null}
-              renderPreview={(item) => (
-                <MeetingPreview
-                  meeting={item}
-                  isPolish={isPolish}
-                  operatorBrief={briefMatchesMeeting(operatorBrief, item.id) ? operatorBrief : null}
-                  operatorBriefLoading={operatorBriefLoading && briefingMeeting?.id === item.id}
-                  operatorBriefError={operatorBriefError && briefingMeeting?.id === item.id}
-                  onRetryOperatorBrief={() => setOperatorBriefReloadKey((k) => k + 1)}
-                />
-              )}
-            >
-              <FilterableTable
+          // Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7): Meeting
+          // list → StandardTable + StandardPreview, 1:1 with the Assessment
+          // 'list' / Interview Inbox / Results KPI catalog adopters.
+          <div className="h-full flex overflow-hidden">
+            <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
+              <StandardTable
                 columns={columns}
-                data={filteredMeetings}
+                data={filteredMeetings as unknown as Array<Record<string, unknown> & { id: string }>}
                 selectedRowId={selectedId}
-                onRowClick={(row) => setSelectedId(row.id)}
-                onRowDoubleClick={(row) => openMeetingDocument(row as MeetingItem)}
-                getRowActions={(row) => [
-                  // canon §9.2 FIXED BOTTOM MANIFEST position 1 — side preview, not navigation
-                  {
-                    id: 'open_preview',
-                    label: t('meeting.openPreview2'),
-                    icon: ChevronRight,
-                    onClick: () => setSelectedId(String(row.id)),
-                  },
-                  {
-                    id: 'open',
-                    label: t('common.open', 'Open'),
-                    icon: ExternalLink,
-                    variant: 'primary',
-                    onClick: () => openMeetingDocument(row as MeetingItem),
-                  },
-                  // canon §9.2 position 2 — Edit (start of fixed "manage" block)
-                  {
-                    id: 'edit',
-                    label: t('common.edit', 'Edit'),
-                    icon: Pencil,
-                    divider: true,
-                    onClick: () => openEditModal(row as MeetingItem),
-                  },
-                  // canon §9.2 position 3 — Archive slot always present; no backend yet → disabled
-                  {
-                    id: 'archive',
-                    label: t('meeting.archive2'),
-                    icon: Archive,
-                    disabled: true,
-                    description: t('meeting.comingSoonBackend2'),
-                    onClick: () => undefined,
-                  },
-                  // canon §9 DANGER zone — hard delete, separated, confirm dialog
-                  {
-                    id: 'delete',
-                    label: t('meeting.delete3'),
-                    icon: Trash2,
-                    divider: true,
-                    variant: 'danger',
-                    onClick: () => setDeleteTarget(row as MeetingItem),
-                  },
-                ]}
+                onRowClick={(row) => setSelectedId(String((row as any).id))}
+                onRowDoubleClick={(row) => openMeetingDocument(row as unknown as MeetingItem)}
+                rowDescription={() => null}
+                defaultSort={{ columnId: 'startAt', direction: 'asc' }}
+                persistKey="meeting.hub.list"
+                selection={{ selectedIds: selectedListIds, onChange: setSelectedListIds }}
+                empty={{
+                  icon: CalendarDays,
+                  title: t('meeting.empty', 'No meetings yet'),
+                  description: t(
+                    'meeting.emptyState.description',
+                    'Schedule your first meeting to start tracking agendas and follow-ups.'
+                  ),
+                  actionLabel: t('meeting.actions.new', 'New meeting'),
+                  onAction: openCreateModal,
+                }}
+                rowMenu={(row): StandardRowMenu => {
+                  const meeting = row as unknown as MeetingItem;
+                  return {
+                    primary: [
+                      {
+                        id: 'open',
+                        label: t('common.open', 'Open'),
+                        icon: ExternalLink,
+                        onClick: () => openMeetingDocument(meeting),
+                      },
+                    ],
+                    statusTransitions: [
+                      {
+                        id: 'toggle-status',
+                        label:
+                          meeting.status === 'completed'
+                            ? t('meeting.markScheduled', 'Mark scheduled')
+                            : t('meeting.markCompleted', 'Mark completed'),
+                        icon: CheckSquare2,
+                        onClick: () => handleToggleMeetingStatus(meeting.id),
+                      },
+                    ],
+                    universalHandlers: {
+                      preview: () => setSelectedId(meeting.id),
+                      edit: () => openEditModal(meeting),
+                      // Brak API archiwizacji spotkania — pozycja disabled z notą
+                      // (StandardTable dokłada ją sama, canon A6 blok 4).
+                    },
+                    destructive: {
+                      // Confirm dialog, nie natychmiastowy delete — istniejący flow.
+                      onClick: () => setDeleteTarget(meeting),
+                    },
+                  };
+                }}
                 activeFilters={activeFilters}
                 onFilterChange={setActiveFilters}
-                emptyMessage={t('meeting.empty', 'No meetings yet')}
-                canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
               />
-            </TableWithPreviewLayout>
+            </div>
+
+            {selectedMeeting ? (
+              <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+                <StandardPreview
+                  title={selectedMeeting.title || t('meeting.meetingLabel', 'Meeting')}
+                  onClose={() => setSelectedId(null)}
+                  onOpenFull={() => openMeetingDocument(selectedMeeting)}
+                  meta={{
+                    pills: [
+                      {
+                        label:
+                          selectedMeeting.status === 'completed'
+                            ? t('meeting.status.completed', 'Completed')
+                            : t('meeting.status.scheduled', 'Scheduled'),
+                        tone: statusChipTone(selectedMeeting.status),
+                      },
+                    ],
+                    trailing: (
+                      <span className="text-[11px] font-semibold text-c-text-secondary">
+                        {formatDateTime(selectedMeeting.startAt, isPolish)}
+                      </span>
+                    ),
+                  }}
+                  details={{
+                    text: [
+                      `${t('meeting.columns.attendees', 'Attendees')}: ${
+                        selectedMeeting.attendees.length
+                          ? selectedMeeting.attendees.join(', ')
+                          : '—'
+                      }`,
+                      `${t('meeting.columns.followUps', 'Follow-ups')}: ${
+                        selectedMeeting.followUps.filter((item) => item.status === 'open').length
+                      }`,
+                      '',
+                      `${t('meeting.agenda', 'Agenda')}: ${
+                        selectedMeeting.agenda.length ? selectedMeeting.agenda.join(' · ') : '—'
+                      }`,
+                      `${t('meeting.decisions2', 'Decisions')}: ${
+                        selectedMeeting.decisions.length
+                          ? selectedMeeting.decisions.join(' · ')
+                          : '—'
+                      }`,
+                      '',
+                      selectedMeeting.location || t('meeting.noLocation2', 'No location'),
+                    ].join('\n'),
+                    onCopy: () => {
+                      void navigator.clipboard?.writeText(
+                        `${selectedMeeting.title} — ${formatDateTime(selectedMeeting.startAt, isPolish)}`
+                      );
+                    },
+                  }}
+                  ai={{
+                    // Real Operator Brief feature (not a placeholder): fetched by the
+                    // existing effect keyed on briefingMeeting?.id, which already tracks
+                    // selectedMeeting when no full document is open (canon A7 blok 4 —
+                    // AI ramka, tu z rzeczywistym wynikiem zamiast samych chipów).
+                    hints: [],
+                    loading:
+                      operatorBriefLoading && briefingMeeting?.id === selectedMeeting.id,
+                    error:
+                      operatorBriefError && briefingMeeting?.id === selectedMeeting.id
+                        ? t('meeting.operatorBriefError', 'Could not load the operator brief.')
+                        : null,
+                    result: briefMatchesMeeting(operatorBrief, selectedMeeting.id)
+                      ? [
+                          operatorBrief?.prepSummary,
+                          Array.isArray(operatorBrief?.agendaGaps) && operatorBrief.agendaGaps.length
+                            ? (operatorBrief.agendaGaps as string[]).slice(0, 2).join(' • ')
+                            : null,
+                          Array.isArray(operatorBrief?.followUpSuggestions) &&
+                          operatorBrief.followUpSuggestions.length
+                            ? (operatorBrief.followUpSuggestions as string[]).slice(0, 3).join(' • ')
+                            : null,
+                        ]
+                          .filter(Boolean)
+                          .join('\n')
+                      : null,
+                    onRegenerate: () => setOperatorBriefReloadKey((k) => k + 1),
+                  }}
+                  relations={
+                    selectedMeeting.projectId
+                      ? [
+                          {
+                            label: `${isPolish ? 'Projekt' : 'Project'}: ${selectedMeeting.projectId.slice(0, 8)}…`,
+                          },
+                        ]
+                      : []
+                  }
+                  actions={listPreviewActions}
+                />
+              </aside>
+            ) : null}
           </div>
         )}
       </ModuleHub>
@@ -1325,87 +1465,6 @@ const MeetingDetailView: React.FC<{
       </div>
     </div>
   </div>
-  );
-};
-
-const MeetingPreview: React.FC<{
-  meeting: MeetingItem;
-  isPolish: boolean;
-  operatorBrief?: any;
-  operatorBriefLoading?: boolean;
-  operatorBriefError?: boolean;
-  onRetryOperatorBrief?: () => void;
-}> = ({
-  meeting,
-  isPolish,
-  operatorBrief,
-  operatorBriefLoading,
-  operatorBriefError,
-  onRetryOperatorBrief,
-}) => {
-  const { t } = useTranslation();
-  // canon §4.1 — status uses the c.* chip family (statusChipTone via EntityStatusChip),
-  // never a hardcoded status-colored pill. Only the neutral date stays in PreviewMetaCard.
-  const pills: MetaPill[] = [
-    {
-      label: formatDateTime(meeting.startAt, isPolish),
-      className: 'bg-c-surface-raised text-c-text-secondary',
-    },
-  ];
-
-  return (
-    <div className="space-y-4 text-sm">
-      <div className="flex items-center gap-2">
-        <EntityStatusChip
-          status={meeting.status}
-          label={
-            meeting.status === 'completed'
-              ? t('meeting.completed2')
-              : t('meeting.scheduled2')
-          }
-        />
-      </div>
-      <PreviewMetaCard pills={pills} />
-
-      <MeetingOperatorBriefCard
-        isPolish={isPolish}
-        brief={operatorBrief}
-        loading={operatorBriefLoading}
-        error={operatorBriefError}
-        onRetry={onRetryOperatorBrief}
-      />
-
-      <PreviewSection
-        icon={<Users size={14} />}
-        title={t('meeting.attendees2')}
-        items={meeting.attendees}
-        emptyLabel={t('meeting.noAttendeesYet')}
-      />
-      <PreviewSection
-        icon={<FileText size={14} />}
-        title={'Pre-read'}
-        items={meeting.preRead}
-        emptyLabel={t('meeting.noPreReadYet')}
-      />
-      <PreviewSection
-        icon={<ClipboardList size={14} />}
-        title={'Agenda'}
-        items={meeting.agenda}
-        emptyLabel={t('meeting.noAgendaYet')}
-      />
-      <PreviewSection
-        icon={<CheckSquare2 size={14} />}
-        title={t('meeting.decisions2')}
-        items={meeting.decisions}
-        emptyLabel={t('meeting.noDecisionsYet')}
-      />
-      <PreviewSection
-        icon={<CheckSquare2 size={14} />}
-        title={'Follow-up'}
-        items={meeting.followUps.map((item) => `${item.title} · ${item.owner}`)}
-        emptyLabel={t('meeting.noFollowUpsYet')}
-      />
-    </div>
   );
 };
 

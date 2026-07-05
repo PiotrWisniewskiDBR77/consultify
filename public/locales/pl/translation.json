@@ -14942,7 +14942,10 @@
         "generated": "Wygenerowana"
       }
     },
-    "operatorBriefError": "Nie udało się załadować briefu operatora."
+    "operatorBriefError": "Nie udało się załadować briefu operatora.",
+    "emptyState": {
+      "description": "Zaplanuj pierwsze spotkanie, aby śledzić agendę i follow-upy."
+    }
   },
   "manager": {
     "col": {
