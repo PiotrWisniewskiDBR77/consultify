@@ -200,9 +200,6 @@ const INTERVIEW_MANAGED_ASSIGNMENTS_TABLE_VIEW_STORAGE_KEY =
   'consultify-interview-managed-assignments-table-view';
 const INTERVIEW_MANAGED_ASSIGNMENTS_ROW_DESCRIPTION_STORAGE_KEY =
   'consultify-interview-managed-assignments-show-row-description';
-const INTERVIEW_INSIGHTS_TABLE_VIEW_STORAGE_KEY = 'consultify-interview-insights-table-view';
-const INTERVIEW_INSIGHTS_ROW_DESCRIPTION_STORAGE_KEY =
-  'consultify-interview-insights-show-row-description';
 const INTERVIEW_TEMPLATES_TABLE_VIEW_STORAGE_KEY = 'consultify-interview-templates-table-view';
 const INTERVIEW_TEMPLATES_ROW_DESCRIPTION_STORAGE_KEY =
   'consultify-interview-templates-show-row-description';
@@ -235,7 +232,6 @@ const INTERVIEW_PIPELINE_STAGE_ORDER = [
 // V-B — column-width persistence storage keys (one per resizable table).
 const INTERVIEW_INBOX_COL_WIDTHS_KEY = 'consultify-interview-inbox-col-widths';
 const INTERVIEW_MANAGED_COL_WIDTHS_KEY = 'consultify-interview-managed-col-widths';
-const INTERVIEW_INSIGHTS_COL_WIDTHS_KEY = 'consultify-interview-insights-col-widths';
 const INTERVIEW_TEMPLATES_COL_WIDTHS_KEY = 'consultify-interview-templates-col-widths';
 const INTERVIEW_INITIATIVES_COL_WIDTHS_KEY = 'consultify-interview-initiatives-col-widths';
 
@@ -277,33 +273,8 @@ const INTERVIEW_ASSIGNMENTS_TABLE_RESIZE_BOUNDS: Record<
   escalation: { minWidth: 140, maxWidth: 260 },
   actions: { minWidth: 52, maxWidth: 72 },
 };
-// (Sessions column-width defaults/resize-bounds retired — StandardTable owns
-// resize + persistence via `persistKey="interview.sessions.list"`.)
-const INTERVIEW_INSIGHTS_TABLE_DEFAULT_WIDTHS: ColumnWidths = {
-  select: 44,
-  title: 430,
-  crossRole: 180,
-  type: 150,
-  status: 140,
-  source: 130,
-  exports: 150,
-  date: 140,
-  actions: 56,
-};
-const INTERVIEW_INSIGHTS_TABLE_RESIZE_BOUNDS: Record<
-  string,
-  { minWidth: number; maxWidth: number }
-> = {
-  select: { minWidth: 44, maxWidth: 44 },
-  title: { minWidth: 300, maxWidth: 680 },
-  crossRole: { minWidth: 140, maxWidth: 280 },
-  type: { minWidth: 120, maxWidth: 240 },
-  status: { minWidth: 120, maxWidth: 220 },
-  source: { minWidth: 110, maxWidth: 220 },
-  exports: { minWidth: 120, maxWidth: 240 },
-  date: { minWidth: 120, maxWidth: 220 },
-  actions: { minWidth: 52, maxWidth: 72 },
-};
+// (Sessions/Insights column-width defaults/resize-bounds retired —
+// StandardTable owns resize + persistence via `persistKey`.)
 const INTERVIEW_TEMPLATES_TABLE_DEFAULT_WIDTHS: ColumnWidths = {
   select: 44,
   name: 360,
@@ -866,20 +837,6 @@ export const InterviewHub: React.FC = () => {
   // Lifecycle scope (active vs archived) — Menu 3 chip toggles this; drives server query.
   const [insightScope, setInsightScope] = useState<'active' | 'archived'>('active');
   const [insightsViewMode, setInsightsViewMode] = useState<InsightsViewMode>('flat');
-  const [insightsHiddenColumns, setInsightsHiddenColumns] = useState<string[]>(() =>
-    loadHiddenColumns(INTERVIEW_INSIGHTS_TABLE_VIEW_STORAGE_KEY, [], ['title', 'actions'])
-  );
-  const [showInsightRowDescription, setShowInsightRowDescription] = useState(() =>
-    loadBooleanSetting(INTERVIEW_INSIGHTS_ROW_DESCRIPTION_STORAGE_KEY, true)
-  );
-  const [isInsightsViewSettingsOpen, setIsInsightsViewSettingsOpen] = useState(false);
-  const insightsViewSettingsRef = useRef<HTMLDivElement | null>(null);
-  const insightsViewSettingsPanelRef = useRef<HTMLDivElement | null>(null);
-  const [insightsViewSettingsPos, setInsightsViewSettingsPos] = useState<{
-    top: number;
-    left: number;
-    maxH: number;
-  } | null>(null);
   const [initiativeStatusFilter, setInitiativeStatusFilter] = useState<
     'all' | 'draft' | 'pending_review' | 'promoted'
   >('all');
@@ -920,11 +877,6 @@ export const InterviewHub: React.FC = () => {
   const [selectedInsightId, setSelectedInsightId] = useState<string | null>(null);
   const [insightPreviewDetailsExpanded, setInsightPreviewDetailsExpanded] = useState(false);
   const [insightPreviewAiActiveId, setInsightPreviewAiActiveId] = useState<string | null>(null);
-  const [insightTableFilters, setInsightTableFilters] = useState<TableFilters>({});
-  const [insightColumnWidths, setInsightColumnWidths] = useState<ColumnWidths>(() =>
-    loadColumnWidths(INTERVIEW_INSIGHTS_COL_WIDTHS_KEY, INTERVIEW_INSIGHTS_TABLE_DEFAULT_WIDTHS)
-  );
-  const [openInsightFilterId, setOpenInsightFilterId] = useState<string | null>(null);
   // Per-column header filters for the Initiatives table (status / priority / source).
   const [initiativeTableFilters, setInitiativeTableFilters] = useState<TableFilters>({});
   const [openInitiativeFilterId, setOpenInitiativeFilterId] = useState<string | null>(null);
@@ -1004,27 +956,6 @@ export const InterviewHub: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isTemplatesViewSettingsOpen]);
-
-  useEffect(() => {
-    if (!isInsightsViewSettingsOpen) return;
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (insightsViewSettingsRef.current?.contains(event.target as Node)) return;
-      if (insightsViewSettingsPanelRef.current?.contains(event.target as Node)) return;
-      setIsInsightsViewSettingsOpen(false);
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setIsInsightsViewSettingsOpen(false);
-    };
-
-    window.addEventListener('pointerdown', handlePointerDown);
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('pointerdown', handlePointerDown);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isInsightsViewSettingsOpen]);
 
   useEffect(() => {
     // Assigned should open on the full manager list.
@@ -2295,36 +2226,10 @@ export const InterviewHub: React.FC = () => {
     ].filter((o) => present.has(o.value));
   }, [insights, getInsightExportKeys, isPolish]);
 
-  // Insights filtered by table header filters
-  const insightsForTable = useMemo(() => {
-    let result = filteredInsights;
-    const typeFilter = insightTableFilters.type as string[] | undefined;
-    if (typeFilter?.length) {
-      result = result.filter((i) => {
-        const t = ((i as any).promptType || (i as any).insightType || 'summary') as string;
-        return typeFilter.includes(t);
-      });
-    }
-    const statusFilter = insightTableFilters.status as string[] | undefined;
-    if (statusFilter?.length) {
-      result = result.filter((i) =>
-        statusFilter.includes(
-          (i.reviewStatus === 'in_review' || i.reviewStatus === 'published'
-            ? i.reviewStatus
-            : i.status) || 'completed'
-        )
-      );
-    }
-    const sourceFilter = insightTableFilters.source as string[] | undefined;
-    if (sourceFilter?.length) {
-      result = result.filter((i) => sourceFilter.includes(getInsightSourceKey(i)));
-    }
-    const exportsFilter = insightTableFilters.exports as string[] | undefined;
-    if (exportsFilter?.length) {
-      result = result.filter((i) => getInsightExportKeys(i).some((k) => exportsFilter.includes(k)));
-    }
-    return result;
-  }, [filteredInsights, insightTableFilters, getInsightSourceKey, getInsightExportKeys]);
+  // Insights for the table — column-level filtering now lives inside
+  // StandardTable's built-in per-column filterOptions (kanon §A4), so this is
+  // a plain alias kept for call-site stability (groupBy / preview lookups).
+  const insightsForTable = filteredInsights;
 
   // Insight statistics
   const insightStats = useMemo(() => {
@@ -5723,912 +5628,278 @@ export const InterviewHub: React.FC = () => {
       selectedId?: string | null;
     }
   ) => {
-    const hiddenSet = new Set(insightsHiddenColumns);
-    const visibleInsightIds = rows.map((insight) => insight.id);
-    const selectedVisibleCount = visibleInsightIds.filter((id) =>
-      selectedInsightIds.has(id)
-    ).length;
-    const allVisibleSelected =
-      visibleInsightIds.length > 0 && selectedVisibleCount === visibleInsightIds.length;
-    const someVisibleSelected = selectedVisibleCount > 0 && !allVisibleSelected;
-    const visibleColumns = [
-      'select',
-      'title',
-      ...(!hiddenSet.has('type') ? ['type'] : []),
-      ...(!hiddenSet.has('status') ? ['status'] : []),
-      ...(!hiddenSet.has('source') ? ['source'] : []),
-      ...(!hiddenSet.has('exports') ? ['exports'] : []),
-      ...(!hiddenSet.has('date') ? ['date'] : []),
-      'actions',
-    ];
-    const tableMinWidth = visibleColumns.reduce(
-      (sum, columnId) => sum + (insightColumnWidths[columnId] ?? 120),
-      0
-    );
-    const toggleInsightSelection = (insightId: string) => {
-      setSelectedInsightIds((prev) => {
-        const next = new Set(prev);
-        if (next.has(insightId)) next.delete(insightId);
-        else next.add(insightId);
-        return next;
-      });
-    };
-    const toggleAllVisibleInsights = () => {
-      setSelectedInsightIds((prev) => {
-        const next = new Set(prev);
-        if (allVisibleSelected) {
-          visibleInsightIds.forEach((id) => next.delete(id));
-        } else {
-          visibleInsightIds.forEach((id) => next.add(id));
-        }
-        return next;
-      });
-    };
-    const handleInsightColumnResize = (columnId: string, newWidth: number) => {
-      setInsightColumnWidths((prev) => {
-        const currentIndex = visibleColumns.indexOf(columnId);
-        const nextColumnId = visibleColumns[currentIndex + 1];
-        if (currentIndex < 0 || !nextColumnId) return prev;
-
-        const current = prev[columnId] ?? INTERVIEW_INSIGHTS_TABLE_DEFAULT_WIDTHS[columnId];
-        const next = prev[nextColumnId] ?? INTERVIEW_INSIGHTS_TABLE_DEFAULT_WIDTHS[nextColumnId];
-        const currentBounds = INTERVIEW_INSIGHTS_TABLE_RESIZE_BOUNDS[columnId];
-        const nextBounds = INTERVIEW_INSIGHTS_TABLE_RESIZE_BOUNDS[nextColumnId];
-        const requestedDelta = newWidth - current;
-        const minDelta = Math.max(currentBounds.minWidth - current, next - nextBounds.maxWidth);
-        const maxDelta = Math.min(currentBounds.maxWidth - current, next - nextBounds.minWidth);
-        const delta = Math.max(minDelta, Math.min(maxDelta, requestedDelta));
-        if (delta === 0) return prev;
-
-        return {
-          ...prev,
-          [columnId]: current + delta,
-          [nextColumnId]: next - delta,
-        };
-      });
-    };
-    const renderInsightResizer = (columnId: string) => {
-      if (visibleColumns[visibleColumns.indexOf(columnId) + 1] == null) return null;
-      const bounds = INTERVIEW_INSIGHTS_TABLE_RESIZE_BOUNDS[columnId];
-      return (
-        <ColumnResizer
-          columnId={columnId}
-          currentWidth={
-            insightColumnWidths[columnId] ?? INTERVIEW_INSIGHTS_TABLE_DEFAULT_WIDTHS[columnId]
-          }
-          minWidth={bounds.minWidth}
-          maxWidth={bounds.maxWidth}
-          onResize={handleInsightColumnResize}
-        />
-      );
-    };
-    const typeCol: ColumnDef = {
-      id: 'type',
-      label: isPolish ? 'Typ' : 'Type',
-      width: insightColumnWidths.type ?? INTERVIEW_INSIGHTS_TABLE_DEFAULT_WIDTHS.type,
-      minWidth: INTERVIEW_INSIGHTS_TABLE_RESIZE_BOUNDS.type.minWidth,
-      maxWidth: INTERVIEW_INSIGHTS_TABLE_RESIZE_BOUNDS.type.maxWidth,
-      resizable: true,
-      filterable: true,
-      filterType: 'multiselect',
-      filterOptions: INSIGHT_TYPE_FILTER_OPTIONS,
-    };
-    const statusCol: ColumnDef = {
-      id: 'status',
-      label: isPolish ? 'Status' : 'Status',
-      width: insightColumnWidths.status ?? INTERVIEW_INSIGHTS_TABLE_DEFAULT_WIDTHS.status,
-      minWidth: INTERVIEW_INSIGHTS_TABLE_RESIZE_BOUNDS.status.minWidth,
-      maxWidth: INTERVIEW_INSIGHTS_TABLE_RESIZE_BOUNDS.status.maxWidth,
-      resizable: true,
-      filterable: true,
-      filterType: 'multiselect',
-      filterOptions: INSIGHT_STATUS_FILTER_OPTIONS,
-    };
-    const sourceCol: ColumnDef = {
-      id: 'source',
-      label: isPolish ? 'Źródło' : 'Source',
-      width: insightColumnWidths.source ?? INTERVIEW_INSIGHTS_TABLE_DEFAULT_WIDTHS.source,
-      minWidth: INTERVIEW_INSIGHTS_TABLE_RESIZE_BOUNDS.source.minWidth,
-      maxWidth: INTERVIEW_INSIGHTS_TABLE_RESIZE_BOUNDS.source.maxWidth,
-      resizable: true,
-      filterable: true,
-      filterType: 'multiselect',
-      filterOptions: INSIGHT_SOURCE_FILTER_OPTIONS,
-    };
-    const exportsCol: ColumnDef = {
-      id: 'exports',
-      label: isPolish ? 'Wyeksportowano' : 'Exported to',
-      width: insightColumnWidths.exports ?? INTERVIEW_INSIGHTS_TABLE_DEFAULT_WIDTHS.exports,
-      minWidth: INTERVIEW_INSIGHTS_TABLE_RESIZE_BOUNDS.exports.minWidth,
-      maxWidth: INTERVIEW_INSIGHTS_TABLE_RESIZE_BOUNDS.exports.maxWidth,
-      resizable: true,
-      filterable: true,
-      filterType: 'multiselect',
-      filterOptions: INSIGHT_EXPORTS_FILTER_OPTIONS,
-    };
-
-    // Header click-sort — applied on top of the already-filtered/grouped `rows`.
-    const insightStatusRank = (i: (typeof rows)[number]) => {
-      const s =
-        (i.reviewStatus === 'in_review' || i.reviewStatus === 'published'
-          ? i.reviewStatus
-          : i.status) || 'completed';
-      const order: Record<string, number> = {
-        draft: 0,
-        generating: 1,
-        completed: 2,
-        in_review: 3,
-        published: 4,
-        failed: 5,
+    const insightStatusCopy = (
+      insight: (typeof rows)[number]
+    ): { label: { en: string; pl: string }; statusKey: string } => {
+      const status = (insight.reviewStatus === 'in_review' || insight.reviewStatus === 'published'
+        ? insight.reviewStatus
+        : insight.status) || 'completed';
+      const configs: Record<string, { label: { en: string; pl: string }; statusKey: string }> = {
+        draft: { label: { en: 'Draft', pl: 'Szkic' }, statusKey: 'DRAFT' },
+        generating: { label: { en: 'Generating', pl: 'Generowanie' }, statusKey: 'GENERATING' },
+        completed: { label: { en: 'Completed', pl: 'Gotowe' }, statusKey: 'COMPLETED' },
+        in_review: { label: { en: 'In Review', pl: 'W recenzji' }, statusKey: 'IN_REVIEW' },
+        published: { label: { en: 'Published', pl: 'Opublikowane' }, statusKey: 'APPROVED' },
+        failed: { label: { en: 'Failed', pl: 'Błąd' }, statusKey: 'BLOCKED' },
       };
-      return order[s] ?? 99;
+      return configs[status] || configs.completed;
     };
-    const sortedInsightRows = insightSortField
-      ? [...rows].sort((a, b) => {
-          const dir = insightSortAsc ? 1 : -1;
-          if (insightSortField === 'title') {
-            return (a.title || '').localeCompare(b.title || '') * dir;
-          }
-          if (insightSortField === 'type') {
-            const aT = String((a as any).promptType || (a as any).insightType || 'summary');
-            const bT = String((b as any).promptType || (b as any).insightType || 'summary');
-            return aT.localeCompare(bT) * dir;
-          }
-          if (insightSortField === 'status') {
-            return (insightStatusRank(a) - insightStatusRank(b)) * dir;
-          }
-          if (insightSortField === 'date') {
-            const aD = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-            const bD = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-            return (aD - bD) * dir;
-          }
-          return 0;
-        })
-      : rows;
+
+    const insightColumns: StandardTableColumn[] = [
+      {
+        id: 'title',
+        label: isPolish ? 'Tytuł' : 'Title',
+        sortable: true,
+        sortAccessor: (row: (typeof rows)[number]) => row.title || '',
+        render: (row: (typeof rows)[number]) => (
+          <span className="text-sm text-c-text font-medium block truncate" title={row.title}>
+            {row.title}
+          </span>
+        ),
+      },
+      {
+        id: 'type',
+        label: isPolish ? 'Typ' : 'Type',
+        width: '160px',
+        filterable: true,
+        filterOptions: INSIGHT_TYPE_FILTER_OPTIONS,
+        sortable: true,
+        sortAccessor: (row: (typeof rows)[number]) =>
+          String((row as any).promptType || (row as any).insightType || 'summary'),
+        render: (row: (typeof rows)[number]) => {
+          const promptType = (row as any).promptType || (row as any).insightType || 'summary';
+          const typeConfig = getInsightTypeConfig(promptType);
+          return (
+            <span className={`${INTERVIEW_META_CHIP_CLASS} gap-1.5`}>
+              {categoryTone(promptType) ? (
+                <span
+                  aria-hidden="true"
+                  className="h-1.5 w-1.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: categoryTone(promptType)! }}
+                />
+              ) : null}
+              {isPolish ? typeConfig.label.pl : typeConfig.label.en}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'status',
+        label: isPolish ? 'Status' : 'Status',
+        width: '150px',
+        filterable: true,
+        filterOptions: INSIGHT_STATUS_FILTER_OPTIONS,
+        sortable: true,
+        sortAccessor: (row: (typeof rows)[number]) => {
+          const s =
+            (row.reviewStatus === 'in_review' || row.reviewStatus === 'published'
+              ? row.reviewStatus
+              : row.status) || 'completed';
+          const order: Record<string, number> = {
+            draft: 0,
+            generating: 1,
+            completed: 2,
+            in_review: 3,
+            published: 4,
+            failed: 5,
+          };
+          return order[s] ?? 99;
+        },
+        render: (row: (typeof rows)[number]) => {
+          const statusCopy = insightStatusCopy(row);
+          return (
+            <EntityStatusChip
+              status={statusCopy.statusKey}
+              label={isPolish ? statusCopy.label.pl : statusCopy.label.en}
+            />
+          );
+        },
+      },
+      {
+        id: 'source',
+        label: isPolish ? 'Źródło' : 'Source',
+        width: '150px',
+        filterable: true,
+        filterOptions: INSIGHT_SOURCE_FILTER_OPTIONS,
+        render: (row: (typeof rows)[number]) => {
+          const sessionCount = row.sourceSessionCount
+            ? row.sourceSessionCount
+            : row.sessionId
+              ? 1
+              : 0;
+          if (sessionCount === 0) return <span className="text-xs text-c-text-muted">—</span>;
+          return (
+            <span className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300">
+              <ClipboardList size={11} />
+              {sessionCount} {sessionCount === 1 ? (isPolish ? 'sesja' : 'session') : isPolish ? 'sesji' : 'sessions'}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'exports',
+        label: isPolish ? 'Wyeksportowano' : 'Exported to',
+        width: '160px',
+        filterable: true,
+        filterOptions: INSIGHT_EXPORTS_FILTER_OPTIONS,
+        render: (row: (typeof rows)[number]) =>
+          row.exportedToTools || row.exportedToAssessment ? (
+            <div className="flex flex-wrap items-center gap-1.5">
+              {row.exportedToTools && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300">
+                  <Send size={10} />
+                  {isPolish ? 'Narzędzia' : 'Tools'}
+                </span>
+              )}
+              {row.exportedToAssessment && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300">
+                  <FileText size={10} />
+                  {isPolish ? 'Ocena' : 'Assessment'}
+                </span>
+              )}
+            </div>
+          ) : (
+            <span className="text-xs text-c-text-muted">—</span>
+          ),
+      },
+      {
+        id: 'date',
+        label: isPolish ? 'Data' : 'Date',
+        width: '130px',
+        sortable: true,
+        sortAccessor: (row: (typeof rows)[number]) =>
+          row.createdAt ? new Date(row.createdAt).getTime() : 0,
+        render: (row: (typeof rows)[number]) =>
+          row.createdAt ? (
+            <span className="text-xs text-c-text-muted">
+              {new Date(row.createdAt).toLocaleDateString()}
+            </span>
+          ) : (
+            <span className="text-xs text-c-text-muted">—</span>
+          ),
+      },
+    ];
 
     return (
-      <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] rounded-xl backdrop-blur">
-        {/* §27-exempt: module-local resizable columns, custom FilterDropdown, checkbox
-            selection state, and complex interactive row cells (cross-role badges, type
-            chips, status pills, action menus) are tightly coupled to local state and
-            cannot be lifted into FilterableTable without a full re-architecture. */}
-        <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
-          <thead className="sticky top-0 z-20 bg-c-surface border-b border-c-border-subtle">
-            <tr className="border-b border-c-border-subtle bg-c-surface-raised">
-              <th className="px-3 py-2 text-left" style={{ width: insightColumnWidths.select }}>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleAllVisibleInsights();
-                  }}
-                  className={[
-                    'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                    'border-c-border bg-c-surface text-white hover:border-c-info',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
-                    allVisibleSelected || someVisibleSelected
-                      ? 'border-c-info bg-c-info opacity-100'
-                      : 'opacity-70',
-                  ].join(' ')}
-                  aria-label={isPolish ? 'Zaznacz widoczne wnioski' : 'Select visible insights'}
-                  aria-pressed={allVisibleSelected}
-                >
-                  {allVisibleSelected ? <Check size={10} strokeWidth={3} /> : null}
-                  {someVisibleSelected ? <Minus size={10} strokeWidth={3} /> : null}
-                </button>
-              </th>
-              <th
-                className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider cursor-pointer select-none hover:text-c-text-secondary transition-colors"
-                style={{ width: insightColumnWidths.title }}
-                onClick={() => toggleInsightSort('title')}
-              >
-                {isPolish ? 'Tytuł' : 'Title'}
-                {insightSortField === 'title' && (
-                  <ChevronDown
-                    size={12}
-                    className={`inline-block ml-0.5 transition-transform ${insightSortAsc ? '' : 'rotate-180'}`}
-                  />
-                )}
-                {renderInsightResizer('title')}
-              </th>
-              {!hiddenSet.has('crossRole') && (
-                <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
-                  style={{ width: insightColumnWidths.crossRole }}
-                >
-                  {isPolish ? 'Cross-role / rozjazdy' : 'Cross-role'}
-                  {renderInsightResizer('crossRole')}
-                </th>
-              )}
-              {!hiddenSet.has('type') && (
-                <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
-                  style={{ width: typeCol.width, minWidth: typeCol.minWidth }}
-                >
-                  <div className="flex items-center justify-start gap-1">
-                    <span
-                      className={[
-                        'cursor-pointer select-none transition-colors hover:text-c-text-secondary',
-                        (insightTableFilters.type as string[] | undefined)?.length
-                          ? 'text-c-accent'
-                          : '',
-                      ].join(' ')}
-                      onClick={() => toggleInsightSort('type')}
-                    >
-                      {typeCol.label}
-                      {insightSortField === 'type' && (
-                        <ChevronDown
-                          size={12}
-                          className={`inline-block ml-0.5 transition-transform ${insightSortAsc ? '' : 'rotate-180'}`}
-                        />
-                      )}
-                    </span>
-                    <FilterDropdown
-                      column={typeCol}
-                      value={insightTableFilters.type as string[] | undefined}
-                      onChange={(v) =>
-                        setInsightTableFilters((f) => ({ ...f, type: v as string[] }))
-                      }
-                      isOpen={openInsightFilterId === 'type'}
-                      onToggle={() =>
-                        setOpenInsightFilterId((id) => (id === 'type' ? null : 'type'))
-                      }
-                      onClose={() => setOpenInsightFilterId(null)}
-                    />
-                  </div>
-                  {renderInsightResizer('type')}
-                </th>
-              )}
-              {!hiddenSet.has('status') && (
-                <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
-                  style={{ width: statusCol.width, minWidth: statusCol.minWidth }}
-                >
-                  <div className="flex items-center justify-start gap-1">
-                    <span
-                      className={[
-                        'cursor-pointer select-none transition-colors hover:text-c-text-secondary',
-                        (insightTableFilters.status as string[] | undefined)?.length
-                          ? 'text-c-accent'
-                          : '',
-                      ].join(' ')}
-                      onClick={() => toggleInsightSort('status')}
-                    >
-                      {statusCol.label}
-                      {insightSortField === 'status' && (
-                        <ChevronDown
-                          size={12}
-                          className={`inline-block ml-0.5 transition-transform ${insightSortAsc ? '' : 'rotate-180'}`}
-                        />
-                      )}
-                    </span>
-                    <FilterDropdown
-                      column={statusCol}
-                      value={insightTableFilters.status as string[] | undefined}
-                      onChange={(v) =>
-                        setInsightTableFilters((f) => ({ ...f, status: v as string[] }))
-                      }
-                      isOpen={openInsightFilterId === 'status'}
-                      onToggle={() =>
-                        setOpenInsightFilterId((id) => (id === 'status' ? null : 'status'))
-                      }
-                      onClose={() => setOpenInsightFilterId(null)}
-                    />
-                  </div>
-                  {renderInsightResizer('status')}
-                </th>
-              )}
-              {!hiddenSet.has('source') && (
-                <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
-                  style={{ width: insightColumnWidths.source }}
-                >
-                  <div className="flex items-center justify-start gap-1">
-                    <span
-                      className={
-                        (insightTableFilters.source as string[] | undefined)?.length
-                          ? 'text-c-accent'
-                          : ''
-                      }
-                    >
-                      {sourceCol.label}
-                    </span>
-                    <FilterDropdown
-                      column={sourceCol}
-                      value={insightTableFilters.source as string[] | undefined}
-                      onChange={(v) =>
-                        setInsightTableFilters((f) => ({ ...f, source: v as string[] }))
-                      }
-                      isOpen={openInsightFilterId === 'source'}
-                      onToggle={() =>
-                        setOpenInsightFilterId((id) => (id === 'source' ? null : 'source'))
-                      }
-                      onClose={() => setOpenInsightFilterId(null)}
-                    />
-                  </div>
-                  {renderInsightResizer('source')}
-                </th>
-              )}
-              {!hiddenSet.has('exports') && (
-                <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
-                  style={{ width: insightColumnWidths.exports }}
-                >
-                  <div className="flex items-center justify-start gap-1">
-                    <span
-                      className={
-                        (insightTableFilters.exports as string[] | undefined)?.length
-                          ? 'text-c-accent'
-                          : ''
-                      }
-                    >
-                      {exportsCol.label}
-                    </span>
-                    <FilterDropdown
-                      column={exportsCol}
-                      value={insightTableFilters.exports as string[] | undefined}
-                      onChange={(v) =>
-                        setInsightTableFilters((f) => ({ ...f, exports: v as string[] }))
-                      }
-                      isOpen={openInsightFilterId === 'exports'}
-                      onToggle={() =>
-                        setOpenInsightFilterId((id) => (id === 'exports' ? null : 'exports'))
-                      }
-                      onClose={() => setOpenInsightFilterId(null)}
-                    />
-                  </div>
-                  {renderInsightResizer('exports')}
-                </th>
-              )}
-              {!hiddenSet.has('date') && (
-                <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider cursor-pointer select-none hover:text-c-text-secondary transition-colors"
-                  style={{ width: insightColumnWidths.date }}
-                  onClick={() => toggleInsightSort('date')}
-                >
-                  {isPolish ? 'Data' : 'Date'}
-                  {insightSortField === 'date' && (
-                    <ChevronDown
-                      size={12}
-                      className={`inline-block ml-0.5 transition-transform ${insightSortAsc ? '' : 'rotate-180'}`}
-                    />
-                  )}
-                  {renderInsightResizer('date')}
-                </th>
-              )}
-              <th
-                className="relative px-3 py-2 text-right text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
-                style={{ width: insightColumnWidths.actions }}
-              >
-                <div ref={insightsViewSettingsRef} className="flex items-center justify-end">
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      const r = event.currentTarget.getBoundingClientRect();
-                      const PANEL_W = 288;
-                      const left = Math.min(
-                        Math.max(8, Math.round(r.right - PANEL_W)),
-                        Math.round(window.innerWidth - PANEL_W - 8)
-                      );
-                      setInsightsViewSettingsPos({
-                        top: Math.round(r.bottom + 8),
-                        left,
-                        maxH: Math.max(180, Math.round(window.innerHeight - r.bottom - 24)),
-                      });
-                      setIsInsightsViewSettingsOpen((open) => !open);
-                    }}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
-                    aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
-                    aria-expanded={isInsightsViewSettingsOpen}
-                    title={isPolish ? 'Ustawienia widoku' : 'View settings'}
-                  >
-                    <Settings2 size={15} />
-                  </button>
-                  {isInsightsViewSettingsOpen && insightsViewSettingsPos
-                    ? createPortal(
-                        <div
-                          ref={insightsViewSettingsPanelRef}
-                          style={{
-                            position: 'fixed',
-                            top: insightsViewSettingsPos.top,
-                            left: insightsViewSettingsPos.left,
-                            maxHeight: insightsViewSettingsPos.maxH,
-                          }}
-                          className="z-[100] w-72 overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
-                          role="menu"
-                          onClick={(event) => event.stopPropagation()}
-                        >
-                          <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
-                            {isPolish ? 'Widoczne kolumny' : 'Visible columns'}
-                          </div>
-                          {(
-                            [
-                              {
-                                id: 'crossRole',
-                                label: isPolish ? 'Cross-role / rozjazdy' : 'Cross-role',
-                              },
-                              { id: 'type', label: isPolish ? 'Typ' : 'Type' },
-                              { id: 'status', label: isPolish ? 'Status' : 'Status' },
-                              { id: 'source', label: isPolish ? 'Źródło' : 'Source' },
-                              { id: 'exports', label: isPolish ? 'Wyeksportowano' : 'Exported to' },
-                              { id: 'date', label: isPolish ? 'Data' : 'Date' },
-                            ] as const
-                          ).map((column) => {
-                            const checked = !hiddenSet.has(column.id);
-                            return (
-                              <label
-                                key={column.id}
-                                className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-white/[0.04]"
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={checked}
-                                  onChange={() => {
-                                    setInsightsHiddenColumns((prev) => {
-                                      const set = new Set(prev);
-                                      if (set.has(column.id)) set.delete(column.id);
-                                      else set.add(column.id);
-                                      const next = Array.from(set);
-                                      saveHiddenColumns(
-                                        INTERVIEW_INSIGHTS_TABLE_VIEW_STORAGE_KEY,
-                                        next
-                                      );
-                                      return next;
-                                    });
-                                  }}
-                                  className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
-                                />
-                                <span>{column.label}</span>
-                              </label>
-                            );
-                          })}
-                          <div className="my-2 border-t border-slate-200/70 dark:border-white/[0.08]" />
-                          <label className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-white/[0.04]">
-                            <input
-                              type="checkbox"
-                              checked={showInsightRowDescription}
-                              onChange={(event) => {
-                                setShowInsightRowDescription(event.target.checked);
-                                saveBooleanSetting(
-                                  INTERVIEW_INSIGHTS_ROW_DESCRIPTION_STORAGE_KEY,
-                                  event.target.checked
-                                );
-                              }}
-                              className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
-                            />
-                            <span>
-                              {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
-                            </span>
-                          </label>
-                        </div>,
-                        document.body
-                      )
-                    : null}
-                </div>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {sortedInsightRows.map((insight) => {
-              const promptType =
-                (insight as any).promptType || (insight as any).insightType || 'summary';
-              const topicCollections = [
-                ...(((insight as any).themes as Array<any>) || []),
-                ...(((insight as any).issues as Array<any>) || []),
-                ...(((insight as any).opportunities as Array<any>) || []),
-              ];
-              const crossPerspectiveCount = topicCollections.filter(
-                (item) => item?.crossSessionPattern
-              ).length;
-              const divergenceCount = topicCollections.filter(
-                (item) => item?.divergence_note
-              ).length;
-              const typeConfig = getInsightTypeConfig(promptType);
-              const status = ((insight.reviewStatus === 'in_review' ||
-              insight.reviewStatus === 'published'
-                ? insight.reviewStatus
-                : insight.status) || 'completed') as
-                | 'draft'
-                | 'generating'
-                | 'completed'
-                | 'in_review'
-                | 'published'
-                | 'failed';
-              const statusConfig: Record<
-                typeof status,
-                { label: { en: string; pl: string }; statusKey: string }
-              > = {
-                draft: {
-                  label: { en: 'Draft', pl: 'Szkic' },
-                  statusKey: 'DRAFT',
+      <StandardTable
+        columns={insightColumns}
+        data={rows as unknown as Array<Record<string, unknown> & { id: string }>}
+        selectedRowId={opts?.selectedId ?? null}
+        onRowClick={(row) => {
+          const insight = row as unknown as (typeof rows)[number];
+          if (opts?.onRowClick) opts.onRowClick(insight.id);
+          else handleViewInsight(insight);
+        }}
+        onRowDoubleClick={(row) => {
+          const insight = row as unknown as (typeof rows)[number];
+          if (opts?.onRowDoubleClick) opts.onRowDoubleClick(insight.id);
+          else handleViewInsight(insight);
+        }}
+        rowDescription={(row) => {
+          const insight = row as unknown as (typeof rows)[number];
+          const raw = String(insight.description || insight.content || insight.sourceQuote || '').trim();
+          return stripInsightMarkdownPreview(raw) || null;
+        }}
+        defaultSort={{ columnId: 'date', direction: 'desc' }}
+        persistKey="interview.insights.list"
+        selection={{ selectedIds: selectedInsightIds, onChange: setSelectedInsightIds }}
+        empty={{
+          icon: Lightbulb,
+          title: isPolish ? 'Brak wniosków' : 'No insights yet',
+          description: isPolish
+            ? 'Wnioski są generowane automatycznie przez AI na podstawie zakończonych wywiadów. Kliknij "Nowy Insight" aby wygenerować wnioski z wybranych sesji.'
+            : 'Insights are generated automatically by AI based on completed interviews. Click "New Insight" to generate insights from selected sessions.',
+          actionLabel: canCreateInsights
+            ? isPolish
+              ? 'Generuj wnioski AI'
+              : 'Generate AI Insights'
+            : undefined,
+          onAction: canCreateInsights
+            ? () => {
+                setSelectedSessionsForInsight([]);
+                setShowInsightModal(true);
+              }
+            : undefined,
+        }}
+        rowMenu={(row): StandardRowMenu => {
+          const insight = row as unknown as (typeof rows)[number];
+          const isArchived = !!insight.archivedAt || insightScope === 'archived';
+          return {
+            primary: [
+              {
+                id: 'export-tools',
+                label: insight.exportedToTools
+                  ? isPolish
+                    ? 'Wyeksportowano do Tools'
+                    : 'Exported to Tools'
+                  : isPolish
+                    ? 'Eksportuj do Tools'
+                    : 'Export to Tools',
+                icon: Send,
+                disabled: !!insight.exportedToTools,
+                onClick: () => handleExportInsightToTools(insight.id),
+              },
+              {
+                id: 'export-assessment',
+                label: insight.exportedToAssessment
+                  ? isPolish
+                    ? 'Wyeksportowano do Assessment'
+                    : 'Exported to Assessment'
+                  : isPolish
+                    ? 'Eksportuj do Assessment'
+                    : 'Export to Assessment',
+                icon: FileText,
+                disabled: !!insight.exportedToAssessment,
+                onClick: () => handleExportInsightToAssessment(insight.id),
+              },
+              {
+                id: 'download',
+                label: isPolish ? 'Pobierz' : 'Download',
+                icon: Download,
+                onClick: () => {
+                  const promptType =
+                    (insight as any).promptType || (insight as any).insightType || 'summary';
+                  const content = `# ${insight.title}\n\n**Type:** ${promptType}\n**Status:** ${insight.status || 'completed'}\n\n${insight.content || ''}\n`;
+                  const blob = new Blob([content], { type: 'text/markdown' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `insight-${insight.id.slice(0, 8)}.md`;
+                  a.click();
+                  URL.revokeObjectURL(url);
                 },
-                generating: {
-                  label: { en: 'Generating', pl: 'Generowanie' },
-                  statusKey: 'GENERATING',
-                },
-                completed: {
-                  label: { en: 'Completed', pl: 'Gotowe' },
-                  statusKey: 'COMPLETED',
-                },
-                in_review: {
-                  label: { en: 'In Review', pl: 'W recenzji' },
-                  statusKey: 'IN_REVIEW',
-                },
-                published: {
-                  label: { en: 'Published', pl: 'Opublikowane' },
-                  statusKey: 'APPROVED',
-                },
-                failed: {
-                  label: { en: 'Failed', pl: 'Błąd' },
-                  statusKey: 'BLOCKED',
-                },
-              };
-              const statusCopy = statusConfig[status] || statusConfig.completed;
-              const sc = {
-                label: statusCopy.label,
-              };
-
-              const isSelected = opts?.selectedId === insight.id;
-              const isInsightSelected = selectedInsightIds.has(insight.id);
-              // Only selected/checked rows carry a left accent (primary). Unselected
-              // rows are clean — status now lives in the StatusPill, not a left bar.
-              const rowAccentClass =
-                isSelected || isInsightSelected
-                  ? 'shadow-[inset_4px_0_0_var(--c-info)]'
-                  : '';
-              const rowToneClass =
-                isSelected || isInsightSelected
-                  ? 'bg-slate-100 dark:bg-white/[0.08]'
-                  : 'hover:bg-slate-50 dark:hover:bg-white/[0.045]';
-              const rowDescription = String(
-                insight.description || insight.content || insight.sourceQuote || ''
-              ).trim();
-              const rowDescriptionPreview = stripInsightMarkdownPreview(rowDescription);
-              const handleClick = opts?.onRowClick
-                ? () => opts.onRowClick!(insight.id)
-                : () => handleViewInsight(insight);
-              const handleDoubleClick = opts?.onRowDoubleClick
-                ? () => opts.onRowDoubleClick!(insight.id)
-                : undefined;
-
-              return (
-                <tr
-                  key={insight.id}
-                  onClick={handleClick}
-                  onDoubleClick={handleDoubleClick}
-                  className={`group cursor-pointer transition-colors border-b border-slate-200/50 dark:border-white/[0.08] last:border-0 ${rowAccentClass} ${rowToneClass} ${
-                    isSelected || isInsightSelected ? 'ring-1 ring-primary-500/25 ring-inset' : ''
-                  }`}
-                >
-                  <td className="px-3 py-3" style={{ width: insightColumnWidths.select }}>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        toggleInsightSelection(insight.id);
-                      }}
-                      className={[
-                        'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                        'border-c-border bg-c-surface text-white hover:border-c-info group-hover:opacity-100',
-                        'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
-                        'group-focus-within:opacity-100 group-focus-within:border-c-info',
-                        isInsightSelected
-                          ? 'border-c-info bg-c-info opacity-100'
-                          : 'opacity-0',
-                      ].join(' ')}
-                      aria-label={isPolish ? 'Zaznacz wniosek' : 'Select insight'}
-                      aria-pressed={isInsightSelected}
-                    >
-                      {isInsightSelected ? <Check size={10} strokeWidth={3} /> : null}
-                    </button>
-                  </td>
-                  <td className="px-3 py-3" style={{ width: insightColumnWidths.title }}>
-                    <div className="flex items-center min-w-0">
-                      <div className="min-w-0">
-                        <span
-                          className="text-sm text-c-text font-medium block truncate"
-                          title={insight.title}
-                        >
-                          {insight.title}
-                        </span>
-                        {showInsightRowDescription && rowDescriptionPreview ? (
-                          <span
-                            className="mt-0.5 block truncate text-[11px] font-normal leading-4 text-slate-950/65 dark:text-slate-100/55"
-                            title={rowDescriptionPreview}
-                          >
-                            {rowDescriptionPreview}
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-                  </td>
-                  {!hiddenSet.has('crossRole') && (
-                    <td
-                      className="px-3 py-3 text-left align-middle"
-                      style={{ width: insightColumnWidths.crossRole }}
-                    >
-                      {crossPerspectiveCount > 0 || divergenceCount > 0 ? (
-                        <div className="flex flex-wrap gap-1.5">
-                          {crossPerspectiveCount > 0 && (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300">
-                              <Users size={10} />
-                              {crossPerspectiveCount} {isPolish ? 'cross-role' : 'cross-role'}
-                            </span>
-                          )}
-                          {divergenceCount > 0 && (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300">
-                              <AlertTriangle size={10} />
-                              {divergenceCount} {isPolish ? 'rozjazdów' : 'divergences'}
-                            </span>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-xs text-c-text-muted">—</span>
-                      )}
-                    </td>
-                  )}
-                  {!hiddenSet.has('type') && (
-                    <td
-                      className="px-3 py-3 text-left align-middle"
-                      style={{ width: insightColumnWidths.type }}
-                    >
-                      <span className={`${INTERVIEW_META_CHIP_CLASS} gap-1.5`}>
-                        {categoryTone(promptType) ? (
-                          <span
-                            aria-hidden="true"
-                            className="h-1.5 w-1.5 shrink-0 rounded-full"
-                            style={{ backgroundColor: categoryTone(promptType)! }}
-                          />
-                        ) : null}
-                        {isPolish ? typeConfig.label.pl : typeConfig.label.en}
-                      </span>
-                    </td>
-                  )}
-                  {!hiddenSet.has('status') && (
-                    <td
-                      className="px-3 py-3 text-left align-middle"
-                      style={{ width: insightColumnWidths.status }}
-                    >
-                      <EntityStatusChip
-                        status={statusCopy.statusKey}
-                        label={isPolish ? sc.label.pl : sc.label.en}
-                      />
-                    </td>
-                  )}
-                  {!hiddenSet.has('source') && (
-                    <td
-                      className="px-3 py-3 text-left align-middle"
-                      style={{ width: insightColumnWidths.source }}
-                    >
-                      {(() => {
-                        const sessionCount = insight.sourceSessionCount
-                          ? insight.sourceSessionCount
-                          : insight.sessionId
-                            ? 1
-                            : 0;
-                        if (sessionCount === 0) {
-                          return (
-                            <span className="text-xs text-c-text-muted">—</span>
-                          );
-                        }
-                        return (
-                          <span className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300">
-                            <ClipboardList size={11} />
-                            {sessionCount}{' '}
-                            {sessionCount === 1
-                              ? isPolish
-                                ? 'sesja'
-                                : 'session'
-                              : isPolish
-                                ? 'sesji'
-                                : 'sessions'}
-                          </span>
-                        );
-                      })()}
-                    </td>
-                  )}
-                  {!hiddenSet.has('exports') && (
-                    <td
-                      className="px-3 py-3 text-left align-middle"
-                      style={{ width: insightColumnWidths.exports }}
-                    >
-                      {insight.exportedToTools || insight.exportedToAssessment ? (
-                        <div className="flex flex-wrap items-center justify-center gap-1.5">
-                          {insight.exportedToTools && (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300">
-                              <Send size={10} />
-                              {isPolish ? 'Narzędzia' : 'Tools'}
-                            </span>
-                          )}
-                          {insight.exportedToAssessment && (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300">
-                              <FileText size={10} />
-                              {isPolish ? 'Ocena' : 'Assessment'}
-                            </span>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-xs text-c-text-muted">—</span>
-                      )}
-                    </td>
-                  )}
-                  {!hiddenSet.has('date') && (
-                    <td
-                      className="px-3 py-3 text-left align-middle text-xs text-c-text-muted"
-                      style={{ width: insightColumnWidths.date }}
-                    >
-                      {insight.createdAt ? new Date(insight.createdAt).toLocaleDateString() : '-'}
-                    </td>
-                  )}
-                  <td
-                    className="px-3 py-3 text-right"
-                    style={{ width: insightColumnWidths.actions }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="flex items-center justify-end">
-                      <RowActionsMenu
-                        iconVariant="vertical"
-                        className="opacity-40 transition-opacity group-hover:opacity-100"
-                        sections={[
-                          // GÓRA — kontekstowe (specyficzne dla wniosku)
-                          {
-                            id: 'context',
-                            kind: 'context' as const,
-                            actions: [
-                              ...(opts?.onRowClick
-                                ? [
-                                    {
-                                      id: 'preview',
-                                      label: isPolish
-                                        ? 'Otwórz w podglądzie'
-                                        : 'Open in side preview',
-                                      icon: Eye,
-                                      onClick: () => opts.onRowClick!(insight.id),
-                                    },
-                                  ]
-                                : []),
-                              {
-                                id: 'export-tools',
-                                label: insight.exportedToTools
-                                  ? isPolish
-                                    ? 'Wyeksportowano do Tools'
-                                    : 'Exported to Tools'
-                                  : isPolish
-                                    ? 'Eksportuj do Tools'
-                                    : 'Export to Tools',
-                                icon: Send,
-                                onClick: () =>
-                                  !insight.exportedToTools &&
-                                  handleExportInsightToTools(insight.id),
-                                disabled: !!insight.exportedToTools,
-                              },
-                              {
-                                id: 'export-assessment',
-                                label: insight.exportedToAssessment
-                                  ? isPolish
-                                    ? 'Wyeksportowano do Assessment'
-                                    : 'Exported to Assessment'
-                                  : isPolish
-                                    ? 'Eksportuj do Assessment'
-                                    : 'Export to Assessment',
-                                icon: FileText,
-                                onClick: () =>
-                                  !insight.exportedToAssessment &&
-                                  handleExportInsightToAssessment(insight.id),
-                                disabled: !!insight.exportedToAssessment,
-                              },
-                              {
-                                id: 'download',
-                                label: isPolish ? 'Pobierz' : 'Download',
-                                icon: Download,
-                                onClick: () => {
-                                  const promptType =
-                                    (insight as any).promptType ||
-                                    (insight as any).insightType ||
-                                    'summary';
-                                  const content = `# ${insight.title}\n\n**Type:** ${promptType}\n**Status:** ${insight.status || 'completed'}\n\n${insight.content || ''}\n`;
-                                  const blob = new Blob([content], { type: 'text/markdown' });
-                                  const url = URL.createObjectURL(blob);
-                                  const a = document.createElement('a');
-                                  a.href = url;
-                                  a.download = `insight-${insight.id.slice(0, 8)}.md`;
-                                  a.click();
-                                  URL.revokeObjectURL(url);
-                                },
-                              },
-                            ],
-                          },
-                          // DÓŁ — stały (kanon §9): Open preview · Edit · Archiwizuj/Przywróć
-                          {
-                            id: 'fixed',
-                            kind: 'manage' as const,
-                            actions: [
-                              {
-                                id: 'open',
-                                label: isPolish ? 'Otwórz podgląd' : 'Open preview',
-                                icon: ChevronRight,
-                                onClick: () => handleViewInsight(insight),
-                              },
-                              {
-                                id: 'edit',
-                                label: isPolish ? 'Edytuj' : 'Edit',
-                                icon: Edit2,
-                                disabled: true,
-                                description: isPolish
-                                  ? 'Wnioski AI — tylko do odczytu'
-                                  : 'AI-generated — read-only',
-                                onClick: () => {},
-                              },
-                              insight.archivedAt || insightScope === 'archived'
-                                ? {
-                                    id: 'restore',
-                                    label: isPolish ? 'Przywróć' : 'Restore',
-                                    icon: RotateCcw,
-                                    onClick: () => handleSetInsightArchived(insight.id, false),
-                                  }
-                                : {
-                                    id: 'archive',
-                                    label: isPolish ? 'Archiwizuj' : 'Archive',
-                                    icon: Archive,
-                                    onClick: () => handleSetInsightArchived(insight.id, true),
-                                  },
-                            ],
-                          },
-                          // DANGER — Usuń
-                          {
-                            id: 'danger',
-                            kind: 'danger' as const,
-                            actions: [
-                              {
-                                id: 'delete',
-                                label: isPolish ? 'Usuń' : 'Delete',
-                                icon: Trash2,
-                                onClick: () => handleDeleteInsight(insight.id),
-                                variant: 'danger' as const,
-                              },
-                            ],
-                          },
-                        ]}
-                      />
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={visibleColumns.length} className="px-4 py-12 text-center">
-                  <div className="flex flex-col items-center">
-                    <Lightbulb className="w-6 h-6 text-c-text-muted mb-3" />
-                    <p className="text-c-text text-sm font-semibold mb-1">
-                      {isPolish ? 'Brak wniosków' : 'No insights yet'}
-                    </p>
-                    <p className="text-xs text-c-text-muted mb-4 max-w-md">
-                      {isPolish
-                        ? 'Wnioski są generowane automatycznie przez AI na podstawie zakończonych wywiadów. Kliknij "Nowy Insight" aby wygenerować wnioski z wybranych sesji.'
-                        : 'Insights are generated automatically by AI based on completed interviews. Click "New Insight" to generate insights from selected sessions.'}
-                    </p>
-                    <button
-                      onClick={() => {
-                        if (!canCreateInsights) return;
-                        setSelectedSessionsForInsight([]);
-                        setShowInsightModal(true);
-                      }}
-                      disabled={!canCreateInsights}
-                      className="inline-flex h-9 items-center gap-2 rounded-lg bg-navy-900 px-4 text-sm font-medium text-white transition-colors hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-                    >
-                      <Sparkles size={16} />
-                      {isPolish ? 'Generuj wnioski AI' : 'Generate AI Insights'}
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              },
+            ],
+            universalHandlers: {
+              preview: () => (opts?.onRowClick ? opts.onRowClick(insight.id) : handleViewInsight(insight)),
+              edit: undefined,
+              editNote: isPolish ? 'Wnioski AI — tylko do odczytu' : 'AI-generated — read-only',
+              archive: isArchived
+                ? undefined
+                : () => handleSetInsightArchived(insight.id, true),
+              archiveNote: isArchived
+                ? isPolish
+                  ? 'Użyj „Przywróć” poniżej'
+                  : 'Use “Restore” below'
+                : undefined,
+            },
+            statusTransitions: isArchived
+              ? [
+                  {
+                    id: 'restore',
+                    label: isPolish ? 'Przywróć' : 'Restore',
+                    icon: RotateCcw,
+                    onClick: () => handleSetInsightArchived(insight.id, false),
+                  },
+                ]
+              : [],
+            destructive: {
+              label: isPolish ? 'Usuń' : 'Delete',
+              onClick: () => handleDeleteInsight(insight.id),
+            },
+          };
+        }}
+      />
     );
   };
 
@@ -7846,22 +7117,10 @@ export const InterviewHub: React.FC = () => {
   >('dueAt');
   const [assignmentSortAsc, setAssignmentSortAsc] = useState(true);
 
-  // Sorting state — Insights / Templates header click-sort. Mirrors the
-  // Assignments pattern (field + asc toggle, click cycles asc→desc, click a new
-  // field resets to asc). Sort applies on top of the already-filtered/grouped list.
-  // (Sessions sort/filter now lives inside StandardTable — Triada standard.)
-  type InsightSortField = 'title' | 'type' | 'status' | 'date';
-  const [insightSortField, setInsightSortField] = useState<InsightSortField | null>(null);
-  const [insightSortAsc, setInsightSortAsc] = useState(true);
-  const toggleInsightSort = (field: InsightSortField) => {
-    if (insightSortField === field) {
-      setInsightSortAsc((prev) => !prev);
-    } else {
-      setInsightSortField(field);
-      setInsightSortAsc(true);
-    }
-  };
-
+  // Sorting state — Templates header click-sort. Mirrors the Assignments
+  // pattern (field + asc toggle, click cycles asc→desc, click a new field
+  // resets to asc). Sort applies on top of the already-filtered/grouped list.
+  // (Sessions/Insights sort/filter now live inside StandardTable — Triada standard.)
   type TemplateSortField = 'name' | 'category' | 'questions' | 'usage' | 'lastUsed' | 'status';
   const [templateSortField, setTemplateSortField] = useState<TemplateSortField | null>(null);
   const [templateSortAsc, setTemplateSortAsc] = useState(true);
@@ -7902,9 +7161,6 @@ export const InterviewHub: React.FC = () => {
   useEffect(() => {
     saveColumnWidths(INTERVIEW_TEMPLATES_COL_WIDTHS_KEY, templatesColumnWidths);
   }, [templatesColumnWidths]);
-  useEffect(() => {
-    saveColumnWidths(INTERVIEW_INSIGHTS_COL_WIDTHS_KEY, insightColumnWidths);
-  }, [insightColumnWidths]);
   useEffect(() => {
     saveColumnWidths(INTERVIEW_INITIATIVES_COL_WIDTHS_KEY, initiativesColumnWidths);
   }, [initiativesColumnWidths]);
