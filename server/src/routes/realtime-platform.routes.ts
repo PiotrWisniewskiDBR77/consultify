@@ -718,10 +718,18 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    const session = await realtimePlatformService.getFacilitationSession(id.orgId, req.params.sessionId);
-    if (!session) { res.status(404).json({ error: 'Facilitation session not found' }); return; }
+    const session = await realtimePlatformService.getFacilitationSession(
+      id.orgId,
+      req.params.sessionId
+    );
+    if (!session) {
+      res.status(404).json({ error: 'Facilitation session not found' });
+      return;
+    }
     const targetId = req.query.targetId as string | undefined;
-    res.json({ votes: await realtimePlatformService.getVotes(id.orgId, req.params.sessionId, targetId) });
+    res.json({
+      votes: await realtimePlatformService.getVotes(id.orgId, req.params.sessionId, targetId),
+    });
   })
 );
 
@@ -730,9 +738,17 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    const session = await realtimePlatformService.getFacilitationSession(id.orgId, req.params.sessionId);
-    if (!session) { res.status(404).json({ error: 'Facilitation session not found' }); return; }
-    res.json({ summary: await realtimePlatformService.getVoteSummary(id.orgId, req.params.sessionId) });
+    const session = await realtimePlatformService.getFacilitationSession(
+      id.orgId,
+      req.params.sessionId
+    );
+    if (!session) {
+      res.status(404).json({ error: 'Facilitation session not found' });
+      return;
+    }
+    res.json({
+      summary: await realtimePlatformService.getVoteSummary(id.orgId, req.params.sessionId),
+    });
   })
 );
 
@@ -786,8 +802,14 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    const session = await realtimePlatformService.getFacilitationSession(id.orgId, req.params.sessionId);
-    if (!session) { res.status(404).json({ error: 'Facilitation session not found' }); return; }
+    const session = await realtimePlatformService.getFacilitationSession(
+      id.orgId,
+      req.params.sessionId
+    );
+    if (!session) {
+      res.status(404).json({ error: 'Facilitation session not found' });
+      return;
+    }
     res.json({ roles: await realtimePlatformService.getRoles(id.orgId, req.params.sessionId) });
   })
 );
@@ -845,9 +867,17 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    const session = await realtimePlatformService.getFacilitationSession(id.orgId, req.params.sessionId);
-    if (!session) { res.status(404).json({ error: 'Facilitation session not found' }); return; }
-    res.json({ outcomes: await realtimePlatformService.getOutcomes(id.orgId, req.params.sessionId) });
+    const session = await realtimePlatformService.getFacilitationSession(
+      id.orgId,
+      req.params.sessionId
+    );
+    if (!session) {
+      res.status(404).json({ error: 'Facilitation session not found' });
+      return;
+    }
+    res.json({
+      outcomes: await realtimePlatformService.getOutcomes(id.orgId, req.params.sessionId),
+    });
   })
 );
 
@@ -871,7 +901,9 @@ router.put(
       req.params.outcomeId
     );
     if (!outcomeRow) {
-      res.status(404).json({ error: 'Outcome not found', code: 'REALTIME_FACILITATION_OUTCOME_NOT_FOUND' });
+      res
+        .status(404)
+        .json({ error: 'Outcome not found', code: 'REALTIME_FACILITATION_OUTCOME_NOT_FOUND' });
       return;
     }
     try {

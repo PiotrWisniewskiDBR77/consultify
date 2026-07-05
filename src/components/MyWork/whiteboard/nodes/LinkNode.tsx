@@ -2,7 +2,7 @@ import { Link2 } from 'lucide-react';
 import React from 'react';
 import { Handle, type NodeProps, Position } from 'reactflow';
 
-import { CommentPinBadge, commentCountOf } from './CommentPinBadge';
+import { commentCountOf, CommentPinBadge } from './CommentPinBadge';
 
 export const LinkNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) => {
   const [meta, setMeta] = React.useState<{
@@ -45,7 +45,11 @@ export const LinkNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) =>
         className={`relative w-[220px] rounded-xl border border-c-border-subtle bg-c-surface dark:backdrop-blur-md shadow-sm dark:shadow-[0_0_12px_rgba(59,130,246,0.15)] transition-shadow overflow-hidden cursor-pointer hover:shadow-md ${selected ? 'ring-2 ring-c-border-strong shadow-lg' : ''}`}
         onClick={handleClick}
       >
-        <Handle type="target" position={Position.Top} className="!w-2 !h-2 !bg-c-border-strong !-top-1" />
+        <Handle
+          type="target"
+          position={Position.Top}
+          className="!w-2 !h-2 !bg-c-border-strong !-top-1"
+        />
         {ogImage && (
           <div className="w-full h-[100px] bg-c-surface-raised overflow-hidden">
             <img src={ogImage} alt="" className="w-full h-full object-cover" />

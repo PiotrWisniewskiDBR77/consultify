@@ -60,25 +60,16 @@ import { IdeaProposalReview } from './IdeaProposalReview';
 import { IdeaSlashCommandMenu } from './IdeaSlashCommandMenu';
 import { applySmartLayout, type LayoutAlgorithm } from './layout/IdeaSmartLayout';
 import { CollaborationOverlay } from './mindmap/CollaborationOverlay';
-import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 import { useConfirmDialog } from './shared/ConfirmDialog';
+import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 import { whiteboardEdgeTypes, whiteboardNodeTypes } from './whiteboard/nodes/nodeTypes';
 import { STICKY_COLORS, useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
 import { useWhiteboardCollab } from './whiteboard/useWhiteboardCollab';
-import { uploadWhiteboardImageWithFallback } from './whiteboard/whiteboardImageUpload';
 import { useWhiteboardNodes } from './whiteboard/useWhiteboardNodes';
 import {
   useWhiteboardQuickActions,
   type WhiteboardAIGeneratorType,
 } from './whiteboard/useWhiteboardQuickActions';
-import {
-  applyProposalNodeMoves,
-  applyProposalNodeUpdates,
-  isWbNodeKind,
-  resolveProposalEdges,
-  toWbNodeKind,
-  type WbNodeKind,
-} from './whiteboard/whiteboardProposalPatch';
 import {
   createWhiteboardActivityEntry,
   createWhiteboardHistoryEntry,
@@ -99,11 +90,20 @@ import {
   type WhiteboardVoteEntry,
 } from './whiteboard/whiteboardContracts';
 import { WhiteboardEmptyState } from './whiteboard/WhiteboardEmptyState';
-import { toggleReaction } from './whiteboard/whiteboardReactions';
+import { uploadWhiteboardImageWithFallback } from './whiteboard/whiteboardImageUpload';
 import {
   getWhiteboardModeCopy,
   getWhiteboardShortcuts,
 } from './whiteboard/whiteboardInteractionGrammar';
+import {
+  applyProposalNodeMoves,
+  applyProposalNodeUpdates,
+  isWbNodeKind,
+  resolveProposalEdges,
+  toWbNodeKind,
+  type WbNodeKind,
+} from './whiteboard/whiteboardProposalPatch';
+import { toggleReaction } from './whiteboard/whiteboardReactions';
 import { WhiteboardSelectionBar } from './whiteboard/WhiteboardSelectionBar';
 import { WhiteboardSessionPanel } from './whiteboard/WhiteboardSessionPanel';
 import { WhiteboardToolbar } from './whiteboard/WhiteboardToolbar';
@@ -1185,9 +1185,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       try {
         const res: any = await Api.facilitationGetRoles(sessionId);
         const roles: any[] = Array.isArray(res?.roles) ? res.roles : [];
-        const mine = roles.find(
-          (r) => String(r?.user_id ?? r?.userId ?? '') === currentUserId
-        );
+        const mine = roles.find((r) => String(r?.user_id ?? r?.userId ?? '') === currentUserId);
         const roleName = String(mine?.role_name ?? mine?.roleName ?? '').toLowerCase();
         return roleName || null;
       } catch {
@@ -3340,7 +3338,10 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           )}
 
           {outlineImportOpen && (
-            <div className="absolute inset-0 z-30 flex items-center justify-center backdrop-blur-[1px]" style={{ backgroundColor: "color-mix(in srgb, var(--c-bg) 45%, transparent)" }}>
+            <div
+              className="absolute inset-0 z-30 flex items-center justify-center backdrop-blur-[1px]"
+              style={{ backgroundColor: 'color-mix(in srgb, var(--c-bg) 45%, transparent)' }}
+            >
               <div className="w-full max-w-lg rounded-2xl border border-c-border-subtle bg-c-surface p-4 shadow-2xl dark:shadow-[0_0_40px_rgba(0,0,0,0.5)]">
                 <div className="text-sm font-semibold text-c-text">
                   {t('myWork.whiteboard.outlineImport.title')}

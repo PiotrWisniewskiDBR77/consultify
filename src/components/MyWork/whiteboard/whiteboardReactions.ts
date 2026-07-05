@@ -90,7 +90,5 @@ export function summarizeReactions(
     summary.count += 1;
     if (entry.userId === currentUserId) summary.reactedByMe = true;
   }
-  return order
-    .map((emoji) => seen.get(emoji)!)
-    .filter((s) => s.count > 0);
+  return order.map((emoji) => seen.get(emoji)!).filter((s) => s.count > 0);
 }

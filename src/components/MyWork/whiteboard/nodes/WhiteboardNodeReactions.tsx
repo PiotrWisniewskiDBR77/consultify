@@ -1,9 +1,6 @@
 import React from 'react';
 
-import {
-  WHITEBOARD_REACTION_EMOJIS,
-  summarizeReactions,
-} from '../whiteboardReactions';
+import { summarizeReactions, WHITEBOARD_REACTION_EMOJIS } from '../whiteboardReactions';
 
 /**
  * WhiteboardNodeReactions — B4 emoji reactions overlay for a single node.
@@ -81,7 +78,9 @@ export const WhiteboardNodeReactions: React.FC<WhiteboardNodeReactionsProps> = (
       {/* React affordance — appears on hover/select via the group-hover wrapper
           in the host node, plus while its own tray is open. */}
       {onToggle && (
-        <div className={showAffordance ? 'flex items-center' : 'hidden group-hover:flex items-center'}>
+        <div
+          className={showAffordance ? 'flex items-center' : 'hidden group-hover:flex items-center'}
+        >
           {trayOpen ? (
             <div
               data-testid="wb-reaction-tray"

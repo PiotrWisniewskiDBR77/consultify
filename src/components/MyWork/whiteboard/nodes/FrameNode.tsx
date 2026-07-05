@@ -2,7 +2,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import React from 'react';
 import { type NodeProps, NodeResizer } from 'reactflow';
 
-import { CommentPinBadge, commentCountOf } from './CommentPinBadge';
+import { commentCountOf, CommentPinBadge } from './CommentPinBadge';
 import { useIsDark } from './whiteboardNodeHelpers';
 
 export const FrameNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) => {

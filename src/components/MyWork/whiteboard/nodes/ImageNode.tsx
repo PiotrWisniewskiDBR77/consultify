@@ -2,7 +2,7 @@ import { Image as ImageIcon } from 'lucide-react';
 import React from 'react';
 import { Handle, type NodeProps, NodeResizer, Position } from 'reactflow';
 
-import { CommentPinBadge, commentCountOf } from './CommentPinBadge';
+import { commentCountOf, CommentPinBadge } from './CommentPinBadge';
 
 export const ImageNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) => {
   const imgSrc = data?.imageUrl || data?.src;
@@ -27,7 +27,11 @@ export const ImageNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) =
       <div
         className={`relative w-full h-full rounded-xl overflow-hidden border border-c-border-subtle shadow-sm dark:shadow-[0_0_12px_rgba(148,163,184,0.1)] transition-shadow ${selected ? 'ring-2 ring-c-border-strong shadow-lg' : ''}`}
       >
-        <Handle type="target" position={Position.Top} className="!w-2 !h-2 !bg-c-border-strong !-top-1" />
+        <Handle
+          type="target"
+          position={Position.Top}
+          className="!w-2 !h-2 !bg-c-border-strong !-top-1"
+        />
         {imgSrc ? (
           <img
             src={imgSrc}

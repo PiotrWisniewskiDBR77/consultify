@@ -3955,7 +3955,9 @@ router.put(
 
     // B1 (M09): observers in an active facilitation session are read-only on the shared board.
     if (await isWhiteboardObserver(ideaId, orgId, userId)) {
-      return res.status(WHITEBOARD_OBSERVER_READONLY.status).json(WHITEBOARD_OBSERVER_READONLY.body);
+      return res
+        .status(WHITEBOARD_OBSERVER_READONLY.status)
+        .json(WHITEBOARD_OBSERVER_READONLY.body);
     }
 
     const baseVersionRaw = req.body?.baseVersion ?? req.body?.version ?? null;
@@ -4237,7 +4239,9 @@ router.post(
 
     // B1 (M09): observers in an active facilitation session are read-only on the shared board.
     if (await isWhiteboardObserver(ideaId, orgId, userId)) {
-      return res.status(WHITEBOARD_OBSERVER_READONLY.status).json(WHITEBOARD_OBSERVER_READONLY.body);
+      return res
+        .status(WHITEBOARD_OBSERVER_READONLY.status)
+        .json(WHITEBOARD_OBSERVER_READONLY.body);
     }
 
     const mapCols = await getTableColumns('my_idea_maps');
@@ -5869,7 +5873,9 @@ router.post(
 
     // B1 (M09): observers in an active facilitation session are read-only on the shared board.
     if (await isWhiteboardObserver(ideaId, orgId, userId)) {
-      return res.status(WHITEBOARD_OBSERVER_READONLY.status).json(WHITEBOARD_OBSERVER_READONLY.body);
+      return res
+        .status(WHITEBOARD_OBSERVER_READONLY.status)
+        .json(WHITEBOARD_OBSERVER_READONLY.body);
     }
 
     const mapRow = await queryHelpers.queryOne<any>(
@@ -5975,7 +5981,9 @@ router.post(
 
     // B1 (M09): observers in an active facilitation session are read-only on the shared board.
     if (await isWhiteboardObserver(ideaId, orgId, userId)) {
-      return res.status(WHITEBOARD_OBSERVER_READONLY.status).json(WHITEBOARD_OBSERVER_READONLY.body);
+      return res
+        .status(WHITEBOARD_OBSERVER_READONLY.status)
+        .json(WHITEBOARD_OBSERVER_READONLY.body);
     }
 
     const mapRow = await queryHelpers.queryOne<any>(
@@ -6083,7 +6091,9 @@ router.post(
 
     // B1 (M09): observers in an active facilitation session are read-only on the shared board.
     if (await isWhiteboardObserver(ideaId, orgId, userId)) {
-      return res.status(WHITEBOARD_OBSERVER_READONLY.status).json(WHITEBOARD_OBSERVER_READONLY.body);
+      return res
+        .status(WHITEBOARD_OBSERVER_READONLY.status)
+        .json(WHITEBOARD_OBSERVER_READONLY.body);
     }
 
     const idea = await queryHelpers.queryOne<any>(

@@ -38,12 +38,12 @@ import { Api, getMapVersionFromPayload } from '@/services/api';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
 import { getArtifactLabel } from '@/utils/artifactLinks';
 
+import type { AIProposalBatch, CanvasToolType } from './ideaSelectionTypes';
 import {
   insertMentionIntoText,
   renderMentionText,
   useMentionAutocomplete,
 } from './mentionAutocomplete';
-import type { AIProposalBatch, CanvasToolType } from './ideaSelectionTypes';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
