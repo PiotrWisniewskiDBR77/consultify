@@ -231,6 +231,25 @@ const ALERT_STATUS_CONFIG: Record<
   },
 };
 
+// Client-side mirror of the backend SLA windows (server/services/feedbackSla.ts)
+// so "overdue" here matches what the escalation sweep pages on.
+const SLA_WINDOW_HOURS: Record<string, number> = {
+  CRITICAL: 4,
+  HIGH: 24,
+  MEDIUM: 72,
+  LOW: 168,
+};
+const OPEN_TICKET_STATUSES = new Set(['NEW', 'PENDING', 'IN_PROGRESS']);
+const SEVERITY_RANK: Record<string, number> = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
+
+function isTicketOverdue(item: { severity?: string; status?: string; created_at: string }): boolean {
+  if (!OPEN_TICKET_STATUSES.has(String(item.status || 'NEW').toUpperCase())) return false;
+  const windowH = SLA_WINDOW_HOURS[String(item.severity || 'MEDIUM').toUpperCase()] ?? 72;
+  const created = new Date(item.created_at).getTime();
+  if (Number.isNaN(created)) return false;
+  return Date.now() > created + windowH * 60 * 60 * 1000;
+}
+
 export const SuperAdminFeedbackView: React.FC = () => {
   const { t, i18n } = useTranslation();
   const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
@@ -242,6 +261,8 @@ export const SuperAdminFeedbackView: React.FC = () => {
   const [severityFilter, setSeverityFilter] = useState<string>('ALL');
   const [envFilter, setEnvFilter] = useState<string>('ALL');
   const [ownershipFilter, setOwnershipFilter] = useState<'ALL' | 'ASSIGNED' | 'UNASSIGNED'>('ALL');
+  const [sortMode, setSortMode] = useState<'recent' | 'severity'>('recent');
+  const [overdueOnly, setOverdueOnly] = useState(false);
   const [search, setSearch] = useState('');
   const [selectedItem, setSelectedItem] = useState<FeedbackItem | null>(null);
   const [screenshotObjectUrl, setScreenshotObjectUrl] = useState<string | null>(null);
@@ -571,6 +592,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
             return false;
           if (ownershipFilter === 'ASSIGNED' && !item.workflow?.owner) return false;
           if (ownershipFilter === 'UNASSIGNED' && item.workflow?.owner) return false;
+          if (overdueOnly && !isTicketOverdue(item)) return false;
           return true;
         })
         .filter(
@@ -584,8 +606,26 @@ export const SuperAdminFeedbackView: React.FC = () => {
             (item.workflow?.cluster || '').toLowerCase().includes(search.toLowerCase()) ||
             item.id.toLowerCase().includes(search.toLowerCase())
         )
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
-    [envFilter, feedback, ownershipFilter, search, severityFilter, statusFilter, typeFilter]
+        .sort((a, b) => {
+          if (sortMode === 'severity') {
+            const rankDiff =
+              (SEVERITY_RANK[String(b.severity || '').toUpperCase()] || 0) -
+              (SEVERITY_RANK[String(a.severity || '').toUpperCase()] || 0);
+            if (rankDiff !== 0) return rankDiff;
+          }
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        }),
+    [
+      envFilter,
+      feedback,
+      ownershipFilter,
+      overdueOnly,
+      search,
+      severityFilter,
+      sortMode,
+      statusFilter,
+      typeFilter,
+    ]
   );
 
   const formatDate = (date: string) =>
@@ -1724,6 +1764,28 @@ export const SuperAdminFeedbackView: React.FC = () => {
             <option value="ASSIGNED">Assigned</option>
             <option value="UNASSIGNED">Unassigned</option>
           </select>
+          <select
+            value={sortMode}
+            onChange={(e) => setSortMode(e.target.value as 'recent' | 'severity')}
+            className="bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-200 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none w-full sm:w-auto"
+            title={t('feedback.sortBy', 'Sortowanie')}
+          >
+            <option value="recent">{t('feedback.sortRecent', 'Najnowsze')}</option>
+            <option value="severity">{t('feedback.sortSeverity', 'Waga (severity)')}</option>
+          </select>
+          <button
+            type="button"
+            onClick={() => setOverdueOnly((v) => !v)}
+            aria-pressed={overdueOnly}
+            className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors w-full sm:w-auto ${
+              overdueOnly
+                ? 'bg-danger-600 border-danger-600 text-white'
+                : 'bg-slate-50 dark:bg-navy-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-danger-400'
+            }`}
+            title={t('feedback.overdueHint', 'Pokaż tylko zgłoszenia po terminie odpowiedzi (SLA)')}
+          >
+            {t('feedback.overdueOnly', 'Zaległe (SLA)')}
+          </button>
         </div>
       </div>
 

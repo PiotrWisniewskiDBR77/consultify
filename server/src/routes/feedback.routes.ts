@@ -3784,4 +3784,19 @@ router.get(
   })
 );
 
+/**
+ * POST /api/feedback/sla/sweep
+ * Superadmin-only: run the overdue-escalation sweep on demand (the cron also
+ * runs it every 15 min). Returns how many tickets were escalated this pass.
+ */
+router.post(
+  '/sla/sweep',
+  verifySuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    const { runFeedbackSlaSweepOnce } = await import('../services/feedbackSla.js');
+    const escalated = await runFeedbackSlaSweepOnce();
+    return res.json({ success: true, escalated });
+  })
+);
+
 export default router;

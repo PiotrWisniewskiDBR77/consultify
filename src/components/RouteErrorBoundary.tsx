@@ -1,4 +1,4 @@
-import { AlertTriangle, Home, RefreshCw } from 'lucide-react';
+import { AlertTriangle, Home, MessageSquareWarning, RefreshCw } from 'lucide-react';
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 
 interface Props {
@@ -122,6 +122,26 @@ export class RouteErrorBoundary extends Component<Props, State> {
     window.location.href = '/';
   };
 
+  // Let the user hand this crash straight into the feedback pipeline, prefilled
+  // with the error + full page context — same mechanism the global ErrorBoundary
+  // uses. Works wherever the FeedbackSidePanel is mounted (the authenticated app
+  // shell); a no-op elsewhere, so it never throws from an already-broken screen.
+  handleReportError = () => {
+    try {
+      const err = this.state.error;
+      (window as unknown as { __FEEDBACK_PREFILL__?: unknown }).__FEEDBACK_PREFILL__ = {
+        type: 'BUG',
+        title: err?.message ? `Crash: ${String(err.message).slice(0, 100)}` : 'Awaria strony',
+        message: 'Strona uległa awarii. Szczegóły techniczne dołączone automatycznie.',
+        severity: 'HIGH',
+        error: err ? { message: err.message, stack: err.stack } : undefined,
+      };
+      window.dispatchEvent(new Event('feedback:open'));
+    } catch {
+      // never make an already-broken screen worse
+    }
+  };
+
   render() {
     if (this.state.hasError) {
       // Custom fallback if provided
@@ -200,6 +220,14 @@ export class RouteErrorBoundary extends Component<Props, State> {
                 Strona główna
               </button>
             </div>
+
+            <button
+              onClick={this.handleReportError}
+              className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 text-sm text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
+            >
+              <MessageSquareWarning className="w-4 h-4" />
+              Zgłoś ten błąd
+            </button>
           </div>
         </div>
       );
