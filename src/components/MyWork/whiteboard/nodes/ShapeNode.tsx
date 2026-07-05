@@ -1,9 +1,10 @@
 import React from 'react';
 import { Handle, type NodeProps, NodeResizer, Position } from 'reactflow';
 
+import { CommentPinBadge, commentCountOf } from './CommentPinBadge';
 import { darkenHex, hexToGlow, useIsDark } from './whiteboardNodeHelpers';
 
-export const ShapeNode: React.FC<NodeProps> = ({ data, selected }) => {
+export const ShapeNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) => {
   const isDark = useIsDark();
   const shape = data?.shape || 'rectangle';
   // Default shape fill = periwinkle identity token (theme-aware); a user-picked
@@ -94,6 +95,13 @@ export const ShapeNode: React.FC<NodeProps> = ({ data, selected }) => {
           position={Position.Bottom}
           className="!w-2 !h-2 !bg-c-border-strong !-bottom-1"
         />
+      </div>
+      {/* Comment badge lives in a non-transformed overlay so shape rotation
+          (diamond) and clipPath (hexagon) never rotate or clip it. */}
+      <div className="pointer-events-none absolute inset-0 z-10">
+        <div className="pointer-events-auto">
+          <CommentPinBadge nodeId={nodeId} count={commentCountOf(data)} />
+        </div>
       </div>
     </>
   );

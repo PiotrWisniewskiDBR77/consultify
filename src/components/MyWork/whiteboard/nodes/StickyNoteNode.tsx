@@ -1,6 +1,7 @@
 import React from 'react';
 import { Handle, type NodeProps, Position } from 'reactflow';
 
+import { CommentPinBadge, commentCountOf } from './CommentPinBadge';
 import { STICKY_COLORS, STICKY_SIZES, useIsDark } from './whiteboardNodeHelpers';
 
 export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) => {
@@ -27,7 +28,7 @@ export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected
     }
   };
 
-  const commentCount = Array.isArray(data?.comments) ? data.comments.length : 0;
+  const commentCount = commentCountOf(data);
   const priority = typeof data?.priority === 'number' ? data.priority : 0;
   const priorityBorder =
     priority >= 80
@@ -59,18 +60,7 @@ export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected
       }}
     >
       <Handle type="target" position={Position.Top} className="!w-2 !h-2 !bg-c-border-strong !-top-1" />
-      {commentCount > 0 && (
-        <div
-          className="absolute -top-2 -right-2 z-10 flex items-center justify-center w-5 h-5 rounded-full bg-c-info text-white text-[8px] font-bold shadow-sm cursor-pointer hover:brightness-110 transition-all"
-          onClick={(e) => {
-            e.stopPropagation();
-            window.dispatchEvent(new CustomEvent('idea-node-open-detail', { detail: { nodeId } }));
-          }}
-          title={`${commentCount} comment${commentCount !== 1 ? 's' : ''}`}
-        >
-          {commentCount}
-        </div>
-      )}
+      <CommentPinBadge nodeId={nodeId} count={commentCount} />
       {editing ? (
         <textarea
           ref={textareaRef}
