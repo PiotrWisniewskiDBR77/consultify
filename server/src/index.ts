@@ -1951,6 +1951,15 @@ if (startServer && shouldStartHttpServer) {
       logger.warn('[Server] Feedback digest cron not started:', err?.message);
     }
 
+    // F5 (SLA): overdue-escalation sweep. Opt-OUT (on by default) — this is a
+    // safety/communication guarantee that no report rots past its deadline.
+    try {
+      const { startFeedbackSlaSweepCron } = await import('./services/feedbackSla.js');
+      startFeedbackSlaSweepCron();
+    } catch (err: any) {
+      logger.warn('[Server] Feedback SLA sweep not started:', err?.message);
+    }
+
     // Slack Command Center progress feed (Filar 4 / F3): batched #cf-progress
     // flush every 15 min. Fail-soft; sends nothing when the buffer is empty or
     // Slack is unconfigured.
