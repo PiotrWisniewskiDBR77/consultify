@@ -200,9 +200,6 @@ const INTERVIEW_MANAGED_ASSIGNMENTS_TABLE_VIEW_STORAGE_KEY =
   'consultify-interview-managed-assignments-table-view';
 const INTERVIEW_MANAGED_ASSIGNMENTS_ROW_DESCRIPTION_STORAGE_KEY =
   'consultify-interview-managed-assignments-show-row-description';
-const INTERVIEW_TEMPLATES_TABLE_VIEW_STORAGE_KEY = 'consultify-interview-templates-table-view';
-const INTERVIEW_TEMPLATES_ROW_DESCRIPTION_STORAGE_KEY =
-  'consultify-interview-templates-show-row-description';
 const INTERVIEW_INITIATIVES_TABLE_VIEW_STORAGE_KEY = 'consultify-interview-initiatives-table-view';
 const INTERVIEW_INITIATIVES_ROW_DESCRIPTION_STORAGE_KEY =
   'consultify-interview-initiatives-show-row-description';
@@ -232,7 +229,6 @@ const INTERVIEW_PIPELINE_STAGE_ORDER = [
 // V-B — column-width persistence storage keys (one per resizable table).
 const INTERVIEW_INBOX_COL_WIDTHS_KEY = 'consultify-interview-inbox-col-widths';
 const INTERVIEW_MANAGED_COL_WIDTHS_KEY = 'consultify-interview-managed-col-widths';
-const INTERVIEW_TEMPLATES_COL_WIDTHS_KEY = 'consultify-interview-templates-col-widths';
 const INTERVIEW_INITIATIVES_COL_WIDTHS_KEY = 'consultify-interview-initiatives-col-widths';
 
 // #9/#9b — opt-in columns are hidden by default; users reveal them via the
@@ -273,35 +269,8 @@ const INTERVIEW_ASSIGNMENTS_TABLE_RESIZE_BOUNDS: Record<
   escalation: { minWidth: 140, maxWidth: 260 },
   actions: { minWidth: 52, maxWidth: 72 },
 };
-// (Sessions/Insights column-width defaults/resize-bounds retired —
+// (Sessions/Insights/Templates column-width defaults/resize-bounds retired —
 // StandardTable owns resize + persistence via `persistKey`.)
-const INTERVIEW_TEMPLATES_TABLE_DEFAULT_WIDTHS: ColumnWidths = {
-  select: 44,
-  name: 360,
-  category: 170,
-  questions: 120,
-  // #16 — Usage count / AI quality score / Last used columns.
-  usage: 120,
-  quality: 130,
-  lastUsed: 140,
-  status: 150,
-  actions: 56,
-};
-const INTERVIEW_TEMPLATES_TABLE_RESIZE_BOUNDS: Record<
-  string,
-  { minWidth: number; maxWidth: number }
-> = {
-  select: { minWidth: 44, maxWidth: 44 },
-  name: { minWidth: 300, maxWidth: 700 },
-  category: { minWidth: 120, maxWidth: 280 },
-  questions: { minWidth: 90, maxWidth: 180 },
-  // #16 — new columns
-  usage: { minWidth: 90, maxWidth: 200 },
-  quality: { minWidth: 100, maxWidth: 220 },
-  lastUsed: { minWidth: 110, maxWidth: 220 },
-  status: { minWidth: 120, maxWidth: 220 },
-  actions: { minWidth: 52, maxWidth: 72 },
-};
 const INTERVIEW_INITIATIVES_TABLE_DEFAULT_WIDTHS: ColumnWidths = {
   select: 44,
   title: 430,
@@ -802,32 +771,8 @@ export const InterviewHub: React.FC = () => {
   const [templateStatusFilter, setTemplateStatusFilter] = useState<
     'all' | 'draft' | 'in_review' | 'approved' | 'archived'
   >('all');
-  const [templatesHiddenColumns, setTemplatesHiddenColumns] = useState<string[]>(() =>
-    // #16 — `quality` and `lastUsed` are backend-pending placeholders, so they
-    // start hidden (still toggleable from the column menu). `usage` ships visible
-    // because it is derived from real assignment data.
-    loadHiddenColumns(
-      INTERVIEW_TEMPLATES_TABLE_VIEW_STORAGE_KEY,
-      ['quality', 'lastUsed'],
-      ['name', 'actions']
-    )
-  );
-  const [templatesColumnWidths, setTemplatesColumnWidths] = useState<ColumnWidths>(() =>
-    loadColumnWidths(INTERVIEW_TEMPLATES_COL_WIDTHS_KEY, INTERVIEW_TEMPLATES_TABLE_DEFAULT_WIDTHS)
-  );
-  const [showTemplateRowDescription, setShowTemplateRowDescription] = useState(() =>
-    loadBooleanSetting(INTERVIEW_TEMPLATES_ROW_DESCRIPTION_STORAGE_KEY, true)
-  );
   const [templatePreviewDetailsMenuOpen, setTemplatePreviewDetailsMenuOpen] = useState(false);
   const [templatePreviewAiMenuOpen, setTemplatePreviewAiMenuOpen] = useState(false);
-  const [isTemplatesViewSettingsOpen, setIsTemplatesViewSettingsOpen] = useState(false);
-  const templatesViewSettingsRef = useRef<HTMLDivElement | null>(null);
-  const templatesViewSettingsPanelRef = useRef<HTMLDivElement | null>(null);
-  const [templatesViewSettingsPos, setTemplatesViewSettingsPos] = useState<{
-    top: number;
-    left: number;
-    maxH: number;
-  } | null>(null);
   const [templatesViewMode, setTemplatesViewMode] = useState<'cards' | 'table'>('table');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [selectedTemplateForAssign, setSelectedTemplateForAssign] =
@@ -895,13 +840,6 @@ export const InterviewHub: React.FC = () => {
   }>({ managed: {}, inbox: {} });
   const [openAssignmentFilterId, setOpenAssignmentFilterId] = useState<string | null>(null);
 
-  // Per-column header filters for the Templates table (category / status).
-  // Mirrors the Sessions / Insights pattern: layered on top of the existing
-  // toolbar filters (source / area / status enum) + search; column visibility,
-  // sorting and widths all keep working unchanged.
-  const [templatesTableFilters, setTemplatesTableFilters] = useState<TableFilters>({});
-  const [openTemplateFilterId, setOpenTemplateFilterId] = useState<string | null>(null);
-
   // Reset preview expansion state when changing selection (KANON v3: stabilny panel)
   useEffect(() => {
     setInsightPreviewDetailsExpanded(false);
@@ -933,29 +871,8 @@ export const InterviewHub: React.FC = () => {
     };
   }, [isInitiativesViewSettingsOpen]);
 
-  // (Sessions table view-settings popover retired — StandardTable's own
-  // Settings2 pstryczek/TableSettingsPopover replaces it; Triada standard.)
-
-  useEffect(() => {
-    if (!isTemplatesViewSettingsOpen) return;
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (templatesViewSettingsRef.current?.contains(event.target as Node)) return;
-      if (templatesViewSettingsPanelRef.current?.contains(event.target as Node)) return;
-      setIsTemplatesViewSettingsOpen(false);
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setIsTemplatesViewSettingsOpen(false);
-    };
-
-    window.addEventListener('pointerdown', handlePointerDown);
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('pointerdown', handlePointerDown);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isTemplatesViewSettingsOpen]);
+  // (Sessions/Templates table view-settings popovers retired — StandardTable's
+  // own Settings2 pstryczek/TableSettingsPopover replaces them; Triada standard.)
 
   useEffect(() => {
     // Assigned should open on the full manager list.
@@ -2444,26 +2361,11 @@ export const InterviewHub: React.FC = () => {
     [isPolish]
   );
 
-  // Templates filtered by the per-column header filters (category / status),
-  // layered on top of filteredTemplates. Used by the table renderer only; the
-  // cards renderer keeps using filteredTemplates.
-  const templatesForTable = useMemo(() => {
-    let result = filteredTemplates;
-    const categoryFilter = templatesTableFilters.category as string[] | undefined;
-    if (categoryFilter?.length) {
-      result = result.filter((t) => categoryFilter.includes((t.category ?? '').trim()));
-    }
-    const statusFilter = templatesTableFilters.status as string[] | undefined;
-    if (statusFilter?.length) {
-      result = result.filter((t) => {
-        const s = String(t.status || 'draft').toLowerCase();
-        // 'approved' option also matches legacy 'published', matching the chip.
-        const normalized = s === 'published' ? 'approved' : s;
-        return statusFilter.includes(normalized);
-      });
-    }
-    return result;
-  }, [filteredTemplates, templatesTableFilters]);
+  // Templates for the table — column-level filtering now lives inside
+  // StandardTable's built-in per-column filterOptions (kanon §A4), so this is
+  // a plain alias kept for call-site stability. Cards renderer uses
+  // filteredTemplates directly.
+  const templatesForTable = filteredTemplates;
 
   // -------------------------
   // Assignments (Assigned tab) status filter
@@ -6077,771 +5979,162 @@ export const InterviewHub: React.FC = () => {
     },
   ];
 
-  // Render templates table (Resizable + Preview-ready)
+  // Render templates table (StandardTable — Triada standard)
   const renderTemplatesTable = (opts?: {
     onSelectRow?: (id: string) => void;
     onOpenFull?: (id: string) => void;
   }) => {
-    const hiddenSet = new Set(templatesHiddenColumns);
-    const visibleTemplateIds = templatesForTable.map((template) => template.id);
-    const selectedVisibleCount = visibleTemplateIds.filter((id) =>
-      selectedTemplateIds.has(id)
-    ).length;
-    const allVisibleSelected =
-      visibleTemplateIds.length > 0 && selectedVisibleCount === visibleTemplateIds.length;
-    const someVisibleSelected = selectedVisibleCount > 0 && !allVisibleSelected;
-    const visibleColumns = [
-      'select',
-      'name',
-      ...(!hiddenSet.has('category') ? ['category'] : []),
-      ...(!hiddenSet.has('questions') ? ['questions'] : []),
-      // #16 — Usage count / AI quality score / Last used
-      ...(!hiddenSet.has('usage') ? ['usage'] : []),
-      ...(!hiddenSet.has('quality') ? ['quality'] : []),
-      ...(!hiddenSet.has('lastUsed') ? ['lastUsed'] : []),
-      ...(!hiddenSet.has('status') ? ['status'] : []),
-      'actions',
+    const templateColumns: StandardTableColumn[] = [
+      {
+        id: 'name',
+        label: isPolish ? 'Nazwa' : 'Name',
+        sortable: true,
+        sortAccessor: (row: InterviewTemplate) => row.name || '',
+        render: (row: InterviewTemplate) => (
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={INTERVIEW_TABLE_ICON_SURFACE_CLASS}>
+              <FileText size={16} />
+            </div>
+            <span className="text-sm text-c-text font-medium block truncate" title={row.name}>
+              {row.name}
+            </span>
+          </div>
+        ),
+      },
+      {
+        id: 'category',
+        label: isPolish ? 'Kategoria' : 'Category',
+        width: '170px',
+        filterable: true,
+        filterOptions: TEMPLATE_CATEGORY_FILTER_OPTIONS,
+        sortable: true,
+        sortAccessor: (row: InterviewTemplate) => (row.category ?? '').trim(),
+        render: (row: InterviewTemplate) =>
+          (row.category ?? '').trim() ? (
+            <span className={`${INTERVIEW_META_CHIP_CLASS} gap-1.5`}>
+              {categoryTone(row.category) ? (
+                <span
+                  aria-hidden="true"
+                  className="h-1.5 w-1.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: categoryTone(row.category)! }}
+                />
+              ) : null}
+              {row.category}
+            </span>
+          ) : (
+            <span className="text-xs text-c-text-muted">—</span>
+          ),
+      },
+      {
+        id: 'questions',
+        label: isPolish ? 'Pytania' : 'Questions',
+        width: '110px',
+        align: 'right',
+        sortable: true,
+        sortAccessor: (row: InterviewTemplate) => row.questionCount || 0,
+        render: (row: InterviewTemplate) => (
+          <span className="text-sm text-c-text-muted tabular-nums">{row.questionCount}</span>
+        ),
+      },
+      {
+        id: 'usage',
+        label: isPolish ? 'Użycia' : 'Usage',
+        width: '110px',
+        align: 'right',
+        sortable: true,
+        sortAccessor: (row: InterviewTemplate) => getTemplateUsageCount(row),
+        render: (row: InterviewTemplate) => {
+          const usageCount = getTemplateUsageCount(row);
+          return usageCount > 0 ? (
+            <span className="text-sm text-c-text-muted tabular-nums">{usageCount}</span>
+          ) : (
+            <span className="text-xs text-c-text-muted">—</span>
+          );
+        },
+      },
+      {
+        id: 'lastUsed',
+        label: isPolish ? 'Ostatnio użyty' : 'Last used',
+        width: '140px',
+        sortable: true,
+        sortAccessor: (row: InterviewTemplate) => {
+          const d = row.updatedAt || row.createdAt;
+          return d ? new Date(d).getTime() : 0;
+        },
+        // No dedicated "last used" backend field yet — kept as a placeholder
+        // column (canon: empty cell = "—"), same as the hand-rolled table.
+        render: () => <span className="text-xs text-c-text-muted">—</span>,
+      },
+      {
+        id: 'status',
+        label: isPolish ? 'Status' : 'Status',
+        width: '160px',
+        filterable: true,
+        filterOptions: TEMPLATE_STATUS_FILTER_OPTIONS,
+        render: (row: InterviewTemplate) => (
+          <div className="inline-flex items-center gap-1.5">
+            <EntityStatusChip
+              status={String(row.status || 'draft')}
+              label={getTemplateStatusChip(row.status, isPolish).label}
+            />
+            {row.isDefault && (
+              <span
+                className={INTERVIEW_META_CHIP_CLASS}
+                title={isPolish ? 'Domyślny szablon' : 'Default template'}
+              >
+                {isPolish ? 'Domyślny' : 'Default'}
+              </span>
+            )}
+          </div>
+        ),
+      },
     ];
-    const colSpan = visibleColumns.length;
-    const tableMinWidth = visibleColumns.reduce(
-      (sum, columnId) => sum + (templatesColumnWidths[columnId] ?? 120),
-      0
-    );
-
-    const toggleTemplateSelection = (templateId: string) => {
-      setSelectedTemplateIds((prev) => {
-        const next = new Set(prev);
-        if (next.has(templateId)) next.delete(templateId);
-        else next.add(templateId);
-        return next;
-      });
-    };
-    const toggleAllVisibleTemplates = () => {
-      setSelectedTemplateIds((prev) => {
-        const next = new Set(prev);
-        if (allVisibleSelected) {
-          visibleTemplateIds.forEach((id) => next.delete(id));
-        } else {
-          visibleTemplateIds.forEach((id) => next.add(id));
-        }
-        return next;
-      });
-    };
-    const handleResize = (columnId: string, newWidth: number) => {
-      setTemplatesColumnWidths((prev) => {
-        const currentIndex = visibleColumns.indexOf(columnId);
-        const nextColumnId = visibleColumns[currentIndex + 1];
-        if (currentIndex < 0 || !nextColumnId) return prev;
-
-        const current = prev[columnId] ?? INTERVIEW_TEMPLATES_TABLE_DEFAULT_WIDTHS[columnId];
-        const next = prev[nextColumnId] ?? INTERVIEW_TEMPLATES_TABLE_DEFAULT_WIDTHS[nextColumnId];
-        const currentBounds = INTERVIEW_TEMPLATES_TABLE_RESIZE_BOUNDS[columnId];
-        const nextBounds = INTERVIEW_TEMPLATES_TABLE_RESIZE_BOUNDS[nextColumnId];
-        const requestedDelta = newWidth - current;
-        const minDelta = Math.max(currentBounds.minWidth - current, next - nextBounds.maxWidth);
-        const maxDelta = Math.min(currentBounds.maxWidth - current, next - nextBounds.minWidth);
-        const delta = Math.max(minDelta, Math.min(maxDelta, requestedDelta));
-        if (delta === 0) return prev;
-
-        return {
-          ...prev,
-          [columnId]: current + delta,
-          [nextColumnId]: next - delta,
-        };
-      });
-    };
-    const renderTemplateResizer = (columnId: string) => {
-      if (visibleColumns[visibleColumns.indexOf(columnId) + 1] == null) return null;
-      const bounds = INTERVIEW_TEMPLATES_TABLE_RESIZE_BOUNDS[columnId];
-      return (
-        <ColumnResizer
-          columnId={columnId}
-          currentWidth={
-            templatesColumnWidths[columnId] ?? INTERVIEW_TEMPLATES_TABLE_DEFAULT_WIDTHS[columnId]
-          }
-          minWidth={bounds.minWidth}
-          maxWidth={bounds.maxWidth}
-          onResize={handleResize}
-        />
-      );
-    };
-
-    // Per-column filter column defs (category / status), matching the
-    // Sessions / Insights header FilterDropdown pattern.
-    const templateCategoryCol: ColumnDef = {
-      id: 'category',
-      label: isPolish ? 'Kategoria' : 'Category',
-      width:
-        templatesColumnWidths.category ?? INTERVIEW_TEMPLATES_TABLE_DEFAULT_WIDTHS.category ?? 120,
-      minWidth: INTERVIEW_TEMPLATES_TABLE_RESIZE_BOUNDS.category?.minWidth ?? 80,
-      maxWidth: INTERVIEW_TEMPLATES_TABLE_RESIZE_BOUNDS.category?.maxWidth,
-      resizable: true,
-      filterable: true,
-      filterType: 'multiselect',
-      filterOptions: TEMPLATE_CATEGORY_FILTER_OPTIONS,
-    };
-    const templateStatusCol: ColumnDef = {
-      id: 'status',
-      label: isPolish ? 'Status' : 'Status',
-      width: templatesColumnWidths.status ?? INTERVIEW_TEMPLATES_TABLE_DEFAULT_WIDTHS.status ?? 120,
-      minWidth: INTERVIEW_TEMPLATES_TABLE_RESIZE_BOUNDS.status?.minWidth ?? 80,
-      maxWidth: INTERVIEW_TEMPLATES_TABLE_RESIZE_BOUNDS.status?.maxWidth,
-      resizable: true,
-      filterable: true,
-      filterType: 'multiselect',
-      filterOptions: TEMPLATE_STATUS_FILTER_OPTIONS,
-    };
-
-    // Header click-sort — applied on top of the already-filtered templates list.
-    // lastUsed has no dedicated backend field yet, so it sorts by the best
-    // available recency proxy (updatedAt → createdAt).
-    const templateStatusRank = (t: InterviewTemplate) => {
-      const s = String(t.status || 'draft').toLowerCase();
-      const order: Record<string, number> = {
-        draft: 0,
-        in_review: 1,
-        approved: 2,
-        published: 2,
-        archived: 3,
-      };
-      return order[s] ?? 99;
-    };
-    const sortedTemplates = templateSortField
-      ? [...templatesForTable].sort((a, b) => {
-          const dir = templateSortAsc ? 1 : -1;
-          if (templateSortField === 'name') {
-            return (a.name || '').localeCompare(b.name || '') * dir;
-          }
-          if (templateSortField === 'category') {
-            return (a.category || '').localeCompare(b.category || '') * dir;
-          }
-          if (templateSortField === 'questions') {
-            return ((a.questionCount || 0) - (b.questionCount || 0)) * dir;
-          }
-          if (templateSortField === 'usage') {
-            return (getTemplateUsageCount(a) - getTemplateUsageCount(b)) * dir;
-          }
-          if (templateSortField === 'lastUsed') {
-            const aD = a.updatedAt || a.createdAt;
-            const bD = b.updatedAt || b.createdAt;
-            const aT = aD ? new Date(aD).getTime() : 0;
-            const bT = bD ? new Date(bD).getTime() : 0;
-            return (aT - bT) * dir;
-          }
-          if (templateSortField === 'status') {
-            return (templateStatusRank(a) - templateStatusRank(b)) * dir;
-          }
-          return 0;
-        })
-      : templatesForTable;
 
     return (
-      <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] rounded-xl backdrop-blur">
-        {/* §27-exempt: module-local resizable columns, custom FilterDropdown, and
-            complex interactive row cells (template preview, usage stats, action menus)
-            are tightly coupled to local state; FilterableTable migration requires
-            full re-architecture of this tab. */}
-        <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
-          <thead className="sticky top-0 z-20 bg-c-surface border-b border-c-border-subtle">
-            <tr className="border-b border-c-border-subtle bg-c-surface-raised sticky top-0 z-10">
-              <th className="px-3 py-2 text-left" style={{ width: templatesColumnWidths.select }}>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleAllVisibleTemplates();
-                  }}
-                  className={[
-                    'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                    'border-c-border bg-c-surface text-white hover:border-c-info',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
-                    allVisibleSelected || someVisibleSelected
-                      ? 'border-c-info bg-c-info opacity-100'
-                      : 'opacity-70',
-                  ].join(' ')}
-                  aria-label={isPolish ? 'Zaznacz widoczne szablony' : 'Select visible templates'}
-                  aria-pressed={allVisibleSelected}
-                >
-                  {allVisibleSelected ? <Check size={10} strokeWidth={3} /> : null}
-                  {someVisibleSelected ? <Minus size={10} strokeWidth={3} /> : null}
-                </button>
-              </th>
-              <th
-                className="px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header w-full"
-                style={{ width: templatesColumnWidths.name }}
-              >
-                <div className="flex items-center gap-1">
-                  <span
-                    className="cursor-pointer select-none transition-colors hover:text-c-text-secondary"
-                    onClick={() => toggleTemplateSort('name')}
-                  >
-                    {isPolish ? 'Nazwa' : 'Name'}
-                    {templateSortField === 'name' && (
-                      <ChevronDown
-                        size={12}
-                        className={`inline-block ml-0.5 transition-transform ${templateSortAsc ? '' : 'rotate-180'}`}
-                      />
-                    )}
-                  </span>
-                </div>
-                {renderTemplateResizer('name')}
-              </th>
-
-              {!hiddenSet.has('category') && (
-                <th
-                  className="px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header"
-                  style={{ width: templatesColumnWidths.category }}
-                >
-                  <div className="flex items-center justify-start gap-1">
-                    <span
-                      className={[
-                        'cursor-pointer select-none transition-colors hover:text-c-text-secondary',
-                        (templatesTableFilters.category as string[] | undefined)?.length
-                          ? 'text-c-accent'
-                          : '',
-                      ].join(' ')}
-                      onClick={() => toggleTemplateSort('category')}
-                    >
-                      {isPolish ? 'Kategoria' : 'Category'}
-                      {templateSortField === 'category' && (
-                        <ChevronDown
-                          size={12}
-                          className={`inline-block ml-0.5 transition-transform ${templateSortAsc ? '' : 'rotate-180'}`}
-                        />
-                      )}
-                    </span>
-                    <FilterDropdown
-                      column={templateCategoryCol}
-                      value={templatesTableFilters.category as string[] | undefined}
-                      onChange={(v) =>
-                        setTemplatesTableFilters((f) => ({ ...f, category: v as string[] }))
-                      }
-                      isOpen={openTemplateFilterId === 'category'}
-                      onToggle={() =>
-                        setOpenTemplateFilterId((id) => (id === 'category' ? null : 'category'))
-                      }
-                      onClose={() => setOpenTemplateFilterId(null)}
-                    />
-                  </div>
-                  {renderTemplateResizer('category')}
-                </th>
-              )}
-
-              {!hiddenSet.has('questions') && (
-                <th
-                  className="px-3 py-2 text-right text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header"
-                  style={{ width: templatesColumnWidths.questions }}
-                >
-                  <div className="flex items-center justify-end gap-1">
-                    <span
-                      className="cursor-pointer select-none transition-colors hover:text-c-text-secondary"
-                      onClick={() => toggleTemplateSort('questions')}
-                    >
-                      {isPolish ? 'Pytania' : 'Questions'}
-                      {templateSortField === 'questions' && (
-                        <ChevronDown
-                          size={12}
-                          className={`inline-block ml-0.5 transition-transform ${templateSortAsc ? '' : 'rotate-180'}`}
-                        />
-                      )}
-                    </span>
-                  </div>
-                  {renderTemplateResizer('questions')}
-                </th>
-              )}
-
-              {/* #16 — Usage count */}
-              {!hiddenSet.has('usage') && (
-                <th
-                  className="px-3 py-2 text-right text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header"
-                  style={{ width: templatesColumnWidths.usage }}
-                >
-                  <div className="flex items-center justify-end gap-1">
-                    <span
-                      className="cursor-pointer select-none transition-colors hover:text-c-text-secondary"
-                      onClick={() => toggleTemplateSort('usage')}
-                    >
-                      {isPolish ? 'Użycia' : 'Usage'}
-                      {templateSortField === 'usage' && (
-                        <ChevronDown
-                          size={12}
-                          className={`inline-block ml-0.5 transition-transform ${templateSortAsc ? '' : 'rotate-180'}`}
-                        />
-                      )}
-                    </span>
-                  </div>
-                  {renderTemplateResizer('usage')}
-                </th>
-              )}
-
-              {/* #16 — AI quality score (number → text-right) */}
-              {!hiddenSet.has('quality') && (
-                <th
-                  className="px-3 py-2 text-right text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header"
-                  style={{ width: templatesColumnWidths.quality }}
-                >
-                  <div className="flex items-center justify-end gap-1">
-                    <span>{isPolish ? 'Jakość AI' : 'AI quality'}</span>
-                  </div>
-                  {renderTemplateResizer('quality')}
-                </th>
-              )}
-
-              {/* #16 — Last used (date → text-left) */}
-              {!hiddenSet.has('lastUsed') && (
-                <th
-                  className="px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header"
-                  style={{ width: templatesColumnWidths.lastUsed }}
-                >
-                  <div className="flex items-center justify-start gap-1">
-                    <span
-                      className="cursor-pointer select-none transition-colors hover:text-c-text-secondary"
-                      onClick={() => toggleTemplateSort('lastUsed')}
-                    >
-                      {isPolish ? 'Ostatnio użyty' : 'Last used'}
-                      {templateSortField === 'lastUsed' && (
-                        <ChevronDown
-                          size={12}
-                          className={`inline-block ml-0.5 transition-transform ${templateSortAsc ? '' : 'rotate-180'}`}
-                        />
-                      )}
-                    </span>
-                  </div>
-                  {renderTemplateResizer('lastUsed')}
-                </th>
-              )}
-
-              {!hiddenSet.has('status') && (
-                <th
-                  className="px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header"
-                  style={{ width: templatesColumnWidths.status }}
-                >
-                  <div className="flex items-center justify-start gap-1">
-                    <span
-                      className={[
-                        'cursor-pointer select-none transition-colors hover:text-c-text-secondary',
-                        (templatesTableFilters.status as string[] | undefined)?.length
-                          ? 'text-c-accent'
-                          : '',
-                      ].join(' ')}
-                      onClick={() => toggleTemplateSort('status')}
-                    >
-                      {isPolish ? 'Status' : 'Status'}
-                      {templateSortField === 'status' && (
-                        <ChevronDown
-                          size={12}
-                          className={`inline-block ml-0.5 transition-transform ${templateSortAsc ? '' : 'rotate-180'}`}
-                        />
-                      )}
-                    </span>
-                    <FilterDropdown
-                      column={templateStatusCol}
-                      value={templatesTableFilters.status as string[] | undefined}
-                      onChange={(v) =>
-                        setTemplatesTableFilters((f) => ({ ...f, status: v as string[] }))
-                      }
-                      isOpen={openTemplateFilterId === 'status'}
-                      onToggle={() =>
-                        setOpenTemplateFilterId((id) => (id === 'status' ? null : 'status'))
-                      }
-                      onClose={() => setOpenTemplateFilterId(null)}
-                    />
-                  </div>
-                  {renderTemplateResizer('status')}
-                </th>
-              )}
-
-              <th
-                className="relative px-3 py-2 text-right text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
-                style={{ width: templatesColumnWidths.actions }}
-              >
-                <div ref={templatesViewSettingsRef} className="flex items-center justify-end">
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      const r = event.currentTarget.getBoundingClientRect();
-                      const PANEL_W = 288;
-                      const left = Math.min(
-                        Math.max(8, Math.round(r.right - PANEL_W)),
-                        Math.round(window.innerWidth - PANEL_W - 8)
-                      );
-                      setTemplatesViewSettingsPos({
-                        top: Math.round(r.bottom + 8),
-                        left,
-                        maxH: Math.max(180, Math.round(window.innerHeight - r.bottom - 24)),
-                      });
-                      setIsTemplatesViewSettingsOpen((open) => !open);
-                    }}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
-                    aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
-                    aria-expanded={isTemplatesViewSettingsOpen}
-                    title={isPolish ? 'Ustawienia widoku' : 'View settings'}
-                  >
-                    <Settings2 size={15} />
-                  </button>
-                  {isTemplatesViewSettingsOpen && templatesViewSettingsPos
-                    ? createPortal(
-                        <div
-                          ref={templatesViewSettingsPanelRef}
-                          style={{
-                            position: 'fixed',
-                            top: templatesViewSettingsPos.top,
-                            left: templatesViewSettingsPos.left,
-                            maxHeight: templatesViewSettingsPos.maxH,
-                          }}
-                          className="z-[100] w-72 overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
-                          role="menu"
-                          onClick={(event) => event.stopPropagation()}
-                        >
-                          <div className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
-                            {isPolish ? 'Kolumny' : 'Columns'}
-                          </div>
-                          <div className="space-y-1">
-                            {(
-                              [
-                                {
-                                  id: 'name',
-                                  label: isPolish ? 'Nazwa' : 'Name',
-                                  alwaysVisible: true,
-                                },
-                                { id: 'category', label: isPolish ? 'Kategoria' : 'Category' },
-                                { id: 'questions', label: isPolish ? 'Pytania' : 'Questions' },
-                                // #16 — Usage count / AI quality score / Last used
-                                { id: 'usage', label: isPolish ? 'Użycia' : 'Usage' },
-                                { id: 'quality', label: isPolish ? 'Jakość AI' : 'AI quality' },
-                                {
-                                  id: 'lastUsed',
-                                  label: isPolish ? 'Ostatnio użyty' : 'Last used',
-                                },
-                                { id: 'status', label: isPolish ? 'Status' : 'Status' },
-                                {
-                                  id: 'actions',
-                                  label: isPolish ? 'Akcje' : 'Actions',
-                                  alwaysVisible: true,
-                                },
-                              ] as Array<{ id: string; label: string; alwaysVisible?: boolean }>
-                            ).map((col) => {
-                              const alwaysVisible = !!col.alwaysVisible;
-                              const checked = alwaysVisible ? true : !hiddenSet.has(col.id);
-                              return (
-                                <label
-                                  key={col.id}
-                                  className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs hover:bg-slate-100/70 dark:hover:bg-white/[0.06] ${
-                                    alwaysVisible ? 'opacity-60' : 'cursor-pointer'
-                                  }`}
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={checked}
-                                    disabled={alwaysVisible}
-                                    onChange={() => {
-                                      if (alwaysVisible) return;
-                                      setTemplatesHiddenColumns((prev) => {
-                                        const set = new Set(prev);
-                                        if (set.has(col.id)) set.delete(col.id);
-                                        else set.add(col.id);
-                                        set.delete('name');
-                                        set.delete('actions');
-                                        const next = Array.from(set);
-                                        saveHiddenColumns(
-                                          INTERVIEW_TEMPLATES_TABLE_VIEW_STORAGE_KEY,
-                                          next
-                                        );
-                                        return next;
-                                      });
-                                    }}
-                                    className="h-3.5 w-3.5 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-c-focus"
-                                  />
-                                  <span className="flex-1 text-c-text-secondary">
-                                    {col.label}
-                                  </span>
-                                  {alwaysVisible ? (
-                                    <span className="text-[10px] text-slate-600 dark:text-slate-500">
-                                      {isPolish ? 'Wymagane' : 'Required'}
-                                    </span>
-                                  ) : null}
-                                </label>
-                              );
-                            })}
-                          </div>
-                          <div className="my-2 h-px bg-slate-200/70 dark:bg-white/[0.08]" />
-                          <label className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-xs hover:bg-slate-100/70 dark:hover:bg-white/[0.06]">
-                            <input
-                              type="checkbox"
-                              checked={showTemplateRowDescription}
-                              onChange={(event) => {
-                                setShowTemplateRowDescription(event.target.checked);
-                                saveBooleanSetting(
-                                  INTERVIEW_TEMPLATES_ROW_DESCRIPTION_STORAGE_KEY,
-                                  event.target.checked
-                                );
-                              }}
-                              className="h-3.5 w-3.5 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-c-focus"
-                            />
-                            <span className="text-c-text-secondary">
-                              {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
-                            </span>
-                          </label>
-                        </div>,
-                        document.body
-                      )
-                    : null}
-                </div>
-              </th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {sortedTemplates.map((template) => {
-              const isSelected = selectedTemplateId === template.id;
-              const isTemplateSelected = selectedTemplateIds.has(template.id);
-              const areaTags = normalizeInterviewTemplateAreaTags(template.areaTags);
-              const rowDescription =
-                template.description ||
-                [
-                  template.scope ? getTemplateSourceLabel(template.scope, isPolish) : null,
-                  areaTags
-                    .slice(0, 2)
-                    .map((tag) => getTemplateAreaTagLabel(tag, isPolish))
-                    .join(' · '),
-                ]
-                  .filter(Boolean)
-                  .join(' · ');
-              const select = () => {
-                setSelectedTemplateId(template.id);
-                opts?.onSelectRow?.(template.id);
-              };
-              const openFull = () => opts?.onOpenFull?.(template.id);
-
-              return (
-                <tr
-                  key={template.id}
-                  onClick={select}
-                  onDoubleClick={openFull}
-                  className={`group cursor-pointer transition-colors border-b border-slate-200/50 dark:border-navy-700/50 last:border-0 ${
-                    isSelected || isTemplateSelected
-                      ? 'bg-slate-100 dark:bg-white/[0.08] shadow-[inset_4px_0_0_var(--c-info)] ring-1 ring-slate-300/60 ring-inset dark:ring-white/[0.10]'
-                      : 'hover:bg-slate-50 dark:hover:bg-navy-800/50'
-                  }`}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    const target = e.target as HTMLElement;
-                    if (
-                      target.tagName === 'INPUT' ||
-                      target.tagName === 'TEXTAREA' ||
-                      target.isContentEditable
-                    )
-                      return;
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      openFull();
-                    }
-                    if (e.key === ' ') {
-                      e.preventDefault();
-                      select();
-                    }
-                    if (e.key === 'Escape') {
-                      e.preventDefault();
-                      setSelectedTemplateId(null);
-                    }
-                  }}
-                >
-                  <td className="px-3 py-3" style={{ width: templatesColumnWidths.select }}>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        toggleTemplateSelection(template.id);
-                      }}
-                      className={[
-                        'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                        'border-c-border bg-c-surface text-white hover:border-c-info',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
-                        isTemplateSelected
-                          ? 'border-c-info bg-c-info opacity-100'
-                          : isSelected
-                            ? 'opacity-100'
-                            : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
-                      ].join(' ')}
-                      aria-label={isPolish ? 'Zaznacz szablon' : 'Select template'}
-                      aria-pressed={isTemplateSelected}
-                    >
-                      {isTemplateSelected ? <Check size={10} strokeWidth={3} /> : null}
-                    </button>
-                  </td>
-                  {/* Name (title only) */}
-                  <td className="px-3 py-3" style={{ width: templatesColumnWidths.name }}>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className={INTERVIEW_TABLE_ICON_SURFACE_CLASS}>
-                          <FileText size={16} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <span
-                            className="text-sm text-c-text font-medium block truncate"
-                            title={template.name}
-                          >
-                            {template.name}
-                          </span>
-                          {showTemplateRowDescription && rowDescription ? (
-                            <span
-                              className="mt-0.5 block truncate text-[11px] font-normal leading-4 text-slate-950/65 dark:text-slate-100/55"
-                              title={rowDescription}
-                            >
-                              {rowDescription}
-                            </span>
-                          ) : null}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-
-                  {!hiddenSet.has('category') && (
-                    <td
-                      className="px-3 py-3 text-left"
-                      style={{ width: templatesColumnWidths.category }}
-                    >
-                      {(template.category ?? '').trim() ? (
-                        // Pilot — delicate 2px left accent per category (tag tone,
-                        // NOT a status signal). Canon §4.0a.
-                        <span className={`${INTERVIEW_META_CHIP_CLASS} gap-1.5`}>
-                          {categoryTone(template.category) ? (
-                            <span
-                              aria-hidden="true"
-                              className="h-1.5 w-1.5 shrink-0 rounded-full"
-                              style={{ backgroundColor: categoryTone(template.category)! }}
-                            />
-                          ) : null}
-                          {template.category}
-                        </span>
-                      ) : (
-                        <span className="text-slate-400 dark:text-slate-500">—</span>
-                      )}
-                    </td>
-                  )}
-
-                  {!hiddenSet.has('questions') && (
-                    <td
-                      className="px-3 py-3 text-right text-sm text-c-text-muted tabular-nums"
-                      style={{ width: templatesColumnWidths.questions }}
-                    >
-                      {template.questionCount}
-                    </td>
-                  )}
-
-                  {/* #16 — Usage count (real, derived from assignment data). */}
-                  {!hiddenSet.has('usage') && (
-                    <td
-                      className="px-3 py-3 text-right text-sm text-c-text-muted tabular-nums"
-                      style={{ width: templatesColumnWidths.usage }}
-                    >
-                      {(() => {
-                        const usageCount = getTemplateUsageCount(template);
-                        return usageCount > 0 ? (
-                          <span className="tabular-nums">{usageCount}</span>
-                        ) : (
-                          <span className="text-slate-400 dark:text-slate-500">—</span>
-                        );
-                      })()}
-                    </td>
-                  )}
-
-                  {/* #16 — AI quality score (number → text-right). No backend field yet. */}
-                  {!hiddenSet.has('quality') && (
-                    <td
-                      className="px-3 py-3 text-right text-sm"
-                      style={{ width: templatesColumnWidths.quality }}
-                    >
-                      <span className="text-slate-400 dark:text-slate-500">—</span>
-                    </td>
-                  )}
-
-                  {/* #16 — Last used (date → text-left). No backend field yet. */}
-                  {!hiddenSet.has('lastUsed') && (
-                    <td
-                      className="px-3 py-3 text-left text-sm"
-                      style={{ width: templatesColumnWidths.lastUsed }}
-                    >
-                      <span className="text-slate-400 dark:text-slate-500">—</span>
-                    </td>
-                  )}
-
-                  {!hiddenSet.has('status') && (
-                    <td
-                      className="px-3 py-3 text-left"
-                      style={{ width: templatesColumnWidths.status }}
-                    >
-                      {/* V-A S5 — real status chip (draft/in_review/approved/
-                          archived), not the old fabricated Default|Active. The
-                          "Default" template flag is now a small separate marker.
-                          Uses the shared StatusPill (SSOT) for tone, with the
-                          template-specific label from getTemplateStatusChip. */}
-                      <div className="inline-flex items-center gap-1.5">
-                        <EntityStatusChip
-                          status={String(template.status || 'draft')}
-                          label={getTemplateStatusChip(template.status, isPolish).label}
-                        />
-                        {template.isDefault && (
-                          <span
-                            className={INTERVIEW_META_CHIP_CLASS}
-                            title={isPolish ? 'Domyślny szablon' : 'Default template'}
-                          >
-                            {isPolish ? 'Domyślny' : 'Default'}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                  )}
-
-                  {/* Actions */}
-                  <td
-                    className="px-3 py-3 text-right"
-                    style={{ width: templatesColumnWidths.actions }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="flex items-center justify-end">
-                      <RowActionsMenu
-                        iconVariant="vertical"
-                        sections={buildTemplateRowSections(template)}
-                      />
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-
-            {templatesForTable.length === 0 && (
-              <tr>
-                <td colSpan={colSpan} className="px-4 py-12 text-center">
-                  <div className="flex flex-col items-center">
-                    <FileText className="w-6 h-6 text-c-text-muted mb-3" />
-                    <p className="text-c-text text-sm font-semibold mb-1">
-                      {isPolish ? 'Brak szablonów' : 'No templates yet'}
-                    </p>
-                    <p className="text-xs text-c-text-muted mb-4 max-w-md">
-                      {isPolish
-                        ? 'Utwórz szablon, aby przyspieszyć kolejne wywiady.'
-                        : 'Create a template to speed up your next interviews.'}
-                    </p>
-                    {canAssign && (
-                      <button
-                        onClick={handleNewTemplate}
-                        className="inline-flex h-9 items-center gap-2 rounded-lg bg-navy-900 px-4 text-sm font-medium text-white transition-colors hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-                      >
-                        <FilePlus size={16} />
-                        {isPolish ? 'Nowy szablon' : 'New template'}
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <StandardTable
+        columns={templateColumns}
+        data={templatesForTable as unknown as Array<Record<string, unknown> & { id: string }>}
+        selectedRowId={selectedTemplateId}
+        onRowClick={(row) => {
+          const template = row as unknown as InterviewTemplate;
+          setSelectedTemplateId(template.id);
+          opts?.onSelectRow?.(template.id);
+        }}
+        onRowDoubleClick={(row) => {
+          const template = row as unknown as InterviewTemplate;
+          opts?.onOpenFull?.(template.id);
+        }}
+        rowDescription={(row) => {
+          const template = row as unknown as InterviewTemplate;
+          const areaTags = normalizeInterviewTemplateAreaTags(template.areaTags);
+          return (
+            template.description ||
+            [
+              template.scope ? getTemplateSourceLabel(template.scope, isPolish) : null,
+              areaTags
+                .slice(0, 2)
+                .map((tag) => getTemplateAreaTagLabel(tag, isPolish))
+                .join(' · '),
+            ]
+              .filter(Boolean)
+              .join(' · ') ||
+            null
+          );
+        }}
+        defaultSort={{ columnId: 'name', direction: 'asc' }}
+        persistKey="interview.templates.list"
+        selection={{ selectedIds: selectedTemplateIds, onChange: setSelectedTemplateIds }}
+        empty={{
+          icon: FileText,
+          title: isPolish ? 'Brak szablonów' : 'No templates yet',
+          description: isPolish
+            ? 'Utwórz szablon, aby przyspieszyć kolejne wywiady.'
+            : 'Create a template to speed up your next interviews.',
+          actionLabel: canAssign ? (isPolish ? 'Nowy szablon' : 'New template') : undefined,
+          onAction: canAssign ? handleNewTemplate : undefined,
+        }}
+        rowActions={(row) => buildTemplateRowSections(row as unknown as InterviewTemplate)}
+      />
     );
   };
 
@@ -7117,21 +6410,8 @@ export const InterviewHub: React.FC = () => {
   >('dueAt');
   const [assignmentSortAsc, setAssignmentSortAsc] = useState(true);
 
-  // Sorting state — Templates header click-sort. Mirrors the Assignments
-  // pattern (field + asc toggle, click cycles asc→desc, click a new field
-  // resets to asc). Sort applies on top of the already-filtered/grouped list.
-  // (Sessions/Insights sort/filter now live inside StandardTable — Triada standard.)
-  type TemplateSortField = 'name' | 'category' | 'questions' | 'usage' | 'lastUsed' | 'status';
-  const [templateSortField, setTemplateSortField] = useState<TemplateSortField | null>(null);
-  const [templateSortAsc, setTemplateSortAsc] = useState(true);
-  const toggleTemplateSort = (field: TemplateSortField) => {
-    if (templateSortField === field) {
-      setTemplateSortAsc((prev) => !prev);
-    } else {
-      setTemplateSortField(field);
-      setTemplateSortAsc(true);
-    }
-  };
+  // (Sessions/Insights/Templates sort/filter now live inside StandardTable —
+  // Triada standard.)
 
   // Table View Settings — Assignments (Inbox + Managed)
   const [inboxHiddenColumns, setInboxHiddenColumns] = useState<string[]>(() =>
@@ -7156,11 +6436,8 @@ export const InterviewHub: React.FC = () => {
 
   // V-B — persist every resizable table's column widths on change, so resizing
   // survives reload (the module-wide bug). One effect per table.
-  // (Sessions moved to StandardTable — persistence now via persistKey inside
-  // the facade; no module-local width state left to persist here.)
-  useEffect(() => {
-    saveColumnWidths(INTERVIEW_TEMPLATES_COL_WIDTHS_KEY, templatesColumnWidths);
-  }, [templatesColumnWidths]);
+  // (Sessions/Templates moved to StandardTable — persistence now via
+  // persistKey inside the facade; no module-local width state left to persist.)
   useEffect(() => {
     saveColumnWidths(INTERVIEW_INITIATIVES_COL_WIDTHS_KEY, initiativesColumnWidths);
   }, [initiativesColumnWidths]);
