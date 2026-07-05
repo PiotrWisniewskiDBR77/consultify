@@ -47,13 +47,8 @@ import ReactFlow, {
   type NodeChange,
   type NodeProps,
   ReactFlowProvider,
+  useUpdateNodeInternals,
 } from 'reactflow';
-// useUpdateNodeInternals: import from @reactflow/core where the named type export
-// resolves cleanly. The `reactflow` barrel's types redirect drops this hook's
-// named export (TS2614), the same quirk that affects useNodesInitialized elsewhere
-// (IdeaRecommendationMap). The runtime value is identical — core is reactflow's
-// implementation package. Used by EdgeRehydrateFix (Londyn c117ed3fcb).
-import { useUpdateNodeInternals } from '@reactflow/core';
 
 import { Api } from '@/services/api';
 import {
@@ -1063,7 +1058,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       // M07 F4: in runtime mode read from the shared workspace graph runtime
       // instead of a second Api.getMyIdeaMap round-trip. The runtime is the
       // single owner of hydration for this ideaId; the parent's refresh() primes
-      // it. Fallback (no runtime) keeps the legacy per-tool API path.
+      // it. Fallback (no runtime) keeps the legacy per-tool API path — with the
+      // M07 reload-race fix (2026-06-24) preserved on that path.
       const runtime = externalRuntimeRef.current;
       let map: any;
       if (runtime) {
@@ -1078,13 +1074,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           preferredTool: 'process_flow',
         };
       } else {
-        // M07 reload-race fix (Londyn 2026-06-24): retry the fallback map GET on
-        // transient failure. The nodes ARE on the server (the autosave already
-        // landed — useIdeaMapSync is single-flight + 409-self-healing), so a reload
-        // that lands during caboose latency / cold-start must NOT blank the canvas
-        // to [] on the first timeout (the "0 nodes after reload" symptom).
-        // In runtime mode (F4) this race can't happen — the primed runtime is the
-        // source — so the retry only wraps the legacy fallback path.
+        // M07 reload-race fix (2026-06-24): retry the map GET on transient failure.
+        // The nodes ARE on the server (the autosave already landed — useIdeaMapSync is
+        // single-flight + 409-self-healing), so a reload that lands during caboose
+        // latency / cold-start must NOT blank the canvas to [] on the first timeout
+        // (that was the "0 nodes after reload" symptom). Fetch-with-backoff, then hydrate.
         let res: any = null;
         let lastErr: any = null;
         for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -1198,17 +1192,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
       resetUndo();
 
-      // NOTE (M07 fix 2026-06-21, Londyn): the old eager preferredTool stamp here did a
-      // SECOND, independent `Api.syncMyIdeaMap` on hydrate — carrying the just-loaded (often
-      // empty) graph with its own baseVersion. It raced the user's first autosave on the same
+      // NOTE (M07 fix 2026-06-21 + F4): the old eager preferredTool stamp here did a SECOND,
+      // independent `Api.syncMyIdeaMap` on hydrate — carrying the just-loaded (often empty)
+      // graph with its own baseVersion. It raced the user's first autosave on the same
       // baseVersion → one 200, the other 409, and the user's freshly-added nodes were dropped
       // (data loss after reload). Removed: the autosave already stamps
       // `preferredTool: 'process_flow'` (buildPersistPayload) on the first edit, so the only
       // cost is that an idea OPENED-but-not-edited won't persist process_flow as its default —
-      // and the /workspace/process_flow URL already forces the tool on open. One sync path = no race.
-      // This removal supersedes F4's fallback-only back-write: in runtime mode F4 already
-      // never synced here, and in fallback mode this eager sync is exactly the autosave-race,
-      // so it is dropped in both modes.
+      // and the /workspace/process_flow URL already forces the tool on open. In runtime mode
+      // the shared workspace runtime owns preferredTool anyway. One sync path = no race.
       didPersistRef.current = true;
     } catch (err: any) {
       const nextError = err?.message || (isPl ? 'Nie udało się wczytać' : 'Failed to load');
@@ -2188,7 +2180,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
   return (
     <div
-      className="w-full h-full flex flex-col bg-c-surface relative"
+      className="w-full h-full flex flex-col bg-white dark:bg-navy-950 relative"
       role="region"
       aria-label={isPl ? 'Edytor przepływu procesu' : 'Process flow editor'}
     >
@@ -2242,6 +2234,13 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         guidance={FLOW_MODE_GUIDANCE[flowMode]}
         onOpenChat={onOpenChat ? handleOpenChatWithContext : undefined}
         onConvert={onQuickAction ? handleConvert : undefined}
+        onAIProposal={() => setShowAIPanel(true)}
+        onReadback={() => {
+          setShowReadbackPanel(true);
+          // Readback reads the existing graph (no user prompt needed) — fetch on open
+          // so the panel shows content immediately instead of an empty "fetch" prompt.
+          fetchReadback();
+        }}
       />
       </div>
 
@@ -2271,11 +2270,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
       {locked && (
         <div className="px-4 pt-3">
-          <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised px-4 py-3 text-sm text-c-text-secondary">
-            <div className="font-medium text-c-text">
+          <div className="rounded-xl border border-slate-200/70 bg-slate-50/80 px-4 py-3 text-sm text-slate-600 dark:border-white/[0.06] dark:bg-white/[0.03] dark:text-slate-300">
+            <div className="font-medium text-slate-900 dark:text-slate-100">
               {isPl ? 'Tryb tylko do odczytu' : 'Read-only mode'}
             </div>
-            <div className="mt-1 text-xs text-c-text-muted">
+            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
               {isPl
                 ? 'Możesz przeglądać przepływ, ale edycja i zapis są obecnie zablokowane.'
                 : 'You can review the flow, but editing and saving are currently disabled.'}
@@ -2286,14 +2285,14 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
       {/* Warnings panel */}
       {showWarnings && warnings.length > 0 && (
-        <div className="px-4 py-2 bg-warning-50/80 dark:bg-warning-900/20 border-b border-warning-200/60 dark:border-warning-700/40 flex-shrink-0">
+        <div className="px-4 py-2 bg-amber-50/80 dark:bg-amber-900/20 border-b border-amber-200/60 dark:border-amber-700/40 flex-shrink-0">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[11px] font-semibold text-warning-700 dark:text-warning-300">
+            <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-300">
               {isPl ? `${warnings.length} ostrzeżeń` : `${warnings.length} warning(s)`}
             </span>
             <button
               onClick={() => setShowWarnings(false)}
-              className="text-[10px] text-warning-600 dark:text-warning-400 hover:underline"
+              className="text-[10px] text-amber-600 dark:text-amber-400 hover:underline"
             >
               {isPl ? 'Zamknij' : 'Close'}
             </button>
@@ -2302,7 +2301,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             {warnings.map((w) => (
               <li
                 key={w.id}
-                className="text-[11px] text-warning-700 dark:text-warning-300 flex items-start gap-1"
+                className="text-[11px] text-amber-700 dark:text-amber-300 flex items-start gap-1"
               >
                 <AlertTriangle size={12} className="mt-0.5 flex-shrink-0" />
                 {isPl ? w.messagePl : w.message}
@@ -2314,19 +2313,16 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
       {/* Coach Insights Panel */}
       {showCoach && coachInsights.length > 0 && (
-        <div
-          className="mx-3 mb-2 rounded-xl border border-c-tag-2 p-3 max-h-48 overflow-y-auto"
-          style={{ backgroundColor: 'color-mix(in srgb, var(--c-tag-2) 8%, transparent)' }}
-        >
+        <div className="mx-3 mb-2 rounded-xl border border-indigo-200/60 dark:border-indigo-800/40 bg-indigo-50/50 dark:bg-indigo-950/20 p-3 max-h-48 overflow-y-auto">
           <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-c-tag-2">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-300">
               <TeresaMark size={14} />
               {isPl ? 'AI Coach — Analiza procesu' : 'AI Coach — Process Analysis'}
             </div>
             <button
               type="button"
               onClick={() => setShowCoach(false)}
-              className="text-c-text-secondary hover:text-c-text"
+              className="text-slate-600 hover:text-slate-800 dark:hover:text-slate-300"
               aria-label={isPl ? 'Zamknij' : 'Close'}
             >
               <X size={14} />
@@ -2336,7 +2332,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             {coachInsights.map((insight: any, idx: number) => (
               <li key={idx} className="flex items-start gap-2 text-[11px]">
                 <span
-                  className={`mt-0.5 flex-shrink-0 ${insight.type === 'bottleneck' ? 'text-danger-500' : insight.type === 'improvement' ? 'text-success-500' : 'text-c-tag-2'}`}
+                  className={`mt-0.5 flex-shrink-0 ${insight.type === 'bottleneck' ? 'text-danger-500' : insight.type === 'improvement' ? 'text-emerald-500' : 'text-indigo-500'}`}
                 >
                   {insight.type === 'bottleneck' ? (
                     <AlertTriangle size={12} />
@@ -2345,19 +2341,16 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   )}
                 </span>
                 <div>
-                  <span className="font-semibold text-c-text-secondary">
+                  <span className="font-semibold text-slate-700 dark:text-slate-300">
                     {insight.message}
                   </span>
                   {insight.suggestion && (
-                    <span className="block text-c-text-muted mt-0.5">
+                    <span className="block text-slate-500 dark:text-slate-400 mt-0.5">
                       {insight.suggestion}
                     </span>
                   )}
                   {insight.confidence != null && (
-                    <span
-                      className="inline-block mt-0.5 px-1.5 py-0.5 rounded-full text-[8px] font-bold text-c-tag-2"
-                      style={{ backgroundColor: 'color-mix(in srgb, var(--c-tag-2) 16%, transparent)' }}
-                    >
+                    <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-[8px] font-bold text-indigo-600 dark:text-indigo-300">
                       {Math.round(insight.confidence * 100)}%
                     </span>
                   )}
@@ -2369,50 +2362,50 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       )}
 
       {processBriefData && (
-        <div className="mx-3 mb-2 rounded-xl border border-c-border-subtle bg-c-surface-raised p-3">
-          <div className="text-[11px] font-bold text-c-text-secondary">
+        <div className="mx-3 mb-2 rounded-xl border border-slate-200/60 dark:border-navy-700/40 bg-slate-50/50 dark:bg-navy-900/20 p-3">
+          <div className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
             {isPl ? 'Structured brief' : 'Structured brief'}
           </div>
-          <div className="mt-1 text-[10px] text-c-text-secondary">
+          <div className="mt-1 text-[10px] text-slate-700 dark:text-slate-300">
             <span className="font-semibold">{isPl ? 'Cel:' : 'Objective:'}</span>{' '}
             {processBriefData.objective}
           </div>
           <div className="mt-2 grid grid-cols-3 gap-2">
             <div>
-              <div className="text-[9px] font-bold text-c-text-secondary">
+              <div className="text-[9px] font-bold text-slate-600 dark:text-slate-300">
                 {isPl ? 'Luki' : 'Gaps'}
               </div>
               <ul className="mt-1 space-y-0.5">
                 {(processBriefData.currentGaps || [])
                   .slice(0, 3)
                   .map((item: string, idx: number) => (
-                    <li key={idx} className="text-[9px] text-c-text-muted">
+                    <li key={idx} className="text-[9px] text-slate-500 dark:text-slate-400">
                       {item}
                     </li>
                   ))}
               </ul>
             </div>
             <div>
-              <div className="text-[9px] font-bold text-c-text-secondary">
+              <div className="text-[9px] font-bold text-slate-600 dark:text-slate-300">
                 {isPl ? 'Ruchy' : 'Moves'}
               </div>
               <ul className="mt-1 space-y-0.5">
                 {(processBriefData.nextMoves || []).slice(0, 3).map((item: string, idx: number) => (
-                  <li key={idx} className="text-[9px] text-c-text-muted">
+                  <li key={idx} className="text-[9px] text-slate-500 dark:text-slate-400">
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
             <div>
-              <div className="text-[9px] font-bold text-c-text-secondary">
+              <div className="text-[9px] font-bold text-slate-600 dark:text-slate-300">
                 {isPl ? 'Checkpointy' : 'Checkpoints'}
               </div>
               <ul className="mt-1 space-y-0.5">
                 {(processBriefData.reviewCheckpoints || [])
                   .slice(0, 3)
                   .map((item: string, idx: number) => (
-                    <li key={idx} className="text-[9px] text-c-text-muted">
+                    <li key={idx} className="text-[9px] text-slate-500 dark:text-slate-400">
                       {item}
                     </li>
                   ))}
@@ -2423,19 +2416,19 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       )}
 
       {savingsAnalysisData && (
-        <div className="mx-3 mb-2 rounded-xl border border-warning-200/60 dark:border-warning-800/40 bg-warning-50/50 dark:bg-warning-950/20 p-3">
+        <div className="mx-3 mb-2 rounded-xl border border-amber-200/60 dark:border-amber-800/40 bg-amber-50/50 dark:bg-amber-950/20 p-3">
           <div className="flex items-center justify-between gap-2">
-            <div className="text-[11px] font-bold text-warning-700 dark:text-warning-300">
+            <div className="text-[11px] font-bold text-amber-700 dark:text-amber-300">
               {isPl ? 'Savings analysis' : 'Savings analysis'}
             </div>
-            <div className="text-[10px] font-semibold text-success-700 dark:text-success-300">
+            <div className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
               {savingsAnalysisData.totalSavingsEstimate}
             </div>
           </div>
           {(savingsAnalysisData.notes || []).length > 0 && (
             <ul className="mt-2 space-y-0.5">
               {(savingsAnalysisData.notes || []).slice(0, 3).map((item: string, idx: number) => (
-                <li key={idx} className="text-[9px] text-c-text-secondary">
+                <li key={idx} className="text-[9px] text-slate-600 dark:text-slate-400">
                   {item}
                 </li>
               ))}
@@ -2446,16 +2439,16 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
       {/* Summary Panel */}
       {showSummary && summaryData && (
-        <div className="mx-3 mb-2 rounded-xl border border-success-200/60 dark:border-success-800/40 bg-success-50/50 dark:bg-success-950/20 p-3 max-h-56 overflow-y-auto">
+        <div className="mx-3 mb-2 rounded-xl border border-emerald-200/60 dark:border-emerald-800/40 bg-emerald-50/50 dark:bg-emerald-950/20 p-3 max-h-56 overflow-y-auto">
           <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-success-700 dark:text-success-300">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
               <CheckCircle size={14} />
               {isPl ? 'Podsumowanie procesu' : 'Process Summary'}
             </div>
             <button
               type="button"
               onClick={() => setShowSummary(false)}
-              className="text-c-text-secondary hover:text-c-text"
+              className="text-slate-600 hover:text-slate-800 dark:hover:text-slate-300"
               aria-label={isPl ? 'Zamknij' : 'Close'}
             >
               <X size={14} />
@@ -2463,38 +2456,38 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           </div>
           <div className="grid grid-cols-3 gap-2 mb-2">
             {summaryData.totalSteps != null && (
-              <div className="text-center p-1.5 rounded-lg bg-c-surface">
-                <div className="text-sm font-bold text-c-text">
+              <div className="text-center p-1.5 rounded-lg bg-white/60 dark:bg-navy-800/40">
+                <div className="text-sm font-bold text-slate-800 dark:text-slate-200">
                   {summaryData.totalSteps}
                 </div>
-                <div className="text-[8px] text-c-text-muted">{isPl ? 'Kroków' : 'Steps'}</div>
+                <div className="text-[8px] text-slate-500">{isPl ? 'Kroków' : 'Steps'}</div>
               </div>
             )}
             {(summaryData.decisions ?? summaryData.totalDecisions) != null && (
-              <div className="text-center p-1.5 rounded-lg bg-c-surface">
-                <div className="text-sm font-bold text-warning-600 dark:text-warning-400">
+              <div className="text-center p-1.5 rounded-lg bg-white/60 dark:bg-navy-800/40">
+                <div className="text-sm font-bold text-amber-600 dark:text-amber-400">
                   {summaryData.decisions ?? summaryData.totalDecisions}
                 </div>
-                <div className="text-[8px] text-c-text-muted">{isPl ? 'Decyzji' : 'Decisions'}</div>
+                <div className="text-[8px] text-slate-500">{isPl ? 'Decyzji' : 'Decisions'}</div>
               </div>
             )}
             {(summaryData.lanes ?? summaryData.totalLanes) != null && (
-              <div className="text-center p-1.5 rounded-lg bg-c-surface">
-                <div className="text-sm font-bold text-c-info">
+              <div className="text-center p-1.5 rounded-lg bg-white/60 dark:bg-navy-800/40">
+                <div className="text-sm font-bold text-blue-600 dark:text-blue-400">
                   {summaryData.lanes ?? summaryData.totalLanes}
                 </div>
-                <div className="text-[8px] text-c-text-muted">{isPl ? 'Ścieżek' : 'Lanes'}</div>
+                <div className="text-[8px] text-slate-500">{isPl ? 'Ścieżek' : 'Lanes'}</div>
               </div>
             )}
           </div>
           {summaryData.estimatedDuration && (
-            <div className="text-[10px] text-c-text-secondary mb-1">
+            <div className="text-[10px] text-slate-600 dark:text-slate-400 mb-1">
               <span className="font-semibold">{isPl ? 'Szacowany czas:' : 'Est. duration:'}</span>{' '}
               {summaryData.estimatedDuration}
             </div>
           )}
           {summaryData.criticalPath && (
-            <div className="text-[10px] text-c-text-secondary mb-1">
+            <div className="text-[10px] text-slate-600 dark:text-slate-400 mb-1">
               <span className="font-semibold">
                 {isPl ? 'Ścieżka krytyczna:' : 'Critical path:'}
               </span>{' '}
@@ -2522,14 +2515,14 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           )}
           {summaryData.recommendations?.length > 0 && (
             <div className="mt-1.5">
-              <div className="text-[9px] font-bold text-success-600 dark:text-success-400 mb-0.5">
+              <div className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 mb-0.5">
                 {isPl ? 'Rekomendacje:' : 'Recommendations:'}
               </div>
               <ul className="space-y-0.5">
                 {summaryData.recommendations.map((r: string, i: number) => (
                   <li
                     key={i}
-                    className="text-[9px] text-success-600/80 dark:text-success-400/80 flex items-start gap-1"
+                    className="text-[9px] text-emerald-600/80 dark:text-emerald-400/80 flex items-start gap-1"
                   >
                     <Lightbulb size={10} className="mt-0.5 flex-shrink-0" /> {r}
                   </li>
@@ -2543,7 +2536,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       {/* Canvas */}
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="animate-spin text-c-text-secondary" size={24} />
+          <Loader2 className="animate-spin text-slate-600" size={24} />
         </div>
       ) : (
         <div ref={flowContainerRef} className="flex-1 relative">
@@ -2600,16 +2593,13 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           {filteredNodes.length === 0 && filteredGhostNodes.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
               <div className="text-center pointer-events-auto">
-                <div
-                  className="w-12 h-12 mx-auto mb-3 rounded-2xl flex items-center justify-center"
-                  style={{ backgroundColor: 'color-mix(in srgb, var(--c-tag-2) 12%, transparent)' }}
-                >
-                  <GitMerge size={24} className="text-c-tag-2" />
+                <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-indigo-500/10 flex items-center justify-center">
+                  <GitMerge size={24} className="text-indigo-500" />
                 </div>
-                <div className="text-sm font-semibold text-c-text-secondary mb-1">
+                <div className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1">
                   {isPl ? 'Pusty przepływ' : 'Empty process flow'}
                 </div>
-                <div className="text-[11px] text-c-text-secondary mb-3 max-w-[220px]">
+                <div className="text-[11px] text-slate-600 dark:text-slate-500 mb-3 max-w-[220px]">
                   {isPl
                     ? 'Dodaj kroki z paska narzędzi lub naciśnij Enter'
                     : 'Add steps from the toolbar or press Enter'}
@@ -2617,8 +2607,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 {!locked && (
                   <button
                     onClick={() => addNode(flowMode === 'vsm' ? 'vsm_process' : 'start')}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-c-tag-2 hover:brightness-110 transition-all"
-                    style={{ backgroundColor: 'color-mix(in srgb, var(--c-tag-2) 12%, transparent)' }}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 transition-colors"
                   >
                     <Plus size={14} />
                     {isPl ? 'Dodaj start' : 'Add start'}
@@ -2710,7 +2699,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   nodeStrokeWidth={3}
                   zoomable
                   pannable
-                  className="!bg-c-surface dark:!bg-c-surface !border-c-border-subtle dark:!border-c-border-subtle"
+                  className="!bg-white/80 dark:!bg-navy-900/80 !border-slate-200/60 dark:!border-navy-700/60"
                 />
               )}
               <CanvasZoomControls
@@ -2832,17 +2821,17 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       {/* ── New panels: Validation, AI Proposal, Readback, Properties, Export, Context Menu ── */}
 
       {showValidationPanel && (
-        <div className="absolute right-0 top-0 bottom-0 w-80 z-30 border-l border-c-border-subtle bg-c-surface overflow-y-auto shadow-lg">
-          <div className="flex items-center justify-between p-3 border-b border-c-border-subtle">
-            <span className="text-xs font-semibold text-c-text-secondary">
+        <div className="absolute right-0 top-0 bottom-0 w-80 z-30 border-l border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-950 overflow-y-auto shadow-lg">
+          <div className="flex items-center justify-between p-3 border-b border-slate-200/60 dark:border-navy-700/60">
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
               {isPl ? 'Walidacja' : 'Validation'}
             </span>
             <button
               onClick={() => setShowValidationPanel(false)}
-              className="p-1 rounded hover:bg-c-surface-raised"
+              className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
               aria-label={isPl ? 'Zamknij' : 'Close'}
             >
-              <X size={14} className="text-c-text-secondary" />
+              <X size={14} className="text-slate-600" />
             </button>
           </div>
           <ValidationResultsPanel
@@ -2859,17 +2848,17 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       )}
 
       {showAIPanel && (
-        <div className="absolute right-0 top-0 bottom-0 w-96 z-30 border-l border-c-border-subtle bg-c-surface overflow-y-auto shadow-lg">
-          <div className="flex items-center justify-between p-3 border-b border-c-border-subtle">
-            <span className="text-xs font-semibold text-c-text-secondary">
+        <div className="absolute right-0 top-0 bottom-0 w-96 z-30 border-l border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-950 overflow-y-auto shadow-lg">
+          <div className="flex items-center justify-between p-3 border-b border-slate-200/60 dark:border-navy-700/60">
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
               {isPl ? 'Propozycja AI' : 'AI Proposal'}
             </span>
             <button
               onClick={() => setShowAIPanel(false)}
-              className="p-1 rounded hover:bg-c-surface-raised"
+              className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
               aria-label={isPl ? 'Zamknij' : 'Close'}
             >
-              <X size={14} className="text-c-text-secondary" />
+              <X size={14} className="text-slate-600" />
             </button>
           </div>
           <AIProposalPanel
@@ -2891,17 +2880,17 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       )}
 
       {showReadbackPanel && (
-        <div className="absolute right-0 top-0 bottom-0 w-80 z-30 border-l border-c-border-subtle bg-c-surface overflow-y-auto shadow-lg">
-          <div className="flex items-center justify-between p-3 border-b border-c-border-subtle">
-            <span className="text-xs font-semibold text-c-text-secondary">
+        <div className="absolute right-0 top-0 bottom-0 w-80 z-30 border-l border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-950 overflow-y-auto shadow-lg">
+          <div className="flex items-center justify-between p-3 border-b border-slate-200/60 dark:border-navy-700/60">
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
               {isPl ? 'Odczyt semantyczny' : 'Semantic Readback'}
             </span>
             <button
               onClick={() => setShowReadbackPanel(false)}
-              className="p-1 rounded hover:bg-c-surface-raised"
+              className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
               aria-label={isPl ? 'Zamknij' : 'Close'}
             >
-              <X size={14} className="text-c-text-secondary" />
+              <X size={14} className="text-slate-600" />
             </button>
           </div>
           <ReadbackPanel
@@ -2917,17 +2906,17 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       )}
 
       {showPropertiesPanel && (
-        <div className="absolute right-0 top-0 bottom-0 w-80 z-30 border-l border-c-border-subtle bg-c-surface overflow-y-auto shadow-lg">
-          <div className="flex items-center justify-between p-3 border-b border-c-border-subtle">
-            <span className="text-xs font-semibold text-c-text-secondary">
+        <div className="absolute right-0 top-0 bottom-0 w-80 z-30 border-l border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-950 overflow-y-auto shadow-lg">
+          <div className="flex items-center justify-between p-3 border-b border-slate-200/60 dark:border-navy-700/60">
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
               {isPl ? 'Właściwości' : 'Properties'}
             </span>
             <button
               onClick={() => setShowPropertiesPanel(false)}
-              className="p-1 rounded hover:bg-c-surface-raised"
+              className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
               aria-label={isPl ? 'Zamknij' : 'Close'}
             >
-              <X size={14} className="text-c-text-secondary" />
+              <X size={14} className="text-slate-600" />
             </button>
           </div>
           <ProcessFlowPropertiesPanel
@@ -3070,66 +3059,66 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       )}
 
       {metricsEditorNode && (
-        <div className="absolute inset-0 z-40 flex items-center justify-center px-4" style={{ backgroundColor: "color-mix(in srgb, var(--c-bg) 55%, transparent)" }}>
-          <div className="w-full max-w-md rounded-2xl border border-c-border-subtle bg-c-surface p-4 shadow-2xl">
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-slate-900/30 px-4">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200/70 bg-white p-4 shadow-2xl dark:border-navy-700/70 dark:bg-navy-900">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="text-sm font-semibold text-c-text">
+                <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                   {isPl ? 'Metryki kroku procesu' : 'Process step metrics'}
                 </div>
-                <div className="text-[11px] text-c-text-muted">
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">
                   {metricsEditorNode.data?.label}
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setMetricsEditorNodeId(null)}
-                className="rounded-lg p-1.5 text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
+                className="rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-800 dark:hover:bg-navy-800 dark:hover:text-slate-200"
                 aria-label={isPl ? 'Zamknij' : 'Close'}
               >
                 <X size={14} />
               </button>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3">
-              <label className="text-[11px] text-c-text-secondary">
+              <label className="text-[11px] text-slate-600 dark:text-slate-300">
                 <div className="mb-1">{isPl ? 'Czas' : 'Duration'}</div>
                 <input
                   value={metricsDraft.duration || ''}
                   onChange={(e) =>
                     setMetricsDraft((prev) => ({ ...prev, duration: e.target.value }))
                   }
-                  className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs outline-none"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs outline-none dark:border-navy-700 dark:bg-navy-950"
                 />
               </label>
-              <label className="text-[11px] text-c-text-secondary">
+              <label className="text-[11px] text-slate-600 dark:text-slate-300">
                 <div className="mb-1">{isPl ? 'Jednostka' : 'Unit'}</div>
                 <input
                   value={metricsDraft.durationUnit || ''}
                   onChange={(e) =>
                     setMetricsDraft((prev) => ({ ...prev, durationUnit: e.target.value }))
                   }
-                  className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs outline-none"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs outline-none dark:border-navy-700 dark:bg-navy-950"
                 />
               </label>
-              <label className="text-[11px] text-c-text-secondary">
+              <label className="text-[11px] text-slate-600 dark:text-slate-300">
                 <div className="mb-1">{isPl ? 'Koszt' : 'Cost'}</div>
                 <input
                   value={metricsDraft.cost || ''}
                   onChange={(e) => setMetricsDraft((prev) => ({ ...prev, cost: e.target.value }))}
-                  className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs outline-none"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs outline-none dark:border-navy-700 dark:bg-navy-950"
                 />
               </label>
-              <label className="text-[11px] text-c-text-secondary">
+              <label className="text-[11px] text-slate-600 dark:text-slate-300">
                 <div className="mb-1">FTE</div>
                 <input
                   value={metricsDraft.fteCount || ''}
                   onChange={(e) =>
                     setMetricsDraft((prev) => ({ ...prev, fteCount: e.target.value }))
                   }
-                  className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs outline-none"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs outline-none dark:border-navy-700 dark:bg-navy-950"
                 />
               </label>
-              <label className="text-[11px] text-c-text-secondary">
+              <label className="text-[11px] text-slate-600 dark:text-slate-300">
                 <div className="mb-1">
                   {isPl ? 'Potencjał automatyzacji' : 'Automation potential'}
                 </div>
@@ -3138,21 +3127,21 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   onChange={(e) =>
                     setMetricsDraft((prev) => ({ ...prev, automationPotential: e.target.value }))
                   }
-                  className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs outline-none"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs outline-none dark:border-navy-700 dark:bg-navy-950"
                 >
                   <option value="low">{isPl ? 'Niski' : 'Low'}</option>
                   <option value="medium">{isPl ? 'Średni' : 'Medium'}</option>
                   <option value="high">{isPl ? 'Wysoki' : 'High'}</option>
                 </select>
               </label>
-              <label className="text-[11px] text-c-text-secondary">
+              <label className="text-[11px] text-slate-600 dark:text-slate-300">
                 <div className="mb-1">{isPl ? 'Szacowane oszczędności' : 'Savings estimate'}</div>
                 <input
                   value={metricsDraft.savingsEstimate || ''}
                   onChange={(e) =>
                     setMetricsDraft((prev) => ({ ...prev, savingsEstimate: e.target.value }))
                   }
-                  className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs outline-none"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs outline-none dark:border-navy-700 dark:bg-navy-950"
                 />
               </label>
             </div>
@@ -3160,14 +3149,14 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               <button
                 type="button"
                 onClick={() => setMetricsEditorNodeId(null)}
-                className="rounded-xl px-3 py-2 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised"
+                className="rounded-xl px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-navy-800"
               >
                 {isPl ? 'Anuluj' : 'Cancel'}
               </button>
               <button
                 type="button"
                 onClick={handleSaveMetrics}
-                className="rounded-xl bg-c-accent px-3 py-2 text-xs font-semibold text-white hover:brightness-110"
+                className="rounded-xl bg-slate-900 dark:bg-white px-3 py-2 text-xs font-semibold text-white dark:text-navy-900 hover:bg-slate-800 dark:hover:bg-slate-100"
               >
                 {isPl ? 'Zapisz metryki' : 'Save metrics'}
               </button>
