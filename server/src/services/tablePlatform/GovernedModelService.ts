@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
+import { evaluateFormula, extractFieldDependencies, parseFormula } from './formulaEngine.js';
 
 interface KpiDefinition {
   code: string;
@@ -399,50 +400,8 @@ const governedModelService = {
   async computeKpi(
     kpiId: string
   ): Promise<{ kpiId: string; value: number | null; computedAt: string }> {
-    const db = getDatabase();
     try {
-      const kpiRow = (await db.query('SELECT * FROM tp_kpi_definitions WHERE kpi_id = $1', [kpiId]))
-        .rows[0] as Record<string, unknown> | undefined;
-      if (!kpiRow) {
-        throw new Error(`KPI ${kpiId} not found`);
-      }
-
-      const formulaType = kpiRow.formula_type as string;
-      const sourceTableId = kpiRow.source_table_id as string | null;
-      const sourceFieldId = kpiRow.source_field_id as string | null;
-
-      let value: number | null = null;
-
-      if (formulaType === 'field_sum' && sourceTableId && sourceFieldId) {
-        const result = await db.query(
-          `SELECT SUM((data->>$2)::numeric) AS val FROM tp_records WHERE table_id = $1`,
-          [sourceTableId, sourceFieldId]
-        );
-        value =
-          (result.rows[0] as { val: string | null })?.val != null
-            ? Number((result.rows[0] as { val: string }).val)
-            : null;
-      } else if (formulaType === 'field_avg' && sourceTableId && sourceFieldId) {
-        const result = await db.query(
-          `SELECT AVG((data->>$2)::numeric) AS val FROM tp_records WHERE table_id = $1`,
-          [sourceTableId, sourceFieldId]
-        );
-        value =
-          (result.rows[0] as { val: string | null })?.val != null
-            ? Number((result.rows[0] as { val: string }).val)
-            : null;
-      } else if (formulaType === 'field_count' && sourceTableId) {
-        const result = await db.query(
-          'SELECT COUNT(*) AS val FROM tp_records WHERE table_id = $1',
-          [sourceTableId]
-        );
-        value = Number((result.rows[0] as { val: string })?.val ?? 0);
-      } else if (formulaType === 'expression') {
-        value = 0;
-      } else if (formulaType === 'canonical_line') {
-        value = 0;
-      }
-
+      const value = await computeKpiValue(kpiId, new Set<string>());
       return { kpiId, value, computedAt: new Date().toISOString() };
     } catch (e) {
       logger.error('[GovernedModelService] computeKpi failed', {
@@ -453,5 +412,222 @@ const governedModelService = {
     }
   },
 };
+
+/**
+ * Core KPI evaluator. Separated from the public `computeKpi` so the
+ * `expression` type can recurse into other KPIs while carrying a `visited`
+ * set for cycle detection.
+ */
+async function computeKpiValue(kpiId: string, visited: Set<string>): Promise<number | null> {
+  const db = getDatabase();
+
+  const kpiRow = (await db.query('SELECT * FROM tp_kpi_definitions WHERE kpi_id = $1', [kpiId]))
+    .rows[0] as Record<string, unknown> | undefined;
+  if (!kpiRow) {
+    throw new Error(`KPI ${kpiId} not found`);
+  }
+
+  const formulaType = kpiRow.formula_type as string;
+  const modelId = kpiRow.model_id as string;
+  const sourceTableId = kpiRow.source_table_id as string | null;
+  const sourceFieldId = kpiRow.source_field_id as string | null;
+  const formulaConfig = parseFormulaConfig(kpiRow.formula_config);
+
+  if (formulaType === 'field_sum' && sourceTableId && sourceFieldId) {
+    const result = await db.query(
+      `SELECT SUM((data->>$2)::numeric) AS val FROM tp_records WHERE table_id = $1`,
+      [sourceTableId, sourceFieldId]
+    );
+    return (result.rows[0] as { val: string | null })?.val != null
+      ? Number((result.rows[0] as { val: string }).val)
+      : null;
+  }
+
+  if (formulaType === 'field_avg' && sourceTableId && sourceFieldId) {
+    const result = await db.query(
+      `SELECT AVG((data->>$2)::numeric) AS val FROM tp_records WHERE table_id = $1`,
+      [sourceTableId, sourceFieldId]
+    );
+    return (result.rows[0] as { val: string | null })?.val != null
+      ? Number((result.rows[0] as { val: string }).val)
+      : null;
+  }
+
+  if (formulaType === 'field_count' && sourceTableId) {
+    const result = await db.query('SELECT COUNT(*) AS val FROM tp_records WHERE table_id = $1', [
+      sourceTableId,
+    ]);
+    return Number((result.rows[0] as { val: string })?.val ?? 0);
+  }
+
+  if (formulaType === 'expression') {
+    return computeExpressionKpi(kpiId, modelId, formulaConfig, visited);
+  }
+
+  if (formulaType === 'canonical_line') {
+    return computeCanonicalLineKpi(sourceTableId, sourceFieldId, formulaConfig);
+  }
+
+  return null;
+}
+
+function parseFormulaConfig(raw: unknown): Record<string, unknown> {
+  if (raw == null) return {};
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {};
+    } catch {
+      return {};
+    }
+  }
+  if (typeof raw === 'object') return raw as Record<string, unknown>;
+  return {};
+}
+
+/**
+ * `expression` KPI: evaluates a formula string that references OTHER KPIs in
+ * the SAME governed model by their `code`. Reuses the platform formula engine
+ * (parse/evaluate) rather than a new parser — KPI codes are treated as field
+ * references, resolved to the recursively-computed value of the sibling KPI.
+ *
+ * formula_config shape (defensive; the only shape the formula engine supports):
+ *   { "expression": "<formula referencing sibling KPI codes>" }
+ *   e.g. { "expression": "revenue - cost" } or "(profit / revenue) * 100"
+ *
+ * Cycle-safe via the `visited` set (self-reference or A→B→A throws).
+ * Missing/unparseable expression → null (never a fabricated 0).
+ */
+async function computeExpressionKpi(
+  kpiId: string,
+  modelId: string,
+  formulaConfig: Record<string, unknown>,
+  visited: Set<string>
+): Promise<number | null> {
+  const expression =
+    typeof formulaConfig.expression === 'string'
+      ? formulaConfig.expression
+      : typeof formulaConfig.formula === 'string'
+        ? (formulaConfig.formula as string)
+        : null;
+
+  if (!expression || expression.trim().length === 0) {
+    logger.warn('[GovernedModelService] expression KPI missing formula_config.expression', {
+      kpiId,
+    });
+    return null;
+  }
+
+  if (visited.has(kpiId)) {
+    throw new Error(`Circular KPI expression dependency detected at KPI ${kpiId}`);
+  }
+  visited.add(kpiId);
+
+  const ast = parseFormula(expression);
+  const referencedCodes = extractFieldDependencies(ast);
+
+  const db = getDatabase();
+  const record: Record<string, unknown> = {};
+  const fieldMap = new Map<string, string>();
+
+  for (const code of referencedCodes) {
+    const refRow = (
+      await db.query('SELECT kpi_id FROM tp_kpi_definitions WHERE model_id = $1 AND code = $2', [
+        modelId,
+        code,
+      ])
+    ).rows[0] as { kpi_id: string } | undefined;
+
+    if (!refRow) {
+      logger.warn('[GovernedModelService] expression references unknown KPI code', {
+        kpiId,
+        code,
+        modelId,
+      });
+      record[code] = 0;
+      continue;
+    }
+
+    // Recurse (shares the visited set → cycles across KPIs are caught).
+    const refValue = await computeKpiValue(refRow.kpi_id, visited);
+    record[code] = refValue ?? 0;
+    fieldMap.set(code, code);
+  }
+
+  visited.delete(kpiId);
+
+  const result = evaluateFormula(ast, record, fieldMap);
+  if (typeof result === 'number') return Number.isFinite(result) ? result : null;
+  if (result === null || result === undefined) return null;
+  const coerced = Number(result);
+  return Number.isFinite(coerced) ? coerced : null;
+}
+
+/**
+ * `canonical_line` KPI.
+ *
+ * DESIGN ASSUMPTION (documented — the enum value is the only spec that shipped
+ * in migration 713; no formula_config schema, FE builder, test, or doc pins the
+ * semantics). Migration 713 introduces this type ALONGSIDE the trust machinery
+ * it adds in the same file: `tp_model_sources.trusted`, `required_provenance`,
+ * and `ALTER TABLE tp_record_provenance ADD COLUMN trusted`. "Governed" models
+ * exist to compute KPIs over GOVERNED (trusted/canonical) data only. The most
+ * defensible interpretation is therefore: an aggregation IDENTICAL to
+ * field_sum/avg/count, but restricted to records whose provenance is marked
+ * `trusted = true` (the "canonical" / certified line of data). This keeps the
+ * computation inside the tablePlatform data model rather than guessing keys into
+ * the separate finance `financial_statement_lines` schema.
+ *
+ * formula_config: { "aggregation": "sum" | "avg" | "count" }  (default "sum")
+ * A record counts as canonical iff it has ≥1 provenance row with trusted=true.
+ * Returns null when the aggregation cannot be computed (no trusted records for
+ * sum/avg) — never a fabricated 0.
+ */
+async function computeCanonicalLineKpi(
+  sourceTableId: string | null,
+  sourceFieldId: string | null,
+  formulaConfig: Record<string, unknown>
+): Promise<number | null> {
+  if (!sourceTableId) {
+    logger.warn('[GovernedModelService] canonical_line KPI missing source_table_id');
+    return null;
+  }
+
+  const db = getDatabase();
+  const aggregation =
+    typeof formulaConfig.aggregation === 'string'
+      ? (formulaConfig.aggregation as string).toLowerCase()
+      : 'sum';
+
+  // Only records with a trusted provenance row are "canonical".
+  const trustedFilter = `r.id IN (SELECT record_id FROM tp_record_provenance WHERE trusted = true)`;
+
+  if (aggregation === 'count') {
+    const result = await db.query(
+      `SELECT COUNT(*) AS val FROM tp_records r WHERE r.table_id = $1 AND ${trustedFilter}`,
+      [sourceTableId]
+    );
+    return Number((result.rows[0] as { val: string })?.val ?? 0);
+  }
+
+  if (!sourceFieldId) {
+    logger.warn(
+      '[GovernedModelService] canonical_line KPI missing source_field_id for aggregation',
+      { aggregation }
+    );
+    return null;
+  }
+
+  const sqlAgg = aggregation === 'avg' ? 'AVG' : 'SUM';
+  const result = await db.query(
+    `SELECT ${sqlAgg}((r.data->>$2)::numeric) AS val
+       FROM tp_records r
+      WHERE r.table_id = $1 AND ${trustedFilter}`,
+    [sourceTableId, sourceFieldId]
+  );
+  return (result.rows[0] as { val: string | null })?.val != null
+    ? Number((result.rows[0] as { val: string }).val)
+    : null;
+}
 
 export default governedModelService;

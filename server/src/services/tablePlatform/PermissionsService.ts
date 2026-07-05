@@ -282,6 +282,102 @@ const permissionsService = {
   },
 
   /**
+   * Internal helper: resolve base_id for a governed-model CHILD row (KPI,
+   * dimension, or model source) by joining child → tp_governed_models, then
+   * enforce canAccessBase. Used by requireKpiAccess / requireDimensionAccess /
+   * requireModelSourceAccess so routes keyed by child ids (not :modelId) are
+   * guarded consistently with requireGovernedModelAccess.
+   */
+  _requireGovernedChildAccess(
+    childSql: string,
+    paramName: string,
+    notFoundLabel: string,
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): void {
+    const authReq = req as AuthRequest;
+    const userId = authReq.userId;
+    const orgId = authReq.organizationId;
+    if (!userId || !orgId) {
+      res.status(403).json({ error: 'Authentication and organization context required' });
+      return;
+    }
+    const childId = authReq.params?.[paramName];
+    if (!childId) {
+      res.status(400).json({ error: `${paramName} required` });
+      return;
+    }
+    const db = getDatabase();
+    db.query(childSql, [childId])
+      .then(async (result) => {
+        const row = result.rows[0] as { base_id: string } | undefined;
+        if (!row) {
+          res.status(404).json({ error: notFoundLabel });
+          return;
+        }
+        const allowed = await permissionsService.canAccessBase(userId, orgId, row.base_id);
+        if (!allowed) {
+          res.status(403).json({ error: 'Access denied to this governed model' });
+          return;
+        }
+        next();
+      })
+      .catch(next);
+  },
+
+  /**
+   * Express middleware: require access to a governed-model KPI keyed by :kpiId.
+   * Resolves kpi → model → base, then checks canAccessBase.
+   */
+  requireKpiAccess(req: Request, res: Response, next: NextFunction): void {
+    permissionsService._requireGovernedChildAccess(
+      `SELECT gm.base_id FROM tp_kpi_definitions k
+         JOIN tp_governed_models gm ON gm.model_id = k.model_id
+        WHERE k.kpi_id = $1`,
+      'kpiId',
+      'KPI not found',
+      req,
+      res,
+      next
+    );
+  },
+
+  /**
+   * Express middleware: require access to a governed-model dimension keyed by
+   * :dimensionId. Resolves dimension → model → base, then checks canAccessBase.
+   */
+  requireDimensionAccess(req: Request, res: Response, next: NextFunction): void {
+    permissionsService._requireGovernedChildAccess(
+      `SELECT gm.base_id FROM tp_dimensions d
+         JOIN tp_governed_models gm ON gm.model_id = d.model_id
+        WHERE d.dimension_id = $1`,
+      'dimensionId',
+      'Dimension not found',
+      req,
+      res,
+      next
+    );
+  },
+
+  /**
+   * Express middleware: require access to a governed-model source keyed by :id.
+   * Resolves source → model → base, then checks canAccessBase.
+   */
+  requireModelSourceAccess(req: Request, res: Response, next: NextFunction): void {
+    permissionsService._requireGovernedChildAccess(
+      `SELECT gm.base_id FROM tp_model_sources ms
+         JOIN tp_governed_models gm ON gm.model_id = ms.model_id
+        WHERE ms.id = $1`,
+      'id',
+      'Model source not found',
+      req,
+      res,
+      next
+    );
+  },
+
+  /**
    * Express middleware: require table access. Extracts tableId from params.
    * Returns 403 if denied.
    */
