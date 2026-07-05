@@ -114,6 +114,84 @@ describe('PresentationsTabContent quality badge', () => {
     expect(cell.textContent).toContain('Validated');
   });
 
+  // P2.6 — deck quality scorecard (checkDeckQualityGates) surfaced on the row.
+  it('renders the letter grade + score when governance.deckScorecard is present', () => {
+    renderTab([
+      makeDeck({
+        governance: {
+          deckScorecard: {
+            score: 92,
+            grade: 'A',
+            result: 'PASS',
+            p0: 0,
+            p1: 0,
+            p2: 0,
+            canExport: true,
+            topIssues: [],
+          },
+        },
+      }),
+    ]);
+    const cell = screen.getByTestId('cell-deck-1-quality');
+    expect(cell.textContent).toContain('A');
+    expect(cell.textContent).toContain('92');
+  });
+
+  it('exposes score + top issues in the grade chip tooltip (hover/expand)', () => {
+    renderTab([
+      makeDeck({
+        governance: {
+          deckScorecard: {
+            score: 55,
+            grade: 'F',
+            result: 'BLOCKED_P1',
+            p0: 1,
+            p1: 0,
+            p2: 0,
+            canExport: false,
+            topIssues: ['Placeholder content on 2 slides', 'Low source traceability'],
+          },
+        },
+      }),
+    ]);
+    const cell = screen.getByTestId('cell-deck-1-quality');
+    expect(cell.textContent).toContain('F');
+    const chip = cell.querySelector('[title]') as HTMLElement;
+    expect(chip).not.toBeNull();
+    expect(chip.getAttribute('title')).toContain('55/100');
+    expect(chip.getAttribute('title')).toContain('BLOCKED_P1');
+    expect(chip.getAttribute('title')).toContain('Placeholder content on 2 slides');
+  });
+
+  it('prefers the deckScorecard grade over the validationState fallback', () => {
+    renderTab([
+      makeDeck({
+        governance: {
+          validationState: 'attention_required',
+          deckScorecard: {
+            score: 84,
+            grade: 'B',
+            result: 'PASS_WITH_P2',
+            p0: 0,
+            p1: 0,
+            p2: 1,
+            canExport: true,
+            topIssues: [],
+          },
+        },
+      }),
+    ]);
+    const cell = screen.getByTestId('cell-deck-1-quality');
+    expect(cell.textContent).toContain('B');
+    expect(cell.textContent).not.toContain('Attention');
+  });
+
+  it('falls back to the validationState badge when no deckScorecard is present', () => {
+    renderTab([makeDeck({ governance: { validationState: 'validated' } })]);
+    const cell = screen.getByTestId('cell-deck-1-quality');
+    expect(cell.textContent).toContain('Validated');
+  });
+
   it('renders an "Attention" badge when governance.validationState is attention_required', () => {
     renderTab([makeDeck({ governance: { validationState: 'attention_required' } })]);
     const cell = screen.getByTestId('cell-deck-1-quality');

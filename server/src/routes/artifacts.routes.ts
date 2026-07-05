@@ -29,6 +29,10 @@ import {
   WAVE5_ARTIFACT_LIFECYCLE,
   WAVE5_ARTIFACT_TYPES,
 } from '../services/wave5ArtifactRuntimeService.js';
+import {
+  computeDeckListScorecard,
+  type DeckListScorecard,
+} from '../services/presentationDeckScorecard.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -405,10 +409,27 @@ router.get(
       },
     });
 
-    const data = items.map((item) => ({
+    const baseData = items.map((item) => ({
       ...item,
       ...buildActionTargetPayload(item),
     }));
+
+    // P2.6 — surface the EXISTING deck quality gates (checkDeckQualityGates) as a
+    // compact per-row scorecard so the Prezentacje list badge shows a real score
+    // + A-F grade, not just the governance validationState. Presentation rows
+    // only; each computation is fail-open (null → list keeps the governance
+    // badge) and runs in parallel so a slow/broken deck never blocks the list.
+    const data = await Promise.all(
+      baseData.map(async (item) => {
+        const anyItem = item as { originRuntime?: string; originRecordId?: string };
+        if (anyItem.originRuntime !== 'presentation' || !anyItem.originRecordId) return item;
+        const deckScorecard: DeckListScorecard | null = await computeDeckListScorecard(
+          organizationId,
+          anyItem.originRecordId
+        );
+        return deckScorecard ? { ...item, deckScorecard } : item;
+      })
+    );
 
     res.json({ data, total: data.length, canonicalHome: 'outputs_library' });
   })
