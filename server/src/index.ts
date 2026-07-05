@@ -1812,7 +1812,77 @@ function startHttpListener(): void {
     logger.info('✅ WebSocket available at ws://0.0.0.0:' + PORT + '/ws');
     logger.info(`[Server] ✅ Server started on port ${PORT}`);
     void announceDeploy();
+    void detectCrashLoop();
   });
+}
+
+/**
+ * Crash-loop detector. A container that OOMs or throws on boot restarts on the
+ * SAME commit, so announceDeploy's env+sha dedup (by design) keeps it silent —
+ * the platform quietly restarts in a loop with no operator signal. Here we
+ * record every start and, if the same commit boots ≥3× within 10 minutes, fire
+ * ONE throttled CRITICAL alert. Fully best-effort / fail-soft (DB + Slack).
+ */
+async function detectCrashLoop(): Promise<void> {
+  if (isTest) return;
+  try {
+    const gitSha =
+      process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GITHUB_SHA || process.env.GIT_SHA;
+    if (!gitSha) return; // local dev / unconfigured
+    const shortSha = gitSha.slice(0, 10);
+    const env = process.env.APP_ENV || process.env.NODE_ENV || 'development';
+
+    const { run: dbRunLocal, get: dbGetLocal } = await import('./utils/DbPromise.js');
+    const { randomUUID } = await import('node:crypto');
+
+    await dbRunLocal(
+      `CREATE TABLE IF NOT EXISTS server_start_events (
+        id TEXT PRIMARY KEY,
+        git_sha TEXT,
+        app_env TEXT,
+        started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`
+    );
+    await dbRunLocal(
+      `CREATE INDEX IF NOT EXISTS idx_server_start_events_started ON server_start_events(started_at)`
+    );
+
+    const nowMs = Date.now();
+    await dbRunLocal(
+      `INSERT INTO server_start_events (id, git_sha, app_env, started_at) VALUES (?, ?, ?, ?)`,
+      [randomUUID(), shortSha, env, new Date(nowMs).toISOString()]
+    );
+
+    const windowIso = new Date(nowMs - 10 * 60 * 1000).toISOString();
+    const row = await dbGetLocal<{ n?: number | string }>(
+      `SELECT COUNT(*) AS n FROM server_start_events
+        WHERE git_sha = ? AND app_env = ? AND started_at >= ?`,
+      [shortSha, env, windowIso]
+    );
+    const count = Number(row?.n ?? 0);
+
+    if (count >= 3) {
+      await sendSystemAlert({
+        title: `Możliwa pętla restartów (${count} startów / 10 min)`,
+        message:
+          `Serwer ${env} wystartował ${count}× w ciągu 10 min na tym samym commicie ${shortSha}. ` +
+          `To wskazuje na crash-loop (np. OOM lub błąd przy starcie), który nie generuje osobnego wdrożenia ani alertu.`,
+        severity: 'CRITICAL',
+        source: 'Process',
+        throttleKey: `crashloop:${env}:${shortSha}`,
+        throttleMs: 15 * 60 * 1000,
+      });
+    }
+
+    // Best-effort retention: drop start rows older than 24h so the table stays tiny.
+    await dbRunLocal(`DELETE FROM server_start_events WHERE started_at < ?`, [
+      new Date(nowMs - 24 * 60 * 60 * 1000).toISOString(),
+    ]).catch(() => undefined);
+  } catch (err) {
+    logger.warn('[Server] detectCrashLoop failed (non-fatal):', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 }
 
 /**
