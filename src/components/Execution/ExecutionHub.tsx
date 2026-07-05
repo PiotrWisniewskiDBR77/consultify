@@ -23,7 +23,6 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities';
 import {
   AlertTriangle,
-  Archive,
   Calendar,
   CalendarDays,
   CheckCircle2,
@@ -37,7 +36,6 @@ import {
   Link2,
   Loader2,
   MessageSquare,
-  Pencil,
   RefreshCw,
   Rocket,
   Scale,
@@ -60,7 +58,6 @@ import {
 import type { ReportConfig } from '@/components/Reports/Wizard';
 import { ReportGeneratorWizard } from '@/components/Reports/Wizard';
 import { Callout } from '@/components/shared/NModeBlocks';
-import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { LoadingState } from '@/components/shared/states';
 import {
   standardPreviewShortcuts,
@@ -102,7 +99,6 @@ import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
 import { type InitiativePreviewV3Model } from '../Initiatives/InitiativePreviewV3';
 import { PortfolioHealthScore } from '../MyWork/Executive/PortfolioHealthScore';
 import {
-  FilterableTable,
   FilterChip,
   HubWorkAreaLoadError,
   HubWorkAreaLoading,
@@ -612,6 +608,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [rolloutSubview, setRolloutSubview] = useState<string>('kpi');
   const [reportFilters, setReportFilters] = useState<FilterChip[]>([]);
   const [reportPreviewId, setReportPreviewId] = useState<string | null>(null);
+  // #12 — bulk selection for the Reports catalog table (left checkbox column).
+  const [reportSelectedIds, setReportSelectedIds] = useState<Set<string>>(new Set());
   const [reportPreset, setReportPreset] = useState<
     'all' | 'weekly' | 'monthly' | 'bi-weekly' | 'on-demand' | 'sponsor'
   >('all');
@@ -2607,6 +2605,41 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     [handleInlineStatusChange, handleOpenDocument, isPilotParticipant, t]
   );
 
+  // Triada standard (StandardTable rowMenu contract, canon A6) — Reports
+  // catalog kebab. Module declares blocks 1-3 only; StandardTable auto-adds
+  // block 4 (Open preview · Edit · Archive) and block 5 (Delete, danger,
+  // always last). Report catalog rows are generated definitions (no per-row
+  // edit/archive backend) → left undeclared so StandardTable renders them
+  // disabled with "Coming soon (backend)", never silently omitted.
+  const buildReportRowMenu = useCallback(
+    (report: ReportDef): StandardRowMenu => ({
+      primary: [
+        {
+          id: 'open_preview',
+          label: t('common.openPreview', 'Otwórz podgląd'),
+          icon: ChevronRight,
+          onClick: () => setReportPreviewId(report.id),
+        },
+        {
+          id: 'open_full',
+          label: t('common.openFull', 'Otwórz pełny widok'),
+          icon: FileText,
+          onClick: () => handleOpenReport(report),
+        },
+      ],
+      universalHandlers: {
+        preview: () => setReportPreviewId(report.id),
+        // Brak API edycji/archiwizacji definicji raportu — pozycje disabled
+        // z notą (StandardTable dokłada je sama, canon A6 blok 4).
+      },
+      destructive: {
+        // Brak endpointu usuwania raportu — disabled z notą (StandardTable
+        // dokłada ją sama, canon A6 blok 5).
+      },
+    }),
+    [handleOpenReport, t]
+  );
+
   const portfolioInitiatives = useMemo(
     () => filteredInitiatives.map((i) => toPortfolioInitiative(i)),
     [filteredInitiatives]
@@ -4303,6 +4336,18 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     return result;
   }, [enrichedReportCatalog, reportPreset, searchQuery]);
 
+  // #12 — bulk selection helpers for the Reports catalog table, 1:1 with the
+  // 'list' (Portfolio) tab's toggleSummarySelectAll/clearSummarySelection.
+  const toggleReportSelectAll = useCallback(() => {
+    setReportSelectedIds((prev) => {
+      const visibleIds = filteredReportCatalog.map((r) => r.id);
+      const allSelected = visibleIds.length > 0 && visibleIds.every((id) => prev.has(id));
+      return allSelected ? new Set<string>() : new Set(visibleIds);
+    });
+  }, [filteredReportCatalog]);
+
+  const clearReportSelection = useCallback(() => setReportSelectedIds(new Set()), []);
+
   // MANAGER — operator cockpit metrics/suggestions removed (dead remnants);
   // ManagerModuleView now fetches its own data via API.
 
@@ -4634,65 +4679,10 @@ Please return:
     [navigate]
   );
 
-  const renderReportPreviewFooter = useCallback(
-    (report: ReportDef) => {
-      const rag = computeRAG(report);
-      return (
-        <div className="flex items-center gap-2 px-4 py-3 border-t border-c-border-subtle">
-          <button
-            type="button"
-            onClick={() => handleGenerateReport(report)}
-            className="h-8 px-4 rounded-lg text-xs font-medium bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 hover:bg-navy-800 transition-colors"
-          >
-            {t('execution.reportPanel.generateAI', 'Generate with AI')}
-          </button>
-          <button
-            type="button"
-            onClick={() => handleGenerateInWordy(report)}
-            className="h-8 px-3 rounded-lg text-xs font-medium border border-brand/40 text-brand hover:bg-brand/5 dark:border-brand/50 dark:text-brand dark:hover:bg-brand/10 transition-colors"
-          >
-            {t('execution.reportPanel.generateInWordy', 'Generate in Wordy')}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              exportReportPDF(report, rag);
-              toast.success(t('execution.reportPanel.pdfExported', 'PDF downloaded'));
-            }}
-            className="h-8 px-3 rounded-lg text-xs font-medium border border-c-border-subtle text-c-text-muted hover:bg-c-surface-raised transition-colors"
-          >
-            PDF
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              // #20 — copy the REAL generated content; fall back to descriptor.
-              const wizardConfig = generatedReports.find((g) => g.id === report.id);
-              const doc = generateReportDocument({
-                typeId: (wizardConfig?.typeId as string) || report.id,
-                title: report.title,
-                audience: report.audience,
-                periodFrom: wizardConfig?.periodFrom,
-                periodTo: wizardConfig?.periodTo,
-                scopeNote: wizardConfig?.scopeNote,
-                ctx: reportDataContext,
-                isPolish,
-              });
-              const md = `${reportDocumentToMarkdown(doc)}\n\n---\n\n${buildReportMarkdown(report, rag)}`;
-              navigator.clipboard.writeText(md).then(
-                () => toast.success(t('execution.reportPanel.copied', 'Copied')),
-                () => toast.error(t('execution.reportPanel.copyFailed', 'Copy failed'))
-              );
-            }}
-            className="h-8 px-3 rounded-lg text-xs font-medium border border-c-border-subtle text-c-text-muted hover:bg-c-surface-raised transition-colors"
-          >
-            {t('execution.reportPanel.copy', 'Copy')}
-          </button>
-        </div>
-      );
-    },
-    [handleGenerateReport, handleGenerateInWordy, t, generatedReports, reportDataContext, isPolish]
-  );
+  // Note: the footer button row (Generate with AI / Generate in Wordy / PDF /
+  // Copy) that used to live here as `renderReportPreviewFooter` is now the
+  // StandardPreview canon A7 block 6 action grid — see `reportPreviewActions`
+  // below, wired into the 'reports' table-view preview pane.
 
   const renderReportsCatalog = () => {
     if (reportDataContext.totalInitiatives === 0) {
@@ -4712,6 +4702,10 @@ Please return:
     }
 
     if (viewMode === 'table') {
+      // Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7): Execution
+      // 'reports' tab → StandardTable + StandardPreview, 1:1 with the 'list'
+      // (Portfolio) tab in this same file. Module declares TYLKO data + kebab
+      // contract (buildReportRowMenu); all chrome comes from Standard* facades.
       type ReportRow = ReportDef & { title: string };
       const selectedReportPreviewId = reportPreviewId;
       const selectedReport = selectedReportPreviewId
@@ -4719,79 +4713,99 @@ Please return:
             | ReportRow
             | undefined) ?? null)
         : null;
-      const reportIds = filteredReportCatalog.map((r) => r.id);
+      const rag = selectedReport ? computeRAG(selectedReport) : null;
+      const ragConf = rag ? RAG_CONFIG[rag] : null;
+      const ragTone: 'success' | 'warning' | 'danger' | 'neutral' =
+        rag === 'green' ? 'success' : rag === 'amber' ? 'warning' : rag === 'red' ? 'danger' : 'neutral';
 
       return (
-        <div className="h-full overflow-hidden">
-          <TableWithPreviewLayout<ReportRow>
-            selectedId={selectedReportPreviewId}
-            selectedItem={selectedReport}
-            onSelect={setReportPreviewId}
-            itemIds={reportIds}
-            getItemById={(id) =>
-              (filteredReportCatalog.find((r) => r.id === id) as ReportRow) ?? null
-            }
-            onOpenFull={(id) => {
-              const r = filteredReportCatalog.find((x) => x.id === id);
-              if (r) handleOpenReport(r);
-            }}
-            renderPreview={(item) => renderReportPreviewBody(item)}
-            renderPreviewFooter={(item) => renderReportPreviewFooter(item)}
-          >
-            <FilterableTable
-              columns={reportColumns}
-              data={filteredReportCatalog as any[]}
-              selectedRowId={selectedReportPreviewId}
-              persistKey="execution-reports"
-              onRowClick={(row) => setReportPreviewId(String(row.id))}
-              onRowDoubleClick={(row) => {
-                const r = filteredReportCatalog.find((x) => x.id === row.id);
-                if (r) handleOpenReport(r);
-              }}
-              getRowActions={(row) => {
-                const r = filteredReportCatalog.find((x) => x.id === row.id);
-                if (!r) return [];
-                return [
-                  {
-                    id: 'open_preview',
-                    label: t('common.openPreview', 'Otwórz podgląd'),
-                    icon: ChevronRight,
-                    onClick: () => setReportPreviewId(String(r.id)),
-                  },
-                  {
-                    id: 'open_full',
-                    label: t('common.openFull', 'Otwórz pełny widok'),
-                    icon: FileText,
-                    onClick: () => handleOpenReport(r),
-                  },
-                  // §9.2 Fixed Bottom Manifest — report catalog rows are generated
-                  // definitions (no per-row edit/archive backend); slots stay visible
-                  // and disabled rather than silently omitted.
-                  {
-                    id: 'edit',
-                    label: t('common.edit', 'Edytuj'),
-                    icon: Pencil,
-                    disabled: true,
-                    description: t('common.comingSoonBackend', 'Wkrótce (backend)'),
-                    onClick: () => undefined,
-                  },
-                  {
-                    id: 'archive',
-                    label: t('common.archive', 'Archiwizuj'),
-                    icon: Archive,
-                    disabled: true,
-                    description: t('common.comingSoonBackend', 'Wkrótce (backend)'),
-                    onClick: () => undefined,
-                  },
-                ];
-              }}
-              activeFilters={reportFilters}
-              onFilterChange={setReportFilters}
-              emptyMessage={t('execution.reportCatalog.noData', 'No reports')}
-              canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
-              density="compact"
-            />
-          </TableWithPreviewLayout>
+        <div className="flex h-full flex-col overflow-hidden">
+          <div className="min-h-0 flex-1 flex overflow-hidden">
+            <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
+              <StandardTable
+                columns={reportColumns}
+                data={filteredReportCatalog as unknown as Array<Record<string, unknown> & { id: string }>}
+                selectedRowId={selectedReportPreviewId}
+                onRowClick={(row) => setReportPreviewId(String((row as any).id))}
+                onRowDoubleClick={(row) => {
+                  const r = filteredReportCatalog.find((x) => x.id === (row as any).id);
+                  if (r) handleOpenReport(r);
+                }}
+                rowDescription={() => null}
+                persistKey="execution-reports"
+                density="compact"
+                selection={{ selectedIds: reportSelectedIds, onChange: setReportSelectedIds }}
+                empty={{
+                  icon: FileText,
+                  title: t('execution.reportCatalog.noData', 'No reports'),
+                  description: t(
+                    'execution.reportCatalog.noDataDesc',
+                    'Reports will be populated once initiatives are actively executing. Add initiatives to the portfolio to start generating reports.'
+                  ),
+                }}
+                rowMenu={(row) => {
+                  const r = filteredReportCatalog.find((x) => x.id === (row as any).id);
+                  return r
+                    ? buildReportRowMenu(r)
+                    : ({ primary: [], universalHandlers: {}, destructive: {} } as StandardRowMenu);
+                }}
+                activeFilters={reportFilters}
+                onFilterChange={setReportFilters}
+              />
+            </div>
+
+            {selectedReport ? (
+              <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+                <StandardPreview
+                  title={selectedReport.title}
+                  onClose={() => setReportPreviewId(null)}
+                  onOpenFull={() => handleOpenReport(selectedReport)}
+                  meta={{
+                    pills: [
+                      ...(ragConf ? [{ label: ragConf.label, tone: ragTone }] : []),
+                      { label: selectedReport.cadence, tone: 'neutral' as const },
+                    ],
+                    trailing: (
+                      <span className="text-[11px] font-semibold text-c-text-secondary">
+                        {selectedReport.audience}
+                      </span>
+                    ),
+                  }}
+                  details={{
+                    text: [
+                      `${t('execution.reportCatalog.col.data', 'Live Data')}: ${
+                        selectedReport.highlights.map((h) => `${h.label}: ${h.value}`).join(', ') || '—'
+                      }`,
+                      `${t('execution.reportCatalog.col.sections', 'Sections')}: ${selectedReport.sections.length}`,
+                      '',
+                      selectedReport.scope,
+                    ].join('\n'),
+                    onCopy: () => {
+                      void navigator.clipboard?.writeText(
+                        `${selectedReport.title} — ${selectedReport.cadence} (${ragConf?.label ?? ''})`
+                      );
+                    },
+                  }}
+                  ai={{
+                    hints: [
+                      t(
+                        'execution.reportPanel.summarizePrompt',
+                        'Summarize this report in 5 bullets and propose 3 next steps.'
+                      ),
+                    ],
+                    onRunHint: () => handleGenerateReport(selectedReport),
+                  }}
+                  relations={selectedReport.dataSources.map((ds) => ({ label: ds }))}
+                  actions={reportPreviewActions(selectedReport)}
+                >
+                  {/* Rich generated report document + methodology descriptor —
+                      preserved from the pre-triada preview (module-specific
+                      content beyond the 6 canon blocks, canon A7 `children`). */}
+                  {renderReportPreviewBody(selectedReport)}
+                </StandardPreview>
+              </aside>
+            ) : null}
+          </div>
         </div>
       );
     }
@@ -4948,6 +4962,71 @@ Please return:
     [selectedSummaryInitiative, t, handleOpenDocument, copyExecutionLink]
   );
 
+  // Triada standard (StandardPreview, canon A7): action grid for the
+  // 'reports' tab preview pane, 1:1 with listPreviewActions above. Row 1
+  // (resolutions) = generation entry points; row 2 (informational) = export.
+  const reportPreviewActions = useCallback(
+    (report: ReportDef): StandardPreviewActions => {
+      const rag = computeRAG(report);
+      return {
+        resolutions: [
+          {
+            id: 'generate-ai',
+            variant: 'positive',
+            label: t('execution.reportPanel.generateAI', 'Generate with AI'),
+            icon: Sparkles,
+            shortcut: 'A',
+            onClick: () => handleGenerateReport(report),
+          },
+          {
+            id: 'generate-wordy',
+            variant: 'neutral',
+            label: t('execution.reportPanel.generateInWordy', 'Generate in Wordy'),
+            icon: FileText,
+            onClick: () => handleGenerateInWordy(report),
+          },
+        ],
+        informational: [
+          {
+            id: 'pdf',
+            variant: 'neutral',
+            label: 'PDF',
+            icon: ExternalLink,
+            onClick: () => {
+              exportReportPDF(report, rag);
+              toast.success(t('execution.reportPanel.pdfExported', 'PDF downloaded'));
+            },
+          },
+          {
+            id: 'copy',
+            variant: 'neutral',
+            label: t('execution.reportPanel.copy', 'Copy'),
+            icon: Link2,
+            onClick: () => {
+              const wizardConfig = generatedReports.find((g) => g.id === report.id);
+              const doc = generateReportDocument({
+                typeId: (wizardConfig?.typeId as string) || report.id,
+                title: report.title,
+                audience: report.audience,
+                periodFrom: wizardConfig?.periodFrom,
+                periodTo: wizardConfig?.periodTo,
+                scopeNote: wizardConfig?.scopeNote,
+                ctx: reportDataContext,
+                isPolish,
+              });
+              const md = `${reportDocumentToMarkdown(doc)}\n\n---\n\n${buildReportMarkdown(report, rag)}`;
+              navigator.clipboard.writeText(md).then(
+                () => toast.success(t('execution.reportPanel.copied', 'Copied')),
+                () => toast.error(t('execution.reportPanel.copyFailed', 'Copy failed'))
+              );
+            },
+          },
+        ],
+      };
+    },
+    [t, handleGenerateReport, handleGenerateInWordy, generatedReports, reportDataContext, isPolish]
+  );
+
   // Esc closes preview; single-key shortcuts (O) active while preview open (kanon B.24/B.31).
   useEffect(() => {
     if (activeTab !== 'list' || viewMode !== 'table' || !summaryPreviewInitiativeId) return;
@@ -4969,6 +5048,30 @@ Please return:
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [activeTab, viewMode, summaryPreviewInitiativeId, listPreviewActions]);
+
+  // Esc closes preview; single-key shortcuts (A) active while preview open
+  // (kanon B.24/B.31), 1:1 with the 'list' tab effect above.
+  useEffect(() => {
+    if (activeTab !== 'reports' || viewMode !== 'table' || !reportPreviewId) return;
+    const selected = filteredReportCatalog.find((r) => r.id === reportPreviewId);
+    const shortcuts = selected ? standardPreviewShortcuts(reportPreviewActions(selected)) : {};
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable)
+        return;
+      if (e.key === 'Escape') {
+        setReportPreviewId(null);
+        return;
+      }
+      const handler = shortcuts[e.key.toUpperCase()];
+      if (handler) {
+        e.preventDefault();
+        handler();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [activeTab, viewMode, reportPreviewId, filteredReportCatalog, reportPreviewActions]);
 
   // Triada standard (canon A3/Menu 3): bulk command row for the 'list' tab
   // table, 1:1 with Assessment/Results catalog bulk bars. Replaces the
@@ -5010,6 +5113,27 @@ Please return:
               {t('execution.bulk.noCommonStatus', 'Brak wspólnej akcji statusu dla zaznaczenia')}
             </span>
           )}
+        </div>
+        <div className={MENU_3_RIGHT_CLASS} />
+      </div>
+    ) : null;
+
+  // Triada standard (canon A3/Menu 3): bulk command row for the 'reports' tab
+  // table, 1:1 with the 'list' tab above. Report catalog rows have no bulk
+  // status transitions (generated definitions) — Select all/Clear only.
+  const reportBulkCommandRowContent =
+    activeTab === 'reports' && viewMode === 'table' && reportSelectedIds.size > 0 ? (
+      <div className={MENU_3_INNER_CLASS}>
+        <div className={MENU_3_LEFT_CLASS}>
+          <span className="inline-flex h-7 items-center rounded-full px-2.5 text-[11px] font-semibold text-c-text whitespace-nowrap">
+            {t('execution.table.selectedCount', '{{count}} selected', {
+              count: reportSelectedIds.size,
+            })}
+          </span>
+          <Menu3Chip onClick={toggleReportSelectAll}>
+            {t('common.selectAll', 'Select all')}
+          </Menu3Chip>
+          <Menu3Chip onClick={clearReportSelection}>{t('common.clear', 'Clear')}</Menu3Chip>
         </div>
         <div className={MENU_3_RIGHT_CLASS} />
       </div>
@@ -5416,7 +5540,7 @@ Please return:
             ? managerCommandRowContent
             : activeTab === ('rollout' as ModuleTab)
               ? rolloutCommandRowContent
-              : (summaryBulkCommandRowContent ?? commandRowContent)
+              : (summaryBulkCommandRowContent ?? reportBulkCommandRowContent ?? commandRowContent)
         }
         commandRowRightContent={
           activeTab === ('people_change' as ModuleTab) ? managerCommandRowRightContent : undefined
