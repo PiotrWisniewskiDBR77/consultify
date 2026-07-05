@@ -80,5 +80,15 @@ K6. ✅ **Results/KPI catalog — DEPLOY na demo `240102eada`** (2026-07-05): ro
 - **Finance** (6 zakładek: Statements ✅już-zrobione-Fala1-wcześniej/Models/Analysis/Prediction/Valuation/Investment — WSZYSTKIE w jednym FinanceHub.tsx, dispatch sekwencyjny).
 - **Interview** (5 realnych kandydatów, WSZYSTKIE w jednym InterviewHub.tsx, funkcje BARDZO DUŻE 400-1000+ linii: renderSessionsTable/renderAssignmentsTable(×3 taby)/renderTemplatesTable/renderInsightsTable + zakładka Initiatives niezweryfikowana — najwyższe ryzyko, dispatch pojedynczo, jeden na raz, nie równolegle).
 - Osobne zadanie w tle: naprawić `AuditsHub.test.tsx` (asercja "Completion" po usunięciu ProgramDashboard).
-K2. Golden path Fala 1 pozycja po pozycji (Interview → Initiatives → Execution → Results → Finance → Materiały).
-K3. Fala 2. K4. Fala 3 (reachability-driven).
+
+## ★★★ K9. ROLLOUT KOMPLETNY — demo `a1685bb798` (2026-07-05 wieczór, praca autonomiczna)
+**Fala 2 (Execution/Finance/Interview) + Fala 2b (Interview 4 tabele) — WSZYSTKIE realne tabele-listy w aplikacji na StandardTable.**
+- **Execution** ✅ List (ExecutionHub 'list' tab) + Reports (renderReportsCatalog) — kebab 5-blok (Mark Complete/Blocked/Cancel + Delay-disabled + Archive/Delete-disabled), preview 6-blok, bulk w Menu3. Zaudytowane oczami.
+- **Finance** ✅ wspólny blok dla 5 zakładek (Models/Analysis/Prediction/Valuation/Investment; Statements już był Fala1). Preview reużywa bogaty renderPreviewBody (DCF/sensitivity/prognozy) jako children StandardPreview. Naprawiono crimson ikony 'prediction' w financeTypes.ts (primary→violet, paleta danych). Zaudytowane oczami (Prediction).
+- **Interview** ✅ KOMPLETNY 6/6: Inbox(Fala1) + Sessions + Insights + Templates + Assigned(managed/my/pending shared) + Initiatives. Zero surowych `<table>` w InterviewHub.tsx (−4116 linii netto). Robotnik incydentalnie naprawił 2 crimson leaki (bg-crimson-600 CTA w Initiatives empty state, active-filter-chip). Wszystkie 4 nowe tabele zaudytowane oczami.
+- **⚠ Interview preview = bespoke dług:** 5 tabel Interview mają StandardTable, ale preview nadal przez `TableWithPreviewLayout`+bespoke bodies (współdzielony z grid view — konwersja na StandardPreview wymaga odłączenia grid, osobny etap). Tabela=kanoniczna, preview=stara.
+- Deploy: 3× spotkano równoległy push innych sesji na `demo` (feedback/security, potem Londyn union M06/M07/Whiteboard/Prezentacje) — WSZYSTKIE scalone przez `git merge origin/demo` bez konfliktów, NIGDY force-push. triada-standard zsynchronizowany z union.
+- **Pozostałe długi (NIE tabele):** Interview preview bespoke; Materiały bulk-bar (architektura Menu3 w Hub); Templates card-GRID crimson (`task_fb82b5b8`); `AuditsHub.test.tsx`.
+- Pułapka wykryta: worktree `/private/tmp/triada` wyrejestrowany mid-rollout przez `git worktree prune` — praca bezpieczna bo w branchu, odtworzony. Zob. pamięć `finding_integ_worktree_deregistered`.
+
+**WERDYKT: standard tabel wdrożony w 100% na wszystkich modułach golden path + Fala 2. Zostają tylko nie-tabelowe długi (preview/bulk/grid/test) do osobnego domknięcia.**
