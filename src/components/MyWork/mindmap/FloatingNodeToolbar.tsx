@@ -1,4 +1,12 @@
 import {
+  AlignCenterHorizontal,
+  AlignCenterVertical,
+  AlignEndHorizontal,
+  AlignEndVertical,
+  AlignHorizontalDistributeCenter,
+  AlignStartHorizontal,
+  AlignStartVertical,
+  AlignVerticalDistributeCenter,
   Bold,
   CheckSquare,
   CircleDot,
@@ -27,6 +35,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { ArtifactLink } from '@/utils/artifactLinks';
+
+import type { AlignMode } from './alignDistribute';
 
 import { ArtifactLinksPopover } from './floating-toolbar/ArtifactLinksPopover';
 import { BranchThemeDropdown } from './floating-toolbar/BranchThemeDropdown';
@@ -74,6 +84,14 @@ export interface FloatingNodeToolbarProps {
   mode?: 'single' | 'multi';
   /** Count of selected nodes when mode === 'multi' (for the toolbar label). */
   selectionCount?: number;
+  /**
+   * M06 Fala 3.1 (behind `mindmapAlignSnap`): when true and mode === 'multi',
+   * render the align/distribute button cluster. Distribute buttons are disabled
+   * unless `canDistribute` (≥3 nodes selected).
+   */
+  showAlign?: boolean;
+  canDistribute?: boolean;
+  onAlignDistribute?: (mode: AlignMode) => void;
   style?: {
     color?: string;
     fillOpacity?: number;
@@ -106,6 +124,9 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
   hasChildren = false,
   mode = 'single',
   selectionCount,
+  showAlign = false,
+  canDistribute = false,
+  onAlignDistribute,
   style = {},
   position,
   onUpdate,
@@ -170,6 +191,40 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
               ? `${selectionCount ?? ''} zaznaczonych`.trim()
               : `${selectionCount ?? ''} selected`.trim()}
           </div>
+        )}
+
+        {/* M06 Fala 3.1: align / distribute cluster (multi-select only). */}
+        {isMulti && showAlign && onAlignDistribute && (
+          <>
+            {(
+              [
+                { m: 'align-left', Icon: AlignStartVertical, pl: 'Wyrównaj do lewej', en: 'Align left', dist: false },
+                { m: 'align-center-h', Icon: AlignCenterVertical, pl: 'Wyśrodkuj w poziomie', en: 'Align center', dist: false },
+                { m: 'align-right', Icon: AlignEndVertical, pl: 'Wyrównaj do prawej', en: 'Align right', dist: false },
+                { m: 'align-top', Icon: AlignStartHorizontal, pl: 'Wyrównaj do góry', en: 'Align top', dist: false },
+                { m: 'align-middle-v', Icon: AlignCenterHorizontal, pl: 'Wyśrodkuj w pionie', en: 'Align middle', dist: false },
+                { m: 'align-bottom', Icon: AlignEndHorizontal, pl: 'Wyrównaj do dołu', en: 'Align bottom', dist: false },
+                { m: 'distribute-h', Icon: AlignHorizontalDistributeCenter, pl: 'Rozłóż poziomo', en: 'Distribute horizontally', dist: true },
+                { m: 'distribute-v', Icon: AlignVerticalDistributeCenter, pl: 'Rozłóż pionowo', en: 'Distribute vertically', dist: true },
+              ] as const
+            ).map(({ m, Icon, pl, en, dist }) => {
+              const disabledBtn = dist && !canDistribute;
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => onAlignDistribute(m as AlignMode)}
+                  disabled={disabledBtn}
+                  title={isPl ? pl : en}
+                  aria-label={isPl ? pl : en}
+                  className={`${btnClass(false)} ${disabledBtn ? 'opacity-40 pointer-events-none' : ''}`}
+                >
+                  <Icon size={13} />
+                </button>
+              );
+            })}
+            <div className="w-px h-4 bg-c-surface-raised dark:bg-c-surface-raised mx-0.5" />
+          </>
         )}
 
         {!isMulti && (

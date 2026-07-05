@@ -103,6 +103,8 @@ import { EmbedInReports } from './mindmap/EmbedInReports';
 import { ExportDiagramCode } from './mindmap/ExportDiagramCode';
 import { ExportPowerPoint } from './mindmap/ExportPowerPoint';
 import { FloatingNodeToolbar } from './mindmap/FloatingNodeToolbar';
+import { type AlignMode, computeAlignDistribute } from './mindmap/alignDistribute';
+import { SmartGuidesOverlay } from './mindmap/SmartGuidesOverlay';
 import { GradientEdge } from './mindmap/GradientEdge';
 import { IdeaFunnelAnalytics } from './mindmap/IdeaFunnelAnalytics';
 import { ImageUrlModal } from './mindmap/ImageUrlModal';
@@ -1938,6 +1940,9 @@ function MindMapInner({
   }, [debugTick]);
 
   const [showMiniMap, setShowMiniMap] = useState(false);
+  // M06 Fala 3.1: snap-to-grid toggle (local, default OFF even when the flag is
+  // ON). 16px grid matches the mind-map spacing rhythm.
+  const [snapEnabled, setSnapEnabled] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -4982,6 +4987,11 @@ function MindMapInner({
   // exact pre-existing behavior (null unless exactly one node is selected).
   const multiToolbarEnabled = isFeatureEnabled('mindmapMultiToolbar');
 
+  // M06 Fala 3.1: align/distribute buttons + snap-to-grid + smart guides, all
+  // behind `mindmapAlignSnap`. Snap is opt-in even when the flag is ON — it
+  // starts OFF so the flag alone never changes drag behavior on the canvas.
+  const alignSnapEnabled = isFeatureEnabled('mindmapAlignSnap');
+
   const floatingToolbarInfo = useMemo(() => {
     if (locked) return null;
     if (contextMenu) return null;
@@ -5049,6 +5059,52 @@ function MindMapInner({
     [debugLog, floatingToolbarInfo, updateNodeDataById, setNodes, broadcastNodeUpdate]
   );
 
+  // M06 Fala 3.1: apply an align/distribute op to the current multi-selection.
+  // Pure geometry (computeAlignDistribute) → position patches; positions are
+  // written through setNodes (no data mutation), pushed onto the undo stack
+  // beforehand, broadcast per-node like a drag, and debounce-persisted. No-op
+  // when the flag is off or the selection is too small for the mode.
+  const applyAlignDistribute = useCallback(
+    (mode: AlignMode) => {
+      if (!alignSnapEnabled || locked) return;
+      const selectedSet = new Set(selectedNodeIds);
+      const selected = (nodes as Node[]).filter((n) => selectedSet.has(n.id) && n.position);
+      const patches = computeAlignDistribute(
+        selected.map((n) => ({
+          id: n.id,
+          position: n.position,
+          width: n.width,
+          height: n.height,
+          data: n.data as any,
+        })),
+        mode
+      );
+      if (patches.length === 0) return;
+      const patchById = new Map(patches.map((p) => [p.id, p.position]));
+      pushUndo();
+      setNodes((prev: Node[]) =>
+        prev.map((n) => {
+          const next = patchById.get(n.id);
+          return next ? { ...n, position: next } : n;
+        })
+      );
+      for (const p of patches) {
+        broadcastNodeUpdate({ id: p.id, position: p.position } as any);
+      }
+      debouncedSave();
+    },
+    [
+      alignSnapEnabled,
+      locked,
+      selectedNodeIds,
+      nodes,
+      pushUndo,
+      setNodes,
+      broadcastNodeUpdate,
+      debouncedSave,
+    ]
+  );
+
   return (
     <div ref={containerRef} className={containerClassName} tabIndex={-1} data-mm-surface="mindmap">
       {/* Floating node toolbar */}
@@ -5064,6 +5120,9 @@ function MindMapInner({
           hasChildren={findChildrenIds(floatingToolbarInfo.nodeId).length > 0}
           mode={floatingToolbarInfo.mode}
           selectionCount={floatingToolbarInfo.nodeIds.length}
+          showAlign={alignSnapEnabled && floatingToolbarInfo.mode === 'multi'}
+          onAlignDistribute={applyAlignDistribute}
+          canDistribute={floatingToolbarInfo.nodeIds.length >= 3}
           style={{
             color: floatingToolbarInfo.node.data?.color,
             fillOpacity: floatingToolbarInfo.node.data?.fillOpacity,
@@ -5290,6 +5349,9 @@ function MindMapInner({
           selectedNodeId={selectedNodeIds[0] || null}
           showMiniMap={showMiniMap}
           onToggleMiniMap={() => setShowMiniMap((prev) => !prev)}
+          {...(alignSnapEnabled
+            ? { snapEnabled, onToggleSnap: () => setSnapEnabled((prev) => !prev) }
+            : {})}
           onFullscreenToggle={onFullscreenToggle}
           isFullscreen={isFullscreen}
         />
@@ -5335,6 +5397,9 @@ function MindMapInner({
               onEdgeClick={onEdgeClick}
               onNodeDrag={onNodeDrag}
               onNodeDragStop={onNodeDragStop}
+              {...(alignSnapEnabled && snapEnabled
+                ? { snapToGrid: true, snapGrid: [16, 16] as [number, number] }
+                : {})}
               nodeTypes={reactFlowNodeTypes}
               edgeTypes={reactFlowEdgeTypes}
               // ReactFlow's built-in keyboard-a11y makes nodes focusable and binds
@@ -5457,6 +5522,8 @@ function MindMapInner({
                   />
                 );
               })()}
+              {/* M06 Fala 3.1: alignment guides during drag (flag-gated, read-only). */}
+              {alignSnapEnabled && <SmartGuidesOverlay threshold={5} />}
               {showMiniMap && (
                 <MiniMap
                   nodeStrokeWidth={3}
