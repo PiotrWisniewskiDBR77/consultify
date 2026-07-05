@@ -266,6 +266,19 @@ class RealtimePlatformService {
     );
   }
 
+  // B1 (M09): read-only lookup of the ACTIVE shared session for a (org, tool_session_id),
+  // WITHOUT creating one. Lets a client resolve its facilitation role on board-open to
+  // enforce observer read-only, while keeping facilitation lazy (no row is spawned just
+  // by opening the board). Returns null when no active session exists.
+  async getActiveFacilitationSessionByTool(orgId: string, toolSessionId: string) {
+    return queryHelpers.queryFirst(
+      `SELECT * FROM tool_facilitation_sessions
+        WHERE organization_id=$1 AND tool_session_id=$2 AND status <> 'ended'
+        ORDER BY created_at ASC LIMIT 1`,
+      [orgId, toolSessionId]
+    );
+  }
+
   async updateTimerState(sessionId: string, timerState: object) {
     await queryHelpers.queryRun(
       `UPDATE tool_facilitation_sessions SET timer_state=$1 WHERE id=$2`,

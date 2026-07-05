@@ -592,7 +592,7 @@ interface IdeaWhiteboardToolProps {
 export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   open,
   ideaId,
-  locked = false,
+  locked: lockedProp = false,
   refreshToken,
   onSaved,
   onSelectionChange,
@@ -628,6 +628,13 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   const [drawingPaths, setDrawingPaths] = useState<DrawingPath[]>([]);
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [sessionState, setSessionState] = useState<WhiteboardSessionState>(DEFAULT_SESSION_STATE);
+  // B1 (M09): an 'observer' in an active facilitation session is view-only. This folds into
+  // the existing `locked` mechanism already threaded through every mutation site below, so
+  // node creation / drag / resize / edit / draw are all disabled without touching each call
+  // site. Server-side enforcement (my-work.routes.ts, WHITEBOARD_OBSERVER_READONLY) is the
+  // real gate; this is the UX so an observer isn't left wondering why edits silently 403.
+  const isObserver = sessionState.role === 'observer';
+  const locked = lockedProp || isObserver;
   const [sharePolicy, setSharePolicy] = useState<WhiteboardSharePolicy>(DEFAULT_SHARE_POLICY);
   const [libraryItems, setLibraryItems] = useState<WhiteboardLibraryItem[]>([]);
   const [outcomeRegistry, setOutcomeRegistry] = useState<WhiteboardOutcomeRecord[]>([]);
@@ -1161,6 +1168,26 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     [buildWhiteboardExtensions, edges, extensions, nodes]
   );
 
+  // B1 (M09): read THIS user's own role row from the shared session (tool_facilitation_roles).
+  // Returns 'observer' | 'facilitator' | 'participant' | null. Best-effort: any failure → null
+  // so we fall back to the facilitator_id-derived default and never wrongly lock the board.
+  const resolveMyAssignedRole = useCallback(
+    async (sessionId: string): Promise<string | null> => {
+      try {
+        const res: any = await Api.facilitationGetRoles(sessionId);
+        const roles: any[] = Array.isArray(res?.roles) ? res.roles : [];
+        const mine = roles.find(
+          (r) => String(r?.user_id ?? r?.userId ?? '') === currentUserId
+        );
+        const roleName = String(mine?.role_name ?? mine?.roleName ?? '').toLowerCase();
+        return roleName || null;
+      } catch {
+        return null;
+      }
+    },
+    [currentUserId]
+  );
+
   const ensureFacilitationSession = useCallback(async () => {
     if (sessionState.sessionId) return sessionState.sessionId;
     // Idempotent on the server (M09 L-04): a 2nd participant on the same board resolves
@@ -1177,8 +1204,17 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     // self-assigned on the client; joiners become participants automatically.
     const server: any = await Api.facilitationGetSession(sessionId).catch(() => null);
     const facilitatorId = String(server?.facilitator_id || server?.facilitatorId || '');
+    // B1 (M09): a facilitator can assign THIS user the 'observer' role; that assignment
+    // (tool_facilitation_roles) overrides the facilitator_id-derived default so the board
+    // renders read-only. Roles table wins for 'observer'; otherwise fall back to the
+    // creator-vs-joiner default (facilitator / participant).
+    const assignedRole = await resolveMyAssignedRole(sessionId);
     const serverRole =
-      facilitatorId && facilitatorId === currentUserId ? 'facilitator' : 'participant';
+      assignedRole === 'observer'
+        ? 'observer'
+        : facilitatorId && facilitatorId === currentUserId
+          ? 'facilitator'
+          : 'participant';
     const rawTimer = server?.timer_state ?? server?.timerState;
     const timerState: Record<string, unknown> =
       rawTimer && typeof rawTimer === 'object'
@@ -1224,7 +1260,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       }).catch(() => toast.error(t('myWork.whiteboard.errors.roleChangeFailed')));
     }
     return sessionId;
-  }, [currentUserId, ideaId, sessionState.sessionId, t, toolSessionId]);
+  }, [currentUserId, ideaId, resolveMyAssignedRole, sessionState.sessionId, t, toolSessionId]);
 
   const syncFacilitationVotes = useCallback(
     async (sessionId: string) => {
@@ -2245,6 +2281,41 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     return () => window.clearInterval(interval);
   }, [open, sessionState.sessionId, sessionState.votingOpen, syncFacilitationVotes]);
 
+  // B1 (M09): resolve THIS user's facilitation role as soon as the board opens, so an
+  // 'observer' the facilitator locked is rendered read-only WITHOUT them first having to
+  // interact with a facilitation control. We only ADOPT the session locally when the user
+  // is an observer — for facilitator/participant we leave the lazy join path unchanged
+  // (facilitation stays dormant until they actually use it), preserving existing behavior.
+  useEffect(() => {
+    if (!open || sessionState.sessionId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        // READ-ONLY: resolves an existing active session without creating one, so simply
+        // opening the board never spawns a facilitation row (facilitation stays lazy).
+        const resolved: any = await Api.facilitationResolveByTool(toolSessionId);
+        const session = resolved?.session;
+        const sessionId = String(session?.id || '');
+        if (!sessionId || cancelled) return;
+        const assignedRole = await resolveMyAssignedRole(sessionId);
+        if (cancelled || assignedRole !== 'observer') return;
+        setSessionState((prev) => ({
+          ...prev,
+          active: true,
+          sessionId,
+          toolSessionId,
+          role: 'observer',
+          updatedAt: Date.now(),
+        }));
+      } catch {
+        /* best-effort: never block opening the board */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, sessionState.sessionId, toolSessionId, resolveMyAssignedRole]);
+
   // M09 L-04: live cross-participant sync of facilitation state. While the session is
   // active, re-read the SHARED server session so a 2nd participant sees the facilitator's
   // phase / voting / timer / role changes without a reload (votes are polled separately
@@ -2257,8 +2328,17 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       const server: any = await Api.facilitationGetSession(sessionId).catch(() => null);
       if (cancelled || !server) return;
       const facilitatorId = String(server.facilitator_id || server.facilitatorId || '');
+      // B1 (M09): honor a facilitator-assigned 'observer' role on every poll so it is not
+      // clobbered back to 'participant' by the facilitator_id default (which would silently
+      // re-enable editing for someone the facilitator locked to view-only).
+      const assignedRole = await resolveMyAssignedRole(sessionId);
+      if (cancelled) return;
       const serverRole =
-        facilitatorId && facilitatorId === currentUserId ? 'facilitator' : 'participant';
+        assignedRole === 'observer'
+          ? 'observer'
+          : facilitatorId && facilitatorId === currentUserId
+            ? 'facilitator'
+            : 'participant';
       const rawTimer = server.timer_state ?? server.timerState;
       let timerState: Record<string, unknown> = {};
       if (rawTimer && typeof rawTimer === 'object') timerState = rawTimer;
@@ -2294,7 +2374,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [open, sessionState.sessionId, sessionState.active, currentUserId]);
+  }, [open, sessionState.sessionId, sessionState.active, currentUserId, resolveMyAssignedRole]);
 
   useEffect(() => {
     if (!open) return;
@@ -3150,6 +3230,29 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           {ideaStage && (
             <div className="absolute top-2 right-2 z-20 px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider bg-c-surface backdrop-blur-sm border border-c-border-subtle text-c-text-secondary shadow-sm">
               {ideaStage}
+            </div>
+          )}
+
+          {/* B1 (M09): observer read-only badge — signals why board interactions are disabled */}
+          {isObserver && (
+            <div
+              data-testid="whiteboard-observer-badge"
+              className="absolute top-2 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-c-surface backdrop-blur-sm border border-c-border-subtle text-c-text-secondary shadow-sm"
+            >
+              <svg
+                className="w-3 h-3"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              {isPl ? 'Obserwator — tylko podgląd' : 'Observer — view only'}
             </div>
           )}
 

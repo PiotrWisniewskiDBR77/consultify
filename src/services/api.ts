@@ -18640,6 +18640,15 @@ export const Api = {
     });
     return handleResponse(res, 'Failed to get facilitation session');
   },
+  // B1 (M09): read-only resolve of the ACTIVE shared session for a toolSessionId
+  // (e.g. `whiteboard:<ideaId>`) WITHOUT creating one → { session } | { session: null }.
+  facilitationResolveByTool: async (toolSessionId: string) => {
+    const res = await fetch(
+      `${API_URL}/realtime-v4/facilitation/sessions/by-tool/${encodeURIComponent(toolSessionId)}`,
+      { headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to resolve facilitation session');
+  },
   facilitationUpdateTimer: async (sessionId: string, timerState: object) => {
     const res = await fetch(`${API_URL}/realtime-v4/facilitation/sessions/${sessionId}/timer`, {
       method: 'PUT',
