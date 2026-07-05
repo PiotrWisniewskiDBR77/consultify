@@ -247,7 +247,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   onGraphSummaryChange,
   onTableContextChange,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   // DP-5: heuristic AI overlays (see DEFAULT_FLAGS in useFeatureFlags)
@@ -473,9 +473,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       const settled = Date.now() - workspaceMountedAtRef.current > CONFLICT_TOAST_SETTLE_MS;
       if (settled) {
         toast(
-          isPolish
-            ? 'Wykryto konflikt zmian. Odświeżam mapę z serwera.'
-            : 'Change conflict detected. Refreshing map from server.',
+          t('mindmap.changeConflictDetectedRefreshingMapFrom'),
           { icon: '⚠️' }
         );
       }
@@ -653,14 +651,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           setActiveTool(runtimeResult.nextTool);
         }
         setMapRefreshToken((v) => v + 1);
-        toast.success(
-          isPolish
-            ? `Zaakceptowano ${accepted.length} propozycji`
-            : `Accepted ${accepted.length} proposal${accepted.length > 1 ? 's' : ''}`
-        );
+        toast.success(t('mindmap.acceptedProposalsCount', { count: accepted.length }));
       } catch (err: any) {
         toast.error(
-          err?.message || (isPolish ? 'Nie udało się zastosować zmian' : 'Failed to apply changes')
+          err?.message || (t('mindmap.failedToApplyChanges'))
         );
       }
     },
@@ -788,12 +782,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
         const result = transformSelection(transformInput, targetTool);
 
-        toast.success(
-          isPolish
-            ? `Przekształcanie zaznaczenia do: ${targetTool}`
-            : `Transforming selection to: ${targetTool}`,
-          { duration: 1200 }
-        );
+        toast.success(t('mindmap.transformingSelectionTo', { targetTool }), { duration: 1200 });
         setActiveTool(targetTool);
 
         if (result) {
@@ -857,9 +846,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         const sel2 = selectionRef.current;
         if (sel2.type === 'none' || !sel2.ids?.length) {
           toast(
-            isPolish
-              ? 'Najpierw zaznacz obiekt na canvasie'
-              : 'Select an object on the canvas first',
+            t('mindmap.selectAnObjectOnTheCanvas'),
             { icon: '🔗', duration: 2000 }
           );
           return;
@@ -943,19 +930,17 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             setProposalBatch(batch);
             setActivePanel('tools');
             toast.success(
-              isPolish
-                ? `Znaleziono ${batch.proposals.length} propozycji powiązań`
-                : `Found ${batch.proposals.length} link suggestions`
+              t('mindmap.linkSuggestionsFoundCount', { count: batch.proposals.length })
             );
           } else {
             toast(
-              isPolish ? 'Nie znaleziono pasujących artefaktów' : 'No matching artifacts found',
+              t('mindmap.noMatchingArtifactsFound'),
               { icon: '🔍' }
             );
           }
         } catch (err: any) {
           toast.error(
-            err?.message || (isPolish ? 'Nie udało się wyszukać powiązań' : 'Failed to find links')
+            err?.message || (t('mindmap.failedToFindLinks'))
           );
         }
         return;
@@ -967,7 +952,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       if (action === 'mm_connect_mode') handleMindMapInteractionModeChange('connect');
       if (action === 'switch_to_process_flow') {
         setActiveTool('process_flow');
-        toast.success(isPolish ? 'Przełączono na przepływ procesu' : 'Switched to Process Flow');
+        toast.success(t('mindmap.switchedToProcessFlow'));
         return;
       }
       externalOnQuickAction?.(action);
@@ -1045,7 +1030,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           detail: { ideaId: realId, tool: activeTool, themeId },
         })
       );
-      toast.success(isPolish ? `Zastosowano motyw: ${themeId}` : `Applied theme: ${themeId}`, {
+      toast.success(t('mindmap.appliedThemeName', { themeId }), {
         duration: 1200,
       });
     },
@@ -1059,7 +1044,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           detail: { ideaId: realId, semantic },
         })
       );
-      toast.success(isPolish ? `Aktywny kit: ${semantic}` : `Active kit: ${semantic}`, {
+      toast.success(t('mindmap.activeKitName', { semantic }), {
         duration: 1200,
       });
     },
@@ -1071,7 +1056,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       if (!realId) return;
       const template = findIdeaTemplate(templateId);
       if (!template) {
-        toast.error(isPolish ? 'Nie znaleziono szablonu' : 'Template not found');
+        toast.error(t('mindmap.templateNotFound'));
         return;
       }
       try {
@@ -1085,20 +1070,18 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           seedText: seedText,
         });
         setMapRefreshToken((v) => v + 1);
-        toast.success(isPolish ? 'Szablon zastosowany' : 'Template applied', { duration: 1200 });
+        toast.success(t('mindmap.templateApplied'), { duration: 1200 });
       } catch (error: any) {
         if (error?.status === 409) {
           toast(
-            isPolish
-              ? 'Wykryto konflikt zmian. Odświeżam mapę z serwera.'
-              : 'Change conflict detected. Refreshing map from server.',
+            t('mindmap.changeConflictDetectedRefreshingMapFrom'),
             { icon: '⚠️' }
           );
           setMapRefreshToken((v) => v + 1);
         } else {
           toast.error(
             error?.message ||
-              (isPolish ? 'Nie udało się zastosować szablonu' : 'Failed to apply template')
+              (t('mindmap.failedToApplyTemplate'))
           );
         }
       }
@@ -1159,9 +1142,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           setActivePanel('tools');
         } else {
           toast(
-            isPolish
-              ? 'AI nie zwróciło propozycji do review'
-              : 'AI returned no proposals to review',
+            t('mindmap.aiReturnedNoProposalsToReview'),
             {
               icon: '🤖',
             }
@@ -1169,7 +1150,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         }
       } catch (error: any) {
         toast.error(
-          error?.message || (isPolish ? 'Nie udało się uruchomić AI' : 'Failed to run AI')
+          error?.message || (t('mindmap.failedToRunAi'))
         );
       }
     },
@@ -1265,12 +1246,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         );
         await graphRuntime.flushGraph({ reason: 'manual' });
         setMapRefreshToken((v) => v + 1);
-        toast.success(
-          isPolish ? `Zapisano status review: ${nextStatus}` : `Saved review status: ${nextStatus}`
-        );
+        toast.success(t('mindmap.savedReviewStatusName', { nextStatus }));
       } catch (err: any) {
         toast.error(
-          err?.message || (isPolish ? 'Nie udało się zapisać review' : 'Failed to save review')
+          err?.message || (t('mindmap.failedToSaveReview'))
         );
       }
     },
@@ -1310,12 +1289,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         });
         setMapRefreshToken((v) => v + 1);
         toast.success(
-          isPolish
-            ? `Zaimportowano diagram (${payload.sourceFormat})`
-            : `Imported diagram (${payload.sourceFormat})`
+          t('mindmap.importedDiagramFormat', { sourceFormat: payload.sourceFormat })
         );
       } catch (err: any) {
-        toast.error(err?.message || (isPolish ? 'Import nie powiódł się' : 'Import failed'));
+        toast.error(err?.message || (t('mindmap.importFailed')));
       }
     },
     [graphLanes, graphRuntime, isPolish]
@@ -1347,7 +1324,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     () =>
       String(
         creationPayload?.title ||
-          deriveIdeaTitleFromSeedIntent(seedIntent, isPolish ? 'Nowe wyzwanie' : 'New challenge')
+          deriveIdeaTitleFromSeedIntent(seedIntent, t('mindmap.newChallenge'))
       ).trim(),
     [creationPayload?.title, isPolish, seedIntent]
   );
@@ -1368,7 +1345,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         let createdRequest = draftIdeaBootstrapPromises.get(ideaId);
         if (!createdRequest) {
           createdRequest = Api.createMyIdea({
-            title: initialIdeaTitle || (isPolish ? 'Nowe wyzwanie' : 'New challenge'),
+            title: initialIdeaTitle || (t('mindmap.newChallenge')),
             body: initialIdeaBody,
             tags: creationPayload?.tags || [],
             sourceType: creationPayload?.sourceType || 'manual',
@@ -1385,7 +1362,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         setRealId(nextId);
         setTitle(
           String(
-            created?.title || initialIdeaTitle || (isPolish ? 'Nowe wyzwanie' : 'New challenge')
+            created?.title || initialIdeaTitle || (t('mindmap.newChallenge'))
           )
         );
         setSeedText(
@@ -1476,7 +1453,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         }
       }
     } catch (err: any) {
-      toast.error(err?.message || (isPolish ? 'Nie udało się wczytać' : 'Failed to load'));
+      toast.error(err?.message || (t('mindmap.failedToLoad')));
     } finally {
       setLoading(false);
     }
@@ -1558,19 +1535,17 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     const globals: ShortcutHelp[] = [
       {
         key: 'Alt+1 / 2 / 3 / 4',
-        description: isPolish
-          ? 'Przełącz narzędzie (Mapa / Tablica / Przepływ / Tabela)'
-          : 'Switch tool (Mind Map / Whiteboard / Process Flow / Table)',
+        description: t('mindmap.switchToolMindMapWhiteboardProcess'),
         category: 'navigation',
       },
       {
         key: isMacPlatform ? '⌘F' : 'Ctrl+F',
-        description: isPolish ? 'Szukaj w tej idei' : 'Search this idea',
+        description: t('mindmap.searchThisIdea'),
         category: 'navigation',
       },
       {
         key: `Shift+1 / ${isMacPlatform ? '⌘0' : 'Ctrl+0'}`,
-        description: isPolish ? 'Dopasuj widok (zoom to fit)' : 'Zoom to fit',
+        description: t('mindmap.zoomToFit'),
         category: 'navigation',
       },
     ];
@@ -1592,7 +1567,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     ): CommandItem => ({
       id: `ws-tool-${id}`,
       title: isPolish ? `Przełącz: ${labelPl}` : `Switch to ${labelEn}`,
-      subtitle: isPolish ? 'Narzędzie workspace' : 'Workspace tool',
+      subtitle: t('mindmap.workspaceTool'),
       icon,
       category: 'workspace',
       action: closeAnd(() => setActiveTool(id)),
@@ -1605,7 +1580,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       toolCmd('table', 'Tabela', 'Table', <Table2 size={18} />),
       {
         id: 'ws-search',
-        title: isPolish ? 'Szukaj w tej idei' : 'Search this idea',
+        title: t('mindmap.searchThisIdea'),
         icon: <Search size={18} />,
         category: 'workspace',
         shortcut: '⌘F',
@@ -1614,7 +1589,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       },
       {
         id: 'ws-templates',
-        title: isPolish ? 'Otwórz galerię szablonów' : 'Open template gallery',
+        title: t('mindmap.openTemplateGallery'),
         icon: <LayoutTemplate size={18} />,
         category: 'workspace',
         action: closeAnd(() => setTemplateGalleryOpen(true)),
@@ -1622,7 +1597,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       },
       {
         id: 'ws-export',
-        title: isPolish ? 'Eksportuj…' : 'Export…',
+        title: t('mindmap.export'),
         icon: <Download size={18} />,
         category: 'workspace',
         action: closeAnd(() => setExportMenuOpen(true)),
@@ -1630,7 +1605,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       },
       {
         id: 'ws-help',
-        title: isPolish ? 'Skróty klawiszowe' : 'Keyboard shortcuts',
+        title: t('mindmap.keyboardShortcuts'),
         icon: <Keyboard size={18} />,
         category: 'workspace',
         shortcut: '?',
@@ -1762,7 +1737,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         prefillText ||
           buildAskAIMessage({
             type: 'idea',
-            title: title || seedText?.slice(0, 80) || (isPolish ? 'Wyzwanie' : 'Challenge'),
+            title: title || seedText?.slice(0, 80) || (t('mindmap.challenge')),
             description: seedText || undefined,
           })
       );
@@ -1778,17 +1753,15 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     const liveNodes = graphNodesRef.current?.length ? graphNodesRef.current : graphNodes;
     const liveEdges = graphEdgesRef.current?.length ? graphEdgesRef.current : graphEdges;
     if (!liveNodes?.length) {
-      toast(isPolish ? 'Mapa jest pusta' : 'The map is empty', { icon: '🗺️' });
+      toast(t('mindmap.theMapIsEmpty'), { icon: '🗺️' });
       return;
     }
-    const mapTitle = title || seedText?.slice(0, 80) || (isPolish ? 'Mapa myśli' : 'Mind map');
+    const mapTitle = title || seedText?.slice(0, 80) || (t('mindmap.mindMap'));
     const outline = ideaMapToMarkdown(
       { nodes: liveNodes, edges: liveEdges },
       { title: mapTitle, isPolish: Boolean(isPolish) }
     );
-    const kickoff = isPolish
-      ? `Oto mapa myśli „${mapTitle}". Omówmy ją i zaproponuj następne kroki:\n\n${outline}`
-      : `Here is the mind map "${mapTitle}". Let's discuss it and propose next steps:\n\n${outline}`;
+    const kickoff = t('mindmap.discussMindMapKickoff', { mapTitle, outline });
     trackFunnelEvent('ideas_discuss_with_teresa', {
       ideaId: realId,
       tool: activeTool,
@@ -1847,9 +1820,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     aiKickoffTriggeredRef.current = true;
     const requestedSystem = preferredSeedSystem || activeTool;
     const promptSeed = initialIdeaBody || seedText;
-    const prompt = isPolish
-      ? `Zacznij budowę workspace dla pomysłu "${initialIdeaTitle || title}". Preferowany system startowy: ${requestedSystem}. Przygotuj pierwszą propozycję struktury na bazie:\n\n${promptSeed}`
-      : `Start building the workspace for "${initialIdeaTitle || title}". Preferred initial system: ${requestedSystem}. Prepare the first proposed structure based on:\n\n${promptSeed}`;
+    const prompt = t('mindmap.startWorkspaceKickoffPrompt', {
+      ideaTitle: initialIdeaTitle || title,
+      requestedSystem,
+      promptSeed,
+    });
     openChat(prompt);
   }, [
     activeTool,
@@ -1883,9 +1858,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       setStage(String((updated as any)?.stage || stage || 'seed'));
       setDirty(false);
       setLastSavedAt(Date.now());
-      toast.success(isPolish ? 'Zapisano' : 'Saved', { duration: 900 });
+      toast.success(t('mindmap.saved'), { duration: 900 });
     } catch (err: any) {
-      toast.error(err?.message || (isPolish ? 'Nie udało się zapisać' : 'Failed to save'));
+      toast.error(err?.message || (t('mindmap.failedToSave')));
     } finally {
       setSaving(false);
     }
@@ -1896,7 +1871,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     if (isDraft) return;
     const nextTitle = (title || safeTitleFromSeed(seedText, isPolish)).trim().slice(0, 255);
     if (!seedText.trim()) {
-      toast(isPolish ? 'Najpierw opisz wyzwanie.' : 'Describe the challenge first.');
+      toast(t('mindmap.describeTheChallengeFirst'));
       return;
     }
     setSaving(true);
@@ -1911,9 +1886,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       onSaved(updated as MyIdea);
       setDirty(false);
       setLastSavedAt(Date.now());
-      toast.success(isPolish ? 'Wyzwanie zaakceptowane' : 'Challenge accepted', { duration: 1100 });
+      toast.success(t('mindmap.challengeAccepted'), { duration: 1100 });
     } catch (err: any) {
-      toast.error(err?.message || (isPolish ? 'Nie udało się' : 'Failed'));
+      toast.error(err?.message || (t('mindmap.failed')));
     } finally {
       setSaving(false);
     }
@@ -1963,14 +1938,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       if (isDraft) return;
       if (!IDEA_CONVERT_TARGETS.some((t) => t.id === target)) {
         toast.error(
-          isPolish
-            ? 'Ten typ konwersji nie jest jeszcze wspierany'
-            : 'This conversion target is not yet supported'
+          t('mindmap.thisConversionTargetIsNotYet')
         );
         return;
       }
       if (!isLiveConvertTarget(target)) {
-        toast(isPolish ? 'Ta konwersja będzie wkrótce' : 'This conversion is coming soon', {
+        toast(t('mindmap.thisConversionIsComingSoon'), {
           icon: '🔜',
         });
         return;
@@ -2064,12 +2037,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         }
 
         toast.success(
-          isPolish
-            ? 'Gotowe — wynik dostępny w module docelowym'
-            : 'Done — output available in target module'
+          t('mindmap.doneOutputAvailableInTargetModule')
         );
       } catch (err: any) {
-        toast.error(err?.message || (isPolish ? 'Nie udało się' : 'Failed'));
+        toast.error(err?.message || (t('mindmap.failed')));
       } finally {
         setSaving(false);
       }
@@ -2278,7 +2249,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           baseVersion: graphRuntime.graph.version,
         });
         await graphRuntime.refresh();
-        toast.success(isPolish ? `Dołączono: ${ref.title}` : `Attached: ${ref.title}`);
+        toast.success(t('mindmap.attachedRefTitle', { title: ref.title }));
         trackFunnelEvent('ideas_artifact_attached', {
           ideaId: realId,
           objectId,
@@ -2290,7 +2261,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         if (conflictVersion) {
           await graphRuntime.refresh().catch(() => {});
         }
-        toast.error(err?.message || (isPolish ? 'Nie udało się dołączyć' : 'Failed to attach'));
+        toast.error(err?.message || (t('mindmap.failedToAttach')));
       }
     },
     [graphRuntime, isDraft, isPolish, realId, selection.ids]
@@ -2472,7 +2443,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             createdAt: Date.now(),
           };
           setProposalBatch(batch);
-          toast(isPolish ? 'AI zaproponowało zmiany w mapie' : 'AI proposed changes to the map', {
+          toast(t('mindmap.aiProposedChangesToTheMap'), {
             icon: '🤖',
           });
         }
@@ -2501,16 +2472,16 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       const detail = (e as CustomEvent).detail;
       if (detail?.action !== 'create_task' || !detail?.taskTitle) return;
       if (!currentProjectId) {
-        toast.error(isPolish ? 'Brak kontekstu projektu' : 'No project context');
+        toast.error(t('mindmap.noProjectContext'));
         return;
       }
       try {
         const result = await Api.createTask({
           projectId: currentProjectId,
           title: detail.taskTitle,
-          description: isPolish
-            ? `Zadanie utworzone z mapy myśli (węzeł: ${detail.nodeId || 'nieznany'})`
-            : `Task created from mindmap (node: ${detail.nodeId || 'unknown'})`,
+          description: t('mindmap.taskCreatedFromMindmapNode', {
+            nodeId: detail.nodeId || (isPolish ? 'nieznany' : 'unknown'),
+          }),
           status: 'todo',
         });
         if (result?.id && detail.nodeId) {
@@ -2536,7 +2507,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           }
         }
       } catch {
-        toast.error(isPolish ? 'Nie udało się utworzyć zadania' : 'Failed to create task');
+        toast.error(t('mindmap.failedToCreateTask'));
       }
     };
     window.addEventListener('idea-mindmap-node-quick-action', handler);
@@ -2562,13 +2533,13 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           baseVersion: graphRuntime.graph.version,
         });
         await graphRuntime.refresh();
-        toast.success(isPolish ? 'Dodano dowód z wywiadu' : 'Interview evidence attached');
+        toast.success(t('mindmap.interviewEvidenceAttached'));
       } catch (err: any) {
         const conflictVersion = getMapVersionFromPayload(err?.data);
         if (conflictVersion) {
           await graphRuntime.refresh().catch(() => {});
         }
-        toast.error(isPolish ? 'Nie udało się dołączyć' : 'Failed to attach');
+        toast.error(t('mindmap.failedToAttach'));
       }
     };
     window.addEventListener('interview-attach-to-idea', handler);
@@ -2589,9 +2560,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       ) {
         setActiveTool(detail.preferredSystem as CanvasToolType);
       }
-      const prompt = isPolish
-        ? `Zacznij budowę workspace na bazie intencji: "${detail.label || ''}". Preferowany system: ${detail.preferredSystem || activeTool}.\n\n${detail.seedText}`
-        : `Start building the workspace based on the intent: "${detail.label || ''}". Preferred system: ${detail.preferredSystem || activeTool}.\n\n${detail.seedText}`;
+      const prompt = t('mindmap.startWorkspaceIntentPrompt', {
+        label: detail.label || '',
+        preferredSystem: detail.preferredSystem || activeTool,
+        seedText: detail.seedText,
+      });
       openChat(prompt);
     };
     window.addEventListener('idea-workspace-apply-intent', handler);
@@ -2634,10 +2607,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
   // ── Draft saved label ───────────────────────────────────────────────────────
   const draftSavedLabel = useMemo(() => {
-    if (saving) return isPolish ? 'Zapisuję…' : 'Saving…';
+    if (saving) return t('mindmap.saving');
     if (!lastSavedAt) return 'Draft';
     const sec = Math.max(1, Math.round((Date.now() - lastSavedAt) / 1000));
-    return isPolish ? `Zapisano ${sec}s temu` : `Saved ${sec}s ago`;
+    return t('mindmap.savedSecondsAgo', { count: sec });
   }, [isPolish, lastSavedAt, saving]);
   const activeToolLabel = useMemo(
     () => getIdeaWorkspaceToolLabel(activeTool, Boolean(isPolish)),
@@ -2645,36 +2618,22 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   );
   const workspaceNextStepLabel = useMemo(() => {
     if (selection.type !== 'none') {
-      return isPolish
-        ? 'Dopracuj zaznaczenie w panelu Tools albo rozwiń je na aktywnym canvasie.'
-        : 'Refine the current selection in Tools or expand it on the active canvas.';
+      return t('mindmap.refineTheCurrentSelectionInTools');
     }
     if (activePanel !== 'tools') {
-      return isPolish
-        ? 'Otwórz panel Tools, aby nadać temu pomysłowi następny konkretny ruch.'
-        : 'Open the Tools panel to give this idea a concrete next move.';
+      return t('mindmap.openTheToolsPanelToGive');
     }
     switch (activeTool) {
       case 'mindmap':
-        return isPolish
-          ? 'Zacznij od głównego problemu i dołóż pierwszą gałąź rekomendacji.'
-          : 'Start with the core problem and add the first recommendation branch.';
+        return t('mindmap.startWithTheCoreProblemAnd');
       case 'whiteboard':
-        return isPolish
-          ? 'Naszkicuj warianty i zgrupuj najmocniejszy kierunek.'
-          : 'Sketch options and cluster the strongest direction.';
+        return t('mindmap.sketchOptionsAndClusterTheStrongest');
       case 'process_flow':
-        return isPolish
-          ? 'Rozpisz główne kroki, właścicieli i blokery przepływu.'
-          : 'Map the main steps, owners, and blockers in the flow.';
+        return t('mindmap.mapTheMainStepsOwnersAnd');
       case 'table':
-        return isPolish
-          ? 'Przełóż pomysł na uporządkowane wiersze, żeby przygotować dalsze decyzje.'
-          : 'Translate the idea into structured rows to prepare the next decisions.';
+        return t('mindmap.translateTheIdeaIntoStructuredRows');
       default:
-        return isPolish
-          ? 'Nadaj tej idei kolejny konkretny ruch.'
-          : 'Give this idea the next concrete move.';
+        return t('mindmap.giveThisIdeaTheNextConcrete');
     }
   }, [activePanel, activeTool, isPolish, selection.type]);
   // top-14 (56px) keeps the breadcrumb/header card BELOW the tool's top toolbar (~44px) so it
@@ -2697,7 +2656,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       className="w-full h-full flex overflow-hidden bg-c-surface-raised dark:bg-c-surface"
       style={{ touchAction: 'none' }}
       role="region"
-      aria-label={isPolish ? 'Obszar roboczy mapy idei' : 'Idea map workspace'}
+      aria-label={t('mindmap.ideaMapWorkspace')}
       // Signals the global command palette to yield Cmd+K to this scoped palette.
       data-local-command-palette="idea-map"
     >
@@ -2706,7 +2665,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         ref={canvasContainerRef}
         className="flex-1 min-w-0 h-full relative"
         role="group"
-        aria-label={isPolish ? 'Płótno idei i narzędzia mapy' : 'Idea canvas and map tools'}
+        aria-label={t('mindmap.ideaCanvasAndMapTools')}
       >
         {/* Breadcrumb for drill-down navigation */}
         {drillDownStack.length > 0 && (
@@ -2715,7 +2674,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               onClick={() => handleDrillUp(0)}
               className="text-[10px] font-semibold text-c-text-secondary dark:text-c-text-muted hover:underline"
             >
-              {isPolish ? 'Główna mapa' : 'Root map'}
+              {t('mindmap.rootMap')}
             </button>
             {drillDownStack.map((item, i) => (
               <React.Fragment key={item.nodeId}>
@@ -2740,18 +2699,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           <div className="absolute top-2 left-1/2 -translate-x-1/2 z-[58] flex items-center gap-2 bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm rounded-xl px-3 py-1.5 border border-c-border-subtle dark:border-c-border shadow-sm">
             <span className="text-[10px] font-bold uppercase tracking-wide text-c-text-secondary dark:text-c-text">
               {focusMode === 'system'
-                ? isPolish
-                  ? `Tryb skupiony: ${activeToolLabel}`
-                  : `Focused: ${activeToolLabel}`
-                : isPolish
-                  ? 'Tryb obiektu'
-                  : 'Object focus'}
+                ? t('mindmap.focusedOnTool', { activeToolLabel })
+                : t('mindmap.objectFocus')}
             </span>
             <button
               onClick={handleExitFocus}
               className="text-[10px] font-semibold text-c-text-secondary hover:text-c-text-secondary dark:text-c-text-muted dark:hover:text-c-text transition-colors"
             >
-              {isPolish ? '← Pełny canvas' : '← Full canvas'}
+              {t('mindmap.fullCanvas')}
             </button>
           </div>
         )}
@@ -2766,18 +2721,18 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               onClick={() => navigate('/my-work')}
               className="text-[11px] font-semibold text-c-text-secondary hover:underline dark:text-c-text-muted"
             >
-              {isPolish ? 'Idee' : 'Ideas'}
+              {t('mindmap.ideas')}
             </button>
             <span className="text-[10px] text-c-text-secondary" aria-hidden="true">
               ›
             </span>
             <span
               className="max-w-[14rem] truncate text-[11px] font-semibold text-c-text-secondary dark:text-c-text"
-              title={title || (isPolish ? 'Bez tytułu' : 'Untitled')}
+              title={title || (t('mindmap.untitled'))}
             >
               {title ||
                 safeTitleFromSeed(seedText, isPolish) ||
-                (isPolish ? 'Bez tytułu' : 'Untitled')}
+                (t('mindmap.untitled'))}
             </span>
             <span className="text-[10px] text-c-text-secondary" aria-hidden="true">
               ›
@@ -2875,7 +2830,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         {activeTool === 'mindmap' && (
           <CanvasToolErrorBoundary
             key={`eb-mindmap-${realId}`}
-            toolName={isPolish ? 'Mapa rekomendacji' : 'Recommendation map'}
+            toolName={t('mindmap.recommendationMap')}
             onRetry={() => setMapRefreshToken((v) => v + 1)}
           >
             <IdeaRecommendationMap
@@ -2905,9 +2860,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               seedText={seedText}
               onEditCard={() => handlePanelChange('tools')}
               onAISummarize={() => {
-                const prompt = isPolish
-                  ? `Podsumuj kartę pomysłu "${title}" — problem, szanse, ryzyka, następne kroki.`
-                  : `Summarize the idea card for "${title}" — problem, opportunities, risks, next steps.`;
+                const prompt = t('mindmap.summarizeIdeaCardPrompt', { title });
                 openChat(prompt);
               }}
               onStageChange={async (newStage) => {
@@ -2920,7 +2873,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                       : `Stage: ${IDEA_STAGE_LABELS[newStage].en}`
                   );
                 } catch {
-                  toast.error(isPolish ? 'Nie udało się zmienić etapu' : 'Failed to change stage');
+                  toast.error(t('mindmap.failedToChangeStage'));
                 }
               }}
               graphNodeCount={graphNodes.length}
