@@ -48,6 +48,9 @@ const {
   requireRecordAccess,
   requireViewAccess,
   requireGovernedModelAccess,
+  requireKpiAccess,
+  requireDimensionAccess,
+  requireModelSourceAccess,
   requireRoles,
   SCHEMA_ROLES,
   DATA_ROLES,
@@ -3442,7 +3445,7 @@ router.get('/governed-models/:modelId/kpis', requireGovernedModelAccess, async (
   }
 });
 
-router.delete('/kpis/:kpiId', async (req: Request, res: Response) => {
+router.delete('/kpis/:kpiId', requireKpiAccess, async (req: Request, res: Response) => {
   try {
     const { kpiId } = req.params;
     if (!kpiId) return res.status(400).json({ error: 'kpiId is required' });
@@ -3490,7 +3493,7 @@ router.get('/governed-models/:modelId/dimensions', requireGovernedModelAccess, a
   }
 });
 
-router.delete('/dimensions/:dimensionId', async (req: Request, res: Response) => {
+router.delete('/dimensions/:dimensionId', requireDimensionAccess, async (req: Request, res: Response) => {
   try {
     const { dimensionId } = req.params;
     if (!dimensionId) return res.status(400).json({ error: 'dimensionId is required' });
@@ -3538,7 +3541,7 @@ router.get('/governed-models/:modelId/sources', requireGovernedModelAccess, asyn
   }
 });
 
-router.patch('/model-sources/:id/trust', async (req: Request, res: Response) => {
+router.patch('/model-sources/:id/trust', requireModelSourceAccess, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { trusted } = req.body ?? {};
@@ -3555,7 +3558,7 @@ router.patch('/model-sources/:id/trust', async (req: Request, res: Response) => 
   }
 });
 
-router.post('/kpis/:kpiId/compute', async (req: Request, res: Response) => {
+router.post('/kpis/:kpiId/compute', requireKpiAccess, async (req: Request, res: Response) => {
   try {
     const { kpiId } = req.params;
     if (!kpiId) return res.status(400).json({ error: 'kpiId is required' });
@@ -3674,6 +3677,7 @@ router.post('/governed-models/:modelId/sync-to-execution', async (req: Request, 
 
 router.post(
   '/governed-models/:modelId/sync-to-initiatives',
+  requireGovernedModelAccess,
   async (req: Request, res: Response) => {
     try {
       const { modelId } = req.params;
@@ -3705,7 +3709,7 @@ router.post(
   }
 );
 
-router.get('/governed-models/:modelId/link-status', async (req: Request, res: Response) => {
+router.get('/governed-models/:modelId/link-status', requireGovernedModelAccess, async (req: Request, res: Response) => {
   try {
     const { modelId } = req.params;
     if (!modelId) return res.status(400).json({ error: 'modelId is required' });
