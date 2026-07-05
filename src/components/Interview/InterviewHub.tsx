@@ -200,9 +200,6 @@ const INTERVIEW_MANAGED_ASSIGNMENTS_TABLE_VIEW_STORAGE_KEY =
   'consultify-interview-managed-assignments-table-view';
 const INTERVIEW_MANAGED_ASSIGNMENTS_ROW_DESCRIPTION_STORAGE_KEY =
   'consultify-interview-managed-assignments-show-row-description';
-const INTERVIEW_SESSIONS_TABLE_VIEW_STORAGE_KEY = 'consultify-interview-sessions-table-view';
-const INTERVIEW_SESSIONS_ROW_DESCRIPTION_STORAGE_KEY =
-  'consultify-interview-sessions-show-row-description';
 const INTERVIEW_INSIGHTS_TABLE_VIEW_STORAGE_KEY = 'consultify-interview-insights-table-view';
 const INTERVIEW_INSIGHTS_ROW_DESCRIPTION_STORAGE_KEY =
   'consultify-interview-insights-show-row-description';
@@ -238,7 +235,6 @@ const INTERVIEW_PIPELINE_STAGE_ORDER = [
 // V-B — column-width persistence storage keys (one per resizable table).
 const INTERVIEW_INBOX_COL_WIDTHS_KEY = 'consultify-interview-inbox-col-widths';
 const INTERVIEW_MANAGED_COL_WIDTHS_KEY = 'consultify-interview-managed-col-widths';
-const INTERVIEW_SESSIONS_COL_WIDTHS_KEY = 'consultify-interview-sessions-col-widths';
 const INTERVIEW_INSIGHTS_COL_WIDTHS_KEY = 'consultify-interview-insights-col-widths';
 const INTERVIEW_TEMPLATES_COL_WIDTHS_KEY = 'consultify-interview-templates-col-widths';
 const INTERVIEW_INITIATIVES_COL_WIDTHS_KEY = 'consultify-interview-initiatives-col-widths';
@@ -250,10 +246,8 @@ const INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [
   'aiScore',
   'escalation',
 ];
-// #9 — Sessions DATE column was a single illegible blob ("Due X + Submitted Y").
-// Split into Due / Submitted / Overdue. Submitted is opt-in (hidden by default);
-// Due + Overdue ship visible. Assignee is a first-class default-visible column.
-const INTERVIEW_SESSIONS_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = ['submitted'];
+// (Sessions column-visibility defaults retired — StandardTable's own
+// TableSettingsPopover manages visible columns now; Triada standard.)
 const INTERVIEW_TEMPLATES_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [];
 const INTERVIEW_INITIATIVES_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [];
 const INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_WIDTHS: ColumnWidths = {
@@ -283,31 +277,8 @@ const INTERVIEW_ASSIGNMENTS_TABLE_RESIZE_BOUNDS: Record<
   escalation: { minWidth: 140, maxWidth: 260 },
   actions: { minWidth: 52, maxWidth: 72 },
 };
-const INTERVIEW_SESSIONS_TABLE_DEFAULT_WIDTHS: ColumnWidths = {
-  select: 44,
-  name: 360,
-  assignee: 180,
-  status: 150,
-  progress: 170,
-  due: 140,
-  submitted: 140,
-  overdue: 140,
-  actions: 56,
-};
-const INTERVIEW_SESSIONS_TABLE_RESIZE_BOUNDS: Record<
-  string,
-  { minWidth: number; maxWidth: number }
-> = {
-  select: { minWidth: 44, maxWidth: 44 },
-  name: { minWidth: 260, maxWidth: 680 },
-  assignee: { minWidth: 140, maxWidth: 280 },
-  status: { minWidth: 120, maxWidth: 220 },
-  progress: { minWidth: 140, maxWidth: 260 },
-  due: { minWidth: 120, maxWidth: 240 },
-  submitted: { minWidth: 120, maxWidth: 240 },
-  overdue: { minWidth: 120, maxWidth: 220 },
-  actions: { minWidth: 52, maxWidth: 72 },
-};
+// (Sessions column-width defaults/resize-bounds retired — StandardTable owns
+// resize + persistence via `persistKey="interview.sessions.list"`.)
 const INTERVIEW_INSIGHTS_TABLE_DEFAULT_WIDTHS: ColumnWidths = {
   select: 44,
   title: 430,
@@ -852,27 +823,6 @@ export const InterviewHub: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
   const [sessionStatusFilter, setSessionStatusFilter] = useState<string>('all');
-  const [sessionsHiddenColumns, setSessionsHiddenColumns] = useState<string[]>(() =>
-    loadHiddenColumns(
-      INTERVIEW_SESSIONS_TABLE_VIEW_STORAGE_KEY,
-      INTERVIEW_SESSIONS_TABLE_DEFAULT_HIDDEN_COLUMNS,
-      ['name', 'actions']
-    )
-  );
-  const [sessionsColumnWidths, setSessionsColumnWidths] = useState<ColumnWidths>(() =>
-    loadColumnWidths(INTERVIEW_SESSIONS_COL_WIDTHS_KEY, INTERVIEW_SESSIONS_TABLE_DEFAULT_WIDTHS)
-  );
-  const [showSessionRowDescription, setShowSessionRowDescription] = useState(() =>
-    loadBooleanSetting(INTERVIEW_SESSIONS_ROW_DESCRIPTION_STORAGE_KEY, true)
-  );
-  const [isSessionsViewSettingsOpen, setIsSessionsViewSettingsOpen] = useState(false);
-  const sessionsViewSettingsRef = useRef<HTMLDivElement | null>(null);
-  const sessionsViewSettingsPanelRef = useRef<HTMLDivElement | null>(null);
-  const [sessionsViewSettingsPos, setSessionsViewSettingsPos] = useState<{
-    top: number;
-    left: number;
-    maxH: number;
-  } | null>(null);
   const [templateSourceFilter, setTemplateSourceFilter] = useState<TemplateSourceFilter>('all');
   const [templateAreaTagFilter, setTemplateAreaTagFilter] = useState<string[]>([]);
   const [isTemplateAreaFilterOpen, setIsTemplateAreaFilterOpen] = useState(false);
@@ -979,11 +929,10 @@ export const InterviewHub: React.FC = () => {
   const [initiativeTableFilters, setInitiativeTableFilters] = useState<TableFilters>({});
   const [openInitiativeFilterId, setOpenInitiativeFilterId] = useState<string | null>(null);
 
-  // #10 — per-column header filters for the Sessions table (status / assignee /
-  // template). Non-destructive: layered on top of the existing custom table
-  // (search + lifecycle + bulk + hidden columns + widths all keep working).
+  // #10 — pre-filter for Sessions data (status/assignee/template), feeding both
+  // StandardTable (table mode) and the grid view. Per-column filter UI itself
+  // now lives inside StandardTable (Triada standard) via column `filterOptions`.
   const [sessionsTableFilters, setSessionsTableFilters] = useState<TableFilters>({});
-  const [openSessionFilterId, setOpenSessionFilterId] = useState<string | null>(null);
 
   // #10 — per-column header filters for the Assigned / Inbox tables (status /
   // assignee / template). Keyed by view ('managed' = Assigned, 'inbox') so the
@@ -1032,26 +981,8 @@ export const InterviewHub: React.FC = () => {
     };
   }, [isInitiativesViewSettingsOpen]);
 
-  useEffect(() => {
-    if (!isSessionsViewSettingsOpen) return;
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (sessionsViewSettingsRef.current?.contains(event.target as Node)) return;
-      if (sessionsViewSettingsPanelRef.current?.contains(event.target as Node)) return;
-      setIsSessionsViewSettingsOpen(false);
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setIsSessionsViewSettingsOpen(false);
-    };
-
-    window.addEventListener('pointerdown', handlePointerDown);
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('pointerdown', handlePointerDown);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isSessionsViewSettingsOpen]);
+  // (Sessions table view-settings popover retired — StandardTable's own
+  // Settings2 pstryczek/TableSettingsPopover replaces it; Triada standard.)
 
   useEffect(() => {
     if (!isTemplatesViewSettingsOpen) return;
@@ -4937,7 +4868,11 @@ export const InterviewHub: React.FC = () => {
     return configs[status] || configs.in_progress;
   };
 
-  // Render table view for sessions
+  // Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7): Interview
+  // Sessions (table mode) → StandardTable, mirroring the Inbox pattern
+  // 1:1 (moduł deklaruje TYLKO dane + kontrakt kebaba/akcji; chrome pochodzi
+  // z fasady StandardTable). §27-exempt custom resizer/FilterDropdown/manual
+  // checkbox mechanics retired in favour of the shared facade.
   const renderSessionsTable = (
     rows: InterviewSession[] = filteredSessions,
     opts?: {
@@ -4946,87 +4881,6 @@ export const InterviewHub: React.FC = () => {
       selectedId?: string | null;
     }
   ) => {
-    const hiddenSet = new Set(sessionsHiddenColumns);
-    const visibleSessionIds = rows.map((session) => session.id);
-    const selectedVisibleCount = visibleSessionIds.filter((id) =>
-      selectedSessionIds.has(id)
-    ).length;
-    const allVisibleSelected =
-      visibleSessionIds.length > 0 && selectedVisibleCount === visibleSessionIds.length;
-    const someVisibleSelected = selectedVisibleCount > 0 && !allVisibleSelected;
-    const visibleColumns = [
-      'select',
-      'name',
-      ...(!hiddenSet.has('assignee') ? ['assignee'] : []),
-      ...(!hiddenSet.has('status') ? ['status'] : []),
-      ...(!hiddenSet.has('progress') ? ['progress'] : []),
-      ...(!hiddenSet.has('due') ? ['due'] : []),
-      ...(!hiddenSet.has('submitted') ? ['submitted'] : []),
-      ...(!hiddenSet.has('overdue') ? ['overdue'] : []),
-      'actions',
-    ];
-    const tableMinWidth = visibleColumns.reduce(
-      (sum, columnId) => sum + (sessionsColumnWidths[columnId] ?? 120),
-      0
-    );
-    const toggleSessionSelection = (sessionId: string) => {
-      setSelectedSessionIds((prev) => {
-        const next = new Set(prev);
-        if (next.has(sessionId)) next.delete(sessionId);
-        else next.add(sessionId);
-        return next;
-      });
-    };
-    const toggleAllVisibleSessions = () => {
-      setSelectedSessionIds((prev) => {
-        const next = new Set(prev);
-        if (allVisibleSelected) {
-          visibleSessionIds.forEach((id) => next.delete(id));
-        } else {
-          visibleSessionIds.forEach((id) => next.add(id));
-        }
-        return next;
-      });
-    };
-    const handleSessionColumnResize = (columnId: string, newWidth: number) => {
-      setSessionsColumnWidths((prev) => {
-        const currentIndex = visibleColumns.indexOf(columnId);
-        const nextColumnId = visibleColumns[currentIndex + 1];
-        if (currentIndex < 0 || !nextColumnId) return prev;
-
-        const current = prev[columnId] ?? INTERVIEW_SESSIONS_TABLE_DEFAULT_WIDTHS[columnId];
-        const next = prev[nextColumnId] ?? INTERVIEW_SESSIONS_TABLE_DEFAULT_WIDTHS[nextColumnId];
-        const currentBounds = INTERVIEW_SESSIONS_TABLE_RESIZE_BOUNDS[columnId];
-        const nextBounds = INTERVIEW_SESSIONS_TABLE_RESIZE_BOUNDS[nextColumnId];
-        const requestedDelta = newWidth - current;
-        const minDelta = Math.max(currentBounds.minWidth - current, next - nextBounds.maxWidth);
-        const maxDelta = Math.min(currentBounds.maxWidth - current, next - nextBounds.minWidth);
-        const delta = Math.max(minDelta, Math.min(maxDelta, requestedDelta));
-        if (delta === 0) return prev;
-
-        return {
-          ...prev,
-          [columnId]: current + delta,
-          [nextColumnId]: next - delta,
-        };
-      });
-    };
-    const renderSessionResizer = (columnId: string) => {
-      if (visibleColumns[visibleColumns.indexOf(columnId) + 1] == null) return null;
-      const bounds = INTERVIEW_SESSIONS_TABLE_RESIZE_BOUNDS[columnId];
-      return (
-        <ColumnResizer
-          columnId={columnId}
-          currentWidth={
-            sessionsColumnWidths[columnId] ?? INTERVIEW_SESSIONS_TABLE_DEFAULT_WIDTHS[columnId]
-          }
-          minWidth={bounds.minWidth}
-          maxWidth={bounds.maxWidth}
-          onResize={handleSessionColumnResize}
-        />
-      );
-    };
-
     // #9 — Overdue computation, mirrors the Assignments-table `getDaysToDue`
     // logic. A session is overdue when it has a due date in the past AND has not
     // yet been submitted/approved. Returns the whole-day delta (negative = past).
@@ -5040,821 +4894,284 @@ export const InterviewHub: React.FC = () => {
       return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
     };
 
-    // #10 — column defs for the header filter dropdowns (status / assignee /
-    // template). Options derive from the live data via `sessionFilterOptions`.
-    const sessionStatusFilterCol: ColumnDef = {
-      id: 'status',
-      label: isPolish ? 'Status' : 'Status',
-      width: sessionsColumnWidths.status ?? 120,
-      minWidth: 80,
-      resizable: true,
-      filterable: true,
-      filterType: 'multiselect',
-      filterOptions: sessionFilterOptions.status,
-    };
-    const sessionAssigneeFilterCol: ColumnDef = {
-      id: 'assignee',
-      label: isPolish ? 'Przydzielony' : 'Assignee',
-      width: 160,
-      minWidth: 80,
-      resizable: false,
-      filterable: true,
-      filterType: 'multiselect',
-      filterOptions: sessionFilterOptions.assignee,
-    };
-    const sessionTemplateFilterCol: ColumnDef = {
-      id: 'template',
-      label: isPolish ? 'Szablon' : 'Template',
-      width: 160,
-      minWidth: 80,
-      resizable: false,
-      filterable: true,
-      filterType: 'multiselect',
-      filterOptions: sessionFilterOptions.template,
-    };
-    const activeSessionFilterChips = (
-      [
-        { col: sessionStatusFilterCol, key: 'status' as const },
-        { col: sessionAssigneeFilterCol, key: 'assignee' as const },
-        { col: sessionTemplateFilterCol, key: 'template' as const },
-      ] as const
-    ).flatMap(({ col, key }) => {
-      const values = (sessionsTableFilters[key] as string[] | undefined) ?? [];
-      return values.map((v) => {
-        const opt = col.filterOptions?.find((o) => o.value === v);
-        return { key, value: v, label: `${col.label}: ${opt?.label ?? v}` };
-      });
-    });
-
-    // Header click-sort — applied on top of the already-filtered `rows`. Mirrors
-    // the Assignments comparator (field + direction). No active field = identity.
-    const sortedRows = sessionSortField
-      ? [...rows].sort((a, b) => {
-          const dir = sessionSortAsc ? 1 : -1;
-          if (sessionSortField === 'name') {
-            return (a.name || '').localeCompare(b.name || '') * dir;
-          }
-          if (sessionSortField === 'status') {
-            const statusOrder: Record<string, number> = {
-              sent_back: 0,
-              assigned: 1,
-              in_progress: 2,
-              submitted: 3,
-              approved: 4,
-              completed: 5,
-            };
-            return (
-              ((statusOrder[getSessionWorkflowStatus(a)] ?? 99) -
-                (statusOrder[getSessionWorkflowStatus(b)] ?? 99)) *
-              dir
-            );
-          }
-          if (sessionSortField === 'due') {
-            const aD = a.dueAt ? new Date(a.dueAt).getTime() : Infinity;
-            const bD = b.dueAt ? new Date(b.dueAt).getTime() : Infinity;
-            return (aD - bD) * dir;
-          }
-          if (sessionSortField === 'submitted') {
-            const aS = a.submittedAt ? new Date(a.submittedAt).getTime() : Infinity;
-            const bS = b.submittedAt ? new Date(b.submittedAt).getTime() : Infinity;
-            return (aS - bS) * dir;
-          }
-          if (sessionSortField === 'overdue') {
-            const aO = getSessionDaysOverdue(a) ?? Infinity;
-            const bO = getSessionDaysOverdue(b) ?? Infinity;
-            return (aO - bO) * dir;
-          }
-          return 0;
-        })
-      : rows;
+    const sessionColumns: StandardTableColumn[] = [
+      {
+        id: 'name',
+        label: isPolish ? 'Nazwa' : 'Name',
+        render: (row: InterviewSession) => (
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={INTERVIEW_TABLE_ICON_SURFACE_CLASS}>
+              <Brain size={15} />
+            </div>
+            <span className="text-sm font-semibold text-c-text block truncate">
+              {row.name || 'Discovery Interview'}
+            </span>
+          </div>
+        ),
+      },
+      {
+        id: 'template',
+        label: isPolish ? 'Szablon' : 'Template',
+        width: '160px',
+        filterable: true,
+        filterOptions: sessionFilterOptions.template,
+        render: (row: InterviewSession) => (
+          <span className="text-xs text-c-text-secondary">
+            {row.templateName || row.templateCategory || '—'}
+          </span>
+        ),
+      },
+      {
+        id: 'assignee',
+        label: isPolish ? 'Przydzielony' : 'Assignee',
+        width: '170px',
+        filterable: true,
+        filterOptions: sessionFilterOptions.assignee,
+        render: (row: InterviewSession) => (
+          <AssigneeCell
+            name={row.assigneeName || row.respondentName || null}
+            unassignedLabel={isPolish ? 'Nieprzypisane' : 'Unassigned'}
+          />
+        ),
+      },
+      {
+        id: 'status',
+        label: isPolish ? 'Status' : 'Status',
+        width: '150px',
+        filterable: true,
+        filterOptions: sessionFilterOptions.status,
+        render: (row: InterviewSession) => {
+          const workflowStatus = getSessionWorkflowStatus(row);
+          const statusConfig = getSessionStatusConfig(workflowStatus);
+          return (
+            <EntityStatusChip
+              status={workflowStatus}
+              label={isPolish ? statusConfig.label.pl : statusConfig.label.en}
+            />
+          );
+        },
+      },
+      {
+        id: 'progress',
+        label: isPolish ? 'Postęp' : 'Progress',
+        width: '130px',
+        align: 'right',
+        render: (row: InterviewSession) => <ProgressCell value={getSessionProgress(row)} />,
+      },
+      {
+        id: 'due',
+        label: isPolish ? 'Termin' : 'Due',
+        width: '160px',
+        sortable: true,
+        sortAccessor: (row: InterviewSession) => (row.dueAt ? new Date(row.dueAt).getTime() : 0),
+        render: (row: InterviewSession) => {
+          // Canon §4.4 — ONE Due column: neutral date, danger when overdue
+          // (and not yet submitted/approved). Overdue merged here as a DueChip.
+          if (!row.dueAt) return <span className="text-xs text-c-text-muted">—</span>;
+          const workflowStatus = getSessionWorkflowStatus(row);
+          const isApproved = ['approved', 'completed'].includes(workflowStatus);
+          const isSubmitted = workflowStatus === 'submitted';
+          const daysToDue = getSessionDaysOverdue(row);
+          const resolved = isSubmitted || isApproved;
+          const overdue = daysToDue != null && daysToDue < 0 && !resolved;
+          const absDays = daysToDue != null ? Math.abs(daysToDue) : 0;
+          const dateLabel = new Date(row.dueAt).toLocaleDateString();
+          return (
+            <DueChip
+              label={
+                overdue
+                  ? isPolish
+                    ? `${absDays} ${absDays === 1 ? 'dzień' : 'dni'} po terminie`
+                    : `${absDays}d overdue`
+                  : dateLabel
+              }
+              risk={overdue ? 'overdue' : 'none'}
+              showIcon
+              title={dateLabel}
+            />
+          );
+        },
+      },
+      {
+        id: 'submitted',
+        label: isPolish ? 'Wysłano' : 'Submitted',
+        width: '150px',
+        sortable: true,
+        sortAccessor: (row: InterviewSession) =>
+          row.submittedAt ? new Date(row.submittedAt).getTime() : 0,
+        render: (row: InterviewSession) =>
+          row.submittedAt ? (
+            <span className="text-xs text-c-text-secondary">
+              {new Date(row.submittedAt).toLocaleDateString()}
+            </span>
+          ) : (
+            <span className="text-xs text-c-text-muted">—</span>
+          ),
+      },
+    ];
 
     return (
-      <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] rounded-xl backdrop-blur">
-        {activeSessionFilterChips.length > 0 ? (
-          <div className="flex flex-wrap items-center gap-1.5 border-b border-c-border-subtle px-3 py-2">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-c-text-muted">
-              {isPolish ? 'Filtry' : 'Filters'}
-            </span>
-            {activeSessionFilterChips.map((chip) => (
-              <button
-                key={`${chip.key}-${chip.value}`}
-                type="button"
-                onClick={() =>
-                  setSessionsTableFilters((prev) => ({
-                    ...prev,
-                    [chip.key]: ((prev[chip.key] as string[] | undefined) ?? []).filter(
-                      (v) => v !== chip.value
-                    ),
-                  }))
-                }
-                className="inline-flex items-center gap-1 rounded-full border border-transparent bg-c-accent-soft px-2 py-0.5 text-[11px] font-medium text-c-accent transition-colors hover:bg-c-accent-soft"
-              >
-                <span className="max-w-[200px] truncate">{chip.label}</span>
-                <X size={11} />
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => setSessionsTableFilters({})}
-              className="ml-1 text-[11px] font-medium text-c-text-muted underline-offset-2 hover:text-c-text-secondary hover:underline"
-            >
-              {isPolish ? 'Wyczyść wszystkie' : 'Clear all'}
-            </button>
-          </div>
-        ) : null}
-        {/* §27-exempt: module-local resizable columns, custom FilterDropdown, checkbox
-            selection state, and complex interactive row cells (status chips, action
-            menus, progress bars) are tightly coupled to local state and cannot be
-            lifted into FilterableTable without a full re-architecture of this tab. */}
-        <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
-          <thead className="sticky top-0 z-20 bg-c-surface border-b border-c-border-subtle">
-            <tr className="border-b border-c-border-subtle bg-c-surface-raised">
-              <th className="px-3 py-2 text-left" style={{ width: sessionsColumnWidths.select }}>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleAllVisibleSessions();
-                  }}
-                  className={[
-                    'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                    'border-c-border bg-c-surface text-white hover:border-c-info',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
-                    allVisibleSelected || someVisibleSelected
-                      ? 'border-c-info bg-c-info opacity-100'
-                      : 'opacity-70',
-                  ].join(' ')}
-                  aria-label={isPolish ? 'Zaznacz widoczne sesje' : 'Select visible sessions'}
-                  aria-pressed={allVisibleSelected}
-                >
-                  {allVisibleSelected ? <Check size={10} strokeWidth={3} /> : null}
-                  {someVisibleSelected ? <Minus size={10} strokeWidth={3} /> : null}
-                </button>
-              </th>
-              <th
-                className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
-                style={{ width: sessionsColumnWidths.name }}
-              >
-                {/* #10 — template filter lives on the Name header; assignee now
-                    has its own dedicated column (below). */}
-                <div className="flex items-center gap-1">
-                  <span
-                    className="cursor-pointer select-none transition-colors hover:text-c-text-secondary"
-                    onClick={() => toggleSessionSort('name')}
-                  >
-                    {isPolish ? 'Nazwa' : 'Name'}
-                    {sessionSortField === 'name' && (
-                      <ChevronDown
-                        size={12}
-                        className={`inline-block ml-0.5 transition-transform ${sessionSortAsc ? '' : 'rotate-180'}`}
-                      />
-                    )}
-                  </span>
-                  <FilterDropdown
-                    column={sessionTemplateFilterCol}
-                    value={sessionsTableFilters.template as string[] | undefined}
-                    onChange={(v) =>
-                      setSessionsTableFilters((f) => ({ ...f, template: v as string[] }))
-                    }
-                    isOpen={openSessionFilterId === 'template'}
-                    onToggle={() =>
-                      setOpenSessionFilterId((id) => (id === 'template' ? null : 'template'))
-                    }
-                    onClose={() => setOpenSessionFilterId(null)}
-                  />
-                </div>
-                {renderSessionResizer('name')}
-              </th>
-              {!hiddenSet.has('assignee') && (
-                <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
-                  style={{ width: sessionsColumnWidths.assignee }}
-                >
-                  {/* #9 — Assignee promoted from row sub-text to a first-class,
-                      filterable column. Reuses the existing assignee filter. */}
-                  <div className="flex items-center gap-1">
-                    <span
-                      className={
-                        (sessionsTableFilters.assignee as string[] | undefined)?.length
-                          ? 'text-c-accent'
-                          : ''
-                      }
-                    >
-                      {isPolish ? 'Przydzielony' : 'Assignee'}
-                    </span>
-                    <FilterDropdown
-                      column={sessionAssigneeFilterCol}
-                      value={sessionsTableFilters.assignee as string[] | undefined}
-                      onChange={(v) =>
-                        setSessionsTableFilters((f) => ({ ...f, assignee: v as string[] }))
-                      }
-                      isOpen={openSessionFilterId === 'assignee'}
-                      onToggle={() =>
-                        setOpenSessionFilterId((id) => (id === 'assignee' ? null : 'assignee'))
-                      }
-                      onClose={() => setOpenSessionFilterId(null)}
-                    />
-                  </div>
-                  {renderSessionResizer('assignee')}
-                </th>
-              )}
-              {!hiddenSet.has('status') && (
-                <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
-                  style={{ width: sessionsColumnWidths.status }}
-                >
-                  <div className="flex items-center justify-start gap-1">
-                    <span
-                      className={[
-                        'cursor-pointer select-none transition-colors hover:text-c-text-secondary',
-                        (sessionsTableFilters.status as string[] | undefined)?.length
-                          ? 'text-c-accent'
-                          : '',
-                      ].join(' ')}
-                      onClick={() => toggleSessionSort('status')}
-                    >
-                      {isPolish ? 'Status' : 'Status'}
-                      {sessionSortField === 'status' && (
-                        <ChevronDown
-                          size={12}
-                          className={`inline-block ml-0.5 transition-transform ${sessionSortAsc ? '' : 'rotate-180'}`}
-                        />
-                      )}
-                    </span>
-                    <FilterDropdown
-                      column={sessionStatusFilterCol}
-                      value={sessionsTableFilters.status as string[] | undefined}
-                      onChange={(v) =>
-                        setSessionsTableFilters((f) => ({ ...f, status: v as string[] }))
-                      }
-                      isOpen={openSessionFilterId === 'status'}
-                      onToggle={() =>
-                        setOpenSessionFilterId((id) => (id === 'status' ? null : 'status'))
-                      }
-                      onClose={() => setOpenSessionFilterId(null)}
-                    />
-                  </div>
-                  {renderSessionResizer('status')}
-                </th>
-              )}
-              {!hiddenSet.has('progress') && (
-                <th
-                  className="relative px-3 py-2 text-right text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
-                  style={{ width: sessionsColumnWidths.progress }}
-                >
-                  {isPolish ? 'Postęp' : 'Progress'}
-                  {renderSessionResizer('progress')}
-                </th>
-              )}
-              {!hiddenSet.has('due') && (
-                <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider cursor-pointer select-none hover:text-c-text-secondary transition-colors"
-                  style={{ width: sessionsColumnWidths.due }}
-                  onClick={() => toggleSessionSort('due')}
-                >
-                  {isPolish ? 'Termin' : 'Due'}
-                  {sessionSortField === 'due' && (
-                    <ChevronDown
-                      size={12}
-                      className={`inline-block ml-0.5 transition-transform ${sessionSortAsc ? '' : 'rotate-180'}`}
-                    />
-                  )}
-                  {renderSessionResizer('due')}
-                </th>
-              )}
-              {!hiddenSet.has('submitted') && (
-                <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider cursor-pointer select-none hover:text-c-text-secondary transition-colors"
-                  style={{ width: sessionsColumnWidths.submitted }}
-                  onClick={() => toggleSessionSort('submitted')}
-                >
-                  {isPolish ? 'Wysłano' : 'Submitted'}
-                  {sessionSortField === 'submitted' && (
-                    <ChevronDown
-                      size={12}
-                      className={`inline-block ml-0.5 transition-transform ${sessionSortAsc ? '' : 'rotate-180'}`}
-                    />
-                  )}
-                  {renderSessionResizer('submitted')}
-                </th>
-              )}
-              {/* Overdue column merged into Due (DueChip) per canon §4.4 */}
-              <th
-                className="relative px-3 py-2 text-right text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
-                style={{ width: sessionsColumnWidths.actions }}
-              >
-                <div ref={sessionsViewSettingsRef} className="flex items-center justify-end">
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      const r = event.currentTarget.getBoundingClientRect();
-                      const PANEL_W = 288;
-                      const left = Math.min(
-                        Math.max(8, Math.round(r.right - PANEL_W)),
-                        Math.round(window.innerWidth - PANEL_W - 8)
-                      );
-                      setSessionsViewSettingsPos({
-                        top: Math.round(r.bottom + 8),
-                        left,
-                        maxH: Math.max(180, Math.round(window.innerHeight - r.bottom - 24)),
-                      });
-                      setIsSessionsViewSettingsOpen((open) => !open);
-                    }}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
-                    aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
-                    aria-expanded={isSessionsViewSettingsOpen}
-                    title={isPolish ? 'Ustawienia widoku' : 'View settings'}
-                  >
-                    <Settings2 size={15} />
-                  </button>
-                  {isSessionsViewSettingsOpen && sessionsViewSettingsPos
-                    ? createPortal(
-                        <div
-                          ref={sessionsViewSettingsPanelRef}
-                          style={{
-                            position: 'fixed',
-                            top: sessionsViewSettingsPos.top,
-                            left: sessionsViewSettingsPos.left,
-                            maxHeight: sessionsViewSettingsPos.maxH,
-                          }}
-                          className="z-[100] w-72 overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
-                          onClick={(event) => event.stopPropagation()}
-                        >
-                          <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
-                            {isPolish ? 'Widoczne kolumny' : 'Visible columns'}
-                          </div>
-                          {(
-                            [
-                              { id: 'assignee', label: isPolish ? 'Przydzielony' : 'Assignee' },
-                              { id: 'status', label: isPolish ? 'Status' : 'Status' },
-                              { id: 'progress', label: isPolish ? 'Postęp' : 'Progress' },
-                              { id: 'due', label: isPolish ? 'Termin' : 'Due' },
-                              { id: 'submitted', label: isPolish ? 'Wysłano' : 'Submitted' },
-                            ] as const
-                          ).map((col) => {
-                            const checked = !hiddenSet.has(col.id);
-                            return (
-                              <label
-                                key={col.id}
-                                className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-white/[0.04]"
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={checked}
-                                  onChange={() => {
-                                    setSessionsHiddenColumns((prev) => {
-                                      const set = new Set(prev);
-                                      if (set.has(col.id)) set.delete(col.id);
-                                      else set.add(col.id);
-                                      const next = Array.from(set);
-                                      saveHiddenColumns(
-                                        INTERVIEW_SESSIONS_TABLE_VIEW_STORAGE_KEY,
-                                        next
-                                      );
-                                      return next;
-                                    });
-                                  }}
-                                  className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
-                                />
-                                <span>{col.label}</span>
-                              </label>
-                            );
-                          })}
-                          <div className="my-2 border-t border-slate-200/70 dark:border-white/[0.08]" />
-                          <label className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-white/[0.04]">
-                            <input
-                              type="checkbox"
-                              checked={showSessionRowDescription}
-                              onChange={(event) => {
-                                setShowSessionRowDescription(event.target.checked);
-                                saveBooleanSetting(
-                                  INTERVIEW_SESSIONS_ROW_DESCRIPTION_STORAGE_KEY,
-                                  event.target.checked
-                                );
-                              }}
-                              className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
-                            />
-                            <span>
-                              {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
-                            </span>
-                          </label>
-                        </div>,
-                        document.body
-                      )
-                    : null}
-                </div>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {sortedRows.map((session) => {
-              const progress = getSessionProgress(session);
-              const workflowStatus = getSessionWorkflowStatus(session);
-              const statusConfig = getSessionStatusConfig(workflowStatus);
-              const isApproved = ['approved', 'completed'].includes(workflowStatus);
-              const isSubmitted = workflowStatus === 'submitted';
-              const canRemind = ['in_progress', 'sent_back'].includes(workflowStatus);
-              const isSelected = opts?.selectedId === session.id;
-              const isSessionSelected = selectedSessionIds.has(session.id);
-              const linkedAssignment = getManagedAssignmentForSession(session);
-              const primaryMeta = session.assigneeName || session.respondentName || '—';
-              const secondaryMeta = session.templateName || session.templateCategory || '—';
+      <StandardTable
+        columns={sessionColumns}
+        data={rows as unknown as Array<Record<string, unknown> & { id: string }>}
+        selectedRowId={opts?.selectedId ?? null}
+        onRowClick={(row) => {
+          const session = row as unknown as InterviewSession;
+          if (opts?.onRowClick) opts.onRowClick(session.id);
+          else handleViewSession(session);
+        }}
+        onRowDoubleClick={(row) => {
+          const session = row as unknown as InterviewSession;
+          if (opts?.onRowDoubleClick) opts.onRowDoubleClick(session.id);
+          else handleViewSession(session);
+        }}
+        rowDescription={(row) => {
+          const session = row as unknown as InterviewSession;
+          const secondaryMeta = session.templateName || session.templateCategory || '—';
+          return `${isPolish ? 'Szablon' : 'Template'}: ${secondaryMeta}`;
+        }}
+        defaultSort={{ columnId: 'due', direction: 'asc' }}
+        persistKey="interview.sessions.list"
+        selection={{ selectedIds: selectedSessionIds, onChange: setSelectedSessionIds }}
+        empty={{
+          icon: Brain,
+          title: isPolish ? 'Przeprowadź pierwszy wywiad' : 'Run your first interview',
+          description: isPolish
+            ? 'Rozpocznij pierwszy wywiad z interesariuszem. Wybierz szablon lub zbuduj go od podstaw.'
+            : 'Start your first stakeholder interview. Pick a template or build one from scratch.',
+          actionLabel: isPolish ? 'Użyj szablonu' : 'Use a template',
+          onAction: () => {
+            setActiveTab('templates');
+            setActiveDocumentId(null);
+          },
+        }}
+        rowMenu={(row): StandardRowMenu => {
+          const session = row as unknown as InterviewSession;
+          const workflowStatus = getSessionWorkflowStatus(session);
+          const isApproved = ['approved', 'completed'].includes(workflowStatus);
+          const isSubmitted = workflowStatus === 'submitted';
+          const canRemind = ['in_progress', 'sent_back'].includes(workflowStatus);
+          const linkedAssignment = getManagedAssignmentForSession(session);
 
-              return (
-                <tr
-                  key={session.id}
-                  onClick={(event) => {
-                    const target = event.target as HTMLElement;
-                    if (target.tagName === 'BUTTON' || target.closest('button')) return;
-                    if (opts?.onRowClick) {
-                      opts.onRowClick(session.id);
-                    } else {
-                      handleViewSession(session);
-                    }
-                  }}
-                  onDoubleClick={() =>
-                    opts?.onRowDoubleClick
-                      ? opts.onRowDoubleClick(session.id)
-                      : handleViewSession(session)
+          return {
+            primary: [
+              ...(isSubmitted && linkedAssignment
+                ? [
+                    {
+                      id: 'approve',
+                      label: isPolish ? 'Zatwierdź' : 'Approve',
+                      icon: Check,
+                      onClick: () => handleApproveAssignment(linkedAssignment),
+                    },
+                  ]
+                : []),
+              ...(isApproved
+                ? [
+                    {
+                      id: 'generate-insight',
+                      label: isPolish ? 'Generuj wnioski AI' : 'Generate AI insights',
+                      icon: Lightbulb,
+                      onClick: () => handleGenerateInsight(session, 'summary'),
+                    },
+                  ]
+                : []),
+            ],
+            statusTransitions: [
+              ...(isSubmitted && linkedAssignment
+                ? [
+                    {
+                      id: 'send-back',
+                      label: isPolish ? 'Odeślij' : 'Send back',
+                      icon: ArrowRight,
+                      onClick: () => handleOpenSendBackModal(linkedAssignment),
+                    },
+                  ]
+                : []),
+              ...(canRemind && linkedAssignment
+                ? [
+                    {
+                      id: 'remind',
+                      label: isPolish ? 'Przypomnij' : 'Remind',
+                      icon: Clock,
+                      onClick: () => handleOpenReminderModal(linkedAssignment),
+                    },
+                  ]
+                : []),
+              // Restore/Untrash to real (non-Archive) labels — Blok 4 "Archive"
+              // stays reserved for the active→archived transition only.
+              ...(sessionLifecycle === 'archived'
+                ? [
+                    {
+                      id: 'restore',
+                      label: isPolish ? 'Przywróć' : 'Restore',
+                      icon: RotateCcw,
+                      disabled: sessionLifecycleBusy,
+                      onClick: () => handleSessionLifecycleAction(session, 'restore'),
+                    },
+                  ]
+                : []),
+              ...(sessionLifecycle === 'trash'
+                ? [
+                    {
+                      id: 'untrash',
+                      label: isPolish ? 'Przywróć' : 'Restore',
+                      icon: RotateCcw,
+                      disabled: sessionLifecycleBusy,
+                      onClick: () => handleSessionLifecycleAction(session, 'untrash'),
+                    },
+                  ]
+                : []),
+            ],
+            timeActions: linkedAssignment
+              ? [
+                  {
+                    id: 'delay',
+                    label: isPolish ? 'Odłóż termin' : 'Delay',
+                    icon: Clock,
+                    submenu: [1, 3, 7].map((d) => ({
+                      id: `delay-${d}`,
+                      label: isPolish ? `+${d} ${d === 1 ? 'dzień' : 'dni'}` : `+${d}d`,
+                      icon: Clock,
+                      onClick: () => void handleDelayAssignment(linkedAssignment, d),
+                    })),
+                  },
+                ]
+              : [],
+            universalHandlers: {
+              preview: () => handleViewSession(session),
+              archive:
+                sessionLifecycle === 'active'
+                  ? () => handleSessionLifecycleAction(session, 'archive')
+                  : undefined,
+              archiveNote:
+                sessionLifecycle === 'active'
+                  ? undefined
+                  : isPolish
+                    ? 'Użyj „Przywróć” powyżej'
+                    : 'Use “Restore” above',
+              // Brak endpointu edycji sesji — disabled z notą (StandardTable dokłada ją sama).
+            },
+            destructive:
+              sessionLifecycle === 'archived'
+                ? {
+                    label: isPolish ? 'Przenieś do kosza' : 'Move to trash',
+                    onClick: () => handleSessionLifecycleAction(session, 'trash'),
                   }
-                  className={[
-                    'group cursor-pointer transition-colors border-b border-c-border-subtle last:border-0',
-                    isSelected || isSessionSelected
-                      ? INTERVIEW_TABLE_SELECTED_ROW_CLASS
-                      : INTERVIEW_TABLE_HOVER_ROW_CLASS,
-                  ].join(' ')}
-                >
-                  <td className="px-3 py-3" style={{ width: sessionsColumnWidths.select }}>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        toggleSessionSelection(session.id);
-                      }}
-                      className={[
-                        'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                        'border-c-border bg-c-surface text-white hover:border-c-info group-hover:opacity-100',
-                        'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
-                        'group-focus-within:opacity-100 group-focus-within:border-c-info',
-                        isSessionSelected
-                          ? 'border-c-info bg-c-info opacity-100'
-                          : 'opacity-0',
-                      ].join(' ')}
-                      aria-label={isPolish ? 'Zaznacz sesję' : 'Select session'}
-                      aria-pressed={isSessionSelected}
-                    >
-                      {isSessionSelected ? <Check size={10} strokeWidth={3} /> : null}
-                    </button>
-                  </td>
-                  <td className="px-3 py-3" style={{ width: sessionsColumnWidths.name }}>
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className={INTERVIEW_TABLE_ICON_SURFACE_CLASS}>
-                        <Brain size={15} />
-                      </div>
-                      <div className="min-w-0">
-                        <span className="text-sm font-semibold text-c-text block truncate">
-                          {session.name || 'Discovery Interview'}
-                        </span>
-                        {showSessionRowDescription ? (
-                          <span className="mt-0.5 block truncate text-[11px] font-normal leading-4 text-c-text-muted">
-                            {isPolish ? 'Szablon' : 'Template'}: {secondaryMeta}
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-                  </td>
-
-                  {!hiddenSet.has('assignee') && (
-                    <td
-                      className="px-3 py-3 align-middle"
-                      style={{ width: sessionsColumnWidths.assignee }}
-                    >
-                      <AssigneeCell
-                        name={session.assigneeName || session.respondentName || null}
-                        unassignedLabel={isPolish ? 'Nieprzypisane' : 'Unassigned'}
-                      />
-                    </td>
-                  )}
-
-                  {!hiddenSet.has('status') && (
-                    <td
-                      className="px-3 py-3 text-left align-middle"
-                      style={{ width: sessionsColumnWidths.status }}
-                    >
-                      {/* Shared StatusPill (SSOT) for tone, with the
-                          session-specific bilingual label from
-                          getSessionStatusConfig. */}
-                      <EntityStatusChip
-                        status={workflowStatus}
-                        label={isPolish ? statusConfig.label.pl : statusConfig.label.en}
-                      />
-                    </td>
-                  )}
-
-                  {!hiddenSet.has('progress') && (
-                    <td
-                      className="px-3 py-3 text-right align-middle"
-                      style={{ width: sessionsColumnWidths.progress }}
-                    >
-                      <ProgressCell value={progress} />
-                    </td>
-                  )}
-
-                  {!hiddenSet.has('due') && (
-                    <td
-                      className="px-3 py-3 text-left align-middle"
-                      style={{ width: sessionsColumnWidths.due }}
-                    >
-                      {(() => {
-                        // Canon §4.4 — ONE Due column: neutral date, danger when
-                        // overdue (and not yet submitted/approved). Overdue column
-                        // merged here as a DueChip signal.
-                        if (!session.dueAt)
-                          return <span className="text-xs text-c-text-muted">—</span>;
-                        const daysToDue = getSessionDaysOverdue(session);
-                        const resolved = isSubmitted || isApproved;
-                        const overdue = daysToDue != null && daysToDue < 0 && !resolved;
-                        const absDays = daysToDue != null ? Math.abs(daysToDue) : 0;
-                        const dateLabel = new Date(session.dueAt).toLocaleDateString();
-                        return (
-                          <div className="flex items-center">
-                            <DueChip
-                              label={
-                                overdue
-                                  ? isPolish
-                                    ? `${absDays} ${absDays === 1 ? 'dzień' : 'dni'} po terminie`
-                                    : `${absDays}d overdue`
-                                  : dateLabel
-                              }
-                              risk={overdue ? 'overdue' : 'none'}
-                              showIcon
-                              title={dateLabel}
-                            />
-                          </div>
-                        );
-                      })()}
-                    </td>
-                  )}
-
-                  {!hiddenSet.has('submitted') && (
-                    <td
-                      className="px-3 py-3 text-left align-middle"
-                      style={{ width: sessionsColumnWidths.submitted }}
-                    >
-                      {session.submittedAt ? (
-                        <span className="text-xs text-c-text-secondary">
-                          {new Date(session.submittedAt).toLocaleDateString()}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-c-text-muted">—</span>
-                      )}
-                    </td>
-                  )}
-
-                  {/* Overdue column merged into Due (DueChip) per canon §4.4 */}
-
-                  <td
-                    className="px-3 py-3 text-right"
-                    style={{ width: sessionsColumnWidths.actions }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="flex items-center justify-end">
-                      <RowActionsMenu
-                        iconVariant="vertical"
-                        className="opacity-40 transition-opacity group-hover:opacity-100"
-                        sections={[
-                          // GÓRA — kontekstowe (wg statusu sesji)
-                          {
-                            id: 'context',
-                            kind: 'context' as const,
-                            actions: [
-                              ...(isSubmitted && linkedAssignment
-                                ? [
-                                    {
-                                      id: 'approve',
-                                      label: isPolish ? 'Zatwierdź' : 'Approve',
-                                      icon: Check,
-                                      onClick: () => handleApproveAssignment(linkedAssignment),
-                                    },
-                                    {
-                                      id: 'send-back',
-                                      label: isPolish ? 'Odeślij' : 'Send back',
-                                      icon: ArrowRight,
-                                      onClick: () => handleOpenSendBackModal(linkedAssignment),
-                                      variant: 'danger' as const,
-                                    },
-                                  ]
-                                : []),
-                              ...(canRemind && linkedAssignment
-                                ? [
-                                    {
-                                      id: 'remind',
-                                      label: isPolish ? 'Przypomnij' : 'Remind',
-                                      icon: Clock,
-                                      onClick: () => handleOpenReminderModal(linkedAssignment),
-                                    },
-                                  ]
-                                : []),
-                              ...(isApproved
-                                ? [
-                                    {
-                                      id: 'generate-insight',
-                                      label: isPolish
-                                        ? 'Generuj wnioski AI'
-                                        : 'Generate AI insights',
-                                      icon: Lightbulb,
-                                      onClick: () => handleGenerateInsight(session, 'summary'),
-                                    },
-                                  ]
-                                : []),
-                            ],
-                          },
-                          // DÓŁ — stały (kanon §9): Open · Edit · Archiwizuj/Przywróć · [Delay]
-                          {
-                            id: 'fixed',
-                            kind: 'manage' as const,
-                            actions: [
-                              {
-                                id: 'open',
-                                label: isPolish ? 'Otwórz podgląd' : 'Open preview',
-                                icon: ChevronRight,
-                                onClick: () => handleViewSession(session),
-                              },
-                              {
-                                id: 'edit',
-                                label: isPolish ? 'Edytuj' : 'Edit',
-                                icon: Edit2,
-                                disabled: true,
-                                description: isPolish
-                                  ? 'Wkrótce (backend)'
-                                  : 'Coming soon (backend)',
-                                onClick: () => {},
-                              },
-                              ...(sessionLifecycle === 'active'
-                                ? [
-                                    {
-                                      id: 'archive',
-                                      label: isPolish ? 'Archiwizuj' : 'Archive',
-                                      icon: Archive,
-                                      disabled: sessionLifecycleBusy,
-                                      onClick: () =>
-                                        handleSessionLifecycleAction(session, 'archive'),
-                                    },
-                                  ]
-                                : []),
-                              ...(sessionLifecycle === 'archived'
-                                ? [
-                                    {
-                                      id: 'restore',
-                                      label: isPolish ? 'Przywróć' : 'Restore',
-                                      icon: RotateCcw,
-                                      disabled: sessionLifecycleBusy,
-                                      onClick: () =>
-                                        handleSessionLifecycleAction(session, 'restore'),
-                                    },
-                                  ]
-                                : []),
-                              ...(sessionLifecycle === 'trash'
-                                ? [
-                                    {
-                                      id: 'untrash',
-                                      label: isPolish ? 'Przywróć' : 'Restore',
-                                      icon: RotateCcw,
-                                      disabled: sessionLifecycleBusy,
-                                      onClick: () =>
-                                        handleSessionLifecycleAction(session, 'untrash'),
-                                    },
-                                  ]
-                                : []),
-                              // Delay — przesuwa termin powiązanego assignmentu
-                              // (sesja nie ma własnego due; due = assignment).
-                              // Realny endpoint manageAssignment; tylko gdy jest assignment.
-                              ...(linkedAssignment
-                                ? [
-                                    {
-                                      id: 'delay',
-                                      label: isPolish ? 'Odłóż termin' : 'Delay',
-                                      icon: Clock,
-                                      onClick: () => {},
-                                      submenu: [1, 3, 7].map((d) => ({
-                                        id: `delay-${d}`,
-                                        label: isPolish
-                                          ? `+${d} ${d === 1 ? 'dzień' : 'dni'}`
-                                          : `+${d}d`,
-                                        icon: Clock,
-                                        onClick: () =>
-                                          void handleDelayAssignment(linkedAssignment, d),
-                                      })),
-                                    },
-                                  ]
-                                : []),
-                            ],
-                          },
-                          // DANGER — Trash / Delete forever (realny lifecycle)
-                          {
-                            id: 'danger',
-                            kind: 'danger' as const,
-                            actions: [
-                              ...(sessionLifecycle === 'active'
-                                ? [
-                                    {
-                                      id: 'trash-from-active',
-                                      label: isPolish ? 'Przenieś do kosza' : 'Move to trash',
-                                      icon: Trash2,
-                                      variant: 'danger' as const,
-                                      disabled: true,
-                                      description: isPolish
-                                        ? 'Archiwizuj najpierw'
-                                        : 'Archive first',
-                                      onClick: () => {},
-                                    },
-                                  ]
-                                : []),
-                              ...(sessionLifecycle === 'archived'
-                                ? [
-                                    {
-                                      id: 'trash',
-                                      label: isPolish ? 'Przenieś do kosza' : 'Move to trash',
-                                      icon: Trash2,
-                                      variant: 'danger' as const,
-                                      disabled: sessionLifecycleBusy,
-                                      onClick: () => handleSessionLifecycleAction(session, 'trash'),
-                                    },
-                                  ]
-                                : []),
-                              ...(sessionLifecycle === 'trash'
-                                ? [
-                                    {
-                                      id: 'delete-forever',
-                                      label: isPolish ? 'Usuń na stałe' : 'Delete forever',
-                                      icon: Trash2,
-                                      variant: 'danger' as const,
-                                      disabled: sessionLifecycleBusy,
-                                      onClick: () => {
-                                        setSessionDeleteConfirmText('');
-                                        setSessionDeleteTarget(session);
-                                      },
-                                    },
-                                  ]
-                                : []),
-                            ],
-                          },
-                        ]}
-                      />
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={visibleColumns.length} className="px-4 py-12">
-                  <div className="mx-auto max-w-md rounded-2xl border border-c-border bg-c-surface p-8 text-center">
-                    <div className="mb-3 flex items-center justify-center gap-2 text-c-accent">
-                      <TeresaMark size={18} />
-                      <span className="text-xs font-semibold uppercase tracking-wide">Teresa</span>
-                    </div>
-                    <p className="text-base font-semibold text-c-text">
-                      {isPolish ? 'Przeprowadź pierwszy wywiad' : 'Run your first interview'}
-                    </p>
-                    <p className="mx-auto mt-2 max-w-sm text-sm text-c-text-muted">
-                      {isPolish
-                        ? 'Rozpocznij pierwszy wywiad z interesariuszem. Wybierz szablon lub zbuduj go od podstaw.'
-                        : 'Start your first stakeholder interview. Pick a template or build one from scratch.'}
-                    </p>
-                    <div className="mt-5 flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveTab('templates');
-                          setActiveDocumentId(null);
-                        }}
-                        className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-navy-900 px-4 text-xs font-semibold text-white transition hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200"
-                      >
-                        <FileText size={14} />
-                        {isPolish ? 'Użyj szablonu' : 'Use a template'}
-                      </button>
-                      {canAssign ? (
-                        <button
-                          type="button"
-                          onClick={() => setShowAssignModal(true)}
-                          className="inline-flex h-9 items-center gap-1.5 rounded-full border border-c-border bg-c-surface px-4 text-xs font-semibold text-c-text-secondary transition hover:bg-c-surface-raised"
-                        >
-                          <UserPlus size={14} />
-                          {isPolish ? 'Nowa sesja' : 'New session'}
-                        </button>
-                      ) : null}
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                : sessionLifecycle === 'trash'
+                  ? {
+                      label: isPolish ? 'Usuń na stałe' : 'Delete forever',
+                      onClick: () => {
+                        setSessionDeleteConfirmText('');
+                        setSessionDeleteTarget(session);
+                      },
+                    }
+                  : {
+                      // sessionLifecycle === 'active' — archiwizuj najpierw (StandardTable dokłada notę).
+                      note: isPolish ? 'Archiwizuj najpierw' : 'Archive first',
+                    },
+          };
+        }}
+      />
     );
   };
 
@@ -8529,21 +7846,10 @@ export const InterviewHub: React.FC = () => {
   >('dueAt');
   const [assignmentSortAsc, setAssignmentSortAsc] = useState(true);
 
-  // Sorting state — Sessions / Insights / Templates header click-sort. Mirrors the
+  // Sorting state — Insights / Templates header click-sort. Mirrors the
   // Assignments pattern (field + asc toggle, click cycles asc→desc, click a new
   // field resets to asc). Sort applies on top of the already-filtered/grouped list.
-  type SessionSortField = 'name' | 'status' | 'due' | 'submitted' | 'overdue';
-  const [sessionSortField, setSessionSortField] = useState<SessionSortField | null>(null);
-  const [sessionSortAsc, setSessionSortAsc] = useState(true);
-  const toggleSessionSort = (field: SessionSortField) => {
-    if (sessionSortField === field) {
-      setSessionSortAsc((prev) => !prev);
-    } else {
-      setSessionSortField(field);
-      setSessionSortAsc(true);
-    }
-  };
-
+  // (Sessions sort/filter now lives inside StandardTable — Triada standard.)
   type InsightSortField = 'title' | 'type' | 'status' | 'date';
   const [insightSortField, setInsightSortField] = useState<InsightSortField | null>(null);
   const [insightSortAsc, setInsightSortAsc] = useState(true);
@@ -8591,9 +7897,8 @@ export const InterviewHub: React.FC = () => {
 
   // V-B — persist every resizable table's column widths on change, so resizing
   // survives reload (the module-wide bug). One effect per table.
-  useEffect(() => {
-    saveColumnWidths(INTERVIEW_SESSIONS_COL_WIDTHS_KEY, sessionsColumnWidths);
-  }, [sessionsColumnWidths]);
+  // (Sessions moved to StandardTable — persistence now via persistKey inside
+  // the facade; no module-local width state left to persist here.)
   useEffect(() => {
     saveColumnWidths(INTERVIEW_TEMPLATES_COL_WIDTHS_KEY, templatesColumnWidths);
   }, [templatesColumnWidths]);
