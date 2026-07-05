@@ -680,6 +680,12 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     });
   // M09 L-02: realtime graph sync (org-scoped WS, mirrors M06 Mind Map).
   const collab = useWhiteboardCollab({ currentUserId, setNodes, setEdges });
+  // useWhiteboardCollab returns a fresh object literal each render, but its inner
+  // callbacks ARE memoized. Depend on the stable callback (not the object) so
+  // handleToggleReaction — and therefore hydrate, which lists it — stays stable.
+  // Depending on `collab` directly re-creates hydrate every render, which re-fires
+  // the hydrate effect and its setSessionState → infinite render loop (B4×B1).
+  const { broadcastNodeUpdate: collabBroadcastNodeUpdate } = collab;
 
   // B4: emoji reactions on nodes. Gated behind the (previously-dead)
   // session.reactionsEnabled flag + an active facilitation session. Toggling a
@@ -702,7 +708,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         if (updated) {
           // Broadcast only the persistable slice (id + data.reactions); the
           // collab receiver shallow-merges node + node.data.
-          collab.broadcastNodeUpdate({
+          collabBroadcastNodeUpdate({
             id: (updated as Node).id,
             data: { reactions: (updated as Node).data?.reactions },
           } as Node);
@@ -710,7 +716,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         return next;
       });
     },
-    [collab, currentUserId, locked, setNodes]
+    [collabBroadcastNodeUpdate, currentUserId, locked, setNodes]
   );
 
   // Reactions are live only during an active facilitation session with the flag on.
